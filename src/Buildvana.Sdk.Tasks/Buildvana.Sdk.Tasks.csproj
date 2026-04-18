@@ -10,14 +10,13 @@
     <Title>Buildvana SDK tasks</Title>
     <Description>This assembly contains compiled tasks used by Buildvana SDK. Documentation for the SDK is available here: https://github.com/Tenacom/Buildvana.Sdk/blob/main/README.md</Description>
     <RootNamespace>Buildvana.Sdk</RootNamespace>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Build.Framework" ExcludeAssets="Runtime" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" ExcludeAssets="Runtime" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="Runtime" PrivateAssets="All" />
-    <PackageReference Include="PolyKit.Embedded" ExcludeAssets="Runtime" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

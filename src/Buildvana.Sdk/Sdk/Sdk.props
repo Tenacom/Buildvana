@@ -75,10 +75,10 @@
     <BV_SdkTasksAssembly>$(BV_BinariesDir)Buildvana.Sdk.Tasks.dll</BV_SdkTasksAssembly>
   </PropertyGroup>
 
-  <UsingTask TaskName="ConvertPfxToSnk" AssemblyFile="$(BV_SdkTasksAssembly)" />
-  <UsingTask TaskName="GetWinePath" AssemblyFile="$(BV_SdkTasksAssembly)" />
-  <UsingTask TaskName="GetWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" />
-  <UsingTask TaskName="ConvertToWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" />
+  <UsingTask TaskName="ConvertPfxToSnk" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
+  <UsingTask TaskName="GetWinePath" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
+  <UsingTask TaskName="GetWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
+  <UsingTask TaskName="ConvertToWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
 
   <!-- Import Buildvana configuration -->
   <Import Condition="$(BV_IsConfigured)" Project="$(BuildvanaSdkDirectory)ImportConfiguration.props" />
