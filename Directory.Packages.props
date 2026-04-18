@@ -10,28 +10,28 @@
       The minimum supported version of Roslyn.
       Used by the SDK to determine whether the compiler in use is supported.
     -->
-    <BV_MinRoslynVersion>4.14</BV_MinRoslynVersion>
+    <BV_MinRoslynVersion>5.3</BV_MinRoslynVersion>
 
     <!--
       A textual hint telling which toolchains contain a suupported version of Roslyn.
       Used by the SDK to construct a meaningful diagnostic message when an unsupported Roslyn version is detected.
     -->
-    <BV_MinRoslynVersionHint>.NET SDK v8.0.413+ / Visual Studio 2022 17.14+</BV_MinRoslynVersionHint>
+    <BV_MinRoslynVersionHint>.NET SDK 10.0.2xx / Visual Studio 2026 18.4+</BV_MinRoslynVersionHint>
 
     <!--
       The package folder, under analyzers/dotnet, where the source generators DLL is put when packing the SDK.
       Used by the SDK project when packing.
     -->
-    <BV_SourceGeneratorsPackageFolder>roslyn4.14</BV_SourceGeneratorsPackageFolder>
+    <BV_SourceGeneratorsPackageFolder>roslyn5.3</BV_SourceGeneratorsPackageFolder>
 
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Build.Framework" Version="17.14.8" />
-    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="17.14.8" />
-    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.14.8" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.14.0" />
+    <PackageVersion Include="Microsoft.Build.Framework" Version="18.4.0" />
+    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="18.4.0" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.4.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.3.0" />
     <PackageVersion Include="PolyKit.Embedded" Version="3.0.27-preview" />
   </ItemGroup>
 
