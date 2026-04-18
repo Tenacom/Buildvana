@@ -7,6 +7,12 @@
   <PropertyGroup>
 
     <!--
+      The minimum supported version of MSBuild.
+      Used by the SDK to determine whether the MSBuild version in use is supported.
+    -->
+    <BV_MinMSBuildVersion>17.4</BV_MinMSBuildVersion>
+
+    <!--
       The minimum supported version of Roslyn.
       Used by the SDK to determine whether the compiler in use is supported.
     -->
