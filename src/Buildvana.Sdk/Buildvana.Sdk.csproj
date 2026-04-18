@@ -6,7 +6,7 @@
       IMPORTANT: TargetFramework must have the same value as in the source generators project,
       so we can use the OutputPath property (which is a relative path) to locate the source generators DLL.
     -->
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>$(SourceGeneratorsTfm)</TargetFramework>
 
     <!-- Common properties -->
     <Title>Buildvana SDK</Title>
