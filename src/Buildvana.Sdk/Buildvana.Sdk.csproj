@@ -252,7 +252,7 @@
              Properties="Configuration=$(Configuration);
                          PublishProtocol=FileSystem;
                          PublishDir=$(MSBuildProjectDirectory)\$(OutputPath);
-                         TargetFramework=$(TargetFramework);
+                         TargetFramework=$(TasksTfm);
                          SelfContained=false;
                          DeleteExistingFiles=false;
                          ExcludeGeneratedDebugSymbols=false" />
