@@ -30,11 +30,6 @@ public sealed class BuildErrorException : Exception
     {
     }
 
-    private BuildErrorException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-    }
-
     [DoesNotReturn]
     public static void ThrowNew(string message)
         => throw new BuildErrorException(message);
