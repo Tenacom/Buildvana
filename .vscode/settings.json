@@ -95,9 +95,7 @@
   // Automatically open explorer view on the end of a debug session
   "debug.openExplorerOnEnd": false,
   // Show variable values inline in editor while debugging
-  "debug.inlineValues": false,
-  // Controls if the floating debug action bar should be hidden
-  "debug.hideActionBar": false,
+  "debug.inlineValues": "auto",
   // Controls behavior of the internal debug console.
   "debug.internalConsoleOptions": "openOnFirstSessionStart",
   // Global debug launch configuration. Should be used as an alternative to 'launch.json' that is shared across workspaces
@@ -148,7 +146,11 @@
   // Configure editor settings to be overridden for [markdown] language.
   "[markdown]": {
     "editor.wordWrap": "on",
-    "editor.quickSuggestions": false,
+    "editor.quickSuggestions": {
+        "comments": "off",
+        "strings": "off",
+        "other": "off"
+    },
     "editor.trimAutoWhitespace": false
   },
   // Configure editor settings to be overridden for [xml] language.
@@ -175,7 +177,7 @@
   // Controls the git badge counter. `all` counts all changes. `tracked` counts only the tracked changes. `off` turns it off.
   "git.countBadge": "all",
   // Controls what type of branches are listed when running `Checkout to...`. `all` shows all refs, `local` shows only the local branchs, `tags` shows only tags and `remote` shows only remote branches.
-  "git.checkoutType": "all",
+  "git.checkoutType": ["local"],
   // Ignores the legacy Git warning
   "git.ignoreLegacyWarning": false,
   // Ignores the warning when there are too many changes in a repository
@@ -190,8 +192,5 @@
   // Enable/disable merge conflict block CodeLens within editor
   "merge-conflict.codeLens.enabled": true,
   // Enable/disable merge conflict decorators within editor
-  "merge-conflict.decorators.enabled": true,
-  // OmniSharp
-  // Enables support for roslyn analyzers, code fixes and rulesets.
-  "omnisharp.enableRoslynAnalyzers": true
+  "merge-conflict.decorators.enabled": true
 }
