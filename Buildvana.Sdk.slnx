@@ -1,0 +1,37 @@
+<Solution>
+  <Folder Name="/- Configuration/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path=".globalconfig" />
+    <File Path="Common.props" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="NuGet.config" />
+    <File Path="stylecop.json" />
+    <File Path="version.json" />
+  </Folder>
+  <Folder Name="/- Dependencies/">
+    <File Path=".config/dotnet-tools.json" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+  </Folder>
+  <Folder Name="/- Documentation/">
+    <File Path="CHANGELOG.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="THIRD-PARTY-NOTICES" />
+  </Folder>
+  <Folder Name="/- Documentation/docs/">
+    <File Path="docs/ConfigurationFiles.md" />
+    <File Path="docs/Diagnostics.md" />
+  </Folder>
+  <Folder Name="/- Documentation/docs/modules/">
+    <File Path="docs/modules/Wine.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Buildvana.Sdk.SourceGenerators/Buildvana.Sdk.SourceGenerators.csproj" />
+    <Project Path="src/Buildvana.Sdk.Tasks/Buildvana.Sdk.Tasks.csproj" />
+    <Project Path="src/Buildvana.Sdk/Buildvana.Sdk.csproj" />
+  </Folder>
+</Solution>
