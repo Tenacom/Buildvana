@@ -42,8 +42,8 @@
 
   <!-- Target frameworks -->
   <PropertyGroup>
-    <SourceGeneratorsTfm>netstandard2.0</SourceGeneratorsTfm>
-    <TasksTfm>net10.0</TasksTfm>
+    <StandardTfm>net10.0</StandardTfm> <!-- Main TFM for tasks and CLI tool -->
+    <SourceGeneratorsTfm>netstandard2.0</SourceGeneratorsTfm> <!-- Must remain netstandard2.0 for Roslyn analyzer compatibility -->
   </PropertyGroup>
 
 </Project>
