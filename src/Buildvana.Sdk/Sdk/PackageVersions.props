@@ -1,7 +1,6 @@
 <Project>
   <!--
     All versions of automatically added dependencies are grouped here for easier updating.
-    The name of this file is Directory.Build.props so NuKeeper can see it and keep it up to date.
 
     NOTE TO CONTRIBUTORS: Please keep the versions below up-to-date with latest versions appearing on nuget.org.
                           If there is some compelling reason to NOT update one or more of this packages,
