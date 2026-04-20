@@ -33,8 +33,8 @@ on:
         required: false
         default: true
         type: boolean
-      cakeVerbosity:
-        description: 'Cake verbosity'
+      buildvanaVerbosity:
+        description: 'Buildvana verbosity'
         required: true
         type: choice
         default: 'Normal'
@@ -67,7 +67,7 @@ jobs:
       CHECK_PUBLIC_API: ${{ inputs.checkPublicApi }}
       FORCE_UPDATE_CHANGELOG: ${{ inputs.forceUpdateChangelog }}
       CHECK_CHANGELOG: ${{ inputs.checkChangelog }}
-      CAKE_VERBOSITY: ${{ inputs.cakeVerbosity }}
+      BV_VERBOSITY: ${{ inputs.buildvanaVerbosity }}
     steps:
     - name: Log workflow inputs
       shell: cmd
@@ -76,13 +76,13 @@ jobs:
         echo Check public API files        : %CHECK_PUBLIC_API%
         echo Update changelog on preview   : %FORCE_UPDATE_CHANGELOG%
         echo Check changelog before update : %CHECK_CHANGELOG%
-        echo Cake verbosity                : %CAKE_VERBOSITY%
+        echo Buildvana verbosity           : %BV_VERBOSITY%
     - name: Checkout repository with full history
       uses: actions/checkout@v5
       with:
         fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
         token: ${{ secrets.RELEASE_TOKEN }}
-        persist-credentials: true # We need auth set up in the Cake script
+        persist-credentials: true # We need auth set up in Buildvana
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v5
       with:
@@ -90,13 +90,13 @@ jobs:
     - name: Restore .NET tools
       shell: cmd
       run: dotnet tool restore
-    - name: Run build script
+    - name: Run Buildvana release
       id: build
       shell: cmd
       run: |
-        if [%CAKE_VERBOSITY%]==[] set CAKE_VERBOSITY=Normal
-        if [%RUNNER_DEBUG%]==[1] set CAKE_VERBOSITY=Diagnostic
-        dotnet cake --target Release --verbosity %CAKE_VERBOSITY%
+        if [%BV_VERBOSITY%]==[] set BV_VERBOSITY=Normal
+        if [%RUNNER_DEBUG%]==[1] set BV_VERBOSITY=Diagnostic
+        dotnet bv release --verbosity %BV_VERBOSITY%
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/Cobertura.xml') != '' }}
       uses: codecov/codecov-action@v5

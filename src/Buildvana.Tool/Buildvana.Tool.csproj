@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>bv</ToolCommandName>
+    <ClsCompliant>false</ClsCompliant>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1515</NoWarn> <!-- Consider making public types internal - Tasks must be exposed to be discovered via reflection -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn> <!--  Detected package version outside of dependency contraint - Transitive dependency hell, mainly caused by Docfx.App - Re-enable this warning before releases to check for _real_ problems -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Cake.Frosting" />
+    <PackageReference Include="Cake.Http" />
+    <PackageReference Include="CommunityToolkit.Diagnostics" />
+    <PackageReference Include="Docfx.App" />
+    <PackageReference Include="LibGit2Sharp" />
+    <PackageReference Include="Louis" />
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="NuGet.Versioning" />
+    <PackageReference Include="Octokit" />
+    <PackageReference Include="Spectre.Console.Cli" />
+  </ItemGroup>
+
+  <!-- Transitive package overrides -->
+  <!-- TODO: Items in this group should be TransitivePackageOverride items in Directory.Packages.props. -->
+  <ItemGroup>
+    <PackageReference Include="NuGet.Packaging" />
+    <PackageReference Include="NuGet.Protocol" />
+  </ItemGroup>
+
+  <!--
+    Playwright (transitive via Docfx.App) ships browser-management PS1 scripts as publish outputs.
+    NuGet rejects them as unrecognized tool scripts (NU5111), so strip them before packing.
+  -->
+  <Target Name="RemovePlaywrightScripts" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+          Condition="$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').Contains('.playwright'))
+                  or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'playwright.ps1'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

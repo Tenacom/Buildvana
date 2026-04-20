@@ -2,6 +2,12 @@
   "version": 1,
   "isRoot": true,
   "tools": {
+    "buildvana.tool": {
+      "version": "1.0.177-preview",
+      "commands": [
+        "bv"
+      ]
+    },
     "nbgv": {
       "version": "3.9.50",
       "commands": [

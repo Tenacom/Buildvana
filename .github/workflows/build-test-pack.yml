@@ -27,12 +27,12 @@ jobs:
     - name: Restore .NET tools
       shell: cmd
       run: dotnet tool restore
-    - name: Run build script
+    - name: Build, test, and pack with Buildvana
       shell: cmd
       run: |
-        if [%CAKE_VERBOSITY%]==[] set CAKE_VERBOSITY=Normal
-        if [%RUNNER_DEBUG%]==[1] set CAKE_VERBOSITY=Diagnostic
-        dotnet cake --target Pack --verbosity %CAKE_VERBOSITY%
+        if [%BV_VERBOSITY%]==[] set BV_VERBOSITY=Normal
+        if [%RUNNER_DEBUG%]==[1] set BV_VERBOSITY=Diagnostic
+        dotnet bv pack --verbosity %BV_VERBOSITY%
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/Cobertura.xml') != '' }}
       uses: codecov/codecov-action@v5

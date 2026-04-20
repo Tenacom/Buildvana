@@ -1,0 +1,26 @@
+﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// See the LICENSE file in the project root for full license information.
+
+using Buildvana.Tool.Infrastructure;
+using Buildvana.Tool.Services;
+using Cake.Frosting;
+using CommunityToolkit.Diagnostics;
+
+namespace Buildvana.Tool.Tasks;
+
+[TaskName(Name)]
+[TaskDescription(Description)]
+[IsDependentOn(typeof(PrepareTask))]
+public sealed class RestoreTask : FrostingTask<BuildContext>
+{
+    private const string Name = "Restore";
+    private const string Description = "Restore dependencies";
+
+    public override void Run(BuildContext context)
+    {
+        Guard.IsNotNull(context);
+
+        var dotnet = context.GetService<DotNetService>();
+        dotnet.RestoreSolution();
+    }
+}
