@@ -1,25 +1,27 @@
 <Project>
 
   <!--
+    Minimum supported version of MSBuild.
+    Used by the SDK to determine whether the MSBuild version in use is supported.
+  -->
+  <PropertyGroup>
+    <BV_MinMSBuildVersion>17.4</BV_MinMSBuildVersion>
+  </PropertyGroup>
+
+  <!--
     Minimum version of Roslyn supporting our source generators.
     These properties MUST be kept in sync with the version of Microsoft.CodeAnalysis packages.
   -->
   <PropertyGroup>
 
     <!--
-      The minimum supported version of MSBuild.
-      Used by the SDK to determine whether the MSBuild version in use is supported.
-    -->
-    <BV_MinMSBuildVersion>17.4</BV_MinMSBuildVersion>
-
-    <!--
-      The minimum supported version of Roslyn.
+      Minimum supported version of Roslyn.
       Used by the SDK to determine whether the compiler in use is supported.
     -->
     <BV_MinRoslynVersion>5.3</BV_MinRoslynVersion>
 
     <!--
-      A textual hint telling which toolchains contain a suupported version of Roslyn.
+      A textual hint telling which toolchains contain a supported version of Roslyn.
       Used by the SDK to construct a meaningful diagnostic message when an unsupported Roslyn version is detected.
     -->
     <BV_MinRoslynVersionHint>.NET SDK 10.0.2xx / Visual Studio 2026 18.4+</BV_MinRoslynVersionHint>
@@ -32,6 +34,7 @@
 
   </PropertyGroup>
 
+  <!-- Run-time dependencies-->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Build.Framework" Version="18.4.0" />
     <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="18.4.0" />
@@ -39,6 +42,10 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.3.0" />
     <PackageVersion Include="PolyKit.Embedded" Version="3.0.27-preview" />
+  </ItemGroup>
+
+  <!-- Development dependencies-->
+  <ItemGroup>
   </ItemGroup>
 
 </Project>
