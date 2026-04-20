@@ -48,7 +48,7 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
         var pwd = password.Length == 0 ? null : password;
         try
         {
-            return new X509Certificate2(path, pwd, X509KeyStorageFlags.Exportable);
+            return X509CertificateLoader.LoadPkcs12FromFile(path, pwd, X509KeyStorageFlags.Exportable);
         }
         catch (CryptographicException)
         {
