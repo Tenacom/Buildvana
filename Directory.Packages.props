@@ -48,4 +48,15 @@
   <ItemGroup>
   </ItemGroup>
 
+  <!-- Transitive vulnerability overrides -->
+  <!--
+    TODO:
+       - Items in this group should be TransitiveVulnerabilityOverride items in Directory.Packages.props
+       - Buildvana SDK should consume those items and add the necessary package references when at least one of the packages
+         mentioned in BvOverrideOf is present in the dependency graph.
+   -->
+  <ItemGroup>
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.6" />
+  </ItemGroup>
+
 </Project>
