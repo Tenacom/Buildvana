@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch",
+      "WebSearch",
+      "Bash(dotnet:*)",
+      "Bash(git:*)",
+      "Bash(xargs grep *)",
+      "Bash(xargs head *)",
+      "Bash(xargs -I {} find *)",
+      "Read",
+      "Glob",
+      "Grep"
+    ]
+  }
+}
