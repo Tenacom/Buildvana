@@ -2,12 +2,6 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "cake.tool": {
-      "version": "6.1.0",
-      "commands": [
-        "dotnet-cake"
-      ]
-    },
     "nbgv": {
       "version": "3.9.50",
       "commands": [
