@@ -5,6 +5,14 @@
     <BV_SdkPropsHasBeenImported>true</BV_SdkPropsHasBeenImported>
   </PropertyGroup>
 
+  <!--
+    Minimum supported version of MSBuild.
+    Used by the SDK to determine whether the MSBuild version in use is supported.
+  -->
+  <PropertyGroup>
+    <BV_MinMSBuildVersion>17.4</BV_MinMSBuildVersion>
+  </PropertyGroup>
+
   <!-- Import the project file containing the SDK version. -->
   <Import Project="$(MSBuildThisFileDirectory)SdkVersion.props" />
 
@@ -40,7 +48,7 @@
   <!-- Check for a supported version of MSBuild. -->
   <PropertyGroup>
     <BV_MSBuildVersionSupported>false</BV_MSBuildVersionSupported>
-    <BV_MSBuildVersionSupported Condition="'$(MSBuildVersion)' &gt;= '$(BV_MinMSBuildVersion)'">true</BV_MSBuildVersionSupported>
+    <BV_MSBuildVersionSupported Condition="$([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '$(BV_MinMSBuildVersion)'))">true</BV_MSBuildVersionSupported>
   </PropertyGroup>
   <ItemGroup Condition="!$(BV_MSBuildVersionSupported)">
     <EvaluationError Include="BVSDK1004"

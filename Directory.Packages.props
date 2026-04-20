@@ -1,14 +1,6 @@
 <Project>
 
   <!--
-    Minimum supported version of MSBuild.
-    Used by the SDK to determine whether the MSBuild version in use is supported.
-  -->
-  <PropertyGroup>
-    <BV_MinMSBuildVersion>17.4</BV_MinMSBuildVersion>
-  </PropertyGroup>
-
-  <!--
     Minimum version of Roslyn supporting our source generators.
     These properties MUST be kept in sync with the version of Microsoft.CodeAnalysis packages.
   -->
