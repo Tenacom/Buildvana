@@ -14,21 +14,16 @@ Each one of the preceding commands includes the previous ones, so `dotnet bv bui
 
 ## Efficiency
 
-- Use built-in Read, Glob, and Grep tools to examine files.
-  Do not shell out to cat, grep, find, or similar when built-in tools exist.
+- Use built-in Read, Glob, and Grep tools to examine files. Do not shell out to cat, grep, find, or similar when built-in tools exist.
 - Prefer dotnet CLI commands over writing scripts whenever possible.
-- This is a .NET project. When a quick script is needed, write C#, not Python.
+- This is a .NET project. When a quick script is needed, write a single-file C# app, not Python.
 
 ## Inspecting third-party library internals
 
 When you need to understand what a NuGet package actually does (method behavior, argument handling, etc.):
 
-- Retrieve package information using `dotnet package search <package-name> --include-prerelease --detail` to find the exact version and source.
-- **Go straight to GitHub.** Fetch the source using WebFetch or a subagent.
-  Most packages are open source and tagged by version on GitHub.
-- Do NOT attempt PowerShell/reflection on the DLL — type-load failures from
-  transitive dependencies make this unreliable on Windows.
-- Do NOT try to unzip `.nupkg` files looking for `.cs` source — runtime packages
-  do not contain source. Source packages use `.snupkg` and are rarely needed.
-- Do NOT install or invoke ad-hoc tools (`dotnet-script`, `ildasm`, etc.)
-  unless already confirmed present; fetching source is faster and always works.
+- Retrieve package information using `dotnet package search <package_name> --exact-match --prerelease --verbosity detailed --format json`. Alongside the current package version you'll probably find the project URL, which is often a GitHub repository.
+- **Go straight to GitHub.** Fetch the source using WebFetch or a subagent. Most packages are open source and tagged by version on GitHub.
+- Do NOT attempt PowerShell/reflection on the DLL — type-load failures from transitive dependencies make this unreliable on Windows.
+- Do NOT try to unzip `.nupkg` files looking for `.cs` source — runtime packages do not contain source. Source packages use `.snupkg` and are rarely needed.
+- Do NOT install or invoke ad-hoc tools (`dotnet-script`, `ildasm`, etc.) unless already confirmed present; fetching source is faster and always works.
