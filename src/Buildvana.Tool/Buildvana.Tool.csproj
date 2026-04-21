@@ -5,6 +5,7 @@
     <TargetFramework>$(StandardTfm)</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
+    <PackageId>bv</PackageId>
     <ToolCommandName>bv</ToolCommandName>
     <ClsCompliant>false</ClsCompliant>
   </PropertyGroup>
