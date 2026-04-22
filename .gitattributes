@@ -1,70 +1,23 @@
+# Unset the text attribute on all files.
+# Git will treat all files as non-text when doing line-ending-normalization, disabling it completely.
+# Other text-specific git commands (e.g. diff) are unaffected. **Only line ending normalization is changed.**
+# https://stackoverflow.com/a/64633700
+* -text
 # IMPORTANT: Always keep EOL settings in sync with .editorconfig
 
-# Default settings
-* text=auto
-
-# Solution files
-*.sln text eol=crlf
-
 # Code files
-*.cake text eol=crlf diff=csharp
-*.cs   text eol=crlf diff=csharp
-*.vb   text eol=crlf
-
-# XML project files
-*.csproj          text eol=lf
-*.vbproj          text eol=lf
-*.vcxproj         text eol=lf
-*.vcxproj.filters text eol=lf
-*.proj            text eol=lf
-*.projitems       text eol=lf
-*.shproj          text eol=lf
-*.props           text eol=lf
-*.targets         text eol=lf
-
-# XML config files
-*.ruleset      text eol=lf
-*.config       text eol=lf
-*.nuspec       text eol=lf
-*.resx         text eol=lf
-*.vsixmanifest text eol=lf
-*.vsct         text eol=lf
-*.runsettings  text eol=lf
-
-# Other XML files
-*.xml text eol=lf
-*.svg text eol=lf
-
-# JSON files
-*.json text eol=lf
-
-# YAML files
-*.yml  text eol=lf
-*.yaml text eol=lf
+*.cake diff=csharp
+*.cs   diff=csharp
 
 # Shell scripts
-*.in text eol=lf diff=bash
-*.sh text eol=lf diff=bash
-
-# Windows batch files
-*.bat text eol=crlf
-*.BAT text eol=crlf
-*.cmd text eol=crlf
-*.CMD text eol=crlf
+*.in diff=bash
+*.sh diff=bash
 
 # Markdown files
-*.md text eol=lf diff=markdown
-
-# InnoSetup files
-*.iss text eol=crlf
-
-# Image files
-*.jpg binary
-*.png binary
-*.gif binary
+*.md diff=markdown
 
 # Document files
-*.pdf binary diff=astextplain
-*.PDF binary diff=astextplain
-*.rtf binary diff=astextplain
-*.RTF binary diff=astextplain
+*.pdf diff=astextplain
+*.PDF diff=astextplain
+*.rtf diff=astextplain
+*.RTF diff=astextplain
