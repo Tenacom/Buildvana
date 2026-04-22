@@ -1,20 +1,36 @@
-# ![Buildvana SDK](graphics/Readme.png)
+# ![Buildvana](graphics/Readme.png)
 
-[![License](https://badgen.net/badge/license/MIT/blue)](https://github.com/Tenacom/Buildvana.Sdk/blob/main/LICENSE)
-[![Latest release](https://badgen.net/github/release/Tenacom/Buildvana.Sdk?label=latest)](https://github.com/Tenacom/Buildvana.Sdk/releases)
-[![Latest stable release](https://badgen.net/github/release/Tenacom/Buildvana.Sdk/stable?label=stable)](https://github.com/Tenacom/Buildvana.Sdk/releases)
-[![Changelog](https://badgen.net/badge/changelog/Keep%20a%20Changelog%20v1.1.0/orange)](https://github.com/Tenacom/Buildvana.Sdk/blob/main/CHANGELOG.md)
+Releases:
+[![Latest release](https://badgen.net/github/release/Tenacom/Buildvana?label=latest)](https://github.com/Tenacom/Buildvana/releases)
+[![Latest stable release](https://badgen.net/github/release/Tenacom/Buildvana/stable?label=stable)](https://github.com/Tenacom/Buildvana/releases)
+[![Changelog](https://badgen.net/badge/changelog/Keep%20a%20Changelog%20v1.1.0/orange)](https://github.com/Tenacom/Buildvana/blob/main/CHANGELOG.md)
 
-[![Build, test, and pack](https://github.com/Tenacom/Buildvana.Sdk/actions/workflows/build-test-pack.yml/badge.svg)](https://github.com/Tenacom/Buildvana.Sdk/actions/workflows/build-test-pack.yml)
-[![CodeQL](https://github.com/Tenacom/Buildvana.Sdk/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Tenacom/Buildvana.Sdk/actions/workflows/codeql-analysis.yml)
+CI:
+[![Build, test, and pack](https://github.com/Tenacom/Buildvana/actions/workflows/build-test-pack.yml/badge.svg)](https://github.com/Tenacom/Buildvana/actions/workflows/build-test-pack.yml)
+[![CodeQL](https://github.com/Tenacom/Buildvana/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Tenacom/Buildvana/actions/workflows/codeql-analysis.yml)
 
-![Repobeats analytics image](https://repobeats.axiom.co/api/embed/733fff6e0c96c981b6229b450fdf4df3e1b4e584.svg "Repobeats analytics image")
+Licensing and attributions:
+[![License](https://badgen.net/badge/license/MIT/blue)](https://github.com/Tenacom/Buildvana/blob/main/LICENSE)
+[![Third-party code](https://badgen.net/badge/Third-party/code/blue)](https://github.com/Tenacom/Buildvana/blob/main/THIRD-PARTY-NOTICES.md)
+[![Third-party graphics](https://badgen.net/badge/Third-party/graphics/blue)](https://github.com/Tenacom/Buildvana/blob/main/THIRD-PARTY-GRAPHICS.md)
 
-| Latest packages | NuGet | Feedz.io |
-|-----------------|-------|----------|
-| Buildvana.Sdk | [![Buildvana.Sdk @ NuGet](https://badgen.net/nuget/v/Buildvana.Sdk?icon=nuget&label=)](https://nuget.org/packages/Buildvana.Sdk) | ![Buildvana.Sdk @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/Buildvana.Sdk?label=&color=orange) |
+![Repobeats analytics image](https://repobeats.axiom.co/api/embed/c3576e175ee43b5bb104c6b93b8286e81383c7e3.svg "Repobeats analytics image")
 
-**You can get preview packages of Buildvana SDK from our preview feed on [Feedz.io](https://feedz.io). The NuGet v3 URL is `https://f.feedz.io/tenacom/preview/nuget/index.json`.**
+| Latest packages | NuGet                                                                                                                            | Feedz.io                                                                                                      |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Buildvana.Sdk` | [![Buildvana.Sdk @ NuGet](https://badgen.net/nuget/v/Buildvana.Sdk?icon=nuget&label=)](https://nuget.org/packages/Buildvana.Sdk) | ![Buildvana.Sdk @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/Buildvana.Sdk?label=&color=orange) |
+| `bv`            | [![bv @ NuGet](https://badgen.net/nuget/v/bv?icon=nuget&label=)](https://nuget.org/packages/bv)                                  | ![bv @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/bv?label=&color=orange)                       |
+
+**You can get preview versions of Buildvana packages from our preview feed on [Feedz.io](https://feedz.io). The NuGet v3 URL is `https://f.feedz.io/tenacom/preview/nuget/index.json`.**
+
+---
+
+> [!IMPORTANT]
+> This project is undergoing _massive_ maintenance at the moment.
+> The documentation below only refers to Buildvana SDK and will eventually be moved to its own file.
+> A decent README for the whole project is in the works.
+>
+> _- @rdeago 2026-04-22_
 
 ---
 
@@ -36,8 +52,8 @@
 
 Buildvana SDK is an opinionated, best-practices-based, CI-friendly, VS-friendly, MSBuild-powered build system for .NET projects.
 
-> **DISCLAIMER:** Buildvana SDK is still a work in progress.  
-Your mileage may vary, if you break your build you own both pieces, and so on and so forth.  
+> **DISCLAIMER:** Buildvana SDK is still a work in progress.
+Your mileage may vary, if you break your build you own both pieces, and so on and so forth.
 However, Buildvana SDK has already been used successfully in production, for both business and open source projects.
 
 ### Benefits
@@ -79,9 +95,9 @@ However, Buildvana SDK has already been used successfully in production, for bot
 
 #### Toolchain
 
-- :heart: MSBuild v17.9 or newer (`msbuild`) running under .NET Framework 4.7.2 or newer / .NET 8.0 or newer
-- :heart: Visual Studio 2022 v17.9 or newer (building from IDE)
-- :heart: .NET SDK 8.0.200 or newer (`dotnet build`, `dotnet msbuild`, etc.)
+- :heart: MSBuild v17.4 or newer (`msbuild`) running under .NET Framework 4.8 or newer / .NET 10.0 or newer
+- :heart: Visual Studio 2026 v18.4 or newer (building from IDE)
+- :heart: .NET SDK 10.0.202 or newer (`dotnet build`, `dotnet msbuild`, etc.)
 - :question: JetBrains Rider (not tested)
 
 ## Quick start
