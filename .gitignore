@@ -4,9 +4,6 @@ artifacts/
 # Local build logs
 logs/
 
-# Cake build
-tools/
-
 # Testing
 **/TestResults/
 
