@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
+- No more Cake build scripts:  Buildvana now has its own global CLI tool, `bv`. More info and documentation incoming.
+
 ### Changes to existing features
 
-- The minimum supported version of Roslyn is now 4.14
-- The minimum supported version of Visual Studio is now VS2022 17.14
-- The minimum supported version of the .NET SDK is now 8.0.403
+- The minimum supported version of the .NET SDK is now 10.0.202
+- The minimum supported version of Roslyn is now 5.3
+- The minimum supported version of Visual Studio is now VS2026 18.4
+- Compiled tasks are now built for .NET 10 and [used out-of-process](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/sdk#use-net-msbuild-tasks-with-net-framework-msbuild) when MSBuild runs on .NET Framework.
 
 ### Bugs fixed in this release
 
