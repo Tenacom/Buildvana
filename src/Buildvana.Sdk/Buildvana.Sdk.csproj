@@ -10,7 +10,7 @@
 
     <!-- Common properties -->
     <Title>Buildvana SDK</Title>
-    <Summary>An opinionated, best-practices-based, CI- / CLI- / VS-friendly, MSBuild-powered build system for .NET projects.</Summary>
+    <Summary>An opinionated, best-practices-based, CI- / CLI- / VS- / VS Code-friendly, MSBuild-powered build system for .NET projects.</Summary>
     <Description>$(Summary)</Description>
 
     <!-- NuGet package configuration -->

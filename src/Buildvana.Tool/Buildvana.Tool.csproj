@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Summary>A .NET global CLI tool that helps implement better development workflows, both locally and in CI.</Summary>
+    <Description>$(Summary)</Description>
     <OutputType>Exe</OutputType>
     <TargetFramework>$(StandardTfm)</TargetFramework>
     <IsPackable>true</IsPackable>
