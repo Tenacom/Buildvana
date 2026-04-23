@@ -103,7 +103,7 @@ public static class CommandLineParser
 
     private static List<(string Name, string Description, HelpInfo HelpInfo)> GetTasks()
         => [.. typeof(BuildContext).Assembly.GetTypes()
-            .Where(type => type.IsSubclassOf(typeof(FrostingTask<BuildContext>)) && !type.IsAbstract)
+            .Where(type => (type.IsSubclassOf(typeof(FrostingTask<BuildContext>)) || type.IsSubclassOf(typeof(AsyncFrostingTask<BuildContext>))) && !type.IsAbstract)
             .Select(type => (
                 Name: type.GetCustomAttribute<TaskNameAttribute>()?.Name ?? string.Empty,
                 Description: type.GetCustomAttribute<TaskDescriptionAttribute>()?.Description ?? string.Empty,
