@@ -16,6 +16,9 @@ jobs:
       DOTNET_CLI_UI_LANGUAGE: 'en-US'
       FEEDZ_IO_PRIVATE_TOKEN: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
     steps:
+    - name: Set bogus local NuGet package directory
+      shell: cmd
+      run: echo NUGET_LOCAL_PACKAGES=%RUNNER_TEMP% >> %GITHUB_ENV%
     - name: Checkout repository with full history
       uses: actions/checkout@v5
       with:
