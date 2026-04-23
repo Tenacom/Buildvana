@@ -52,5 +52,5 @@ public static class KnownOptions
 
     public static readonly BoolOption Push = new(
         "--push",
-        "When specified, the task actually perform push to GitHub and nuget.org");
+        "When specified, the task actually pushes to GitHub and nuget.org");
 }
