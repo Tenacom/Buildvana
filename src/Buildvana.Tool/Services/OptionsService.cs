@@ -93,7 +93,7 @@ public sealed partial class OptionsService
     [GeneratedRegex(@"([A-Z]+)([A-Z][a-z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex GetUnderscoreCasingRegex1();
 
-    [GeneratedRegex(@"([a-z][0-9])([A-Z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    [GeneratedRegex("([a-z0-9])([A-Z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex GetUnderscoreCasingRegex2();
 
     [GeneratedRegex(@"[-\s]", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
