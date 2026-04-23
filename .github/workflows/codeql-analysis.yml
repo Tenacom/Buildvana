@@ -2,9 +2,9 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ main, 'v[0-9]+.[0-9]+' ]
+    branches: [ main, develop, hotfix/*, dev/*, 'v[0-9]+.[0-9]+' ]
   pull_request:
-    branches: [ main, 'v[0-9]+.[0-9]+' ]
+    branches: [ main, develop, hotfix/*, dev/*, 'v[0-9]+.[0-9]+' ]
   schedule:
     - cron: '38 16 * * 6' # At 4:38PM, every Saturday
 
