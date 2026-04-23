@@ -182,9 +182,6 @@ public sealed partial class ChangelogService
 
                         writer.WriteLine(line);
                         break;
-                    default:
-                        _context.Fail($"Internal error: reading state corrupted ({state}).");
-                        throw null;
                 }
             }
 
@@ -294,9 +291,6 @@ public sealed partial class ChangelogService
 
                         writer.WriteLine(line);
                         break;
-                    default:
-                        _context.Fail($"Internal error: reading state corrupted ({state}).");
-                        throw null;
                 }
             }
         }
@@ -304,10 +298,10 @@ public sealed partial class ChangelogService
         SysFile.WriteAllText(FullPath, sb.ToString(), encoding);
     }
 
-    [GeneratedRegex(@"^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex GetSectionHeadingRegex();
 
-    [GeneratedRegex(@"^ {0,3}###($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^ {0,3}###($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex GetSubsectionHeadingRegex();
 
     private string MakeSectionTitle()

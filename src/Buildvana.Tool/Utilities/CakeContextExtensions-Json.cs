@@ -138,7 +138,7 @@ partial class CakeContextExtensions
                 return @this.Fail<T>($"Json property {propertyName} in {objectDescription} is null.");
             case JsonValue value:
                 @this.Ensure(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
-                return result ?? @this.Fail<T>($"Json property {propertyName} in {objectDescription} has a null value.");
+                return result;
             default:
                 return @this.Fail<T>($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
         }

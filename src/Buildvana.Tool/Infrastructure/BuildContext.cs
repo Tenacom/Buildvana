@@ -24,7 +24,7 @@ public sealed class BuildContext : FrostingContext
     {
         Guard.IsNotNull(context);
         _services = new ServiceCollection()
-            .AddSingleton<ICakeContext>(context)
+            .AddSingleton(context)
             .AddSingleton<GitService>()
             .AddSingleton<PublicApiFilesService>()
             .AddSingleton(ServerAdapter.Create)

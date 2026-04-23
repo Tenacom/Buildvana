@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using CommunityToolkit.Diagnostics;
-using Microsoft.CodeAnalysis.Options;
 
 namespace Buildvana.Tool.Infrastructure.Options;
 

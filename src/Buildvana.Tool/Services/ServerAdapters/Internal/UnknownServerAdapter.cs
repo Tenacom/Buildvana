@@ -13,7 +13,7 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal;
 /// <summary>
 /// <para>Implements a dummy Continuous Integration adapter for unknown system / local build.</para>
 /// <para>All property and methods of this class will fail the build when called,
-/// except for <<see cref="IsCloudBuild"/>, which will always return <see langword="false"/>.</para>
+/// except for <see cref="IsCloudBuild"/>, which will always return <see langword="false"/>.</para>
 /// </summary>
 internal sealed class UnknownServerAdapter : ServerAdapter
 {

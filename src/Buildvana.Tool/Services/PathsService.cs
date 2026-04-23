@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using Cake.Core;
 using Cake.Core.IO;
 
 namespace Buildvana.Tool.Services;
@@ -14,7 +13,7 @@ public sealed class PathsService
     /// <summary>
     /// Initializes a new instance of the <see cref="PathsService"/> class.
     /// </summary>
-    public PathsService(ICakeContext context)
+    public PathsService()
     {
         AllArtifacts = new DirectoryPath("artifacts");
         TestResults = new DirectoryPath("TestResults");

@@ -19,11 +19,9 @@ namespace Buildvana.Tool.Services;
 /// </summary>
 public sealed class DocFxService
 {
-    private readonly ICakeContext _context;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
     private readonly PathsService _paths;
-    private readonly DotNetService _dotnet;
     private readonly FilePath _configPath;
 
     private bool _initialized;
@@ -35,31 +33,26 @@ public sealed class DocFxService
     /// <param name="server">The server adapter.</param>
     /// <param name="version">The version management service.</param>
     /// <param name="paths">The service providing path information.</param>
-    /// <param name="dotnet">The service providing access to the .NET CLI.</param>
     public DocFxService(
         ICakeContext context,
         ServerAdapter server,
         VersionService version,
-        PathsService paths,
-        DotNetService dotnet)
+        PathsService paths)
     {
         Guard.IsNotNull(context);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         Guard.IsNotNull(paths);
-        Guard.IsNotNull(dotnet);
 
-        _context = context;
         _server = server;
         _version = version;
         _paths = paths;
-        _dotnet = dotnet;
 
         _configPath = _paths.Docs.CombineWithFilePath("docfx.json");
         IsEnabled = SysFile.Exists(_configPath.FullPath);
         if (!IsEnabled)
         {
-            _context.Information($"{_configPath} not found: DocFX operations will be skipped.");
+            context.Information($"{_configPath} not found: DocFX operations will be skipped.");
         }
     }
 

@@ -43,7 +43,7 @@ public sealed class VersionFile
     /// Gets the unstable tag to use for version advances.
     /// </summary>
     /// <value>Either the "release.firstUnstableTag" value read from version.json, or "preview" as a default value.</value>
-    public string FirstUnstableTag { get; private init; }
+    public string FirstUnstableTag { get; }
 
     /// <summary>
     /// Constructs a <see cref="VersionFile"/> instance by loading the repository's <c>version.json</c> file.

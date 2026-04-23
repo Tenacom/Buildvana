@@ -77,7 +77,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         Guard.IsNotNull(services);
         var context = services.GetRequiredService<ICakeContext>();
-        return context.EnvironmentVariable<bool>("GITHUB_ACTIONS", false)
+        return context.EnvironmentVariable("GITHUB_ACTIONS", false)
             ? new GitHubServerAdapter(services)
             : null;
     }
@@ -125,7 +125,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
                 // Create the release as a draft first, so if the token has no permissions we can bail out early
                 var tag = _version.CurrentStr;
                 var client = CreateGitHubClient();
-                _context.Information($"Creating a provisional draft release...");
+                _context.Information("Creating a provisional draft release...");
                 var newRelease = new NewRelease(tag)
                 {
                     Name = $"{tag} [provisional]",
@@ -191,7 +191,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         {
             _ = await client.Git.Reference.Get(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
         }
-        catch (Octokit.NotFoundException)
+        catch (NotFoundException)
         {
             _context.Information($"Reference '{reference}' not found in GitHub repository.");
             return;
@@ -223,7 +223,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
             .AppendHeader("Authorization", "Token " + _token)
             .AppendHeader("User-Agent", "Buildvana (Win32NT 10.0.19044; amd64; en-US)")
             .SetJsonRequestBody(requestBody)
-            .EnsureSuccessStatusCode(true);
+            .EnsureSuccessStatusCode();
 
         var postUrl = $"https://api.github.com/repos/{RepositoryOwner}/{RepositoryName}/actions/workflows/{filename}/dispatches";
         _ = await _context.HttpPostAsync(postUrl, httpSettings).ConfigureAwait(false);
