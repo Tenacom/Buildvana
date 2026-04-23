@@ -77,7 +77,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         Guard.IsNotNull(services);
         var context = services.GetRequiredService<ICakeContext>();
-        return context.EnvironmentVariable<bool>("GITUHB_ACTIONS", false)
+        return context.EnvironmentVariable<bool>("GITHUB_ACTIONS", false)
             ? new GitHubServerAdapter(services)
             : null;
     }
