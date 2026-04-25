@@ -129,7 +129,8 @@ public sealed class GitService : IDisposable
         var pathsInRepo = paths.Select(path =>
         {
             Guard.IsTrue(path is not null, nameof(paths), "One or more paths are null.");
-            var pathInRepo = _context.Environment.WorkingDirectory.GetRelativePath(path);
+            var absolutePath = path.MakeAbsolute(_context.Environment);
+            var pathInRepo = _context.Environment.WorkingDirectory.GetRelativePath(absolutePath);
             if (!pathInRepo.IsRelative || pathInRepo.Segments[0] == "..")
             {
                 _context.Fail($"Git: cannot stage '{path}' because it is not in the repository.");
