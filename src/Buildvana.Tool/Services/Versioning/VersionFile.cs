@@ -23,7 +23,7 @@ public sealed class VersionFile
     private VersionFile(ICakeContext context, FilePath path, JsonNode json, VersionSpec versionSpec, string firstUnstableTag)
     {
         _context = context;
-        Path = path;
+        Path = path.MakeAbsolute(_context.Environment);
         _json = json;
         VersionSpec = versionSpec;
         FirstUnstableTag = firstUnstableTag;
