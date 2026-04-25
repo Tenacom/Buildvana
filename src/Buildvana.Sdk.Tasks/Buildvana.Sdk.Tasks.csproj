@@ -10,7 +10,7 @@
     <Title>Buildvana SDK tasks</Title>
     <Description>This assembly contains compiled tasks used by Buildvana SDK. Documentation for the SDK is available here: https://github.com/Tenacom/Buildvana.Sdk/blob/main/README.md</Description>
     <RootNamespace>Buildvana.Sdk</RootNamespace>
-    <TargetFrameworks>$(StandardTfm)</TargetFrameworks>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
