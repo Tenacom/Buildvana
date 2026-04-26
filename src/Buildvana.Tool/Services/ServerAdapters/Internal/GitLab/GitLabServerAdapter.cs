@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Utilities;
 using Cake.Common;
 using Cake.Core;
@@ -22,6 +23,7 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     internal GitLabServerAdapter(IServiceProvider services)
     {
         _context = services.GetRequiredService<ICakeContext>();
+        CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{_context.EnvironmentVariable("CI_SERVER_HOST")}");
     }
 
     /// <inheritdoc/>
@@ -42,6 +44,9 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     /// <inheritdoc/>
     /// <value>Always <see langword="true"/>.</value>
     public override bool IsCloudBuild => true;
+
+    /// <inheritdoc/>
+    public override GitIdentity? CIBotIdentity { get; }
 
     /// <summary>
     /// Creates and returns an instance of <see cref="GitLabServerAdapter"/> if the build is running in a GitLab CI runner.

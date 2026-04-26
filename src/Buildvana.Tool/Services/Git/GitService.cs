@@ -62,6 +62,26 @@ public sealed class GitService : IDisposable
     /// <value>If HEAD is on a branch, the name of the branch; otherwise, the empty string.</value>
     public string CurrentBranch { get; }
 
+    /// <summary>
+    /// Gets or sets the identity of the Git committer.
+    /// </summary>
+    [DisallowNull]
+    public GitIdentity? CommitterIdentity
+    {
+        get
+        {
+            var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
+            return signature is null ? null : new(signature.Name, signature.Email);
+        }
+        set
+        {
+            Guard.IsNotNull(value);
+
+            _repository.Config.Set("user.name", value.Name);
+            _repository.Config.Set("user.email", value.Email);
+        }
+    }
+
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose() => _repository.Dispose();
 
@@ -151,7 +171,7 @@ public sealed class GitService : IDisposable
     public void Commit(string message, bool amend = false)
     {
         var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
-        _context.Ensure(signature is not null, "Git: cannot obtain author identity from configuration.");
+        _context.Ensure(signature is not null, "Git: committer identity not set.");
         var options = new CommitOptions() { AmendPreviousCommit = amend };
         _ = _repository.Commit(message, signature, signature, options);
     }

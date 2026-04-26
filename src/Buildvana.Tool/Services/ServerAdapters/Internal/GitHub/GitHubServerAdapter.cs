@@ -67,6 +67,9 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <value>Always <see langword="false"/>.</value>
     public override bool IsCloudBuild => true;
 
+    /// <inheritdoc/>
+    public override GitIdentity? CIBotIdentity { get; } = new("github-actions[bot]", "41898282+github-actions[bot]@users.noreply.github.com");
+
     /// <summary>
     /// Creates and returns an instance of <see cref="GitHubServerAdapter"/> if the build is running in a GitHub Actions runner.
     /// </summary>

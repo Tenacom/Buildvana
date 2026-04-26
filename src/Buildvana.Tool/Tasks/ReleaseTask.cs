@@ -46,6 +46,9 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
         context.Ensure(!string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
         context.Ensure(version.IsPublicRelease, "Cannot create a release from the current branch.");
 
+        // Ensure that the CI bot identity is used for commits, if not already set.
+        git.CommitterIdentity ??= server.CIBotIdentity ?? context.Fail<GitIdentity>("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
+
         // Perform an initial versioning consistency check.
         // This is a tad more relaxed than the final check, as it takes into account that we may still increment the current version
         // (for example by updating the changelog).

@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Utilities;
 using Cake.Core;
 using Cake.Core.IO;
@@ -50,6 +51,12 @@ internal sealed class UnknownServerAdapter : ServerAdapter
     /// This property is not supported on this adapter and will always throw.
     /// </summary>
     public override Uri RepositoryUrl => _context.FailOnUnsupportedProperty<Uri>();
+
+    /// <inheritdoc/>
+    /// <summary>
+    /// This property is not supported on this adapter and will always throw.
+    /// </summary>
+    public override GitIdentity CIBotIdentity => _context.FailOnUnsupportedProperty<GitIdentity>();
 
     /// <inheritdoc/>
     /// <value>Always <see langword="false"/>.</value>

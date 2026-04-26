@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.ServerAdapters.Internal;
 using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 using Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
@@ -51,6 +52,14 @@ public abstract class ServerAdapter
     /// <value>If the build is taking place on a Continuous Integration server, <see langword="true"/>;
     /// otherwise (i.e. if it is a local build), <see langword="false"/>.</value>
     public abstract bool IsCloudBuild { get; }
+
+    /// <summary>
+    /// Gets the identity of the bot user, if any, used for CI operations such as release creation.
+    /// </summary> <remarks>
+    /// <para>Depending on the specific build platform, this property may return <see langword="null"/>
+    /// if the platform does not have a specific bot user for CI operations, or if the bot user is not identifiable.</para>
+    /// </remarks>
+    public abstract GitIdentity? CIBotIdentity { get; }
 
     /// <summary>
     /// Creates and returns an instance of <see cref="ServerAdapter"/>
