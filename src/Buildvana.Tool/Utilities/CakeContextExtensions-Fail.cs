@@ -126,7 +126,7 @@ partial class CakeContextExtensions
     /// <para>This method does not return.</para>
     /// </summary>
     /// <param name="this">The Cake context.</param>
-    /// <param name="methodName">The name of the unsupported property. This parameter defaults to the name of the calling property (or method).</param>
+    /// <param name="propertyName">The name of the unsupported property. This parameter defaults to the name of the calling property (or method).</param>
     /// <returns>This method never returns.</returns>
     [DoesNotReturn]
     public static void FailOnUnsupportedProperty(this ICakeContext @this, [CallerMemberName] string propertyName = "", [CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
@@ -138,7 +138,7 @@ partial class CakeContextExtensions
     /// </summary>
     /// <typeparam name="T">The expected return type.</typeparam>
     /// <param name="this">The Cake context.</param>
-    /// <param name="methodName">The name of the unsupported property. This parameter defaults to the name of the calling property (or method).</param>
+    /// <param name="propertyName">The name of the unsupported property. This parameter defaults to the name of the calling property (or method).</param>
     /// <returns>This method never returns.</returns>
     [DoesNotReturn]
     public static T FailOnUnsupportedProperty<T>(this ICakeContext @this, [CallerMemberName] string propertyName = "", [CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
