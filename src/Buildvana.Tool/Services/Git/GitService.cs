@@ -82,6 +82,16 @@ public sealed class GitService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets or sets the credentials used for pushing to the Git repository if ambient credentials are not sufficient.
+    /// </summary>
+    /// <remarks>
+    /// <para>Set this property when ambient mechanisms (`http.extraheader` written by CI checkout actions, URL-embedded credentials, OS credential helpers)
+    /// are absent or insufficient.</para>
+    /// <para>The provided credentials are tried only after the server returns a 401 challenge to the initial push request.</para>
+    /// </remarks>
+    public GitCredentials? PushCredentialsFallback { get; set; }
+
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose() => _repository.Dispose();
 
@@ -200,6 +210,13 @@ public sealed class GitService : IDisposable
         var head = _repository.Head;
         var remote = head.RemoteName;
         _context.Ensure(!string.IsNullOrEmpty(remote), "Git: cannot push, HEAD is not tracking any remote.");
+        var pushOptions = new PushOptions();
+        var pushCredentialsFallback = PushCredentialsFallback;
+        if (pushCredentialsFallback is not null)
+        {
+            pushOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials { Username = pushCredentialsFallback.Username, Password = pushCredentialsFallback.Password };
+        }
+
         if (force)
         {
             // https://stackoverflow.com/a/47295101/5753412
@@ -207,12 +224,12 @@ public sealed class GitService : IDisposable
             // https://github.com/libgit2/libgit2sharp/issues/104#issuecomment-1553347893
             _context.Information($"Git: force pushing changes to '{remote}'...");
             var pushRefSpec = string.Format(CultureInfo.InvariantCulture, "+{0}:{0}", _repository.Head.CanonicalName);
-            _repository.Network.Push(_repository.Network.Remotes[remote], pushRefSpec);
+            _repository.Network.Push(_repository.Network.Remotes[remote], pushRefSpec, pushOptions);
         }
         else
         {
             _context.Information($"Git: pushing changes to '{remote}'...");
-            _repository.Network.Push(head);
+            _repository.Network.Push(head, pushOptions);
         }
     }
 

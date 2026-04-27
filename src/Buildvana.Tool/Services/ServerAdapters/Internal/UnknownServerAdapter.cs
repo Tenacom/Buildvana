@@ -59,6 +59,12 @@ internal sealed class UnknownServerAdapter : ServerAdapter
     public override GitIdentity CIBotIdentity => _context.FailOnUnsupportedProperty<GitIdentity>();
 
     /// <inheritdoc/>
+    public override string? PushUsername => null;
+
+    /// <inheritdoc/>
+    public override string? PushPassword => null;
+
+    /// <inheritdoc/>
     /// <value>Always <see langword="false"/>.</value>
     public override bool IsCloudBuild => false;
 

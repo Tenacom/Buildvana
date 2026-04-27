@@ -62,6 +62,16 @@ public abstract class ServerAdapter
     public abstract GitIdentity? CIBotIdentity { get; }
 
     /// <summary>
+    /// Gets the username used for pushing to the remote repository.
+    /// </summary>
+    public abstract string? PushUsername { get; }
+
+    /// <summary>
+    /// Gets the password used for pushing to the remote repository.
+    /// </summary>
+    public abstract string? PushPassword { get; }
+
+    /// <summary>
     /// Creates and returns an instance of <see cref="ServerAdapter"/>
     /// suitable for the repository.
     /// </summary>

@@ -48,6 +48,12 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     /// <inheritdoc/>
     public override GitIdentity? CIBotIdentity { get; }
 
+    /// <inheritdoc/>
+    public override string? PushUsername => "oauth2";
+
+    /// <inheritdoc/>
+    public override string? PushPassword => null;
+
     /// <summary>
     /// Creates and returns an instance of <see cref="GitLabServerAdapter"/> if the build is running in a GitLab CI runner.
     /// </summary>

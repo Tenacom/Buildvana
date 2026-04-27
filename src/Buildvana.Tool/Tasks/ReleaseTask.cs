@@ -48,6 +48,20 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
 
         // Ensure that the CI bot identity is used for commits, if not already set.
         git.CommitterIdentity ??= server.CIBotIdentity ?? context.Fail<GitIdentity>("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
+        context.Information($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
+
+        // Set fallback Git credentials if the server adapter can provide them.
+        var pushUsername = server.PushUsername;
+        var pushPassword = server.PushPassword;
+        if (pushUsername is not null && pushPassword is not null)
+        {
+            context.Information($"Fallback push credentials provided by the server adapter (protocol username: '{pushUsername}').");
+            git.PushCredentialsFallback = new(pushUsername, pushPassword);
+        }
+        else
+        {
+            context.Warning("No push credentials provided by the server adapter. Push operations may fail if the repository is not already authenticated.");
+        }
 
         // Perform an initial versioning consistency check.
         // This is a tad more relaxed than the final check, as it takes into account that we may still increment the current version

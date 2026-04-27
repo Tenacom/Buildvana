@@ -70,6 +70,12 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <inheritdoc/>
     public override GitIdentity? CIBotIdentity { get; } = new("github-actions[bot]", "41898282+github-actions[bot]@users.noreply.github.com");
 
+    /// <inheritdoc/>
+    public override string PushUsername => "x-access-token";
+
+    /// <inheritdoc/>
+    public override string PushPassword => _token;
+
     /// <summary>
     /// Creates and returns an instance of <see cref="GitHubServerAdapter"/> if the build is running in a GitHub Actions runner.
     /// </summary>
