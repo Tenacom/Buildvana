@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
+### Changes to existing features
+
+### Bugs fixed in this release
+
+### Known problems introduced by this release
+
+## [1.0.220](https://github.com/Tenacom/Buildvanareleases/tag/1.0.220) (2026-04-27)
+
+### New features
+
 - No more Cake build scripts:  Buildvana now has its own global CLI tool, `bv`. More info and documentation incoming.
 
 ### Changes to existing features
@@ -21,8 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bugs fixed in this release
 
 - Additional assembly info generation failed on Visual Basic projects, because the source generator depended on `Microsoft.CodeAnalysis.CSharp`. It now depends on `Microsoft.CodeAnalysis.Common` instead, which is available in all Roslyn compilations.
-
-### Known problems introduced by this release
 
 ## [1.0.154-preview](https://github.com/Tenacom/Buildvana.Sdk/releases/tag/1.0.154-preview) (2024-04-20)
 
