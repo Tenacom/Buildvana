@@ -15,16 +15,15 @@ namespace Buildvana.Tool.Services.Versioning;
 public sealed class VersionFile
 {
     private const string VersionJsonPath = "version.json";
+    private const string VersionPropertyName = "version";
     private const string DefaultFirstUnstableTag = "preview";
 
     private readonly ICakeContext _context;
-    private readonly JsonNode _json;
 
-    private VersionFile(ICakeContext context, FilePath path, JsonNode json, VersionSpec versionSpec, string firstUnstableTag)
+    private VersionFile(ICakeContext context, FilePath path, VersionSpec versionSpec, string firstUnstableTag)
     {
         _context = context;
         Path = path.MakeAbsolute(_context.Environment);
-        _json = json;
         VersionSpec = versionSpec;
         FirstUnstableTag = firstUnstableTag;
     }
@@ -56,7 +55,7 @@ public sealed class VersionFile
 
         var path = new FilePath(VersionJsonPath);
         var json = context.LoadJsonObject(path);
-        var versionStr = context.GetJsonPropertyValue<string>(json, "version", path + " file");
+        var versionStr = context.GetJsonPropertyValue<string>(json, VersionPropertyName, path + " file");
         context.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
         var firstUnstableTag = DefaultFirstUnstableTag;
         var release = json["release"];
@@ -69,7 +68,7 @@ public sealed class VersionFile
             }
         }
 
-        return new(context, path, json, versionSpec, firstUnstableTag);
+        return new(context, path, versionSpec, firstUnstableTag);
     }
 
     /// <summary>
@@ -93,7 +92,9 @@ public sealed class VersionFile
     /// </summary>
     public void Save()
     {
-        _json["version"] = JsonValue.Create(VersionSpec.ToString());
-        _context.SaveJson(_json, Path);
+        var newVersion = VersionSpec.ToString();
+        _ = _context.RewriteJsonStringValues(
+            Path,
+            (propertyPath, _) => propertyPath.Count == 1 && propertyPath[0] == VersionPropertyName ? newVersion : null);
     }
 }
