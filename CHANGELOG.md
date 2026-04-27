@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 MD034 -->
+
 # Changelog
 
 All notable changes to Buildvana SDK will be documented in this file.
