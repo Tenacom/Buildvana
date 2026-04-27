@@ -195,7 +195,18 @@ public sealed class SelfReferenceUpdater
     private bool UpdateMsBuildXml(FilePath path, Dictionary<string, string> produced, string[] tagNames)
     {
         var fullPath = path.FullPath;
-        var original = SysFile.ReadAllText(fullPath);
+
+        // Read while detecting the file's encoding from any BOM, and remember it so the rewrite
+        // preserves the original encoding exactly. The fallback when no BOM is present is UTF-8
+        // without BOM; using the static Encoding.UTF8 as fallback (which has emitBOM=true) would
+        // silently add a BOM on rewrite to files that did not have one.
+        string original;
+        Encoding encoding;
+        using (var reader = new System.IO.StreamReader(fullPath, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
+        {
+            original = reader.ReadToEnd();
+            encoding = reader.CurrentEncoding;
+        }
 
         // Build a regex alternation from the supplied tag names.
         // The two patterns are mutually exclusive: each matching start tag has Include and Version
@@ -217,10 +228,7 @@ public sealed class SelfReferenceUpdater
             return false;
         }
 
-        // Match ChangelogService's convention: UTF-8 without BOM, throwing on invalid bytes.
-        // File.WriteAllText without an explicit encoding would default to UTF-8-no-BOM as well,
-        // but stating it makes the choice intentional and keeps the rewrite stable across runs.
-        SysFile.WriteAllText(fullPath, current, new UTF8Encoding(false, true));
+        SysFile.WriteAllText(fullPath, current, encoding);
         return true;
     }
 
