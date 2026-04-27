@@ -244,6 +244,12 @@ partial class CakeContextExtensions
 
         var edits = new List<JsonValueEdit>();
         var pathSegments = new List<string>();
+
+        // Parallel stack: one entry per open container, true iff that container's start consumed
+        // a property name (i.e. pushed onto pathSegments). Without this, EndObject/EndArray would
+        // pop a segment for *every* close — including containers that are array elements, which
+        // never push — corrupting the path for siblings that follow.
+        var containerPushedSegment = new Stack<bool>();
         string? pendingProperty = null;
         while (reader.Read())
         {
@@ -258,14 +264,19 @@ partial class CakeContextExtensions
                     if (pendingProperty is not null)
                     {
                         pathSegments.Add(pendingProperty);
+                        containerPushedSegment.Push(true);
                         pendingProperty = null;
+                    }
+                    else
+                    {
+                        containerPushedSegment.Push(false);
                     }
 
                     break;
 
                 case JsonTokenType.EndObject:
                 case JsonTokenType.EndArray:
-                    if (pathSegments.Count > 0)
+                    if (containerPushedSegment.Pop())
                     {
                         pathSegments.RemoveAt(pathSegments.Count - 1);
                     }

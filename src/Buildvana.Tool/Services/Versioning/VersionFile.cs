@@ -93,8 +93,13 @@ public sealed class VersionFile
     public void Save()
     {
         var newVersion = VersionSpec.ToString();
-        _ = _context.RewriteJsonStringValues(
+        var rewritten = _context.RewriteJsonStringValues(
             Path,
             (propertyPath, _) => propertyPath.Count == 1 && propertyPath[0] == VersionPropertyName ? newVersion : null);
+
+        // Load already validated that a top-level string "version" property exists, so a no-op here
+        // means either the on-disk file changed underneath us or VersionSpec.ToString() produced the
+        // same string the file already held — both cases would let the release flow stage stale data.
+        _context.Ensure(rewritten, $"Could not update {VersionJsonPath}: expected a top-level string '{VersionPropertyName}' property to rewrite.");
     }
 }
