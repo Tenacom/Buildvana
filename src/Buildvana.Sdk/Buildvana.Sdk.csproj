@@ -37,15 +37,6 @@
 
   </PropertyGroup>
 
-  <!-- Repository and documentation -->
-
-  <PropertyGroup>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/Buildvana/Buildvana.Sdk</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/Buildvana/Buildvana</PackageProjectUrl>
-    <PackageReleaseNotes>Release notes are available at https://github.com/Buildvana/Buildvana.Sdk/blob/main/CHANGELOG.md</PackageReleaseNotes>
-  </PropertyGroup>
-
   <!-- Package contents -->
 
   <PropertyGroup>

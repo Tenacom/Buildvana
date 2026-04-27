@@ -8,10 +8,11 @@
     <Company>Tenacom</Company>
     <Copyright>Copyright (c) $(Authors)</Copyright>
     <Trademark />
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Tenacom/Buildvana</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageProjectUrl>https://github.com/Tenacom/Buildvana.Sdk</PackageProjectUrl>
-    <PackageReleaseNotes>See $(PackageProjectUrl)/blob/main/CHANGELOG.md</PackageReleaseNotes>
-    <RepositoryUrl>https://github.com/Tenacom/Buildvana.Sdk</RepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <PackageReleaseNotes>Release notes are available at $(RepositoryUrl)/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <IconInPackage>true</IconInPackage>
     <ReadmeFileInPackage>true</ReadmeFileInPackage>
     <LicenseFileInPackage>true</LicenseFileInPackage>

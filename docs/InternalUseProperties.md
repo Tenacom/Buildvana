@@ -13,7 +13,7 @@ Buildvana SDK introduces some properties only meant for use by the SDK itself. T
 
 **These properties are not meant for use outside of the SDK.** Any change in their names, contents, and/or semantics, as well as the addition and/or removal of internal-use properties, _will not be considered a breaking change_.
 
-If you find yourself referring to or modifying any of these properties in your own projects, please [open an issue](https://github.com/Buildvana/Buildvana.Sdk/issues/new/choose). Chances are we need to either change one or more properties to well-known properties, or otherwise fix what is probably a bug.
+If you find yourself referring to or modifying any of these properties in your own projects, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). Chances are we need to either change one or more properties to well-known properties, or otherwise fix what is probably a bug.
 
 > **NOTE:** Not all `BV_`-prefixed properties are documented here, as most of them are use internally by single SDK modules.
 

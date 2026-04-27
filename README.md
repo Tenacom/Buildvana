@@ -137,7 +137,7 @@ _Of course_ we accept contributions! :smiley: Just take a look at our [Code of C
 
 ## Proudly built using Buildvana SDK
 
-- [PolyKit](https://github.com/Buildvana/PolyKit) is the last polyfill library you'll ever need for your C# projects.
+- [PolyKit](https://github.com/Tenacom/PolyKit) is the last polyfill library you'll ever need for your C# projects.
 - [L.o.U.I.S.](https://github.com/Tenacom/Louis) is a general-purpose library, providing commonly-used types, suitable for multi-platform libraries and applications.
 - [Cecil.XmlDocNames](https://github.com/Tenacom/Cecil.XmlDocNames) is a tiny library that generates XML-documentation-compliant names for [Mono.Cecil](https://github.com/jbevain/cecil) objects.
 - [ReSharper.ExportAnnotations](https://github.com/Tenacom/ReSharper.ExportAnnotations) lets you distribute ReSharper code annotations in XML format along with your libraries, without keeping a transient dependency on the [JetBrains.Annotations](https://www.nuget.org/packages/JetBrains.Annotations) package.
