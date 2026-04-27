@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes to existing features
 
-- Repository links have been fixed: all references to READMEs, chagngelog, and the repository itself should now bear no trace of the old `Buildvana` organization and `Buildvana.Sdk` repository.
+- Repository links have been fixed: all references to READMEs, changelog, and the repository itself should now bear no trace of the old `Buildvana` organization and `Buildvana.Sdk` repository.
 
 ### Bugs fixed in this release
 
