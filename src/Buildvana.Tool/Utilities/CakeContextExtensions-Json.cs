@@ -288,22 +288,8 @@ partial class CakeContextExtensions
                     // string elements of arrays have no pending property name and are skipped on purpose.
                     if (pendingProperty is not null)
                     {
-                        var currentValue = reader.GetString()!;
-                        pathSegments.Add(pendingProperty);
-                        var newValue = rewriter(pathSegments, currentValue);
-                        pathSegments.RemoveAt(pathSegments.Count - 1);
+                        TryRecordStringEdit(ref reader, offsetInFile, rewriter, pathSegments, pendingProperty, edits);
                         pendingProperty = null;
-
-                        if (newValue is not null && !string.Equals(newValue, currentValue, StringComparison.Ordinal))
-                        {
-                            // TokenStartIndex points to the opening quote; ValueSpan covers the bytes
-                            // between the quotes (escape sequences included). The closing quote and any
-                            // surrounding whitespace are deliberately untouched.
-                            var innerStart = (int)reader.TokenStartIndex + 1 + offsetInFile;
-                            var innerLength = reader.ValueSpan.Length;
-                            var encoded = JsonEncodedText.Encode(newValue.AsSpan(), JavaScriptEncoder.UnsafeRelaxedJsonEscaping).EncodedUtf8Bytes.ToArray();
-                            edits.Add(new JsonValueEdit(innerStart, innerLength, encoded));
-                        }
                     }
 
                     break;
@@ -316,5 +302,32 @@ partial class CakeContextExtensions
         }
 
         return edits;
+    }
+
+    private static void TryRecordStringEdit(
+        ref Utf8JsonReader reader,
+        int offsetInFile,
+        JsonStringValueRewriter rewriter,
+        List<string> pathSegments,
+        string propertyName,
+        List<JsonValueEdit> edits)
+    {
+        var currentValue = reader.GetString()!;
+        pathSegments.Add(propertyName);
+        var newValue = rewriter(pathSegments, currentValue);
+        pathSegments.RemoveAt(pathSegments.Count - 1);
+
+        if (newValue is null || string.Equals(newValue, currentValue, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        // TokenStartIndex points to the opening quote; ValueSpan covers the bytes
+        // between the quotes (escape sequences included). The closing quote and any
+        // surrounding whitespace are deliberately untouched.
+        var innerStart = (int)reader.TokenStartIndex + 1 + offsetInFile;
+        var innerLength = reader.ValueSpan.Length;
+        var encoded = JsonEncodedText.Encode(newValue.AsSpan(), JavaScriptEncoder.UnsafeRelaxedJsonEscaping).EncodedUtf8Bytes.ToArray();
+        edits.Add(new JsonValueEdit(innerStart, innerLength, encoded));
     }
 }
