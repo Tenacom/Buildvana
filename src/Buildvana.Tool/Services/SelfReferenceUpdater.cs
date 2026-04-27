@@ -1,0 +1,278 @@
+﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// See the LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Buildvana.Tool.Services.Versioning;
+using Buildvana.Tool.Utilities;
+using Cake.Common.Diagnostics;
+using Cake.Core;
+using Cake.Core.IO;
+using CommunityToolkit.Diagnostics;
+
+using SysDirectory = System.IO.Directory;
+using SysFile = System.IO.File;
+using SysPath = System.IO.Path;
+
+namespace Buildvana.Tool.Services;
+
+/// <summary>
+/// Rewrites in-tree references to packages produced by the current build, so that a self-hosting (dogfooded)
+/// project can bump its own SDK/tool/package references as part of the "Prepare release" commit.
+/// </summary>
+/// <remarks>
+/// <para>The updater discovers produced packages by inspecting the <c>*.nupkg</c> files in the artifacts directory:
+/// each filename is expected to match the form <c>{Id}.{CurrentVersion}.nupkg</c>; files whose version suffix
+/// does not match the version being released are ignored.</para>
+/// <para>Updates are applied in-place to the following well-known files, when present:</para>
+/// <list type="bullet">
+///   <item><description><c>global.json</c> — entries under <c>msbuild-sdks</c>.</description></item>
+///   <item><description><c>.config/dotnet-tools.json</c> — entries under <c>tools</c>.</description></item>
+///   <item><description><c>Directory.Packages.props</c> — <c>&lt;PackageVersion&gt;</c> items.</description></item>
+/// </list>
+/// <para>Version values that look like MSBuild property references (e.g. <c>$(SomePackageVersion)</c>) are
+/// left untouched, since rewriting them would break the indirection.</para>
+/// </remarks>
+public sealed class SelfReferenceUpdater
+{
+    private readonly ICakeContext _context;
+    private readonly DotNetService _dotnet;
+    private readonly VersionService _version;
+    private readonly (string RelativePath, Func<FilePath, Dictionary<string, string>, bool> Update)[] _targets;
+
+    public SelfReferenceUpdater(ICakeContext context, DotNetService dotnet, VersionService version)
+    {
+        Guard.IsNotNull(context);
+        Guard.IsNotNull(dotnet);
+        Guard.IsNotNull(version);
+        _context = context;
+        _dotnet = dotnet;
+        _version = version;
+        _targets =
+        [
+            ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
+            (".config/dotnet-tools.json", (p, produced) => UpdateJsonContainer(p, produced, container: "tools", versionPropertyName: "version")),
+            ("Directory.Packages.props", (p, produced) => UpdateMsBuildXml(p, produced, tagNames: ["PackageVersion"])),
+        ];
+    }
+
+    /// <summary>
+    /// Rewrites in-tree references to packages produced by the current build.
+    /// </summary>
+    /// <returns>The list of files that were actually modified. Pass this to
+    /// <see cref="ServerAdapters.ServerRelease.UpdateRepository(FilePath[])"/> to stage them
+    /// into the "Prepare release" commit.</returns>
+    public IReadOnlyList<FilePath> UpdateReferences()
+    {
+        var produced = DiscoverProducedPackages();
+        if (produced.Count == 0)
+        {
+            _context.Information("Self-reference update: no produced packages were found in the artifacts directory.");
+            return [];
+        }
+
+        _context.Information($"Self-reference update: {produced.Count} produced package(s) detected: {string.Join(", ", produced.Keys)}.");
+
+        var modified = new List<FilePath>();
+        foreach (var (relativePath, update) in _targets)
+        {
+            // FilePath.FullPath of a relative path is still relative; resolve up-front so the path
+            // returned to the caller (and shown in logs) is unambiguous.
+            var path = new FilePath(relativePath).MakeAbsolute(_context.Environment);
+            if (!SysFile.Exists(path.FullPath))
+            {
+                continue;
+            }
+
+            if (update(path, produced))
+            {
+                _context.Information($"Self-reference update: rewrote {relativePath}.");
+                modified.Add(path);
+            }
+        }
+
+        return modified;
+    }
+
+    private static List<string> SnapshotPropertyNames(JsonObject json)
+    {
+        // Materialize the names so callers can mutate the object while iterating.
+        var names = new List<string>(json.Count);
+        foreach (var kvp in json)
+        {
+            names.Add(kvp.Key);
+        }
+
+        return names;
+    }
+
+    private Dictionary<string, string> DiscoverProducedPackages()
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var artifacts = _dotnet.ArtifactsPath.FullPath;
+        if (!SysDirectory.Exists(artifacts))
+        {
+            return result;
+        }
+
+        var version = _version.CurrentStr;
+        var suffix = $".{version}.nupkg";
+        foreach (var path in SysDirectory.EnumerateFiles(artifacts, "*.nupkg"))
+        {
+            var fileName = SysPath.GetFileName(path);
+            if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                _context.Verbose($"Self-reference update: skipping '{fileName}' (version does not match '{version}').");
+                continue;
+            }
+
+            var id = fileName[..^suffix.Length];
+            result[id] = version;
+        }
+
+        return result;
+    }
+
+    private bool UpdateJsonContainer(FilePath path, Dictionary<string, string> produced, string container, string? versionPropertyName)
+    {
+        var json = _context.LoadJsonObject(path);
+        if (json[container] is not JsonObject entries)
+        {
+            return false;
+        }
+
+        var changed = false;
+        foreach (var name in SnapshotPropertyNames(entries))
+        {
+            if (!produced.TryGetValue(name, out var newVersion))
+            {
+                continue;
+            }
+
+            // Resolve where the version value actually lives.
+            // - versionPropertyName == null → the entry value itself IS the version string.
+            // - versionPropertyName != null → the entry is an object holding the version under that property.
+            JsonObject holder;
+            string key;
+            if (versionPropertyName is null)
+            {
+                holder = entries;
+                key = name;
+            }
+            else
+            {
+                if (entries[name] is not JsonObject entryObject)
+                {
+                    continue;
+                }
+
+                holder = entryObject;
+                key = versionPropertyName;
+            }
+
+            if (holder[key] is JsonValue current
+                && current.TryGetValue<string>(out var currentValue)
+                && string.Equals(currentValue, newVersion, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            holder[key] = JsonValue.Create(newVersion);
+            changed = true;
+        }
+
+        if (changed)
+        {
+            _context.SaveJson(json, path);
+        }
+
+        return changed;
+    }
+
+    private bool UpdateMsBuildXml(FilePath path, Dictionary<string, string> produced, string[] tagNames)
+    {
+        var fullPath = path.FullPath;
+        var original = SysFile.ReadAllText(fullPath);
+
+        // Build a regex alternation from the supplied tag names.
+        // The two patterns are mutually exclusive: each matching start tag has Include and Version
+        // attributes in exactly one order, so a given match site is matched by at most one of them.
+        var tagAlternation = string.Join('|', Array.ConvertAll(tagNames, Regex.Escape));
+        var includeFirst = new Regex(
+            $@"(<(?:{tagAlternation})\b[^>]*?\bInclude\s*=\s*"")([^""]+)(""[^>]*?\bVersion\s*=\s*"")([^""]*)("")",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var versionFirst = new Regex(
+            $@"(<(?:{tagAlternation})\b[^>]*?\bVersion\s*=\s*"")([^""]*)(""[^>]*?\bInclude\s*=\s*"")([^""]+)("")",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        var current = original;
+        current = includeFirst.Replace(current, m => RewriteIncludeFirstMatch(m, produced));
+        current = versionFirst.Replace(current, m => RewriteVersionFirstMatch(m, produced));
+
+        if (string.Equals(current, original, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        SysFile.WriteAllText(fullPath, current);
+        return true;
+    }
+
+    private string RewriteIncludeFirstMatch(Match match, Dictionary<string, string> produced)
+    {
+        // Groups: 1 = head up to opening quote of Include value
+        //         2 = Include value (package id)
+        //         3 = middle up to opening quote of Version value
+        //         4 = Version value (current)
+        //         5 = closing quote of Version value
+        var id = match.Groups[2].Value;
+        if (!produced.TryGetValue(id, out var newVersion))
+        {
+            return match.Value;
+        }
+
+        var existing = match.Groups[4].Value;
+        if (!IsRewritable(existing, id, newVersion))
+        {
+            return match.Value;
+        }
+
+        return match.Groups[1].Value + match.Groups[2].Value + match.Groups[3].Value + newVersion + match.Groups[5].Value;
+    }
+
+    private string RewriteVersionFirstMatch(Match match, Dictionary<string, string> produced)
+    {
+        // Groups: 1 = head up to opening quote of Version value
+        //         2 = Version value (current)
+        //         3 = middle up to opening quote of Include value
+        //         4 = Include value (package id)
+        //         5 = closing quote of Include value
+        var id = match.Groups[4].Value;
+        if (!produced.TryGetValue(id, out var newVersion))
+        {
+            return match.Value;
+        }
+
+        var existing = match.Groups[2].Value;
+        if (!IsRewritable(existing, id, newVersion))
+        {
+            return match.Value;
+        }
+
+        return match.Groups[1].Value + newVersion + match.Groups[3].Value + match.Groups[4].Value + match.Groups[5].Value;
+    }
+
+    private bool IsRewritable(string existing, string id, string newVersion)
+    {
+        // Don't rewrite property references like $(SomeVersion) — they'd silently lose their indirection.
+        if (existing.Contains("$(", StringComparison.Ordinal))
+        {
+            _context.Verbose($"Self-reference update: leaving property-reference version '{existing}' on package '{id}' unchanged.");
+            return false;
+        }
+
+        return !string.Equals(existing, newVersion, StringComparison.Ordinal);
+    }
+}
