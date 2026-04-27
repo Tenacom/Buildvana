@@ -2,8 +2,8 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "buildvana.tool": {
-      "version": "1.0.177-preview",
+    "bv": {
+      "version": "1.0.215-preview",
       "commands": [
         "bv"
       ]
