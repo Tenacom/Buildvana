@@ -90,6 +90,11 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         global-json-file: global.json
+        cache: true
+        cache-dependency-path: |
+          global.json
+          .config/dotnet-tools.json
+          Directory.Packages.props
     - name: Restore .NET tools
       shell: cmd
       run: dotnet tool restore
