@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New features
 
 - Buildvana SDK now supports loading a machine- and/or user-scoped configuration file named `Buildvana.Sdk.props`. Please refer to the relevant [documentation](docs/ConfigurationFiles.md) for details.
-- A `.pfx` file used to sign an assembly through the `AssemblySigning` module can now have no password. Previous versions issued an error if the `PfxPassword` property was empty or not defined.  
+- A `.pfx` file used to sign an assembly through the `AssemblySigning` module can now have no password. Previous versions issued an error if the `PfxPassword` property was empty or not defined.
 (Please note that the `PfxPassword` property has also been renamed to `AssemblyOriginatorKeyPassword`, as noted below in the "Changes to existing features" section.)
 - Some support has been added for running Windows-only tools under [Wine](https://winehq.org) when building under Linux or macOS. Please refer to the relevant [documentation](docs/modules/Wine.md) for details.
 - In Inno Setup support, when there is no `AssemblyTitle` property, `AppFullName` now defaults to `AssemblyName`.
@@ -98,7 +98,7 @@ This release just updates some dependencies to their latest versions, the most n
 
 ### Changes to existing features
 
-- When using NerdBack.GitVersioning, the value of `AssemblyInformationalVersion` is now changed to not include metadata (Git commit SHA) when building a public version (i.e. from `main` or other branches identified in `version.json`).  
+- When using NerdBack.GitVersioning, the value of `AssemblyInformationalVersion` is now changed to not include metadata (Git commit SHA) when building a public version (i.e. from `main` or other branches identified in `version.json`).
 This change also affects the default names of zipped publish folders and InnoSetup-generated setup programs, as they use `AssemblyInformationalVersion` as a suffix.
 
 ## [1.0.99-preview](https://github.com/Tenacom/Buildvana.Sdk/releases/tag/1.0.99-preview) (2023-11-08)
@@ -138,9 +138,9 @@ This change also affects the default names of zipped publish folders and InnoSet
 ### Changes to existing features
 
 - If the `CreateZipFile` metadata of a `PublishFolder` item is `true` and its `ZipFileName` metadata is not set, the latter defaults to:
-  - `$(MSBuildProjectName)-%(PublishFolder.Identity)_$(PackageVersion).zip` if the `PackageVersion` property is set  
+  - `$(MSBuildProjectName)-%(PublishFolder.Identity)_$(PackageVersion).zip` if the `PackageVersion` property is set
   (note that the `BuildVersion` and `AssemblyInformationalVersion` properties were previously used instead of `PackageVersion`);
-  - `$(MSBuildProjectName)-%(PublishFolder.Identity).zip` otherwise  
+  - `$(MSBuildProjectName)-%(PublishFolder.Identity).zip` otherwise
   (this has not changed).
 
 ## [1.0.72-preview](https://github.com/Tenacom/Buildvana.Sdk/releases/tag/1.0.72-preview) (2023-10-02)
@@ -148,9 +148,9 @@ This change also affects the default names of zipped publish folders and InnoSet
 ### Changes to existing features
 
 - If the `CreateZipFile` metadata of a `PublishFolder` item is `true` and its `ZipFileName` metadata is not set, the latter defaults to:
-  - `$(MSBuildProjectName)-%(PublishFolder.Identity)_$(AssemblyInformationalVersion).zip` if the `AssemblyInformationalVersion` property is set  
+  - `$(MSBuildProjectName)-%(PublishFolder.Identity)_$(AssemblyInformationalVersion).zip` if the `AssemblyInformationalVersion` property is set
   (note that the `BuildVersion` property was previously used instead of `AssemblyInformationalVersion`);
-  - `$(MSBuildProjectName)-%(PublishFolder.Identity).zip` otherwise  
+  - `$(MSBuildProjectName)-%(PublishFolder.Identity).zip` otherwise
   (this has not changed).
 
 ## [1.0.69-preview](https://github.com/Tenacom/Buildvana.Sdk/releases/tag/1.0.69-preview) (2023-10-02)
@@ -221,10 +221,10 @@ This change also affects the default names of zipped publish folders and InnoSet
 ### New features
 
 - **BREAKING CHANGE:** The `UseAlternatePack` property is no longer recognized. Projects must instead set `AlternatePackMethod` to one of the following values:
-  * `None`: does nothing (useful to silence warnings in library projects using `Microsoft.Net.Sdk.Web`)
-  * `PublishToFolders`: publish to folders, no InnoSetup involved
-  * `InnoSetup`: publish to folders and generate setup (this is the value to use in projects that previously set `UseAlternatePack` to `true`)
-  
+  - `None`: does nothing (useful to silence warnings in library projects using `Microsoft.Net.Sdk.Web`)
+  - `PublishToFolders`: publish to folders, no InnoSetup involved
+  - `InnoSetup`: publish to folders and generate setup (this is the value to use in projects that previously set `UseAlternatePack` to `true`)
+
 ## [1.0.26-preview](https://github.com/Tenacom/Buildvana.Sdk/releases/tag/1.0.26-preview) (2023-05-02)
 
 This version just updates all dependencies, as well as build scripts.
@@ -294,7 +294,7 @@ Recognized names for the README file, in order of lookup, are: `Package-README.m
 ### Changes to existing features
 
 - https://github.com/Tenacom/Buildvana.Sdk/pull/146 - **BREAKING CHANGE:** The Polyfills module, introduced in v1.0.0-alpha.18, has been removed.
-Polyfills are a complicated topic, with lots of edge cases. They are best dealt with at a project level. The experience acquired with the Polyfills module has helped shape a polyfill library that will be open-sourced shortly (and is, needless to say, built with Buildvana SDK).  
+Polyfills are a complicated topic, with lots of edge cases. They are best dealt with at a project level. The experience acquired with the Polyfills module has helped shape a polyfill library that will be open-sourced shortly (and is, needless to say, built with Buildvana SDK).
 **EDIT:** [PolyKit](https://github.com/Tenacom/PolyKit#readme) has born and is even better than anticipated!
 
 ## [1.0.0-alpha.19](https://github.com/Tenacom/Buildvana.Sdk/releases/tag/1.0.0-alpha.19) (2022-04-29)
@@ -436,7 +436,7 @@ Polyfills are a complicated topic, with lots of edge cases. They are best dealt 
 
 - **POTENTIALLY BREAKING CHANGE:** https://github.com/Tenacom/Buildvana.Sdk/issues/44 - The `AssemblyInfo` module has been removed. Assembly attribute generation-related properties like e.g. `GenerateAssemblyInfo`, `GenerateAssemblyVersionAttribute`, etc. are not set to `true` any more at project and common files evaluation time; instead, they are left unset and defaulted to `true` later.
 - **POTENTIALLY BREAKING CHANGE:** [Errors and warnings](docs/ErrorsAndWarnings.md) have been renumbered.
-- **BREAKING CHANGE:** https://github.com/Tenacom/Buildvana.Sdk/issues/44 - The `CLSCompliant` property is no longer set to `true` by default; it must be set explicitly in order to generate the respective assembly attribute. Projects that contain `CLSCompliant` attributes on types and members and do not set the `CLSCompliant` property will now issue warning CS3021: *'<type_or_member>' does not need a CLSCompliant attribute because the assembly does not have a CLSCompliant attribute.*. To avoid the warning, set the `CLSCompliant` property to `true` (the previous default) in the project file or in a common file.
+- **BREAKING CHANGE:** https://github.com/Tenacom/Buildvana.Sdk/issues/44 - The `CLSCompliant` property is no longer set to `true` by default; it must be set explicitly in order to generate the respective assembly attribute. Projects that contain `CLSCompliant` attributes on types and members and do not set the `CLSCompliant` property will now issue warning CS3021: _'<type_or_member>' does not need a CLSCompliant attribute because the assembly does not have a CLSCompliant attribute._. To avoid the warning, set the `CLSCompliant` property to `true` (the previous default) in the project file or in a common file.
 - **BREAKING CHANGE:** https://github.com/Tenacom/Buildvana.Sdk/issues/44 - The `ComVisible` property is no longer set to `false` by default; it must be set explicitly in order to generate the respective assembly attribute. In projects that need to have all types and members of the compiled assembly hidden from COM, now you must set the `ComVisible` property to `false` (the previous default) in the project file or in a common file.
 
 ### Bugs fixed in this release
