@@ -1,7 +1,12 @@
 name: Claude Code Review
 
+# Use pull_request_target so PRs from forks have access to repository secrets and OIDC.
+# This event runs the workflow file from the base branch, so PR-controlled changes to this
+# file don't take effect until merged. The job below does NOT check out PR-controlled code,
+# and the Claude review action fetches PR data via the GitHub API rather than from a local
+# checkout — so secrets stay isolated from anything the PR could supply.
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, ready_for_review, reopened]
     # Optional: Only run on specific file changes
     # paths:
@@ -21,16 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
       issues: read
       id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
