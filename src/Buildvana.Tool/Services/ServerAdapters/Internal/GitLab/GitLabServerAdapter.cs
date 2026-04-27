@@ -49,7 +49,7 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     public override GitIdentity? CIBotIdentity { get; }
 
     /// <inheritdoc/>
-    public override string? PushUsername => "oauth2";
+    public override string PushUsername => "oauth2";
 
     /// <inheritdoc/>
     public override string? PushPassword => null;

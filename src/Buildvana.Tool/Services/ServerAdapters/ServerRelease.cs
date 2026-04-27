@@ -23,7 +23,6 @@ public abstract partial class ServerRelease : IAsyncDisposable
     private readonly ICakeContext _context;
     private readonly GitService _git;
     private readonly VersionService _version;
-    private readonly DotNetService _dotnet;
     private readonly Stack<Func<ValueTask>> _rollbackActions = new();
     private readonly List<AssetData> _assets = [];
 
@@ -38,7 +37,6 @@ public abstract partial class ServerRelease : IAsyncDisposable
         _context = services.GetRequiredService<ICakeContext>();
         _git = services.GetRequiredService<GitService>();
         _version = services.GetRequiredService<VersionService>();
-        _dotnet = services.GetRequiredService<DotNetService>();
     }
 
     public bool IsDisposed { get; private set; }
@@ -66,7 +64,7 @@ public abstract partial class ServerRelease : IAsyncDisposable
         else
         {
             _context.Information("Committing changed files...");
-            _git.Commit("Prepare release [skip ci]", false);
+            _git.Commit("Prepare release [skip ci]");
 
             // Git height has changed
             _version.Update();
