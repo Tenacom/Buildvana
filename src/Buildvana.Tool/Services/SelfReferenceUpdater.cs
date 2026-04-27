@@ -109,6 +109,11 @@ public sealed class SelfReferenceUpdater
         return names;
     }
 
+    private static bool IsAlreadySet(JsonObject holder, string key, string value)
+        => holder[key] is JsonValue current
+           && current.TryGetValue<string>(out var currentValue)
+           && string.Equals(currentValue, value, StringComparison.Ordinal);
+
     private Dictionary<string, string> DiscoverProducedPackages()
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -173,9 +178,7 @@ public sealed class SelfReferenceUpdater
                 key = versionPropertyName;
             }
 
-            if (holder[key] is JsonValue current
-                && current.TryGetValue<string>(out var currentValue)
-                && string.Equals(currentValue, newVersion, StringComparison.Ordinal))
+            if (IsAlreadySet(holder, key, newVersion))
             {
                 continue;
             }
