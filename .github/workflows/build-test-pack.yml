@@ -21,7 +21,7 @@ jobs:
       shell: cmd
       run: echo NUGET_LOCAL_PACKAGES=%RUNNER_TEMP% >> %GITHUB_ENV%
     - name: Checkout repository with full history
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
     - name: Setup .NET SDK
@@ -39,7 +39,7 @@ jobs:
         dotnet bv pack --verbosity %BV_VERBOSITY%
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/Cobertura.xml') != '' }}
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         working-directory: TestResults
         files: Cobertura.xml

@@ -81,7 +81,7 @@ jobs:
         echo Check changelog before update : %CHECK_CHANGELOG%
         echo Buildvana verbosity           : %BV_VERBOSITY%
     - name: Checkout repository with full history
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
         token: ${{ secrets.RELEASE_TOKEN }}
@@ -102,7 +102,7 @@ jobs:
         dotnet bv release --verbosity %BV_VERBOSITY%
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/Cobertura.xml') != '' }}
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         working-directory: TestResults
         files: Cobertura.xml
