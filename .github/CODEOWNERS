@@ -9,9 +9,6 @@
 # Git configuration files
 /.git* @rdeago
 
-# Build scripts
-*.cake @rdeago
-
 # Licensing
 LICENSE @rdeago
 THIRD-PARTY-NOTICES @rdeago
@@ -24,3 +21,7 @@ stylecop.json @rdeago
 *.DotSettings @rdeago
 NuGet.config @rdeago
 version.json @rdeago
+
+# Claude Code configuration
+/.claude/ @rdeago
+.mcp.json @rdeago
