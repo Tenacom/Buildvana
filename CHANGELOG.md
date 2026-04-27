@@ -15,9 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bugs fixed in this release
 
-- [Issue #243](https://github.com/Tenacom/Buildvana/issues/243) — `dotnet bv release` now rewrites `global.json`, `.config/dotnet-tools.json`, and `version.json` in place via a byte-level splice, preserving line endings, trailing newlines, indentation, comments, and BOM exactly as they were on disk. Previously, automatic dogfooding (and version-file updates) re-serialized the entire JSON document, producing all-lines-changed diffs and dropping the trailing newline.
-
 ### Known problems introduced by this release
+
+## [1.1.10](https://github.com/Tenacom/Buildvanareleases/tag/1.1.10) (2026-04-27)
+
+### Bugs fixed in this release
+
+- [Issue #243](https://github.com/Tenacom/Buildvana/issues/243) — `dotnet bv release` now rewrites `global.json`, `.config/dotnet-tools.json`, and `version.json` in place via a byte-level splice, preserving line endings, trailing newlines, indentation, comments, and BOM exactly as they were on disk. Previously, automatic dogfooding (and version-file updates) re-serialized the entire JSON document, producing all-lines-changed diffs and dropping the trailing newline.
 
 ## [1.1.4](https://github.com/Tenacom/Buildvanareleases/tag/1.1.4) (2026-04-27)
 
