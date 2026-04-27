@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Buildvana.Tool.Services.Versioning;
@@ -216,7 +217,10 @@ public sealed class SelfReferenceUpdater
             return false;
         }
 
-        SysFile.WriteAllText(fullPath, current);
+        // Match ChangelogService's convention: UTF-8 without BOM, throwing on invalid bytes.
+        // File.WriteAllText without an explicit encoding would default to UTF-8-no-BOM as well,
+        // but stating it makes the choice intentional and keeps the rewrite stable across runs.
+        SysFile.WriteAllText(fullPath, current, new UTF8Encoding(false, true));
         return true;
     }
 
