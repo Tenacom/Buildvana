@@ -29,6 +29,10 @@ To skip automatic dogfooding, either pass `--updateSelfReferences=false` to `dot
 
 - Repository links have been fixed: all references to READMEs, changelog, and the repository itself should now bear no trace of the old `Buildvana` organization and `Buildvana.Sdk` repository.
 
+### Known problems introduced by this release
+
+- [Issue #243](https://github.com/Tenacom/Buildvana/issues/243) — Automatic dogfooding, introduced with [PR #242](https://github.com/Tenacom/Buildvana/pull/242), does not preserve line endings, traling newlines, and any non-standard formatting in `global.json` and `.config/dotnet-tools.json` if it happens to modify them.
+
 ## [1.0.220](https://github.com/Tenacom/Buildvanareleases/tag/1.0.220) (2026-04-27)
 
 ### New features
