@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
@@ -97,23 +96,6 @@ public sealed class SelfReferenceUpdater
         return modified;
     }
 
-    private static List<string> SnapshotPropertyNames(JsonObject json)
-    {
-        // Materialize the names so callers can mutate the object while iterating.
-        var names = new List<string>(json.Count);
-        foreach (var kvp in json)
-        {
-            names.Add(kvp.Key);
-        }
-
-        return names;
-    }
-
-    private static bool IsAlreadySet(JsonObject holder, string key, string value)
-        => holder[key] is JsonValue current
-           && current.TryGetValue<string>(out var currentValue)
-           && string.Equals(currentValue, value, StringComparison.Ordinal);
-
     private Dictionary<string, string> DiscoverProducedPackages()
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -143,56 +125,33 @@ public sealed class SelfReferenceUpdater
 
     private bool UpdateJsonContainer(FilePath path, Dictionary<string, string> produced, string container, string? versionPropertyName)
     {
-        var json = _context.LoadJsonObject(path);
-        if (json[container] is not JsonObject entries)
+        // Splice the new version directly over the existing one in the source bytes, so unrelated
+        // bytes — line endings, indentation, the trailing newline (if any), comments, BOM — survive untouched.
+        // The expected location of each version string differs by container shape:
+        //   - versionPropertyName == null → at depth 2 with path [container, packageId];
+        //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
+        return _context.RewriteJsonStringValues(path, (propertyPath, currentValue) =>
         {
-            return false;
-        }
-
-        var changed = false;
-        foreach (var name in SnapshotPropertyNames(entries))
-        {
-            if (!produced.TryGetValue(name, out var newVersion))
-            {
-                continue;
-            }
-
-            // Resolve where the version value actually lives.
-            // - versionPropertyName == null → the entry value itself IS the version string.
-            // - versionPropertyName != null → the entry is an object holding the version under that property.
-            JsonObject holder;
-            string key;
             if (versionPropertyName is null)
             {
-                holder = entries;
-                key = name;
+                if (propertyPath.Count != 2 || propertyPath[0] != container)
+                {
+                    return null;
+                }
             }
             else
             {
-                if (entries[name] is not JsonObject entryObject)
+                if (propertyPath.Count != 3 || propertyPath[0] != container || propertyPath[2] != versionPropertyName)
                 {
-                    continue;
+                    return null;
                 }
-
-                holder = entryObject;
-                key = versionPropertyName;
             }
 
-            if (IsAlreadySet(holder, key, newVersion))
-            {
-                continue;
-            }
-
-            holder[key] = JsonValue.Create(newVersion);
-            changed = true;
-        }
-
-        if (changed)
-        {
-            _context.SaveJson(json, path);
-        }
-
-        return changed;
+            var packageId = propertyPath[1];
+            return produced.TryGetValue(packageId, out var newVersion) && !string.Equals(currentValue, newVersion, StringComparison.Ordinal)
+                ? newVersion
+                : null;
+        });
     }
 
     private bool UpdateMsBuildXml(FilePath path, Dictionary<string, string> produced, string[] tagNames)
