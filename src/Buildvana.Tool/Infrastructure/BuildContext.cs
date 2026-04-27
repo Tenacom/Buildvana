@@ -34,6 +34,7 @@ public sealed class BuildContext : FrostingContext
             .AddSingleton<DotNetService>()
             .AddSingleton<OptionsService>()
             .AddSingleton<PathsService>()
+            .AddSingleton<SelfReferenceUpdater>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
     }
 

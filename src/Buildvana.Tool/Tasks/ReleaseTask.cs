@@ -40,6 +40,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
         var changelog = context.GetService<ChangelogService>();
         var publicApiFiles = context.GetService<PublicApiFilesService>();
         var docfx = context.GetService<DocFxService>();
+        var selfReferenceUpdater = context.GetService<SelfReferenceUpdater>();
 
         // Perform some preliminary checks
         context.Ensure(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
@@ -170,6 +171,28 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             else
             {
                 context.Information("Changelog section title update skipped: changelog has not been updated.");
+            }
+
+            // Update in-tree references to packages produced by this release (dogfooding).
+            // Must happen after pack (so the produced .nupkg files exist and the build ran against the
+            // previously-published versions) and before push (so the rewrites land in the Prepare release commit).
+            if (options.GetOption("updateSelfReferences", true))
+            {
+                var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences();
+                context.Information(selfReferenceUpdates.Count switch {
+                    0 => "No self-referenced files were modified.",
+                    1 => "1 self-referenced file was modified.",
+                    _ => $"{selfReferenceUpdates.Count} self-referenced files were modified.",
+                });
+
+                if (selfReferenceUpdates.Count > 0)
+                {
+                    release.UpdateRepository([..selfReferenceUpdates]);
+                }
+            }
+            else
+            {
+                context.Information("Self-reference update skipped: option 'updateSelfReferences' is false.");
             }
 
             release.PushUpdates();

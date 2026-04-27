@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
+- `dotnet bv release` now updates `global.json`, `.config/dotnet-tools.json`, and `Directory.Packages.props` references to packages produced by the current build, so a self-hosting (dogfooded) project picks up the new version as part of the "Prepare release" commit. Disable with `updateSelfReferences=false`.
+
 ### Changes to existing features
 
 - Repository links have been fixed: all references to READMEs, chagngelog, and the repository itself should now bear no trace of the old `Buildvana` organization and `Buildvana.Sdk` repository.
