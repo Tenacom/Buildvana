@@ -8,6 +8,8 @@
       "WebFetch",
       "WebSearch",
       "Bash(dotnet:*)",
+      "Bash(gh run *)",
+      "Bash(gh api *)",
       "Bash(git:*)",
       "Bash(xargs grep *)",
       "Bash(xargs head *)",
