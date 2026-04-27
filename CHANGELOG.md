@@ -11,17 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
-- `dotnet bv release` now updates `global.json`, `.config/dotnet-tools.json`, and `Directory.Packages.props` references to packages produced by the current build, so a self-hosting (dogfooded) project picks up the new version as part of the "Prepare release" commit.
-As a consequence, checking out a version tag and rebuilding your repository's solution will **not** reproduce the build that was originally released — the tagged commit references the just-released SDK/tool versions, while the original release was built against the previously-published versions. Whether this matters depends on your project.
-To skip automatic dogfooding, either pass `--updateSelfReferences=false` to `dotnet bv release`, or set the `UPDATE_SELF_REFERENCES` environment variable to `false` in your CI workflow.
-
 ### Changes to existing features
 
 ### Bugs fixed in this release
 
-- Repository links have been fixed: all references to READMEs, changelog, and the repository itself should now bear no trace of the old `Buildvana` organization and `Buildvana.Sdk` repository.
-
 ### Known problems introduced by this release
+
+## [1.1.4](https://github.com/Tenacom/Buildvanareleases/tag/1.1.4) (2026-04-27)
+
+### New features
+
+- `dotnet bv release` now updates `global.json`, `.config/dotnet-tools.json`, and `Directory.Packages.props` references to packages produced by the current build, so a self-hosting (dogfooded) project picks up the new version as part of the "Prepare release" commit.
+As a consequence, checking out a version tag and rebuilding your repository's solution will **not** reproduce the build that was originally released — the tagged commit references the just-released SDK/tool versions, while the original release was built against the previously-published versions. Whether this matters depends on your project.
+To skip automatic dogfooding, either pass `--updateSelfReferences=false` to `dotnet bv release`, or set the `UPDATE_SELF_REFERENCES` environment variable to `false` in your CI workflow.
+
+### Bugs fixed in this release
+
+- Repository links have been fixed: all references to READMEs, changelog, and the repository itself should now bear no trace of the old `Buildvana` organization and `Buildvana.Sdk` repository.
 
 ## [1.0.220](https://github.com/Tenacom/Buildvanareleases/tag/1.0.220) (2026-04-27)
 
