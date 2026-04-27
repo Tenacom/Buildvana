@@ -1,12 +1,14 @@
 name: Claude Code Review
 
-# Use pull_request_target so PRs from forks have access to repository secrets and OIDC.
-# This event runs the workflow file from the base branch, so PR-controlled changes to this
-# file don't take effect until merged. The job below does NOT check out PR-controlled code,
-# and the Claude review action fetches PR data via the GitHub API rather than from a local
-# checkout — so secrets stay isolated from anything the PR could supply.
+# Note: this workflow uses `pull_request`, which means PRs from forks run with a read-only
+# GITHUB_TOKEN and no access to repository secrets — claude-review will fail for those PRs.
+#
+# The natural fix would be `pull_request_target`, but anthropics/claude-code-action does not
+# currently accept OIDC tokens issued for `pull_request_target` events, so the action fails
+# server-side regardless of permissions. Track anthropics/claude-code-action#713 and switch
+# back to `pull_request_target` once that issue is resolved.
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
     # Optional: Only run on specific file changes
     # paths:
@@ -26,11 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
       issues: read
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
