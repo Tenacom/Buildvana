@@ -92,7 +92,6 @@ public abstract partial class ServerRelease : IAsyncDisposable
     {
         EnsurePending();
 
-        _updatesPushed = true;
         if (!_repositoryUpdated)
         {
             _context.Information("Repository unchanged, no commit to push.");
@@ -100,6 +99,7 @@ public abstract partial class ServerRelease : IAsyncDisposable
         }
 
         _git.Push();
+        _updatesPushed = true;
 
         // The rollback action is defined in UpdateRepository, because
         // commit and push can't be undone in reverse order (as rollback actions are processed):
