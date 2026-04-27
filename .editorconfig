@@ -23,6 +23,10 @@ indent_size = 8
 [*.{cs,csx,cake}]
 charset = utf-8-bom
 
+# Markdown files
+[*.{md, markdown}]
+trim_trailing_whitespace = false
+
 #### .NET Coding Conventions ####
 
 dotnet_style_operator_placement_when_wrapping = beginning_of_line:suggestion
