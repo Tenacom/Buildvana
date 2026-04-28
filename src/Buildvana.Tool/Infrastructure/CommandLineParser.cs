@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using Buildvana.Tool.Infrastructure.Options;
 using Cake.Frosting;
 
@@ -13,16 +12,14 @@ namespace Buildvana.Tool.Infrastructure;
 
 public static class CommandLineParser
 {
-    private const string ScriptName = "build.cmd";
+    private const string ToolName = "bv";
 
-    private static readonly string CallScriptName =
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ScriptName : "./" + ScriptName;
+    private const string CallToolName = $"dotnet {ToolName}";
 
     private static readonly IOption[] BaseOptions = [
         KnownOptions.Verbosity,
         KnownOptions.Exclusive,
         KnownOptions.Help,
-        KnownOptions.Stable,
     ];
 
     public static string[]? Parse(string[]? args)
@@ -122,14 +119,14 @@ public static class CommandLineParser
         WriteHeader("Description:");
 
         WritePrefix();
-        WriteLine("BenchmarkDotNet build script");
+        WriteLine("Buildvana command-line tool");
 
         WriteLine();
 
         WriteHeader("Usage:");
 
         WritePrefix();
-        Write(CallScriptName + " ");
+        Write(CallToolName + " ");
         WriteTask("<TASK> ");
         WriteOption("[OPTIONS]");
         WriteLine();
@@ -182,7 +179,7 @@ public static class CommandLineParser
         WriteHeader("Usage:");
 
         WritePrefix();
-        Write(CallScriptName + " ");
+        Write(CallToolName + " ");
         WriteTask(taskName + " ");
         WriteOption("[OPTIONS]");
         WriteLine();
@@ -278,7 +275,7 @@ public static class CommandLineParser
         foreach (var example in examples)
         {
             WritePrefix();
-            Write(CallScriptName + " ");
+            Write(CallToolName + " ");
             WriteTask(example.TaskName + " ");
             foreach (var (name, value, isMsBuild) in example.Arguments)
             {
