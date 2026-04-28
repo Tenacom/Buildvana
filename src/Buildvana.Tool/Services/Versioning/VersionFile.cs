@@ -95,7 +95,7 @@ public sealed class VersionFile
         var newVersion = VersionSpec.ToString();
         var rewritten = _context.RewriteJsonStringValues(
             Path,
-            (propertyPath, _) => propertyPath.Count == 1 && propertyPath[0] == VersionPropertyName ? newVersion : null);
+            (propertyPath, _) => propertyPath is [VersionPropertyName] ? newVersion : null);
 
         // Load already validated that a top-level string "version" property exists, so a no-op here
         // means either the on-disk file changed underneath us or VersionSpec.ToString() produced the
