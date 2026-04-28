@@ -20,17 +20,19 @@ public sealed class PrepareTask : FrostingTask<BuildContext>
     {
         Guard.IsNotNull(context);
 
+        var paths = context.GetService<PathsService>();
         var dotnet = context.GetService<DotNetService>();
+
         context.DeleteDirectoryIfExists(".vs");
         context.DeleteDirectoryIfExists("_ReSharper.Caches");
-        context.DeleteDirectoryIfExists("artifacts");
         context.DeleteDirectoryIfExists("temp");
+        context.DeleteDirectoryIfExists(paths.AllArtifacts);
+        context.DeleteDirectoryIfExists(paths.TestResults);
         foreach (var project in dotnet.Solution.Projects)
         {
             var projectDirectory = project.Path.GetDirectory();
             context.DeleteDirectoryIfExists(projectDirectory.Combine("bin"));
             context.DeleteDirectoryIfExists(projectDirectory.Combine("obj"));
-            context.DeleteDirectoryIfExists(projectDirectory.Combine("TestResults"));
         }
     }
 }
