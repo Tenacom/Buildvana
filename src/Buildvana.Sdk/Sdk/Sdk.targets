@@ -37,12 +37,12 @@
         <BV_IsNoTargetsProject>true</BV_IsNoTargetsProject>
       </PropertyGroup>
     </When>
-    <When Condition="($(MSBuildProjectName.EndsWith('.Tests')) And '$(IsTestProject)' != 'false') Or '$(IsTestProject)' == 'true'">
+    <When Condition="'$(IsTestProject)' == 'true'">
       <PropertyGroup>
         <BV_IsTestProject>true</BV_IsTestProject>
       </PropertyGroup>
     </When>
-    <When Condition="'$(OutputType)' == 'Library' And '$(BV_IsTestProject)' != 'true'">
+    <When Condition="'$(OutputType)' == 'Library'">
       <PropertyGroup>
         <BV_IsLibraryProject>true</BV_IsLibraryProject>
       </PropertyGroup>

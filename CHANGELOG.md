@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes to existing features
 
+- **BREAKING CHANGE**: Test projects must set the `IsTestProject` MSBuild property to `true`.  In practice, all major test frameworks already do this through their SDK, so explicit assignment in project files is rarely needed. The old heuristic rule by which projects whose name ends in `.Tests` were considered test projects unless they set `IsTestProject` to `false` is no longer in effect.
+
 ### Bugs fixed in this release
 
 ### Known problems introduced by this release
