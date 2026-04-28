@@ -21,6 +21,6 @@ public sealed class TestTask : FrostingTask<BuildContext>
         Guard.IsNotNull(context);
 
         var dotnet = context.GetService<DotNetService>();
-        dotnet.TestSolution(false, false, true);
+        dotnet.TestSolution(false, false);
     }
 }

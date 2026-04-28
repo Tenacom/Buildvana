@@ -159,7 +159,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             // Build, test, make artifacts
             dotnet.RestoreSolution();
             dotnet.BuildSolution(false);
-            dotnet.TestSolution(false, false, false);
+            dotnet.TestSolution(false, false);
             dotnet.PackSolution(false, false);
 
             if (changelogUpdated)

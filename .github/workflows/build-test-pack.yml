@@ -43,9 +43,9 @@ jobs:
         if [%RUNNER_DEBUG%]==[1] set BV_VERBOSITY=Diagnostic
         dotnet bv pack --verbosity %BV_VERBOSITY%
     - name: Upload coverage to Codecov
-      if: ${{ hashFiles('TestResults/Cobertura.xml') != '' }}
+      if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
       uses: codecov/codecov-action@v6
       with:
         working-directory: TestResults
-        files: Cobertura.xml
+        files: '*.cobertura.xml'
         verbose: true

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes to existing features
 
+- **BREAKING CHANGE**: Microsoft Testing Platform (MTP) is the only supported test runner now. Test projects using VSTest are explicitly not supported and will cause test-time errors. Buildvana will assume all test projects to be built with MTP.
+- **BREAKING CHANGE**: Code coverage reports are now collected in a `TestResults` directory at the repository root rather than under each test project's directory, and are no longer merged into a single file. Tooling that consumes coverage output (e.g. Codecov upload steps) must handle multiple *.cobertura.xml files; Codecov's GitHub Action accepts globs natively.
 - **BREAKING CHANGE**: Test projects must set the `IsTestProject` MSBuild property to `true`.  In practice, all major test frameworks already do this through their SDK, so explicit assignment in project files is rarely needed. The old heuristic rule by which projects whose name ends in `.Tests` were considered test projects unless they set `IsTestProject` to `false` is no longer in effect.
 
 ### Bugs fixed in this release
