@@ -11,10 +11,10 @@ namespace Buildvana.Tool.Tasks;
 
 [TaskName(Name)]
 [TaskDescription(Description)]
-public sealed class PrepareTask : FrostingTask<BuildContext>
+public sealed class CleanTask : FrostingTask<BuildContext>
 {
-    private const string Name = "Prepare";
-    private const string Description = "Prepare";
+    private const string Name = "Clean";
+    private const string Description = "Remove all build artifacts, intermediate output, and temporary files. Like 'dotnet clean', but more aggressive.";
 
     public override void Run(BuildContext context)
     {

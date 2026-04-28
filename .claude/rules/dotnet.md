@@ -4,13 +4,13 @@
 
 First of all, use `dotnet tool restore` to install global tools. Then use the following commands for common operations:
 
-- `dotnet bv prepare` - Prepare the solution for building by removing previous generated files and build artifacts. Similar to `dotnet clean` but somewhat faster and more thorough.
+- `dotnet bv clean` - Remove all build artifacts, intermediate output, and temporary files.
 - `dotnet bv restore` - Restore NuGet packages.
 - `dotnet bv build` - Build the solution.
 - `dotnet bv test` - Run tests.
 - `dotnet bv pack` - Create NuGet packages in `artifacts/`.
 
-Each one of the preceding commands includes the previous ones, so `dotnet bv build` also prepares and restores, `dotnet bv test` also builds, and so on.
+Each one of the preceding commands includes the previous ones, so `dotnet bv build` also cleans and restores, `dotnet bv test` also builds, and so on.
 
 ## Efficiency
 

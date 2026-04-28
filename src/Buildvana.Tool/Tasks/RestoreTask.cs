@@ -10,7 +10,7 @@ namespace Buildvana.Tool.Tasks;
 
 [TaskName(Name)]
 [TaskDescription(Description)]
-[IsDependentOn(typeof(PrepareTask))]
+[IsDependentOn(typeof(CleanTask))]
 public sealed class RestoreTask : FrostingTask<BuildContext>
 {
     private const string Name = "Restore";
