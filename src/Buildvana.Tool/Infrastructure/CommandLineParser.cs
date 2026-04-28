@@ -144,11 +144,6 @@ public static class CommandLineParser
         var taskWidth = GetTaskNames().Max(name => name.Length) + 3;
         foreach (var (taskName, taskDescription, _) in GetTasks())
         {
-            if (taskName.Equals("Default", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
             WriteTask("    " + taskName.PadRight(taskWidth));
             Write(taskDescription);
 
