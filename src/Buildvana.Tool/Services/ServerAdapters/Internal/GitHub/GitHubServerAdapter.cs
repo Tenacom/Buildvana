@@ -150,26 +150,31 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// Asynchronously publishes a draft release on the GitHub repository.
     /// </summary>
     /// <param name="release">An object representing the GitHub release.</param>
+    /// <param name="targetCommitish">The commit the release tag should point to. Pass the SHA of the
+    /// release commit so the tag is anchored to it regardless of any post-release commits that may
+    /// have been pushed on top of the branch.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task PublishReleaseAsync(Release release)
+    public async Task PublishReleaseAsync(Release release, string targetCommitish)
     {
         Guard.IsNotNull(release);
+        Guard.IsNotNullOrEmpty(targetCommitish);
         var tag = _version.CurrentStr;
         var client = CreateGitHubClient();
         _context.Information($"Generating release notes for {tag}...");
         var releaseNotesRequest = new GenerateReleaseNotesRequest(tag)
         {
-            TargetCommitish = _git.CurrentBranch,
+            TargetCommitish = targetCommitish,
         };
 
         var generateNotesResponse = await client.Repository.Release.GenerateReleaseNotes(RepositoryOwner, RepositoryName, releaseNotesRequest).ConfigureAwait(false);
         var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.MainBranch)}).\n\n---\n\n"
                 + generateNotesResponse.Body;
 
-        _context.Information($"Publishing the previously created release as {tag}...");
+        _context.Information($"Publishing the previously created release as {tag} (target {targetCommitish})...");
         var update = release.ToUpdate();
         update.TagName = tag;
         update.Name = tag;
+        update.TargetCommitish = targetCommitish;
         update.Body = body;
         update.Prerelease = _version.IsPrerelease;
         update.Draft = false;

@@ -19,10 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGE**: Test projects must set the `IsTestProject` MSBuild property to `true`.  In practice, all major test frameworks already do this through their SDK, so explicit assignment in project files is rarely needed. The old heuristic rule by which projects whose name ends in `.Tests` were considered test projects unless they set `IsTestProject` to `false` is no longer in effect.
 - **BREAKING CHANGE**: `bv clean` (formerly known as `bv prepare`) now deletes the `TestResults` directory at the repository root.
 - `bv clean` (formerly known as `bv prepare`) no longer deletes per-project `TestResults` directories.
+- `dotnet bv release` no longer folds self-reference (dogfood) updates into the "Prepare release" commit. They now go into a separate `Update self-references to <version> [skip ci]` commit pushed on top, in the same push. The release tag binds to the "Prepare release" commit, so checking out the tag and rebuilding now reproduces the actually-released source state (which still references the previously-published versions). `[skip ci]` is required on the dogfood commit because the new packages are usually not yet published at push time.
 
 ### Bugs fixed in this release
 
 ### Known problems introduced by this release
+
+- When a release introduces no other file changes (typically a prerelease with no version-spec change and no changelog or public-API updates), the "Prepare release" commit is empty. The major public Git hosts accept empty commits, but self-hosted setups with custom `pre-receive` hooks may reject them. If this affects you, either allow empty commits, or set `updateChangelogOnPrerelease` to `true` so prerelease runs always have a non-empty release commit. If neither option is acceptable for your workflow, please open an issue.
 
 ## [1.1.10](https://github.com/Tenacom/Buildvanareleases/tag/1.1.10) (2026-04-27)
 

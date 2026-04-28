@@ -92,6 +92,11 @@ public sealed class GitService : IDisposable
     /// </remarks>
     public GitCredentials? PushCredentialsFallback { get; set; }
 
+    /// <summary>
+    /// Gets the SHA of the current <c>HEAD</c> commit.
+    /// </summary>
+    public string HeadSha => _repository.Head.Tip.Sha;
+
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose() => _repository.Dispose();
 
@@ -178,11 +183,12 @@ public sealed class GitService : IDisposable
     /// </summary>
     /// <param name="message">The commit message.</param>
     /// <param name="amend">If <see langword="true"/>, amends last commit instead of creating a new commit.</param>
-    public void Commit(string message, bool amend = false)
+    /// <param name="allowEmpty">If <see langword="true"/>, allows creating (or amending into) an empty commit.</param>
+    public void Commit(string message, bool amend = false, bool allowEmpty = false)
     {
         var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
         _context.Ensure(signature is not null, "Git: committer identity not set.");
-        var options = new CommitOptions() { AmendPreviousCommit = amend };
+        var options = new CommitOptions() { AmendPreviousCommit = amend, AllowEmptyCommit = allowEmpty };
         _ = _repository.Commit(message, signature, signature, options);
     }
 

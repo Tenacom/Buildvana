@@ -80,7 +80,7 @@ internal sealed class GitHubServerRelease : ServerRelease
             _context.Information("Asset upload skipped: no release assets defined.");
         }
 
-        await _server.PublishReleaseAsync(_gitHubRelease).ConfigureAwait(false);
+        await _server.PublishReleaseAsync(_gitHubRelease, ReleaseCommitSha).ConfigureAwait(false);
     }
 
     protected override async Task UndoPublishAsync()

@@ -28,6 +28,8 @@ public abstract partial class ServerRelease : IAsyncDisposable
 
     private bool _published;
     private bool _repositoryUpdated;
+    private string _releaseCommitSha = string.Empty;
+    private int _postReleaseCommits;
     private bool _updatesPushed;
 
     private protected ServerRelease(IServiceProvider services)
@@ -41,6 +43,71 @@ public abstract partial class ServerRelease : IAsyncDisposable
 
     public bool IsDisposed { get; private set; }
 
+    /// <summary>
+    /// Gets the SHA of the "Prepare release" commit, once it has been created.
+    /// </summary>
+    /// <remarks>
+    /// <para>This is the commit the release tag should point to, regardless of any post-release commits
+    /// (e.g. self-reference dogfooding) that may be pushed on top of it.</para>
+    /// <para>Returns the empty string before <see cref="EnsureReleaseCommit"/> (or any method that calls it,
+    /// such as <see cref="UpdateRepository"/>) has run.</para>
+    /// </remarks>
+    protected string ReleaseCommitSha => _releaseCommitSha;
+
+    /// <summary>
+    /// Ensures that a "Prepare release" commit exists, creating an empty one if necessary.
+    /// </summary>
+    /// <remarks>
+    /// <para>The first call creates an empty commit, refreshes version information from the new Git height,
+    /// then amends the commit with the final version-bearing message and captures its SHA into
+    /// <see cref="ReleaseCommitSha"/>. Subsequent calls are no-ops.</para>
+    /// <para><see cref="UpdateRepository"/> calls this implicitly; callers only need to invoke it directly
+    /// when they want to guarantee a release commit exists without staging any file.</para>
+    /// </remarks>
+    public void EnsureReleaseCommit()
+    {
+        EnsurePending();
+
+        if (_updatesPushed)
+        {
+            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot create the release commit when updates have already been pushed.");
+        }
+
+        if (_repositoryUpdated)
+        {
+            return;
+        }
+
+        _context.Information("Creating release commit...");
+        _git.Commit("Prepare release [skip ci]", allowEmpty: true);
+
+        // Git height has changed
+        _version.Update();
+        _context.Information($"Version changed to {_version.CurrentStr}");
+        _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
+        _repositoryUpdated = true;
+        _releaseCommitSha = _git.HeadSha;
+
+        OnRollback(() =>
+        {
+            // This lambda rolls back the release commit, any post-release commits added on top,
+            // and (if appropriate) the push that carried them to the remote.
+            var commitsToUndo = 1 + _postReleaseCommits;
+            for (var i = 0; i < commitsToUndo; i++)
+            {
+                _git.UndoLastCommit();
+            }
+
+            // If updates have already been pushed...
+            if (_updatesPushed)
+            {
+                // "Undo" the push by force pushing the previous commit
+                // (to which we have just reset).
+                _git.Push(force: true);
+            }
+        });
+    }
+
     public void UpdateRepository(params FilePath[] files)
     {
         Guard.IsNotNull(files);
@@ -51,41 +118,52 @@ public abstract partial class ServerRelease : IAsyncDisposable
             ThrowHelper.ThrowInvalidOperationException("Internal error: cannot update repository when updates have already been pushed.");
         }
 
+        if (_postReleaseCommits > 0)
+        {
+            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot update the release commit after a post-release commit has been added.");
+        }
+
+        EnsureReleaseCommit();
+
         _git.Stage(files);
+        _context.Information("Amending release commit...");
+        _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
+        _releaseCommitSha = _git.HeadSha;
+    }
 
-        // If this was the first call to this method, the commit changed the Git height;
-        // update version information and amend the commit adding the correct version.
-        // Amending a commit does not further change the Git height.
-        if (_repositoryUpdated)
+    /// <summary>
+    /// Adds a separate commit on top of the release commit, e.g. for post-release dogfooding updates
+    /// whose contents reference the just-published version and therefore must not be part of the tagged commit.
+    /// </summary>
+    /// <param name="message">The commit message. Should include <c>[skip ci]</c> if the new commit's state
+    /// is not yet buildable on the branch tip (for example, because it references packages that haven't
+    /// been published to the feed yet).</param>
+    /// <param name="files">The paths of the files to stage into the new commit.</param>
+    /// <remarks>
+    /// If no release commit has been created yet, this method calls <see cref="EnsureReleaseCommit"/>
+    /// first, so the post-release commit always sits on top of a tagged release commit (possibly empty).
+    /// </remarks>
+    public void AddPostReleaseCommit(string message, params FilePath[] files)
+    {
+        Guard.IsNotNullOrEmpty(message);
+        Guard.IsNotNull(files);
+        EnsurePending();
+
+        if (_updatesPushed)
         {
-            _context.Information("Amending commit...");
-            _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", true);
+            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot add a post-release commit when updates have already been pushed.");
         }
-        else
-        {
-            _context.Information("Committing changed files...");
-            _git.Commit("Prepare release [skip ci]");
 
-            // Git height has changed
-            _version.Update();
-            _context.Information($"Version changed to {_version.CurrentStr}");
-            _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", true);
-            _repositoryUpdated = true;
-            OnRollback(() =>
-            {
-                // This lambda rolls back both UpdateRepository and (if appropriate) PushUpdates.
-                // First, "undo" the commit by resetting the local repository.
-                _git.UndoLastCommit();
+        EnsureReleaseCommit();
 
-                // If updates have already been pushed...
-                if (_updatesPushed)
-                {
-                    // "Undo" the push by force pushing the previous commit
-                    // (to which we have just reset).
-                    _git.Push(force: true);
-                }
-            });
-        }
+        _git.Stage(files);
+        _context.Information("Committing post-release changed files...");
+        _git.Commit(message);
+        _postReleaseCommits++;
+
+        // No rollback registered here on purpose: the rollback installed by EnsureReleaseCommit
+        // walks back 1 + _postReleaseCommits commits, so post-release commits are covered by
+        // a single, ordered rollback rather than per-commit rollbacks popped LIFO.
     }
 
     public void PushUpdates()
@@ -101,9 +179,9 @@ public abstract partial class ServerRelease : IAsyncDisposable
         _git.Push();
         _updatesPushed = true;
 
-        // The rollback action is defined in UpdateRepository, because
+        // The rollback action is defined in EnsureReleaseCommit, because
         // commit and push can't be undone in reverse order (as rollback actions are processed):
-        // first we need to undo the commit (a.k.a. reset), then force push to "undo" the push.
+        // first we need to undo the commits (a.k.a. reset), then force push to "undo" the push.
     }
 
     public void AddAsset(FilePath path, string? description = null, string? mimeType = null)

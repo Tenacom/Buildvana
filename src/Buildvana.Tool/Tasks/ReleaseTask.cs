@@ -175,7 +175,10 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
 
             // Update in-tree references to packages produced by this release (dogfooding).
             // Must happen after pack (so the produced .nupkg files exist and the build ran against the
-            // previously-published versions) and before push (so the rewrites land in the Prepare release commit).
+            // previously-published versions) and before push (so the rewrites travel with the release commit).
+            // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
+            // state (which still references the previously-published versions); the dogfood commit is marked
+            // [skip ci] because the new packages aren't in the feed yet at push time.
             if (options.GetOption("updateSelfReferences", true))
             {
                 var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences();
@@ -187,7 +190,9 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
 
                 if (selfReferenceUpdates.Count > 0)
                 {
-                    release.UpdateRepository([..selfReferenceUpdates]);
+                    release.AddPostReleaseCommit(
+                        $"Update self-references to {version.CurrentStr} [skip ci]",
+                        [..selfReferenceUpdates]);
                 }
             }
             else

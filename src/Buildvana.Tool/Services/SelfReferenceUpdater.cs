@@ -62,8 +62,8 @@ public sealed class SelfReferenceUpdater
     /// Rewrites in-tree references to packages produced by the current build.
     /// </summary>
     /// <returns>The list of files that were actually modified. Pass this to
-    /// <see cref="ServerAdapters.ServerRelease.UpdateRepository(FilePath[])"/> to stage them
-    /// into the "Prepare release" commit.</returns>
+    /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, FilePath[])"/> to commit them
+    /// into a separate post-release commit on top of the "Prepare release" commit.</returns>
     public IReadOnlyList<FilePath> UpdateReferences()
     {
         var produced = DiscoverProducedPackages();
