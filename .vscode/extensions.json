@@ -3,13 +3,17 @@
   // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
   // List of extensions which should be recommended for users of this workspace.
   "recommendations": [
-    "bierner.github-markdown-preview",
     "editorconfig.editorconfig",
     "ms-dotnettools.csharp",
     "redhat.vscode-xml",
     "redhat.vscode-yaml",
     "tintoy.msbuild-project-tools",
-    "yzhang.markdown-all-in-one"
+    "yzhang.markdown-all-in-one",
+    "bierner.github-markdown-preview",
+    "davidanson.vscode-markdownlint",
+    "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+    "darkriszty.markdown-table-prettify",
+    "takumii.markdowntable"
   ],
   // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
   "unwantedRecommendations": []
