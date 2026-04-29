@@ -10,6 +10,7 @@
     <File Path="NuGet.config" />
     <File Path="stylecop.json" />
     <File Path="version.json" />
+    <File Path="Buildvana.slnx.DotSettings" />
   </Folder>
   <Folder Name="/- Dependencies/">
     <File Path=".config/dotnet-tools.json" />
