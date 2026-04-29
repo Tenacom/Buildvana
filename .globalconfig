@@ -248,3 +248,9 @@ dotnet_diagnostic.IDE0079.severity = none # Remove unnecessary suppression - app
 dotnet_diagnostic.IDE0290.severity = none # Use primary constructor - No. Just no.
 
 # Solution-specific overrides
+
+# This project generates no library packages; still, public types are used via reflection and/or DI, so "unused" public types are not a concern.
+resharper_class_never_instantiated_global_highlighting = none
+
+# Some methods are unused but present for completeness and/or future use; "unused" members are not a concern.
+resharper_unused_member_global_highlighting = none
