@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Buildvana.Core;
-using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;

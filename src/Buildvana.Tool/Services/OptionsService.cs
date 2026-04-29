@@ -93,7 +93,7 @@ public sealed partial class OptionsService
             ? ConvertOptionValue<T>(stringValue)
             : _host.Fail<T>($"Option {name} / environment variable {OptionNameToEnvironmentVariableName(name)} not found or empty.");
 
-    [GeneratedRegex(@"([A-Z]+)([A-Z][a-z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    [GeneratedRegex("([A-Z]+)([A-Z][a-z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex GetUnderscoreCasingRegex1();
 
     [GeneratedRegex("([a-z0-9])([A-Z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]

@@ -164,7 +164,7 @@ public sealed partial class ChangelogService
 
                         if (subSectionHeadingRegex.IsMatch(line))
                         {
-                            subSections.Add((line, new List<string>()));
+                            subSections.Add((line, []));
                             ++subSectionIndex;
                             break;
                         }

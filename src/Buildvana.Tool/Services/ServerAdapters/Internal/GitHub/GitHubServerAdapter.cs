@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Utilities;
 using Cake.Common;
 using Cake.Core;
 using Cake.Core.IO;
