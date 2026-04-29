@@ -36,7 +36,7 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
 
         using var cert = LoadCertificate(PfxPath, PfxPassword);
         var keyBytes = ExtractPrivateKey(cert, PfxPath);
-        SaveBytes(OutputPath, keyBytes!);
+        SaveBytes(OutputPath, keyBytes);
         return Undefined.Value;
     }
 
