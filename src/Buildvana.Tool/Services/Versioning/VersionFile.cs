@@ -56,7 +56,7 @@ public sealed class VersionFile
         Guard.IsNotNull(context);
         Guard.IsNotNull(host);
 
-        var path = new FilePath(VersionJsonPath);
+        var path = new FilePath(VersionJsonPath).MakeAbsolute(context.Environment);
         var json = host.LoadJsonObject(path);
         var versionStr = host.GetJsonPropertyValue<string>(json, VersionPropertyName, path + " file");
         host.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
