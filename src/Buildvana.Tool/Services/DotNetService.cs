@@ -126,7 +126,7 @@ public sealed class DotNetService
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
     public void TestSolution(bool restore, bool build)
     {
-        _host.LogInformation($"Checking for MTP test projects...");
+        _host.LogInformation("Checking for MTP test projects...");
         var hasTestProjects = false;
         foreach (var project in Solution.Projects.Where(p => !(p is SolutionFolder)))
         {
