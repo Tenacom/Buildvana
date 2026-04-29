@@ -72,7 +72,9 @@
     "**/_ReSharper.Caches": true
   },
   // Configure file associations to languages (e.g. "*.extension": "html"). These have precedence over the default associations of the languages installed.
-  "files.associations": {},
+  "files.associations": {
+    ".globalconfig": "editorconfig"
+  },
   // The default character set encoding to use when reading and writing files.
   "files.encoding": "utf8",
   // When enabled, will attempt to guess the character set encoding when opening files
