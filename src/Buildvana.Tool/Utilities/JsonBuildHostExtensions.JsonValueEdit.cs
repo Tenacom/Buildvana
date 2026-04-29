@@ -3,7 +3,7 @@
 
 namespace Buildvana.Tool.Utilities;
 
-partial class CakeContextExtensions
+partial class JsonBuildHostExtensions
 {
     private readonly record struct JsonValueEdit(int Start, int Length, byte[] Replacement);
 }

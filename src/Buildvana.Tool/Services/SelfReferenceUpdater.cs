@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using Buildvana.Core;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
-using Cake.Common.Diagnostics;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
@@ -38,16 +38,19 @@ namespace Buildvana.Tool.Services;
 public sealed class SelfReferenceUpdater
 {
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly DotNetService _dotnet;
     private readonly VersionService _version;
     private readonly (string RelativePath, Func<FilePath, Dictionary<string, string>, bool> Update)[] _targets;
 
-    public SelfReferenceUpdater(ICakeContext context, DotNetService dotnet, VersionService version)
+    public SelfReferenceUpdater(ICakeContext context, IBuildHost host, DotNetService dotnet, VersionService version)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
         Guard.IsNotNull(dotnet);
         Guard.IsNotNull(version);
         _context = context;
+        _host = host;
         _dotnet = dotnet;
         _version = version;
         _targets =
@@ -69,11 +72,11 @@ public sealed class SelfReferenceUpdater
         var produced = DiscoverProducedPackages();
         if (produced.Count == 0)
         {
-            _context.Information("Self-reference update: no produced packages were found in the artifacts directory.");
+            _host.LogInformation("Self-reference update: no produced packages were found in the artifacts directory.");
             return [];
         }
 
-        _context.Information($"Self-reference update: {produced.Count} produced package(s) detected: {string.Join(", ", produced.Keys)}.");
+        _host.LogInformation($"Self-reference update: {produced.Count} produced package(s) detected: {string.Join(", ", produced.Keys)}.");
 
         var modified = new List<FilePath>();
         foreach (var (relativePath, update) in _targets)
@@ -88,7 +91,7 @@ public sealed class SelfReferenceUpdater
 
             if (update(path, produced))
             {
-                _context.Information($"Self-reference update: rewrote {relativePath}.");
+                _host.LogInformation($"Self-reference update: rewrote {relativePath}.");
                 modified.Add(path);
             }
         }
@@ -112,7 +115,7 @@ public sealed class SelfReferenceUpdater
             var fileName = SysPath.GetFileName(path);
             if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
             {
-                _context.Verbose($"Self-reference update: skipping '{fileName}' (version does not match '{version}').");
+                _host.LogDebug($"Self-reference update: skipping '{fileName}' (version does not match '{version}').");
                 continue;
             }
 
@@ -130,7 +133,7 @@ public sealed class SelfReferenceUpdater
         // The expected location of each version string differs by container shape:
         //   - versionPropertyName == null → at depth 2 with path [container, packageId];
         //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
-        return _context.RewriteJsonStringValues(path, (propertyPath, currentValue) =>
+        return _host.RewriteJsonStringValues(path, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
             {
@@ -243,7 +246,7 @@ public sealed class SelfReferenceUpdater
         // Don't rewrite property references like $(SomeVersion) — they'd silently lose their indirection.
         if (existing.Contains("$(", StringComparison.Ordinal))
         {
-            _context.Verbose($"Self-reference update: leaving property-reference version '{existing}' on package '{id}' unchanged.");
+            _host.LogDebug($"Self-reference update: leaving property-reference version '{existing}' on package '{id}' unchanged.");
             return false;
         }
 

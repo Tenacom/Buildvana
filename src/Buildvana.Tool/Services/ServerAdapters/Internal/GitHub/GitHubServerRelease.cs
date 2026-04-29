@@ -4,10 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Common.Diagnostics;
-using Cake.Core;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Octokit;
@@ -22,9 +21,8 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 internal sealed class GitHubServerRelease : ServerRelease
 {
     private readonly GitHubServerAdapter _server;
-    private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly VersionService _version;
-    private readonly GitService _git;
     private readonly Release _gitHubRelease;
 
     private bool _gitHubReleaseDeleted;
@@ -37,9 +35,8 @@ internal sealed class GitHubServerRelease : ServerRelease
         Guard.IsNotNull(gitHubRelease);
 
         _server = server;
-        _context = services.GetRequiredService<ICakeContext>();
+        _host = services.GetRequiredService<IBuildHost>();
         _version = services.GetRequiredService<VersionService>();
-        _git = services.GetRequiredService<GitService>();
         _gitHubRelease = gitHubRelease;
 
         OnRollback(async () =>
@@ -71,13 +68,13 @@ internal sealed class GitHubServerRelease : ServerRelease
             foreach (var asset in assets)
             {
                 i++;
-                _context.Information($"Uploading asset {i} of {assetCount}: {SysPath.GetFileName(asset.Path)} ({asset.Description})...");
+                _host.LogInformation($"Uploading asset {i} of {assetCount}: {SysPath.GetFileName(asset.Path)} ({asset.Description})...");
                 await _server.UploadReleaseAssetAsync(_gitHubRelease, asset.Path, asset.MimeType, asset.Description).ConfigureAwait(false);
             }
         }
         else
         {
-            _context.Information("Asset upload skipped: no release assets defined.");
+            _host.LogInformation("Asset upload skipped: no release assets defined.");
         }
 
         await _server.PublishReleaseAsync(_gitHubRelease, ReleaseCommitSha).ConfigureAwait(false);

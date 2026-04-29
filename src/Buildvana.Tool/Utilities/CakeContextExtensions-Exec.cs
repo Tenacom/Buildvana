@@ -24,7 +24,11 @@ partial class CakeContextExtensions
         Guard.IsNotNull(arguments);
 
         var exitCode = @this.Exec(command, arguments, out var output);
-        @this.Ensure(exitCode == 0, $"'{command} {arguments.RenderSafe()}' exited with code {exitCode}.");
+        if (exitCode != 0)
+        {
+            throw new CakeException($"'{command} {arguments.RenderSafe()}' exited with code {exitCode}.");
+        }
+
         return output;
     }
 

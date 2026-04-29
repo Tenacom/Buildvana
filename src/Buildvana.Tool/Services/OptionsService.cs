@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Buildvana.Tool.Utilities;
+using Buildvana.Core;
 using Cake.Core;
 using CommunityToolkit.Diagnostics;
 
@@ -20,12 +20,15 @@ public sealed partial class OptionsService
     private static readonly Regex UnderscoreCasingRegex3 = GetUnderscoreCasingRegex3();
 
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly Dictionary<string, string> _options = [];
 
-    public OptionsService(ICakeContext context)
+    public OptionsService(ICakeContext context, IBuildHost host)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
         _context = context;
+        _host = host;
     }
 
     /// <summary>
@@ -88,7 +91,7 @@ public sealed partial class OptionsService
         where T : notnull
         => TryGetOptionString(name, out var stringValue)
             ? ConvertOptionValue<T>(stringValue)
-            : _context.Fail<T>($"Option {name} / environment variable {OptionNameToEnvironmentVariableName(name)} not found or empty.");
+            : _host.Fail<T>($"Option {name} / environment variable {OptionNameToEnvironmentVariableName(name)} not found or empty.");
 
     [GeneratedRegex(@"([A-Z]+)([A-Z][a-z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex GetUnderscoreCasingRegex1();

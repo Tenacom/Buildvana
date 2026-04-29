@@ -4,11 +4,11 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using Cake.Common;
-using Cake.Common.Diagnostics;
 using Cake.Core;
 using Cake.Core.IO;
 using Cake.Http;
@@ -28,6 +28,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 {
     private readonly IServiceProvider _services;
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly VersionService _version;
     private readonly GitService _git;
 
@@ -37,10 +38,11 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         _services = services;
         _context = services.GetRequiredService<ICakeContext>();
+        _host = services.GetRequiredService<IBuildHost>();
         _version = services.GetRequiredService<VersionService>();
         _git = services.GetRequiredService<GitService>();
-        _context.Ensure(GitUrlInfo.TryCreate(_git.OriginUrl, out var originInfo), $"Couldn't get information from origin URL '{_git.OriginUrl}'.");
-        _context.Ensure(originInfo.PathSegments.Count == 2, $"'{originInfo.Url}' is not a valid GitHub repository URL.");
+        _host.Ensure(GitUrlInfo.TryCreate(_git.OriginUrl, out var originInfo), $"Couldn't get information from origin URL '{_git.OriginUrl}'.");
+        _host.Ensure(originInfo.PathSegments.Count == 2, $"'{originInfo.Url}' is not a valid GitHub repository URL.");
         HostName = originInfo.Host;
         RepositoryOwner = originInfo.PathSegments[0];
         RepositoryName = originInfo.PathSegments[1];
@@ -94,7 +96,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <inheritdoc/>
     public override async Task<bool> IsPrivateRepositoryAsync()
     {
-        _context.Information("Fetching repository information...");
+        _host.LogInformation("Fetching repository information...");
         var client = CreateGitHubClient();
         var repository = await client.Repository.Get(RepositoryOwner, RepositoryName).ConfigureAwait(false);
         return repository.Private;
@@ -134,7 +136,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
                 // Create the release as a draft first, so if the token has no permissions we can bail out early
                 var tag = _version.CurrentStr;
                 var client = CreateGitHubClient();
-                _context.Information("Creating a provisional draft release...");
+                _host.LogInformation("Creating a provisional draft release...");
                 var newRelease = new NewRelease(tag)
                 {
                     Name = $"{tag} [provisional]",
@@ -160,7 +162,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         Guard.IsNotNullOrEmpty(targetCommitish);
         var tag = _version.CurrentStr;
         var client = CreateGitHubClient();
-        _context.Information($"Generating release notes for {tag}...");
+        _host.LogInformation($"Generating release notes for {tag}...");
         var releaseNotesRequest = new GenerateReleaseNotesRequest(tag)
         {
             TargetCommitish = targetCommitish,
@@ -170,7 +172,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.MainBranch)}).\n\n---\n\n"
                 + generateNotesResponse.Body;
 
-        _context.Information($"Publishing the previously created release as {tag} (target {targetCommitish})...");
+        _host.LogInformation($"Publishing the previously created release as {tag} (target {targetCommitish})...");
         var update = release.ToUpdate();
         update.TagName = tag;
         update.Name = tag;
@@ -191,7 +193,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public async Task DeleteReleaseAsync(Release release, string? tagName)
     {
         Guard.IsNotNull(release);
-        _context.Information("Deleting the previously created release...");
+        _host.LogInformation("Deleting the previously created release...");
         var client = CreateGitHubClient();
         await client.Repository.Release.Delete(RepositoryOwner, RepositoryName, release.Id).ConfigureAwait(false);
         if (string.IsNullOrEmpty(tagName))
@@ -200,18 +202,18 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         }
 
         var reference = "refs/tags/" + tagName;
-        _context.Information($"Looking for reference '{reference}' in GitHub repository...");
+        _host.LogInformation($"Looking for reference '{reference}' in GitHub repository...");
         try
         {
             _ = await client.Git.Reference.Get(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
         }
         catch (NotFoundException)
         {
-            _context.Information($"Reference '{reference}' not found in GitHub repository.");
+            _host.LogInformation($"Reference '{reference}' not found in GitHub repository.");
             return;
         }
 
-        _context.Information($"Deleting reference '{reference}' in GitHub repository...");
+        _host.LogInformation($"Deleting reference '{reference}' in GitHub repository...");
         await client.Git.Reference.Delete(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
     }
 
@@ -226,7 +228,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         Guard.IsNotNullOrEmpty(filename);
         Guard.IsNotNullOrEmpty(reference);
-        _context.Information($"Dispatching workflow '{filename}' on '{reference}'...");
+        _host.LogInformation($"Dispatching workflow '{filename}' on '{reference}'...");
         object requestBody = inputs is null
             ? new { @ref = reference }
             : new { @ref = reference, inputs };
@@ -254,7 +256,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public async Task UploadReleaseAssetAsync(Release release, string path, string mimeType, string description)
     {
         var client = CreateGitHubClient();
-        _context.Verbose($"Uploading asset {path}...");
+        _host.LogDebug($"Uploading asset {path}...");
         ReleaseAsset asset;
         var assetContents = SysFile.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
@@ -271,14 +273,14 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 
         if (!string.IsNullOrEmpty(description))
         {
-            _context.Verbose("Updating asset label...");
+            _host.LogDebug("Updating asset label...");
             var update = asset.ToUpdate();
             update.Label = description;
             _ = await client.Repository.Release.EditAsset(RepositoryOwner, RepositoryName, asset.Id, update).ConfigureAwait(false);
         }
         else
         {
-            _context.Verbose("Skipping label update: asset has no description.");
+            _host.LogDebug("Skipping label update: asset has no description.");
         }
     }
 
@@ -290,7 +292,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public void SetActionsStepOutput(string name, string value)
     {
         var outputFile = _context.EnvironmentVariable("GITHUB_OUTPUT");
-        _context.Ensure(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
+        _host.Ensure(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
         SysFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
     }
 
