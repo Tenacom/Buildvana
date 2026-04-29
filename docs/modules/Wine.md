@@ -286,4 +286,4 @@ Here's how we can support running _ExeMangler_ through Wine when building on Lin
 </Target>
 ```
 
-For a more convoluted example, you can take a look at [how Buildvana SDK invokes Inno Setup's compiler](https://github.com/Tenacom/Buildvana.Sdk/blob/main/src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets).
+For a more convoluted example, you can take a look at [how Buildvana SDK invokes Inno Setup's compiler](https://github.com/Tenacom/Buildvana/blob/main/src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets).
