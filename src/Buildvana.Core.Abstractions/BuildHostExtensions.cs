@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Buildvana.Core;
 
@@ -74,4 +75,56 @@ public static class BuildHostExtensions
     /// <param name="host">The build host.</param>
     /// <param name="message">The message to log.</param>
     public static void LogError(this IBuildHost host, string message) => host.Log(LogLevel.Error, message);
+
+    /// <summary>
+    /// <para>Fails the build because an unsupported method has been called.</para>
+    /// <para>This method does not return.</para>
+    /// </summary>
+    /// <param name="host">The build host.</param>
+    /// <param name="methodName">The name of the unsupported method. This parameter defaults to the name of the calling method.</param>
+    /// <param name="sourceFilePath">The path of the source file where the unsupported method is called. This parameter defaults to the caller's file path.</param>
+    /// <param name="sourceLineNumber">The line number in the source file where the unsupported method is called. This parameter defaults to the caller's line number.</param>
+    [DoesNotReturn]
+    public static void FailOnUnsupportedMethod(this IBuildHost host, [CallerMemberName] string methodName = "", [CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
+        => host.Fail($"Unsupported method {methodName} in {sourceFilePath} ({sourceLineNumber})");
+
+    /// <summary>
+    /// <para>Fails the build because an unsupported method has been called.</para>
+    /// <para>This method does not return.</para>
+    /// </summary>
+    /// <typeparam name="T">The expected return type.</typeparam>
+    /// <param name="host">The build host.</param>
+    /// <param name="methodName">The name of the unsupported method. This parameter defaults to the name of the calling method.</param>
+    /// <param name="sourceFilePath">The path of the source file where the unsupported method is called. This parameter defaults to the caller's file path.</param>
+    /// <param name="sourceLineNumber">The line number in the source file where the unsupported method is called. This parameter defaults to the caller's line number.</param>
+    /// <returns>This method never returns.</returns>
+    [DoesNotReturn]
+    public static T FailOnUnsupportedMethod<T>(this IBuildHost host, [CallerMemberName] string methodName = "", [CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
+        => host.Fail<T>($"Unsupported method {methodName} in {sourceFilePath} ({sourceLineNumber})");
+
+    /// <summary>
+    /// <para>Fails the build because an unsupported property setter has been called.</para>
+    /// <para>This method does not return.</para>
+    /// </summary>
+    /// <param name="host">The build host.</param>
+    /// <param name="propertyName">The name of the unsupported property. This parameter defaults to the name of the calling property (or method).</param>
+    /// <param name="sourceFilePath">The path of the source file where the unsupported property is accessed. This parameter defaults to the caller's file path.</param>
+    /// <param name="sourceLineNumber">The line number in the source file where the unsupported property is accessed. This parameter defaults to the caller's line number.</param>
+    [DoesNotReturn]
+    public static void FailOnUnsupportedProperty(this IBuildHost host, [CallerMemberName] string propertyName = "", [CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
+        => host.Fail($"Unsupported property {propertyName} in {sourceFilePath} ({sourceLineNumber})");
+
+    /// <summary>
+    /// <para>Fails the build because an unsupported property getter has been called.</para>
+    /// <para>This method does not return.</para>
+    /// </summary>
+    /// <typeparam name="T">The expected return type.</typeparam>
+    /// <param name="host">The build host.</param>
+    /// <param name="propertyName">The name of the unsupported property. This parameter defaults to the name of the calling property (or method).</param>
+    /// <param name="sourceFilePath">The path of the source file where the unsupported property is accessed. This parameter defaults to the caller's file path.</param>
+    /// <param name="sourceLineNumber">The line number in the source file where the unsupported property is accessed. This parameter defaults to the caller's line number.</param>
+    /// <returns>This method never returns.</returns>
+    [DoesNotReturn]
+    public static T FailOnUnsupportedProperty<T>(this IBuildHost host, [CallerMemberName] string propertyName = "", [CallerFilePath] string sourceFilePath = "", [CallerLineNumber] int sourceLineNumber = 0)
+        => host.Fail<T>($"Unsupported property {propertyName} in {sourceFilePath} ({sourceLineNumber})");
 }

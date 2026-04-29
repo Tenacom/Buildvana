@@ -7,23 +7,26 @@ using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Cake.Core;
+using Buildvana.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using SysFile = System.IO.File;
 
 namespace Buildvana.Tool.Utilities;
 
-partial class CakeContextExtensions
+/// <summary>
+/// Provides JSON-related helpers that fail the build through an <see cref="IBuildHost"/> on parse or I/O errors.
+/// </summary>
+public static partial class JsonBuildHostExtensions
 {
     /// <summary>
     /// Parses a JSON object from a string. Fails the build if not successful.
     /// </summary>
-    /// <param name="this">The Cake context.</param>
+    /// <param name="this">The build host.</param>
     /// <param name="str">The string to parse.</param>
     /// <param name="description">A description of the string for exception messages.</param>
     /// <returns>The parsed object.</returns>
-    public static JsonObject ParseJsonObject(this ICakeContext @this, string str, string description = "The provided string")
+    public static JsonObject ParseJsonObject(this IBuildHost @this, string str, string description = "The provided string")
     {
         JsonNode? node;
         try
@@ -52,10 +55,10 @@ partial class CakeContextExtensions
     /// <summary>
     /// Loads a JSON object from a file. Fails the build if not successful.
     /// </summary>
-    /// <param name="this">The Cake context.</param>
+    /// <param name="this">The build host.</param>
     /// <param name="path">The path of the file to parse.</param>
     /// <returns>The parsed object.</returns>
-    public static JsonObject LoadJsonObject(this ICakeContext @this, FilePath path)
+    public static JsonObject LoadJsonObject(this IBuildHost @this, FilePath path)
     {
         Guard.IsNotNull(path);
 
@@ -92,10 +95,10 @@ partial class CakeContextExtensions
     /// <summary>
     /// Saves a JSON object to a file. Fails the build if not successful.
     /// </summary>
-    /// <param name="this">The Cake context.</param>
+    /// <param name="this">The build host.</param>
     /// <param name="json">The JSON object to save.</param>
     /// <param name="path">The path of the file to save <paramref name="json"/> to.</param>
-    public static void SaveJson(this ICakeContext @this, JsonNode json, FilePath path)
+    public static void SaveJson(this IBuildHost @this, JsonNode json, FilePath path)
     {
         Guard.IsNotNull(json);
         Guard.IsNotNull(path);
@@ -124,7 +127,7 @@ partial class CakeContextExtensions
     /// Rewrites the value of one or more JSON string properties in a file in place, preserving every byte
     /// not covered by an actual replacement.
     /// </summary>
-    /// <param name="this">The Cake context.</param>
+    /// <param name="this">The build host.</param>
     /// <param name="path">The path of the file to rewrite.</param>
     /// <param name="rewriter">A callback invoked once per string-valued property of an object reached during
     /// a depth-first walk of the document. Returning <see langword="null"/> (or the unchanged value) leaves
@@ -138,7 +141,7 @@ partial class CakeContextExtensions
     /// <para>Replacements are JSON-encoded with <see cref="JavaScriptEncoder.UnsafeRelaxedJsonEscaping"/>,
     /// matching the policy used by <see cref="SaveJson"/>.</para>
     /// </remarks>
-    public static bool RewriteJsonStringValues(this ICakeContext @this, FilePath path, JsonStringValueRewriter rewriter)
+    public static bool RewriteJsonStringValues(this IBuildHost @this, FilePath path, JsonStringValueRewriter rewriter)
     {
         Guard.IsNotNull(path);
         Guard.IsNotNull(rewriter);
@@ -207,12 +210,12 @@ partial class CakeContextExtensions
     /// Gets the value of a property from a JSON object. Fails the build if not successful.
     /// </summary>
     /// <typeparam name="T">The desired type of the property value.</typeparam>
-    /// <param name="this">The Cake context.</param>
+    /// <param name="this">The build host.</param>
     /// <param name="json">The JSON object.</param>
     /// <param name="propertyName">The name of the property to get.</param>
     /// <param name="objectDescription">A description of the object for exception messages.</param>
     /// <returns>The value of the specified property.</returns>
-    public static T GetJsonPropertyValue<T>(this ICakeContext @this, JsonObject json, string propertyName, string objectDescription = "JSON object")
+    public static T GetJsonPropertyValue<T>(this IBuildHost @this, JsonObject json, string propertyName, string objectDescription = "JSON object")
     {
         Guard.IsNotNull(json);
 

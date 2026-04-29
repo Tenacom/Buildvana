@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text.Json.Nodes;
+using Buildvana.Core;
 using Buildvana.Tool.Utilities;
 using Cake.Core;
 using Cake.Core.IO;
@@ -18,12 +19,12 @@ public sealed class VersionFile
     private const string VersionPropertyName = "version";
     private const string DefaultFirstUnstableTag = "preview";
 
-    private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
 
-    private VersionFile(ICakeContext context, FilePath path, VersionSpec versionSpec, string firstUnstableTag)
+    private VersionFile(ICakeContext context, IBuildHost host, FilePath path, VersionSpec versionSpec, string firstUnstableTag)
     {
-        _context = context;
-        Path = path.MakeAbsolute(_context.Environment);
+        _host = host;
+        Path = path.MakeAbsolute(context.Environment);
         VersionSpec = versionSpec;
         FirstUnstableTag = firstUnstableTag;
     }
@@ -48,15 +49,17 @@ public sealed class VersionFile
     /// Constructs a <see cref="VersionFile"/> instance by loading the repository's <c>version.json</c> file.
     /// </summary>
     /// <param name="context">The Cake context.</param>
+    /// <param name="host">The build host.</param>
     /// <returns>A newly-created <see cref="VersionFile"/>, representing the loaded data.</returns>
-    public static VersionFile Load(ICakeContext context)
+    public static VersionFile Load(ICakeContext context, IBuildHost host)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
 
         var path = new FilePath(VersionJsonPath);
-        var json = context.LoadJsonObject(path);
-        var versionStr = context.GetJsonPropertyValue<string>(json, VersionPropertyName, path + " file");
-        context.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
+        var json = host.LoadJsonObject(path);
+        var versionStr = host.GetJsonPropertyValue<string>(json, VersionPropertyName, path + " file");
+        host.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
         var firstUnstableTag = DefaultFirstUnstableTag;
         var release = json["release"];
         if (release is not null)
@@ -68,7 +71,7 @@ public sealed class VersionFile
             }
         }
 
-        return new(context, path, versionSpec, firstUnstableTag);
+        return new(context, host, path, versionSpec, firstUnstableTag);
     }
 
     /// <summary>
@@ -93,13 +96,13 @@ public sealed class VersionFile
     public void Save()
     {
         var newVersion = VersionSpec.ToString();
-        var rewritten = _context.RewriteJsonStringValues(
+        var rewritten = _host.RewriteJsonStringValues(
             Path,
             (propertyPath, _) => propertyPath is [VersionPropertyName] ? newVersion : null);
 
         // Load already validated that a top-level string "version" property exists, so a no-op here
         // means either the on-disk file changed underneath us or VersionSpec.ToString() produced the
         // same string the file already held — both cases would let the release flow stage stale data.
-        _context.Ensure(rewritten, $"Could not update {VersionJsonPath}: expected a top-level string '{VersionPropertyName}' property to rewrite.");
+        _host.Ensure(rewritten, $"Could not update {VersionJsonPath}: expected a top-level string '{VersionPropertyName}' property to rewrite.");
     }
 }

@@ -3,8 +3,8 @@
 
 using System;
 using System.Threading.Tasks;
+using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
-using Buildvana.Tool.Utilities;
 using Cake.Common;
 using Cake.Core;
 using Cake.Core.IO;
@@ -19,10 +19,12 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 internal sealed class GitLabServerAdapter : ServerAdapter
 {
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
 
     internal GitLabServerAdapter(IServiceProvider services)
     {
         _context = services.GetRequiredService<ICakeContext>();
+        _host = services.GetRequiredService<IBuildHost>();
         CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{_context.EnvironmentVariable("CI_SERVER_HOST")}");
     }
 
@@ -30,16 +32,16 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     public override string Name => "GitLab CI";
 
     /// <inheritdoc/>
-    public override string HostName => _context.FailOnUnsupportedProperty<string>();
+    public override string HostName => _host.FailOnUnsupportedProperty<string>();
 
     /// <inheritdoc/>
-    public override string RepositoryOwner => _context.FailOnUnsupportedProperty<string>();
+    public override string RepositoryOwner => _host.FailOnUnsupportedProperty<string>();
 
     /// <inheritdoc/>
-    public override string RepositoryName => _context.FailOnUnsupportedProperty<string>();
+    public override string RepositoryName => _host.FailOnUnsupportedProperty<string>();
 
     /// <inheritdoc/>
-    public override Uri RepositoryUrl => _context.FailOnUnsupportedProperty<Uri>();
+    public override Uri RepositoryUrl => _host.FailOnUnsupportedProperty<Uri>();
 
     /// <inheritdoc/>
     /// <value>Always <see langword="true"/>.</value>
@@ -72,22 +74,22 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     }
 
     /// <inheritdoc/>
-    public override Task<bool> IsPrivateRepositoryAsync() => _context.FailOnUnsupportedMethod<Task<bool>>();
+    public override Task<bool> IsPrivateRepositoryAsync() => _host.FailOnUnsupportedMethod<Task<bool>>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
     public override Uri GetReleaseUrl(string version)
-        => _context.FailOnUnsupportedMethod<Uri>();
+        => _host.FailOnUnsupportedMethod<Uri>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
     public override Uri GetFileUrl(FilePath path, string commitish)
-        => _context.FailOnUnsupportedMethod<Uri>();
+        => _host.FailOnUnsupportedMethod<Uri>();
 
     /// <inheritdoc/>
-    public override Task<ServerRelease> CreateReleaseAsync() => _context.FailOnUnsupportedMethod<Task<ServerRelease>>();
+    public override Task<ServerRelease> CreateReleaseAsync() => _host.FailOnUnsupportedMethod<Task<ServerRelease>>();
 }

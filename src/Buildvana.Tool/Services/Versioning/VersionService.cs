@@ -2,10 +2,10 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text;
+using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Utilities;
-using Cake.Common.Diagnostics;
 using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNet.Tool;
 using Cake.Core;
@@ -21,19 +21,20 @@ namespace Buildvana.Tool.Services.Versioning;
 public sealed class VersionService
 {
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly PublicApiFilesService _publicApiFiles;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VersionService"/> class.
     /// </summary>
-    /// <param name="context">The Cake context.</param>
-    /// <param name="publicApiFiles">The public API files management service.</param>
-    public VersionService(ICakeContext context, GitService git, PublicApiFilesService publicApiFiles)
+    public VersionService(ICakeContext context, IBuildHost host, GitService git, PublicApiFilesService publicApiFiles)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
         Guard.IsNotNull(git);
         Guard.IsNotNull(publicApiFiles);
         _context = context;
+        _host = host;
         _publicApiFiles = publicApiFiles;
         (CurrentStr, Current, IsPublicRelease, IsPrerelease) = GetVersionInformationFromNbgv();
         (Latest, LatestStable) = git.GetLatestVersions();
@@ -79,24 +80,24 @@ public sealed class VersionService
     /// for example by updating the changelog.</param>
     public void EnsureConsistency(bool isFinalCheck)
     {
-        _context.Ensure(
+        _host.Ensure(
             VersionComparer.Compare(Latest, LatestStable, VersionComparison.Version) >= 0,
             $"Versioning anomaly detected: latest version ({Latest?.ToString() ?? "none"}) is lower than latest stable version ({LatestStable?.ToString() ?? "none"}).");
         if (isFinalCheck)
         {
-            _context.Ensure(
+            _host.Ensure(
                 VersionComparer.Compare(Current, LatestStable, VersionComparison.Version) > 0,
                 $"Versioning anomaly detected: current version ({Current}) is not higher than latest stable version ({LatestStable?.ToString() ?? "none"}).");
-            _context.Ensure(
+            _host.Ensure(
                 VersionComparer.Compare(Current, Latest, VersionComparison.Version) > 0,
                 $"Versioning anomaly detected: current version ({Current}) is not higher than latest version ({Latest?.ToString() ?? "none"}).");
         }
         else
         {
-            _context.Ensure(
+            _host.Ensure(
                 VersionComparer.Compare(Current, LatestStable, VersionComparison.Version) >= 0,
                 $"Versioning anomaly detected: current version ({Current}) is lower than latest stable version ({LatestStable?.ToString() ?? "none"}).");
-            _context.Ensure(
+            _host.Ensure(
                 VersionComparer.Compare(Current, Latest, VersionComparison.Version) >= 0,
                 $"Versioning anomaly detected: current version ({Current}) is lower than latest version ({Latest?.ToString() ?? "none"}).");
         }
@@ -115,11 +116,11 @@ public sealed class VersionService
                                     : Current.Major > LatestStable.Major ? VersionIncrement.Major
                                     : Current.Minor > LatestStable.Minor ? VersionIncrement.Minor
                                     : VersionIncrement.None;
-        _context.Information($"Current version increment: {currentVersionIncrement}");
+        _host.LogInformation($"Current version increment: {currentVersionIncrement}");
 
         // Determine the kind of change in public API
         var publicApiChangeKind = checkPublicApiFiles ? _publicApiFiles.GetApiChangeKind() : ApiChangeKind.None;
-        _context.Information($"Public API change kind: {publicApiChangeKind}{(checkPublicApiFiles ? null : " (not checked)")}");
+        _host.LogInformation($"Public API change kind: {publicApiChangeKind}{(checkPublicApiFiles ? null : " (not checked)")}");
 
         // Determine the version increment required by SemVer rules
         // When the major version is 0, "anything MAY change" according to SemVer;
@@ -130,16 +131,16 @@ public sealed class VersionService
             ApiChangeKind.Additive => isMajorVersionZero ? VersionIncrement.None : VersionIncrement.Minor,
             _ => VersionIncrement.None,
         };
-        _context.Information($"Required version increment according to Semantic Versioning rules: {semanticVersionIncrement}");
+        _host.LogInformation($"Required version increment according to Semantic Versioning rules: {semanticVersionIncrement}");
 
         // Determine the requested version increment, if any.
-        _context.Information($"Requested version spec change: {requestedChange}");
+        _host.LogInformation($"Requested version spec change: {requestedChange}");
         var requestedVersionIncrement = requestedChange switch {
             VersionSpecChange.Major => VersionIncrement.Major,
             VersionSpecChange.Minor => VersionIncrement.Minor,
             _ => VersionIncrement.None,
         };
-        _context.Information($"Requested version increment: {requestedVersionIncrement}.");
+        _host.LogInformation($"Requested version increment: {requestedVersionIncrement}.");
 
         // Adjust requested version increment to follow SemVer rules
         if (semanticVersionIncrement > requestedVersionIncrement)
@@ -149,7 +150,7 @@ public sealed class VersionService
 
         // Determine the kind of version increment actually required
         var actualVersionIncrement = requestedVersionIncrement > currentVersionIncrement ? requestedVersionIncrement : VersionIncrement.None;
-        _context.Information($"Required version increment with respect to current version: {actualVersionIncrement}");
+        _host.LogInformation($"Required version increment with respect to current version: {actualVersionIncrement}");
 
         // Determine the actual version spec change to apply:
         //   - forget any increment-related change (already accounted for via requestedVersionIncrement)
@@ -163,7 +164,7 @@ public sealed class VersionService
             VersionIncrement.Minor => VersionSpecChange.Minor,
             _ => actualChange,
         };
-        _context.Information($"Actual version spec change: {actualChange}.");
+        _host.LogInformation($"Actual version spec change: {actualChange}.");
         return actualChange;
     }
 
@@ -193,12 +194,12 @@ public sealed class VersionService
                     }),
             });
 
-        var json = _context.ParseJsonObject(nbgvOutput.ToString(), "The output of nbgv");
-        var currentStr = _context.GetJsonPropertyValue<string>(json, "SemVer2", "the output of nbgv");
+        var json = _host.ParseJsonObject(nbgvOutput.ToString(), "The output of nbgv");
+        var currentStr = _host.GetJsonPropertyValue<string>(json, "SemVer2", "the output of nbgv");
         return (
             currentStr,
             SemanticVersion.Parse(currentStr),
-            _context.GetJsonPropertyValue<bool>(json, "PublicRelease", "the output of nbgv"),
-            !string.IsNullOrEmpty(_context.GetJsonPropertyValue<string>(json, "PrereleaseVersion", "the output of nbgv")));
+            _host.GetJsonPropertyValue<bool>(json, "PublicRelease", "the output of nbgv"),
+            !string.IsNullOrEmpty(_host.GetJsonPropertyValue<string>(json, "PrereleaseVersion", "the output of nbgv")));
     }
 }

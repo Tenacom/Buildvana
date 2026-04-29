@@ -11,9 +11,6 @@ using System.Text.RegularExpressions;
 using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Utilities;
-using Cake.Common.Diagnostics;
-using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 
@@ -31,7 +28,6 @@ public sealed partial class ChangelogService
     /// </summary>
     public const string FileName = "CHANGELOG.md";
 
-    private readonly ICakeContext _context;
     private readonly IBuildHost _host;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
@@ -39,13 +35,11 @@ public sealed partial class ChangelogService
     /// <summary>
     /// Initializes a new instance of the <see cref="ChangelogService"/> class.
     /// </summary>
-    public ChangelogService(ICakeContext context, IBuildHost host, ServerAdapter server, VersionService version)
+    public ChangelogService(IBuildHost host, ServerAdapter server, VersionService version)
     {
-        Guard.IsNotNull(context);
         Guard.IsNotNull(host);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
-        _context = context;
         _host = host;
         _server = server;
         _version = version;
@@ -114,7 +108,7 @@ public sealed partial class ChangelogService
     /// </summary>
     public void PrepareForRelease()
     {
-        _context.Information("Updating changelog...");
+        _host.LogInformation("Updating changelog...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
         using (var reader = new StreamReader(FullPath, encoding))
@@ -139,7 +133,7 @@ public sealed partial class ChangelogService
                 switch (state)
                 {
                     case readingFileHeader:
-                        _context.Ensure(line != null, $"{FileName} contains no sections.");
+                        _host.Ensure(line != null, $"{FileName} contains no sections.");
 
                         // Copy everything up to an including the first section heading (which we assume is "Unreleased changes")
                         writer.WriteLine(line);
@@ -244,7 +238,7 @@ public sealed partial class ChangelogService
     /// </summary>
     public void UpdateNewSectionTitle()
     {
-        _context.Information("Updating changelog's new release section title...");
+        _host.LogInformation("Updating changelog's new release section title...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
         using (var reader = new StreamReader(FullPath, encoding))
@@ -266,7 +260,7 @@ public sealed partial class ChangelogService
                 switch (state)
                 {
                     case readingFileHeader:
-                        _context.Ensure(line != null, $"{FileName} contains no sections.");
+                        _host.Ensure(line != null, $"{FileName} contains no sections.");
                         writer.WriteLine(line);
                         if (sectionHeadingRegex.IsMatch(line))
                         {
@@ -275,7 +269,7 @@ public sealed partial class ChangelogService
 
                         break;
                     case readingUnreleasedChangesSection:
-                        _context.Ensure(line != null, $"{FileName} contains only one section.");
+                        _host.Ensure(line != null, $"{FileName} contains only one section.");
                         if (sectionHeadingRegex.IsMatch(line))
                         {
                             // Replace header of second section

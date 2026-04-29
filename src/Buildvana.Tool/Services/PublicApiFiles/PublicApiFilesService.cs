@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Cake.Common.Diagnostics;
+using Buildvana.Core;
 using Cake.Common.IO;
 using Cake.Core;
 using Cake.Core.IO;
@@ -23,15 +23,17 @@ public sealed class PublicApiFilesService
     private const string RemovedPrefix = "*REMOVED*";
 
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicApiFilesService"/> class.
     /// </summary>
-    /// <param name="context">The _context context.</param>
-    public PublicApiFilesService(ICakeContext context)
+    public PublicApiFilesService(ICakeContext context, IBuildHost host)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
         _context = context;
+        _host = host;
     }
 
     /// <summary>
@@ -45,12 +47,12 @@ public sealed class PublicApiFilesService
     /// </returns>
     public ApiChangeKind GetApiChangeKind()
     {
-        _context.Information("Computing API change kind according to unshipped public API files...");
+        _host.LogInformation("Computing API change kind according to unshipped public API files...");
         var result = ApiChangeKind.None;
         foreach (var unshippedPath in GetAllPublicApiFilePairs().Select(pair => pair.UnshippedPath))
         {
             var fileResult = GetApiChangeKind(unshippedPath);
-            _context.Verbose($"{unshippedPath} -> {fileResult}");
+            _host.LogDebug($"{unshippedPath} -> {fileResult}");
             if (fileResult == ApiChangeKind.Breaking)
             {
                 return ApiChangeKind.Breaking;
@@ -71,10 +73,10 @@ public sealed class PublicApiFilesService
     /// <returns>An enumeration of the modified files.</returns>
     public IEnumerable<FilePath> TransferAllPublicApisToShipped()
     {
-        _context.Information("Updating public API files...");
+        _host.LogInformation("Updating public API files...");
         foreach (var (unshippedPath, shippedPath) in GetAllPublicApiFilePairs())
         {
-            _context.Verbose($"Updating {shippedPath}...");
+            _host.LogDebug($"Updating {shippedPath}...");
             if (!TransferPublicApisToShipped(unshippedPath, shippedPath))
             {
                 continue;

@@ -6,11 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Utilities;
 using Cake.Common;
-using Cake.Common.Diagnostics;
 using Cake.Common.IO;
 using Cake.Common.Solution;
 using Cake.Common.Tools.DotNet;
@@ -32,6 +31,7 @@ namespace Buildvana.Tool.Services;
 public sealed class DotNetService
 {
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly OptionsService _options;
     private readonly ServerAdapter _server;
     private readonly PathsService _paths;
@@ -41,15 +41,16 @@ public sealed class DotNetService
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
     /// </summary>
-    /// <param name="context">The _context context.</param>
-    public DotNetService(ICakeContext context, OptionsService options, ServerAdapter server, PathsService paths, VersionService version)
+    public DotNetService(ICakeContext context, IBuildHost host, OptionsService options, ServerAdapter server, PathsService paths, VersionService version)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
         Guard.IsNotNull(options);
         Guard.IsNotNull(server);
         Guard.IsNotNull(paths);
         Guard.IsNotNull(version);
         _context = context;
+        _host = host;
         _options = options;
         _server = server;
         _paths = paths;
@@ -62,7 +63,7 @@ public sealed class DotNetService
         };
         SolutionPath = context.GetFiles("*.slnx").FirstOrDefault()
             ?? context.GetFiles("*.sln").FirstOrDefault()
-            ?? context.Fail<FilePath>(255, "Cannot find a solution file.");
+            ?? host.Fail<FilePath>("Cannot find a solution file.");
         Solution = context.ParseSolution(SolutionPath);
         Configuration = context.Argument("configuration", "Release");
         ArtifactsPath = paths.AllArtifacts.Combine(Configuration);
@@ -93,7 +94,7 @@ public sealed class DotNetService
     /// </summary>
     public void RestoreSolution()
     {
-        _context.Information("Restoring NuGet packages for solution...");
+        _host.LogInformation("Restoring NuGet packages for solution...");
         _context.DotNetRestore(SolutionPath.FullPath, new()
         {
             MSBuildSettings = _msBuildSettings,
@@ -108,7 +109,7 @@ public sealed class DotNetService
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
     public void BuildSolution(bool restore)
     {
-        _context.Information($"Building solution (restore = {restore})...");
+        _host.LogInformation($"Building solution (restore = {restore})...");
         _context.DotNetBuild(SolutionPath.FullPath, new()
         {
             Configuration = Configuration,
@@ -125,11 +126,11 @@ public sealed class DotNetService
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
     public void TestSolution(bool restore, bool build)
     {
-        _context.Information($"Checking for MTP test projects...");
+        _host.LogInformation($"Checking for MTP test projects...");
         var hasTestProjects = false;
         foreach (var project in Solution.Projects.Where(p => !(p is SolutionFolder)))
         {
-            _context.Verbose($"Checking '{project.Path}'...");
+            _host.LogDebug($"Checking '{project.Path}'...");
             var sb = new StringBuilder();
             _context.DotNetMSBuild(
                 project.Path.FullPath,
@@ -150,7 +151,7 @@ public sealed class DotNetService
 
             if (string.Equals(sb.ToString().Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
-                _context.Verbose($"Project '{project.Path}' is a test project, will run tests.");
+                _host.LogDebug($"Project '{project.Path}' is a test project, will run tests.");
                 hasTestProjects = true;
                 break;
             }
@@ -158,11 +159,11 @@ public sealed class DotNetService
 
         if (!hasTestProjects)
         {
-            _context.Information("No test projects found, skipping tests.");
+            _host.LogInformation("No test projects found, skipping tests.");
             return;
         }
 
-        _context.Information($"Running tests (restore = {restore}, build = {build})...");
+        _host.LogInformation($"Running tests (restore = {restore}, build = {build})...");
         _context.DotNetTest(SolutionPath.FullPath, new()
         {
             PathType = DotNetTestPathType.Solution,
@@ -192,7 +193,7 @@ public sealed class DotNetService
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
     public void PackSolution(bool restore, bool build)
     {
-        _context.Information($"Packing solution (restore = {restore}, build = {build})...");
+        _host.LogInformation($"Packing solution (restore = {restore}, build = {build})...");
         _context.DotNetPack(SolutionPath.FullPath, new()
         {
             Configuration = Configuration,
@@ -212,7 +213,7 @@ public sealed class DotNetService
         const string nupkgMask = "*.nupkg";
         if (!SysDirectory.EnumerateFiles(ArtifactsPath.FullPath, nupkgMask).Any())
         {
-            _context.Verbose("No .nupkg files to push.");
+            _host.LogDebug("No .nupkg files to push.");
             return;
         }
 
@@ -230,7 +231,7 @@ public sealed class DotNetService
         var packages = SysPath.Combine(ArtifactsPath.FullPath, nupkgMask);
         foreach (var path in _context.GetFiles(packages))
         {
-            _context.Information($"Pushing {path} to {nugetSource}...");
+            _host.LogInformation($"Pushing {path} to {nugetSource}...");
             _context.DotNetNuGetPush(path, nugetPushSettings);
         }
     }
