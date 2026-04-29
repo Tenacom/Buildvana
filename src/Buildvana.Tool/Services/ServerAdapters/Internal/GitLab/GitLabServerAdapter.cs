@@ -18,14 +18,13 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 /// </summary>
 internal sealed class GitLabServerAdapter : ServerAdapter
 {
-    private readonly ICakeContext _context;
     private readonly IBuildHost _host;
 
     internal GitLabServerAdapter(IServiceProvider services)
     {
-        _context = services.GetRequiredService<ICakeContext>();
         _host = services.GetRequiredService<IBuildHost>();
-        CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{_context.EnvironmentVariable("CI_SERVER_HOST")}");
+        var context = services.GetRequiredService<ICakeContext>();
+        CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{context.EnvironmentVariable("CI_SERVER_HOST")}");
     }
 
     /// <inheritdoc/>
