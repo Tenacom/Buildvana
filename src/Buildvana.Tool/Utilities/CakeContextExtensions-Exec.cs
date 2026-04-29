@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using Cake.Common;
+using Cake.Common.Diagnostics;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
@@ -26,7 +27,9 @@ partial class CakeContextExtensions
         var exitCode = @this.Exec(command, arguments, out var output);
         if (exitCode != 0)
         {
-            throw new CakeException($"'{command} {arguments.RenderSafe()}' exited with code {exitCode}.");
+            var message = $"Command '{command} {arguments.RenderSafe()}' exited with code {exitCode}.";
+            @this.Error(message);
+            throw new CakeException(message);
         }
 
         return output;
