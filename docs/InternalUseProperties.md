@@ -1,5 +1,9 @@
 # Internal-use properties
 
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
+
 - [Overview](#overview)
 - [Project type](#project-type)
   - [`BV_IsExeProject`](#bv_isexeproject)

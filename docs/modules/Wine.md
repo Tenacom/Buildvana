@@ -1,7 +1,8 @@
-# `Wine` module <!-- omit from toc -->
+# `Wine` module
 
-<details>
-<summary><b>Table of contents</b></summary>
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
 
 - [Overview](#overview)
 - [Configuration](#configuration)
@@ -14,8 +15,6 @@
     - [`GetWinePaths` task](#getwinepaths-task)
     - [`ConvertToWinePaths` task](#converttowinepaths-task)
   - [Putting it all together: invoking a tool through Wine](#putting-it-all-together-invoking-a-tool-through-wine)
-
-</details>
 
 ## Overview
 
@@ -263,7 +262,7 @@ Here's how we can support running _ExeMangler_ through Wine when building on Lin
     <Output TaskParameter="WinePath2" PropertyName="_TEMP_TargetFullPath" />
   </GetWinePaths>
 
-  <!-- Construct the command line for ExeMangler -->  
+  <!-- Construct the command line for ExeMangler -->
   <PropertyGroup>
     <_TEMP_ExeManglerCommand>$(_TEMP_ExeManglerFullPath) $(_TEMP_TargetFullPath)</_TEMP_ExeManglerCommand>
   </PropertyGroup>

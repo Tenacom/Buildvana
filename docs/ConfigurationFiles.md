@@ -1,7 +1,8 @@
 # Buildvana SDK configuration files
 
-<details>
-<summary><b>Table of contents</b></summary>
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
 
 - [Buildvana SDK configuration files](#buildvana-sdk-configuration-files)
   - [Overview](#overview)
@@ -11,8 +12,6 @@
     - [A word to the wise](#a-word-to-the-wise)
   - [Configuration files, one by one](#configuration-files-one-by-one)
     - [`Buildvana.Sdk.props`](#buildvanasdkprops)
-
-</details>
 
 ## Overview
 
@@ -32,13 +31,13 @@ Configuration files are the exception to the basic rule that every file needed f
 
 Buildvana SDK looks for configuration files in the following directories, according to the operating system:
 
-| Windows | macOS | Linux |
-|---------|-------|-------|
-| | /etc/buildvana | /etc/buildvana |
-| C:\\ProgramData\\buildvana | /usr/share/buildvana | /usr/share/buildvana |
-| C:\\Users\\John\\.buildvana | /Users/john/.buildvana | /home/john/.buildvana |
-| C:\\Users\\John\\AppData\\Roaming\\buildvana | /Users/john/.config/buildvana | /home/john/.config/buildvana |
-| C:\\Users\\John\\AppData\\Local\\buildvana | /Users/john/.local/share/buildvana | /home/john/.local/share/buildvana |
+| Windows                                      | macOS                              | Linux                             |
+| -------------------------------------------- | ---------------------------------- | --------------------------------- |
+|                                              | /etc/buildvana                     | /etc/buildvana                    |
+| C:\\ProgramData\\buildvana                   | /usr/share/buildvana               | /usr/share/buildvana              |
+| C:\\Users\\John\\.buildvana                  | /Users/john/.buildvana             | /home/john/.buildvana             |
+| C:\\Users\\John\\AppData\\Roaming\\buildvana | /Users/john/.config/buildvana      | /home/john/.config/buildvana      |
+| C:\\Users\\John\\AppData\\Local\\buildvana   | /Users/john/.local/share/buildvana | /home/john/.local/share/buildvana |
 
 _(Note that the above table assumes default folder locations and a user name of `John` (on Windows) or `john` (on other systems). If, for example, the user profile is in `D:\Some\Path\Users\Paul`, Buildvana SDK will look for configuration files in `D:\Some\Path\Users\Paul\.buildvana`, etc.)_
 

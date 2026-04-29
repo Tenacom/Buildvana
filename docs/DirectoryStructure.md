@@ -1,5 +1,9 @@
 # Directory structure
 
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
+
 - [Overview](#overview)
 - [Home directory](#home-directory)
   - [Location of the home directory](#location-of-the-home-directory)
