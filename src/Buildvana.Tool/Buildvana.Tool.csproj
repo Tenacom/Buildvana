@@ -18,6 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Cake.Frosting" />
     <PackageReference Include="Cake.Http" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
