@@ -130,7 +130,6 @@ public sealed class DotNetService
             Configuration = Configuration,
             MSBuildSettings = _msBuildSettings,
             NoBuild = !build,
-            NoLogo = true,
             NoRestore = !restore,
             ArgumentCustomization = args => args
                 .Append("--coverage")
