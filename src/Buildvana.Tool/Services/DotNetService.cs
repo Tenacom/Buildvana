@@ -1,8 +1,10 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
@@ -123,12 +125,55 @@ public sealed class DotNetService
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
     public void TestSolution(bool restore, bool build)
     {
-        _context.Information($"Running tests (restore = {restore}, build = {build}...");
+        _context.Information($"Checking for MTP test projects...");
+        var hasTestProjects = false;
+        foreach (var project in Solution.Projects.Where(p => !(p is SolutionFolder)))
+        {
+            _context.Verbose($"Checking '{project.Path}'...");
+            var sb = new StringBuilder();
+            _context.DotNetMSBuild(
+                project.Path.FullPath,
+                new()
+                {
+                    MaxCpuCount = 1,
+                    ContinuousIntegrationBuild = _server.IsCloudBuild,
+                    NoLogo = true,
+                    ArgumentCustomization = args => args.Append("-getProperty:IsTestingPlatformApplication"),
+                },
+                output =>
+                {
+                    foreach (var line in output)
+                    {
+                        sb.AppendLine(line);
+                    }
+                });
+
+            if (string.Equals(sb.ToString().Trim(), "true", StringComparison.OrdinalIgnoreCase))
+            {
+                _context.Verbose($"Project '{project.Path}' is a test project, will run tests.");
+                hasTestProjects = true;
+                break;
+            }
+        }
+
+        if (!hasTestProjects)
+        {
+            _context.Information("No test projects found, skipping tests.");
+            return;
+        }
+
+        _context.Information($"Running tests (restore = {restore}, build = {build})...");
         _context.DotNetTest(SolutionPath.FullPath, new()
         {
             PathType = DotNetTestPathType.Solution,
             Configuration = Configuration,
-            MSBuildSettings = _msBuildSettings,
+
+            // Can't use _msBuildSettings here because `dotnet test` passes those to MTP applications,
+            // which (at least those built with TUnit) fail because they don't recognize /nologo and /maxCpuCount:1.
+            MSBuildSettings = new()
+            {
+                ContinuousIntegrationBuild = _server.IsCloudBuild,
+            },
             NoBuild = !build,
             NoRestore = !restore,
             ArgumentCustomization = args => args
