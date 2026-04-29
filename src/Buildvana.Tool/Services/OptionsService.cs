@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -86,7 +87,7 @@ public sealed partial class OptionsService
     /// <typeparam name="T">The type of the option value.</typeparam>
     /// <param name="name">The option name.</param>
     /// <returns>The value of the option, converted to <typeparamref name="T" />.</returns>
-    /// <exception cref="CakeException">The specified option was not found.</exception>
+    /// <exception cref="Exception">The specified option was not found. The type of exception thrown is determined by the host.</exception>
     public T GetOptionOrFail<T>(string name)
         where T : notnull
         => TryGetOptionString(name, out var stringValue)
