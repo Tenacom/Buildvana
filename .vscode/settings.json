@@ -11,7 +11,7 @@
   // When opening a file, `editor.tabSize` and `editor.insertSpaces` will be detected based on the file contents.
   "editor.detectIndentation": false,
   // Controls if we seed the search string in Find Widget from editor selection
-  "editor.find.seedSearchStringFromSelection": true,
+  "editor.find.seedSearchStringFromSelection": "always",
   // Controls if Find in Selection flag is turned on when multiple characters or lines of text are selected in the editor
   "editor.find.autoFindInSelection": "multiline",
   // Controls how lines should wrap. Can be:
@@ -147,14 +147,17 @@
   },
   // Configure editor settings to be overridden for [markdown] language.
   "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
     "editor.wordWrap": "on",
     "editor.quickSuggestions": {
         "comments": "off",
         "strings": "off",
         "other": "off"
     },
-    "editor.trimAutoWhitespace": false
+    "editor.trimAutoWhitespace": false,
+    "files.trimTrailingWhitespace": false
   },
+  "markdownlint.configFile": ".markdownlint-cli2.jsonc",
   // Configure editor settings to be overridden for [xml] language.
   "[xml]": {
     "editor.insertSpaces": true,
@@ -194,5 +197,18 @@
   // Enable/disable merge conflict block CodeLens within editor
   "merge-conflict.codeLens.enabled": true,
   // Enable/disable merge conflict decorators within editor
-  "merge-conflict.decorators.enabled": true
+  "merge-conflict.decorators.enabled": true,
+  // Trusted JSON Schema domains
+  "json.schemaDownload.trustedDomains": {
+    "https://developer.microsoft.com/json-schemas/": true,
+    "https://json-schema.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://raw.githubusercontent.com/DavidAnson/markdownlint/": true,
+    "https://raw.githubusercontent.com/devcontainers/spec/": true,
+    "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/main/src/NerdBank.GitVersioning/version.schema.json": true,
+    "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json": true,
+    "https://raw.githubusercontent.com/microsoft/vscode/": true,
+    "https://schemastore.azurewebsites.net/": true,
+    "https://www.schemastore.org/": true
+  },
 }
