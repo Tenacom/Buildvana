@@ -344,7 +344,7 @@ public sealed class GitService : IDisposable
 
         if (mainBranch is null)
         {
-            _host.LogDebug("Git: main branch not found on remote '{origin}'.");
+            _host.LogDebug($"Git: main branch not found on remote '{origin}'.");
             return string.Empty;
         }
 

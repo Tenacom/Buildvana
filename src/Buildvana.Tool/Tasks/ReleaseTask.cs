@@ -211,7 +211,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             var assetLists = SysPath.Combine(dotnet.ArtifactsPath.FullPath, assetListMask);
             foreach (var path in context.GetFiles(assetLists).Select(x => x.FullPath))
             {
-                host.LogDebug("Reading release asset list {path}...");
+                host.LogDebug($"Reading release asset list {path}...");
                 var i = 0;
                 await foreach (var line in SysFile.ReadLinesAsync(path).ConfigureAwait(false))
                 {
