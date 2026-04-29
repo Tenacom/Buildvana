@@ -37,7 +37,7 @@
         <BV_IsNoTargetsProject>true</BV_IsNoTargetsProject>
       </PropertyGroup>
     </When>
-    <When Condition="'$(IsTestProject)' == 'true'">
+    <When Condition="'$(IsTestingPlatformApplication)' == 'true'">
       <PropertyGroup>
         <BV_IsTestProject>true</BV_IsTestProject>
       </PropertyGroup>

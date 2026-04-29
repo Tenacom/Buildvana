@@ -23,9 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bugs fixed in this release
 
+- Buildvana SDK now correctly checks the `IsTestingPlatformApplication` (required by MTP) instead of `IsTestProject` (required by VSTest) to determine whether a project is a test project and set `BV_IsTestProject` accordingly.
+
 ### Known problems introduced by this release
 
 - When a release introduces no other file changes (typically a prerelease with no version-spec change and no changelog or public-API updates), the "Prepare release" commit is empty. The major public Git hosts accept empty commits, but self-hosted setups with custom `pre-receive` hooks may reject them. If this affects you, either allow empty commits, or set `updateChangelogOnPrerelease` to `true` so prerelease runs always have a non-empty release commit. If neither option is acceptable for your workflow, please open an issue.
+- The check for `IsTestProject` is wrong, as it's a VSTest-related property. MTP uses `IsTestingPlatformApplication` instead.
 
 ## [1.1.10](https://github.com/Tenacom/Buildvanareleases/tag/1.1.10) (2026-04-27)
 
