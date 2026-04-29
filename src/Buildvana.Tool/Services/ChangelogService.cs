@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
@@ -31,18 +32,21 @@ public sealed partial class ChangelogService
     public const string FileName = "CHANGELOG.md";
 
     private readonly ICakeContext _context;
+    private readonly IBuildHost _host;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChangelogService"/> class.
     /// </summary>
-    public ChangelogService(ICakeContext context, ServerAdapter server, VersionService version)
+    public ChangelogService(ICakeContext context, IBuildHost host, ServerAdapter server, VersionService version)
     {
         Guard.IsNotNull(context);
+        Guard.IsNotNull(host);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         _context = context;
+        _host = host;
         _server = server;
         _version = version;
         Path = new FilePath(FileName);
@@ -86,7 +90,7 @@ public sealed partial class ChangelogService
             line = reader.ReadLine();
         } while (line != null && !sectionHeadingRegex.IsMatch(line));
 
-        _context.Ensure(line != null, $"{FileName} contains no sections.");
+        _host.Ensure(line != null, $"{FileName} contains no sections.");
         for (; ;)
         {
             line = reader.ReadLine();

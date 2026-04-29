@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana Core Abstractions</Title>
+    <Description>Host-agnostic contracts shared by Buildvana libraries. Contracts only — no concrete helpers.</Description>
+    <RootNamespace>Buildvana.Core</RootNamespace>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

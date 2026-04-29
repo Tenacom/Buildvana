@@ -30,6 +30,7 @@
     <File Path="docs/modules/Wine.md" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Buildvana.Core.Abstractions/Buildvana.Core.Abstractions.csproj" />
     <Project Path="src/Buildvana.Sdk.SourceGenerators/Buildvana.Sdk.SourceGenerators.csproj" />
     <Project Path="src/Buildvana.Sdk.Tasks/Buildvana.Sdk.Tasks.csproj" />
     <Project Path="src/Buildvana.Sdk/Buildvana.Sdk.csproj" />

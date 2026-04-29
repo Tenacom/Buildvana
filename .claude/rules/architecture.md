@@ -7,10 +7,15 @@ It consists of an MSBuild SDK working in addition to the SDK specified in projec
 
 Sub-projects under `src/`:
 
+- `Buildvana.Core.Abstractions` — host-agnostic contracts shared by Buildvana libraries (currently `IBuildHost`). No host references (no Cake, no MSBuild). Not packaged: it is an internal seam between sibling projects in this repo.
 - `Buildvana.Sdk.Tasks` — compiled MSBuild tasks.
 - `Buildvana.Sdk.SourceGenerators` — Roslyn source generators.
 - `Buildvana.Sdk` — MSBuild SDK. Packages the above two projects and contains the SDK props/targets.
 - `Buildvana.Tool` — .NET CLI tool (`bv`).
+
+### `.Abstractions` discipline
+
+`Buildvana.Core.Abstractions` (and any future `*.Abstractions` library) contains contracts only — no concrete helpers, no domain types, no host references. If something has a concrete implementation that could justify its own library, it does not belong in `.Abstractions`. Concrete adapters (e.g. `CakeBuildHost`, `MSBuildTaskHost`) live in the project that owns the host (`Buildvana.Tool`, `Buildvana.Sdk.Tasks`), not in the abstractions library.
 
 ## Target platforms
 
