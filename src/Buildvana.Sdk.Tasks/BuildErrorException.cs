@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Buildvana.Sdk;
@@ -28,20 +27,4 @@ public sealed class BuildErrorException : Exception
         : base(message, innerException)
     {
     }
-
-    [DoesNotReturn]
-    public static void ThrowNew(string message)
-        => throw new BuildErrorException(message);
-
-    [DoesNotReturn]
-    public static T ThrowNew<T>(string message)
-        => throw new BuildErrorException(message);
-
-    [DoesNotReturn]
-    public static void ThrowNew(string format, params object[] args)
-        => throw new BuildErrorException(format, args);
-
-    [DoesNotReturn]
-    public static T ThrowNew<T>(string format, params object[] args)
-        => throw new BuildErrorException(format, args);
 }

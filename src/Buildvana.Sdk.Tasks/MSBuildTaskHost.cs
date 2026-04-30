@@ -23,7 +23,7 @@ internal sealed class MSBuildTaskHost : IBuildHost
     }
 
     [DoesNotReturn]
-    public void Fail(string message) => BuildErrorException.ThrowNew(message);
+    public void Fail(string message) => throw new BuildErrorException(message);
 
     public bool IsEnabled(LogLevel level) => level switch
     {

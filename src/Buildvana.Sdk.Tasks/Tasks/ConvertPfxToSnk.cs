@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Buildvana.Core;
 using Buildvana.Sdk.Internal;
 using Buildvana.Sdk.Resources;
 using Microsoft.Build.Framework;
@@ -24,15 +25,8 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
 
     protected override Undefined Run()
     {
-        if (string.IsNullOrEmpty(PfxPath))
-        {
-            return BuildErrorException.ThrowNew<Undefined>(Strings.MissingParameterFmt, nameof(PfxPath));
-        }
-
-        if (string.IsNullOrEmpty(OutputPath))
-        {
-            return BuildErrorException.ThrowNew<Undefined>(Strings.MissingParameterFmt, nameof(OutputPath));
-        }
+        Host.Ensure(!string.IsNullOrEmpty(PfxPath), Strings.MissingParameterFmt, nameof(PfxPath));
+        Host.Ensure(!string.IsNullOrEmpty(OutputPath), Strings.MissingParameterFmt, nameof(OutputPath));
 
         using var cert = LoadCertificate(PfxPath, PfxPassword);
         var keyBytes = ExtractPrivateKey(cert, PfxPath);
@@ -40,7 +34,7 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
         return Undefined.Value;
     }
 
-    private static X509Certificate2 LoadCertificate(string path, string password)
+    private X509Certificate2 LoadCertificate(string path, string password)
     {
         // Null and empty string are one and the same, as far as task parameters are concerned.
         // https://learn.microsoft.com/en-us/visualstudio/msbuild/task-writing?view=vs-2022#how-msbuild-invokes-a-task
@@ -52,16 +46,16 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
         }
         catch (CryptographicException)
         {
-            return BuildErrorException.ThrowNew<X509Certificate2>(Strings.AssemblySigning.CannotExtractCertificateFmt, path);
+            return Host.Fail<X509Certificate2>(Strings.AssemblySigning.CannotExtractCertificateFmt, path);
         }
     }
 
-    private static byte[] ExtractPrivateKey(X509Certificate2 certificate, string certificatePath)
+    private byte[] ExtractPrivateKey(X509Certificate2 certificate, string certificatePath)
         => certificate.GetRSAPrivateKey() is RSACryptoServiceProvider privateKey
             ? privateKey.ExportCspBlob(true)
-            : BuildErrorException.ThrowNew<byte[]>(Strings.AssemblySigning.MissingRsaPrivateKeyFmt, certificatePath);
+            : Host.Fail<byte[]>(Strings.AssemblySigning.MissingRsaPrivateKeyFmt, certificatePath);
 
-    private static void SaveBytes(string outputPath, byte[] bytes)
+    private void SaveBytes(string outputPath, byte[] bytes)
     {
         try
         {
@@ -70,7 +64,7 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
         }
         catch (Exception e) when (e.IsIORelatedException())
         {
-            BuildErrorException.ThrowNew(Strings.CouldNotWriteFileFmt, outputPath, e.Message);
+            Host.Fail(Strings.CouldNotWriteFileFmt, outputPath, e.Message);
         }
     }
 }
