@@ -7,6 +7,9 @@
     // Path to configuration file to extend
     "extends": null,
 
+    // Globs of files to ignore
+    "ignores": ["CLAUDE.md", ".claude/**/*.md"],
+
     // MD001/heading-increment : Heading levels should only increment by one level at a time : https://github.com/DavidAnson/markdownlint/blob/main/doc/md001.md
     "heading-increment": true,
 
@@ -14,7 +17,7 @@
     "heading-style": { "style": "atx" },
 
     // MD004/ul-style : Unordered list style : https://github.com/DavidAnson/markdownlint/blob/main/doc/md004.md
-    // L'ideale sarebbe "sublist" (caratteri diversi per i livelli di lista), ma non è supportato dalla generazione della Table of Contents di Markdown All In One
+    // "sublist" (different characters for different list levels) would be optimal, but it's not supported by Markdown All In One TOC generation
     "ul-style": { "style": "consistent" },
 
     // MD005/list-indent : Inconsistent indentation for list items at the same level : https://github.com/DavidAnson/markdownlint/blob/main/doc/md005.md
@@ -36,10 +39,10 @@
     "no-multiple-blanks": { "maximum": 1 },
 
     // MD013/line-length : Line length : https://github.com/DavidAnson/markdownlint/blob/main/doc/md013.md
-    // Disabilitato perché:
-    // - abbiamo il line wrap in VS code
-    // - i file Markdown sono spesso visualizzati in contesti (GitHub, ecc.) dove il line wrap è automatico e il font è a larghezza variabile
-    // - può essere fastidioso dover andare a capo manualmente in punti non naturali (es. URL lunghi)
+    // Disabled because:
+    // - VS code can wrap lines
+    // - Markdown files are mostly rendered with variable-width fonts, in contexts where line wrap is automatic
+    // - may be inconvenient in some situations (e.g., long URLs)
     "line-length": false,
     // "line-length": { "line_length": 120, "heading_line_length": 120, "code_block_line_length": 120, "code_blocks": true, "tables": true, "headings": true, "strict": false, "stern": true },
 
