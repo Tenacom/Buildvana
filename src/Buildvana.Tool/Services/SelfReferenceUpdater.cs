@@ -126,14 +126,13 @@ public sealed class SelfReferenceUpdater
         return result;
     }
 
+    // Splice the new version directly over the existing one in the source bytes, so unrelated
+    // bytes — line endings, indentation, the trailing newline (if any), comments, BOM — survive untouched.
+    // The expected location of each version string differs by container shape:
+    //   - versionPropertyName == null → at depth 2 with path [container, packageId];
+    //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
     private bool UpdateJsonContainer(FilePath path, Dictionary<string, string> produced, string container, string? versionPropertyName)
-    {
-        // Splice the new version directly over the existing one in the source bytes, so unrelated
-        // bytes — line endings, indentation, the trailing newline (if any), comments, BOM — survive untouched.
-        // The expected location of each version string differs by container shape:
-        //   - versionPropertyName == null → at depth 2 with path [container, packageId];
-        //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
-        return _host.RewriteJsonStringValues(path.FullPath, (propertyPath, currentValue) =>
+        => _host.RewriteJsonStringValues(path.FullPath, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
             {
@@ -155,7 +154,6 @@ public sealed class SelfReferenceUpdater
                 ? newVersion
                 : null;
         });
-    }
 
     private bool UpdateMsBuildXml(FilePath path, Dictionary<string, string> produced, string[] tagNames)
     {
