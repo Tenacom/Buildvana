@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
+using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Utilities;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
@@ -133,7 +133,7 @@ public sealed class SelfReferenceUpdater
         // The expected location of each version string differs by container shape:
         //   - versionPropertyName == null → at depth 2 with path [container, packageId];
         //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
-        return _host.RewriteJsonStringValues(path, (propertyPath, currentValue) =>
+        return _host.RewriteJsonStringValues(path.FullPath, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
             {
