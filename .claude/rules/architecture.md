@@ -15,7 +15,12 @@ Sub-projects under `src/`:
 
 ### `.Abstractions` discipline
 
-`Buildvana.Core.Abstractions` (and any future `*.Abstractions` library) contains contracts only — no concrete helpers, no domain types, no host references. If something has a concrete implementation that could justify its own library, it does not belong in `.Abstractions`. Concrete adapters (e.g. `CakeBuildHost`, `MSBuildTaskHost`) live in the project that owns the host (`Buildvana.Tool`, `Buildvana.Sdk.Tasks`), not in the abstractions library.
+`*.Abstractions` libraries (henceforth "abstraction libraries") contain contracts (interfaces and/or abstract base classes), plus implementation-independent helpers, provided as extension methods on contracts.
+
+Helpers provided in an abstraction library are part of the contract for callers, but do not have to be implemented every time.
+Example: method `Log(string message)` is part of the contract; extension method `Log(CompositeFormat format, params ReadOnlySpan<object?> args)` formats the message and calls the contract's `Log`.
+
+The root namespace of an astraction library does not include the `.Abstractions" suffix. Example: the root namespace of `Buildvana.Core.Abstractions` is `Buildvana.Core`.
 
 ## Target platforms
 
@@ -26,5 +31,5 @@ All other projects target `$(StandardTfm)` (`netX.0` form, tracks the latest .NE
 
 ## Self-hosting
 
-Buildvana builds itself using the last published version of its own packages (obtained from either nuget.org or a private NuGet feed, whichever hosts the newest version).
+Buildvana builds itself using the last published version of its own packages (obtained from either nuget.org if stable, or a private NuGet feed if preview).
 Changes to the SDK won't break the current build, but will affect the next build after the new version is published and consumed.
