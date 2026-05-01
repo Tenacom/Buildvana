@@ -7,11 +7,20 @@ It consists of an MSBuild SDK working in addition to the SDK specified in projec
 
 Sub-projects under `src/`:
 
-- `Buildvana.Core.Abstractions` — host-agnostic contracts shared by Buildvana libraries (currently `IBuildHost`). No host references (no Cake, no MSBuild). Not packaged: it is an internal seam between sibling projects in this repo.
+- `Buildvana.Core.Abstractions` — host-agnostic contracts shared by Buildvana libraries (currently `IBuildHost`). No host references (no Cake, no MSBuild).
+- `Buildvana.Core.Json` — JSON loading, parsing, saving, and in-place rewriting helpers built on `IBuildHost`.
 - `Buildvana.Sdk.Tasks` — compiled MSBuild tasks.
 - `Buildvana.Sdk.SourceGenerators` — Roslyn source generators.
 - `Buildvana.Sdk` — MSBuild SDK. Packages the above two projects and contains the SDK props/targets.
 - `Buildvana.Tool` — .NET CLI tool (`bv`).
+
+### Project tiers
+
+Project names follow a three-tier convention:
+
+- `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend only on `Buildvana.Core.Abstractions` and standard libraries; no host references (Cake, MSBuild, etc.).
+- `Buildvana.Sdk.*` — the MSBuild SDK and its components (tasks, source generators). Only `Buildvana.Sdk` is packaged; it bundles the others.
+- `Buildvana.Tool` — the `bv` .NET CLI global tool. Packaged as a `dotnet tool`.
 
 ### `.Abstractions` discipline
 
