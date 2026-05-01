@@ -1,5 +1,9 @@
 name: Publish a release
 
+permissions:
+  contents: read
+  packages: read
+
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
