@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Linq;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Utilities;
@@ -28,9 +29,8 @@ public sealed class CleanTask : FrostingTask<BuildContext>
         context.DeleteDirectoryIfExists("temp");
         context.DeleteDirectoryIfExists(paths.AllArtifacts);
         context.DeleteDirectoryIfExists(paths.TestResults);
-        foreach (var project in dotnet.Solution.Projects)
+        foreach (var projectDirectory in dotnet.Solution.Projects.Select(p => p.Path.GetDirectory()))
         {
-            var projectDirectory = project.Path.GetDirectory();
             context.DeleteDirectoryIfExists(projectDirectory.Combine("bin"));
             context.DeleteDirectoryIfExists(projectDirectory.Combine("obj"));
         }
