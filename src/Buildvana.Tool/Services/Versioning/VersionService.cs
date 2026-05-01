@@ -3,9 +3,9 @@
 
 using System.Text;
 using Buildvana.Core;
+using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
-using Buildvana.Tool.Utilities;
 using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNet.Tool;
 using Cake.Core;

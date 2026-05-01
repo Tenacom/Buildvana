@@ -7,12 +7,10 @@ using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Buildvana.Core;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using SysFile = System.IO.File;
 
-namespace Buildvana.Tool.Utilities;
+namespace Buildvana.Core.Json;
 
 /// <summary>
 /// Provides JSON-related helpers that fail the build through an <see cref="IBuildHost"/> on parse or I/O errors.
@@ -58,15 +56,14 @@ public static partial class JsonBuildHostExtensions
     /// <param name="this">The build host.</param>
     /// <param name="path">The path of the file to parse.</param>
     /// <returns>The parsed object.</returns>
-    public static JsonObject LoadJsonObject(this IBuildHost @this, FilePath path)
+    public static JsonObject LoadJsonObject(this IBuildHost @this, string path)
     {
-        Guard.IsNotNull(path);
+        Guard.IsNotNullOrEmpty(path);
 
-        var fullPath = path.FullPath;
         JsonNode? node;
         try
         {
-            using var stream = SysFile.OpenRead(fullPath);
+            using var stream = SysFile.OpenRead(path);
             node = JsonNode.Parse(
                 stream,
                 new JsonNodeOptions { PropertyNameCaseInsensitive = false },
@@ -78,17 +75,17 @@ public static partial class JsonBuildHostExtensions
         }
         catch (IOException e)
         {
-            return @this.Fail<JsonObject>($"Could not read from {fullPath}: {e.Message}");
+            return @this.Fail<JsonObject>($"Could not read from {path}: {e.Message}");
         }
         catch (JsonException)
         {
-            return @this.Fail<JsonObject>($"{fullPath} does not contain valid JSON.");
+            return @this.Fail<JsonObject>($"{path} does not contain valid JSON.");
         }
 
         return node switch {
-            null => @this.Fail<JsonObject>($"{fullPath} was parsed as JSON null."),
+            null => @this.Fail<JsonObject>($"{path} was parsed as JSON null."),
             JsonObject obj => obj,
-            object other => @this.Fail<JsonObject>($"{fullPath} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
+            object other => @this.Fail<JsonObject>($"{path} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
         };
     }
 
@@ -98,15 +95,14 @@ public static partial class JsonBuildHostExtensions
     /// <param name="this">The build host.</param>
     /// <param name="json">The JSON object to save.</param>
     /// <param name="path">The path of the file to save <paramref name="json"/> to.</param>
-    public static void SaveJson(this IBuildHost @this, JsonNode json, FilePath path)
+    public static void SaveJson(this IBuildHost @this, JsonNode json, string path)
     {
         Guard.IsNotNull(json);
-        Guard.IsNotNull(path);
+        Guard.IsNotNullOrEmpty(path);
 
-        var fullPath = path.FullPath;
         try
         {
-            using var stream = SysFile.OpenWrite(fullPath);
+            using var stream = SysFile.OpenWrite(path);
             var writerOptions = new JsonWriterOptions
             {
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -119,7 +115,7 @@ public static partial class JsonBuildHostExtensions
         }
         catch (IOException e)
         {
-            @this.Fail($"Could not write to {fullPath}: {e.Message}");
+            @this.Fail($"Could not write to {path}: {e.Message}");
         }
     }
 
@@ -141,20 +137,19 @@ public static partial class JsonBuildHostExtensions
     /// <para>Replacements are JSON-encoded with <see cref="JavaScriptEncoder.UnsafeRelaxedJsonEscaping"/>,
     /// matching the policy used by <see cref="SaveJson"/>.</para>
     /// </remarks>
-    public static bool RewriteJsonStringValues(this IBuildHost @this, FilePath path, JsonStringValueRewriter rewriter)
+    public static bool RewriteJsonStringValues(this IBuildHost @this, string path, JsonStringValueRewriter rewriter)
     {
-        Guard.IsNotNull(path);
+        Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNull(rewriter);
 
-        var fullPath = path.FullPath;
         byte[] originalBytes;
         try
         {
-            originalBytes = SysFile.ReadAllBytes(fullPath);
+            originalBytes = SysFile.ReadAllBytes(path);
         }
         catch (IOException e)
         {
-            return @this.Fail<bool>($"Could not read from {fullPath}: {e.Message}");
+            return @this.Fail<bool>($"Could not read from {path}: {e.Message}");
         }
 
         // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
@@ -167,7 +162,7 @@ public static partial class JsonBuildHostExtensions
         }
         catch (JsonException)
         {
-            return @this.Fail<bool>($"{fullPath} does not contain valid JSON.");
+            return @this.Fail<bool>($"{path} does not contain valid JSON.");
         }
 
         if (edits.Count == 0)
@@ -196,11 +191,11 @@ public static partial class JsonBuildHostExtensions
 
         try
         {
-            SysFile.WriteAllBytes(fullPath, output.ToArray());
+            SysFile.WriteAllBytes(path, output.ToArray());
         }
         catch (IOException e)
         {
-            @this.Fail($"Could not write to {fullPath}: {e.Message}");
+            @this.Fail($"Could not write to {path}: {e.Message}");
         }
 
         return true;

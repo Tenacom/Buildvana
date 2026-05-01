@@ -3,7 +3,7 @@
 
 using System.Text.Json.Nodes;
 using Buildvana.Core;
-using Buildvana.Tool.Utilities;
+using Buildvana.Core.Json;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
@@ -57,7 +57,7 @@ public sealed class VersionFile
         Guard.IsNotNull(host);
 
         var path = new FilePath(VersionJsonPath).MakeAbsolute(context.Environment);
-        var json = host.LoadJsonObject(path);
+        var json = host.LoadJsonObject(path.FullPath);
         var versionStr = host.GetJsonPropertyValue<string>(json, VersionPropertyName, path + " file");
         host.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
         var firstUnstableTag = DefaultFirstUnstableTag;
@@ -97,7 +97,7 @@ public sealed class VersionFile
     {
         var newVersion = VersionSpec.ToString();
         var rewritten = _host.RewriteJsonStringValues(
-            Path,
+            Path.FullPath,
             (propertyPath, _) => propertyPath is [VersionPropertyName] ? newVersion : null);
 
         // Load already validated that a top-level string "version" property exists, so a no-op here
