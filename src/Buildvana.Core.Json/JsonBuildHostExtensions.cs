@@ -15,317 +15,215 @@ namespace Buildvana.Core.Json;
 /// <summary>
 /// Provides JSON-related helpers that fail the build through an <see cref="IBuildHost"/> on parse or I/O errors.
 /// </summary>
+#pragma warning disable CA1034 // Nested types should not be visible — false positive on C# 14 extension blocks; fixed in .NET 11, backport to .NET 10 requested in https://github.com/dotnet/sdk/issues/53984
+#pragma warning disable CA1708 // Identifiers should differ by more than case — false positive on classes with C# 14 extension blocks; fixed in .NET 11, https://github.com/dotnet/sdk/issues/51716
 public static partial class JsonBuildHostExtensions
 {
-    /// <summary>
-    /// Parses a JSON object from a string. Fails the build if not successful.
-    /// </summary>
-    /// <param name="this">The build host.</param>
-    /// <param name="str">The string to parse.</param>
-    /// <param name="description">A description of the string for exception messages.</param>
-    /// <returns>The parsed object.</returns>
-    public static JsonObject ParseJsonObject(this IBuildHost @this, string str, string description = "The provided string")
+    extension(IBuildHost @this)
     {
-        JsonNode? node;
-        try
+        /// <summary>
+        /// Parses a JSON object from a string. Fails the build if not successful.
+        /// </summary>
+        /// <param name="str">The string to parse.</param>
+        /// <param name="description">A description of the string for exception messages.</param>
+        /// <returns>The parsed object.</returns>
+        public JsonObject ParseJsonObject(string str, string description = "The provided string")
         {
-            node = JsonNode.Parse(
-                str,
-                new JsonNodeOptions { PropertyNameCaseInsensitive = false },
-                new JsonDocumentOptions
-                {
-                    AllowTrailingCommas = true,
-                    CommentHandling = JsonCommentHandling.Skip,
-                });
-        }
-        catch (JsonException)
-        {
-            return @this.Fail<JsonObject>($"{description} is not valid JSON.");
-        }
-
-        return node switch {
-            null => @this.Fail<JsonObject>($"{description} was parsed as JSON null."),
-            JsonObject obj => obj,
-            object other => @this.Fail<JsonObject>($"{description} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
-        };
-    }
-
-    /// <summary>
-    /// Loads a JSON object from a file. Fails the build if not successful.
-    /// </summary>
-    /// <param name="this">The build host.</param>
-    /// <param name="path">The path of the file to parse.</param>
-    /// <returns>The parsed object.</returns>
-    public static JsonObject LoadJsonObject(this IBuildHost @this, string path)
-    {
-        Guard.IsNotNullOrEmpty(path);
-
-        JsonNode? node;
-        try
-        {
-            using var stream = SysFile.OpenRead(path);
-            node = JsonNode.Parse(
-                stream,
-                new JsonNodeOptions { PropertyNameCaseInsensitive = false },
-                new JsonDocumentOptions
-                {
-                    AllowTrailingCommas = true,
-                    CommentHandling = JsonCommentHandling.Skip,
-                });
-        }
-        catch (IOException e)
-        {
-            return @this.Fail<JsonObject>($"Could not read from {path}: {e.Message}");
-        }
-        catch (JsonException)
-        {
-            return @this.Fail<JsonObject>($"{path} does not contain valid JSON.");
-        }
-
-        return node switch {
-            null => @this.Fail<JsonObject>($"{path} was parsed as JSON null."),
-            JsonObject obj => obj,
-            object other => @this.Fail<JsonObject>($"{path} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
-        };
-    }
-
-    /// <summary>
-    /// Saves a JSON object to a file. Fails the build if not successful.
-    /// </summary>
-    /// <param name="this">The build host.</param>
-    /// <param name="json">The JSON object to save.</param>
-    /// <param name="path">The path of the file to save <paramref name="json"/> to.</param>
-    public static void SaveJson(this IBuildHost @this, JsonNode json, string path)
-    {
-        Guard.IsNotNull(json);
-        Guard.IsNotNullOrEmpty(path);
-
-        try
-        {
-            using var stream = SysFile.OpenWrite(path);
-            var writerOptions = new JsonWriterOptions
+            JsonNode? node;
+            try
             {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                Indented = true,
+                node = JsonNode.Parse(
+                    str,
+                    new JsonNodeOptions { PropertyNameCaseInsensitive = false },
+                    new JsonDocumentOptions
+                    {
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip,
+                    });
+            }
+            catch (JsonException)
+            {
+                return @this.Fail<JsonObject>($"{description} is not valid JSON.");
+            }
+
+            return node switch {
+                null => @this.Fail<JsonObject>($"{description} was parsed as JSON null."),
+                JsonObject obj => obj,
+                object other => @this.Fail<JsonObject>($"{description} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
             };
-
-            using var writer = new Utf8JsonWriter(stream, writerOptions);
-            json.WriteTo(writer);
-            stream.SetLength(stream.Position);
-        }
-        catch (IOException e)
-        {
-            @this.Fail($"Could not write to {path}: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Rewrites the value of one or more JSON string properties in a file in place, preserving every byte
-    /// not covered by an actual replacement.
-    /// </summary>
-    /// <param name="this">The build host.</param>
-    /// <param name="path">The path of the file to rewrite.</param>
-    /// <param name="rewriter">A callback invoked once per string-valued property of an object reached during
-    /// a depth-first walk of the document. Returning <see langword="null"/> (or the unchanged value) leaves
-    /// the property alone; returning a different string queues a splice at that exact location.</param>
-    /// <returns><see langword="true"/> if at least one property was actually changed and the file was rewritten;
-    /// <see langword="false"/> if no callback returned a changed value (the file is left untouched on disk).</returns>
-    /// <remarks>
-    /// <para>Unlike a load-mutate-serialize cycle (e.g. <see cref="LoadJsonObject"/> + <see cref="SaveJson"/>),
-    /// this method does not reformat the document: line endings, indentation, blank lines, comments, the
-    /// trailing newline (if any) and a UTF-8 BOM (if any) are preserved exactly.</para>
-    /// <para>Replacements are JSON-encoded with <see cref="JavaScriptEncoder.UnsafeRelaxedJsonEscaping"/>,
-    /// matching the policy used by <see cref="SaveJson"/>.</para>
-    /// </remarks>
-    public static bool RewriteJsonStringValues(this IBuildHost @this, string path, JsonStringValueRewriter rewriter)
-    {
-        Guard.IsNotNullOrEmpty(path);
-        Guard.IsNotNull(rewriter);
-
-        byte[] originalBytes;
-        try
-        {
-            originalBytes = SysFile.ReadAllBytes(path);
-        }
-        catch (IOException e)
-        {
-            return @this.Fail<bool>($"Could not read from {path}: {e.Message}");
         }
 
-        // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
-        var bomLength = HasUtf8Bom(originalBytes) ? 3 : 0;
+        /// <summary>
+        /// Loads a JSON object from a file. Fails the build if not successful.
+        /// </summary>
+        /// <param name="path">The path of the file to parse.</param>
+        /// <returns>The parsed object.</returns>
+        public JsonObject LoadJsonObject(string path)
+        {
+            Guard.IsNotNullOrEmpty(path);
 
-        List<JsonValueEdit> edits;
-        try
-        {
-            edits = CollectJsonStringEdits(originalBytes.AsSpan(bomLength), bomLength, rewriter);
-        }
-        catch (JsonException)
-        {
-            return @this.Fail<bool>($"{path} does not contain valid JSON.");
-        }
-
-        if (edits.Count == 0)
-        {
-            return false;
-        }
-
-        // Walker emits edits in source order, so a single forward pass over the original bytes suffices.
-        using var output = new MemoryStream(originalBytes.Length + 64);
-        var cursor = 0;
-        foreach (var edit in edits)
-        {
-            if (edit.Start > cursor)
+            JsonNode? node;
+            try
             {
-                output.Write(originalBytes, cursor, edit.Start - cursor);
+                using var stream = SysFile.OpenRead(path);
+                node = JsonNode.Parse(
+                    stream,
+                    new JsonNodeOptions { PropertyNameCaseInsensitive = false },
+                    new JsonDocumentOptions
+                    {
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip,
+                    });
+            }
+            catch (IOException e)
+            {
+                return @this.Fail<JsonObject>($"Could not read from {path}: {e.Message}");
+            }
+            catch (JsonException)
+            {
+                return @this.Fail<JsonObject>($"{path} does not contain valid JSON.");
             }
 
-            output.Write(edit.Replacement, 0, edit.Replacement.Length);
-            cursor = edit.Start + edit.Length;
+            return node switch {
+                null => @this.Fail<JsonObject>($"{path} was parsed as JSON null."),
+                JsonObject obj => obj,
+                object other => @this.Fail<JsonObject>($"{path} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
+            };
         }
 
-        if (cursor < originalBytes.Length)
+        /// <summary>
+        /// Saves a JSON object to a file. Fails the build if not successful.
+        /// </summary>
+        /// <param name="json">The JSON object to save.</param>
+        /// <param name="path">The path of the file to save <paramref name="json"/> to.</param>
+        public void SaveJson(JsonNode json, string path)
         {
-            output.Write(originalBytes, cursor, originalBytes.Length - cursor);
-        }
+            Guard.IsNotNull(json);
+            Guard.IsNotNullOrEmpty(path);
 
-        try
-        {
-            SysFile.WriteAllBytes(path, output.ToArray());
-        }
-        catch (IOException e)
-        {
-            @this.Fail($"Could not write to {path}: {e.Message}");
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Gets the value of a property from a JSON object. Fails the build if not successful.
-    /// </summary>
-    /// <typeparam name="T">The desired type of the property value.</typeparam>
-    /// <param name="this">The build host.</param>
-    /// <param name="json">The JSON object.</param>
-    /// <param name="propertyName">The name of the property to get.</param>
-    /// <param name="objectDescription">A description of the object for exception messages.</param>
-    /// <returns>The value of the specified property.</returns>
-    public static T GetJsonPropertyValue<T>(this IBuildHost @this, JsonObject json, string propertyName, string objectDescription = "JSON object")
-    {
-        Guard.IsNotNull(json);
-
-        @this.Ensure(json.TryGetPropertyValue(propertyName, out var property), $"Json property {propertyName} not found in {objectDescription}.");
-        switch (property)
-        {
-            case null:
-                return @this.Fail<T>($"Json property {propertyName} in {objectDescription} is null.");
-            case JsonValue value:
-                @this.Ensure(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
-                return result;
-            default:
-                return @this.Fail<T>($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
-        }
-    }
-
-    private static bool HasUtf8Bom(ReadOnlySpan<byte> bytes)
-        => bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
-
-    private static List<JsonValueEdit> CollectJsonStringEdits(ReadOnlySpan<byte> jsonSpan, int offsetInFile, JsonStringValueRewriter rewriter)
-    {
-        var reader = new Utf8JsonReader(
-            jsonSpan,
-            new JsonReaderOptions
+            try
             {
-                AllowTrailingCommas = true,
-                CommentHandling = JsonCommentHandling.Skip,
-            });
+                using var stream = SysFile.OpenWrite(path);
+                var writerOptions = new JsonWriterOptions
+                {
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                    Indented = true,
+                };
 
-        var edits = new List<JsonValueEdit>();
-        var pathSegments = new List<string>();
-
-        // Parallel stack: one entry per open container, true iff that container's start consumed
-        // a property name (i.e. pushed onto pathSegments). Without this, EndObject/EndArray would
-        // pop a segment for *every* close — including containers that are array elements, which
-        // never push — corrupting the path for siblings that follow.
-        var containerPushedSegment = new Stack<bool>();
-        string? pendingProperty = null;
-        while (reader.Read())
-        {
-            switch (reader.TokenType)
+                using var writer = new Utf8JsonWriter(stream, writerOptions);
+                json.WriteTo(writer);
+                stream.SetLength(stream.Position);
+            }
+            catch (IOException e)
             {
-                case JsonTokenType.PropertyName:
-                    pendingProperty = reader.GetString();
-                    break;
+                @this.Fail($"Could not write to {path}: {e.Message}");
+            }
+        }
 
-                case JsonTokenType.StartObject:
-                case JsonTokenType.StartArray:
-                    if (pendingProperty is not null)
-                    {
-                        pathSegments.Add(pendingProperty);
-                        containerPushedSegment.Push(true);
-                        pendingProperty = null;
-                    }
-                    else
-                    {
-                        containerPushedSegment.Push(false);
-                    }
+        /// <summary>
+        /// Rewrites the value of one or more JSON string properties in a file in place, preserving every byte
+        /// not covered by an actual replacement.
+        /// </summary>
+        /// <param name="path">The path of the file to rewrite.</param>
+        /// <param name="rewriter">A callback invoked once per string-valued property of an object reached during
+        /// a depth-first walk of the document. Returning <see langword="null"/> (or the unchanged value) leaves
+        /// the property alone; returning a different string queues a splice at that exact location.</param>
+        /// <returns><see langword="true"/> if at least one property was actually changed and the file was rewritten;
+        /// <see langword="false"/> if no callback returned a changed value (the file is left untouched on disk).</returns>
+        /// <remarks>
+        /// <para>Unlike a load-mutate-serialize cycle (e.g. <see cref="LoadJsonObject"/> + <see cref="SaveJson"/>),
+        /// this method does not reformat the document: line endings, indentation, blank lines, comments, the
+        /// trailing newline (if any) and a UTF-8 BOM (if any) are preserved exactly.</para>
+        /// <para>Replacements are JSON-encoded with <see cref="JavaScriptEncoder.UnsafeRelaxedJsonEscaping"/>,
+        /// matching the policy used by <see cref="SaveJson"/>.</para>
+        /// </remarks>
+        public bool RewriteJsonStringValues(string path, JsonStringValueRewriter rewriter)
+        {
+            Guard.IsNotNullOrEmpty(path);
+            Guard.IsNotNull(rewriter);
 
-                    break;
+            byte[] originalBytes;
+            try
+            {
+                originalBytes = SysFile.ReadAllBytes(path);
+            }
+            catch (IOException e)
+            {
+                return @this.Fail<bool>($"Could not read from {path}: {e.Message}");
+            }
 
-                case JsonTokenType.EndObject:
-                case JsonTokenType.EndArray:
-                    if (containerPushedSegment.Pop())
-                    {
-                        pathSegments.RemoveAt(pathSegments.Count - 1);
-                    }
+            // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
+            var bomLength = HasUtf8Bom(originalBytes) ? 3 : 0;
 
-                    break;
+            List<JsonValueEdit> edits;
+            try
+            {
+                edits = CollectJsonStringEdits(originalBytes.AsSpan(bomLength), bomLength, rewriter);
+            }
+            catch (JsonException)
+            {
+                return @this.Fail<bool>($"{path} does not contain valid JSON.");
+            }
 
-                case JsonTokenType.String:
-                    // Only invoke the rewriter for string values that are direct properties of an object;
-                    // string elements of arrays have no pending property name and are skipped on purpose.
-                    if (pendingProperty is not null)
-                    {
-                        TryRecordStringEdit(ref reader, offsetInFile, rewriter, pathSegments, pendingProperty, edits);
-                        pendingProperty = null;
-                    }
+            if (edits.Count == 0)
+            {
+                return false;
+            }
 
-                    break;
+            // Walker emits edits in source order, so a single forward pass over the original bytes suffices.
+            using var output = new MemoryStream(originalBytes.Length + 64);
+            var cursor = 0;
+            foreach (var edit in edits)
+            {
+                if (edit.Start > cursor)
+                {
+                    output.Write(originalBytes, cursor, edit.Start - cursor);
+                }
 
+                output.Write(edit.Replacement, 0, edit.Replacement.Length);
+                cursor = edit.Start + edit.Length;
+            }
+
+            if (cursor < originalBytes.Length)
+            {
+                output.Write(originalBytes, cursor, originalBytes.Length - cursor);
+            }
+
+            try
+            {
+                SysFile.WriteAllBytes(path, output.ToArray());
+            }
+            catch (IOException e)
+            {
+                @this.Fail($"Could not write to {path}: {e.Message}");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the value of a property from a JSON object. Fails the build if not successful.
+        /// </summary>
+        /// <typeparam name="T">The desired type of the property value.</typeparam>
+        /// <param name="json">The JSON object.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="objectDescription">A description of the object for exception messages.</param>
+        /// <returns>The value of the specified property.</returns>
+        public T GetJsonPropertyValue<T>(JsonObject json, string propertyName, string objectDescription = "JSON object")
+        {
+            Guard.IsNotNull(json);
+
+            @this.Ensure(json.TryGetPropertyValue(propertyName, out var property), $"Json property {propertyName} not found in {objectDescription}.");
+            switch (property)
+            {
+                case null:
+                    return @this.Fail<T>($"Json property {propertyName} in {objectDescription} is null.");
+                case JsonValue value:
+                    @this.Ensure(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
+                    return result;
                 default:
-                    // Any other primitive value (Number / True / False / Null) consumes the pending name.
-                    pendingProperty = null;
-                    break;
+                    return @this.Fail<T>($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
             }
         }
-
-        return edits;
-    }
-
-    private static void TryRecordStringEdit(
-        ref Utf8JsonReader reader,
-        int offsetInFile,
-        JsonStringValueRewriter rewriter,
-        List<string> pathSegments,
-        string propertyName,
-        List<JsonValueEdit> edits)
-    {
-        var currentValue = reader.GetString()!;
-        pathSegments.Add(propertyName);
-        var newValue = rewriter(pathSegments, currentValue);
-        pathSegments.RemoveAt(pathSegments.Count - 1);
-
-        if (newValue is null || string.Equals(newValue, currentValue, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        // TokenStartIndex points to the opening quote; ValueSpan covers the bytes
-        // between the quotes (escape sequences included). The closing quote and any
-        // surrounding whitespace are deliberately untouched.
-        var innerStart = (int)reader.TokenStartIndex + 1 + offsetInFile;
-        var innerLength = reader.ValueSpan.Length;
-        var encoded = JsonEncodedText.Encode(newValue.AsSpan(), JavaScriptEncoder.UnsafeRelaxedJsonEscaping).EncodedUtf8Bytes.ToArray();
-        edits.Add(new JsonValueEdit(innerStart, innerLength, encoded));
     }
 }
