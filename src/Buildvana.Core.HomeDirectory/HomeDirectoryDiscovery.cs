@@ -9,9 +9,8 @@ namespace Buildvana.Core.HomeDirectory;
 
 /// <summary>
 /// Canonical implementation of the Buildvana "home directory" discovery algorithm:
-/// the closest ancestor of a given start directory that contains either a <c>.buildvana-home</c>
-/// marker, a <c>.git</c> entry (worktree, submodule, or regular repository), or a <c>.git/HEAD</c>
-/// file (regular repository).
+/// the closest ancestor of a given start directory that contains either a <c>.buildvana-home</c> file
+/// (manual override), a <c>.git</c> file (worktree or submodule), or a <c>.git/HEAD</c> file (regular repository).
 /// </summary>
 /// <remarks>
 /// <para>This algorithm mirrors the discovery performed by the Buildvana SDK in

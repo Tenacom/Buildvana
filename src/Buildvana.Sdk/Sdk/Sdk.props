@@ -19,14 +19,13 @@
   <!--
     Rules for HomeDirectory:
       * the nearest directory above the project file containing a file named .buildvana-home
-      * the Git submodule above the project's directory (look for a file named .git)
+      * the Git submodule or worktree above the project's directory (look for a file named .git)
       * the Git repository above the project's directory (look for a file named HEAD in a .git subdirectory)
 
-    The canonical implementation of this algorithm lives in Buildvana.Core.HomeDirectory.HomeDirectoryDiscovery
-    (src/Buildvana.Core.HomeDirectory/HomeDirectoryDiscovery.cs). Any change to the discovery rules MUST be
-    applied to both places. MSBuild's evaluation phase cannot call tasks, so the property assignments below
-    cannot delegate to that implementation; consumers within MSBuild tasks should construct a
-    FixedHomeDirectoryProvider seeded with $(HomeDirectory).
+    The canonical implementation of this algorithm lives in class `Buildvana.Core.HomeDirectory.HomeDirectoryDiscovery`.
+    Any change to the discovery rules MUST be applied to both places.
+    MSBuild's evaluation phase cannot call tasks, so the property assignments below cannot delegate to that implementation;
+    consumers within compiled tasks should construct a `FixedHomeDirectoryProvider` seeded with `$(HomeDirectory)`.
   -->
   <PropertyGroup>
     <HomeDirectory>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana-home'))</HomeDirectory>
