@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
-using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Core;
 using Cake.Core.IO;
@@ -39,18 +38,26 @@ public sealed class SelfReferenceUpdater
 {
     private readonly ICakeContext _context;
     private readonly IBuildHost _host;
+    private readonly IJsonHelper _jsonHelper;
     private readonly DotNetService _dotnet;
     private readonly VersionService _version;
     private readonly (string RelativePath, Func<FilePath, Dictionary<string, string>, bool> Update)[] _targets;
 
-    public SelfReferenceUpdater(ICakeContext context, IBuildHost host, DotNetService dotnet, VersionService version)
+    public SelfReferenceUpdater(
+        ICakeContext context,
+        IBuildHost host,
+        IJsonHelper jsonHelper,
+        DotNetService dotnet,
+        VersionService version)
     {
         Guard.IsNotNull(context);
         Guard.IsNotNull(host);
+        Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(dotnet);
         Guard.IsNotNull(version);
         _context = context;
         _host = host;
+        _jsonHelper = jsonHelper;
         _dotnet = dotnet;
         _version = version;
         _targets =
@@ -132,7 +139,7 @@ public sealed class SelfReferenceUpdater
     //   - versionPropertyName == null → at depth 2 with path [container, packageId];
     //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
     private bool UpdateJsonContainer(FilePath path, Dictionary<string, string> produced, string container, string? versionPropertyName)
-        => _host.RewriteJsonStringValues(path.FullPath, (propertyPath, currentValue) =>
+        => _jsonHelper.RewriteStringValues(path.FullPath, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
             {

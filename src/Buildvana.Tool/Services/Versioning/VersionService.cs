@@ -3,7 +3,6 @@
 
 using System.Text;
 using Buildvana.Core;
-using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Cake.Common.Tools.DotNet;
@@ -22,19 +21,27 @@ public sealed class VersionService
 {
     private readonly ICakeContext _context;
     private readonly IBuildHost _host;
+    private readonly IJsonHelper _jsonHelper;
     private readonly PublicApiFilesService _publicApiFiles;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VersionService"/> class.
     /// </summary>
-    public VersionService(ICakeContext context, IBuildHost host, GitService git, PublicApiFilesService publicApiFiles)
+    public VersionService(
+        ICakeContext context,
+        IBuildHost host,
+        IJsonHelper jsonHelper,
+        GitService git,
+        PublicApiFilesService publicApiFiles)
     {
         Guard.IsNotNull(context);
         Guard.IsNotNull(host);
+        Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(git);
         Guard.IsNotNull(publicApiFiles);
         _context = context;
         _host = host;
+        _jsonHelper = jsonHelper;
         _publicApiFiles = publicApiFiles;
         (CurrentStr, Current, IsPublicRelease, IsPrerelease) = GetVersionInformationFromNbgv();
         (Latest, LatestStable) = git.GetLatestVersions();
@@ -194,12 +201,12 @@ public sealed class VersionService
                     }),
             });
 
-        var json = _host.ParseJsonObject(nbgvOutput.ToString(), "The output of nbgv");
-        var currentStr = _host.GetJsonPropertyValue<string>(json, "SemVer2", "the output of nbgv");
+        var json = _jsonHelper.ParseObject(nbgvOutput.ToString(), "The output of nbgv");
+        var currentStr = _jsonHelper.GetPropertyValue<string>(json, "SemVer2", "the output of nbgv");
         return (
             currentStr,
             SemanticVersion.Parse(currentStr),
-            _host.GetJsonPropertyValue<bool>(json, "PublicRelease", "the output of nbgv"),
-            !string.IsNullOrEmpty(_host.GetJsonPropertyValue<string>(json, "PrereleaseVersion", "the output of nbgv")));
+            _jsonHelper.GetPropertyValue<bool>(json, "PublicRelease", "the output of nbgv"),
+            !string.IsNullOrEmpty(_jsonHelper.GetPropertyValue<string>(json, "PrereleaseVersion", "the output of nbgv")));
     }
 }

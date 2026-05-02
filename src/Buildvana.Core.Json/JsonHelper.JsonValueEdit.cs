@@ -3,7 +3,7 @@
 
 namespace Buildvana.Core.Json;
 
-partial class JsonBuildHostExtensions
+partial class JsonHelper
 {
     private readonly record struct JsonValueEdit(int Start, int Length, byte[] Replacement);
 }
