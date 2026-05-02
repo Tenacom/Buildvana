@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,8 @@ namespace Buildvana.Core.Process;
 /// </summary>
 public sealed class ProcessRunner : IProcessRunner
 {
+    private const int TailCapBytes = 4096;
+
     /// <inheritdoc cref="IProcessRunner.RunAsync"/>
     public async Task<ProcessResult> RunAsync(
         string executable,
@@ -61,9 +64,58 @@ public sealed class ProcessRunner : IProcessRunner
         {
             throw new BuildFailedException(
                 result.ExitCode,
-                $"Command '{executable}' exited with code {result.ExitCode}.");
+                BuildFailureMessage(executable, result));
         }
 
         return result;
+    }
+
+    private static string BuildFailureMessage(string executable, ProcessResult result)
+    {
+        var stdout = FormatTail(result.StandardOutput);
+        var stderr = FormatTail(result.StandardError);
+        var header = string.Create(
+            CultureInfo.InvariantCulture,
+            $"Command '{executable}' exited with code {result.ExitCode}.");
+        if (stdout is null && stderr is null)
+        {
+            return header;
+        }
+
+        var sb = new StringBuilder(header);
+        if (stdout is not null)
+        {
+            _ = sb.Append("\n--- stdout ---\n").Append(stdout);
+        }
+
+        if (stderr is not null)
+        {
+            _ = sb.Append("\n--- stderr ---\n").Append(stderr);
+        }
+
+        return sb.ToString();
+    }
+
+    private static string? FormatTail(string text)
+    {
+        var trimmed = text.TrimEnd();
+        if (trimmed.Length == 0)
+        {
+            return null;
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(trimmed);
+        if (bytes.Length <= TailCapBytes)
+        {
+            return trimmed;
+        }
+
+        var start = bytes.Length - TailCapBytes;
+        while (start < bytes.Length && (bytes[start] & 0xC0) == 0x80)
+        {
+            start++;
+        }
+
+        return "…" + Encoding.UTF8.GetString(bytes, start, bytes.Length - start).TrimStart();
     }
 }
