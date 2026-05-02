@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Buildvana.Core;
+using Buildvana.Core.HomeDirectory;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
@@ -19,20 +20,20 @@ namespace Buildvana.Tool.Services.Git;
 /// </summary>
 public sealed class GitService : IDisposable
 {
-    private readonly ICakeContext _context;
     private readonly IBuildHost _host;
+    private readonly IHomeDirectoryProvider _home;
     private readonly Repository _repository;
 
-    public GitService(ICakeContext context, IBuildHost host, OptionsService options)
+    public GitService(IBuildHost host, IHomeDirectoryProvider home, OptionsService options)
     {
-        Guard.IsNotNull(context);
         Guard.IsNotNull(host);
+        Guard.IsNotNull(home);
         Guard.IsNotNull(options);
-        _context = context;
         _host = host;
-        var workingDirectory = context.Environment.WorkingDirectory.FullPath;
-        _host.Ensure(Repository.IsValid(workingDirectory), $"There is no Git repository at {workingDirectory}");
-        _repository = new Repository(workingDirectory);
+        _home = home;
+        var homeDirectory = home.HomeDirectory;
+        _host.Ensure(Repository.IsValid(homeDirectory), $"There is no Git repository at {homeDirectory}");
+        _repository = new Repository(homeDirectory);
         _host.Ensure(TryGetOriginInfo(out var origin, out var originUrl), "No origin remote found in the Git repository.");
         Origin = origin;
         OriginUrl = new(originUrl);
@@ -163,11 +164,12 @@ public sealed class GitService : IDisposable
             return;
         }
 
+        var homeDirectory = new DirectoryPath(_home.HomeDirectory);
         var pathsInRepo = paths.Select(path =>
         {
             Guard.IsTrue(path is not null, nameof(paths), "One or more paths are null.");
-            var absolutePath = path.MakeAbsolute(_context.Environment);
-            var pathInRepo = _context.Environment.WorkingDirectory.GetRelativePath(absolutePath);
+            var absolutePath = path.MakeAbsolute(homeDirectory);
+            var pathInRepo = homeDirectory.GetRelativePath(absolutePath);
             if (!pathInRepo.IsRelative || pathInRepo.Segments[0] == "..")
             {
                 _host.Fail($"Git: cannot stage '{path}' because it is not in the repository.");

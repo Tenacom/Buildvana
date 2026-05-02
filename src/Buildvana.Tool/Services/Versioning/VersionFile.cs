@@ -3,8 +3,8 @@
 
 using System.Text.Json.Nodes;
 using Buildvana.Core;
+using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
-using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 
@@ -23,16 +23,15 @@ public sealed class VersionFile
     private readonly IJsonHelper _jsonHelper;
 
     private VersionFile(
-        ICakeContext context,
         IBuildHost host,
         IJsonHelper jsonHelper,
-        FilePath path,
+        FilePath absolutePath,
         VersionSpec versionSpec,
         string firstUnstableTag)
     {
         _host = host;
         _jsonHelper = jsonHelper;
-        Path = path.MakeAbsolute(context.Environment);
+        Path = absolutePath;
         VersionSpec = versionSpec;
         FirstUnstableTag = firstUnstableTag;
     }
@@ -56,17 +55,17 @@ public sealed class VersionFile
     /// <summary>
     /// Constructs a <see cref="VersionFile"/> instance by loading the repository's <c>version.json</c> file.
     /// </summary>
-    /// <param name="context">The Cake context.</param>
     /// <param name="host">The build host.</param>
+    /// <param name="home">The home directory provider used to resolve the path of <c>version.json</c>.</param>
     /// <param name="jsonHelper">The JSON helper used to load and rewrite the file.</param>
     /// <returns>A newly-created <see cref="VersionFile"/>, representing the loaded data.</returns>
-    public static VersionFile Load(ICakeContext context, IBuildHost host, IJsonHelper jsonHelper)
+    public static VersionFile Load(IBuildHost host, IHomeDirectoryProvider home, IJsonHelper jsonHelper)
     {
-        Guard.IsNotNull(context);
         Guard.IsNotNull(host);
+        Guard.IsNotNull(home);
         Guard.IsNotNull(jsonHelper);
 
-        var path = new FilePath(VersionJsonPath).MakeAbsolute(context.Environment);
+        var path = new FilePath(VersionJsonPath).MakeAbsolute(new DirectoryPath(home.HomeDirectory));
         var json = jsonHelper.LoadObject(path.FullPath);
         var versionStr = jsonHelper.GetPropertyValue<string>(json, VersionPropertyName, path + " file");
         host.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
@@ -81,7 +80,7 @@ public sealed class VersionFile
             }
         }
 
-        return new(context, host, jsonHelper, path, versionSpec, firstUnstableTag);
+        return new(host, jsonHelper, path, versionSpec, firstUnstableTag);
     }
 
     /// <summary>
