@@ -22,8 +22,10 @@ internal sealed class MSBuildTaskHost : IBuildHost
         _engineServices = (engine as IBuildEngine10)?.EngineServices;
     }
 
+    public int DefaultFailExitCode => 1;
+
     [DoesNotReturn]
-    public void Fail(string message) => throw new BuildErrorException(message);
+    public void Fail(int exitCode, string message) => throw new BuildErrorException(message);
 
     public bool IsEnabled(LogLevel level) => level switch
     {

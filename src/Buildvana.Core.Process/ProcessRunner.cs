@@ -19,6 +19,18 @@ public sealed class ProcessRunner : IProcessRunner
 {
     private const int TailCapBytes = 4096;
 
+    private readonly IBuildHost _host;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProcessRunner"/> class.
+    /// </summary>
+    /// <param name="host">The build host through which a non-zero exit code is reported.</param>
+    public ProcessRunner(IBuildHost host)
+    {
+        Guard.IsNotNull(host);
+        _host = host;
+    }
+
     /// <inheritdoc cref="IProcessRunner.RunAsync"/>
     public async Task<ProcessResult> RunAsync(
         string executable,
@@ -62,9 +74,7 @@ public sealed class ProcessRunner : IProcessRunner
 
         if (throwOnNonZero && result.ExitCode != 0)
         {
-            throw new BuildFailedException(
-                result.ExitCode,
-                BuildFailureMessage(executable, result));
+            _host.Fail(result.ExitCode, BuildFailureMessage(executable, result));
         }
 
         return result;

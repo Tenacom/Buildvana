@@ -22,11 +22,13 @@ public sealed class CakeBuildHost : IBuildHost
         _context = context;
     }
 
+    public int DefaultFailExitCode => 1;
+
     [DoesNotReturn]
-    public void Fail(string message)
+    public void Fail(int exitCode, string message)
     {
         _context.Error(message);
-        throw new CakeException(message);
+        throw new CakeException(exitCode, message);
     }
 
     public bool IsEnabled(LogLevel level) => level switch

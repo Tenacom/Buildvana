@@ -16,7 +16,30 @@ partial class BuildHostExtensions
     extension(IBuildHost @this)
     {
         /// <summary>
-        /// <para>Fails the build with the specified message.</para>
+        /// <para>Fails the build with the specified message and the default fail exit code.</para>
+        /// <para>This method does not return.</para>
+        /// </summary>
+        /// <param name="message">A message explaining the reason for failing the build.</param>
+        [DoesNotReturn]
+        public void Fail(string message) => @this.Fail(@this.DefaultFailExitCode, message);
+
+        /// <summary>
+        /// <para>Fails the build with the specified exit code and message.</para>
+        /// <para>This method does not return.</para>
+        /// </summary>
+        /// <typeparam name="T">The expected return type.</typeparam>
+        /// <param name="exitCode">The exit code that should be surfaced to the host's runtime, where applicable.</param>
+        /// <param name="message">A message explaining the reason for failing the build.</param>
+        /// <returns>This method never returns.</returns>
+        [DoesNotReturn]
+        public T Fail<T>(int exitCode, string message)
+        {
+            @this.Fail(exitCode, message);
+            throw new UnreachableException();
+        }
+
+        /// <summary>
+        /// <para>Fails the build with the specified message and the default fail exit code.</para>
         /// <para>This method does not return.</para>
         /// </summary>
         /// <typeparam name="T">The expected return type.</typeparam>
@@ -25,12 +48,26 @@ partial class BuildHostExtensions
         [DoesNotReturn]
         public T Fail<T>(string message)
         {
-            @this.Fail(message);
+            @this.Fail(@this.DefaultFailExitCode, message);
             throw new UnreachableException();
         }
 
         /// <summary>
-        /// <para>Fails the build with the specified formatted message.</para>
+        /// <para>Fails the build with the specified exit code and a formatted message.</para>
+        /// <para>This method does not return.</para>
+        /// </summary>
+        /// <param name="exitCode">The exit code that should be surfaced to the host's runtime, where applicable.</param>
+        /// <param name="format">A <see cref="CompositeFormat"/>.</param>
+        /// <param name="args">An object span that contains zero or more objects to format.</param>
+        [DoesNotReturn]
+        public void Fail(
+            int exitCode,
+            CompositeFormat format,
+            params ReadOnlySpan<object?> args)
+            => @this.Fail(exitCode, string.Format(CultureInfo.InvariantCulture, format, args));
+
+        /// <summary>
+        /// <para>Fails the build with the specified formatted message and the default fail exit code.</para>
         /// <para>This method does not return.</para>
         /// </summary>
         /// <param name="format">A <see cref="CompositeFormat"/>.</param>
@@ -39,10 +76,25 @@ partial class BuildHostExtensions
         public void Fail(
             CompositeFormat format,
             params ReadOnlySpan<object?> args)
-            => @this.Fail(string.Format(CultureInfo.InvariantCulture, format, args));
+            => @this.Fail(@this.DefaultFailExitCode, string.Format(CultureInfo.InvariantCulture, format, args));
 
         /// <summary>
-        /// <para>Fails the build with the specified formatted message.</para>
+        /// <para>Fails the build with the specified exit code and a formatted message.</para>
+        /// <para>This method does not return.</para>
+        /// </summary>
+        /// <typeparam name="T">The expected return type.</typeparam>
+        /// <param name="exitCode">The exit code that should be surfaced to the host's runtime, where applicable.</param>
+        /// <param name="format">A <see cref="CompositeFormat"/>.</param>
+        /// <param name="args">An object span that contains zero or more objects to format.</param>
+        [DoesNotReturn]
+        public T Fail<T>(
+            int exitCode,
+            CompositeFormat format,
+            params ReadOnlySpan<object?> args)
+            => @this.Fail<T>(exitCode, string.Format(CultureInfo.InvariantCulture, format, args));
+
+        /// <summary>
+        /// <para>Fails the build with the specified formatted message and the default fail exit code.</para>
         /// <para>This method does not return.</para>
         /// </summary>
         /// <typeparam name="T">The expected return type.</typeparam>
@@ -52,6 +104,6 @@ partial class BuildHostExtensions
         public T Fail<T>(
             CompositeFormat format,
             params ReadOnlySpan<object?> args)
-            => @this.Fail<T>(string.Format(CultureInfo.InvariantCulture, format, args));
+            => @this.Fail<T>(@this.DefaultFailExitCode, string.Format(CultureInfo.InvariantCulture, format, args));
     }
 }
