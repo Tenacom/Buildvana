@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Buildvana.Core;
+namespace Buildvana.Core.Process;
 
 /// <summary>
 /// The outcome of a process invocation performed through <see cref="IProcessRunner"/>.
