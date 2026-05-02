@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
+using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 
@@ -37,27 +37,27 @@ namespace Buildvana.Tool.Services;
 /// </remarks>
 public sealed class SelfReferenceUpdater
 {
-    private readonly ICakeContext _context;
     private readonly IBuildHost _host;
+    private readonly IHomeDirectoryProvider _home;
     private readonly IJsonHelper _jsonHelper;
     private readonly DotNetService _dotnet;
     private readonly VersionService _version;
     private readonly (string RelativePath, Func<FilePath, Dictionary<string, string>, bool> Update)[] _targets;
 
     public SelfReferenceUpdater(
-        ICakeContext context,
         IBuildHost host,
+        IHomeDirectoryProvider home,
         IJsonHelper jsonHelper,
         DotNetService dotnet,
         VersionService version)
     {
-        Guard.IsNotNull(context);
         Guard.IsNotNull(host);
+        Guard.IsNotNull(home);
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(dotnet);
         Guard.IsNotNull(version);
-        _context = context;
         _host = host;
+        _home = home;
         _jsonHelper = jsonHelper;
         _dotnet = dotnet;
         _version = version;
@@ -87,11 +87,12 @@ public sealed class SelfReferenceUpdater
         _host.LogInformation($"Self-reference update: {produced.Count} produced package(s) detected: {string.Join(", ", produced.Keys)}.");
 
         var modified = new List<FilePath>();
+        var homeDirectory = new DirectoryPath(_home.HomeDirectory);
         foreach (var (relativePath, update) in _targets)
         {
             // FilePath.FullPath of a relative path is still relative; resolve up-front so the path
             // returned to the caller (and shown in logs) is unambiguous.
-            var path = new FilePath(relativePath).MakeAbsolute(_context.Environment);
+            var path = new FilePath(relativePath).MakeAbsolute(homeDirectory);
             if (!SysFile.Exists(path.FullPath))
             {
                 continue;

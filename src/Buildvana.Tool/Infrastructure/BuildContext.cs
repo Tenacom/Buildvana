@@ -4,6 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Buildvana.Core;
+using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Services;
@@ -29,6 +30,7 @@ public sealed class BuildContext : FrostingContext
         _services = new ServiceCollection()
             .AddSingleton(context)
             .AddSingleton<IBuildHost, CakeBuildHost>()
+            .AddSingleton<IHomeDirectoryProvider>(static sp => new DiscoveredHomeDirectoryProvider(sp.GetRequiredService<IBuildHost>(), System.Environment.CurrentDirectory))
             .AddSingleton<IJsonHelper, JsonHelper>()
             .AddSingleton<IProcessRunner, ProcessRunner>()
             .AddSingleton<GitService>()
