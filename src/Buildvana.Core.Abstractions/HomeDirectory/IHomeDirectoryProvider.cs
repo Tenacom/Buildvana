@@ -17,6 +17,9 @@ public interface IHomeDirectoryProvider
     /// <summary>
     /// Gets the absolute path of the home directory, with a trailing directory separator.
     /// </summary>
-    /// <exception cref="BuildFailedException">The home directory could not be resolved.</exception>
+    /// <remarks>
+    /// <para>If the home directory cannot be resolved, the build is failed via <see cref="IBuildHost.Fail"/>;
+    /// the exact exception type thrown is host-specific.</para>
+    /// </remarks>
     string HomeDirectory { get; }
 }

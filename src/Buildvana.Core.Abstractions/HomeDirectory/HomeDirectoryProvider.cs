@@ -29,7 +29,10 @@ public abstract class HomeDirectoryProvider : IHomeDirectoryProvider
     /// When overridden in a derived class, computes the absolute path of the home directory.
     /// Invoked at most once per instance, on first read of <see cref="HomeDirectory"/>.
     /// </summary>
+    /// <remarks>
+    /// <para>If the home directory cannot be resolved, the implementation should fail the build via
+    /// <see cref="IBuildHost.Fail"/>; the exact exception type thrown is host-specific.</para>
+    /// </remarks>
     /// <returns>The absolute path of the home directory, with a trailing directory separator.</returns>
-    /// <exception cref="BuildFailedException">The home directory could not be resolved.</exception>
     protected abstract string Resolve();
 }
