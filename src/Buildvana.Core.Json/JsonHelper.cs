@@ -30,7 +30,7 @@ public sealed partial class JsonHelper : IJsonHelper
         _host = host;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc cref="IJsonHelper.ParseObject"/>
     public JsonObject ParseObject(string str, string description = "The provided string")
     {
         JsonNode? node;
@@ -57,7 +57,7 @@ public sealed partial class JsonHelper : IJsonHelper
         };
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc cref="IJsonHelper.LoadObject"/>
     public JsonObject LoadObject(string path)
     {
         Guard.IsNotNullOrEmpty(path);
@@ -91,7 +91,7 @@ public sealed partial class JsonHelper : IJsonHelper
         };
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc cref="IJsonHelper.SaveObject"/>
     public void SaveObject(JsonNode json, string path)
     {
         Guard.IsNotNull(json);
@@ -116,7 +116,7 @@ public sealed partial class JsonHelper : IJsonHelper
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc cref="IJsonHelper.RewriteStringValues"/>
     public bool RewriteStringValues(string path, JsonStringValueRewriter rewriter)
     {
         Guard.IsNotNullOrEmpty(path);
@@ -181,7 +181,7 @@ public sealed partial class JsonHelper : IJsonHelper
         return true;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc cref="IJsonHelper.GetPropertyValue{T}"/>
     public T GetPropertyValue<T>(JsonObject json, string propertyName, string objectDescription = "JSON object")
     {
         Guard.IsNotNull(json);
