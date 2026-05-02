@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Buildvana.Core;
+namespace Buildvana.Core.Process;
 
 /// <summary>
 /// Runs an external process and reports its outcome through a <see cref="ProcessResult"/>.

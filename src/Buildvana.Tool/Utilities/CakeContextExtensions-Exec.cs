@@ -10,7 +10,7 @@ using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 
-using IProcessRunner = Buildvana.Core.IProcessRunner;
+using IProcessRunner = Buildvana.Core.Process.IProcessRunner;
 
 namespace Buildvana.Tool.Utilities;
 
