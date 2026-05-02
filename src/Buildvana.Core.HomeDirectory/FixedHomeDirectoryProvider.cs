@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.HomeDirectory;
@@ -20,9 +21,13 @@ public sealed class FixedHomeDirectoryProvider : HomeDirectoryProvider
     /// Initializes a new instance of the <see cref="FixedHomeDirectoryProvider"/> class.
     /// </summary>
     /// <param name="homeDirectory">The absolute path of the home directory.</param>
-    public FixedHomeDirectoryProvider(string homeDirectory)
+    public FixedHomeDirectoryProvider(IBuildHost host, string homeDirectory)
     {
+        Guard.IsNotNull(host);
         Guard.IsNotNullOrEmpty(homeDirectory);
+
+        homeDirectory = Path.GetFullPath(homeDirectory);
+        host.Ensure(Directory.Exists(homeDirectory), $"The specified home directory '{homeDirectory}' does not exist.");
         _homeDirectory = homeDirectory;
     }
 
