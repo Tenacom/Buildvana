@@ -58,7 +58,7 @@ public static class HomeDirectoryDiscovery
         while (current is not null)
         {
             var candidate = Path.Combine([current, .. markerParts]);
-            if (File.Exists(candidate) || Directory.Exists(candidate))
+            if (File.Exists(candidate))
             {
                 homeDirectory = NormalizeDirectory(current);
                 return true;
