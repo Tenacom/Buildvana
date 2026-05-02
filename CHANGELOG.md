@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changes to existing features
 
+- `bv` may now be invoked from any subdirectory under the solution's directory (`HomeDirectory` property in Buildvana SDK). It will search upwards for the home directory, the same way the SDK does, and work from there. If it doesn't find the home directory, `bv` will exit with a non-zero exit code.
 - **BREAKING CHANGE**: The `prepare` subcommand of `bv` has been renamed to `clean`, in order to maintain parallelism between `bv` and `dotnet` build pipeline subcommands (`restore`, `build`, etc.).
 - **BREAKING CHANGE**: Microsoft Testing Platform (MTP) is the only supported test runner now. Test projects using VSTest are explicitly not supported and will cause test-time errors. Buildvana will assume all test projects to be built with MTP.
 - **BREAKING CHANGE**: Code coverage reports are now collected in a `TestResults` directory at the repository root rather than under each test project's directory, and are no longer merged into a single file. Tooling that consumes coverage output (e.g. Codecov upload steps) must handle multiple *.cobertura.xml files; Codecov's GitHub Action accepts globs natively.
