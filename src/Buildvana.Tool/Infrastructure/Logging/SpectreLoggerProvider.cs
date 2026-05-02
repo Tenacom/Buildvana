@@ -18,7 +18,9 @@ namespace Buildvana.Tool.Infrastructure.Logging;
 /// extra detection logic of its own.</para>
 /// <para>The provider does not own the supplied console; <see cref="Dispose"/> is a no-op.</para>
 /// </remarks>
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes - Will be instantiated via DI in a soon-to-come commit.
 internal sealed class SpectreLoggerProvider : ILoggerProvider
+#pragma warning restore
 {
     private readonly IAnsiConsole _console;
     private readonly ConcurrentDictionary<string, SpectreLogger> _loggers = new(StringComparer.Ordinal);
