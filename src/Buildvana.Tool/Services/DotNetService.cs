@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -237,24 +236,6 @@ public sealed class DotNetService
         {
             _host.LogInformation($"Pushing {path} to {nugetSource}...");
             _context.DotNetNuGetPush(path, nugetPushSettings);
-        }
-    }
-
-    private IEnumerable<string> GetCodeCoverageReportPaths()
-    {
-        var homeDirectory = new DirectoryPath(_home.HomeDirectory);
-        foreach (var testResultsDirectory in Solution.Projects.Select(static x => x.Path.GetDirectory().Combine("TestResults")))
-        {
-            if (!_context.DirectoryExists(testResultsDirectory))
-            {
-                continue;
-            }
-
-            var globPattern = new GlobPattern(string.Join(testResultsDirectory.Separator, testResultsDirectory.FullPath, "**", "coverage.cobertura.xml"));
-            foreach (var path in _context.GetFiles(globPattern))
-            {
-                yield return homeDirectory.GetRelativePath(path).ToString();
-            }
         }
     }
 }
