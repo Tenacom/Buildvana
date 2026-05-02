@@ -18,7 +18,7 @@ Sub-projects under `src/`:
 
 Project names follow a three-tier convention:
 
-- `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend on other `Buildvana.Core.*` libraries and standard libraries; no host references (Cake, MSBuild, etc.). See "Core tier layout" below for how the tier is structured.
+ - `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend on other `Buildvana.Core.*` libraries and ordinary BCL/NuGet dependencies, but must remain host-agnostic: no host references (Cake, MSBuild, etc.). See "Core tier layout" below for how the tier is structured.
 - `Buildvana.Sdk.*` — the MSBuild SDK and its components (tasks, source generators). Only `Buildvana.Sdk` is packaged; it bundles the others.
 - `Buildvana.Tool` — the `bv` .NET CLI global tool. Packaged as a `dotnet tool`.
 
