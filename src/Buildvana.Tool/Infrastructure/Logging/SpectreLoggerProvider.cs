@@ -18,7 +18,7 @@ namespace Buildvana.Tool.Infrastructure.Logging;
 /// extra detection logic of its own.</para>
 /// <para>The provider does not own the supplied console; <see cref="Dispose"/> is a no-op.</para>
 /// </remarks>
-public sealed class SpectreLoggerProvider : ILoggerProvider
+internal sealed class SpectreLoggerProvider : ILoggerProvider
 {
     private readonly IAnsiConsole _console;
     private readonly ConcurrentDictionary<string, SpectreLogger> _loggers = new(StringComparer.Ordinal);
