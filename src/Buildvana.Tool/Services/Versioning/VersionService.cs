@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
+using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using CommunityToolkit.Diagnostics;

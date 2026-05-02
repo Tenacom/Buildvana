@@ -3,7 +3,7 @@
 
 using System.Text.Json.Nodes;
 
-namespace Buildvana.Core;
+namespace Buildvana.Core.Json;
 
 /// <summary>
 /// <para>Provides JSON loading, parsing, saving, and in-place rewriting helpers.

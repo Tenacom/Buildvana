@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
+using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Core;
 using Cake.Core.IO;
