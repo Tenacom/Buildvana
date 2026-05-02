@@ -12,7 +12,16 @@ Here are additional rules that either cannot be codified there, or are better kn
 
 ## C# source files (`*.cs`)
 
-- Charset: UTF-8 with BOM
+- Charset: UTF-8 with BOM. StyleCop's SA1412 hard-fails the build on missing BOM.
+
+### Creating new C# files
+
+The `Write` tool silently strips the leading BOM (even when U+FEFF is embedded in the content), which makes it unfit for creating new `.cs` files. Use this workflow instead:
+
+1. Copy `.claude/templates/Default.cs` to the target path. The template carries the BOM and the standard copyright preamble.
+2. Use the `Edit` tool to replace `// __EVERYTHING_GOES_HERE__` with the file body. `Edit` preserves the BOM.
+
+If you must use `Write` to fully rewrite an existing `.cs` file (which also strips the BOM), prepend `0xEF 0xBB 0xBF` to the file afterwards.
 
 ## MSBuild XML files (`*.*proj`, `*.props`, `*.targets`)
 
