@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Json\Buildvana.Core.Json.csproj" />
+    <ProjectReference Include="..\Buildvana.Core.Process\Buildvana.Core.Process.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,6 +5,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Buildvana.Core;
 using Buildvana.Core.Json;
+using Buildvana.Core.Process;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
@@ -29,6 +30,7 @@ public sealed class BuildContext : FrostingContext
             .AddSingleton(context)
             .AddSingleton<IBuildHost, CakeBuildHost>()
             .AddSingleton<IJsonHelper, JsonHelper>()
+            .AddSingleton<IProcessRunner, ProcessRunner>()
             .AddSingleton<GitService>()
             .AddSingleton<PublicApiFilesService>()
             .AddSingleton(ServerAdapter.Create)
