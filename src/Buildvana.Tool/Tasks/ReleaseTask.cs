@@ -4,6 +4,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.Json;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;

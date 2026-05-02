@@ -3,6 +3,7 @@
 
 using System.Text.Json.Nodes;
 using Buildvana.Core;
+using Buildvana.Core.Json;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
