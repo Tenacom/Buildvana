@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "bv": {
-      "version": "2.0.44-preview",
+      "version": "2.0.61-preview",
       "commands": [
         "bv"
       ]
