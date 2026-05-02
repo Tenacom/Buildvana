@@ -1,14 +1,9 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Text;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
-using Cake.Common.Tools.DotNet;
-using Cake.Common.Tools.DotNet.Tool;
-using Cake.Core;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
@@ -19,29 +14,29 @@ namespace Buildvana.Tool.Services.Versioning;
 /// </summary>
 public sealed class VersionService
 {
-    private readonly ICakeContext _context;
     private readonly IBuildHost _host;
     private readonly IJsonHelper _jsonHelper;
+    private readonly IProcessRunner _processRunner;
     private readonly PublicApiFilesService _publicApiFiles;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VersionService"/> class.
     /// </summary>
     public VersionService(
-        ICakeContext context,
         IBuildHost host,
         IJsonHelper jsonHelper,
+        IProcessRunner processRunner,
         GitService git,
         PublicApiFilesService publicApiFiles)
     {
-        Guard.IsNotNull(context);
         Guard.IsNotNull(host);
         Guard.IsNotNull(jsonHelper);
+        Guard.IsNotNull(processRunner);
         Guard.IsNotNull(git);
         Guard.IsNotNull(publicApiFiles);
-        _context = context;
         _host = host;
         _jsonHelper = jsonHelper;
+        _processRunner = processRunner;
         _publicApiFiles = publicApiFiles;
         (CurrentStr, Current, IsPublicRelease, IsPrerelease) = GetVersionInformationFromNbgv();
         (Latest, LatestStable) = git.GetLatestVersions();
@@ -182,26 +177,13 @@ public sealed class VersionService
 
     private (string CurrentStr, SemanticVersion Current, bool IsPublicRelease, bool IsPrerelease) GetVersionInformationFromNbgv()
     {
-        var nbgvOutput = new StringBuilder();
-        _context.DotNetTool(
-            null,
-            "nbgv",
-            new ProcessArgumentBuilder()
-                .Append("get-version")
-                .Append("--format")
-                .Append("json"),
-            new DotNetToolSettings
-            {
-                SetupProcessSettings = s => s
-                    .SetRedirectStandardOutput(true)
-                    .SetRedirectedStandardOutputHandler(x =>
-                    {
-                        _ = nbgvOutput.AppendLine(x);
-                        return x;
-                    }),
-            });
+        // Block synchronously: this method runs from the constructor (and Update()), neither of which is async.
+        var result = _processRunner
+            .RunAsync("dotnet", ["nbgv", "get-version", "--format", "json"])
+            .GetAwaiter()
+            .GetResult();
 
-        var json = _jsonHelper.ParseObject(nbgvOutput.ToString(), "The output of nbgv");
+        var json = _jsonHelper.ParseObject(result.StandardOutput, "The output of nbgv");
         var currentStr = _jsonHelper.GetPropertyValue<string>(json, "SemVer2", "the output of nbgv");
         return (
             currentStr,
