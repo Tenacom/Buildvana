@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Buildvana.Core.Json;
+namespace Buildvana.Core;
 
 /// <summary>
 /// Computes a replacement for a JSON string value visited during a structural walk of a JSON document.

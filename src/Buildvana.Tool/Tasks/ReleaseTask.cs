@@ -32,6 +32,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
         Guard.IsNotNull(context);
 
         var host = context.GetService<IBuildHost>();
+        var jsonHelper = context.GetService<IJsonHelper>();
         var options = context.GetService<OptionsService>();
         var server = context.GetService<ServerAdapter>();
         var version = context.GetService<VersionService>();
@@ -81,7 +82,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             // Modify version file if required.
             if (versionSpecChange != VersionSpecChange.None)
             {
-                var versionFile = VersionFile.Load(context, host);
+                var versionFile = VersionFile.Load(context, host, jsonHelper);
                 var previousVersionSpec = versionFile.VersionSpec;
                 if (versionFile.ApplyVersionSpecChange(versionSpecChange))
                 {
