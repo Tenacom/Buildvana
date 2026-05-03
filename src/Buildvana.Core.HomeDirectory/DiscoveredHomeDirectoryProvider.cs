@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.HomeDirectory;
@@ -15,20 +16,16 @@ namespace Buildvana.Core.HomeDirectory;
 /// </remarks>
 public sealed class DiscoveredHomeDirectoryProvider : HomeDirectoryProvider
 {
-    private readonly IBuildHost _host;
     private readonly string _startDirectory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DiscoveredHomeDirectoryProvider"/> class.
     /// </summary>
-    /// <param name="host">The build host through which a discovery failure is reported.</param>
     /// <param name="startDirectory">The directory from which discovery should begin. Typically the current
     /// process's working directory.</param>
-    public DiscoveredHomeDirectoryProvider(IBuildHost host, string startDirectory)
+    public DiscoveredHomeDirectoryProvider(string startDirectory)
     {
-        Guard.IsNotNull(host);
         Guard.IsNotNullOrEmpty(startDirectory);
-        _host = host;
         _startDirectory = startDirectory;
     }
 
@@ -36,5 +33,5 @@ public sealed class DiscoveredHomeDirectoryProvider : HomeDirectoryProvider
     protected override string Resolve()
         => HomeDirectoryDiscovery.TryDiscover(_startDirectory, out var homeDirectory)
             ? homeDirectory
-            : _host.Fail<string>($"Home directory not defined (no .buildvana-home, .git, or .git/HEAD found above '{_startDirectory}').");
+            : throw new BuildFailedException($"Home directory not defined (no .buildvana-home, .git, or .git/HEAD found above '{_startDirectory}').");
 }

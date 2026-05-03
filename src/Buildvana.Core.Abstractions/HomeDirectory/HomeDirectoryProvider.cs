@@ -30,8 +30,8 @@ public abstract class HomeDirectoryProvider : IHomeDirectoryProvider
     /// Invoked at most once per instance, on first read of <see cref="HomeDirectory"/>.
     /// </summary>
     /// <remarks>
-    /// <para>If the home directory cannot be resolved, the implementation should fail the build via
-    /// <see cref="IBuildHost.Fail"/>; the exact exception type thrown is host-specific.</para>
+    /// <para>If the home directory cannot be resolved, the implementation should throw a
+    /// <see cref="BuildFailedException"/>.</para>
     /// </remarks>
     /// <returns>The absolute path of the home directory, with a trailing directory separator.</returns>
     protected abstract string Resolve();

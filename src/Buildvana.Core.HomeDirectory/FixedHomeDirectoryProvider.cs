@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.IO;
+using Buildvana.Core;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.HomeDirectory;
@@ -21,13 +22,12 @@ public sealed class FixedHomeDirectoryProvider : HomeDirectoryProvider
     /// Initializes a new instance of the <see cref="FixedHomeDirectoryProvider"/> class.
     /// </summary>
     /// <param name="homeDirectory">The absolute path of the home directory.</param>
-    public FixedHomeDirectoryProvider(IBuildHost host, string homeDirectory)
+    public FixedHomeDirectoryProvider(string homeDirectory)
     {
-        Guard.IsNotNull(host);
         Guard.IsNotNullOrEmpty(homeDirectory);
 
         homeDirectory = Path.GetFullPath(homeDirectory);
-        host.Ensure(Directory.Exists(homeDirectory), $"The specified home directory '{homeDirectory}' does not exist.");
+        BuildFailedException.ThrowIfNot(Directory.Exists(homeDirectory), $"The specified home directory '{homeDirectory}' does not exist.");
         _homeDirectory = homeDirectory;
     }
 
