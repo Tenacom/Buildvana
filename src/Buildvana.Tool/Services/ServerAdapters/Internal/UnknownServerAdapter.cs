@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Cake.Core.IO;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal;
 
@@ -17,13 +16,6 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal;
 /// </summary>
 internal sealed class UnknownServerAdapter : ServerAdapter
 {
-    private readonly IBuildHost _host;
-
-    internal UnknownServerAdapter(IServiceProvider services)
-    {
-        _host = services.GetRequiredService<IBuildHost>();
-    }
-
     /// <inheritdoc/>
     public override string Name => "(unknown / local build)";
 
@@ -31,31 +23,31 @@ internal sealed class UnknownServerAdapter : ServerAdapter
     /// <summary>
     /// This property is not supported on this adapter and will always throw.
     /// </summary>
-    public override string HostName => _host.FailOnUnsupportedProperty<string>();
+    public override string HostName => BuildFailedException.ThrowOnUnsupportedProperty<string>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This property is not supported on this adapter and will always throw.
     /// </summary>
-    public override string RepositoryOwner => _host.FailOnUnsupportedProperty<string>();
+    public override string RepositoryOwner => BuildFailedException.ThrowOnUnsupportedProperty<string>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This property is not supported on this adapter and will always throw.
     /// </summary>
-    public override string RepositoryName => _host.FailOnUnsupportedProperty<string>();
+    public override string RepositoryName => BuildFailedException.ThrowOnUnsupportedProperty<string>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This property is not supported on this adapter and will always throw.
     /// </summary>
-    public override Uri RepositoryUrl => _host.FailOnUnsupportedProperty<Uri>();
+    public override Uri RepositoryUrl => BuildFailedException.ThrowOnUnsupportedProperty<Uri>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This property is not supported on this adapter and will always throw.
     /// </summary>
-    public override GitIdentity CIBotIdentity => _host.FailOnUnsupportedProperty<GitIdentity>();
+    public override GitIdentity CIBotIdentity => BuildFailedException.ThrowOnUnsupportedProperty<GitIdentity>();
 
     /// <inheritdoc/>
     public override string? PushUsername => null;
@@ -71,23 +63,23 @@ internal sealed class UnknownServerAdapter : ServerAdapter
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
-    public override Task<bool> IsPrivateRepositoryAsync() => _host.FailOnUnsupportedMethod<Task<bool>>();
+    public override Task<bool> IsPrivateRepositoryAsync() => BuildFailedException.ThrowOnUnsupportedMethod<Task<bool>>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
-    public override Uri GetReleaseUrl(string version) => _host.FailOnUnsupportedMethod<Uri>();
+    public override Uri GetReleaseUrl(string version) => BuildFailedException.ThrowOnUnsupportedMethod<Uri>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
-    public override Uri GetFileUrl(FilePath path, string commitish) => _host.FailOnUnsupportedMethod<Uri>();
+    public override Uri GetFileUrl(FilePath path, string commitish) => BuildFailedException.ThrowOnUnsupportedMethod<Uri>();
 
     /// <inheritdoc/>
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
-    public override Task<ServerRelease> CreateReleaseAsync() => _host.FailOnUnsupportedMethod<Task<ServerRelease>>();
+    public override Task<ServerRelease> CreateReleaseAsync() => BuildFailedException.ThrowOnUnsupportedMethod<Task<ServerRelease>>();
 }

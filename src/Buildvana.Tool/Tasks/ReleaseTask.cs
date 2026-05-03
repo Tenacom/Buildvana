@@ -15,6 +15,7 @@ using Buildvana.Tool.Services.Versioning;
 using Cake.Common.IO;
 using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 using SysFile = System.IO.File;
 using SysPath = System.IO.Path;
@@ -33,7 +34,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
     {
         Guard.IsNotNull(context);
 
-        var host = context.GetService<IBuildHost>();
+        var logger = context.GetService<ILogger<ReleaseTask>>();
         var home = context.GetService<IHomeDirectoryProvider>();
         var jsonHelper = context.GetService<IJsonHelper>();
         var options = context.GetService<OptionsService>();
@@ -47,25 +48,25 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
         var selfReferenceUpdater = context.GetService<SelfReferenceUpdater>();
 
         // Perform some preliminary checks
-        host.Ensure(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
-        host.Ensure(!string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
-        host.Ensure(version.IsPublicRelease, "Cannot create a release from the current branch.");
+        BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
+        BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
+        BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
 
         // Ensure that the CI bot identity is used for commits, if not already set.
-        git.CommitterIdentity ??= server.CIBotIdentity ?? host.Fail<GitIdentity>("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
-        host.LogInformation($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
+        git.CommitterIdentity ??= server.CIBotIdentity ?? throw new BuildFailedException("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
+        logger.LogInformation("Using committer identity: {Name} <{Email}>", git.CommitterIdentity.Name, git.CommitterIdentity.Email);
 
         // Set fallback Git credentials if the server adapter can provide them.
         var pushUsername = server.PushUsername;
         var pushPassword = server.PushPassword;
         if (pushUsername is not null && pushPassword is not null)
         {
-            host.LogInformation($"Fallback push credentials provided by the server adapter (protocol username: '{pushUsername}').");
+            logger.LogInformation("Fallback push credentials provided by the server adapter (protocol username: '{Username}').", pushUsername);
             git.PushCredentialsFallback = new(pushUsername, pushPassword);
         }
         else
         {
-            host.LogWarning("No push credentials provided by the server adapter. Push operations may fail if the repository is not already authenticated.");
+            logger.LogWarning("No push credentials provided by the server adapter. Push operations may fail if the repository is not already authenticated.");
         }
 
         // Perform an initial versioning consistency check.
@@ -85,33 +86,40 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             // Modify version file if required.
             if (versionSpecChange != VersionSpecChange.None)
             {
-                var versionFile = VersionFile.Load(host, home, jsonHelper);
+                var versionFile = VersionFile.Load(home, jsonHelper);
                 var previousVersionSpec = versionFile.VersionSpec;
                 if (versionFile.ApplyVersionSpecChange(versionSpecChange))
                 {
-                    host.LogInformation($"Version spec changed from {previousVersionSpec} to {versionFile.VersionSpec}.");
+                    logger.LogInformation("Version spec changed from {Previous} to {New}.", previousVersionSpec, versionFile.VersionSpec);
                     versionFile.Save();
                     release.UpdateRepository(versionFile.Path);
                 }
                 else
                 {
-                    host.LogInformation("Version spec not changed.");
+                    logger.LogInformation("Version spec not changed.");
                 }
             }
 
             // Update public API files only when releasing a stable version
             if (version.IsPrerelease)
             {
-                host.LogInformation("Public API update skipped: not needed on prerelease.");
+                logger.LogInformation("Public API update skipped: not needed on prerelease.");
             }
             else
             {
                 var modified = publicApiFiles.TransferAllPublicApisToShipped().ToArray();
-                host.LogInformation(modified.Length switch {
-                    0 => "No public API files were modified.",
-                    1 => "1 public API file was modified.",
-                    _ => $"{modified.Length} public API files were modified.",
-                });
+                switch (modified.Length)
+                {
+                    case 0:
+                        logger.LogInformation("No public API files were modified.");
+                        break;
+                    case 1:
+                        logger.LogInformation("1 public API file was modified.");
+                        break;
+                    default:
+                        logger.LogInformation("{Count} public API files were modified.", modified.Length);
+                        break;
+                }
 
                 if (modified.Length > 0)
                 {
@@ -123,21 +131,21 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             var changelogUpdated = false;
             if (!changelog.Exists)
             {
-                host.LogInformation($"Changelog update skipped: {changelog.Path} not found.");
+                logger.LogInformation("Changelog update skipped: {Path} not found.", changelog.Path);
             }
             else if (!version.IsPrerelease || options.GetOption("updateChangelogOnPrerelease", false))
             {
                 if (options.GetOption("ensureChangelogNotEmpty", true))
                 {
-                    host.Ensure(
+                    BuildFailedException.ThrowIfNot(
                         changelog.HasUnreleasedChanges(),
                         "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings.");
 
-                    host.LogInformation("Changelog check successful: the \"Unreleased changes\" section is not empty.");
+                    logger.LogInformation("Changelog check successful: the \"Unreleased changes\" section is not empty.");
                 }
                 else
                 {
-                    host.LogInformation("Changelog check skipped: option 'ensureChangelogNotEmpty' is false.");
+                    logger.LogInformation("Changelog check skipped: option 'ensureChangelogNotEmpty' is false.");
                 }
 
                 // Update the changelog and commit the change before building.
@@ -148,7 +156,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             }
             else
             {
-                host.LogInformation("Changelog update skipped: not needed on prerelease.");
+                logger.LogInformation("Changelog update skipped: not needed on prerelease.");
             }
 
             // At this point we know what the actual published version will be.
@@ -158,7 +166,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             // Ensure that the release tag doesn't already exist.
             // This assumes that full repo history has been checked out;
             // however, that is already a prerequisite for using Nerdbank.GitVersioning.
-            host.Ensure(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
+            BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Build, test, make artifacts
             dotnet.RestoreSolution();
@@ -174,7 +182,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             }
             else
             {
-                host.LogInformation("Changelog section title update skipped: changelog has not been updated.");
+                logger.LogInformation("Changelog section title update skipped: changelog has not been updated.");
             }
 
             // Update in-tree references to packages produced by this release (dogfooding).
@@ -186,11 +194,18 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             if (options.GetOption("updateSelfReferences", true))
             {
                 var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences();
-                host.LogInformation(selfReferenceUpdates.Count switch {
-                    0 => "No self-referenced files were modified.",
-                    1 => "1 self-referenced file was modified.",
-                    _ => $"{selfReferenceUpdates.Count} self-referenced files were modified.",
-                });
+                switch (selfReferenceUpdates.Count)
+                {
+                    case 0:
+                        logger.LogInformation("No self-referenced files were modified.");
+                        break;
+                    case 1:
+                        logger.LogInformation("1 self-referenced file was modified.");
+                        break;
+                    default:
+                        logger.LogInformation("{Count} self-referenced files were modified.", selfReferenceUpdates.Count);
+                        break;
+                }
 
                 if (selfReferenceUpdates.Count > 0)
                 {
@@ -201,7 +216,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             }
             else
             {
-                host.LogInformation("Self-reference update skipped: option 'updateSelfReferences' is false.");
+                logger.LogInformation("Self-reference update skipped: option 'updateSelfReferences' is false.");
             }
 
             release.PushUpdates();
@@ -211,11 +226,11 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
 
             // Gather build assets from Buildvana.Sdk release asset lists
             const string assetListMask = "*.assets.txt";
-            host.LogInformation("Reading release asset lists...");
+            logger.LogInformation("Reading release asset lists...");
             var assetLists = SysPath.Combine(dotnet.ArtifactsPath.FullPath, assetListMask);
             foreach (var path in context.GetFiles(assetLists).Select(x => x.FullPath))
             {
-                host.LogDebug($"Reading release asset list {path}...");
+                logger.LogDebug("Reading release asset list {Path}...", path);
                 var i = 0;
                 await foreach (var line in SysFile.ReadLinesAsync(path).ConfigureAwait(false))
                 {
@@ -223,13 +238,13 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
                     var parts = line.Split('\t');
                     if (parts.Length != 3)
                     {
-                        host.LogWarning($"Release asset list {path}, line #{i}: invalid line '{line}'");
+                        logger.LogWarning("Release asset list {Path}, line #{LineNumber}: invalid line '{Line}'", path, i, line);
                         continue;
                     }
 
                     if (!SysFile.Exists(parts[0]))
                     {
-                        host.LogWarning($"Release asset list {path}, line #{i}: asset not found '{parts[0]}'");
+                        logger.LogWarning("Release asset list {Path}, line #{LineNumber}: asset not found '{Asset}'", path, i, parts[0]);
                         continue;
                     }
 
@@ -255,17 +270,17 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             {
                 if (version.IsPrerelease)
                 {
-                    host.LogInformation("Documentation generation skipped: not needed on prerelease.");
+                    logger.LogInformation("Documentation generation skipped: not needed on prerelease.");
                 }
                 else if (git.CurrentBranch != git.MainBranch)
                 {
-                    host.LogInformation($"Documentation generation skipped: releasing from '{git.CurrentBranch}', not '{git.MainBranch}'.");
+                    logger.LogInformation("Documentation generation skipped: releasing from '{Current}', not '{Main}'.", git.CurrentBranch, git.MainBranch);
                 }
                 else
                 {
-                    host.LogInformation("Generating documentation web pages...");
+                    logger.LogInformation("Generating documentation web pages...");
                     await docfx.GenerateSiteAsync().ConfigureAwait(false);
-                    host.LogInformation("Generating documentation PDF files...");
+                    logger.LogInformation("Generating documentation PDF files...");
                     await docfx.GeneratePdfsAsync().ConfigureAwait(false);
                 }
             }

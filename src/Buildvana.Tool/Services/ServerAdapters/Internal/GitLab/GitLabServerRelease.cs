@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 
@@ -16,7 +15,6 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 internal sealed class GitLabServerRelease : ServerRelease
 {
     private readonly GitLabServerAdapter _server;
-    private readonly IBuildHost _host;
 
     private GitLabServerRelease(GitLabServerAdapter server, IServiceProvider services)
         : base(services)
@@ -25,7 +23,6 @@ internal sealed class GitLabServerRelease : ServerRelease
         Guard.IsNotNull(services);
 
         _server = server;
-        _host = services.GetRequiredService<IBuildHost>();
     }
 
     public static Task<GitLabServerRelease> CreateAsync(GitLabServerAdapter server, IServiceProvider services)
@@ -36,7 +33,7 @@ internal sealed class GitLabServerRelease : ServerRelease
         return Task.FromResult(new GitLabServerRelease(server, services));
     }
 
-    protected override Task DoPublishAsync(IReadOnlyList<AssetData> assets) => _host.FailOnUnsupportedMethod<Task>();
+    protected override Task DoPublishAsync(IReadOnlyList<AssetData> assets) => BuildFailedException.ThrowOnUnsupportedMethod<Task>();
 
-    protected override Task UndoPublishAsync() => _host.FailOnUnsupportedMethod<Task>();
+    protected override Task UndoPublishAsync() => BuildFailedException.ThrowOnUnsupportedMethod<Task>();
 }

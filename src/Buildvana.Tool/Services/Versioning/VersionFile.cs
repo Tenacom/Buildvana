@@ -19,17 +19,14 @@ public sealed class VersionFile
     private const string VersionPropertyName = "version";
     private const string DefaultFirstUnstableTag = "preview";
 
-    private readonly IBuildHost _host;
     private readonly IJsonHelper _jsonHelper;
 
     private VersionFile(
-        IBuildHost host,
         IJsonHelper jsonHelper,
         FilePath absolutePath,
         VersionSpec versionSpec,
         string firstUnstableTag)
     {
-        _host = host;
         _jsonHelper = jsonHelper;
         Path = absolutePath;
         VersionSpec = versionSpec;
@@ -55,20 +52,18 @@ public sealed class VersionFile
     /// <summary>
     /// Constructs a <see cref="VersionFile"/> instance by loading the repository's <c>version.json</c> file.
     /// </summary>
-    /// <param name="host">The build host.</param>
     /// <param name="home">The home directory provider used to resolve the path of <c>version.json</c>.</param>
     /// <param name="jsonHelper">The JSON helper used to load and rewrite the file.</param>
     /// <returns>A newly-created <see cref="VersionFile"/>, representing the loaded data.</returns>
-    public static VersionFile Load(IBuildHost host, IHomeDirectoryProvider home, IJsonHelper jsonHelper)
+    public static VersionFile Load(IHomeDirectoryProvider home, IJsonHelper jsonHelper)
     {
-        Guard.IsNotNull(host);
         Guard.IsNotNull(home);
         Guard.IsNotNull(jsonHelper);
 
         var path = new FilePath(VersionJsonPath).MakeAbsolute(new DirectoryPath(home.HomeDirectory));
         var json = jsonHelper.LoadObject(path.FullPath);
         var versionStr = jsonHelper.GetPropertyValue<string>(json, VersionPropertyName, path + " file");
-        host.Ensure(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
+        BuildFailedException.ThrowIfNot(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
         var firstUnstableTag = DefaultFirstUnstableTag;
         var release = json["release"];
         if (release is not null)
@@ -80,7 +75,7 @@ public sealed class VersionFile
             }
         }
 
-        return new(host, jsonHelper, path, versionSpec, firstUnstableTag);
+        return new(jsonHelper, path, versionSpec, firstUnstableTag);
     }
 
     /// <summary>
@@ -112,6 +107,6 @@ public sealed class VersionFile
         // Load already validated that a top-level string "version" property exists, so a no-op here
         // means either the on-disk file changed underneath us or VersionSpec.ToString() produced the
         // same string the file already held — both cases would let the release flow stage stale data.
-        _host.Ensure(rewritten, $"Could not update {VersionJsonPath}: expected a top-level string '{VersionPropertyName}' property to rewrite.");
+        BuildFailedException.ThrowIfNot(rewritten, $"Could not update {VersionJsonPath}: expected a top-level string '{VersionPropertyName}' property to rewrite.");
     }
 }

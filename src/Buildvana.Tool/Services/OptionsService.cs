@@ -21,15 +21,12 @@ public sealed partial class OptionsService
     private static readonly Regex UnderscoreCasingRegex3 = GetUnderscoreCasingRegex3();
 
     private readonly ICakeContext _context;
-    private readonly IBuildHost _host;
     private readonly Dictionary<string, string> _options = [];
 
-    public OptionsService(ICakeContext context, IBuildHost host)
+    public OptionsService(ICakeContext context)
     {
         Guard.IsNotNull(context);
-        Guard.IsNotNull(host);
         _context = context;
-        _host = host;
     }
 
     /// <summary>
@@ -87,12 +84,12 @@ public sealed partial class OptionsService
     /// <typeparam name="T">The type of the option value.</typeparam>
     /// <param name="name">The option name.</param>
     /// <returns>The value of the option, converted to <typeparamref name="T" />.</returns>
-    /// <exception cref="Exception">The specified option was not found. The type of exception thrown is determined by the host.</exception>
+    /// <exception cref="BuildFailedException">The specified option was not found.</exception>
     public T GetOptionOrFail<T>(string name)
         where T : notnull
         => TryGetOptionString(name, out var stringValue)
             ? ConvertOptionValue<T>(stringValue)
-            : _host.Fail<T>($"Option {name} / environment variable {OptionNameToEnvironmentVariableName(name)} not found or empty.");
+            : throw new BuildFailedException($"Option {name} / environment variable {OptionNameToEnvironmentVariableName(name)} not found or empty.");
 
     [GeneratedRegex("([A-Z]+)([A-Z][a-z])", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex GetUnderscoreCasingRegex1();

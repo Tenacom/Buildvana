@@ -80,7 +80,7 @@ public abstract class ServerAdapter
     public static ServerAdapter Create(IServiceProvider services)
         => GitHubServerAdapter.CreateIfApplicable(services)
             ?? GitLabServerAdapter.CreateIfApplicable(services)
-            ?? new UnknownServerAdapter(services);
+            ?? new UnknownServerAdapter();
 
     /// <summary>
     /// Asynchronously gets a value that indicates whether the current repository is private.
