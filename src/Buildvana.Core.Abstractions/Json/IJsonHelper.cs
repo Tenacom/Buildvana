@@ -7,8 +7,7 @@ namespace Buildvana.Core.Json;
 
 /// <summary>
 /// <para>Provides JSON loading, parsing, saving, and in-place rewriting helpers.
-/// On parse, I/O, or shape errors, implementations report the failure through their associated
-/// <see cref="IBuildHost"/> (typically via <see cref="IBuildHost.Fail(string)"/>) and do not return.</para>
+/// On parse, I/O, or shape errors, implementations throw a <see cref="BuildFailedException"/>.</para>
 /// </summary>
 public interface IJsonHelper
 {

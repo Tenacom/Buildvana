@@ -18,18 +18,6 @@ namespace Buildvana.Core.Json;
 /// </summary>
 public sealed partial class JsonHelper : IJsonHelper
 {
-    private readonly IBuildHost _host;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonHelper"/> class.
-    /// </summary>
-    /// <param name="host">The build host through which failures are reported.</param>
-    public JsonHelper(IBuildHost host)
-    {
-        Guard.IsNotNull(host);
-        _host = host;
-    }
-
     /// <inheritdoc cref="IJsonHelper.ParseObject"/>
     public JsonObject ParseObject(string str, string description = "The provided string")
     {
@@ -47,13 +35,13 @@ public sealed partial class JsonHelper : IJsonHelper
         }
         catch (JsonException)
         {
-            return _host.Fail<JsonObject>($"{description} is not valid JSON.");
+            throw new BuildFailedException($"{description} is not valid JSON.");
         }
 
         return node switch {
-            null => _host.Fail<JsonObject>($"{description} was parsed as JSON null."),
+            null => throw new BuildFailedException($"{description} was parsed as JSON null."),
             JsonObject obj => obj,
-            object other => _host.Fail<JsonObject>($"{description} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
+            object other => throw new BuildFailedException($"{description} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
         };
     }
 
@@ -77,17 +65,17 @@ public sealed partial class JsonHelper : IJsonHelper
         }
         catch (IOException e)
         {
-            return _host.Fail<JsonObject>($"Could not read from {path}: {e.Message}");
+            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
-        catch (JsonException)
+        catch (JsonException e)
         {
-            return _host.Fail<JsonObject>($"{path} does not contain valid JSON.");
+            throw new BuildFailedException($"{path} does not contain valid JSON.", e);
         }
 
         return node switch {
-            null => _host.Fail<JsonObject>($"{path} was parsed as JSON null."),
+            null => throw new BuildFailedException($"{path} was parsed as JSON null."),
             JsonObject obj => obj,
-            object other => _host.Fail<JsonObject>($"{path} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
+            object other => throw new BuildFailedException($"{path} was parsed as a {other.GetType().Name}, not a {nameof(JsonObject)}."),
         };
     }
 
@@ -112,7 +100,7 @@ public sealed partial class JsonHelper : IJsonHelper
         }
         catch (IOException e)
         {
-            _host.Fail($"Could not write to {path}: {e.Message}");
+            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
         }
     }
 
@@ -129,7 +117,7 @@ public sealed partial class JsonHelper : IJsonHelper
         }
         catch (IOException e)
         {
-            return _host.Fail<bool>($"Could not read from {path}: {e.Message}");
+            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
 
         // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
@@ -140,9 +128,9 @@ public sealed partial class JsonHelper : IJsonHelper
         {
             edits = CollectJsonStringEdits(originalBytes.AsSpan(bomLength), bomLength, rewriter);
         }
-        catch (JsonException)
+        catch (JsonException e)
         {
-            return _host.Fail<bool>($"{path} does not contain valid JSON.");
+            throw new BuildFailedException($"{path} does not contain valid JSON.", e);
         }
 
         if (edits.Count == 0)
@@ -175,7 +163,7 @@ public sealed partial class JsonHelper : IJsonHelper
         }
         catch (IOException e)
         {
-            _host.Fail($"Could not write to {path}: {e.Message}");
+            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
         }
 
         return true;
@@ -186,16 +174,16 @@ public sealed partial class JsonHelper : IJsonHelper
     {
         Guard.IsNotNull(json);
 
-        _host.Ensure(json.TryGetPropertyValue(propertyName, out var property), $"Json property {propertyName} not found in {objectDescription}.");
+        BuildFailedException.ThrowIfNot(json.TryGetPropertyValue(propertyName, out var property), $"Json property {propertyName} not found in {objectDescription}.");
         switch (property)
         {
             case null:
-                return _host.Fail<T>($"Json property {propertyName} in {objectDescription} is null.");
+                throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is null.");
             case JsonValue value:
-                _host.Ensure(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
+                BuildFailedException.ThrowIfNot(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
                 return result;
             default:
-                return _host.Fail<T>($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
+                throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
         }
     }
 
