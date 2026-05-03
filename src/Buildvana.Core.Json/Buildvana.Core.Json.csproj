@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Title>Buildvana JSON helpers</Title>
-    <Description>JSON loading, parsing, saving, and in-place rewriting helpers that report failures through an IBuildHost.</Description>
+    <Description>JSON loading, parsing, saving, and in-place rewriting helpers that report failures via BuildFailedException.</Description>
     <TargetFramework>$(StandardTfm)</TargetFramework>
   </PropertyGroup>
 
