@@ -5,6 +5,7 @@ using System;
 using Buildvana.Core;
 using Buildvana.Sdk.Internal;
 using Microsoft.Build.Utilities;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Buildvana.Sdk.Tasks;
 
@@ -12,11 +13,17 @@ public abstract class BuildvanaSdkTask : Task
 {
     protected IBuildHost Host => field ??= new MSBuildTaskHost(Log, BuildEngine);
 
+    protected ILogger Logger => field ??= new TaskLoggingHelperLogger(Log, BuildEngine);
+
     public sealed override bool Execute()
     {
         try
         {
             _ = Run();
+        }
+        catch (BuildFailedException ex)
+        {
+            Log.LogError(ex.Message);
         }
         catch (BuildErrorException ex)
         {
