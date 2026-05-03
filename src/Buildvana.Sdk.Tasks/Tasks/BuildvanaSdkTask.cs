@@ -11,8 +11,6 @@ namespace Buildvana.Sdk.Tasks;
 
 public abstract class BuildvanaSdkTask : Task
 {
-    protected IBuildHost Host => field ??= new MSBuildTaskHost(Log, BuildEngine);
-
     protected ILogger Logger => field ??= new TaskLoggingHelperLogger(Log, BuildEngine);
 
     public sealed override bool Execute()
@@ -22,10 +20,6 @@ public abstract class BuildvanaSdkTask : Task
             _ = Run();
         }
         catch (BuildFailedException ex)
-        {
-            Log.LogError(ex.Message);
-        }
-        catch (BuildErrorException ex)
         {
             Log.LogError(ex.Message);
         }
