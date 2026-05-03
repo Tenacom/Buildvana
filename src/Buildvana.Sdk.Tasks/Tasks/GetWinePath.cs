@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using Buildvana.Core;
 using Buildvana.Sdk.Internal;
 using Buildvana.Sdk.Resources;
@@ -20,7 +21,9 @@ public sealed class GetWinePath : BuildvanaSdkTask
 
     protected override Undefined Run()
     {
-        Host.Ensure(!string.IsNullOrEmpty(HostPath), Strings.MissingParameterFmt, nameof(HostPath));
+        BuildFailedException.ThrowIfNot(
+            !string.IsNullOrEmpty(HostPath),
+            string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(HostPath)));
 
         WinePath = WinePathUtility.ConvertToWinePath(HostPath, BasePath);
         return Undefined.Value;
