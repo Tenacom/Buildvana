@@ -165,3 +165,64 @@ result = foo is not null ? ComputeSomething(firstParam, secondParam, foo)
     : someOtherCondition ? ComputeSomething(firstParam, secondParam, 2)
     : ComputeSomethingElse();
 ```
+
+## Long parameter lists
+
+When a parameter list (in a declaration) or argument list (in an invocation) makes the line exceed 120 characters including indentation, wrap it. This rule applies to:
+
+- declarations: methods, constructors (including primary constructors), records, delegates, indexers, local functions;
+- invocations: any call site of the above, plus base/this constructor calls (`: base(...)` / `: this(...)`).
+
+The 120-character threshold is specific to this rule and is independent of any editor or formatter line-length setting (the project intentionally has no `max_line_length` in `.editorconfig`).
+
+When wrapping:
+
+- Put every parameter or argument on its own line. Do not mix one parameter next to the opening parenthesis with the rest on their own lines — it's all or nothing.
+- Indent wrapped parameters or arguments one level beyond the line that contains the opening parenthesis.
+- The closing parenthesis goes on the same line as the last parameter or argument, per StyleCop rule SA1111.
+- Generic constraints (`where T : ...`) go on their own lines after the closing parenthesis. With multiple constraint clauses, each subsequent `where` goes on its own line, indented at the same level as the parameters (StyleCop SA1127 forbids placing two `where` clauses on the same line).
+- Constructor chaining (`: base(...)` or `: this(...)`) goes on its own line before the opening brace, indented at the same level as the parameters. If the chained call is itself long enough to wrap, apply the same rules to its argument list.
+
+**Examples:**
+
+Declaration, wrong:
+
+```csharp
+    public async Task<ProcessResult> RunAsync(string executable, IEnumerable<string> args, string? workingDirectory = null, bool throwOnNonZero = true, Action<string>? onStdout = null, CancellationToken cancellationToken = default)
+    {
+        // ...
+    }
+```
+
+Declaration, correct:
+
+```csharp
+    public async Task<ProcessResult> RunAsync(
+        string executable,
+        IEnumerable<string> args,
+        string? workingDirectory = null,
+        bool throwOnNonZero = true,
+        Action<string>? onStdout = null,
+        CancellationToken cancellationToken = default)
+    {
+        // ...
+    }
+```
+
+Invocation, wrong:
+
+```csharp
+        var result = await runner.RunAsync(executable, args, workingDirectory, throwOnNonZero: true, onStdout: line => log.WriteLine(line), cancellationToken).ConfigureAwait(false);
+```
+
+Invocation, correct:
+
+```csharp
+        var result = await runner.RunAsync(
+            executable,
+            args,
+            workingDirectory,
+            throwOnNonZero: true,
+            onStdout: line => log.WriteLine(line),
+            cancellationToken).ConfigureAwait(false);
+```
