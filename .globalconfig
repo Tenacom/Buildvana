@@ -254,3 +254,9 @@ resharper_class_never_instantiated_global_highlighting = none
 
 # Some methods are unused but present for completeness and/or future use; "unused" members are not a concern.
 resharper_unused_member_global_highlighting = none
+
+# Given the type of C# projects (compiled MSBuild tasks, CLI tool) we don't need to optimize logging with LoggerMessage delegates (CA1848),
+# nor do we need CA1873 to complain that "argument evaluation may be expensive when logging is disabled".
+# Disabling these rules globally helps keep code clean and simple without needing to sprinkle pragmas or suppression attributes around the codebase.
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.CA1873.severity = none

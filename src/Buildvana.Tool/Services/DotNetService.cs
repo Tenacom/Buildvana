@@ -18,6 +18,7 @@ using Cake.Common.Tools.DotNet.Test;
 using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 using SysDirectory = System.IO.Directory;
 using SysPath = System.IO.Path;
@@ -30,7 +31,7 @@ namespace Buildvana.Tool.Services;
 public sealed class DotNetService
 {
     private readonly ICakeContext _context;
-    private readonly IBuildHost _host;
+    private readonly ILogger<DotNetService> _logger;
     private readonly OptionsService _options;
     private readonly ServerAdapter _server;
     private readonly PathsService _paths;
@@ -42,20 +43,20 @@ public sealed class DotNetService
     /// </summary>
     public DotNetService(
         ICakeContext context,
-        IBuildHost host,
+        ILogger<DotNetService> logger,
         OptionsService options,
         ServerAdapter server,
         PathsService paths,
         VersionService version)
     {
         Guard.IsNotNull(context);
-        Guard.IsNotNull(host);
+        Guard.IsNotNull(logger);
         Guard.IsNotNull(options);
         Guard.IsNotNull(server);
         Guard.IsNotNull(paths);
         Guard.IsNotNull(version);
         _context = context;
-        _host = host;
+        _logger = logger;
         _options = options;
         _server = server;
         _paths = paths;
@@ -68,7 +69,7 @@ public sealed class DotNetService
         };
         SolutionPath = context.GetFiles("*.slnx").FirstOrDefault()
             ?? context.GetFiles("*.sln").FirstOrDefault()
-            ?? host.Fail<FilePath>("Cannot find a solution file.");
+            ?? throw new BuildFailedException("Cannot find a solution file.");
         Solution = context.ParseSolution(SolutionPath);
         Configuration = context.Argument("configuration", "Release");
         ArtifactsPath = paths.AllArtifacts.Combine(Configuration);
@@ -99,7 +100,7 @@ public sealed class DotNetService
     /// </summary>
     public void RestoreSolution()
     {
-        _host.LogInformation("Restoring NuGet packages for solution...");
+        _logger.LogInformation("Restoring NuGet packages for solution...");
         _context.DotNetRestore(SolutionPath.FullPath, new()
         {
             MSBuildSettings = _msBuildSettings,
@@ -114,7 +115,7 @@ public sealed class DotNetService
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
     public void BuildSolution(bool restore)
     {
-        _host.LogInformation($"Building solution (restore = {restore})...");
+        _logger.LogInformation("Building solution (restore = {Restore})...", restore);
         _context.DotNetBuild(SolutionPath.FullPath, new()
         {
             Configuration = Configuration,
@@ -131,11 +132,11 @@ public sealed class DotNetService
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
     public void TestSolution(bool restore, bool build)
     {
-        _host.LogInformation("Checking for MTP test projects...");
+        _logger.LogInformation("Checking for MTP test projects...");
         var hasTestProjects = false;
         foreach (var project in Solution.Projects.Where(p => !(p is SolutionFolder)))
         {
-            _host.LogDebug($"Checking '{project.Path}'...");
+            _logger.LogDebug("Checking '{Path}'...", project.Path);
             var sb = new StringBuilder();
             _context.DotNetMSBuild(
                 project.Path.FullPath,
@@ -156,7 +157,7 @@ public sealed class DotNetService
 
             if (string.Equals(sb.ToString().Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
-                _host.LogDebug($"Project '{project.Path}' is a test project, will run tests.");
+                _logger.LogDebug("Project '{Path}' is a test project, will run tests.", project.Path);
                 hasTestProjects = true;
                 break;
             }
@@ -164,11 +165,11 @@ public sealed class DotNetService
 
         if (!hasTestProjects)
         {
-            _host.LogInformation("No test projects found, skipping tests.");
+            _logger.LogInformation("No test projects found, skipping tests.");
             return;
         }
 
-        _host.LogInformation($"Running tests (restore = {restore}, build = {build})...");
+        _logger.LogInformation("Running tests (restore = {Restore}, build = {Build})...", restore, build);
         _context.DotNetTest(SolutionPath.FullPath, new()
         {
             PathType = DotNetTestPathType.Solution,
@@ -198,7 +199,7 @@ public sealed class DotNetService
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
     public void PackSolution(bool restore, bool build)
     {
-        _host.LogInformation($"Packing solution (restore = {restore}, build = {build})...");
+        _logger.LogInformation("Packing solution (restore = {Restore}, build = {Build})...", restore, build);
         _context.DotNetPack(SolutionPath.FullPath, new()
         {
             Configuration = Configuration,
@@ -218,7 +219,7 @@ public sealed class DotNetService
         const string nupkgMask = "*.nupkg";
         if (!SysDirectory.EnumerateFiles(ArtifactsPath.FullPath, nupkgMask).Any())
         {
-            _host.LogDebug("No .nupkg files to push.");
+            _logger.LogDebug("No .nupkg files to push.");
             return;
         }
 
@@ -236,7 +237,7 @@ public sealed class DotNetService
         var packages = SysPath.Combine(ArtifactsPath.FullPath, nupkgMask);
         foreach (var path in _context.GetFiles(packages))
         {
-            _host.LogInformation($"Pushing {path} to {nugetSource}...");
+            _logger.LogInformation("Pushing {Path} to {Source}...", path, nugetSource);
             _context.DotNetNuGetPush(path, nugetPushSettings);
         }
     }

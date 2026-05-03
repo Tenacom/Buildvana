@@ -40,7 +40,6 @@ internal sealed class TaskLoggingHelperLogger : ILogger
         LogLevel.Warning => true,
         LogLevel.Error => true,
         LogLevel.Critical => true,
-        LogLevel.None => false,
         _ => false,
     };
 

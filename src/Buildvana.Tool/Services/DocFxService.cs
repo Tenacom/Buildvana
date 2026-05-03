@@ -3,11 +3,11 @@
 
 using System.Text.Json;
 using System.Threading.Tasks;
-using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 using SysFile = System.IO.File;
 
@@ -28,17 +28,13 @@ public sealed class DocFxService
     /// <summary>
     /// Initializes a new instance of the <see cref="DocFxService"/> class.
     /// </summary>
-    /// <param name="host">The build host.</param>
-    /// <param name="server">The server adapter.</param>
-    /// <param name="version">The version management service.</param>
-    /// <param name="paths">The service providing path information.</param>
     public DocFxService(
-        IBuildHost host,
+        ILogger<DocFxService> logger,
         ServerAdapter server,
         VersionService version,
         PathsService paths)
     {
-        Guard.IsNotNull(host);
+        Guard.IsNotNull(logger);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         Guard.IsNotNull(paths);
@@ -51,7 +47,7 @@ public sealed class DocFxService
         IsEnabled = SysFile.Exists(_configPath.FullPath);
         if (!IsEnabled)
         {
-            host.LogInformation($"{_configPath} not found: DocFX operations will be skipped.");
+            logger.LogInformation("{ConfigPath} not found: DocFX operations will be skipped.", _configPath);
         }
     }
 

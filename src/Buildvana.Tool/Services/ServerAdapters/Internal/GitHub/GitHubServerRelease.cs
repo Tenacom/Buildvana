@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Buildvana.Core;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Octokit;
 
 using SysPath = System.IO.Path;
@@ -20,7 +20,7 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 internal sealed class GitHubServerRelease : ServerRelease
 {
     private readonly GitHubServerAdapter _server;
-    private readonly IBuildHost _host;
+    private readonly ILogger<GitHubServerRelease> _logger;
     private readonly VersionService _version;
     private readonly Release _gitHubRelease;
 
@@ -34,7 +34,7 @@ internal sealed class GitHubServerRelease : ServerRelease
         Guard.IsNotNull(gitHubRelease);
 
         _server = server;
-        _host = services.GetRequiredService<IBuildHost>();
+        _logger = services.GetRequiredService<ILogger<GitHubServerRelease>>();
         _version = services.GetRequiredService<VersionService>();
         _gitHubRelease = gitHubRelease;
 
@@ -67,13 +67,18 @@ internal sealed class GitHubServerRelease : ServerRelease
             foreach (var asset in assets)
             {
                 i++;
-                _host.LogInformation($"Uploading asset {i} of {assetCount}: {SysPath.GetFileName(asset.Path)} ({asset.Description})...");
+                _logger.LogInformation(
+                    "Uploading asset {Index} of {Count}: {Filename} ({Description})...",
+                    i,
+                    assetCount,
+                    SysPath.GetFileName(asset.Path),
+                    asset.Description);
                 await _server.UploadReleaseAssetAsync(_gitHubRelease, asset.Path, asset.MimeType, asset.Description).ConfigureAwait(false);
             }
         }
         else
         {
-            _host.LogInformation("Asset upload skipped: no release assets defined.");
+            _logger.LogInformation("Asset upload skipped: no release assets defined.");
         }
 
         await _server.PublishReleaseAsync(_gitHubRelease, ReleaseCommitSha).ConfigureAwait(false);
