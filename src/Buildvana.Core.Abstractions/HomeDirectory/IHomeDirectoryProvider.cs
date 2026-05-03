@@ -15,7 +15,7 @@ namespace Buildvana.Core.HomeDirectory;
 public interface IHomeDirectoryProvider
 {
     /// <summary>
-    /// Gets the absolute path of the home directory, with a trailing directory separator.
+    /// Gets the absolute path of the home directory.
     /// </summary>
     /// <remarks>
     /// <para>If the home directory cannot be resolved, the build is failed via <see cref="IBuildHost.Fail"/>;
