@@ -3,7 +3,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
@@ -17,7 +16,6 @@ using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Buildvana.Tool.Infrastructure;
 
@@ -31,7 +29,6 @@ public sealed class BuildContext : FrostingContext
         Guard.IsNotNull(context);
         _services = new ServiceCollection()
             .AddSingleton(context)
-            .AddSingleton<IBuildHost, CakeBuildHost>()
             .AddLogging(static builder => builder
                 .SetMinimumLevel(LogLevel.Trace)
                 .Services.AddSingleton<ILoggerProvider>(static sp => new CakeLogLoggerProvider(sp.GetRequiredService<ICakeContext>().Log)))

@@ -7,8 +7,8 @@ It consists of an MSBuild SDK working in addition to the SDK specified in projec
 
 Sub-projects under `src/`:
 
-- `Buildvana.Core.Abstractions` — host-agnostic contracts shared by Buildvana libraries (currently `IBuildHost`). No host references (no Cake, no MSBuild).
-- `Buildvana.Core.Json` — JSON loading, parsing, saving, and in-place rewriting helpers built on `IBuildHost`.
+- `Buildvana.Core.Abstractions` — host-agnostic contracts shared by Buildvana libraries (e.g., `IHomeDirectoryProvider`, `IJsonHelper`, `IProcessRunner`) plus `BuildFailedException`. No host references (no Cake, no MSBuild).
+- `Buildvana.Core.Json` — JSON loading, parsing, saving, and in-place rewriting helpers; reports failures via `BuildFailedException`.
 - `Buildvana.Sdk.Tasks` — compiled MSBuild tasks.
 - `Buildvana.Sdk.SourceGenerators` — Roslyn source generators.
 - `Buildvana.Sdk` — MSBuild SDK. Packages the above two projects and contains the SDK props/targets.
@@ -36,7 +36,7 @@ The root namespace of an astraction library does not include the `.Abstractions"
 The `Buildvana.Core.*` tier follows a flat-by-default layout. Areas live together until there is a concrete reason to split them.
 
 - `Buildvana.Core.Abstractions` — single shared abstractions library for the entire Core tier. Holds contracts (interfaces, abstract base classes), the helpers prescribed by the `.Abstractions` discipline above, and trivial null/no-op stubs (stateless, allocation-free) suitable as default arguments or in tests.
-- `Buildvana.Core.X` — concrete implementation of area `X`. Created only when an area actually has a common implementation. Some areas (e.g., `IBuildHost`) have no common concrete implementation and therefore have no `Buildvana.Core.X` project.
+- `Buildvana.Core.X` — concrete implementation of area `X`. Created only when an area actually has a common implementation. Some areas have no common concrete implementation and therefore have no `Buildvana.Core.X` project.
 - `Buildvana.Core.X.<discriminator>` — alternative concrete implementation of area `X`. Created only when a second implementation actually exists; do not pre-create.
 - `Buildvana.Core.Testing` — single shared library for stateful test doubles (capture-and-assert fakes, recorders). Created lazily, on first need. Stateful fakes never go into the abstractions library.
 
