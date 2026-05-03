@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
-using Buildvana.Core.HomeDirectory;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Common;
@@ -32,7 +31,6 @@ public sealed class DotNetService
 {
     private readonly ICakeContext _context;
     private readonly IBuildHost _host;
-    private readonly IHomeDirectoryProvider _home;
     private readonly OptionsService _options;
     private readonly ServerAdapter _server;
     private readonly PathsService _paths;
@@ -42,18 +40,22 @@ public sealed class DotNetService
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
     /// </summary>
-    public DotNetService(ICakeContext context, IBuildHost host, IHomeDirectoryProvider home, OptionsService options, ServerAdapter server, PathsService paths, VersionService version)
+    public DotNetService(
+        ICakeContext context,
+        IBuildHost host,
+        OptionsService options,
+        ServerAdapter server,
+        PathsService paths,
+        VersionService version)
     {
         Guard.IsNotNull(context);
         Guard.IsNotNull(host);
-        Guard.IsNotNull(home);
         Guard.IsNotNull(options);
         Guard.IsNotNull(server);
         Guard.IsNotNull(paths);
         Guard.IsNotNull(version);
         _context = context;
         _host = host;
-        _home = home;
         _options = options;
         _server = server;
         _paths = paths;
