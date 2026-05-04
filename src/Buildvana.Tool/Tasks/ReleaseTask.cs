@@ -11,6 +11,7 @@ using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Common.IO;
 using Cake.Frosting;
@@ -41,6 +42,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
         var server = context.GetService<ServerAdapter>();
         var version = context.GetService<VersionService>();
         var dotnet = context.GetService<DotNetService>();
+        var solution = context.GetService<SolutionContext>();
         var git = context.GetService<GitService>();
         var changelog = context.GetService<ChangelogService>();
         var publicApiFiles = context.GetService<PublicApiFilesService>();
@@ -169,10 +171,10 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Build, test, make artifacts
-            dotnet.RestoreSolution();
-            dotnet.BuildSolution(false);
-            dotnet.TestSolution(false, false);
-            dotnet.PackSolution(false, false);
+            dotnet.RestoreSolution(solution);
+            dotnet.BuildSolution(solution, false);
+            dotnet.TestSolution(solution, false, false);
+            dotnet.PackSolution(solution, false, false);
 
             if (changelogUpdated)
             {

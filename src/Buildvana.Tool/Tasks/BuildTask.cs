@@ -3,6 +3,7 @@
 
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Solution;
 using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
 
@@ -21,6 +22,7 @@ public sealed class BuildTask : FrostingTask<BuildContext>
         Guard.IsNotNull(context);
 
         var dotnet = context.GetService<DotNetService>();
-        dotnet.BuildSolution(false);
+        var solution = context.GetService<SolutionContext>();
+        dotnet.BuildSolution(solution, false);
     }
 }

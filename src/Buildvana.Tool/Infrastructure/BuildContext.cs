@@ -10,6 +10,7 @@ using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Core;
 using Cake.Frosting;
@@ -35,6 +36,8 @@ public sealed class BuildContext : FrostingContext
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(System.Environment.CurrentDirectory))
             .AddSingleton<IJsonHelper, JsonHelper>()
             .AddSingleton<IProcessRunner, ProcessRunner>()
+            .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
+            .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
             .AddSingleton<GitService>()
             .AddSingleton<PublicApiFilesService>()
             .AddSingleton(ServerAdapter.Create)

@@ -1,12 +1,14 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Linq;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Utilities;
 using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
+
+using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Tasks;
 
@@ -22,17 +24,18 @@ public sealed class CleanTask : FrostingTask<BuildContext>
         Guard.IsNotNull(context);
 
         var paths = context.GetService<PathsService>();
-        var dotnet = context.GetService<DotNetService>();
+        var solution = context.GetService<SolutionContext>();
 
         context.DeleteDirectoryIfExists(".vs");
         context.DeleteDirectoryIfExists("_ReSharper.Caches");
         context.DeleteDirectoryIfExists("temp");
         context.DeleteDirectoryIfExists(paths.AllArtifacts);
         context.DeleteDirectoryIfExists(paths.TestResults);
-        foreach (var projectDirectory in dotnet.Solution.Projects.Select(p => p.Path.GetDirectory()))
+        foreach (var project in solution.Model.SolutionProjects)
         {
-            context.DeleteDirectoryIfExists(projectDirectory.Combine("bin"));
-            context.DeleteDirectoryIfExists(projectDirectory.Combine("obj"));
+            var projectDirectory = SysPath.GetDirectoryName(solution.ResolveProjectPath(project))!;
+            context.DeleteDirectoryIfExists(SysPath.Combine(projectDirectory, "bin"));
+            context.DeleteDirectoryIfExists(SysPath.Combine(projectDirectory, "obj"));
         }
     }
 }
