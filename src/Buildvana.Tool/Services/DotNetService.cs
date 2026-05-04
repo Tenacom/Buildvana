@@ -5,12 +5,11 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Cake.Common;
 using Cake.Common.IO;
-using Cake.Common.Solution;
 using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNet.MSBuild;
 using Cake.Common.Tools.DotNet.NuGet.Push;
@@ -67,23 +66,9 @@ public sealed class DotNetService
             ContinuousIntegrationBuild = server.IsCloudBuild,
             NoLogo = true,
         };
-        SolutionPath = context.GetFiles("*.slnx").FirstOrDefault()
-            ?? context.GetFiles("*.sln").FirstOrDefault()
-            ?? throw new BuildFailedException("Cannot find a solution file.");
-        Solution = context.ParseSolution(SolutionPath);
         Configuration = context.Argument("configuration", "Release");
         ArtifactsPath = paths.AllArtifacts.Combine(Configuration);
     }
-
-    /// <summary>
-    /// Gets the path of the solution file.
-    /// </summary>
-    public FilePath SolutionPath { get; }
-
-    /// <summary>
-    /// Gets the parsed solution.
-    /// </summary>
-    public SolutionParserResult Solution { get; }
 
     /// <summary>
     /// Gets the configuration to build.
@@ -98,10 +83,12 @@ public sealed class DotNetService
     /// <summary>
     /// Restores all NuGet packages for the solution.
     /// </summary>
-    public void RestoreSolution()
+    /// <param name="solution">The solution to restore.</param>
+    public void RestoreSolution(SolutionContext solution)
     {
+        Guard.IsNotNull(solution);
         _logger.LogInformation("Restoring NuGet packages for solution...");
-        _context.DotNetRestore(SolutionPath.FullPath, new()
+        _context.DotNetRestore(solution.SolutionPath, new()
         {
             MSBuildSettings = _msBuildSettings,
             DisableParallel = true,
@@ -112,11 +99,13 @@ public sealed class DotNetService
     /// <summary>
     /// Build all projects in the solution.
     /// </summary>
+    /// <param name="solution">The solution to build.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
-    public void BuildSolution(bool restore)
+    public void BuildSolution(SolutionContext solution, bool restore)
     {
+        Guard.IsNotNull(solution);
         _logger.LogInformation("Building solution (restore = {Restore})...", restore);
-        _context.DotNetBuild(SolutionPath.FullPath, new()
+        _context.DotNetBuild(solution.SolutionPath, new()
         {
             Configuration = Configuration,
             MSBuildSettings = _msBuildSettings,
@@ -128,18 +117,21 @@ public sealed class DotNetService
     /// <summary>
     /// Run all tests for the solution.
     /// </summary>
+    /// <param name="solution">The solution to test.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before testing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
-    public void TestSolution(bool restore, bool build)
+    public void TestSolution(SolutionContext solution, bool restore, bool build)
     {
+        Guard.IsNotNull(solution);
         _logger.LogInformation("Checking for MTP test projects...");
         var hasTestProjects = false;
-        foreach (var project in Solution.Projects.Where(p => !(p is SolutionFolder)))
+        foreach (var project in solution.Model.SolutionProjects)
         {
-            _logger.LogDebug("Checking '{Path}'...", project.Path);
+            var projectPath = solution.ResolveProjectPath(project);
+            _logger.LogDebug("Checking '{Path}'...", projectPath);
             var sb = new StringBuilder();
             _context.DotNetMSBuild(
-                project.Path.FullPath,
+                projectPath,
                 new()
                 {
                     MaxCpuCount = 1,
@@ -157,7 +149,7 @@ public sealed class DotNetService
 
             if (string.Equals(sb.ToString().Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogDebug("Project '{Path}' is a test project, will run tests.", project.Path);
+                _logger.LogDebug("Project '{Path}' is a test project, will run tests.", projectPath);
                 hasTestProjects = true;
                 break;
             }
@@ -170,7 +162,7 @@ public sealed class DotNetService
         }
 
         _logger.LogInformation("Running tests (restore = {Restore}, build = {Build})...", restore, build);
-        _context.DotNetTest(SolutionPath.FullPath, new()
+        _context.DotNetTest(solution.SolutionPath, new()
         {
             PathType = DotNetTestPathType.Solution,
             Configuration = Configuration,
@@ -195,12 +187,14 @@ public sealed class DotNetService
     /// <summary>
     /// Run the Pack target on the solution. This usually produces NuGet packages, but Buildvana SDK may hijack the target to produce, for example, setup executables.
     /// </summary>
+    /// <param name="solution">The solution to pack.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before packing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
-    public void PackSolution(bool restore, bool build)
+    public void PackSolution(SolutionContext solution, bool restore, bool build)
     {
+        Guard.IsNotNull(solution);
         _logger.LogInformation("Packing solution (restore = {Restore}, build = {Build})...", restore, build);
-        _context.DotNetPack(SolutionPath.FullPath, new()
+        _context.DotNetPack(solution.SolutionPath, new()
         {
             Configuration = Configuration,
             MSBuildSettings = _msBuildSettings,
