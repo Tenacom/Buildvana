@@ -13,7 +13,7 @@ using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Common.IO;
+using Buildvana.Tool.Utilities;
 using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -227,10 +227,8 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             await dotnet.NuGetPushAllAsync().ConfigureAwait(false);
 
             // Gather build assets from Buildvana.Sdk release asset lists
-            const string assetListMask = "*.assets.txt";
             logger.LogInformation("Reading release asset lists...");
-            var assetLists = SysPath.Combine(dotnet.ArtifactsPath.FullPath, assetListMask);
-            foreach (var path in context.GetFiles(assetLists).Select(x => x.FullPath))
+            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath.FullPath, "*.assets.txt"))
             {
                 logger.LogDebug("Reading release asset list {Path}...", path);
                 var i = 0;
@@ -257,7 +255,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             // Add NuGet packages as assets
             // const string nupkgMask = "*.nupkg";
             // var nupkgs = SysPath.Combine(dotnet.ArtifactsPath.FullPath, nupkgMask);
-            foreach (var path in context.GetFiles(assetLists).Select(x => x.FullPath))
+            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath.FullPath, "*.assets.txt"))
             {
                 release.AddAsset(path);
                 var snupkgPath = SysPath.ChangeExtension(path, ".snupkg");
