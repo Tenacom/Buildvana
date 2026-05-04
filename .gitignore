@@ -17,6 +17,7 @@ logs/
 # ReSharper
 *.DotSettings.user
 _ReSharper.*/
+*.sarif
 
 # Windows thumbnails
 Thumbs.db
