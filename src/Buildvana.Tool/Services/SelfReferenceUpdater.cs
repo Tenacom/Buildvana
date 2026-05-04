@@ -8,11 +8,11 @@ using System.Text.RegularExpressions;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Versioning;
+using Buildvana.Tool.Utilities;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-using SysDirectory = System.IO.Directory;
 using SysFile = System.IO.File;
 using SysPath = System.IO.Path;
 
@@ -115,14 +115,14 @@ public sealed class SelfReferenceUpdater
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var artifacts = _dotnet.ArtifactsPath.FullPath;
-        if (!SysDirectory.Exists(artifacts))
+        if (!FileSystemHelper.DirectoryExists(artifacts))
         {
             return result;
         }
 
         var version = _version.CurrentStr;
         var suffix = $".{version}.nupkg";
-        foreach (var path in SysDirectory.EnumerateFiles(artifacts, "*.nupkg"))
+        foreach (var path in FileSystemHelper.EnumerateFiles(artifacts, "*.nupkg"))
         {
             var fileName = SysPath.GetFileName(path);
             if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))

@@ -7,6 +7,7 @@ using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Utilities;
 using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 using SysPath = System.IO.Path;
 
@@ -23,19 +24,20 @@ public sealed class CleanTask : FrostingTask<BuildContext>
     {
         Guard.IsNotNull(context);
 
+        var logger = context.GetService<ILogger<CleanTask>>();
         var paths = context.GetService<PathsService>();
         var solution = context.GetService<SolutionContext>();
 
-        context.DeleteDirectoryIfExists(".vs");
-        context.DeleteDirectoryIfExists("_ReSharper.Caches");
-        context.DeleteDirectoryIfExists("temp");
-        context.DeleteDirectoryIfExists(paths.AllArtifacts);
-        context.DeleteDirectoryIfExists(paths.TestResults);
+        FileSystemHelper.DeleteDirectory(solution.ResolvePath(".vs"), logger);
+        FileSystemHelper.DeleteDirectory(solution.ResolvePath("_ReSharper.Caches"), logger);
+        FileSystemHelper.DeleteDirectory(solution.ResolvePath("temp"), logger);
+        FileSystemHelper.DeleteDirectory(solution.ResolvePath(paths.AllArtifacts.FullPath), logger);
+        FileSystemHelper.DeleteDirectory(solution.ResolvePath(paths.TestResults.FullPath), logger);
         foreach (var project in solution.Model.SolutionProjects)
         {
             var projectDirectory = SysPath.GetDirectoryName(solution.ResolveProjectPath(project))!;
-            context.DeleteDirectoryIfExists(SysPath.Combine(projectDirectory, "bin"));
-            context.DeleteDirectoryIfExists(SysPath.Combine(projectDirectory, "obj"));
+            FileSystemHelper.DeleteDirectory(SysPath.Combine(projectDirectory, "bin"), logger);
+            FileSystemHelper.DeleteDirectory(SysPath.Combine(projectDirectory, "obj"), logger);
         }
     }
 }
