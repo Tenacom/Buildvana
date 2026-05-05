@@ -5,11 +5,8 @@ using System;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
-using Cake.Common;
-using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 
@@ -18,10 +15,9 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 /// </summary>
 internal sealed class GitLabServerAdapter : ServerAdapter
 {
-    internal GitLabServerAdapter(IServiceProvider services)
+    internal GitLabServerAdapter()
     {
-        var context = services.GetRequiredService<ICakeContext>();
-        CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{context.EnvironmentVariable("CI_SERVER_HOST")}");
+        CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{Environment.GetEnvironmentVariable("CI_SERVER_HOST")}");
     }
 
     /// <inheritdoc/>
@@ -62,10 +58,8 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     {
         Guard.IsNotNull(services);
 
-        var context = services.GetRequiredService<ICakeContext>();
-
-        return context.HasEnvironmentVariable("GITLAB_CI")
-            ? new GitLabServerAdapter(services)
+        return Environment.GetEnvironmentVariable("GITLAB_CI") is not null
+            ? new GitLabServerAdapter()
             : null;
     }
 

@@ -1,13 +1,13 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
-using Cake.Core;
+using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services;
@@ -19,13 +19,13 @@ public sealed partial class OptionsService
     private static readonly Regex UnderscoreCasingRegex2 = GetUnderscoreCasingRegex2();
     private static readonly Regex UnderscoreCasingRegex3 = GetUnderscoreCasingRegex3();
 
-    private readonly ICakeContext _context;
+    private readonly ICommandOptions _commandOptions;
     private readonly Dictionary<string, string> _options = [];
 
-    public OptionsService(ICakeContext context)
+    public OptionsService(ICommandOptions commandOptions)
     {
-        Guard.IsNotNull(context);
-        _context = context;
+        Guard.IsNotNull(commandOptions);
+        _commandOptions = commandOptions;
     }
 
     /// <summary>
@@ -123,14 +123,14 @@ public sealed partial class OptionsService
             return true;
         }
 
-        value = _context.Arguments.GetArguments(name)?.FirstOrDefault();
+        value = _commandOptions.GetValue(name);
         if (!string.IsNullOrEmpty(value))
         {
             _options[name] = value;
             return true;
         }
 
-        value = _context.Environment.GetEnvironmentVariable(OptionNameToEnvironmentVariableName(name));
+        value = Environment.GetEnvironmentVariable(OptionNameToEnvironmentVariableName(name));
         if (string.IsNullOrEmpty(value))
         {
             return false;

@@ -95,7 +95,7 @@ internal sealed class GitHubServerRelease : ServerRelease
 
     protected override Task OnPublishedAsync()
     {
-        _server.SetActionsStepOutput("version", _version.CurrentStr);
+        GitHubServerAdapter.SetActionsStepOutput("version", _version.CurrentStr);
         return Task.CompletedTask;
     }
 }
