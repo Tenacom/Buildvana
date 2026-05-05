@@ -20,7 +20,7 @@ namespace Buildvana.Tool.Infrastructure.Logging;
 /// </remarks>
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes - Will be instantiated via DI in a soon-to-come commit.
 internal sealed class SpectreLoggerProvider : ILoggerProvider
-#pragma warning restore
+#pragma warning restore CA1812
 {
     private readonly IAnsiConsole _console;
     private readonly ConcurrentDictionary<string, SpectreLogger> _loggers = new(StringComparer.Ordinal);
@@ -35,11 +35,17 @@ internal sealed class SpectreLoggerProvider : ILoggerProvider
         _console = console;
     }
 
+    /// <summary>
+    /// Gets or sets the minimum level emitted by loggers from this provider. Mutable so the entry command
+    /// can apply <c>--verbosity</c> after parsing settings.
+    /// </summary>
+    public LogLevel MinLevel { get; set; } = LogLevel.Information;
+
     /// <inheritdoc/>
     public ILogger CreateLogger(string categoryName)
     {
         Guard.IsNotNull(categoryName);
-        return _loggers.GetOrAdd(categoryName, name => new SpectreLogger(_console, name));
+        return _loggers.GetOrAdd(categoryName, name => new SpectreLogger(_console, name, this));
     }
 
     /// <inheritdoc/>

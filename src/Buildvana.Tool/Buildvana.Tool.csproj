@@ -13,7 +13,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CA1515</NoWarn> <!-- Consider making public types internal - Tasks must be exposed to be discovered via reflection -->
+    <NoWarn>$(NoWarn);CA1515</NoWarn> <!-- Consider making public types internal - Spectre.Console.Cli settings classes are public by convention -->
+    <NoWarn>$(NoWarn);CA1812</NoWarn> <!-- Avoid uninstantiated internal classes - Spectre.Console.Cli commands are instantiated via the TypeRegistrar/TypeResolver adapter, which the analyzer cannot trace -->
     <NoWarn>$(NoWarn);NU1608</NoWarn> <!--  Detected package version outside of dependency contraint - Transitive dependency hell, mainly caused by Docfx.App - Re-enable this warning before releases to check for _real_ problems -->
   </PropertyGroup>
 

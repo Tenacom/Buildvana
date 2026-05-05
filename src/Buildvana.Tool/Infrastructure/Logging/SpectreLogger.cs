@@ -12,18 +12,20 @@ internal sealed class SpectreLogger : ILogger
 {
     private readonly IAnsiConsole _console;
     private readonly string _categoryName;
+    private readonly SpectreLoggerProvider _provider;
 
-    public SpectreLogger(IAnsiConsole console, string categoryName)
+    public SpectreLogger(IAnsiConsole console, string categoryName, SpectreLoggerProvider provider)
     {
         _console = console;
         _categoryName = categoryName;
+        _provider = provider;
     }
 
     public IDisposable? BeginScope<TState>(TState state)
         where TState : notnull
         => null;
 
-    public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
+    public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None && logLevel >= _provider.MinLevel;
 
     public void Log<TState>(
         LogLevel logLevel,

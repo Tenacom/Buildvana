@@ -1,13 +1,15 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
-using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
@@ -15,37 +17,40 @@ using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
-using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Tasks;
+namespace Buildvana.Tool.Cli;
 
-[TaskName(Name)]
-[TaskDescription(Description)]
-[IsDependentOn(typeof(TestTask))]
-public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
+[Description("Publish a new public release (CI only).")]
+internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<ReleaseSettings>
 {
-    private const string Name = "Release";
-    private const string Description = "Publish a new public release (CI only)";
-
-    public override async Task RunAsync(BuildContext context)
+    protected override async Task<int> ExecuteAsync(CommandContext context, ReleaseSettings settings, CancellationToken cancellationToken)
     {
-        Guard.IsNotNull(context);
+        Guard.IsNotNull(settings);
+        SettingsApplier.Apply(settings, services);
 
-        var logger = context.GetService<ILogger<ReleaseTask>>();
-        var home = context.GetService<IHomeDirectoryProvider>();
-        var jsonHelper = context.GetService<IJsonHelper>();
-        var options = context.GetService<OptionsService>();
-        var server = context.GetService<ServerAdapter>();
-        var version = context.GetService<VersionService>();
-        var dotnet = context.GetService<DotNetService>();
-        var solution = context.GetService<SolutionContext>();
-        var git = context.GetService<GitService>();
-        var changelog = context.GetService<ChangelogService>();
-        var publicApiFiles = context.GetService<PublicApiFilesService>();
-        var docfx = context.GetService<DocFxService>();
-        var selfReferenceUpdater = context.GetService<SelfReferenceUpdater>();
+        // Pre-pipeline (mirrors today's [IsDependentOn(TestTask)] chain).
+        await BuildSteps.CleanAsync(services).ConfigureAwait(false);
+        await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
+        await BuildSteps.BuildAsync(services).ConfigureAwait(false);
+        await BuildSteps.TestAsync(services).ConfigureAwait(false);
+
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Release");
+        var home = services.GetRequiredService<IHomeDirectoryProvider>();
+        var jsonHelper = services.GetRequiredService<IJsonHelper>();
+        var options = services.GetRequiredService<OptionsService>();
+        var server = services.GetRequiredService<ServerAdapter>();
+        var version = services.GetRequiredService<VersionService>();
+        var dotnet = services.GetRequiredService<DotNetService>();
+        var solution = services.GetRequiredService<SolutionContext>();
+        var git = services.GetRequiredService<GitService>();
+        var changelog = services.GetRequiredService<ChangelogService>();
+        var publicApiFiles = services.GetRequiredService<PublicApiFilesService>();
+        var docfx = services.GetRequiredService<DocFxService>();
+        var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
 
         // Perform some preliminary checks
         BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
@@ -230,7 +235,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             {
                 logger.LogDebug("Reading release asset list {Path}...", path);
                 var i = 0;
-                await foreach (var line in File.ReadLinesAsync(path).ConfigureAwait(false))
+                await foreach (var line in File.ReadLinesAsync(path, cancellationToken).ConfigureAwait(false))
                 {
                     i++;
                     var parts = line.Split('\t');
@@ -284,5 +289,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             // Last but not least, publish the release.
             await release.PublishAsync().ConfigureAwait(false);
         }
+
+        return 0;
     }
 }
