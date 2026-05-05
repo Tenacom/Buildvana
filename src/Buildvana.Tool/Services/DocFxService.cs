@@ -1,15 +1,14 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
-
-using SysFile = System.IO.File;
 
 namespace Buildvana.Tool.Services;
 
@@ -20,8 +19,7 @@ public sealed class DocFxService
 {
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
-    private readonly PathsService _paths;
-    private readonly FilePath _configPath;
+    private readonly string _configPath;
 
     private bool _initialized;
 
@@ -31,20 +29,17 @@ public sealed class DocFxService
     public DocFxService(
         ILogger<DocFxService> logger,
         ServerAdapter server,
-        VersionService version,
-        PathsService paths)
+        VersionService version)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
-        Guard.IsNotNull(paths);
 
         _server = server;
         _version = version;
-        _paths = paths;
 
-        _configPath = _paths.Docs.CombineWithFilePath("docfx.json");
-        IsEnabled = SysFile.Exists(_configPath.FullPath);
+        _configPath = Path.Combine(CommonPaths.Docs, "docfx.json");
+        IsEnabled = File.Exists(_configPath);
         if (!IsEnabled)
         {
             logger.LogInformation("{ConfigPath} not found: DocFX operations will be skipped.", _configPath);
@@ -66,7 +61,7 @@ public sealed class DocFxService
 
         Initialize();
 
-        await Docfx.Docset.Build(_configPath.FullPath).ConfigureAwait(false);
+        await Docfx.Docset.Build(_configPath).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -82,7 +77,7 @@ public sealed class DocFxService
 
         Initialize();
 
-        await Docfx.Docset.Pdf(_configPath.FullPath).ConfigureAwait(false);
+        await Docfx.Docset.Pdf(_configPath).ConfigureAwait(false);
     }
 
     private void Initialize()
@@ -110,8 +105,8 @@ public sealed class DocFxService
         };
 #pragma warning restore
 
-        var jsonPath = _paths.Docs.CombineWithFilePath("globalMetadata.json");
-        using var stream = SysFile.Create(jsonPath.FullPath);
+        var jsonPath = Path.Combine(CommonPaths.Docs, "globalMetadata.json");
+        using var stream = File.Create(jsonPath);
         JsonSerializer.Serialize(stream, globalMetadata, options);
     }
 }

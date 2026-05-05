@@ -5,7 +5,6 @@ using System;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
-using Cake.Core.IO;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal;
 
@@ -75,7 +74,7 @@ internal sealed class UnknownServerAdapter : ServerAdapter
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
-    public override Uri GetFileUrl(FilePath path, string commitish) => BuildFailedException.ThrowOnUnsupportedMethod<Uri>();
+    public override Uri GetFileUrl(string path, string commitish) => BuildFailedException.ThrowOnUnsupportedMethod<Uri>();
 
     /// <inheritdoc/>
     /// <summary>

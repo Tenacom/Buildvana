@@ -5,7 +5,6 @@ using System.Text.Json.Nodes;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services.Versioning;
@@ -23,7 +22,7 @@ public sealed class VersionFile
 
     private VersionFile(
         IJsonHelper jsonHelper,
-        FilePath absolutePath,
+        string absolutePath,
         VersionSpec versionSpec,
         string firstUnstableTag)
     {
@@ -34,9 +33,9 @@ public sealed class VersionFile
     }
 
     /// <summary>
-    /// Gets the <see cref="FilePath"/> of the <c>version.json</c> file.
+    /// Gets the absolute path of the <c>version.json</c> file.
     /// </summary>
-    public FilePath Path { get; }
+    public string Path { get; }
 
     /// <summary>
     /// Gets a <see cref="VersionSpec"/> representing the "version" value in the <c>version.json</c> file.
@@ -60,8 +59,8 @@ public sealed class VersionFile
         Guard.IsNotNull(home);
         Guard.IsNotNull(jsonHelper);
 
-        var path = new FilePath(VersionJsonPath).MakeAbsolute(new DirectoryPath(home.HomeDirectory));
-        var json = jsonHelper.LoadObject(path.FullPath);
+        var path = System.IO.Path.GetFullPath(VersionJsonPath, home.HomeDirectory);
+        var json = jsonHelper.LoadObject(path);
         var versionStr = jsonHelper.GetPropertyValue<string>(json, VersionPropertyName, path + " file");
         BuildFailedException.ThrowIfNot(VersionSpec.TryParse(versionStr, out var versionSpec), $"{VersionJsonPath} contains invalid version specification '{versionStr}'.");
         var firstUnstableTag = DefaultFirstUnstableTag;
@@ -101,7 +100,7 @@ public sealed class VersionFile
     {
         var newVersion = VersionSpec.ToString();
         var rewritten = _jsonHelper.RewriteStringValues(
-            Path.FullPath,
+            Path,
             (propertyPath, _) => propertyPath is [VersionPropertyName] ? newVersion : null);
 
         // Load already validated that a top-level string "version" property exists, so a no-op here

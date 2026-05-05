@@ -3,16 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Microsoft.Extensions.Logging;
-
-using SysDirectory = System.IO.Directory;
-using SysDirectoryInfo = System.IO.DirectoryInfo;
-using SysFile = System.IO.File;
-using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Utilities;
 
@@ -27,7 +23,7 @@ public static class FileSystemHelper
     public static bool DirectoryExists(string path)
     {
         Guard.IsNotNull(path);
-        return SysDirectory.Exists(path);
+        return Directory.Exists(path);
     }
 
     /// <summary>
@@ -36,7 +32,7 @@ public static class FileSystemHelper
     public static bool FileExists(string path)
     {
         Guard.IsNotNull(path);
-        return SysFile.Exists(path);
+        return File.Exists(path);
     }
 
     /// <summary>
@@ -48,14 +44,14 @@ public static class FileSystemHelper
     public static void DeleteDirectory(string path, ILogger? logger = null)
     {
         Guard.IsNotNull(path);
-        if (!SysDirectory.Exists(path))
+        if (!Directory.Exists(path))
         {
             logger?.LogDebug("Skipping non-existent directory: {Path}", path);
             return;
         }
 
         logger?.LogInformation("Deleting directory: {Path}", path);
-        SysDirectory.Delete(path, recursive: true);
+        Directory.Delete(path, recursive: true);
     }
 
     /// <summary>
@@ -71,7 +67,7 @@ public static class FileSystemHelper
         Guard.IsNotNull(pattern);
         var matcher = new Matcher(caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
         matcher.AddInclude(pattern);
-        var result = matcher.Execute(new DirectoryInfoWrapper(new SysDirectoryInfo(baseDirectory)));
-        return result.Files.Select(f => SysPath.GetFullPath(SysPath.Combine(baseDirectory, f.Path)));
+        var result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(baseDirectory)));
+        return result.Files.Select(f => Path.GetFullPath(Path.Combine(baseDirectory, f.Path)));
     }
 }

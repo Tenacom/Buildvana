@@ -4,10 +4,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
@@ -156,7 +156,7 @@ public sealed class GitService : IDisposable
     /// Adds one or more files to the Git index.
     /// </summary>
     /// <param name="paths">The paths of the files to add.</param>
-    public void Stage(params FilePath[] paths)
+    public void Stage(params string[] paths)
     {
         Guard.IsNotNull(paths);
         if (paths.Length == 0)
@@ -164,18 +164,18 @@ public sealed class GitService : IDisposable
             return;
         }
 
-        var homeDirectory = new DirectoryPath(_home.HomeDirectory);
+        var homeDirectory = _home.HomeDirectory;
         var pathsInRepo = paths.Select(path =>
         {
-            Guard.IsTrue(path is not null, nameof(paths), "One or more paths are null.");
-            var absolutePath = path.MakeAbsolute(homeDirectory);
-            var pathInRepo = homeDirectory.GetRelativePath(absolutePath);
-            if (!pathInRepo.IsRelative || pathInRepo.Segments[0] == "..")
+            Guard.IsTrue(!string.IsNullOrEmpty(path), nameof(paths), "One or more paths are null or empty.");
+            var absolutePath = Path.GetFullPath(path, homeDirectory);
+            var pathInRepo = Path.GetRelativePath(homeDirectory, absolutePath);
+            if (Path.IsPathRooted(pathInRepo) || pathInRepo == ".." || pathInRepo.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             {
                 throw new BuildFailedException($"Git: cannot stage '{path}' because it is not in the repository.");
             }
 
-            return pathInRepo.ToString();
+            return pathInRepo;
         }).ToArray();
 
         _logger.LogDebug("Git: staging {Count} file(s)...", pathsInRepo.Length);

@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -17,9 +18,6 @@ using Buildvana.Tool.Utilities;
 using Cake.Frosting;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
-
-using SysFile = System.IO.File;
-using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Tasks;
 
@@ -133,7 +131,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             var changelogUpdated = false;
             if (!changelog.Exists)
             {
-                logger.LogInformation("Changelog update skipped: {Path} not found.", changelog.Path);
+                logger.LogInformation("Changelog update skipped: {Path} not found.", ChangelogService.FileName);
             }
             else if (!version.IsPrerelease || options.GetOption("updateChangelogOnPrerelease", false))
             {
@@ -153,7 +151,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
                 // Update the changelog and commit the change before building.
                 // This ensures that the Git height is up to date when computing a version for the build artifacts.
                 changelog.PrepareForRelease();
-                release.UpdateRepository(changelog.Path);
+                release.UpdateRepository(ChangelogService.FileName);
                 changelogUpdated = true;
             }
             else
@@ -180,7 +178,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             {
                 // Change the new section's title in the changelog to reflect the actual version.
                 changelog.UpdateNewSectionTitle();
-                release.UpdateRepository(changelog.Path);
+                release.UpdateRepository(ChangelogService.FileName);
             }
             else
             {
@@ -228,11 +226,11 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
 
             // Gather build assets from Buildvana.Sdk release asset lists
             logger.LogInformation("Reading release asset lists...");
-            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath.FullPath, "*.assets.txt"))
+            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath, "*.assets.txt"))
             {
                 logger.LogDebug("Reading release asset list {Path}...", path);
                 var i = 0;
-                await foreach (var line in SysFile.ReadLinesAsync(path).ConfigureAwait(false))
+                await foreach (var line in File.ReadLinesAsync(path).ConfigureAwait(false))
                 {
                     i++;
                     var parts = line.Split('\t');
@@ -242,7 +240,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
                         continue;
                     }
 
-                    if (!SysFile.Exists(parts[0]))
+                    if (!File.Exists(parts[0]))
                     {
                         logger.LogWarning("Release asset list {Path}, line #{LineNumber}: asset not found '{Asset}'", path, i, parts[0]);
                         continue;
@@ -254,12 +252,12 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
 
             // Add NuGet packages as assets
             // const string nupkgMask = "*.nupkg";
-            // var nupkgs = SysPath.Combine(dotnet.ArtifactsPath.FullPath, nupkgMask);
-            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath.FullPath, "*.assets.txt"))
+            // var nupkgs = Path.Combine(dotnet.ArtifactsPath, nupkgMask);
+            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath, "*.assets.txt"))
             {
                 release.AddAsset(path);
-                var snupkgPath = SysPath.ChangeExtension(path, ".snupkg");
-                if (SysFile.Exists(snupkgPath))
+                var snupkgPath = Path.ChangeExtension(path, ".snupkg");
+                if (File.Exists(snupkgPath))
                 {
                     release.AddAsset(snupkgPath);
                 }

@@ -47,7 +47,6 @@ public sealed class BuildContext : FrostingContext
             .AddSingleton<DocFxService>()
             .AddSingleton<DotNetService>()
             .AddSingleton<OptionsService>()
-            .AddSingleton<PathsService>()
             .AddSingleton<SelfReferenceUpdater>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
     }

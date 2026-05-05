@@ -2,19 +2,16 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Octokit;
-
-using SysFile = System.IO.File;
-using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 
@@ -96,7 +93,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         var outputFile = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
         BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
-        SysFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
+        File.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
     }
 
     /// <inheritdoc/>
@@ -116,18 +113,15 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     }
 
     /// <inheritdoc/>
-    public override Uri GetFileUrl(FilePath path, string commitish)
+    public override Uri GetFileUrl(string path, string commitish)
     {
-        Guard.IsNotNull(path);
-        Guard.IsTrue(path.IsRelative, "A path must be relative to be converted to a file URL.");
-        Guard.IsTrue(path.Segments[0] != "..", "Only a path to a file in the repository can be converted to a file URL.");
+        Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNullOrEmpty(commitish);
+        Guard.IsTrue(!Path.IsPathFullyQualified(path), "A path must be relative to be converted to a file URL.");
 
-        var remotePath = path.ToString();
-        if (path.Separator != '/')
-        {
-            remotePath = remotePath.Replace(path.Separator, '/');
-        }
+        // Normalize to forward slashes for the URL, then reject paths that escape the repo.
+        var remotePath = path.Replace('\\', '/');
+        Guard.IsTrue(remotePath != ".." && !remotePath.StartsWith("../", StringComparison.Ordinal), "Only a path to a file in the repository can be converted to a file URL.");
 
         return new Uri($"{RepositoryUrl}blob/{commitish}/{remotePath}");
     }
@@ -236,12 +230,12 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var client = CreateGitHubClient();
         _logger.LogDebug("Uploading asset {Path}...", path);
         ReleaseAsset asset;
-        var assetContents = SysFile.OpenRead(path);
+        var assetContents = File.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
         {
             var upload = new ReleaseAssetUpload()
             {
-                FileName = SysPath.GetFileName(path),
+                FileName = Path.GetFileName(path),
                 ContentType = mimeType,
                 RawData = assetContents,
             };
