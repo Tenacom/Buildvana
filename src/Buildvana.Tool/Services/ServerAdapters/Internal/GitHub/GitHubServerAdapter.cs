@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Common;
-using Cake.Core;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +24,6 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 internal sealed class GitHubServerAdapter : ServerAdapter
 {
     private readonly IServiceProvider _services;
-    private readonly ICakeContext _context;
     private readonly ILogger<GitHubServerAdapter> _logger;
     private readonly VersionService _version;
     private readonly GitService _git;
@@ -36,7 +33,6 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private GitHubServerAdapter(IServiceProvider services)
     {
         _services = services;
-        _context = services.GetRequiredService<ICakeContext>();
         _logger = services.GetRequiredService<ILogger<GitHubServerAdapter>>();
         _version = services.GetRequiredService<VersionService>();
         _git = services.GetRequiredService<GitService>();
@@ -86,10 +82,21 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public static ServerAdapter? CreateIfApplicable(IServiceProvider services)
     {
         Guard.IsNotNull(services);
-        var context = services.GetRequiredService<ICakeContext>();
-        return context.EnvironmentVariable("GITHUB_ACTIONS", false)
+        return string.Equals(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"), "true", StringComparison.OrdinalIgnoreCase)
             ? new GitHubServerAdapter(services)
             : null;
+    }
+
+    /// <summary>
+    /// Sets a GitHub Actions step output.
+    /// </summary>
+    /// <param name="name">The output name.</param>
+    /// <param name="value">The output value.</param>
+    public static void SetActionsStepOutput(string name, string value)
+    {
+        var outputFile = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
+        BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
+        SysFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
     }
 
     /// <inheritdoc/>
@@ -253,18 +260,6 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         {
             _logger.LogDebug("Skipping label update: asset has no description.");
         }
-    }
-
-    /// <summary>
-    /// Sets a GitHub Actions step output.
-    /// </summary>
-    /// <param name="name">The output name.</param>
-    /// <param name="value">The output value.</param>
-    public void SetActionsStepOutput(string name, string value)
-    {
-        var outputFile = _context.EnvironmentVariable("GITHUB_OUTPUT");
-        BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
-        SysFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
     }
 
     private GitHubClient CreateGitHubClient()

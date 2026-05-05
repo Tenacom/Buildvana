@@ -33,6 +33,7 @@ public sealed class BuildContext : FrostingContext
             .AddLogging(static builder => builder
                 .SetMinimumLevel(LogLevel.Trace)
                 .Services.AddSingleton<ILoggerProvider>(static sp => new CakeLogLoggerProvider(sp.GetRequiredService<ICakeContext>().Log)))
+            .AddSingleton<ICommandOptions, EmptyCommandOptions>()
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(System.Environment.CurrentDirectory))
             .AddSingleton<IJsonHelper, JsonHelper>()
             .AddSingleton<IProcessRunner, ProcessRunner>()
