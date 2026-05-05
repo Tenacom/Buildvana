@@ -7,7 +7,6 @@ using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.ServerAdapters.Internal;
 using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 using Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
-using Cake.Core.IO;
 
 namespace Buildvana.Tool.Services.ServerAdapters;
 
@@ -102,7 +101,7 @@ public abstract class ServerAdapter
     /// <param name="path">The path to the file.</param>
     /// <param name="commitish">The SHA or reference to which the file belongs.</param>
     /// <returns></returns>
-    public abstract Uri GetFileUrl(FilePath path, string commitish);
+    public abstract Uri GetFileUrl(string path, string commitish);
 
     /// <summary>
     /// Asynchronously creates a <see cref="ServerRelease"/> object, based on the current Git branch.

@@ -3,13 +3,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
 
@@ -34,7 +35,6 @@ public sealed class DotNetService
     private readonly IProcessRunner _processRunner;
     private readonly OptionsService _options;
     private readonly ServerAdapter _server;
-    private readonly PathsService _paths;
     private readonly VersionService _version;
 
     /// <summary>
@@ -45,23 +45,20 @@ public sealed class DotNetService
         IProcessRunner processRunner,
         OptionsService options,
         ServerAdapter server,
-        PathsService paths,
         VersionService version)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(options);
         Guard.IsNotNull(server);
-        Guard.IsNotNull(paths);
         Guard.IsNotNull(version);
         _logger = logger;
         _processRunner = processRunner;
         _options = options;
         _server = server;
-        _paths = paths;
         _version = version;
         Configuration = options.GetOption("configuration", "Release");
-        ArtifactsPath = paths.AllArtifacts.Combine(Configuration);
+        ArtifactsPath = Path.Combine(CommonPaths.AllArtifacts, Configuration);
     }
 
     /// <summary>
@@ -72,7 +69,7 @@ public sealed class DotNetService
     /// <summary>
     /// Gets the path of the directory where build artifacts for <see cref="Configuration"/> are stored.
     /// </summary>
-    public DirectoryPath ArtifactsPath { get; }
+    public string ArtifactsPath { get; }
 
     /// <summary>
     /// Asynchronously restores all NuGet packages for the solution.
@@ -158,7 +155,7 @@ public sealed class DotNetService
             args.Add("--no-restore");
         }
 
-        args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", _paths.TestResults.FullPath]);
+        args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", CommonPaths.TestResults]);
         await RunDotNetAsync(args).ConfigureAwait(false);
     }
 
@@ -194,7 +191,7 @@ public sealed class DotNetService
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     public async Task NuGetPushAllAsync()
     {
-        var packages = FileSystemHelper.EnumerateFiles(ArtifactsPath.FullPath, "*.nupkg").ToArray();
+        var packages = FileSystemHelper.EnumerateFiles(ArtifactsPath, "*.nupkg").ToArray();
         if (packages.Length == 0)
         {
             _logger.LogDebug("No .nupkg files to push.");

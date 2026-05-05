@@ -3,18 +3,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
-
-using SysFile = System.IO.File;
-using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Services;
 
@@ -42,7 +39,7 @@ public sealed class SelfReferenceUpdater
     private readonly IJsonHelper _jsonHelper;
     private readonly DotNetService _dotnet;
     private readonly VersionService _version;
-    private readonly (string RelativePath, Func<FilePath, Dictionary<string, string>, bool> Update)[] _targets;
+    private readonly (string RelativePath, Func<string, Dictionary<string, string>, bool> Update)[] _targets;
 
     public SelfReferenceUpdater(
         ILogger<SelfReferenceUpdater> logger,
@@ -73,9 +70,9 @@ public sealed class SelfReferenceUpdater
     /// Rewrites in-tree references to packages produced by the current build.
     /// </summary>
     /// <returns>The list of files that were actually modified. Pass this to
-    /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, FilePath[])"/> to commit them
+    /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, string[])"/> to commit them
     /// into a separate post-release commit on top of the "Prepare release" commit.</returns>
-    public IReadOnlyList<FilePath> UpdateReferences()
+    public IReadOnlyList<string> UpdateReferences()
     {
         var produced = DiscoverProducedPackages();
         if (produced.Count == 0)
@@ -89,14 +86,12 @@ public sealed class SelfReferenceUpdater
             produced.Count,
             string.Join(", ", produced.Keys));
 
-        var modified = new List<FilePath>();
-        var homeDirectory = new DirectoryPath(_home.HomeDirectory);
+        var modified = new List<string>();
         foreach (var (relativePath, update) in _targets)
         {
-            // FilePath.FullPath of a relative path is still relative; resolve up-front so the path
-            // returned to the caller (and shown in logs) is unambiguous.
-            var path = new FilePath(relativePath).MakeAbsolute(homeDirectory);
-            if (!SysFile.Exists(path.FullPath))
+            // Resolve up-front so the path returned to the caller (and shown in logs) is unambiguous.
+            var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
+            if (!File.Exists(path))
             {
                 continue;
             }
@@ -114,7 +109,7 @@ public sealed class SelfReferenceUpdater
     private Dictionary<string, string> DiscoverProducedPackages()
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var artifacts = _dotnet.ArtifactsPath.FullPath;
+        var artifacts = _dotnet.ArtifactsPath;
         if (!FileSystemHelper.DirectoryExists(artifacts))
         {
             return result;
@@ -124,7 +119,7 @@ public sealed class SelfReferenceUpdater
         var suffix = $".{version}.nupkg";
         foreach (var path in FileSystemHelper.EnumerateFiles(artifacts, "*.nupkg"))
         {
-            var fileName = SysPath.GetFileName(path);
+            var fileName = Path.GetFileName(path);
             if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogDebug("Self-reference update: skipping '{FileName}' (version does not match '{Version}').", fileName, version);
@@ -143,8 +138,8 @@ public sealed class SelfReferenceUpdater
     // The expected location of each version string differs by container shape:
     //   - versionPropertyName == null → at depth 2 with path [container, packageId];
     //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
-    private bool UpdateJsonContainer(FilePath path, Dictionary<string, string> produced, string container, string? versionPropertyName)
-        => _jsonHelper.RewriteStringValues(path.FullPath, (propertyPath, currentValue) =>
+    private bool UpdateJsonContainer(string path, Dictionary<string, string> produced, string container, string? versionPropertyName)
+        => _jsonHelper.RewriteStringValues(path, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
             {
@@ -167,17 +162,15 @@ public sealed class SelfReferenceUpdater
                 : null;
         });
 
-    private bool UpdateMsBuildXml(FilePath path, Dictionary<string, string> produced, string[] tagNames)
+    private bool UpdateMsBuildXml(string path, Dictionary<string, string> produced, string[] tagNames)
     {
-        var fullPath = path.FullPath;
-
         // Read while detecting the file's encoding from any BOM, and remember it so the rewrite
         // preserves the original encoding exactly. The fallback when no BOM is present is UTF-8
         // without BOM; using the static Encoding.UTF8 as fallback (which has emitBOM=true) would
         // silently add a BOM on rewrite to files that did not have one.
         string original;
         Encoding encoding;
-        using (var reader = new System.IO.StreamReader(fullPath, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
+        using (var reader = new StreamReader(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
         {
             original = reader.ReadToEnd();
             encoding = reader.CurrentEncoding;
@@ -203,7 +196,7 @@ public sealed class SelfReferenceUpdater
             return false;
         }
 
-        SysFile.WriteAllText(fullPath, current, encoding);
+        File.WriteAllText(path, current, encoding);
         return true;
     }
 

@@ -3,17 +3,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Tool.Utilities;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Louis.Collections;
 using Microsoft.Extensions.Logging;
-
-using SysFile = System.IO.File;
-using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Services.PublicApiFiles;
 
@@ -73,7 +70,7 @@ public sealed class PublicApiFilesService
     /// in all directories of the repository where both files exist.
     /// </summary>
     /// <returns>An enumeration of the modified files.</returns>
-    public IEnumerable<FilePath> TransferAllPublicApisToShipped()
+    public IEnumerable<string> TransferAllPublicApisToShipped()
     {
         _logger.LogInformation("Updating public API files...");
         foreach (var (unshippedPath, shippedPath) in GetAllPublicApiFilePairs())
@@ -91,7 +88,7 @@ public sealed class PublicApiFilesService
 
     private static ApiChangeKind GetApiChangeKind(string unshippedPath)
     {
-        var unshippedLines = SysFile.ReadAllLines(unshippedPath, Encoding.UTF8);
+        var unshippedLines = File.ReadAllLines(unshippedPath, Encoding.UTF8);
         static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';
         var unshippedPublicApiLines = unshippedLines.SkipWhile(IsEmptyOrStartsWithHash);
         var newApiPresent = false;
@@ -111,14 +108,14 @@ public sealed class PublicApiFilesService
     private static bool TransferPublicApisToShipped(string unshippedPath, string shippedPath)
     {
         var utf8 = new UTF8Encoding(false);
-        var unshippedLines = SysFile.ReadAllLines(unshippedPath, utf8);
+        var unshippedLines = File.ReadAllLines(unshippedPath, utf8);
         var unshippedHeaderLines = unshippedLines.TakeWhile(IsEmptyOrStartsWithHash).ToArray();
         if (unshippedHeaderLines.Length == unshippedLines.Length)
         {
             return false;
         }
 
-        var shippedLines = SysFile.ReadAllLines(shippedPath, utf8);
+        var shippedLines = File.ReadAllLines(shippedPath, utf8);
         var shippedHeaderLines = shippedLines.TakeWhile(IsEmptyOrStartsWithHash).ToArray();
 
         var removedLines = unshippedLines
@@ -136,8 +133,8 @@ public sealed class PublicApiFilesService
                 .Where(DoesNotStartWithRemovedPrefix))
             .OrderBy(static l => l, StringComparer.Ordinal);
 
-        SysFile.WriteAllLines(shippedPath, shippedHeaderLines.Concat(newShippedLines), utf8);
-        SysFile.WriteAllLines(unshippedPath, unshippedHeaderLines, utf8);
+        File.WriteAllLines(shippedPath, shippedHeaderLines.Concat(newShippedLines), utf8);
+        File.WriteAllLines(unshippedPath, unshippedHeaderLines, utf8);
         return true;
 
         static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';
@@ -155,7 +152,7 @@ public sealed class PublicApiFilesService
 
         static (string UnshippedPath, string ShippedPath)? GetPair(string shippedPath)
         {
-            var unshippedPath = SysPath.Combine(SysPath.GetDirectoryName(shippedPath)!, "PublicAPI.Unshipped.txt");
+            var unshippedPath = Path.Combine(Path.GetDirectoryName(shippedPath)!, "PublicAPI.Unshipped.txt");
             return FileSystemHelper.FileExists(unshippedPath) ? (unshippedPath, shippedPath) : null;
         }
     }

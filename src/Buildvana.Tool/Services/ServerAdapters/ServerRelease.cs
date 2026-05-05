@@ -3,10 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Louis.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -107,7 +107,7 @@ public abstract partial class ServerRelease : IAsyncDisposable
         });
     }
 
-    public void UpdateRepository(params FilePath[] files)
+    public void UpdateRepository(params string[] files)
     {
         Guard.IsNotNull(files);
         EnsurePending();
@@ -142,7 +142,7 @@ public abstract partial class ServerRelease : IAsyncDisposable
     /// If no release commit has been created yet, this method calls <see cref="EnsureReleaseCommit"/>
     /// first, so the post-release commit always sits on top of a tagged release commit (possibly empty).
     /// </remarks>
-    public void AddPostReleaseCommit(string message, params FilePath[] files)
+    public void AddPostReleaseCommit(string message, params string[] files)
     {
         Guard.IsNotNullOrEmpty(message);
         Guard.IsNotNull(files);
@@ -183,14 +183,14 @@ public abstract partial class ServerRelease : IAsyncDisposable
         // first we need to undo the commits (a.k.a. reset), then force push to "undo" the push.
     }
 
-    public void AddAsset(FilePath path, string? description = null, string? mimeType = null)
+    public void AddAsset(string path, string? description = null, string? mimeType = null)
     {
         EnsurePending();
-        Guard.IsNotNull(path);
+        Guard.IsNotNullOrEmpty(path);
 
         if (string.IsNullOrEmpty(description))
         {
-            description = path.GetFilename().ToString();
+            description = Path.GetFileName(path);
         }
 
         if (string.IsNullOrEmpty(mimeType))
@@ -198,7 +198,7 @@ public abstract partial class ServerRelease : IAsyncDisposable
             mimeType = "application/octet-stream";
         }
 
-        _assets.Add(new(path.FullPath, description, mimeType));
+        _assets.Add(new(path, description, mimeType));
     }
 
     public async Task PublishAsync()

@@ -5,7 +5,6 @@ using System;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Tool.Services.Git;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
@@ -77,7 +76,7 @@ internal sealed class GitLabServerAdapter : ServerAdapter
     /// <summary>
     /// This method is not supported on this adapter and will always throw.
     /// </summary>
-    public override Uri GetFileUrl(FilePath path, string commitish)
+    public override Uri GetFileUrl(string path, string commitish)
         => BuildFailedException.ThrowOnUnsupportedMethod<Uri>();
 
     /// <inheritdoc/>

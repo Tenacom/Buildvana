@@ -3,14 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Octokit;
-
-using SysPath = System.IO.Path;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 
@@ -71,7 +70,7 @@ internal sealed class GitHubServerRelease : ServerRelease
                     "Uploading asset {Index} of {Count}: {Filename} ({Description})...",
                     i,
                     assetCount,
-                    SysPath.GetFileName(asset.Path),
+                    Path.GetFileName(asset.Path),
                     asset.Description);
                 await _server.UploadReleaseAssetAsync(_gitHubRelease, asset.Path, asset.MimeType, asset.Description).ConfigureAwait(false);
             }

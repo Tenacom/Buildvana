@@ -11,11 +11,8 @@ using System.Text.RegularExpressions;
 using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
-
-using SysFile = System.IO.File;
 
 namespace Buildvana.Tool.Services;
 
@@ -44,20 +41,8 @@ public sealed partial class ChangelogService
         _logger = logger;
         _server = server;
         _version = version;
-        Path = new FilePath(FileName);
-        FullPath = Path.FullPath;
-        Exists = SysFile.Exists(FullPath);
+        Exists = File.Exists(FileName);
     }
-
-    /// <summary>
-    /// Gets the path to the changelog file.
-    /// </summary>
-    public FilePath Path { get; }
-
-    /// <summary>
-    /// Gets the full path to the changelog file as a string.
-    /// </summary>
-    public string FullPath { get; }
 
     /// <summary>
     /// Gets a value indicating whether the changelog file exists.
@@ -76,7 +61,7 @@ public sealed partial class ChangelogService
             return false;
         }
 
-        using var reader = new StreamReader(FullPath, Encoding.UTF8);
+        using var reader = new StreamReader(FileName, Encoding.UTF8);
         var sectionHeadingRegex = GetSectionHeadingRegex();
         var subSectionHeadingRegex = GetSubsectionHeadingRegex();
         string? line;
@@ -112,7 +97,7 @@ public sealed partial class ChangelogService
         _logger.LogInformation("Updating changelog...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
-        using (var reader = new StreamReader(FullPath, encoding))
+        using (var reader = new StreamReader(FileName, encoding))
         using (var writer = new StringWriter(sb, CultureInfo.InvariantCulture))
         {
             // Using a StringWriter instead of a StringBuilder allows for a custom line separator
@@ -230,7 +215,7 @@ public sealed partial class ChangelogService
             }
         }
 
-        SysFile.WriteAllText(FullPath, sb.ToString(), encoding);
+        File.WriteAllText(FileName, sb.ToString(), encoding);
     }
 
     /// <summary>
@@ -242,7 +227,7 @@ public sealed partial class ChangelogService
         _logger.LogInformation("Updating changelog's new release section title...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
-        using (var reader = new StreamReader(FullPath, encoding))
+        using (var reader = new StreamReader(FileName, encoding))
         using (var writer = new StringWriter(sb, CultureInfo.InvariantCulture))
         {
             // Using a StringWriter instead of a StringBuilder allows for a custom line separator
@@ -294,7 +279,7 @@ public sealed partial class ChangelogService
             }
         }
 
-        SysFile.WriteAllText(FullPath, sb.ToString(), encoding);
+        File.WriteAllText(FileName, sb.ToString(), encoding);
     }
 
     [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
