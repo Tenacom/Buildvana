@@ -32,6 +32,7 @@
     <ComVisible>false</ComVisible>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <UseJetBrainsAnnotations>true</UseJetBrainsAnnotations>
   </PropertyGroup>
 
   <!-- Solution-wide build options -->

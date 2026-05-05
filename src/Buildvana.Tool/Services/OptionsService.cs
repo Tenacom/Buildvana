@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
-using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services;
@@ -19,14 +18,7 @@ public sealed partial class OptionsService
     private static readonly Regex UnderscoreCasingRegex2 = GetUnderscoreCasingRegex2();
     private static readonly Regex UnderscoreCasingRegex3 = GetUnderscoreCasingRegex3();
 
-    private readonly ICommandOptions _commandOptions;
     private readonly Dictionary<string, string> _options = [];
-
-    public OptionsService(ICommandOptions commandOptions)
-    {
-        Guard.IsNotNull(commandOptions);
-        _commandOptions = commandOptions;
-    }
 
     /// <summary>
     /// Sets an option. The value set by this method will take precedence over arguments and environment variables.
@@ -120,13 +112,6 @@ public sealed partial class OptionsService
         Guard.IsNotNullOrEmpty(name);
         if (_options.TryGetValue(name, out value))
         {
-            return true;
-        }
-
-        value = _commandOptions.GetValue(name);
-        if (!string.IsNullOrEmpty(value))
-        {
-            _options[name] = value;
             return true;
         }
 
