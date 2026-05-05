@@ -10,7 +10,6 @@ using Buildvana.Tool.Services.Versioning;
 using Cake.Common;
 using Cake.Core;
 using Cake.Core.IO;
-using Cake.Http;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -215,34 +214,6 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 
         _logger.LogInformation("Deleting reference '{Reference}' in GitHub repository...", reference);
         await client.Git.Reference.Delete(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Asynchronously creates a workflow dispatch event on the GitHub repository.
-    /// </summary>
-    /// <param name="filename">The name of the workflow file to run, including extension.</param>
-    /// <param name="reference">The name of the reference on which to dispatch the workflow run.</param>
-    /// <param name="inputs">An optional anonymous object containing the inputs for the workflow. The object, if given, must be JSON-serializable.</param>
-    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task DispatchWorkflowAsync(string filename, string reference, object? inputs = null)
-    {
-        Guard.IsNotNullOrEmpty(filename);
-        Guard.IsNotNullOrEmpty(reference);
-        _logger.LogInformation("Dispatching workflow '{Filename}' on '{Reference}'...", filename, reference);
-        object requestBody = inputs is null
-            ? new { @ref = reference }
-            : new { @ref = reference, inputs };
-
-        // TODO: Check whether this can be done with latest OctoKit instead of directly creating an HTTP request
-        var httpSettings = new HttpSettings()
-            .SetAccept("application/vnd.github.v3")
-            .AppendHeader("Authorization", "Token " + _token)
-            .AppendHeader("User-Agent", "Buildvana (Win32NT 10.0.19044; amd64; en-US)")
-            .SetJsonRequestBody(requestBody)
-            .EnsureSuccessStatusCode();
-
-        var postUrl = $"https://api.github.com/repos/{RepositoryOwner}/{RepositoryName}/actions/workflows/{filename}/dispatches";
-        _ = await _context.HttpPostAsync(postUrl, httpSettings).ConfigureAwait(false);
     }
 
     /// <summary>
