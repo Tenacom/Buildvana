@@ -36,6 +36,7 @@ public sealed class DotNetService
     private readonly OptionsService _options;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
+    private readonly MSBuildProperties _msbuildProperties;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
@@ -45,18 +46,21 @@ public sealed class DotNetService
         IProcessRunner processRunner,
         OptionsService options,
         ServerAdapter server,
-        VersionService version)
+        VersionService version,
+        MSBuildProperties msbuildProperties)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(options);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
+        Guard.IsNotNull(msbuildProperties);
         _logger = logger;
         _processRunner = processRunner;
         _options = options;
         _server = server;
         _version = version;
+        _msbuildProperties = msbuildProperties;
         Configuration = options.GetOption("configuration", "Release");
         ArtifactsPath = Path.Combine(CommonPaths.AllArtifacts, Configuration);
     }
@@ -220,6 +224,10 @@ public sealed class DotNetService
         yield return "-nologo";
         yield return "-maxcpucount:1";
         yield return ContinuousIntegrationBuildArg();
+        foreach (var arg in _msbuildProperties.EnumerateAsArgs())
+        {
+            yield return arg;
+        }
     }
 
     private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args)

@@ -46,6 +46,7 @@ public sealed class BuildContext : FrostingContext
             .AddSingleton<ChangelogService>()
             .AddSingleton<DocFxService>()
             .AddSingleton<DotNetService>()
+            .AddSingleton<MSBuildProperties>()
             .AddSingleton<OptionsService>()
             .AddSingleton<SelfReferenceUpdater>()
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
