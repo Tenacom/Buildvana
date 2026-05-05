@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Threading.Tasks;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Solution;
@@ -12,17 +13,17 @@ namespace Buildvana.Tool.Tasks;
 [TaskName(Name)]
 [TaskDescription(Description)]
 [IsDependentOn(typeof(CleanTask))]
-public sealed class RestoreTask : FrostingTask<BuildContext>
+public sealed class RestoreTask : AsyncFrostingTask<BuildContext>
 {
     private const string Name = "Restore";
     private const string Description = "Restore dependencies";
 
-    public override void Run(BuildContext context)
+    public override Task RunAsync(BuildContext context)
     {
         Guard.IsNotNull(context);
 
         var dotnet = context.GetService<DotNetService>();
         var solution = context.GetService<SolutionContext>();
-        dotnet.RestoreSolution(solution);
+        return dotnet.RestoreSolutionAsync(solution);
     }
 }

@@ -171,10 +171,10 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Build, test, make artifacts
-            dotnet.RestoreSolution(solution);
-            dotnet.BuildSolution(solution, false);
-            dotnet.TestSolution(solution, false, false);
-            dotnet.PackSolution(solution, false, false);
+            await dotnet.RestoreSolutionAsync(solution).ConfigureAwait(false);
+            await dotnet.BuildSolutionAsync(solution, false).ConfigureAwait(false);
+            await dotnet.TestSolutionAsync(solution, false, false).ConfigureAwait(false);
+            await dotnet.PackSolutionAsync(solution, false, false).ConfigureAwait(false);
 
             if (changelogUpdated)
             {

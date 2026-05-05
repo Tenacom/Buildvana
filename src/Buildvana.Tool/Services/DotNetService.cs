@@ -2,25 +2,19 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
-using Cake.Common;
-using Cake.Common.IO;
-using Cake.Common.Tools.DotNet;
-using Cake.Common.Tools.DotNet.MSBuild;
-using Cake.Common.Tools.DotNet.NuGet.Push;
-using Cake.Common.Tools.DotNet.Test;
-using Cake.Core;
+using Buildvana.Tool.Utilities;
 using Cake.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-using SysDirectory = System.IO.Directory;
-using SysPath = System.IO.Path;
+using IProcessRunner = Buildvana.Core.Process.IProcessRunner;
+using ProcessResult = Buildvana.Core.Process.ProcessResult;
 
 namespace Buildvana.Tool.Services;
 
@@ -29,44 +23,44 @@ namespace Buildvana.Tool.Services;
 /// </summary>
 public sealed class DotNetService
 {
-    private readonly ICakeContext _context;
+    // The muxer sets DOTNET_HOST_PATH to the full path of the dotnet executable that launched us,
+    // so we re-invoke that exact host instead of relying on `dotnet` being on PATH.
+    private static readonly string DotNetMuxer
+        = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") is { Length: > 0 } p
+            ? p
+            : "dotnet";
+
     private readonly ILogger<DotNetService> _logger;
+    private readonly IProcessRunner _processRunner;
     private readonly OptionsService _options;
     private readonly ServerAdapter _server;
     private readonly PathsService _paths;
     private readonly VersionService _version;
-    private readonly DotNetMSBuildSettings _msBuildSettings;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
     /// </summary>
     public DotNetService(
-        ICakeContext context,
         ILogger<DotNetService> logger,
+        IProcessRunner processRunner,
         OptionsService options,
         ServerAdapter server,
         PathsService paths,
         VersionService version)
     {
-        Guard.IsNotNull(context);
         Guard.IsNotNull(logger);
+        Guard.IsNotNull(processRunner);
         Guard.IsNotNull(options);
         Guard.IsNotNull(server);
         Guard.IsNotNull(paths);
         Guard.IsNotNull(version);
-        _context = context;
         _logger = logger;
+        _processRunner = processRunner;
         _options = options;
         _server = server;
         _paths = paths;
         _version = version;
-        _msBuildSettings = new DotNetMSBuildSettings
-        {
-            MaxCpuCount = 1,
-            ContinuousIntegrationBuild = server.IsCloudBuild,
-            NoLogo = true,
-        };
-        Configuration = context.Argument("configuration", "Release");
+        Configuration = options.GetOption("configuration", "Release");
         ArtifactsPath = paths.AllArtifacts.Combine(Configuration);
     }
 
@@ -81,46 +75,47 @@ public sealed class DotNetService
     public DirectoryPath ArtifactsPath { get; }
 
     /// <summary>
-    /// Restores all NuGet packages for the solution.
+    /// Asynchronously restores all NuGet packages for the solution.
     /// </summary>
     /// <param name="solution">The solution to restore.</param>
-    public void RestoreSolution(SolutionContext solution)
+    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
+    public Task RestoreSolutionAsync(SolutionContext solution)
     {
         Guard.IsNotNull(solution);
         _logger.LogInformation("Restoring NuGet packages for solution...");
-        _context.DotNetRestore(solution.SolutionPath, new()
-        {
-            MSBuildSettings = _msBuildSettings,
-            DisableParallel = true,
-            Interactive = false,
-        });
+        List<string> args = ["restore", solution.SolutionPath, "--disable-parallel"];
+        args.AddRange(StandardMSBuildArgs());
+        return RunDotNetAsync(args);
     }
 
     /// <summary>
-    /// Build all projects in the solution.
+    /// Asynchronously builds all projects in the solution.
     /// </summary>
     /// <param name="solution">The solution to build.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
-    public void BuildSolution(SolutionContext solution, bool restore)
+    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
+    public Task BuildSolutionAsync(SolutionContext solution, bool restore)
     {
         Guard.IsNotNull(solution);
         _logger.LogInformation("Building solution (restore = {Restore})...", restore);
-        _context.DotNetBuild(solution.SolutionPath, new()
+        List<string> args = ["build", solution.SolutionPath, "-c", Configuration];
+        if (!restore)
         {
-            Configuration = Configuration,
-            MSBuildSettings = _msBuildSettings,
-            NoLogo = true,
-            NoRestore = !restore,
-        });
+            args.Add("--no-restore");
+        }
+
+        args.AddRange(StandardMSBuildArgs());
+        return RunDotNetAsync(args);
     }
 
     /// <summary>
-    /// Run all tests for the solution.
+    /// Asynchronously runs all tests for the solution.
     /// </summary>
     /// <param name="solution">The solution to test.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before testing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
-    public void TestSolution(SolutionContext solution, bool restore, bool build)
+    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
+    public async Task TestSolutionAsync(SolutionContext solution, bool restore, bool build)
     {
         Guard.IsNotNull(solution);
         _logger.LogInformation("Checking for MTP test projects...");
@@ -129,25 +124,12 @@ public sealed class DotNetService
         {
             var projectPath = solution.ResolveProjectPath(project);
             _logger.LogDebug("Checking '{Path}'...", projectPath);
-            var sb = new StringBuilder();
-            _context.DotNetMSBuild(
-                projectPath,
-                new()
-                {
-                    MaxCpuCount = 1,
-                    ContinuousIntegrationBuild = _server.IsCloudBuild,
-                    NoLogo = true,
-                    ArgumentCustomization = args => args.Append("-getProperty:IsTestingPlatformApplication"),
-                },
-                output =>
-                {
-                    foreach (var line in output)
-                    {
-                        sb.AppendLine(line);
-                    }
-                });
+            List<string> probeArgs = ["msbuild", projectPath];
+            probeArgs.AddRange(StandardMSBuildArgs());
+            probeArgs.Add("-getProperty:IsTestingPlatformApplication");
+            var probe = await RunDotNetAsync(probeArgs).ConfigureAwait(false);
 
-            if (string.Equals(sb.ToString().Trim(), "true", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogDebug("Project '{Path}' is a test project, will run tests.", projectPath);
                 hasTestProjects = true;
@@ -162,46 +144,48 @@ public sealed class DotNetService
         }
 
         _logger.LogInformation("Running tests (restore = {Restore}, build = {Build})...", restore, build);
-        _context.DotNetTest(solution.SolutionPath, new()
-        {
-            PathType = DotNetTestPathType.Solution,
-            Configuration = Configuration,
 
-            // Can't use _msBuildSettings here because `dotnet test` passes those to MTP applications,
-            // which (at least those built with TUnit) fail because they don't recognize /nologo and /maxCpuCount:1.
-            MSBuildSettings = new()
-            {
-                ContinuousIntegrationBuild = _server.IsCloudBuild,
-            },
-            NoBuild = !build,
-            NoRestore = !restore,
-            ArgumentCustomization = args => args
-                .Append("--coverage")
-                .Append("--coverage-output-format")
-                .Append("cobertura")
-                .Append("--results-directory")
-                .Append(_paths.TestResults.FullPath),
-        });
+        // Don't pass the standard MSBuild args here: `dotnet test` forwards them to MTP applications,
+        // which (at least those built with TUnit) fail because they don't recognize -nologo and -maxcpucount.
+        List<string> args = ["test", solution.SolutionPath, "-c", Configuration, ContinuousIntegrationBuildArg()];
+        if (!build)
+        {
+            args.Add("--no-build");
+        }
+
+        if (!restore)
+        {
+            args.Add("--no-restore");
+        }
+
+        args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", _paths.TestResults.FullPath]);
+        await RunDotNetAsync(args).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Run the Pack target on the solution. This usually produces NuGet packages, but Buildvana SDK may hijack the target to produce, for example, setup executables.
+    /// Asynchronously runs the Pack target on the solution. This usually produces NuGet packages, but Buildvana SDK may hijack the target to produce, for example, setup executables.
     /// </summary>
     /// <param name="solution">The solution to pack.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before packing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
-    public void PackSolution(SolutionContext solution, bool restore, bool build)
+    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
+    public Task PackSolutionAsync(SolutionContext solution, bool restore, bool build)
     {
         Guard.IsNotNull(solution);
         _logger.LogInformation("Packing solution (restore = {Restore}, build = {Build})...", restore, build);
-        _context.DotNetPack(solution.SolutionPath, new()
+        List<string> args = ["pack", solution.SolutionPath, "-c", Configuration];
+        if (!build)
         {
-            Configuration = Configuration,
-            MSBuildSettings = _msBuildSettings,
-            NoBuild = !build,
-            NoLogo = true,
-            NoRestore = !restore,
-        });
+            args.Add("--no-build");
+        }
+
+        if (!restore)
+        {
+            args.Add("--no-restore");
+        }
+
+        args.AddRange(StandardMSBuildArgs());
+        return RunDotNetAsync(args);
     }
 
     /// <summary>
@@ -210,8 +194,8 @@ public sealed class DotNetService
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     public async Task NuGetPushAllAsync()
     {
-        const string nupkgMask = "*.nupkg";
-        if (!SysDirectory.EnumerateFiles(ArtifactsPath.FullPath, nupkgMask).Any())
+        var packages = FileSystemHelper.EnumerateFiles(ArtifactsPath.FullPath, "*.nupkg").ToArray();
+        if (packages.Length == 0)
         {
             _logger.LogDebug("No .nupkg files to push.");
             return;
@@ -220,19 +204,27 @@ public sealed class DotNetService
         var isPrivate = await _server.IsPrivateRepositoryAsync().ConfigureAwait(false);
         var nugetSource = _options.GetOptionOrFail<string>(isPrivate ? "privateNugetSource" : _version.IsPrerelease ? "prereleaseNugetSource" : "releaseNugetSource");
         var nugetApiKey = _options.GetOptionOrFail<string>(isPrivate ? "privateNugetKey" : _version.IsPrerelease ? "prereleaseNugetKey" : "releaseNugetKey");
-        var nugetPushSettings = new DotNetNuGetPushSettings
-        {
-            ForceEnglishOutput = true,
-            Source = nugetSource,
-            ApiKey = nugetApiKey,
-            SkipDuplicate = true,
-        };
-
-        var packages = SysPath.Combine(ArtifactsPath.FullPath, nupkgMask);
-        foreach (var path in _context.GetFiles(packages))
+        foreach (var path in packages)
         {
             _logger.LogInformation("Pushing {Path} to {Source}...", path, nugetSource);
-            _context.DotNetNuGetPush(path, nugetPushSettings);
+            await _processRunner
+                .RunAsync(
+                    DotNetMuxer,
+                    ["nuget", "push", path, "--source", nugetSource, "--api-key", nugetApiKey, "--skip-duplicate", "--force-english-output"])
+                .ConfigureAwait(false);
         }
     }
+
+    private string ContinuousIntegrationBuildArg()
+        => $"-p:ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
+
+    private IEnumerable<string> StandardMSBuildArgs()
+    {
+        yield return "-nologo";
+        yield return "-maxcpucount:1";
+        yield return ContinuousIntegrationBuildArg();
+    }
+
+    private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args)
+        => _processRunner.RunAsync(DotNetMuxer, args);
 }
