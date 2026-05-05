@@ -251,9 +251,7 @@ public sealed class ReleaseTask : AsyncFrostingTask<BuildContext>
             }
 
             // Add NuGet packages as assets
-            // const string nupkgMask = "*.nupkg";
-            // var nupkgs = Path.Combine(dotnet.ArtifactsPath, nupkgMask);
-            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath, "*.assets.txt"))
+            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath, "*.nupkg"))
             {
                 release.AddAsset(path);
                 var snupkgPath = Path.ChangeExtension(path, ".snupkg");
