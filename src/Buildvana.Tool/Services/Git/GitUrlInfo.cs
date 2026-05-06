@@ -15,21 +15,17 @@ public sealed class GitUrlInfo
 {
     private GitUrlInfo(
         Uri url,
-        GitProtocol protocol,
         string host,
         int port,
         IReadOnlyList<string> pathSegments)
     {
         Url = url;
-        Protocol = protocol;
         Host = host;
         Port = port;
         PathSegments = pathSegments;
     }
 
     public Uri Url { get; }
-
-    public GitProtocol Protocol { get; }
 
     public string Host { get; }
 
@@ -63,37 +59,24 @@ public sealed class GitUrlInfo
             return false;
         }
 
-        GitProtocol protocol;
-        if (url.StartsWith("http://", StringComparison.Ordinal))
+        var isRecognizedScheme = url.StartsWith("http://", StringComparison.Ordinal)
+            || url.StartsWith("https://", StringComparison.Ordinal)
+            || url.StartsWith("ssh://", StringComparison.Ordinal)
+            || url.StartsWith("git://", StringComparison.Ordinal);
+        if (!isRecognizedScheme)
         {
-            protocol = GitProtocol.Http;
-        }
-        else if (url.StartsWith("https://", StringComparison.Ordinal))
-        {
-            protocol = GitProtocol.Https;
-        }
-        else if (url.StartsWith("ssh://", StringComparison.Ordinal))
-        {
-            protocol = GitProtocol.Ssh;
-        }
-        else if (url.StartsWith("git://", StringComparison.Ordinal))
-        {
-            protocol = GitProtocol.Git;
-        }
-        else if (url.StartsWith("file://", StringComparison.Ordinal))
-        {
-            // Common case that we may mistake for an SSH URL
-            result = null;
-            return false;
-        }
-        else
-        {
+            if (url.StartsWith("file://", StringComparison.Ordinal))
+            {
+                // Common case that we may mistake for an SSH URL
+                result = null;
+                return false;
+            }
+
             var firstSlashPos = url.IndexOf('/', StringComparison.Ordinal);
             if (firstSlashPos < 0 || firstColonPos < firstSlashPos)
             {
                 // [user@]host.xz:path/to/repo.git/
                 // Recognized by Git only if there are no slashes before the first colon
-                protocol = GitProtocol.Ssh;
                 url = "ssh://" + url[..firstColonPos] + "/" + url[(firstColonPos + 1)..];
             }
             else
@@ -120,7 +103,6 @@ public sealed class GitUrlInfo
 
         result = new(
             new(url),
-            protocol,
             host: uri.Host,
             port: uri.IsDefaultPort ? -1 : uri.Port,
             pathSegments: uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries));

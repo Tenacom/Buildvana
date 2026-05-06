@@ -2,10 +2,12 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Sdk.Internal;
+using JetBrains.Annotations;
 using Microsoft.Build.Framework;
 
 namespace Buildvana.Sdk.Tasks;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed class GetWinePaths : BuildvanaSdkTask
 {
     public string BasePath { get; set; } = string.Empty;

@@ -9,6 +9,7 @@ using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using CommunityToolkit.Diagnostics;
+using JetBrains.Annotations;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
@@ -18,6 +19,7 @@ namespace Buildvana.Tool.Services.Git;
 /// <summary>
 /// Provides shortcut methods to use Git.
 /// </summary>
+[PublicAPI]
 public sealed class GitService : IDisposable
 {
     private readonly ILogger<GitService> _logger;
