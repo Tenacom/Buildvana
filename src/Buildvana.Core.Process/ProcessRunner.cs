@@ -29,6 +29,8 @@ public sealed class ProcessRunner : IProcessRunner
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNullOrEmpty(executable);
+
+        // ReSharper disable once PossibleMultipleEnumeration
         Guard.IsNotNull(args);
 
         var stdoutBuffer = new StringBuilder();
@@ -42,6 +44,8 @@ public sealed class ProcessRunner : IProcessRunner
                 PipeTarget.ToDelegate(onStdout));
 
         var command = Cli.Wrap(executable)
+
+            // ReSharper disable once PossibleMultipleEnumeration
             .WithArguments(args)
             .WithStandardOutputPipe(stdoutPipe)
             .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderrBuffer))
