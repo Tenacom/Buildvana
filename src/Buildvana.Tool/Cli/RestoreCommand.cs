@@ -10,7 +10,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[Description("Restore dependencies.")]
+[Description("Clean and restore dependencies.")]
 internal sealed class RestoreCommand(IServiceProvider services) : AsyncCommand<BuildSettings>
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, BuildSettings settings, CancellationToken cancellationToken)
