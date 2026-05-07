@@ -13,7 +13,7 @@ namespace Buildvana.Tool.Services;
 /// </summary>
 public sealed class MSBuildProperties
 {
-    private readonly Dictionary<string, string> _properties = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _properties = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Sets the value of an MSBuild property.
