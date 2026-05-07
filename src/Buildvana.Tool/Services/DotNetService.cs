@@ -160,6 +160,10 @@ public sealed class DotNetService
         }
 
         args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", CommonPaths.TestResults]);
+
+        // `dotnet test` doesn't support passing MSBuild properties with `-p:Key=Value`, nor does it support passing any other parameter to MSBuild.
+        // It _does_ support `--property:Key=Value`, though. We need to pass MSBuild properties differently than in the other commands, but we can (and must) do so.
+        args.AddRange(_msbuildProperties.EnumerateAsDotnetTestArgs());
         await RunDotNetAsync(args).ConfigureAwait(false);
     }
 
