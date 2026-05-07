@@ -10,7 +10,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[Description("Build all projects, run tests, and prepare build artifacts.")]
+[Description("Clean, restore, build all projects, run tests, and prepare build artifacts.")]
 internal sealed class PackCommand(IServiceProvider services) : AsyncCommand<BuildSettings>
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, BuildSettings settings, CancellationToken cancellationToken)
