@@ -38,7 +38,6 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <XmlDocs>false</XmlDocs> <!--Do not generate XML documentation -->
-    <UseJetBrainsAnnotations>true</UseJetBrainsAnnotations>
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
   </PropertyGroup>
 
