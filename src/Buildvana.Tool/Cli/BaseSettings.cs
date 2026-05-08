@@ -17,7 +17,7 @@ public class BaseSettings : CommandSettings
     /// Gets the requested logging verbosity.
     /// </summary>
     [CommandOption("-v|--verbosity <LEVEL>")]
-    [Description("Logging verbosity. Accepts .NET LogLevel names (Trace/Debug/Information/Warning/Error/Critical/None) or Cake-compat names (Quiet/Minimal/Normal/Verbose/Diagnostic).")]
+    [Description("Logging verbosity. Accepts either Trace/Debug/Information/Warning/Error/Critical/None or Quiet/Minimal/Normal/Verbose/Diagnostic.")]
     public string? Verbosity { get; init; }
 
     /// <summary>
