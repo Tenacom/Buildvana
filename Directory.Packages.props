@@ -32,6 +32,7 @@
     <PackageVersion Include="CliWrap" Version="3.10.1" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
     <PackageVersion Include="Docfx.App" Version="2.78.5" />
+    <PackageVersion Include="JetBrains.Annotations.Sources" Version="2025.2.4" />
     <PackageVersion Include="LibGit2Sharp" Version="0.31.0" />
     <PackageVersion Include="Louis" Version="2.1.1-preview" />
     <PackageVersion Include="Microsoft.Build.Framework" Version="18.4.0" />
