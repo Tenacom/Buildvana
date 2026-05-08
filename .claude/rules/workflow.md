@@ -33,7 +33,7 @@
 5. You write the code; I review before every commit. Always ensure the solution builds with zero errors and zero warnings and all tests (if any) pass.
 6. Final sanity check:
    a. Execute `dotnet bv pack` to build everything, run tests, and produce build artifacts. After it runs, you should find artifacts (NuGet packages, Docker images, etc.) in the `artifacts` folder. You can inspect these artifacts to verify that they are correct and ready for release.
-   b. Execute `dotnet dnx JetBrains.ReSharper.GlobalTools inspectcode --swea --severity=WARNING --output=inspect.sarif --format=Sarif --properties:Configuration=Release --no-build Buildvana.slnx --yes` to analyze the whole solution with ReSharper. Parse `inspect.sarif`, address each `result` (with `--severity=WARNING`, every result will be at `error` or `warning` level — fix them all).
+   b. Execute `dotnet dnx JetBrains.ReSharper.GlobalTools inspectcode --swea --severity=WARNING --output=inspect.sarif --format=Sarif --properties:Configuration=Release --no-build Buildvana.slnx --yes` to analyze the whole solution with ReSharper. Then run `dotnet run .claude/tools/inspect-sarif.cs` to summarize the report (one line per result), and address each one (with `--severity=WARNING`, every result will be at `error` or `warning` level — fix them all).
    c. Repeat from (a) until there are zero errors and zero warnings. If you have any doubts, or an error or warning that you think is a false positive, or that just won't go away, ask me.
    d. You can leave `inspect.sarif` in the repo, it's in `.gitignore` and won't be committed.
 7. When you're done, you prepare the title, text , and labels for the PR.
