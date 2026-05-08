@@ -26,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cake.Frosting" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Docfx.App" />
     <PackageReference Include="JetBrains.Annotations.Sources" />

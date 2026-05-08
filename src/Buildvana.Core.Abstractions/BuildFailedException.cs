@@ -10,8 +10,8 @@ namespace Buildvana.Core;
 /// <summary>
 /// <para>The exception that Buildvana libraries throw to fail the build.</para>
 /// <para>Hosts catch this exception at their top-level entry point and translate it
-/// to whatever failure mechanism their runtime expects (e.g., <c>CakeException</c>,
-/// <c>TaskLoggingHelper.LogError</c>, etc.).</para>
+/// to whatever failure mechanism their runtime expects (e.g., <c>TaskLoggingHelper.LogError</c>,
+/// a non-zero process exit code, etc.).</para>
 /// </summary>
 public sealed class BuildFailedException : Exception
 {

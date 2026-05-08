@@ -28,7 +28,6 @@
 
   <!-- Run-time dependencies-->
   <ItemGroup>
-    <PackageVersion Include="Cake.Frosting" Version="6.1.0" />
     <PackageVersion Include="CliWrap" Version="3.10.1" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
     <PackageVersion Include="Docfx.App" Version="2.78.5" />

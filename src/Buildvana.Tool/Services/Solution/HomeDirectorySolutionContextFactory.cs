@@ -35,8 +35,7 @@ public sealed class HomeDirectorySolutionContextFactory : ISolutionContextFactor
         var serializer = SolutionSerializers.GetSerializerByMoniker(path)
             ?? throw new BuildFailedException($"No serializer supports solution file '{path}'.");
 
-        // The package's serializers read the file synchronously; sync-waiting on the returned task
-        // is fine here and matches Cake's old eager-load behavior in DotNetService's constructor.
+        // The package's serializers read the file synchronously; sync-waiting on the returned task is fine here.
         var model = serializer.OpenAsync(path, CancellationToken.None).GetAwaiter().GetResult();
 
         return new SolutionContext(path, model);
