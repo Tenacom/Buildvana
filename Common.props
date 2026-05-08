@@ -2,7 +2,7 @@
 
   <!-- Branding, ownership, licensing, project information -->
   <PropertyGroup>
-    <Product>Buildvana.Sdk</Product>
+    <Product>Buildvana</Product>
     <Authors>Tenacom and contributors</Authors>
     <Owners>Tenacom</Owners>
     <Company>Tenacom</Company>
