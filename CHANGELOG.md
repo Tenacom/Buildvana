@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGE**: `bv clean` (formerly known as `bv prepare`) now deletes the `TestResults` directory at the repository root.
 - `bv clean` (formerly known as `bv prepare`) no longer deletes per-project `TestResults` directories.
 - `dotnet bv release` no longer folds self-reference (dogfood) updates into the "Prepare release" commit. They now go into a separate `Update self-references to <version> [skip ci]` commit pushed on top, in the same push. The release tag binds to the "Prepare release" commit, so checking out the tag and rebuilding now reproduces the actually-released source state (which still references the previously-published versions). `[skip ci]` is required on the dogfood commit because the new packages are usually not yet published at push time.
+- **BREAKING CHANGE**: Multi-word `bv` options no longer accept their camelCase aliases. Use the kebab-case form (e.g. `--main-branch` instead of `--mainBranch`, `--version-spec-change` instead of `--versionSpecChange`). The kebab-case form was already accepted alongside the camelCase one in previous previews.
+- **BREAKING CHANGE**: Five `bv release` options have been renamed: `--versionSpecChange` → `--bump`, `--checkPublicApiFiles` → `--check-public-api`, `--updateChangelogOnPrerelease` → `--unstable-changelog`, `--ensureChangelogNotEmpty` → `--require-changelog`, `--updateSelfReferences` → `--dogfood`. The matching default-source environment variables follow the same renaming.
 
 ### Bugs fixed in this release
 
@@ -28,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known problems introduced by this release
 
-- When a release introduces no other file changes (typically a prerelease with no version-spec change and no changelog or public-API updates), the "Prepare release" commit is empty. The major public Git hosts accept empty commits, but self-hosted setups with custom `pre-receive` hooks may reject them. If this affects you, either allow empty commits, or set `updateChangelogOnPrerelease` to `true` so prerelease runs always have a non-empty release commit. If neither option is acceptable for your workflow, please open an issue.
+- When a release introduces no other file changes (typically a prerelease with no version-spec change and no changelog or public-API updates), the "Prepare release" commit is empty. The major public Git hosts accept empty commits, but self-hosted setups with custom `pre-receive` hooks may reject them. If this affects you, either allow empty commits, or set `--unstable-changelog` to `true` so prerelease runs always have a non-empty release commit. If neither option is acceptable for your workflow, please open an issue.
 - The check for `IsTestProject` is wrong, as it's a VSTest-related property. MTP uses `IsTestingPlatformApplication` instead.
 
 ## [1.1.10](https://github.com/Tenacom/Buildvanareleases/tag/1.1.10) (2026-04-27)
