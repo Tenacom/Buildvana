@@ -23,7 +23,7 @@ public class BuildSettings : BaseSettings
     /// <summary>
     /// Gets the name of the repository's main branch.
     /// </summary>
-    [CommandOption("--mainBranch|--main-branch <NAME>")]
+    [CommandOption("--main-branch <NAME>")]
     [Description("Name of the repository's main branch. Defaults to 'main' (or the MAIN_BRANCH environment variable, if set).")]
     public string? MainBranch { get; init; }
 }
