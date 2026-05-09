@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
@@ -27,6 +28,9 @@ internal static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        // Force English help/diagnostics: Spectre.Console.Cli localizes via CurrentUICulture, and the invariant fallback is the English Resources.resx.
+        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
         var (cleanArgs, msbuildProperties) = ExtractMSBuildProperties(args);
 
         var console = AnsiConsole.Console;
