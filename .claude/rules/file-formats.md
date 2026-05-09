@@ -4,6 +4,7 @@ File format rules are configured in `.editorconfig`.
 Here are additional rules that either cannot be codified there, or are better known in advance.
 
 ## Common defaults for all files (valid unless otherwise specified below)
+
 - Charset: UTF-8 without BOM
 - Line separator: LF
 - Indentation: spaces (NOT tabs)
@@ -36,6 +37,8 @@ If you must use `Write` to fully rewrite an existing `.cs` file (which also stri
 
 - Tab width = indentation width = 2
 - Markdown line break: 2 spaces
+- Always use `_` for emphasis, `**` for strong emphasis. Applies to all `.md` files, including AI-consumed ones — markdownlint rule MD049 is a backup enforcement, not the source of the rule.  
+  Example: `_emphasis_` and `**strong emphasis**` are correct; `*emphasis*` or `__strong emphasis__` are NOT correct.
 
 Generally honor markdownlint rules laid out in `.markdownlint-cli2.jsonc`. Only when absolutely necessary, suppress rules with XML comments. Example:
 

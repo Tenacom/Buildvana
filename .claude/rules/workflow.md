@@ -16,11 +16,13 @@
 2. You analyze the situation and make a plan.
 3. We review the plan together.
 4. You prepare the issue, following one of these templates:
-   - Bug report: https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/01_bug_report.yml
-   - Enhancement proposal: https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/02_enhancement_proposal.yml
-   - Documentation issue: https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/03_doc_issue.yml
-   - Documentation request: https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/04_docs_request.yml
+   - [Bug report](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/01_bug_report.yml)
+   - [Enhancement proposal](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/02_enhancement_proposal.yml)
+   - [Documentation issue](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/03_doc_issue.yml)
+   - [Documentation request](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/ISSUE_TEMPLATE/04_docs_request.yml)
    - For anything else, no template
+
+   Acceptance criteria must include a changelog update for every public-facing change. See `CHANGELOG.md` for section structure (Keep a Changelog format under `## Unreleased changes`) and the `**BREAKING CHANGE**:` convention.
 5. I review the issue and propose edits if necessary
 6. When I approve the issue, you post it, using the GitHub MCP tool.
 
@@ -42,4 +44,8 @@
 
 ## Labels
 
-- Do not apply `area:*` labels to issues or PRs. A CI workflow manages them automatically.
+- Do not apply `area:*` labels to issues or PRs. A CI workflow manages them automatically on PRs, and they're not important on issues until triage.
+
+## Getting stuck
+
+- If you get stuck on something, don't hesitate to ask me for help. It's better to ask for help than take wasteful detours. Just let me know what you're struggling with, and we can work through it together.
