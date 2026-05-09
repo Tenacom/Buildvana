@@ -39,3 +39,7 @@
 7. When you're done, you prepare the title, text , and labels for the PR.
 8. I review the PR and propose edits if necessary.
 9. When I approve, you post the PR using the GitHub MCP tool.
+
+## Labels
+
+- Do not apply `area:*` labels to issues or PRs. A CI workflow manages them automatically.
