@@ -39,11 +39,11 @@ internal static class SettingsApplier
 
         if (settings is ReleaseSettings release)
         {
-            SetIfPresent(options, "versionSpecChange", release.VersionSpecChange);
-            SetIfPresent(options, "checkPublicApiFiles", release.CheckPublicApiFiles);
-            SetIfPresent(options, "updateChangelogOnPrerelease", release.UpdateChangelogOnPrerelease);
-            SetIfPresent(options, "ensureChangelogNotEmpty", release.EnsureChangelogNotEmpty);
-            SetIfPresent(options, "updateSelfReferences", release.UpdateSelfReferences);
+            SetIfPresent(options, "bump", release.Bump);
+            SetIfPresent(options, "checkPublicApi", release.CheckPublicApi);
+            SetIfPresent(options, "unstableChangelog", release.UnstableChangelog);
+            SetIfPresent(options, "requireChangelog", release.RequireChangelog);
+            SetIfPresent(options, "dogfood", release.Dogfood);
         }
     }
 
