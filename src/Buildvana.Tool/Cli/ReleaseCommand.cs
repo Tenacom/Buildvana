@@ -82,8 +82,8 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
         // Compute the version spec change to apply, if any.
         // This implies more checks and possibly throws, so do it as early as possible.
         var versionSpecChange = version.ComputeVersionSpecChange(
-            requestedChange: options.GetOption("versionSpecChange", VersionSpecChange.None),
-            checkPublicApiFiles: options.GetOption("checkPublicApiFiles", true));
+            requestedChange: options.GetOption("bump", VersionSpecChange.None),
+            checkPublicApiFiles: options.GetOption("checkPublicApi", true));
 
         var release = await server.CreateReleaseAsync().ConfigureAwait(false);
         await using (release.ConfigureAwait(false))
@@ -138,9 +138,9 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             {
                 logger.LogInformation("Changelog update skipped: {Path} not found.", ChangelogService.FileName);
             }
-            else if (!version.IsPrerelease || options.GetOption("updateChangelogOnPrerelease", false))
+            else if (!version.IsPrerelease || options.GetOption("unstableChangelog", false))
             {
-                if (options.GetOption("ensureChangelogNotEmpty", true))
+                if (options.GetOption("requireChangelog", true))
                 {
                     BuildFailedException.ThrowIfNot(
                         changelog.HasUnreleasedChanges(),
@@ -150,7 +150,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
                 }
                 else
                 {
-                    logger.LogInformation("Changelog check skipped: option 'ensureChangelogNotEmpty' is false.");
+                    logger.LogInformation("Changelog check skipped: option 'requireChangelog' is false.");
                 }
 
                 // Update the changelog and commit the change before building.
@@ -196,7 +196,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
             // state (which still references the previously-published versions); the dogfood commit is marked
             // [skip ci] because the new packages aren't in the feed yet at push time.
-            if (options.GetOption("updateSelfReferences", true))
+            if (options.GetOption("dogfood", true))
             {
                 var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences();
                 switch (selfReferenceUpdates.Count)
@@ -221,7 +221,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             }
             else
             {
-                logger.LogInformation("Self-reference update skipped: option 'updateSelfReferences' is false.");
+                logger.LogInformation("Self-reference update skipped: option 'dogfood' is false.");
             }
 
             release.PushUpdates();

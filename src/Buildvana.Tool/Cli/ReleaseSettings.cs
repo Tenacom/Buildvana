@@ -16,35 +16,42 @@ public class ReleaseSettings : BuildSettings
     /// <summary>
     /// Gets the requested version-spec change.
     /// </summary>
-    [CommandOption("--version-spec-change <CHANGE>")]
-    [Description("Version-spec change to apply. Defaults to None.")]
-    public string? VersionSpecChange { get; init; }
+    [CommandOption("--bump <CHANGE>")]
+    [Description("""
+        Version-spec change to apply:
+          - [bold]none[/] (the default): advance patch from Git height.
+          - [bold]unstable[/]: advance patch, add prerelease label.
+          - [bold]stable[/]: advance patch, drop prerelease label.
+          - [bold]minor[/]: advance minor, reset patch, add prerelease label.
+          - [bold]major[/]: advance major, reset minor and patch, add prerelease label.
+        """)]
+    public string? Bump { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether public API files are checked when computing version-spec changes.
+    /// Gets a value indicating whether the public API is checked when computing version-spec changes.
     /// </summary>
-    [CommandOption("--check-public-api-files <BOOL>")]
-    [Description("Check public API files when computing version-spec changes. Defaults to true.")]
-    public bool? CheckPublicApiFiles { get; init; }
+    [CommandOption("--check-public-api <BOOL>")]
+    [Description("Check the public API when computing version-spec changes. Defaults to true.")]
+    public bool? CheckPublicApi { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the changelog is updated on prereleases.
+    /// Gets a value indicating whether the changelog is updated on unstable (prerelease) versions.
     /// </summary>
-    [CommandOption("--update-changelog-on-prerelease <BOOL>")]
-    [Description("Update the changelog on prereleases. Defaults to false.")]
-    public bool? UpdateChangelogOnPrerelease { get; init; }
+    [CommandOption("--unstable-changelog <BOOL>")]
+    [Description("Update the changelog on unstable (prerelease) versions. Defaults to false.")]
+    public bool? UnstableChangelog { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the build is failed if the 'Unreleased changes' section is empty.
     /// </summary>
-    [CommandOption("--ensure-changelog-not-empty <BOOL>")]
+    [CommandOption("--require-changelog <BOOL>")]
     [Description("Fail the build if the 'Unreleased changes' section is empty. Defaults to true.")]
-    public bool? EnsureChangelogNotEmpty { get; init; }
+    public bool? RequireChangelog { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether in-tree references to packages produced by this release are updated.
     /// </summary>
-    [CommandOption("--update-self-references <BOOL>")]
-    [Description("Update in-tree references to packages produced by this release (dogfooding). Defaults to true.")]
-    public bool? UpdateSelfReferences { get; init; }
+    [CommandOption("--dogfood <BOOL>")]
+    [Description("Update in-tree references to packages produced by this release. Defaults to true.")]
+    public bool? Dogfood { get; init; }
 }
