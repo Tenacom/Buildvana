@@ -5,7 +5,7 @@
     "allowPrerelease": false
   },
   "msbuild-sdks": {
-    "Buildvana.Sdk": "2.0.61-preview",
+    "Buildvana.Sdk": "2.0.103-preview",
     "Microsoft.Build.NoTargets": "3.7.134"
   }
 }
