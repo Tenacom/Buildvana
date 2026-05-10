@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -131,88 +132,136 @@ internal static class Program
         {
             var arg = args[i];
 
-            // Spectre's built-in --help / -h matcher is hardcoded StringComparer.Ordinal (CaseSensitivity
-            // setting doesn't cover it). Normalize case-variants to canonical lowercase so the case-insensitive
-            // contract holds across all of bv's options, including the built-in help flag.
-            if (string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase))
+            if (TryNormalizeHelp(arg, out var canonical))
             {
-                cleanArgs.Add("--help");
+                cleanArgs.Add(canonical);
                 continue;
             }
 
-            if (string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase))
+            if (TryMatchBooleanGlobal(arg, ref color, ref noColor, ref nologo, ref version))
             {
-                cleanArgs.Add("-h");
                 continue;
             }
 
-            // Boolean global flags (case-insensitive, matching the rest of bv's option surface).
-            if (string.Equals(arg, "--nologo", StringComparison.OrdinalIgnoreCase))
+            if (TryMatchVerbosity(arg, args, ref i, ref verbosity))
             {
-                nologo = true;
                 continue;
             }
 
-            if (string.Equals(arg, "--version", StringComparison.OrdinalIgnoreCase))
+            if (TryParseMSBuildProperty(arg, properties))
             {
-                version = true;
                 continue;
-            }
-
-            if (string.Equals(arg, "--color", StringComparison.OrdinalIgnoreCase))
-            {
-                color = true;
-                continue;
-            }
-
-            if (string.Equals(arg, "--no-color", StringComparison.OrdinalIgnoreCase))
-            {
-                noColor = true;
-                continue;
-            }
-
-            // --verbosity / -v with value as the next token.
-            if (string.Equals(arg, "-v", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(arg, "--verbosity", StringComparison.OrdinalIgnoreCase))
-            {
-                if (i + 1 >= args.Length)
-                {
-                    throw new BuildFailedException($"Option '{arg}' requires a value (verbosity level).");
-                }
-
-                verbosity = args[++i];
-                continue;
-            }
-
-            // --verbosity=VALUE / -v=VALUE inline form.
-            if (arg.StartsWith("--verbosity=", StringComparison.OrdinalIgnoreCase))
-            {
-                verbosity = arg["--verbosity=".Length..];
-                continue;
-            }
-
-            if (arg.StartsWith("-v=", StringComparison.OrdinalIgnoreCase))
-            {
-                verbosity = arg[3..];
-                continue;
-            }
-
-            // MSBuild properties (forwarded to the underlying invocation, not bv's own options).
-            if (arg.Length > 3
-                && (arg.StartsWith("/p:", StringComparison.OrdinalIgnoreCase) || arg.StartsWith("-p:", StringComparison.OrdinalIgnoreCase)))
-            {
-                var kv = arg[3..];
-                var eq = kv.IndexOf('=', StringComparison.Ordinal);
-                if (eq > 0)
-                {
-                    properties.Set(kv[..eq], kv[(eq + 1)..]);
-                    continue;
-                }
             }
 
             cleanArgs.Add(arg);
         }
 
         return ([..cleanArgs], properties, new GlobalOptions(verbosity, color, noColor, nologo, version));
+    }
+
+    // Spectre's built-in --help / -h matcher is hardcoded StringComparer.Ordinal (CaseSensitivity
+    // setting doesn't cover it). Normalize case-variants to canonical lowercase so the case-insensitive
+    // contract holds across all of bv's options, including the built-in help flag.
+    private static bool TryNormalizeHelp(string arg, [NotNullWhen(true)] out string? canonical)
+    {
+        if (string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase))
+        {
+            canonical = "--help";
+            return true;
+        }
+
+        if (string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase))
+        {
+            canonical = "-h";
+            return true;
+        }
+
+        canonical = null;
+        return false;
+    }
+
+    // Boolean global flags (case-insensitive, matching the rest of bv's option surface).
+    private static bool TryMatchBooleanGlobal(string arg, ref bool color, ref bool noColor, ref bool nologo, ref bool version)
+    {
+        if (string.Equals(arg, "--nologo", StringComparison.OrdinalIgnoreCase))
+        {
+            nologo = true;
+            return true;
+        }
+
+        if (string.Equals(arg, "--version", StringComparison.OrdinalIgnoreCase))
+        {
+            version = true;
+            return true;
+        }
+
+        if (string.Equals(arg, "--color", StringComparison.OrdinalIgnoreCase))
+        {
+            color = true;
+            return true;
+        }
+
+        if (string.Equals(arg, "--no-color", StringComparison.OrdinalIgnoreCase))
+        {
+            noColor = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryMatchVerbosity(string arg, string[] args, ref int i, ref string? verbosity)
+    {
+        // --verbosity / -v with value as the next token.
+        if (string.Equals(arg, "-v", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(arg, "--verbosity", StringComparison.OrdinalIgnoreCase))
+        {
+            if (i + 1 >= args.Length)
+            {
+                throw new BuildFailedException($"Option '{arg}' requires a value (verbosity level).");
+            }
+
+            verbosity = args[++i];
+            return true;
+        }
+
+        // --verbosity=VALUE / -v=VALUE inline form.
+        if (arg.StartsWith("--verbosity=", StringComparison.OrdinalIgnoreCase))
+        {
+            verbosity = arg["--verbosity=".Length..];
+            return true;
+        }
+
+        if (arg.StartsWith("-v=", StringComparison.OrdinalIgnoreCase))
+        {
+            verbosity = arg[3..];
+            return true;
+        }
+
+        return false;
+    }
+
+    // MSBuild properties (forwarded to the underlying invocation, not bv's own options).
+    private static bool TryParseMSBuildProperty(string arg, MSBuildProperties properties)
+    {
+        if (arg.Length <= 3)
+        {
+            return false;
+        }
+
+        if (!arg.StartsWith("/p:", StringComparison.OrdinalIgnoreCase) && !arg.StartsWith("-p:", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var kv = arg[3..];
+        var eq = kv.IndexOf('=', StringComparison.Ordinal);
+        if (eq <= 0)
+        {
+            return false;
+        }
+
+        properties.Set(kv[..eq], kv[(eq + 1)..]);
+        return true;
     }
 }
