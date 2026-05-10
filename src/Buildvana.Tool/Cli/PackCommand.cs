@@ -11,6 +11,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
+[AcceptsMSBuildOptions(MSBuildOptionKinds.All)]
 [Description("Clean, restore, build all projects, run tests, and prepare build artifacts.")]
 internal sealed class PackCommand(IServiceProvider services) : AsyncCommand<BuildSettings>
 {

@@ -10,6 +10,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
+[AcceptsMSBuildOptions(MSBuildOptionKinds.None)]
 [Description("Remove all build artifacts, intermediate output, and temporary files. Like 'dotnet clean', but more aggressive.")]
 internal sealed class CleanCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
 {
