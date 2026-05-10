@@ -61,7 +61,9 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
         }
 
         // Append Spectre's built-in --help so the section is self-contained.
-        grid.AddRow(new Markup("-h, --help"), new Markup("Prints help information"));
+        grid.AddRow(
+            new Markup(Markup.Escape(FormatOptionNames(new CommandOptionAttribute("-h|--help")))),
+            new Markup("Prints help information"));
 
         yield return grid;
     }
