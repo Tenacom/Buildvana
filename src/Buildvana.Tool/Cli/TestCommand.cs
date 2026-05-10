@@ -11,6 +11,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
+[AcceptsMSBuildOptions(MSBuildOptionKinds.Properties)]
 [Description("Build all projects and run tests.")]
 internal sealed class TestCommand(IServiceProvider services) : AsyncCommand<BuildSettings>
 {

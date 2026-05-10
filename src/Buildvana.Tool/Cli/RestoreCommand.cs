@@ -11,6 +11,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
+[AcceptsMSBuildOptions(MSBuildOptionKinds.All)]
 [Description("Clean and restore dependencies.")]
 internal sealed class RestoreCommand(IServiceProvider services) : AsyncCommand<BuildSettings>
 {
