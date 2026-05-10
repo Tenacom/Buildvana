@@ -38,6 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Pass values via CLI flags instead.  
   Secrets and endpoints (`GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`/`KEY`, `PRERELEASE_NUGET_SOURCE`/`KEY`, `RELEASE_NUGET_SOURCE`/`KEY`) are unaffected.
+- **BREAKING CHANGE**: `bv`'s `--verbosity` setting now accepts the same values as the .NET CLI:
+  - `quiet` (or `q`)
+  - `minimal` (or `m`)
+  - `normal` (or `n`)
+  - `detailed` (or `d`)
+  - `diagnostic` (or `diag`)
+
+  Cake verbosity values (e.g., `verbose`) are no longer accepted.
 
 ### Bugs fixed in this release
 
