@@ -165,7 +165,7 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
         var result = new Dictionary<string, MSBuildOptionKinds>(StringComparer.OrdinalIgnoreCase);
         foreach (var type in typeof(BvHelpProvider).Assembly.GetTypes())
         {
-            if (type.Namespace != "Buildvana.Tool.Cli")
+            if (type.Namespace is null || (type.Namespace != "Buildvana.Tool.Cli" && !type.Namespace.StartsWith("Buildvana.Tool.Cli.", StringComparison.Ordinal)))
             {
                 continue;
             }
