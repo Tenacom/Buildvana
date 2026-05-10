@@ -11,7 +11,7 @@ namespace Buildvana.Tool.Cli;
 /// Global options shared by every Spectre command.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public class BaseSettings : CommandSettings
+public partial class BaseSettings : CommandSettings
 {
     /// <summary>
     /// Gets the requested logging verbosity.

@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
@@ -39,7 +40,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         RepositoryOwner = originInfo.PathSegments[0];
         RepositoryName = originInfo.PathSegments[1];
         RepositoryUrl = new Uri($"https://{HostName}/{RepositoryOwner}/{RepositoryName}");
-        _token = services.GetRequiredService<OptionsService>().GetOptionOrFail<string>("githubToken");
+        _token = services.GetRequiredService<ToolConfiguration>().GitHubToken;
     }
 
     /// <inheritdoc/>

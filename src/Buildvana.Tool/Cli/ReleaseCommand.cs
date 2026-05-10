@@ -30,7 +30,8 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
     protected override async Task<int> ExecuteAsync(CommandContext context, ReleaseSettings settings, CancellationToken cancellationToken)
     {
         Guard.IsNotNull(settings);
-        SettingsApplier.Apply(settings, services);
+        settings.Apply(services);
+        services.GetRequiredService<BuildSettingsHolder>().Current = settings;
 
         // Pre-pipeline (mirrors today's [IsDependentOn(TestTask)] chain).
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
@@ -41,7 +42,6 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
         var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Release");
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
         var jsonHelper = services.GetRequiredService<IJsonHelper>();
-        var options = services.GetRequiredService<OptionsService>();
         var server = services.GetRequiredService<ServerAdapter>();
         var version = services.GetRequiredService<VersionService>();
         var dotnet = services.GetRequiredService<DotNetService>();
@@ -82,8 +82,8 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
         // Compute the version spec change to apply, if any.
         // This implies more checks and possibly throws, so do it as early as possible.
         var versionSpecChange = version.ComputeVersionSpecChange(
-            requestedChange: options.GetOption("bump", VersionSpecChange.None),
-            checkPublicApiFiles: options.GetOption("checkPublicApi", true));
+            requestedChange: settings.ResolveBump(),
+            checkPublicApiFiles: settings.ResolveCheckPublicApi());
 
         var release = await server.CreateReleaseAsync().ConfigureAwait(false);
         await using (release.ConfigureAwait(false))
@@ -138,9 +138,9 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             {
                 logger.LogInformation("Changelog update skipped: {Path} not found.", ChangelogService.FileName);
             }
-            else if (!version.IsPrerelease || options.GetOption("unstableChangelog", false))
+            else if (!version.IsPrerelease || settings.ResolveUnstableChangelog())
             {
-                if (options.GetOption("requireChangelog", true))
+                if (settings.ResolveRequireChangelog())
                 {
                     BuildFailedException.ThrowIfNot(
                         changelog.HasUnreleasedChanges(),
@@ -196,7 +196,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
             // state (which still references the previously-published versions); the dogfood commit is marked
             // [skip ci] because the new packages aren't in the feed yet at push time.
-            if (options.GetOption("dogfood", true))
+            if (settings.ResolveDogfood())
             {
                 var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences();
                 switch (selfReferenceUpdates.Count)
