@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Tool.Cli;
 using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
@@ -26,11 +27,11 @@ public sealed class GitService : IDisposable
     private readonly IHomeDirectoryProvider _home;
     private readonly Repository _repository;
 
-    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, OptionsService options)
+    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, BuildSettingsHolder buildSettings)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(home);
-        Guard.IsNotNull(options);
+        Guard.IsNotNull(buildSettings);
         _logger = logger;
         _home = home;
         var homeDirectory = home.HomeDirectory;
@@ -41,8 +42,7 @@ public sealed class GitService : IDisposable
         OriginUrl = new(originUrl);
         var headName = _repository.Head.CanonicalName;
         CurrentBranch = headName.StartsWith("refs/heads/", StringComparison.Ordinal) ? _repository.Head.FriendlyName : string.Empty;
-        var configuredMainBranch = options.GetOption("mainBranch", string.Empty);
-        MainBranch = FindMainBranch(origin, configuredMainBranch);
+        MainBranch = FindMainBranch(origin, buildSettings.Current.ResolveMainBranch());
     }
 
     /// <summary>

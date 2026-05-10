@@ -10,6 +10,7 @@ using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Cli;
+using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure.Logging;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
@@ -53,7 +54,8 @@ internal static class Program
             .AddSingleton<ChangelogService>()
             .AddSingleton<DocFxService>()
             .AddSingleton<DotNetService>()
-            .AddSingleton<OptionsService>()
+            .AddSingleton<BuildSettingsHolder>()
+            .AddSingleton(static _ => ToolConfiguration.FromEnvironment())
             .AddSingleton<SelfReferenceUpdater>();
 
         var registrar = new TypeRegistrar(services);

@@ -1,7 +1,10 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.ComponentModel;
+using Buildvana.Core;
+using Buildvana.Tool.Services.Versioning;
 using JetBrains.Annotations;
 using Spectre.Console.Cli;
 
@@ -54,4 +57,41 @@ public class ReleaseSettings : BuildSettings
     [CommandOption("--dogfood <BOOL>")]
     [Description("Update in-tree references to packages produced by this release. Defaults to true.")]
     public bool? Dogfood { get; init; }
+
+    /// <summary>
+    /// Parses <see cref="Bump"/> into a <see cref="VersionSpecChange"/>; defaults to <see cref="VersionSpecChange.None"/>.
+    /// </summary>
+    /// <exception cref="BuildFailedException">The value of <see cref="Bump"/> is not a recognized version-spec change.</exception>
+    public VersionSpecChange ResolveBump()
+    {
+        if (Bump is null)
+        {
+            return VersionSpecChange.None;
+        }
+
+        var parsed = Enum.TryParse<VersionSpecChange>(Bump, ignoreCase: true, out var value) && Enum.IsDefined(value);
+        return parsed
+            ? value
+            : throw new BuildFailedException($"Invalid value '{Bump}' for --bump. Valid values: none, unstable, stable, minor, major.");
+    }
+
+    /// <summary>
+    /// Returns <see cref="CheckPublicApi"/> if set, otherwise <see langword="true"/>.
+    /// </summary>
+    public bool ResolveCheckPublicApi() => CheckPublicApi ?? true;
+
+    /// <summary>
+    /// Returns <see cref="UnstableChangelog"/> if set, otherwise <see langword="false"/>.
+    /// </summary>
+    public bool ResolveUnstableChangelog() => UnstableChangelog ?? false;
+
+    /// <summary>
+    /// Returns <see cref="RequireChangelog"/> if set, otherwise <see langword="true"/>.
+    /// </summary>
+    public bool ResolveRequireChangelog() => RequireChangelog ?? true;
+
+    /// <summary>
+    /// Returns <see cref="Dogfood"/> if set, otherwise <see langword="true"/>.
+    /// </summary>
+    public bool ResolveDogfood() => Dogfood ?? true;
 }

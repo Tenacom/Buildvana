@@ -17,13 +17,24 @@ public class BuildSettings : BaseSettings
     /// Gets the MSBuild configuration to build.
     /// </summary>
     [CommandOption("-c|--configuration <NAME>")]
-    [Description("MSBuild configuration to build. Defaults to 'Release' (or the CONFIGURATION environment variable, if set).")]
+    [Description("MSBuild configuration to build. Defaults to 'Release'.")]
     public string? Configuration { get; init; }
 
     /// <summary>
     /// Gets the name of the repository's main branch.
     /// </summary>
     [CommandOption("--main-branch <NAME>")]
-    [Description("Name of the repository's main branch. Defaults to 'main' (or the MAIN_BRANCH environment variable, if set).")]
+    [Description("Name of the repository's main branch. Defaults to 'main'.")]
     public string? MainBranch { get; init; }
+
+    /// <summary>
+    /// Gets the resolved MSBuild configuration: <see cref="Configuration"/> if set, otherwise <c>"Release"</c>.
+    /// </summary>
+    public string ResolveConfiguration() => Configuration ?? "Release";
+
+    /// <summary>
+    /// Gets the configured main branch name, or the empty string if none was passed (in which case
+    /// <c>GitService</c> auto-detects from <c>main</c>/<c>master</c>).
+    /// </summary>
+    public string ResolveMainBranch() => MainBranch ?? string.Empty;
 }

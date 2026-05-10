@@ -6,12 +6,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Buildvana.Tool.Cli;
+using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using IProcessRunner = Buildvana.Core.Process.IProcessRunner;
@@ -33,7 +36,7 @@ public sealed class DotNetService
 
     private readonly ILogger<DotNetService> _logger;
     private readonly IProcessRunner _processRunner;
-    private readonly OptionsService _options;
+    private readonly IServiceProvider _services;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
     private readonly MSBuildProperties _msbuildProperties;
@@ -44,24 +47,26 @@ public sealed class DotNetService
     public DotNetService(
         ILogger<DotNetService> logger,
         IProcessRunner processRunner,
-        OptionsService options,
+        BuildSettingsHolder buildSettings,
+        IServiceProvider services,
         ServerAdapter server,
         VersionService version,
         MSBuildProperties msbuildProperties)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(processRunner);
-        Guard.IsNotNull(options);
+        Guard.IsNotNull(buildSettings);
+        Guard.IsNotNull(services);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         Guard.IsNotNull(msbuildProperties);
         _logger = logger;
         _processRunner = processRunner;
-        _options = options;
+        _services = services;
         _server = server;
         _version = version;
         _msbuildProperties = msbuildProperties;
-        Configuration = options.GetOption("configuration", "Release");
+        Configuration = buildSettings.Current.ResolveConfiguration();
         ArtifactsPath = Path.Combine(CommonPaths.AllArtifacts, Configuration);
     }
 
@@ -207,15 +212,17 @@ public sealed class DotNetService
         }
 
         var isPrivate = await _server.IsPrivateRepositoryAsync().ConfigureAwait(false);
-        var nugetSource = _options.GetOptionOrFail<string>(isPrivate ? "privateNugetSource" : _version.IsPrerelease ? "prereleaseNugetSource" : "releaseNugetSource");
-        var nugetApiKey = _options.GetOptionOrFail<string>(isPrivate ? "privateNugetKey" : _version.IsPrerelease ? "prereleaseNugetKey" : "releaseNugetKey");
+        var config = _services.GetRequiredService<ToolConfiguration>();
+        var target = isPrivate ? config.PrivateNuGet
+            : _version.IsPrerelease ? config.PrereleaseNuGet
+            : config.ReleaseNuGet;
         foreach (var path in packages)
         {
-            _logger.LogInformation("Pushing {Path} to {Source}...", path, nugetSource);
+            _logger.LogInformation("Pushing {Path} to {Source}...", path, target.Source);
             await _processRunner
                 .RunAsync(
                     DotNetMuxer,
-                    ["nuget", "push", path, "--source", nugetSource, "--api-key", nugetApiKey, "--skip-duplicate", "--force-english-output"])
+                    ["nuget", "push", path, "--source", target.Source, "--api-key", target.ApiKey, "--skip-duplicate", "--force-english-output"])
                 .ConfigureAwait(false);
         }
     }

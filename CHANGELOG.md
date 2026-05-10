@@ -21,7 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGE**: `bv clean` (formerly known as `bv prepare`) now deletes the `TestResults` directory at the repository root.
 - `bv clean` (formerly known as `bv prepare`) no longer deletes per-project `TestResults` directories.
 - `dotnet bv release` no longer folds self-reference (dogfood) updates into the "Prepare release" commit. They now go into a separate `Update self-references to <version> [skip ci]` commit pushed on top, in the same push. The release tag binds to the "Prepare release" commit, so checking out the tag and rebuilding now reproduces the actually-released source state (which still references the previously-published versions). `[skip ci]` is required on the dogfood commit because the new packages are usually not yet published at push time.
-- **BREAKING CHANGE**: Five `bv release` options have been renamed: `--versionSpecChange` → `--bump`, `--checkPublicApiFiles` → `--check-public-api`, `--updateChangelogOnPrerelease` → `--unstable-changelog`, `--ensureChangelogNotEmpty` → `--require-changelog`, `--updateSelfReferences` → `--dogfood`. The matching default-source environment variables follow the same renaming.
+- **BREAKING CHANGE**: Five `bv release` options have been renamed:
+  - `--versionSpecChange` → `--bump`
+  - `--checkPublicApiFiles` → `--check-public-api`
+  - `--updateChangelogOnPrerelease` → `--unstable-changelog`
+  - `--ensureChangelogNotEmpty` → `--require-changelog`
+  - `--updateSelfReferences` → `--dogfood`
+- **BREAKING CHANGE**: `bv` no longer accepts CLI option values via environment variables. The following env vars are no longer recognized as defaults for their CLI counterparts:
+  - `CONFIGURATION` (`--configuration`)
+  - `MAIN_BRANCH` (`--main-branch`)
+  - `VERSION_SPEC_CHANGE` (`--versionSpecChange`, now `--bump`)
+  - `CHECK_PUBLIC_API_FILES` (`--checkPublicApiFiles`, now `--check-public-api`)
+  - `UPDATE_CHANGELOG_ON_PRERELEASE` (`--updateChangelogOnPrerelease`, now `--unstable-changelog`)
+  - `ENSURE_CHANGELOG_NOT_EMPTY` (`--ensureChangelogNotEmpty`, now `--require-changelog`)
+  - `UPDATE_SELF_REFERENCES` (`--updateSelfReferences`, now `--dogfood`)
+
+  Pass values via CLI flags instead.  
+  Secrets and endpoints (`GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`/`KEY`, `PRERELEASE_NUGET_SOURCE`/`KEY`, `RELEASE_NUGET_SOURCE`/`KEY`) are unaffected.
 
 ### Bugs fixed in this release
 
