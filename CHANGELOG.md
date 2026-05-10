@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
+- `bv` now prints a startup logo (`Buildvana CLI tool v{version}`) before running the requested command. Pass `--nologo` to suppress it.
+- `bv --version` prints the tool's informational version and exits without running a command.
+- `bv` root help (`bv --help`) now shows a `GLOBAL OPTIONS:` section listing the options every subcommand inherits (`--verbosity`/`-v`, `--color`, `--no-color`, `--nologo`, `--version`). These options are now position-independent (accepted before or after the subcommand name) and case-insensitive, matching the rest of `bv`'s option surface.
+- Each command in `bv`'s root help carries an `[MSBuild: …]` annotation describing whether it forwards `/`-prefixed MSBuild switches and which kinds (none, properties only, switches only, or all). Per-command help (`bv <command> --help`) includes a matching `FORWARDED MSBUILD OPTIONS` section.
+
 ### Changes to existing features
 
 - `bv` may now be invoked from any subdirectory under the solution's directory (`HomeDirectory` property in Buildvana SDK). It will search upwards for the home directory, the same way the SDK does, and work from there. If it doesn't find the home directory, `bv` will exit with a non-zero exit code.
