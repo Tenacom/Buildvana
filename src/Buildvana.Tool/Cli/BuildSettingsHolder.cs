@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
+
 namespace Buildvana.Tool.Cli;
 
 /// <summary>
@@ -12,5 +14,9 @@ namespace Buildvana.Tool.Cli;
 /// </remarks>
 public sealed class BuildSettingsHolder
 {
-    public BuildSettings Current { get; set; } = new();
+    public BuildSettings Current
+    {
+        get => field ?? throw new InvalidOperationException("BuildSettingsHolder.Current was read before it was set.");
+        set;
+    }
 }
