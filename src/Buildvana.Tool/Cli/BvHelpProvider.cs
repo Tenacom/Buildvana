@@ -41,6 +41,12 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
             yield break;
         }
 
+        // Root help (command is null): we deliberately skip base.GetOptions and render our own
+        // GLOBAL OPTIONS grid. base would emit a separate OPTIONS: block containing only
+        // -h, --help, which would duplicate/conflict with this section. If Spectre starts
+        // producing additional root-level entries, fold them into EnumerateGlobalOptions
+        // rather than re-enabling base — the hand-appended -h, --help row below exists
+        // precisely because base is bypassed.
         yield return new Markup("\nGLOBAL OPTIONS:\n");
 
         var grid = new Grid();
