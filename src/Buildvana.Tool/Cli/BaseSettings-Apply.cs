@@ -25,17 +25,12 @@ partial class BaseSettings
 
     private static LogLevel ParseVerbosity(string raw) => raw.ToUpperInvariant() switch
     {
-        "QUIET" => LogLevel.Critical,
-        "MINIMAL" => LogLevel.Warning,
-        "NORMAL" => LogLevel.Information,
-        "VERBOSE" or "DEBUG" => LogLevel.Debug,
-        "DIAGNOSTIC" or "TRACE" => LogLevel.Trace,
-        "INFO" or "INFORMATION" => LogLevel.Information,
-        "WARN" or "WARNING" => LogLevel.Warning,
-        "ERROR" => LogLevel.Error,
-        "CRITICAL" => LogLevel.Critical,
-        "NONE" => LogLevel.None,
-        _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use either one of: Trace, Debug, Information, Warning, Error, Critical, None, or one of: Quiet, Minimal, Normal, Verbose, Diagnostic."),
+        "QUIET" or "Q" => LogLevel.Error,
+        "MINIMAL" or "M" => LogLevel.Warning,
+        "NORMAL" or "N" => LogLevel.Information,
+        "DETAILED" or "D" => LogLevel.Debug,
+        "DIAGNOSTIC" or "DIAG" => LogLevel.Trace,
+        _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: quiet, minimal, normal, detailed, diagnostic."),
     };
 
     private void ApplyVerbosity(IServiceProvider services)

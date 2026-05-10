@@ -17,7 +17,7 @@ public partial class BaseSettings : CommandSettings
     /// Gets the requested logging verbosity.
     /// </summary>
     [CommandOption("-v|--verbosity <LEVEL>")]
-    [Description("Logging verbosity. Accepts either Trace/Debug/Information/Warning/Error/Critical/None or Quiet/Minimal/Normal/Verbose/Diagnostic.")]
+    [Description("Logging verbosity. One of: quiet, minimal, normal, detailed, diagnostic. Defaults to normal.")]
     public string? Verbosity { get; init; }
 
     /// <summary>
