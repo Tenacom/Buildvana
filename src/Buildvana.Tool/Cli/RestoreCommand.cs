@@ -18,7 +18,6 @@ internal sealed class RestoreCommand(IServiceProvider services) : AsyncCommand<B
     protected override async Task<int> ExecuteAsync(CommandContext context, BuildSettings settings, CancellationToken cancellationToken)
     {
         Guard.IsNotNull(settings);
-        settings.Apply(services);
         services.GetRequiredService<BuildSettingsHolder>().Current = settings;
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
         await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
