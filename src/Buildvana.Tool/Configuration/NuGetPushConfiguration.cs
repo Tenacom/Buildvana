@@ -2,24 +2,28 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
-using Buildvana.Tool.Utilities;
 
 namespace Buildvana.Tool.Configuration;
 
 /// <summary>
-/// Typed configuration for <c>bv</c>: secrets and endpoints with no CLI-flag counterpart.
+/// Typed configuration for NuGet package pushes: one push target per channel (private, prerelease, release).
 /// </summary>
 /// <remarks>
 /// <para>This is the seedling of a future file-backed configuration layer. For now, values are read from
 /// environment variables; when the file layer arrives, only <see cref="FromEnvironment"/> changes.</para>
 /// </remarks>
-internal sealed record ToolConfiguration(string GitHubToken)
+internal sealed record NuGetPushConfiguration(
+    NuGetPushTarget Private,
+    NuGetPushTarget Prerelease,
+    NuGetPushTarget Release)
 {
     /// <summary>
-    /// Reads all configuration values from environment variables.
+    /// Reads all push targets from environment variables.
     /// </summary>
-    /// <returns>A populated <see cref="ToolConfiguration"/>.</returns>
+    /// <returns>A populated <see cref="NuGetPushConfiguration"/>.</returns>
     /// <exception cref="BuildFailedException">A required environment variable is not set or empty.</exception>
-    public static ToolConfiguration FromEnvironment() => new(
-        GitHubToken: EnvVarHelper.Require("GITHUB_TOKEN"));
+    public static NuGetPushConfiguration FromEnvironment() => new(
+        Private: NuGetPushTarget.FromEnvironment("PRIVATE"),
+        Prerelease: NuGetPushTarget.FromEnvironment("PRERELEASE"),
+        Release: NuGetPushTarget.FromEnvironment("RELEASE"));
 }
