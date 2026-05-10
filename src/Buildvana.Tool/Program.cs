@@ -56,6 +56,7 @@ internal static class Program
             .AddSingleton<DotNetService>()
             .AddSingleton<BuildSettingsHolder>()
             .AddSingleton(static _ => ToolConfiguration.FromEnvironment())
+            .AddSingleton(static _ => NuGetPushConfiguration.FromEnvironment())
             .AddSingleton<SelfReferenceUpdater>();
 
         var registrar = new TypeRegistrar(services);

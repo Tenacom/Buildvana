@@ -212,10 +212,10 @@ public sealed class DotNetService
         }
 
         var isPrivate = await _server.IsPrivateRepositoryAsync().ConfigureAwait(false);
-        var config = _services.GetRequiredService<ToolConfiguration>();
-        var target = isPrivate ? config.PrivateNuGet
-            : _version.IsPrerelease ? config.PrereleaseNuGet
-            : config.ReleaseNuGet;
+        var nugetConfig = _services.GetRequiredService<NuGetPushConfiguration>();
+        var target = isPrivate ? nugetConfig.Private
+            : _version.IsPrerelease ? nugetConfig.Prerelease
+            : nugetConfig.Release;
         foreach (var path in packages)
         {
             _logger.LogInformation("Pushing {Path} to {Source}...", path, target.Source);

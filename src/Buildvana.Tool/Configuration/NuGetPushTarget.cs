@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Tool.Utilities;
+
 namespace Buildvana.Tool.Configuration;
 
 /// <summary>
@@ -14,6 +16,6 @@ internal sealed record NuGetPushTarget(string Source, string ApiKey)
     /// <param name="prefix">The environment-variable name prefix (e.g., <c>PRIVATE</c>, <c>PRERELEASE</c>, <c>RELEASE</c>).</param>
     /// <returns>A populated <see cref="NuGetPushTarget"/>.</returns>
     public static NuGetPushTarget FromEnvironment(string prefix) => new(
-        Source: ToolConfiguration.RequireEnv($"{prefix}_NUGET_SOURCE"),
-        ApiKey: ToolConfiguration.RequireEnv($"{prefix}_NUGET_KEY"));
+        Source: EnvVarHelper.Require($"{prefix}_NUGET_SOURCE"),
+        ApiKey: EnvVarHelper.Require($"{prefix}_NUGET_KEY"));
 }
