@@ -44,16 +44,16 @@ internal static class Program
                 console.Profile.Capabilities.Ansi = globals.Color;
             }
 
-            if (!globals.Nologo)
-            {
-                console.WriteLine($"Buildvana CLI tool v{ThisAssembly.AssemblyInformationalVersion}");
-                console.WriteLine();
-            }
-
             if (globals.Version)
             {
                 console.WriteLine(ThisAssembly.AssemblyInformationalVersion);
                 return 0;
+            }
+
+            if (!globals.Nologo)
+            {
+                console.WriteLine($"Buildvana CLI tool v{ThisAssembly.AssemblyInformationalVersion}");
+                console.WriteLine();
             }
 
             // Parse --verbosity eagerly (so the error surfaces in the outer catch) but defer SpectreLoggerProvider
