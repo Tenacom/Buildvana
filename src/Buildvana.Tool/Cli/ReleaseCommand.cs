@@ -31,7 +31,6 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
     protected override async Task<int> ExecuteAsync(CommandContext context, ReleaseSettings settings, CancellationToken cancellationToken)
     {
         Guard.IsNotNull(settings);
-        settings.Apply(services);
         services.GetRequiredService<BuildSettingsHolder>().Current = settings;
 
         // Pre-pipeline (mirrors today's [IsDependentOn(TestTask)] chain).

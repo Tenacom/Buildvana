@@ -17,7 +17,6 @@ internal sealed class CleanCommand(IServiceProvider services) : AsyncCommand<Bas
     protected override async Task<int> ExecuteAsync(CommandContext context, BaseSettings settings, CancellationToken cancellationToken)
     {
         Guard.IsNotNull(settings);
-        settings.Apply(services);
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
         return 0;
     }
