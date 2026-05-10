@@ -89,6 +89,7 @@ internal static class Program
             {
                 config.Settings.CaseSensitivity = CaseSensitivity.None;
                 config.SetApplicationName("bv");
+                config.SetHelpProvider(new BvHelpProvider(config.Settings));
                 config.AddCommand<CleanCommand>("clean");
                 config.AddCommand<RestoreCommand>("restore");
                 config.AddCommand<BuildCommand>("build");
