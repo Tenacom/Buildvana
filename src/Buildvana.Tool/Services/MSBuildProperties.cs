@@ -34,8 +34,8 @@ public sealed class MSBuildProperties
     public IEnumerable<string> EnumerateAsArgs() => _properties.Select(kvp => $"-p:{kvp.Key}={kvp.Value}");
 
     /// <summary>
-    /// Enumerates the configured properties as MSBuild command-line arguments (<c>-p:Key=Value</c>).
+    /// Enumerates the configured properties as MSBuild command-line arguments (<c>--property:Key=Value</c>) for `dotnet test`.
     /// </summary>
-    /// <returns>A sequence of MSBuild command-line arguments.</returns>
+    /// <returns>A sequence of MSBuild command-line arguments for `dotnet test`.</returns>
     public IEnumerable<string> EnumerateAsDotnetTestArgs() => _properties.Select(kvp => $"--property:{kvp.Key}={kvp.Value}");
 }
