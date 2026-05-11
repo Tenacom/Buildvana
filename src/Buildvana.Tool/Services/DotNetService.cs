@@ -235,7 +235,7 @@ public sealed class DotNetService
         yield return "-nologo";
         yield return "-maxcpucount:1";
         yield return ContinuousIntegrationBuildArg();
-        foreach (var arg in _msbuildProperties.EnumerateAsArgs())
+        foreach (var arg in _msbuildProperties.EnumerateAsDotnetArgs())
         {
             yield return arg;
         }
