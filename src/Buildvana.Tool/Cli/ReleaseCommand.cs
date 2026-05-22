@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
@@ -24,20 +25,21 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[AcceptsMSBuildOptions(MSBuildOptionKinds.All)]
 [Description("Publish a new public release (CI only).")]
 internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<ReleaseSettings>
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, ReleaseSettings settings, CancellationToken cancellationToken)
     {
         Guard.IsNotNull(settings);
-        services.GetRequiredService<BuildSettingsHolder>().Current = settings;
+
+        var configuration = settings.ResolveConfiguration();
+        var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 
         // Pre-pipeline (mirrors today's [IsDependentOn(TestTask)] chain).
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
-        await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
-        await BuildSteps.BuildAsync(services).ConfigureAwait(false);
-        await BuildSteps.TestAsync(services).ConfigureAwait(false);
+        await BuildSteps.RestoreAsync(services, configuration).ConfigureAwait(false);
+        await BuildSteps.BuildAsync(services, configuration).ConfigureAwait(false);
+        await BuildSteps.TestAsync(services, configuration).ConfigureAwait(false);
 
         var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Release");
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
@@ -174,10 +176,10 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Build, test, make artifacts
-            await dotnet.RestoreSolutionAsync(solution).ConfigureAwait(false);
-            await dotnet.BuildSolutionAsync(solution, false).ConfigureAwait(false);
-            await dotnet.TestSolutionAsync(solution, false, false).ConfigureAwait(false);
-            await dotnet.PackSolutionAsync(solution, false, false).ConfigureAwait(false);
+            await dotnet.RestoreSolutionAsync(solution, configuration, []).ConfigureAwait(false);
+            await dotnet.BuildSolutionAsync(solution, configuration, [], restore: false).ConfigureAwait(false);
+            await dotnet.TestSolutionAsync(solution, configuration, [], restore: false, build: false).ConfigureAwait(false);
+            await dotnet.PackSolutionAsync(solution, configuration, [], restore: false, build: false).ConfigureAwait(false);
 
             if (changelogUpdated)
             {
@@ -198,7 +200,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             // [skip ci] because the new packages aren't in the feed yet at push time.
             if (settings.ResolveDogfood())
             {
-                var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences();
+                var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences(artifactsPath);
                 switch (selfReferenceUpdates.Count)
                 {
                     case 0:
@@ -227,11 +229,11 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             release.PushUpdates();
 
             // Publish NuGet packages
-            await dotnet.NuGetPushAllAsync().ConfigureAwait(false);
+            await dotnet.NuGetPushAllAsync(artifactsPath).ConfigureAwait(false);
 
             // Gather build assets from Buildvana.Sdk release asset lists
             logger.LogInformation("Reading release asset lists...");
-            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath, "*.assets.txt"))
+            foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.assets.txt"))
             {
                 logger.LogDebug("Reading release asset list {Path}...", path);
                 var i = 0;
@@ -256,7 +258,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             }
 
             // Add NuGet packages as assets
-            foreach (var path in FileSystemHelper.EnumerateFiles(dotnet.ArtifactsPath, "*.nupkg"))
+            foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg"))
             {
                 release.AddAsset(path);
                 var snupkgPath = Path.ChangeExtension(path, ".snupkg");

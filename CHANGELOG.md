@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bv` now prints a startup logo (`Buildvana CLI tool v{version}`) before running the requested command. Pass `--nologo` to suppress it.
 - `bv --version` prints the tool's informational version and exits without running a command and without printing the startup logo.
 - `bv` root help (`bv --help`) now shows a `GLOBAL OPTIONS:` section listing the options every subcommand inherits (`--verbosity`/`-v`, `--color`, `--no-color`, `--nologo`, `--version`). These options are now position-independent (accepted before or after the subcommand name) and case-insensitive, matching the rest of `bv`'s option surface.
-- Each command in `bv`'s root help carries an `[MSBuild: …]` annotation describing whether it forwards `/`-prefixed MSBuild switches and which kinds (none, properties only, switches only, or all). Per-command help (`bv <command> --help`) includes a matching `FORWARDED MSBUILD OPTIONS` section.
+- Commands that forward extra arguments to `dotnet` (`restore`, `build`, `test`, `pack`) are marked as such in `bv`'s root help, and their per-command help (`bv <command> --help`) includes a `FORWARDED ARGUMENTS` section.
 
 ### Changes to existing features
 
@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `diagnostic` (or `diag`)
 
   Cake verbosity values (e.g., `verbose`) are no longer accepted.
+- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` now forward any extra command-line arguments verbatim to the underlying `dotnet` invocation(s), in the order given; `bv` no longer parses or validates them. Malformed or unknown arguments now produce an error from `dotnet` (or, for `bv test`, from the Microsoft.Testing.Platform test application) rather than from `bv`. Previously only `-p:`/`/p:` MSBuild properties were forwarded. `bv` also always forwards `--nologo` and its resolved `--verbosity` (default `normal`) to those invocations.
+  - `bv build -m:8 -v:minimal` forwards `-m:8 -v:minimal` to `dotnet build`.
+  - `bv test --report-trx` reaches the test application.
+- **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of `restore`/`build`/`test`/`pack`. MSBuild now uses its default parallelism unless you forward your own `-m`/`-maxcpucount` switch.
+- **BREAKING CHANGE**: The `-c`/`--configuration` option is no longer parsed by `bv restore`/`build`/`test`/`pack`; for those commands it is just another forwarded argument. `bv` emits `Release` as an overridable default, so a forwarded `-c`/`-p:Configuration=` still wins (e.g. `bv build -c Debug` builds `Debug`). `bv release` keeps `-c`/`--configuration` as a parsed option, since it needs the value to locate build artifacts.
+- `--main-branch` is now a global option: it is accepted at any position on the command line (before or after the subcommand name), appears in the `GLOBAL OPTIONS` section of help, and is honored by the commands that talk to Git.
 
 ### Bugs fixed in this release
 

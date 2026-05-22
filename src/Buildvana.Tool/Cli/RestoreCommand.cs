@@ -6,19 +6,17 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[AcceptsMSBuildOptions(MSBuildOptionKinds.All)]
+[ConsumeAllArguments]
 [Description("Clean and restore dependencies.")]
-internal sealed class RestoreCommand(IServiceProvider services) : AsyncCommand<BuildSettings>
+internal sealed class RestoreCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, BuildSettings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, BaseSettings settings, CancellationToken cancellationToken)
     {
         Guard.IsNotNull(settings);
-        services.GetRequiredService<BuildSettingsHolder>().Current = settings;
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
         await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
         return 0;

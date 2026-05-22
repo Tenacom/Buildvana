@@ -14,8 +14,15 @@ namespace Buildvana.Tool.Cli;
 /// Options for the <c>release</c> command.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public class ReleaseSettings : BuildSettings
+public class ReleaseSettings : BaseSettings
 {
+    /// <summary>
+    /// Gets the MSBuild configuration to build.
+    /// </summary>
+    [CommandOption("-c|--configuration <NAME>")]
+    [Description("MSBuild configuration to build. Defaults to 'Release'.")]
+    public string? Configuration { get; init; }
+
     /// <summary>
     /// Gets the requested version-spec change.
     /// </summary>
@@ -74,6 +81,11 @@ public class ReleaseSettings : BuildSettings
             ? value
             : throw new BuildFailedException($"Invalid value '{Bump}' for --bump. Valid values: none, unstable, stable, minor, major.");
     }
+
+    /// <summary>
+    /// Gets the resolved MSBuild configuration: <see cref="Configuration"/> if set, otherwise <c>"Release"</c>.
+    /// </summary>
+    public string ResolveConfiguration() => Configuration ?? "Release";
 
     /// <summary>
     /// Returns <see cref="CheckPublicApi"/> if set, otherwise <see langword="true"/>.

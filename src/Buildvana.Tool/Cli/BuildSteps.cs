@@ -21,6 +21,12 @@ namespace Buildvana.Tool.Cli;
 /// </summary>
 internal static class BuildSteps
 {
+    /// <summary>
+    /// The MSBuild configuration used by the standalone pipeline commands (restore/build/test/pack).
+    /// It is emitted as an overridable default, so a user-forwarded <c>-c</c>/<c>-p:Configuration=</c> wins.
+    /// </summary>
+    public const string DefaultConfiguration = "Release";
+
     public static Task CleanAsync(IServiceProvider services)
     {
         Guard.IsNotNull(services);
@@ -42,35 +48,39 @@ internal static class BuildSteps
         return Task.CompletedTask;
     }
 
-    public static Task RestoreAsync(IServiceProvider services)
+    public static Task RestoreAsync(IServiceProvider services, string configuration = DefaultConfiguration)
     {
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        return dotnet.RestoreSolutionAsync(solution);
+        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        return dotnet.RestoreSolutionAsync(solution, configuration, forwardedArgs);
     }
 
-    public static Task BuildAsync(IServiceProvider services)
+    public static Task BuildAsync(IServiceProvider services, string configuration = DefaultConfiguration)
     {
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        return dotnet.BuildSolutionAsync(solution, restore: false);
+        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        return dotnet.BuildSolutionAsync(solution, configuration, forwardedArgs, restore: false);
     }
 
-    public static Task TestAsync(IServiceProvider services)
+    public static Task TestAsync(IServiceProvider services, string configuration = DefaultConfiguration)
     {
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        return dotnet.TestSolutionAsync(solution, restore: false, build: false);
+        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        return dotnet.TestSolutionAsync(solution, configuration, forwardedArgs, restore: false, build: false);
     }
 
-    public static Task PackAsync(IServiceProvider services)
+    public static Task PackAsync(IServiceProvider services, string configuration = DefaultConfiguration)
     {
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        return dotnet.PackSolutionAsync(solution, restore: false, build: false);
+        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        return dotnet.PackSolutionAsync(solution, configuration, forwardedArgs, restore: false, build: false);
     }
 }

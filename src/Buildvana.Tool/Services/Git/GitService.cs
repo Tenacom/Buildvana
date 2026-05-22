@@ -27,11 +27,11 @@ public sealed class GitService : IDisposable
     private readonly IHomeDirectoryProvider _home;
     private readonly Repository _repository;
 
-    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, BuildSettingsHolder buildSettings)
+    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, GlobalOptions globals)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(home);
-        Guard.IsNotNull(buildSettings);
+        Guard.IsNotNull(globals);
         _logger = logger;
         _home = home;
         var homeDirectory = home.HomeDirectory;
@@ -42,7 +42,7 @@ public sealed class GitService : IDisposable
         OriginUrl = new(originUrl);
         var headName = _repository.Head.CanonicalName;
         CurrentBranch = headName.StartsWith("refs/heads/", StringComparison.Ordinal) ? _repository.Head.FriendlyName : string.Empty;
-        MainBranch = FindMainBranch(origin, buildSettings.Current.ResolveMainBranch());
+        MainBranch = FindMainBranch(origin, globals.MainBranch ?? string.Empty);
     }
 
     /// <summary>
