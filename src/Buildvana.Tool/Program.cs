@@ -37,7 +37,7 @@ internal static class Program
 
         try
         {
-            var (cleanArgs, msbuildProperties, globals) = PreprocessArgs(args);
+            var (spectreArgs, forwardedArgs, globals) = PreprocessArgs(args);
 
             // Apply --color / --no-color before any output. When both (or neither) are set the existing console profile wins.
             if (globals.Color != globals.NoColor)
@@ -65,7 +65,8 @@ internal static class Program
                 .AddSingleton(console)
                 .AddSingleton<SpectreLoggerProvider>(_ => new SpectreLoggerProvider(console) { MinLevel = initialLogLevel })
                 .AddSingleton<ILoggerProvider>(static sp => sp.GetRequiredService<SpectreLoggerProvider>())
-                .AddSingleton(msbuildProperties)
+                .AddSingleton(globals)
+                .AddSingleton(new ForwardedArguments { Args = forwardedArgs })
                 .AddLogging(static builder => builder.SetMinimumLevel(LogLevel.Trace))
                 .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
                 .AddSingleton<IJsonHelper, JsonHelper>()
@@ -79,7 +80,6 @@ internal static class Program
                 .AddSingleton<ChangelogService>()
                 .AddSingleton<DocFxService>()
                 .AddSingleton<DotNetService>()
-                .AddSingleton<BuildSettingsHolder>()
                 .AddSingleton(static _ => ToolConfiguration.FromEnvironment())
                 .AddSingleton(static _ => NuGetPushConfiguration.FromEnvironment())
                 .AddSingleton<SelfReferenceUpdater>();
@@ -99,7 +99,7 @@ internal static class Program
                 config.AddCommand<ReleaseCommand>("release");
             });
 
-            return await app.RunAsync(cleanArgs).ConfigureAwait(false);
+            return await app.RunAsync(spectreArgs).ConfigureAwait(false);
         }
         catch (BuildFailedException ex)
         {
@@ -118,11 +118,11 @@ internal static class Program
         _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: quiet, minimal, normal, detailed, diagnostic."),
     };
 
-    private static (string[] CleanArgs, MSBuildProperties Properties, GlobalOptions Globals) PreprocessArgs(string[] args)
+    private static (string[] SpectreArgs, IReadOnlyList<string> ForwardedArgs, GlobalOptions Globals) PreprocessArgs(string[] args)
     {
-        var cleanArgs = new List<string>(args.Length);
-        var properties = new MSBuildProperties();
+        var nonGlobal = new List<string>(args.Length);
         string? verbosity = null;
+        string? mainBranch = null;
         var color = false;
         var noColor = false;
         var nologo = false;
@@ -134,7 +134,7 @@ internal static class Program
 
             if (TryNormalizeHelp(arg, out var canonical))
             {
-                cleanArgs.Add(canonical);
+                nonGlobal.Add(canonical);
                 continue;
             }
 
@@ -143,20 +143,70 @@ internal static class Program
                 continue;
             }
 
-            if (TryMatchVerbosity(arg, args, ref i, ref verbosity))
+            if (TryMatchValueGlobal(arg, args, ref i, shortName: "-v", longName: "--verbosity", ref verbosity))
             {
                 continue;
             }
 
-            if (TryParseMSBuildProperty(arg, properties))
+            if (TryMatchValueGlobal(arg, args, ref i, shortName: null, longName: "--main-branch", ref mainBranch))
             {
                 continue;
             }
 
-            cleanArgs.Add(arg);
+            nonGlobal.Add(arg);
         }
 
-        return ([..cleanArgs], properties, new GlobalOptions(verbosity, color, noColor, nologo, version));
+        var globals = new GlobalOptions(verbosity, color, noColor, nologo, version, mainBranch);
+        var (spectreArgs, forwardedArgs) = SplitCommandArgs(nonGlobal);
+        return (spectreArgs, forwardedArgs, globals);
+    }
+
+    // Splits the post-global tokens into the args handed to Spectre and the args forwarded verbatim to the
+    // underlying `dotnet` invocation. The subcommand is the first token that is not an option (does not start
+    // with '-'); globals can appear on either side of it, so forwarded args are not simply a trailing tail.
+    private static (string[] SpectreArgs, IReadOnlyList<string> ForwardedArgs) SplitCommandArgs(List<string> nonGlobal)
+    {
+        var subcommandIndex = -1;
+        for (var i = 0; i < nonGlobal.Count; i++)
+        {
+            if (!nonGlobal[i].StartsWith('-'))
+            {
+                subcommandIndex = i;
+                break;
+            }
+        }
+
+        // No subcommand (e.g. `bv`, `bv --help`): hand everything to Spectre (root help / error).
+        if (subcommandIndex < 0)
+        {
+            return ([..nonGlobal], []);
+        }
+
+        // Commands with a fixed option surface (e.g. release) bind their arguments through Spectre.
+        var subcommand = nonGlobal[subcommandIndex];
+        if (!ConsumeAllArgumentsCommands.Names.Contains(subcommand))
+        {
+            return ([..nonGlobal], []);
+        }
+
+        // ConsumeAllArguments command: if help was requested, let Spectre render bv's help for it; otherwise
+        // hand Spectre only the command name and stash the rest for verbatim forwarding.
+        var helpRequested = nonGlobal.Contains("--help") || nonGlobal.Contains("-h");
+        if (helpRequested)
+        {
+            return ([subcommand, "--help"], []);
+        }
+
+        var forwarded = new List<string>(nonGlobal.Count - 1);
+        for (var i = 0; i < nonGlobal.Count; i++)
+        {
+            if (i != subcommandIndex)
+            {
+                forwarded.Add(nonGlobal[i]);
+            }
+        }
+
+        return ([subcommand], forwarded);
     }
 
     // Spectre's built-in --help / -h matcher is hardcoded StringComparer.Ordinal (CaseSensitivity
@@ -210,58 +260,41 @@ internal static class Program
         return false;
     }
 
-    private static bool TryMatchVerbosity(string arg, string[] args, ref int i, ref string? verbosity)
+    // Value-bearing global option (case-insensitive, matching the rest of bv's option surface). Accepts both
+    // "<name> <value>" (value as the next token) and "<name>=<value>" inline forms. <paramref name="shortName"/>
+    // may be null for options that have no short alias.
+    private static bool TryMatchValueGlobal(string arg, string[] args, ref int i, string? shortName, string longName, ref string? value)
     {
-        // --verbosity / -v with value as the next token.
-        if (string.Equals(arg, "-v", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(arg, "--verbosity", StringComparison.OrdinalIgnoreCase))
+        var isShort = shortName is not null && string.Equals(arg, shortName, StringComparison.OrdinalIgnoreCase);
+        var isLong = string.Equals(arg, longName, StringComparison.OrdinalIgnoreCase);
+        if (isShort || isLong)
         {
             if (i + 1 >= args.Length)
             {
-                throw new BuildFailedException($"Option '{arg}' requires a value (verbosity level).");
+                throw new BuildFailedException($"Option '{arg}' requires a value.");
             }
 
-            verbosity = args[++i];
+            value = args[++i];
             return true;
         }
 
-        // --verbosity=VALUE / -v=VALUE inline form.
-        if (arg.StartsWith("--verbosity=", StringComparison.OrdinalIgnoreCase))
+        var longPrefix = longName + "=";
+        if (arg.StartsWith(longPrefix, StringComparison.OrdinalIgnoreCase))
         {
-            verbosity = arg["--verbosity=".Length..];
+            value = arg[longPrefix.Length..];
             return true;
         }
 
-        if (arg.StartsWith("-v=", StringComparison.OrdinalIgnoreCase))
+        if (shortName is not null)
         {
-            verbosity = arg[3..];
-            return true;
+            var shortPrefix = shortName + "=";
+            if (arg.StartsWith(shortPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                value = arg[shortPrefix.Length..];
+                return true;
+            }
         }
 
         return false;
-    }
-
-    // MSBuild properties (forwarded to the underlying invocation, not bv's own options).
-    private static bool TryParseMSBuildProperty(string arg, MSBuildProperties properties)
-    {
-        if (arg.Length <= 3)
-        {
-            return false;
-        }
-
-        if (!arg.StartsWith("/p:", StringComparison.OrdinalIgnoreCase) && !arg.StartsWith("-p:", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        var kv = arg[3..];
-        var eq = kv.IndexOf('=', StringComparison.Ordinal);
-        if (eq <= 0)
-        {
-            return false;
-        }
-
-        properties.Set(kv[..eq], kv[(eq + 1)..]);
-        return true;
     }
 }

@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -15,15 +14,13 @@ namespace Buildvana.Tool.Cli;
 
 /// <summary>
 /// Custom help provider for the <c>bv</c> CLI tool. Extends Spectre's <see cref="HelpProvider"/> with:
-/// a <c>GLOBAL OPTIONS</c> section at root help (reflecting <see cref="BaseSettings"/>);
-/// an <c>[MSBuild: ...]</c> annotation on each command row of the root commands list (driven by
-/// <see cref="AcceptsMSBuildOptionsAttribute"/>); and a <c>FORWARDED MSBUILD OPTIONS</c> section on
-/// per-command help describing what kinds of <c>/</c>-prefixed switches the command forwards.
+/// a <c>GLOBAL OPTIONS</c> section at root help (reflecting <see cref="BaseSettings"/>); an annotation on
+/// each command row of the root commands list marking the commands that forward extra arguments; and a
+/// <c>FORWARDED ARGUMENTS</c> section on the per-command help of commands marked with
+/// <see cref="ConsumeAllArgumentsAttribute"/>.
 /// </summary>
 internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvider(settings)
 {
-    private static readonly Dictionary<string, MSBuildOptionKinds> CommandKindsByName = BuildCommandKindsMap();
-
     public override IEnumerable<IRenderable> GetOptions(ICommandModel model, ICommandInfo? command)
     {
         if (command is not null)
@@ -33,9 +30,10 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
                 yield return renderable;
             }
 
-            foreach (var renderable in RenderForwardedMSBuildOptionsSection(command))
+            if (ConsumeAllArgumentsCommands.Names.Contains(command.Name))
             {
-                yield return renderable;
+                yield return new Markup("\nFORWARDED ARGUMENTS:\n");
+                yield return new Markup("    Any arguments other than the options above are forwarded verbatim to the dotnet invocation(s) this command performs.\n");
             }
 
             yield break;
@@ -89,42 +87,15 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
         foreach (var child in commands)
         {
             var description = Markup.Escape(StripTrailingPeriod(child.Description));
-            var kind = CommandKindsByName.GetValueOrDefault(child.Name, MSBuildOptionKinds.None);
-            var indicator = FormatKindIndicator(kind);
-            var rendered = indicator is null
-                ? description
-                : $"{description}   [grey][[MSBuild: {indicator}]][/]";
+            var rendered = ConsumeAllArgumentsCommands.Names.Contains(child.Name)
+                ? $"{description}   [grey][[forwards extra args to dotnet]][/]"
+                : description;
 
             grid.AddRow(new Markup(Markup.Escape(child.Name)), new Markup(rendered));
         }
 
         yield return grid;
     }
-
-    private static IEnumerable<IRenderable> RenderForwardedMSBuildOptionsSection(ICommandInfo command)
-    {
-        var kind = CommandKindsByName.GetValueOrDefault(command.Name, MSBuildOptionKinds.None);
-        var text = kind switch
-        {
-            MSBuildOptionKinds.None => "MSBuild not invoked. No /-prefixed switches accepted.",
-            MSBuildOptionKinds.Properties => "Accepts /p:Key=Value (or -p:Key=Value) MSBuild properties.",
-            MSBuildOptionKinds.Switches => "Accepts /-prefixed MSBuild switches other than properties (e.g. /m:N, /v:m).",
-            MSBuildOptionKinds.All => "Accepts all /-prefixed MSBuild switches: /p:Key=Value properties and others (e.g. /m:N, /v:m).",
-            _ => throw new InvalidOperationException($"Unexpected {nameof(MSBuildOptionKinds)} value: {kind}"),
-        };
-
-        yield return new Markup("\nFORWARDED MSBUILD OPTIONS:\n");
-        yield return new Markup($"    {Markup.Escape(text)}\n");
-    }
-
-    private static string? FormatKindIndicator(MSBuildOptionKinds kind) => kind switch
-    {
-        MSBuildOptionKinds.None => null,
-        MSBuildOptionKinds.Properties => "properties only",
-        MSBuildOptionKinds.Switches => "switches only",
-        MSBuildOptionKinds.All => "all",
-        _ => throw new InvalidOperationException($"Unexpected {nameof(MSBuildOptionKinds)} value: {kind}"),
-    };
 
     private static IEnumerable<(string Names, string? Description)> EnumerateGlobalOptions()
     {
@@ -160,33 +131,5 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
         }
 
         return text.EndsWith('.') ? text[..^1] : text;
-    }
-
-    private static Dictionary<string, MSBuildOptionKinds> BuildCommandKindsMap()
-    {
-        var result = new Dictionary<string, MSBuildOptionKinds>(StringComparer.OrdinalIgnoreCase);
-        foreach (var type in typeof(BvHelpProvider).Assembly.GetTypes())
-        {
-            if (type.Namespace is null || (type.Namespace != "Buildvana.Tool.Cli" && !type.Namespace.StartsWith("Buildvana.Tool.Cli.", StringComparison.Ordinal)))
-            {
-                continue;
-            }
-
-            if (!type.Name.EndsWith("Command", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var attr = type.GetCustomAttribute<AcceptsMSBuildOptionsAttribute>();
-            if (attr is null)
-            {
-                continue;
-            }
-
-            var name = type.Name[..^"Command".Length];
-            result[name] = attr.Kinds;
-        }
-
-        return result;
     }
 }

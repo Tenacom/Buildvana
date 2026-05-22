@@ -11,4 +11,11 @@ namespace Buildvana.Tool.Cli;
 /// <param name="NoColor">Whether <c>--no-color</c> was passed.</param>
 /// <param name="Nologo">Whether <c>--nologo</c> was passed.</param>
 /// <param name="Version">Whether <c>--version</c> was passed.</param>
-internal sealed record GlobalOptions(string? Verbosity, bool Color, bool NoColor, bool Nologo, bool Version);
+/// <param name="MainBranch">The raw <c>--main-branch</c> value, or <see langword="null"/> if none was passed.</param>
+public sealed record GlobalOptions(
+    string? Verbosity,
+    bool Color,
+    bool NoColor,
+    bool Nologo,
+    bool Version,
+    string? MainBranch);

@@ -25,6 +25,13 @@ public class BaseSettings : CommandSettings
     public string? Verbosity { get; init; }
 
     /// <summary>
+    /// Gets the name of the repository's main branch.
+    /// </summary>
+    [CommandOption("--main-branch <NAME>")]
+    [Description("Name of the repository's main branch. Defaults to 'main'.")]
+    public string? MainBranch { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether ANSI color output is forced even when not connected to a TTY.
     /// </summary>
     [CommandOption("--color")]

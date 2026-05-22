@@ -37,7 +37,6 @@ public sealed class SelfReferenceUpdater
     private readonly ILogger<SelfReferenceUpdater> _logger;
     private readonly IHomeDirectoryProvider _home;
     private readonly IJsonHelper _jsonHelper;
-    private readonly DotNetService _dotnet;
     private readonly VersionService _version;
     private readonly (string RelativePath, Func<string, Dictionary<string, string>, bool> Update)[] _targets;
 
@@ -45,18 +44,15 @@ public sealed class SelfReferenceUpdater
         ILogger<SelfReferenceUpdater> logger,
         IHomeDirectoryProvider home,
         IJsonHelper jsonHelper,
-        DotNetService dotnet,
         VersionService version)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(home);
         Guard.IsNotNull(jsonHelper);
-        Guard.IsNotNull(dotnet);
         Guard.IsNotNull(version);
         _logger = logger;
         _home = home;
         _jsonHelper = jsonHelper;
-        _dotnet = dotnet;
         _version = version;
         _targets =
         [
@@ -69,12 +65,13 @@ public sealed class SelfReferenceUpdater
     /// <summary>
     /// Rewrites in-tree references to packages produced by the current build.
     /// </summary>
+    /// <param name="artifactsPath">The path of the directory containing the produced <c>*.nupkg</c> files.</param>
     /// <returns>The list of files that were actually modified. Pass this to
     /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, string[])"/> to commit them
     /// into a separate post-release commit on top of the "Prepare release" commit.</returns>
-    public IReadOnlyList<string> UpdateReferences()
+    public IReadOnlyList<string> UpdateReferences(string artifactsPath)
     {
-        var produced = DiscoverProducedPackages();
+        var produced = DiscoverProducedPackages(artifactsPath);
         if (produced.Count == 0)
         {
             _logger.LogInformation("Self-reference update: no produced packages were found in the artifacts directory.");
@@ -106,18 +103,17 @@ public sealed class SelfReferenceUpdater
         return modified;
     }
 
-    private Dictionary<string, string> DiscoverProducedPackages()
+    private Dictionary<string, string> DiscoverProducedPackages(string artifactsPath)
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var artifacts = _dotnet.ArtifactsPath;
-        if (!FileSystemHelper.DirectoryExists(artifacts))
+        if (!FileSystemHelper.DirectoryExists(artifactsPath))
         {
             return result;
         }
 
         var version = _version.CurrentStr;
         var suffix = $".{version}.nupkg";
-        foreach (var path in FileSystemHelper.EnumerateFiles(artifacts, "*.nupkg"))
+        foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg"))
         {
             var fileName = Path.GetFileName(path);
             if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))

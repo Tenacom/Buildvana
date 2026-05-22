@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Buildvana.Tool.Cli;
@@ -39,7 +38,7 @@ public sealed class DotNetService
     private readonly IServiceProvider _services;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
-    private readonly MSBuildProperties _msbuildProperties;
+    private readonly GlobalOptions _globals;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
@@ -47,50 +46,45 @@ public sealed class DotNetService
     public DotNetService(
         ILogger<DotNetService> logger,
         IProcessRunner processRunner,
-        BuildSettingsHolder buildSettings,
         IServiceProvider services,
         ServerAdapter server,
         VersionService version,
-        MSBuildProperties msbuildProperties)
+        GlobalOptions globals)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(processRunner);
-        Guard.IsNotNull(buildSettings);
         Guard.IsNotNull(services);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
-        Guard.IsNotNull(msbuildProperties);
+        Guard.IsNotNull(globals);
         _logger = logger;
         _processRunner = processRunner;
         _services = services;
         _server = server;
         _version = version;
-        _msbuildProperties = msbuildProperties;
-        Configuration = buildSettings.Current.ResolveConfiguration();
-        ArtifactsPath = Path.Combine(CommonPaths.AllArtifacts, Configuration);
+        _globals = globals;
     }
 
-    /// <summary>
-    /// Gets the configuration to build.
-    /// </summary>
-    public string Configuration { get; }
-
-    /// <summary>
-    /// Gets the path of the directory where build artifacts for <see cref="Configuration"/> are stored.
-    /// </summary>
-    public string ArtifactsPath { get; }
+    // The verbosity bv forwards to every `dotnet` invocation. bv and the .NET CLI share the same vocabulary
+    // (quiet/minimal/normal/detailed/diagnostic and their short forms), so the raw value is forwarded as-is.
+    private string Verbosity => _globals.Verbosity ?? "normal";
 
     /// <summary>
     /// Asynchronously restores all NuGet packages for the solution.
     /// </summary>
     /// <param name="solution">The solution to restore.</param>
+    /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RestoreSolutionAsync(SolutionContext solution)
+    public Task RestoreSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs)
     {
         Guard.IsNotNull(solution);
+        Guard.IsNotNullOrEmpty(configuration);
+        Guard.IsNotNull(forwardedArgs);
         _logger.LogInformation("Restoring NuGet packages for solution...");
-        List<string> args = ["restore", solution.SolutionPath, "--disable-parallel"];
-        args.AddRange(StandardMSBuildArgs());
+        List<string> args = ["restore", solution.SolutionPath, "--disable-parallel", "-nologo", "-v", Verbosity];
+        args.AddRange(forwardedArgs);
+        args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
         return RunDotNetAsync(args);
     }
 
@@ -98,19 +92,24 @@ public sealed class DotNetService
     /// Asynchronously builds all projects in the solution.
     /// </summary>
     /// <param name="solution">The solution to build.</param>
+    /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task BuildSolutionAsync(SolutionContext solution, bool restore)
+    public Task BuildSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore)
     {
         Guard.IsNotNull(solution);
+        Guard.IsNotNullOrEmpty(configuration);
+        Guard.IsNotNull(forwardedArgs);
         _logger.LogInformation("Building solution (restore = {Restore})...", restore);
-        List<string> args = ["build", solution.SolutionPath, "-c", Configuration];
+        List<string> args = ["build", solution.SolutionPath, "-nologo", "-v", Verbosity, $"-p:Configuration={configuration}"];
         if (!restore)
         {
             args.Add("--no-restore");
         }
 
-        args.AddRange(StandardMSBuildArgs());
+        args.AddRange(forwardedArgs);
+        args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
         return RunDotNetAsync(args);
     }
 
@@ -118,21 +117,27 @@ public sealed class DotNetService
     /// Asynchronously runs all tests for the solution.
     /// </summary>
     /// <param name="solution">The solution to test.</param>
+    /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet test</c> invocation
+    /// (reaching the Microsoft.Testing.Platform test applications).</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before testing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task TestSolutionAsync(SolutionContext solution, bool restore, bool build)
+    public async Task TestSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, bool build)
     {
         Guard.IsNotNull(solution);
+        Guard.IsNotNullOrEmpty(configuration);
+        Guard.IsNotNull(forwardedArgs);
         _logger.LogInformation("Checking for MTP test projects...");
         var hasTestProjects = false;
         foreach (var project in solution.Model.SolutionProjects)
         {
             var projectPath = solution.ResolveProjectPath(project);
             _logger.LogDebug("Checking '{Path}'...", projectPath);
-            List<string> probeArgs = ["msbuild", projectPath];
-            probeArgs.AddRange(StandardMSBuildArgs());
-            probeArgs.Add("-getProperty:IsTestingPlatformApplication");
+
+            // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
+            // test-application options that `dotnet msbuild` would reject.
+            List<string> probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
             var probe = await RunDotNetAsync(probeArgs).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
@@ -151,9 +156,10 @@ public sealed class DotNetService
 
         _logger.LogInformation("Running tests (restore = {Restore}, build = {Build})...", restore, build);
 
-        // Don't pass the standard MSBuild args here: `dotnet test` forwards them to MTP applications,
-        // which (at least those built with TUnit) fail because they don't recognize -nologo and -maxcpucount.
-        List<string> args = ["test", solution.SolutionPath, "-c", Configuration, ContinuousIntegrationBuildArg()];
+        // `dotnet test` consumes -nologo and -v itself; the configuration and ContinuousIntegrationBuild are
+        // passed as MSBuild properties using the `--property:` form, which is what `dotnet test` understands
+        // (the `-p:` form is not supported here).
+        List<string> args = ["test", solution.SolutionPath, "-nologo", "-v", Verbosity, $"--property:Configuration={configuration}"];
         if (!build)
         {
             args.Add("--no-build");
@@ -165,10 +171,8 @@ public sealed class DotNetService
         }
 
         args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", CommonPaths.TestResults]);
-
-        // `dotnet test` doesn't support passing MSBuild properties with `-p:Key=Value`, nor does it support passing any other parameter to MSBuild.
-        // It _does_ support `--property:Key=Value`, though. We need to pass MSBuild properties differently than in the other commands, but we can (and must) do so.
-        args.AddRange(_msbuildProperties.EnumerateAsDotnetTestArgs());
+        args.AddRange(forwardedArgs);
+        args.Add(ContinuousIntegrationBuildArg(dotnetTest: true));
         await RunDotNetAsync(args).ConfigureAwait(false);
     }
 
@@ -176,14 +180,18 @@ public sealed class DotNetService
     /// Asynchronously runs the Pack target on the solution. This usually produces NuGet packages, but Buildvana SDK may hijack the target to produce, for example, setup executables.
     /// </summary>
     /// <param name="solution">The solution to pack.</param>
+    /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before packing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task PackSolutionAsync(SolutionContext solution, bool restore, bool build)
+    public Task PackSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, bool build)
     {
         Guard.IsNotNull(solution);
+        Guard.IsNotNullOrEmpty(configuration);
+        Guard.IsNotNull(forwardedArgs);
         _logger.LogInformation("Packing solution (restore = {Restore}, build = {Build})...", restore, build);
-        List<string> args = ["pack", solution.SolutionPath, "-c", Configuration];
+        List<string> args = ["pack", solution.SolutionPath, "-nologo", "-v", Verbosity, $"-p:Configuration={configuration}"];
         if (!build)
         {
             args.Add("--no-build");
@@ -194,17 +202,20 @@ public sealed class DotNetService
             args.Add("--no-restore");
         }
 
-        args.AddRange(StandardMSBuildArgs());
+        args.AddRange(forwardedArgs);
+        args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
         return RunDotNetAsync(args);
     }
 
     /// <summary>
     /// Asynchronously pushes all produced NuGet packages to the appropriate NuGet server.
     /// </summary>
+    /// <param name="artifactsPath">The path of the directory containing the produced <c>*.nupkg</c> files.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task NuGetPushAllAsync()
+    public async Task NuGetPushAllAsync(string artifactsPath)
     {
-        var packages = FileSystemHelper.EnumerateFiles(ArtifactsPath, "*.nupkg").ToArray();
+        Guard.IsNotNullOrEmpty(artifactsPath);
+        var packages = FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg").ToArray();
         if (packages.Length == 0)
         {
             _logger.LogDebug("No .nupkg files to push.");
@@ -227,18 +238,12 @@ public sealed class DotNetService
         }
     }
 
-    private string ContinuousIntegrationBuildArg()
-        => $"-p:ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
-
-    private IEnumerable<string> StandardMSBuildArgs()
+    // bv's authoritative ContinuousIntegrationBuild value, emitted in the trailing group so it wins under
+    // MSBuild's last-wins resolution. `dotnet test` requires the `--property:` form; the other verbs accept `-p:`.
+    private string ContinuousIntegrationBuildArg(bool dotnetTest)
     {
-        yield return "-nologo";
-        yield return "-maxcpucount:1";
-        yield return ContinuousIntegrationBuildArg();
-        foreach (var arg in _msbuildProperties.EnumerateAsDotnetArgs())
-        {
-            yield return arg;
-        }
+        var prefix = dotnetTest ? "--property:" : "-p:";
+        return $"{prefix}ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
     }
 
     private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args)
