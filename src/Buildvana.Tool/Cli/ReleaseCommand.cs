@@ -15,7 +15,6 @@ using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
-using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
@@ -48,7 +47,6 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
         var server = services.GetRequiredService<ServerAdapter>();
         var version = services.GetRequiredService<VersionService>();
         var dotnet = services.GetRequiredService<DotNetService>();
-        var solution = services.GetRequiredService<SolutionContext>();
         var git = services.GetRequiredService<GitService>();
         var changelog = services.GetRequiredService<ChangelogService>();
         var publicApiFiles = services.GetRequiredService<PublicApiFilesService>();
@@ -177,10 +175,10 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Build, test, make artifacts
-            await dotnet.RestoreSolutionAsync(solution, []).ConfigureAwait(false);
-            await dotnet.BuildSolutionAsync(solution, configuration, [], restore: false).ConfigureAwait(false);
-            await dotnet.TestSolutionAsync(solution, configuration, [], restore: false, build: false).ConfigureAwait(false);
-            await dotnet.PackSolutionAsync(solution, configuration, [], restore: false, build: false).ConfigureAwait(false);
+            await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
+            await BuildSteps.BuildAsync(services, configuration).ConfigureAwait(false);
+            await BuildSteps.TestAsync(services, configuration).ConfigureAwait(false);
+            await BuildSteps.PackAsync(services, configuration).ConfigureAwait(false);
 
             if (changelogUpdated)
             {
