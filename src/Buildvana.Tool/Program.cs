@@ -186,6 +186,7 @@ internal static class Program
 
         // Argument-forwarding command: if help was requested, let Spectre render bv's help for it; otherwise
         // hand Spectre only the command name and stash the rest for verbatim forwarding.
+        // The ordinal Contains works because TryNormalizeHelp already canonicalized --help/-h to lowercase.
         var helpRequested = nonGlobal.Contains("--help") || nonGlobal.Contains("-h");
         if (helpRequested)
         {
