@@ -73,13 +73,11 @@ public sealed class DotNetService
     /// Asynchronously restores all NuGet packages for the solution.
     /// </summary>
     /// <param name="solution">The solution to restore.</param>
-    /// <param name="configuration">The MSBuild configuration to build.</param>
     /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RestoreSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs)
+    public Task RestoreSolutionAsync(SolutionContext solution, IReadOnlyList<string> forwardedArgs)
     {
         Guard.IsNotNull(solution);
-        Guard.IsNotNullOrEmpty(configuration);
         Guard.IsNotNull(forwardedArgs);
         _logger.LogInformation("Restoring NuGet packages for solution...");
         List<string> args = ["restore", solution.SolutionPath, "--disable-parallel", "-nologo", "-v", Verbosity];

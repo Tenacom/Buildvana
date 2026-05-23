@@ -37,7 +37,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
 
         // Pre-pipeline (mirrors today's [IsDependentOn(TestTask)] chain).
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
-        await BuildSteps.RestoreAsync(services, configuration).ConfigureAwait(false);
+        await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
         await BuildSteps.BuildAsync(services, configuration).ConfigureAwait(false);
         await BuildSteps.TestAsync(services, configuration).ConfigureAwait(false);
 
@@ -176,7 +176,7 @@ internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<R
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Build, test, make artifacts
-            await dotnet.RestoreSolutionAsync(solution, configuration, []).ConfigureAwait(false);
+            await dotnet.RestoreSolutionAsync(solution, []).ConfigureAwait(false);
             await dotnet.BuildSolutionAsync(solution, configuration, [], restore: false).ConfigureAwait(false);
             await dotnet.TestSolutionAsync(solution, configuration, [], restore: false, build: false).ConfigureAwait(false);
             await dotnet.PackSolutionAsync(solution, configuration, [], restore: false, build: false).ConfigureAwait(false);

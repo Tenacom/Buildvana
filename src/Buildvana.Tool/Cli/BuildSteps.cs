@@ -48,13 +48,13 @@ internal static class BuildSteps
         return Task.CompletedTask;
     }
 
-    public static Task RestoreAsync(IServiceProvider services, string configuration = DefaultConfiguration)
+    public static Task RestoreAsync(IServiceProvider services)
     {
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
         var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
-        return dotnet.RestoreSolutionAsync(solution, configuration, forwardedArgs);
+        return dotnet.RestoreSolutionAsync(solution, forwardedArgs);
     }
 
     public static Task BuildAsync(IServiceProvider services, string configuration = DefaultConfiguration)
