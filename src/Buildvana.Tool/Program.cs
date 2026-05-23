@@ -91,12 +91,7 @@ internal static class Program
                 config.Settings.CaseSensitivity = CaseSensitivity.None;
                 config.SetApplicationName("bv");
                 config.SetHelpProvider(new BvHelpProvider(config.Settings));
-                config.AddCommand<CleanCommand>("clean");
-                config.AddCommand<RestoreCommand>("restore");
-                config.AddCommand<BuildCommand>("build");
-                config.AddCommand<TestCommand>("test");
-                config.AddCommand<PackCommand>("pack");
-                config.AddCommand<ReleaseCommand>("release");
+                CommandRegistry.RegisterAll(config);
             });
 
             return await app.RunAsync(spectreArgs).ConfigureAwait(false);
@@ -184,12 +179,12 @@ internal static class Program
 
         // Commands with a fixed option surface (e.g. release) bind their arguments through Spectre.
         var subcommand = nonGlobal[subcommandIndex];
-        if (!ConsumeAllArgumentsCommands.Names.Contains(subcommand))
+        if (!CommandRegistry.ConsumesAllArguments(subcommand))
         {
             return ([..nonGlobal], []);
         }
 
-        // ConsumeAllArguments command: if help was requested, let Spectre render bv's help for it; otherwise
+        // Argument-forwarding command: if help was requested, let Spectre render bv's help for it; otherwise
         // hand Spectre only the command name and stash the rest for verbatim forwarding.
         var helpRequested = nonGlobal.Contains("--help") || nonGlobal.Contains("-h");
         if (helpRequested)

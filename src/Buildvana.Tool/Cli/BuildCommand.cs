@@ -10,7 +10,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[ConsumeAllArguments]
+[ImplementsCommand("build", consumesAllArguments: true)]
 [Description("Clean, restore, and build all projects.")]
 internal sealed class BuildCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
 {

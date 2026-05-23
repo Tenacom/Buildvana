@@ -10,7 +10,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[ConsumeAllArguments]
+[ImplementsCommand("test", consumesAllArguments: true)]
 [Description("Build all projects and run tests.")]
 internal sealed class TestCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
 {
