@@ -27,6 +27,8 @@ public class BaseSettings : CommandSettings
     /// <summary>
     /// Gets the name of the repository's main branch.
     /// </summary>
+    /// <remarks>Always <see langword="null"/> in command handlers (see the type-level remarks); the effective
+    /// value is read from <see cref="GlobalOptions.MainBranch"/> (by <c>GitService</c>).</remarks>
     [CommandOption("--main-branch <NAME>")]
     [Description("Name of the repository's main branch. Defaults to 'main'.")]
     public string? MainBranch { get; init; }
