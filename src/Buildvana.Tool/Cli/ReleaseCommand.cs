@@ -25,6 +25,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
+[ImplementsCommand("release")]
 [Description("Publish a new public release (CI only).")]
 internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<ReleaseSettings>
 {

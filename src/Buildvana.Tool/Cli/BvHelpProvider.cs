@@ -16,8 +16,8 @@ namespace Buildvana.Tool.Cli;
 /// Custom help provider for the <c>bv</c> CLI tool. Extends Spectre's <see cref="HelpProvider"/> with:
 /// a <c>GLOBAL OPTIONS</c> section at root help (reflecting <see cref="BaseSettings"/>); an annotation on
 /// each command row of the root commands list marking the commands that forward extra arguments; and a
-/// <c>FORWARDED ARGUMENTS</c> section on the per-command help of commands marked with
-/// <see cref="ConsumeAllArgumentsAttribute"/>.
+/// <c>FORWARDED ARGUMENTS</c> section on the per-command help of commands that consume all of their arguments
+/// (see <see cref="CommandRegistry"/>).
 /// </summary>
 internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvider(settings)
 {
@@ -30,7 +30,7 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
                 yield return renderable;
             }
 
-            if (ConsumeAllArgumentsCommands.Names.Contains(command.Name))
+            if (CommandRegistry.ConsumesAllArguments(command.Name))
             {
                 yield return new Markup("\nFORWARDED ARGUMENTS:\n");
                 yield return new Markup("    Any arguments other than the options above are forwarded verbatim to the dotnet invocation(s) this command performs.\n");
@@ -87,7 +87,7 @@ internal sealed class BvHelpProvider(ICommandAppSettings settings) : HelpProvide
         foreach (var child in commands)
         {
             var description = Markup.Escape(StripTrailingPeriod(child.Description));
-            var rendered = ConsumeAllArgumentsCommands.Names.Contains(child.Name)
+            var rendered = CommandRegistry.ConsumesAllArguments(child.Name)
                 ? $"{description}   [grey][[forwards extra args to dotnet]][/]"
                 : description;
 

@@ -10,7 +10,7 @@ using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Cli;
 
-[ConsumeAllArguments]
+[ImplementsCommand("pack", consumesAllArguments: true)]
 [Description("Clean, restore, build all projects, run tests, and prepare build artifacts.")]
 internal sealed class PackCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
 {

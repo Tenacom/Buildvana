@@ -6,8 +6,9 @@ using System.Collections.Generic;
 namespace Buildvana.Tool.Cli;
 
 /// <summary>
-/// Singleton holder for the arguments the pre-parser stashed for a <see cref="ConsumeAllArgumentsAttribute"/>
-/// command to forward verbatim to its underlying <c>dotnet</c> invocation(s).
+/// Singleton holder for the arguments the pre-parser stashed for a command declared with
+/// <see cref="ImplementsCommandAttribute"/>'s <c>consumesAllArguments</c> flag set, to forward verbatim to
+/// its underlying <c>dotnet</c> invocation(s).
 /// </summary>
 internal sealed class ForwardedArguments
 {
