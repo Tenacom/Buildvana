@@ -108,7 +108,8 @@ static void PrintUsage()
     Console.WriteLine($"The default schema path is '{DefaultSchemaPath}' relative to the working directory.");
 }
 
-static int CountLines(string text) => text.Split('\n').Length;
+// Generate() guarantees a trailing newline, so the line count is the number of line terminators.
+static int CountLines(string text) => text.Split('\n').Length - 1;
 
 // Reports the first line where the committed schema diverges from the freshly generated one, with a little context.
 static void ReportFirstDifference(string committed, string generated)
