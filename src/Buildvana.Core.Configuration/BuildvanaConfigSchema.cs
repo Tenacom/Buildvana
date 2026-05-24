@@ -36,6 +36,9 @@ public static class BuildvanaConfigSchema
         {
             root.Insert(0, "$schema", "https://json-schema.org/draft/2020-12/schema");
             root.Insert(1, "title", "Buildvana configuration");
+
+            // The exporter marks the root as nullable, but the loader rejects a JSON null document.
+            root["type"] = "object";
         }
 
         var json = schema.ToJsonString(new JsonSerializerOptions

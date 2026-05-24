@@ -1,10 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Buildvana configuration",
-  "type": [
-    "object",
-    "null"
-  ],
+  "type": "object",
   "properties": {
     "$schema": {
       "description": "URI of the JSON schema describing this file.",
