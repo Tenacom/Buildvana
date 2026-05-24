@@ -30,8 +30,15 @@
   <Folder Name="/- Documentation/docs/modules/">
     <File Path="docs/modules/Wine.md" />
   </Folder>
+  <Folder Name="/- Schemas/">
+    <File Path="schemas/buildvana.schema.json" />
+  </Folder>
+  <Folder Name="/- Tools/">
+    <File Path="tools/generate-config-schema.cs" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Buildvana.Core.Abstractions/Buildvana.Core.Abstractions.csproj" />
+    <Project Path="src/Buildvana.Core.Configuration/Buildvana.Core.Configuration.csproj" />
     <Project Path="src/Buildvana.Core.HomeDirectory/Buildvana.Core.HomeDirectory.csproj" />
     <Project Path="src/Buildvana.Core.Json/Buildvana.Core.Json.csproj" />
     <Project Path="src/Buildvana.Core.Process/Buildvana.Core.Process.csproj" />

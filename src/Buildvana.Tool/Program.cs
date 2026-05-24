@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
@@ -69,6 +70,7 @@ internal static class Program
                 .AddSingleton(new ForwardedArguments { Args = forwardedArgs })
                 .AddLogging(static builder => builder.SetMinimumLevel(LogLevel.Trace))
                 .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
+                .AddSingleton(static sp => BuildvanaConfigLoader.Load(sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory))
                 .AddSingleton<IJsonHelper, JsonHelper>()
                 .AddSingleton<IProcessRunner, ProcessRunner>()
                 .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()

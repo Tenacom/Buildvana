@@ -18,24 +18,43 @@
 
   <!--
     Rules for HomeDirectory:
-      * the nearest directory above the project file containing a file named .buildvana-home
-      * the Git submodule or worktree above the project's directory (look for a file named .git)
-      * the Git repository above the project's directory (look for a file named HEAD in a .git subdirectory)
+      Walking upward from the project's directory (the project's directory included), find the NEAREST directory
+      containing any of these home markers, and use it as the home directory:
+        * a Buildvana configuration file (buildvana.json or buildvana.jsonc);
+        * a file named .buildvana-home (manual override);
+        * a Git worktree or submodule (a file named .git);
+        * a regular Git repository (a file named HEAD in a .git subdirectory).
+      "Nearest" means the deepest candidate: since every candidate is the project's directory or an ancestor of it,
+      the candidate with the longest path is the closest one.
+
+      The configuration file is only a marker for the purpose of locating the home directory; the SDK does not parse
+      it here. Whether a configuration file is actually present at the home directory is the loader's concern.
 
     The canonical implementation of this algorithm lives in class `Buildvana.Core.HomeDirectory.HomeDirectoryDiscovery`.
     Any change to the discovery rules MUST be applied to both places.
     MSBuild's evaluation phase cannot call tasks, so the property assignments below cannot delegate to that implementation;
     consumers within compiled tasks should construct a `FixedHomeDirectoryProvider` seeded with `$(HomeDirectory)`.
+
+    NOTE: Check for ".git/HEAD", not ".git\HEAD", because the latter only works on Windows.
+          MSBuild doesn't convert directory separators on the second argument to GetDirectoryNameOfFileAbove,
+          probably due to https://github.com/microsoft/msbuild/issues/1024
   -->
   <PropertyGroup>
-    <HomeDirectory>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana-home'))</HomeDirectory>
-    <HomeDirectory Condition="'$(HomeDirectory)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git'))</HomeDirectory>
-    <!--
-        NOTE: Check for ".git/HEAD", not ".git\HEAD", because the latter only works on Windows.
-              MSBuild doesn't convert directory separators on the second argument to GetDirectoryNameOfFileAbove,
-              probably due to https://github.com/microsoft/msbuild/issues/1024
-    -->
-    <HomeDirectory Condition="'$(HomeDirectory)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git/HEAD'))</HomeDirectory>
+    <_HomeDir_ByConfigJson>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','buildvana.json'))</_HomeDir_ByConfigJson>
+    <_HomeDir_ByConfigJsonc>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','buildvana.jsonc'))</_HomeDir_ByConfigJsonc>
+    <_HomeDir_ByManualMarker>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana-home'))</_HomeDir_ByManualMarker>
+    <_HomeDir_ByGitFile>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git'))</_HomeDir_ByGitFile>
+    <_HomeDir_ByGitHead>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git/HEAD'))</_HomeDir_ByGitHead>
+  </PropertyGroup>
+
+  <!-- Pick the nearest (deepest, i.e. longest-path) candidate among the markers that were found. -->
+  <PropertyGroup>
+    <HomeDirectory></HomeDirectory>
+    <HomeDirectory Condition="$(_HomeDir_ByConfigJson.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByConfigJson)</HomeDirectory>
+    <HomeDirectory Condition="$(_HomeDir_ByConfigJsonc.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByConfigJsonc)</HomeDirectory>
+    <HomeDirectory Condition="$(_HomeDir_ByManualMarker.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByManualMarker)</HomeDirectory>
+    <HomeDirectory Condition="$(_HomeDir_ByGitFile.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByGitFile)</HomeDirectory>
+    <HomeDirectory Condition="$(_HomeDir_ByGitHead.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByGitHead)</HomeDirectory>
   </PropertyGroup>
 
   <!-- Normalize HomeDirectory if found. -->
@@ -48,6 +67,12 @@
     <EvaluationError Condition="'$(HomeDirectory)' == ''"
                      Include="BVSDK1003"
                      Text="Home directory not defined." />
+  </ItemGroup>
+
+  <!-- A home directory must not contain both configuration file variants. -->
+  <ItemGroup Condition="'$(HomeDirectory)' != '' and Exists('$(HomeDirectory)buildvana.json') and Exists('$(HomeDirectory)buildvana.jsonc')">
+    <EvaluationError Include="BVSDK1005"
+                     Text="Both buildvana.json and buildvana.jsonc are present in the home directory ($(HomeDirectory)). Keep only one." />
   </ItemGroup>
 
   <!-- Check for a supported version of MSBuild. -->

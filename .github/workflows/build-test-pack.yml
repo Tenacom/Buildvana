@@ -40,6 +40,9 @@ jobs:
     - name: Restore .NET tools
       shell: cmd
       run: dotnet tool restore
+    - name: Verify buildvana.json schema is up to date
+      shell: cmd
+      run: dotnet run tools/generate-config-schema.cs -- --check
     - name: Build, test, and pack with Buildvana
       shell: cmd
       run: |
