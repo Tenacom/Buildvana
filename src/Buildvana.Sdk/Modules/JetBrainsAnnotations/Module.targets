@@ -3,11 +3,11 @@
   <!--
     Coalesce ExportJetBrainsAnnotations to a boolean value (default false; opt-in).
     Exporting reconstructs a C# compilation, so it is supported for C# projects only;
-    force to false for any other project type and for no-targets projects.
+    force to false for any other language and for no-targets projects.
   -->
   <PropertyGroup>
     <ExportJetBrainsAnnotations Condition="'$(ExportJetBrainsAnnotations)' != 'true'">false</ExportJetBrainsAnnotations>
-    <ExportJetBrainsAnnotations Condition="'$(MSBuildProjectExtension)' != '.csproj'">false</ExportJetBrainsAnnotations>
+    <ExportJetBrainsAnnotations Condition="'$(Language)' != 'C#'">false</ExportJetBrainsAnnotations>
     <ExportJetBrainsAnnotations Condition="$(BV_IsNoTargetsProject)">false</ExportJetBrainsAnnotations>
   </PropertyGroup>
 
