@@ -70,6 +70,10 @@ internal static class Program
                 .AddSingleton(new ForwardedArguments { Args = forwardedArgs })
                 .AddLogging(static builder => builder.SetMinimumLevel(LogLevel.Trace))
                 .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
+
+                // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
+                // No Phase 1 command resolves BuildvanaConfig, so a malformed buildvana.json stays inert until a
+                // Phase 2 consumer reads it.
                 .AddSingleton(static sp => BuildvanaConfigLoader.Load(sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory))
                 .AddSingleton<IJsonHelper, JsonHelper>()
                 .AddSingleton<IProcessRunner, ProcessRunner>()
