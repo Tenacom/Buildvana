@@ -7,11 +7,9 @@
                           there MUST be a comment explaining it.
   -->
   <ItemGroup>
-    <BV_PackageVersion Include="JetBrains.Annotations" Version="2025.2.0" />
     <BV_PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <BV_PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <BV_PackageVersion Include="Nerdbank.GitVersioning" Version="3.7.115" />
-    <BV_PackageVersion Include="ReSharper.ExportAnnotations.Task" Version="1.4.0" />
     <BV_PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <BV_PackageVersion Include="Tools.InnoDownloadPlugin" Version="1.5.1" />
     <BV_PackageVersion Include="Tools.InnoSetup" Version="6.4.3" />

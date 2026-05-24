@@ -1,26 +1,54 @@
 <Project>
 
-  <!-- Coalesce UseJetBrainsAnnotations to a boolean value; force to false for unsupported and no-targets projects. -->
+  <!--
+    Coalesce ExportJetBrainsAnnotations to a boolean value (default false; opt-in).
+    Exporting reconstructs a C# compilation, so it is supported for C# projects only;
+    force to false for any other project type and for no-targets projects.
+  -->
   <PropertyGroup>
-    <UseJetBrainsAnnotations Condition="'$(MSBuildProjectExtension)' != '.csproj' And '$(MSBuildProjectExtension)' != '.vbproj'">false</UseJetBrainsAnnotations>
-    <UseJetBrainsAnnotations Condition="$(BV_IsNoTargetsProject)">false</UseJetBrainsAnnotations>
-    <UseJetBrainsAnnotations Condition="'$(UseJetBrainsAnnotations)' != 'true'">false</UseJetBrainsAnnotations>
+    <ExportJetBrainsAnnotations Condition="'$(ExportJetBrainsAnnotations)' != 'true'">false</ExportJetBrainsAnnotations>
+    <ExportJetBrainsAnnotations Condition="'$(MSBuildProjectExtension)' != '.csproj'">false</ExportJetBrainsAnnotations>
+    <ExportJetBrainsAnnotations Condition="$(BV_IsNoTargetsProject)">false</ExportJetBrainsAnnotations>
   </PropertyGroup>
-
-  <!-- Add annotations-related package references where appropriate. -->
-  <ItemGroup Condition="$(UseJetBrainsAnnotations)">
-    <BV_PackageReference Include="JetBrains.Annotations" IncludeAssets="Compile" PrivateAssets="All" />
-    <BV_PackageReference Include="ReSharper.ExportAnnotations.Task" PrivateAssets="All" />
-  </ItemGroup>
 
   <!--
-    BV_PackageReference items are transformed into PackageReference items
-    AFTER the sanity check in ReSharper.ExportAnnotations.Task, so disable the check.
-    Same goes for updating JetBrains.Annotations' metadata: it would be redundant anyway.
+    Export the external-annotations file right after the (per-TFM) build, when DefineConstants and references
+    are fully resolved. The condition on TargetFramework keeps this out of the outer cross-targeting build,
+    so the export runs once per target framework. The Inputs/Outputs make it incremental.
   -->
-  <PropertyGroup Condition="$(UseJetBrainsAnnotations)">
-    <CheckForJetBrainsAnnotationsPackageReference>false</CheckForJetBrainsAnnotationsPackageReference>
-    <UpdateJetBrainsAnnotationsPackageReferencee>false</UpdateJetBrainsAnnotationsPackageReferencee>
+  <Target Name="BV_ExportJetBrainsAnnotations"
+          AfterTargets="Build"
+          Condition="$(ExportJetBrainsAnnotations) And '$(TargetFramework)' != ''"
+          Inputs="@(Compile);@(ReferencePathWithRefAssemblies)"
+          Outputs="$(TargetDir)$(AssemblyName).ExternalAnnotations.xml">
+
+    <ExportJetBrainsAnnotations AssemblyName="$(AssemblyName)"
+                                CompileItems="@(Compile)"
+                                References="@(ReferencePathWithRefAssemblies)"
+                                DefineConstants="$(DefineConstants)"
+                                LangVersion="$(LangVersion)"
+                                OutputFile="$(TargetDir)$(AssemblyName).ExternalAnnotations.xml" />
+
+  </Target>
+
+  <!--
+    Add the already-built external-annotations file to the package, next to the assembly in lib/<tfm>.
+    This runs at pack time and only references the file produced by the build, so packing does not need
+    to force a build (e.g. when packing without building after a separate build step).
+  -->
+  <PropertyGroup Condition="$(ExportJetBrainsAnnotations)">
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);BV_IncludeJetBrainsAnnotationsInPackage</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
+
+  <Target Name="BV_IncludeJetBrainsAnnotationsInPackage"
+          Condition="$(ExportJetBrainsAnnotations)">
+
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(TargetDir)$(AssemblyName).ExternalAnnotations.xml"
+                              Condition="Exists('$(TargetDir)$(AssemblyName).ExternalAnnotations.xml')"
+                              PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+
+  </Target>
 
 </Project>

@@ -89,6 +89,7 @@
   </PropertyGroup>
 
   <UsingTask TaskName="ConvertPfxToSnk" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
+  <UsingTask TaskName="ExportJetBrainsAnnotations" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="GetWinePath" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="GetWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="ConvertToWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />

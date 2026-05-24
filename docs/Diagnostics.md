@@ -60,7 +60,9 @@ This module has no associated diagnostics.
 
 ## JetBrainsAnnotations module (1300-1399)
 
-This module has no associated diagnostics.
+| Code      | Severity | Message                                           | Description                                                                                                                                                                                                                                   |
+| --------- | :------: | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK1300 |   Error  | Could not export JetBrains annotations for '...'. | An error occurred while exporting ReSharper external annotations. The accompanying message describes the failure. Clean and rebuild; if the problem persists, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). |
 
 ## AdditionalAssemblyInfo module (1400-1499)
 
