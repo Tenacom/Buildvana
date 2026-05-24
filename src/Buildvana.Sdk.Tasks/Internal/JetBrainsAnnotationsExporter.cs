@@ -68,7 +68,7 @@ internal static class JetBrainsAnnotationsExporter
             .Where(File.Exists)
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .ToList();
-        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true);
         return CSharpCompilation.Create(assemblyName, syntaxTrees, references, options);
     }
 
