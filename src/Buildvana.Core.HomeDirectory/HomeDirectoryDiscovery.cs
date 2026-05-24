@@ -9,25 +9,22 @@ namespace Buildvana.Core.HomeDirectory;
 
 /// <summary>
 /// Canonical implementation of the Buildvana "home directory" discovery algorithm:
-/// the closest ancestor of a given start directory that contains either a <c>.buildvana-home</c> file
+/// the nearest directory, starting at a given directory and walking upward, that contains any home marker —
+/// a <c>buildvana.json</c> or <c>buildvana.jsonc</c> configuration file, a <c>.buildvana-home</c> file
 /// (manual override), a <c>.git</c> file (worktree or submodule), or a <c>.git/HEAD</c> file (regular repository).
 /// </summary>
 /// <remarks>
+/// <para>The search stops at the first directory (the start directory included) that contains any marker;
+/// a configuration file only counts when it sits at that directory. Whether a configuration file is actually
+/// present there — and which one — is determined separately by <c>BuildvanaConfigLoader</c>.</para>
 /// <para>This algorithm mirrors the discovery performed by the Buildvana SDK in
 /// <c>src/Buildvana.Sdk/Sdk/Sdk.props</c>. Any change made here MUST be applied to that file as well.</para>
 /// </remarks>
 public static class HomeDirectoryDiscovery
 {
-    private static readonly string[][] Markers =
-    [
-        [".buildvana-home"],
-        [".git"],
-        [".git", "HEAD"],
-    ];
-
     /// <summary>
-    /// Walks up from <paramref name="startDirectory"/>, looking for the closest ancestor that
-    /// satisfies the home directory discovery rules.
+    /// Walks up from <paramref name="startDirectory"/> (inclusive), looking for the nearest directory
+    /// that contains a home marker.
     /// </summary>
     /// <param name="startDirectory">The directory from which to begin the search. Resolved against the current process's
     /// working directory if relative.</param>
@@ -38,26 +35,10 @@ public static class HomeDirectoryDiscovery
     {
         Guard.IsNotNullOrEmpty(startDirectory);
 
-        var startPath = Path.GetFullPath(startDirectory);
-        foreach (var marker in Markers)
-        {
-            if (TryFindAncestorContaining(startPath, marker, out homeDirectory))
-            {
-                return true;
-            }
-        }
-
-        homeDirectory = null;
-        return false;
-    }
-
-    private static bool TryFindAncestorContaining(string startPath, string[] markerParts, [MaybeNullWhen(false)] out string homeDirectory)
-    {
-        var current = startPath;
+        string? current = Path.GetFullPath(startDirectory);
         while (current is not null)
         {
-            var candidate = Path.Combine([current, .. markerParts]);
-            if (File.Exists(candidate))
+            if (DirectoryContainsMarker(current))
             {
                 homeDirectory = NormalizeDirectory(current);
                 return true;
@@ -68,6 +49,19 @@ public static class HomeDirectoryDiscovery
 
         homeDirectory = null;
         return false;
+    }
+
+    private static bool DirectoryContainsMarker(string directory)
+    {
+        var hasConfigFile = File.Exists(Path.Combine(directory, "buildvana.json"))
+            || File.Exists(Path.Combine(directory, "buildvana.jsonc"));
+        var hasManualMarker = File.Exists(Path.Combine(directory, ".buildvana-home"));
+
+        // A regular repository has a .git directory containing HEAD; a worktree or submodule has a .git file.
+        var hasGitMarker = File.Exists(Path.Combine(directory, ".git", "HEAD"))
+            || File.Exists(Path.Combine(directory, ".git"));
+
+        return hasConfigFile || hasManualMarker || hasGitMarker;
     }
 
     private static string NormalizeDirectory(string path)
