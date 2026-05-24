@@ -126,11 +126,7 @@ internal static class JetBrainsAnnotationsExporter
     {
         for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
         {
-            var visible = current.DeclaredAccessibility
-                is Accessibility.Public
-                or Accessibility.Protected
-                or Accessibility.ProtectedOrInternal;
-            if (!visible)
+            if (!IsExternallyVisible(current.DeclaredAccessibility))
             {
                 return false;
             }
@@ -138,6 +134,12 @@ internal static class JetBrainsAnnotationsExporter
 
         return true;
     }
+
+    private static bool IsExternallyVisible(Accessibility accessibility)
+        => accessibility
+            is Accessibility.Public
+            or Accessibility.Protected
+            or Accessibility.ProtectedOrInternal;
 
     private static IEnumerable<XElement> TypeToXml(INamedTypeSymbol type)
     {
@@ -149,6 +151,11 @@ internal static class JetBrainsAnnotationsExporter
 
         foreach (var member in type.GetMembers())
         {
+            if (!IsExternallyVisible(member.DeclaredAccessibility))
+            {
+                continue;
+            }
+
             var element = MemberToXml(member);
             if (element is not null)
             {
