@@ -39,6 +39,10 @@ public static class BuildvanaConfigSchema
 
             // The exporter marks the root as nullable, but the loader rejects a JSON null document.
             root["type"] = "object";
+
+            // Collection element types in the model are non-nullable, but the exporter still emits nullable
+            // item schemas; tighten them so the schema matches the model (and what the loader accepts).
+            StripNullFromArrayItems(root);
         }
 
         var json = schema.ToJsonString(new JsonSerializerOptions
@@ -86,5 +90,56 @@ public static class BuildvanaConfigSchema
 
         schemaObject.Insert(0, "description", description);
         return schema;
+    }
+
+    // Walks the schema tree and removes "null" from the type of every array's item schema, since no collection
+    // in the model accepts null elements.
+    private static void StripNullFromArrayItems(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                if (obj["items"] is JsonObject items)
+                {
+                    RemoveNullFromType(items);
+                }
+
+                foreach (var property in obj)
+                {
+                    StripNullFromArrayItems(property.Value);
+                }
+
+                break;
+            case JsonArray array:
+                foreach (var element in array)
+                {
+                    StripNullFromArrayItems(element);
+                }
+
+                break;
+        }
+    }
+
+    // Removes "null" from a schema's "type" keyword when it is expressed as an array, collapsing a single
+    // remaining type to a scalar for cleaner output. No-op when "type" is already a scalar.
+    private static void RemoveNullFromType(JsonObject schema)
+    {
+        if (schema["type"] is not JsonArray typeArray)
+        {
+            return;
+        }
+
+        for (var i = typeArray.Count - 1; i >= 0; i--)
+        {
+            if (typeArray[i]?.GetValue<string>() == "null")
+            {
+                typeArray.RemoveAt(i);
+            }
+        }
+
+        if (typeArray.Count == 1)
+        {
+            schema["type"] = typeArray[0]!.GetValue<string>();
+        }
     }
 }
