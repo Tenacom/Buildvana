@@ -124,15 +124,54 @@
             "object",
             "null"
           ],
-          "additionalProperties": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "type": "string"
+          "properties": {
+            "all": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "restore": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "build": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "test": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            },
+            "pack": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
             }
-          }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -150,29 +189,55 @@
             "object",
             "null"
           ],
-          "additionalProperties": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "source": {
-                "description": "Source URL of the NuGet feed.",
-                "type": [
-                  "string",
-                  "null"
-                ]
+          "properties": {
+            "prerelease": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "source": {
+                  "description": "Source URL of the NuGet feed.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "apiKeyEnv": {
+                  "description": "Name of the environment variable that holds the feed API key.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
               },
-              "apiKeyEnv": {
-                "description": "Name of the environment variable that holds the feed API key.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          }
+            "release": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "source": {
+                  "description": "Source URL of the NuGet feed.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "apiKeyEnv": {
+                  "description": "Name of the environment variable that holds the feed API key.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

@@ -17,9 +17,6 @@ public static class BuildvanaConfigLoader
     private const string JsonFileName = "buildvana.json";
     private const string JsoncFileName = "buildvana.jsonc";
 
-    private static readonly string[] AllowedDotNetArgsKeys = ["all", "restore", "build", "test", "pack"];
-    private static readonly string[] AllowedNuGetFeedKeys = ["prerelease", "release"];
-
     /// <summary>
     /// Loads the configuration file found in <paramref name="homeDirectory"/>.
     /// </summary>
@@ -80,8 +77,8 @@ public static class BuildvanaConfigLoader
 
     private static void Validate(BuildvanaConfig config, string path)
     {
-        ValidateDictionaryKeys(config.DotNet?.Args?.Keys, AllowedDotNetArgsKeys, "dotnet.args", path);
-        ValidateDictionaryKeys(config.NuGet?.Feeds?.Keys, AllowedNuGetFeedKeys, "nuget.feeds", path);
+        ValidateDictionaryKeys(config.DotNet?.Args?.Keys, DotNetConfig.AllowedArgsKeys, "dotnet.args", path);
+        ValidateDictionaryKeys(config.NuGet?.Feeds?.Keys, NuGetConfig.AllowedFeedKeys, "nuget.feeds", path);
         ValidateNoNullItems(config.Release?.Branches, "release.branches", path);
         ValidateNoNullItems(config.Release?.GenerateDocsFrom, "release.generateDocsFrom", path);
 

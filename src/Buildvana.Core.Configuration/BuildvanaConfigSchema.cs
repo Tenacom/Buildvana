@@ -40,6 +40,11 @@ public static class BuildvanaConfigSchema
             // The exporter marks the root as nullable, but the loader rejects a JSON null document.
             root["type"] = "object";
 
+            // The exporter leaves these dictionaries open-ended, but the loader only accepts a fixed set of keys;
+            // pin the schema to the same keys so editors reject what the loader would reject.
+            ConstrainKeys(root, "dotnet", "args", DotNetConfig.AllowedArgsKeys);
+            ConstrainKeys(root, "nuget", "feeds", NuGetConfig.AllowedFeedKeys);
+
             // Collection element types in the model are non-nullable, but the exporter still emits nullable
             // item schemas; tighten them so the schema matches the model (and what the loader accepts).
             StripNullFromArrayItems(root);
@@ -90,6 +95,24 @@ public static class BuildvanaConfigSchema
 
         schemaObject.Insert(0, "description", description);
         return schema;
+    }
+
+    // Replaces the open-ended additionalProperties of a dictionary section (e.g. dotnet.args, nuget.feeds) with an
+    // explicit set of allowed keys, each mapped to the original value schema, plus additionalProperties: false.
+    private static void ConstrainKeys(JsonObject root, string topProperty, string dictProperty, string[] allowedKeys)
+    {
+        var section = (JsonObject)root["properties"]![topProperty]!["properties"]![dictProperty]!;
+        var valueSchema = section["additionalProperties"]!;
+        _ = section.Remove("additionalProperties");
+
+        var properties = new JsonObject();
+        foreach (var key in allowedKeys)
+        {
+            properties.Add(key, valueSchema.DeepClone());
+        }
+
+        section["properties"] = properties;
+        section["additionalProperties"] = false;
     }
 
     // Walks the schema tree and removes "null" from the type of every array's item schema, since no collection

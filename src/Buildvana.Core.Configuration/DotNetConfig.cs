@@ -13,6 +13,10 @@ namespace Buildvana.Core.Configuration;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record DotNetConfig
 {
+    // Allowed keys for Args, in schema-output order. Shared between loader validation and schema generation
+    // so the two cannot diverge.
+    internal static readonly string[] AllowedArgsKeys = ["all", "restore", "build", "test", "pack"];
+
     /// <summary>Gets the default build configuration passed to <c>dotnet</c>.</summary>
     [Description("Default build configuration (e.g. Debug, Release).")]
     public string? Configuration { get; init; }
