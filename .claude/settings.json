@@ -20,6 +20,8 @@
       "Bash(dotnet test *)",
       "Bash(dotnet pack *)",
       "Bash(dotnet publish *)",
+      "Bash(dotnet run tools/*)",
+      "Bash(dotnet run .claude/tools/*)",
       "Bash(gh repo view *)",
       "Bash(gh repo list *)",
       "Bash(gh repo clone *)",
