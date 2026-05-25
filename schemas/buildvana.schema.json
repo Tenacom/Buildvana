@@ -24,10 +24,7 @@
             "null"
           ],
           "items": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           }
         },
         "generateDocsFrom": {
@@ -37,10 +34,7 @@
             "null"
           ],
           "items": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           }
         },
         "configuration": {
@@ -136,10 +130,7 @@
               "null"
             ],
             "items": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             }
           }
         }

@@ -82,6 +82,16 @@ public static class BuildvanaConfigLoader
     {
         ValidateDictionaryKeys(config.DotNet?.Args?.Keys, AllowedDotNetArgsKeys, "dotnet.args", path);
         ValidateDictionaryKeys(config.NuGet?.Feeds?.Keys, AllowedNuGetFeedKeys, "nuget.feeds", path);
+        ValidateNoNullItems(config.Release?.Branches, "release.branches", path);
+        ValidateNoNullItems(config.Release?.GenerateDocsFrom, "release.generateDocsFrom", path);
+
+        if (config.DotNet?.Args is { } args)
+        {
+            foreach (var (key, value) in args)
+            {
+                ValidateNoNullItems(value, $"dotnet.args.{key}", path);
+            }
+        }
     }
 
     private static void ValidateDictionaryKeys(IEnumerable<string>? keys, string[] allowed, string section, string path)
@@ -96,6 +106,23 @@ public static class BuildvanaConfigLoader
             BuildFailedException.ThrowIfNot(
                 Array.IndexOf(allowed, key) >= 0,
                 $"Unknown key '{key}' in {section} ({path}). Allowed keys: {string.Join(", ", allowed)}.");
+        }
+    }
+
+    private static void ValidateNoNullItems(IEnumerable<string?>? items, string section, string path)
+    {
+        if (items is null)
+        {
+            return;
+        }
+
+        var index = 0;
+        foreach (var item in items)
+        {
+            BuildFailedException.ThrowIf(
+                item is null,
+                $"Null item at index {index} in {section} ({path}). All items must be non-null strings.");
+            index++;
         }
     }
 }
