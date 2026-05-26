@@ -58,6 +58,12 @@
   <ItemGroup>
   </ItemGroup>
 
+  <!-- Test dependencies-->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.7.0" />
+    <PackageVersion Include="TUnit" Version="1.45.29" />
+  </ItemGroup>
+
   <!-- Transitive package overrides -->
   <!-- TODO: Items in this group should be TransitivePackageOverride items. -->
   <ItemGroup>

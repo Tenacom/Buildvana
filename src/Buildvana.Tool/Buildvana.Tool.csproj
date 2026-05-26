@@ -19,6 +19,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Buildvana.Tool.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Configuration\Buildvana.Core.Configuration.csproj" />
     <ProjectReference Include="..\Buildvana.Core.HomeDirectory\Buildvana.Core.HomeDirectory.csproj" />

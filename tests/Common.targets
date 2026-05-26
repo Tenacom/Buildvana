@@ -1,0 +1,29 @@
+<Project>
+
+  <!-- Common build options for test projects -->
+  <PropertyGroup Condition="'$(IsTestingPlatformApplication)' == 'true'">
+
+    <!--
+        Test assemblies are not going to interoperate much.
+        Besides, the type names used in test projects are not apt to cause ambiguities.
+        Therefore there is no need for a root namespace: let's save ourselves some declarations.
+    -->
+    <RootNamespace />
+
+    <!-- No need for public API analyzers -->
+    <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
+
+    <!-- Disable some warnings that have no sense in test projects -->
+    <NoWarn>$(NoWarn);CA1050</NoWarn> <!-- Declare types in namespaces -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn> <!-- Identifiers should not contain underscores -->
+    <NoWarn>$(NoWarn);IDE0058</NoWarn> <!-- Expression value is never used -->
+    <NoWarn>$(NoWarn);SA1600</NoWarn> <!-- Elements should be documented - test code is self-describing -->
+
+  </PropertyGroup>
+
+  <!-- Hide test result files in Visual Studio -->
+  <ItemGroup Condition="'$(IsTestingPlatformApplication)' == 'true'">
+    <None Remove="TestResults\**" />
+  </ItemGroup>
+
+</Project>

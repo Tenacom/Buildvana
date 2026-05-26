@@ -47,4 +47,8 @@
     <Project Path="src/Buildvana.Sdk/Buildvana.Sdk.csproj" />
     <Project Path="src/Buildvana.Tool/Buildvana.Tool.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Common.targets" />
+    <Project Path="tests/Buildvana.Tool.Tests/Buildvana.Tool.Tests.csproj" />
+  </Folder>
 </Solution>
