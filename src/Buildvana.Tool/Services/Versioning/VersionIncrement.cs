@@ -9,7 +9,7 @@ namespace Buildvana.Tool.Services.Versioning;
 /// <remarks>
 /// <para>The values of this enum are sorted in ascending order of importance, so that they may be compared.</para>
 /// </remarks>
-public enum VersionIncrement
+internal enum VersionIncrement
 {
     /// <summary>
     /// Represents no version advancement.

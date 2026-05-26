@@ -9,7 +9,7 @@ namespace Buildvana.Tool.Utilities;
 /// <summary>
 /// Provides helper methods for accessing environment variables.
 /// </summary>
-public static class EnvVarHelper
+internal static class EnvVarHelper
 {
     /// <summary>
     /// Returns the value of the named environment variable, or fails the build if it is not set or empty.

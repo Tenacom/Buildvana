@@ -11,7 +11,7 @@ namespace Buildvana.Tool.Services.Versioning;
 /// <summary>
 /// Represents a Major.Minor[-Tag] version as found in version.json.
 /// </summary>
-public sealed partial record VersionSpec
+internal sealed partial record VersionSpec
 {
     private static readonly Regex VersionSpecRegex = GetVersionSpecRegex();
 

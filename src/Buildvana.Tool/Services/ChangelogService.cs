@@ -19,7 +19,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Manages the repository's changelog in Markdown format, according to the <see href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</see> specification.
 /// </summary>
-public sealed partial class ChangelogService
+internal sealed partial class ChangelogService
 {
     /// <summary>
     /// The name of the changelog file.

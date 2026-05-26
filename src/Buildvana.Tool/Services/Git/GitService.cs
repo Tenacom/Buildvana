@@ -22,7 +22,7 @@ namespace Buildvana.Tool.Services.Git;
 /// Provides shortcut methods to use Git.
 /// </summary>
 [PublicAPI]
-public sealed class GitService : IDisposable
+internal sealed class GitService : IDisposable
 {
     private readonly ILogger<GitService> _logger;
     private readonly IHomeDirectoryProvider _home;

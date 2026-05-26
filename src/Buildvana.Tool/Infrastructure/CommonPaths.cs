@@ -6,7 +6,7 @@ namespace Buildvana.Tool.Infrastructure;
 /// <summary>
 /// Provides well-known paths used throughout the build, relative to the repository root.
 /// </summary>
-public static class CommonPaths
+internal static class CommonPaths
 {
     /// <summary>
     /// The path of the directory where build artifacts for all configurations are stored.

@@ -13,7 +13,7 @@ namespace Buildvana.Tool.Services.ServerAdapters;
 /// <summary>
 /// Base class for Continuous Integration adapters.
 /// </summary>
-public abstract class ServerAdapter
+internal abstract class ServerAdapter
 {
     private protected ServerAdapter()
     {

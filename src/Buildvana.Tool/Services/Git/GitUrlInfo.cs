@@ -11,7 +11,7 @@ namespace Buildvana.Tool.Services.Git;
 /// <summary>
 /// Represents information about a Git fetch URL that may be needed to identify the kind of server and other information.
 /// </summary>
-public sealed class GitUrlInfo
+internal sealed class GitUrlInfo
 {
     private GitUrlInfo(
         Uri url,

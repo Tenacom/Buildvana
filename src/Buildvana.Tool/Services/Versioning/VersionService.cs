@@ -15,7 +15,7 @@ namespace Buildvana.Tool.Services.Versioning;
 /// <summary>
 /// Provides methods to manage project versioning.
 /// </summary>
-public sealed class VersionService
+internal sealed class VersionService
 {
     private readonly ILogger<VersionService> _logger;
     private readonly IJsonHelper _jsonHelper;

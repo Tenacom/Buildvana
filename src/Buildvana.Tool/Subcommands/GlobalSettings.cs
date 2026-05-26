@@ -19,7 +19,7 @@ namespace Buildvana.Tool.Commands;
 /// <param name="Nologo">Whether <c>--nologo</c> was passed.</param>
 /// <param name="Version">Whether <c>--version</c> was passed.</param>
 /// <remarks>The constructor parameter order is also the order in which these options appear in <c>bv</c>'s help.</remarks>
-public sealed record GlobalSettings(
+internal sealed record GlobalSettings(
     [property: BvOption("-v|--verbosity <LEVEL>")]
     [property: Description("Logging verbosity. One of: quiet, minimal, normal, detailed, diagnostic. Defaults to normal.")]
     string? Verbosity,

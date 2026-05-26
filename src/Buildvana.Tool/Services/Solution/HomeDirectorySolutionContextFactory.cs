@@ -15,7 +15,7 @@ namespace Buildvana.Tool.Services.Solution;
 /// Locates the solution file in the home directory of the current build (preferring <c>*.slnx</c>
 /// over <c>*.sln</c>), parses it, and returns a <see cref="SolutionContext"/>.
 /// </summary>
-public sealed class HomeDirectorySolutionContextFactory : ISolutionContextFactory
+internal sealed class HomeDirectorySolutionContextFactory : ISolutionContextFactory
 {
     private readonly IHomeDirectoryProvider _home;
 
