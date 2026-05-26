@@ -6,7 +6,7 @@ namespace Buildvana.Tool.Services.Versioning;
 /// <summary>
 /// Specifies how to modify the version specification upon publishing a release.
 /// </summary>
-public enum VersionSpecChange
+internal enum VersionSpecChange
 {
     /// <summary>
     /// Do not force a version increment; do not modify the unstable tag.

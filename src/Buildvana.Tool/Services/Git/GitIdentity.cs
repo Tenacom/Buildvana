@@ -8,4 +8,4 @@ namespace Buildvana.Tool.Services.Git;
 /// </summary>
 /// <param name="Name">The name of the Git user.</param>
 /// <param name="Email">The email of the Git user.</param>
-public record GitIdentity(string Name, string Email);
+internal record GitIdentity(string Name, string Email);

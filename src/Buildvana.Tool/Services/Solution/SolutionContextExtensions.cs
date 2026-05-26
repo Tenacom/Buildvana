@@ -12,7 +12,7 @@ namespace Buildvana.Tool.Services.Solution;
 /// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible — false positive on C# 14 extension blocks; fixed in .NET 11, backport to .NET 10 requested in https://github.com/dotnet/sdk/issues/53984
 #pragma warning disable CA1708 // Identifiers should differ by more than case — false positive on classes with C# 14 extension blocks; fixed in .NET 11, https://github.com/dotnet/sdk/issues/51716
-public static class SolutionContextExtensions
+internal static class SolutionContextExtensions
 {
     extension(SolutionContext @this)
     {

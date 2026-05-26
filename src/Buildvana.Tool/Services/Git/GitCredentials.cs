@@ -8,4 +8,4 @@ namespace Buildvana.Tool.Services.Git;
 /// </summary>
 /// <param name="Username">The username of the Git user.</param>
 /// <param name="Password">The password of the Git user.</param>
-public record GitCredentials(string Username, string Password);
+internal record GitCredentials(string Username, string Password);

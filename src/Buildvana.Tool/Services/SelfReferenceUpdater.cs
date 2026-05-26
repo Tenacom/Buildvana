@@ -32,7 +32,7 @@ namespace Buildvana.Tool.Services;
 /// <para>Version values that look like MSBuild property references (e.g. <c>$(SomePackageVersion)</c>) are
 /// left untouched, since rewriting them would break the indirection.</para>
 /// </remarks>
-public sealed class SelfReferenceUpdater
+internal sealed class SelfReferenceUpdater
 {
     private readonly ILogger<SelfReferenceUpdater> _logger;
     private readonly IHomeDirectoryProvider _home;

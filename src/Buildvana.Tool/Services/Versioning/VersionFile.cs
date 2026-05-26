@@ -12,7 +12,7 @@ namespace Buildvana.Tool.Services.Versioning;
 /// <summary>
 /// Represents the <c>version.json</c> file, for the purpose of applying version advances.
 /// </summary>
-public sealed class VersionFile
+internal sealed class VersionFile
 {
     private const string VersionJsonPath = "version.json";
     private const string VersionPropertyName = "version";

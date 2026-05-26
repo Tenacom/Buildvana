@@ -9,7 +9,7 @@ namespace Buildvana.Tool.Services.PublicApiFiles;
 /// <remarks>
 /// <para>The values of this enum are sorted in ascending order of importance, so that they may be compared.</para>
 /// </remarks>
-public enum ApiChangeKind
+internal enum ApiChangeKind
 {
     /// <summary>
     /// Public APIs have not changed between two versions.

@@ -17,7 +17,7 @@ namespace Buildvana.Tool.Services.PublicApiFiles;
 /// <summary>
 /// Manages pairs of <c>PublicAPI.Shipped.txt</c> and <c>PublicAPI.Unshipped.txt</c> files throughout the repository.
 /// </summary>
-public sealed class PublicApiFilesService
+internal sealed class PublicApiFilesService
 {
     private const string RemovedPrefix = "*REMOVED*";
 

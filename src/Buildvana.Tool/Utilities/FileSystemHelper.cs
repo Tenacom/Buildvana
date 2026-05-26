@@ -15,7 +15,7 @@ namespace Buildvana.Tool.Utilities;
 /// <summary>
 /// Provides thin, host-agnostic file-system helpers used across the tool.
 /// </summary>
-public static class FileSystemHelper
+internal static class FileSystemHelper
 {
     /// <summary>
     /// Returns whether a directory exists at the given path.

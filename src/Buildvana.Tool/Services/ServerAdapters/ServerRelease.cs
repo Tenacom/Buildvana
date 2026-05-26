@@ -17,7 +17,7 @@ namespace Buildvana.Tool.Services.ServerAdapters;
 /// <summary>
 /// Represents a release in a server-independent way.
 /// </summary>
-public abstract partial class ServerRelease : IAsyncDisposable
+internal abstract partial class ServerRelease : IAsyncDisposable
 {
     private readonly ILogger _logger;
     private readonly GitService _git;

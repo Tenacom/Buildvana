@@ -6,7 +6,7 @@ namespace Buildvana.Tool.Services.Solution;
 /// <summary>
 /// Discovers and parses the solution that the current build operates on.
 /// </summary>
-public interface ISolutionContextFactory
+internal interface ISolutionContextFactory
 {
     /// <summary>
     /// Discovers the solution file, parses it, and returns a <see cref="SolutionContext"/> describing it.

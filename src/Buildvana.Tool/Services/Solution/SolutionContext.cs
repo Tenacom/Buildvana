@@ -11,4 +11,4 @@ namespace Buildvana.Tool.Services.Solution;
 /// </summary>
 /// <param name="SolutionPath">The absolute path of the solution file.</param>
 /// <param name="Model">The parsed solution model.</param>
-public sealed record SolutionContext(string SolutionPath, SolutionModel Model);
+internal sealed record SolutionContext(string SolutionPath, SolutionModel Model);

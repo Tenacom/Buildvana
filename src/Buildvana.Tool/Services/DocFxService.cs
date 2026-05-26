@@ -15,7 +15,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Implements DocFX operations.
 /// </summary>
-public sealed class DocFxService
+internal sealed class DocFxService
 {
     private readonly ServerAdapter _server;
     private readonly VersionService _version;

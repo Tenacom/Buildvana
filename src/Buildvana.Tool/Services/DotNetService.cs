@@ -24,7 +24,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Provides shortcut methods for .NET SDK operations.
 /// </summary>
-public sealed class DotNetService
+internal sealed class DotNetService
 {
     // The muxer sets DOTNET_HOST_PATH to the full path of the dotnet executable that launched us,
     // so we re-invoke that exact host instead of relying on `dotnet` being on PATH.
