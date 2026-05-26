@@ -5,10 +5,11 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Tool.Infrastructure.Execution;
 using CommunityToolkit.Diagnostics;
 using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Commands;
 
 [ImplementsCommand("pack", consumesAllArguments: true)]
 [Description("Clean, restore, build all projects, run tests, and prepare build artifacts.")]

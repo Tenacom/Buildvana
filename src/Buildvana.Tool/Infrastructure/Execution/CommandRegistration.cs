@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
 /// A discovered <c>bv</c> command: the name it is registered under, the class that implements it, and whether

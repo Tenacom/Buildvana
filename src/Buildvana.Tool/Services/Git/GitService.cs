@@ -8,12 +8,13 @@ using System.IO;
 using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
-using Buildvana.Tool.Cli;
+using Buildvana.Tool.Commands;
 using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
+using GitCommands = LibGit2Sharp.Commands;
 
 namespace Buildvana.Tool.Services.Git;
 
@@ -181,7 +182,7 @@ public sealed class GitService : IDisposable
         }).ToArray();
 
         _logger.LogDebug("Git: staging {Count} file(s)...", pathsInRepo.Length);
-        Commands.Stage(_repository, pathsInRepo, new StageOptions() { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
+        GitCommands.Stage(_repository, pathsInRepo, new StageOptions() { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
     }
 
     /// <summary>

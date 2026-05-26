@@ -5,7 +5,7 @@ using System.ComponentModel;
 using JetBrains.Annotations;
 using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Commands;
 
 /// <summary>
 /// Global options shared by every Spectre command.

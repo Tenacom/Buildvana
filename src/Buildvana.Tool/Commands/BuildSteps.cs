@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Solution;
@@ -12,7 +13,7 @@ using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Commands;
 
 /// <summary>
 /// Bodies of the individual pipeline steps (clean / restore / build / test / pack), independent of the

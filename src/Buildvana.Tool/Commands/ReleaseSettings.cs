@@ -8,7 +8,7 @@ using Buildvana.Tool.Services.Versioning;
 using JetBrains.Annotations;
 using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Commands;
 
 /// <summary>
 /// Options for the <c>release</c> command.

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.CommandLine;
 
 /// <summary>
 /// Singleton holder for the arguments the pre-parser stashed for a command declared with

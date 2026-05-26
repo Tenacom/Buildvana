@@ -11,6 +11,7 @@ using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Tool.Infrastructure;
+using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
@@ -22,7 +23,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Commands;
 
 [ImplementsCommand("release")]
 [Description("Publish a new public release (CI only).")]

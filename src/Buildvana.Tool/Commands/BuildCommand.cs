@@ -5,14 +5,15 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Tool.Infrastructure.Execution;
 using CommunityToolkit.Diagnostics;
 using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Commands;
 
-[ImplementsCommand("test", consumesAllArguments: true)]
-[Description("Build all projects and run tests.")]
-internal sealed class TestCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
+[ImplementsCommand("build", consumesAllArguments: true)]
+[Description("Clean, restore, and build all projects.")]
+internal sealed class BuildCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, BaseSettings settings, CancellationToken cancellationToken)
     {
@@ -20,7 +21,6 @@ internal sealed class TestCommand(IServiceProvider services) : AsyncCommand<Base
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
         await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
         await BuildSteps.BuildAsync(services).ConfigureAwait(false);
-        await BuildSteps.TestAsync(services).ConfigureAwait(false);
         return 0;
     }
 }

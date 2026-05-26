@@ -8,7 +8,7 @@ using System.Reflection;
 using CommunityToolkit.Diagnostics;
 using Spectre.Console.Cli;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
 /// Discovers <c>bv</c> commands (classes marked with <see cref="ImplementsCommandAttribute"/>) by reflection

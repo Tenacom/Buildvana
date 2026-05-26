@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Buildvana.Tool.Cli;
+namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
 /// Declares the <c>bv</c> command implemented by the decorated class: its name (as typed on the command line)
