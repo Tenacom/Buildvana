@@ -13,6 +13,7 @@ internal sealed class BvOptionAttributeTests
     public async Task ValueOptionTemplate_ParsesNamesAndValuePlaceholder()
     {
         var attribute = new BvOptionAttribute("-c|--configuration <NAME>");
+        await Assert.That(attribute.Template).IsEqualTo("-c|--configuration <NAME>");
         await Assert.That(attribute.ShortNames.Count).IsEqualTo(1);
         await Assert.That(attribute.ShortNames[0]).IsEqualTo("-c");
         await Assert.That(attribute.LongNames.Count).IsEqualTo(1);

@@ -8,13 +8,13 @@ using System.IO;
 using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
-using Buildvana.Tool.Commands;
 using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
 using GitCommands = LibGit2Sharp.Commands;
+using GlobalSettings = Buildvana.Tool.Commands.GlobalSettings;
 
 namespace Buildvana.Tool.Services.Git;
 
@@ -28,7 +28,7 @@ public sealed class GitService : IDisposable
     private readonly IHomeDirectoryProvider _home;
     private readonly Repository _repository;
 
-    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, GlobalOptions globals)
+    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, GlobalSettings globals)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(home);

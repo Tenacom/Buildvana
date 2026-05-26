@@ -18,21 +18,17 @@ using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
-using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Commands;
 
-[ImplementsCommand("release")]
+[ImplementsCommand("release", settingsType: typeof(ReleaseSettings))]
 [Description("Publish a new public release (CI only).")]
-internal sealed class ReleaseCommand(IServiceProvider services) : AsyncCommand<ReleaseSettings>
+internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings settings) : IBvCommand
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, ReleaseSettings settings, CancellationToken cancellationToken)
+    public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        Guard.IsNotNull(settings);
-
         var configuration = settings.ResolveConfiguration();
         var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 

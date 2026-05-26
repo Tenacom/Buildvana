@@ -2,31 +2,31 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Buildvana.Core;
+using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Services.Versioning;
-using JetBrains.Annotations;
-using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Commands;
 
 /// <summary>
-/// Options for the <c>release</c> command.
+/// Options for the <c>release</c> command, parsed from the command-line option tokens by <see cref="Parse"/>.
+/// Decorated with <see cref="BvOptionAttribute"/>/<see cref="DescriptionAttribute"/> for the help renderer.
 /// </summary>
-[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public class ReleaseSettings : BaseSettings
+internal sealed class ReleaseSettings
 {
     /// <summary>
     /// Gets the MSBuild configuration to build.
     /// </summary>
-    [CommandOption("-c|--configuration <NAME>")]
+    [BvOption("-c|--configuration <NAME>")]
     [Description("MSBuild configuration to build. Defaults to 'Release'.")]
     public string? Configuration { get; init; }
 
     /// <summary>
     /// Gets the requested version-spec change.
     /// </summary>
-    [CommandOption("--bump <CHANGE>")]
+    [BvOption("--bump <CHANGE>")]
     [Description("""
         Version-spec change to apply:
           - [bold]none[/] (the default): advance patch from Git height.
@@ -40,30 +40,58 @@ public class ReleaseSettings : BaseSettings
     /// <summary>
     /// Gets a value indicating whether the public API is checked when computing version-spec changes.
     /// </summary>
-    [CommandOption("--check-public-api <BOOL>")]
+    [BvOption("--check-public-api <BOOL>")]
     [Description("Check the public API when computing version-spec changes. Defaults to true.")]
     public bool? CheckPublicApi { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the changelog is updated on unstable (prerelease) versions.
     /// </summary>
-    [CommandOption("--unstable-changelog <BOOL>")]
+    [BvOption("--unstable-changelog <BOOL>")]
     [Description("Update the changelog on unstable (prerelease) versions. Defaults to false.")]
     public bool? UnstableChangelog { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the build is failed if the 'Unreleased changes' section is empty.
     /// </summary>
-    [CommandOption("--require-changelog <BOOL>")]
+    [BvOption("--require-changelog <BOOL>")]
     [Description("Fail the build if the 'Unreleased changes' section is empty. Defaults to true.")]
     public bool? RequireChangelog { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether in-tree references to packages produced by this release are updated.
     /// </summary>
-    [CommandOption("--dogfood <BOOL>")]
+    [BvOption("--dogfood <BOOL>")]
     [Description("Update in-tree references to packages produced by this release. Defaults to true.")]
     public bool? Dogfood { get; init; }
+
+    /// <summary>
+    /// Parses the command's option tokens into a <see cref="ReleaseSettings"/>, rejecting any option the command
+    /// does not recognize.
+    /// </summary>
+    /// <param name="options">The option tokens for the <c>release</c> command (from <c>CommandParameters.Options</c>).</param>
+    /// <returns>The parsed settings.</returns>
+    /// <exception cref="BuildFailedException">An option value is invalid, or an unrecognized option was given.</exception>
+    public static ReleaseSettings Parse(IReadOnlyList<string> options)
+    {
+        var reader = new CliOptionReader(options);
+        var settings = new ReleaseSettings
+        {
+            Configuration = reader.ReadValue("--configuration", "-c"),
+            Bump = reader.ReadValue("--bump"),
+            CheckPublicApi = ParseBool(reader.ReadValue("--check-public-api"), "--check-public-api"),
+            UnstableChangelog = ParseBool(reader.ReadValue("--unstable-changelog"), "--unstable-changelog"),
+            RequireChangelog = ParseBool(reader.ReadValue("--require-changelog"), "--require-changelog"),
+            Dogfood = ParseBool(reader.ReadValue("--dogfood"), "--dogfood"),
+        };
+
+        if (reader.Remaining.Count > 0)
+        {
+            throw new BuildFailedException($"Unknown option '{reader.Remaining[0]}' for command 'release'.");
+        }
+
+        return settings;
+    }
 
     /// <summary>
     /// Parses <see cref="Bump"/> into a <see cref="VersionSpecChange"/>; defaults to <see cref="VersionSpecChange.None"/>.
@@ -106,4 +134,19 @@ public class ReleaseSettings : BaseSettings
     /// Returns <see cref="Dogfood"/> if set, otherwise <see langword="true"/>.
     /// </summary>
     public bool ResolveDogfood() => Dogfood ?? true;
+
+    private static bool? ParseBool(string? raw, string optionName)
+    {
+        if (raw is null)
+        {
+            return null;
+        }
+
+        if (bool.TryParse(raw, out var value))
+        {
+            return value;
+        }
+
+        throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
+    }
 }

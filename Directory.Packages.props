@@ -51,7 +51,6 @@
     <PackageVersion Include="Octokit" Version="14.0.0" />
     <PackageVersion Include="PolyKit.Embedded" Version="3.0.27-preview" />
     <PackageVersion Include="Spectre.Console" Version="0.55.0" />
-    <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
   </ItemGroup>
 
   <!-- Development dependencies-->
