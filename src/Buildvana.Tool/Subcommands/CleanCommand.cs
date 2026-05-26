@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.Infrastructure.Execution;
 
-namespace Buildvana.Tool.Commands;
+namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("clean")]
 [Description("Remove all build artifacts, intermediate output, and temporary files. Like 'dotnet clean', but more aggressive.")]

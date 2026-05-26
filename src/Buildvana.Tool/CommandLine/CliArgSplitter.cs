@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Buildvana.Core;
-using Buildvana.Tool.Commands;
+using Buildvana.Tool.Subcommands;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.CommandLine;

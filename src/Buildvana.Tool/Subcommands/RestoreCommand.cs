@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.Infrastructure.Execution;
 
-namespace Buildvana.Tool.Commands;
+namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("restore", consumesAllArguments: true)]
 [Description("Clean and restore dependencies.")]

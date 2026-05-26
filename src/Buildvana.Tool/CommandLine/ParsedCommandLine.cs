@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
-using Buildvana.Tool.Commands;
+using Buildvana.Tool.Subcommands;
 
 namespace Buildvana.Tool.CommandLine;
 

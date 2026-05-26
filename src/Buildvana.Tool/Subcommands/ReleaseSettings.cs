@@ -8,7 +8,7 @@ using Buildvana.Core;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Services.Versioning;
 
-namespace Buildvana.Tool.Commands;
+namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
 /// Options for the <c>release</c> command, parsed from the command-line option tokens by <see cref="Parse"/>.

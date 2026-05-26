@@ -21,7 +21,7 @@ using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Buildvana.Tool.Commands;
+namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("release", settingsType: typeof(ReleaseSettings))]
 [Description("Publish a new public release (CI only).")]

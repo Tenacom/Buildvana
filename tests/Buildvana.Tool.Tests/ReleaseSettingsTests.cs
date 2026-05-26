@@ -2,8 +2,8 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
-using Buildvana.Tool.Commands;
 using Buildvana.Tool.Services.Versioning;
+using Buildvana.Tool.Subcommands;
 
 internal sealed class ReleaseSettingsTests
 {

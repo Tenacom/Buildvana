@@ -4,7 +4,7 @@
 using System.ComponentModel;
 using Buildvana.Tool.CommandLine;
 
-namespace Buildvana.Tool.Commands;
+namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
 /// The bv-global options, parsed from the command line by <see cref="CliArgSplitter"/> before the subcommand is

@@ -13,8 +13,7 @@ using JetBrains.Annotations;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
-using GitCommands = LibGit2Sharp.Commands;
-using GlobalSettings = Buildvana.Tool.Commands.GlobalSettings;
+using GlobalSettings = Buildvana.Tool.Subcommands.GlobalSettings;
 
 namespace Buildvana.Tool.Services.Git;
 
@@ -182,7 +181,7 @@ internal sealed class GitService : IDisposable
         }).ToArray();
 
         _logger.LogDebug("Git: staging {Count} file(s)...", pathsInRepo.Length);
-        GitCommands.Stage(_repository, pathsInRepo, new StageOptions() { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
+        Commands.Stage(_repository, pathsInRepo, new StageOptions() { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
     }
 
     /// <summary>

@@ -3,7 +3,7 @@
 
 using System.Reflection;
 using Buildvana.Tool.CommandLine;
-using Buildvana.Tool.Commands;
+using Buildvana.Tool.Subcommands;
 
 internal sealed class SettingsHelpReflectionTests
 {

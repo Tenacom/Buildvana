@@ -13,7 +13,7 @@ using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Buildvana.Tool.Commands;
+namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
 /// Bodies of the individual pipeline steps (clean / restore / build / test / pack), independent of the

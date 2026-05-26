@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Buildvana.Tool.CommandLine;
-using Buildvana.Tool.Commands;
+using Buildvana.Tool.Subcommands;
 using CommunityToolkit.Diagnostics;
 using Spectre.Console;
 
