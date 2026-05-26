@@ -9,9 +9,10 @@ namespace Buildvana.Core.Process;
 /// <summary>
 /// The outcome of a process invocation performed through <see cref="IProcessRunner"/>.
 /// </summary>
+/// <param name="CommandLine">The full command line that was executed, including the executable and all arguments.</param>
 /// <param name="ExitCode">The exit code reported by the process.</param>
 /// <param name="StandardOutput">The full text written to the process's standard output stream.</param>
 /// <param name="StandardError">The full text written to the process's standard error stream.</param>
 /// <param name="Elapsed">The wall-clock time the process took to run.</param>
 [PublicAPI]
-public sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError, TimeSpan Elapsed);
+public sealed record ProcessResult(string CommandLine, int ExitCode, string StandardOutput, string StandardError, TimeSpan Elapsed);

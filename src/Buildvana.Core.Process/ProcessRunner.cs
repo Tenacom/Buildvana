@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Core.Process.Internal;
 using CliWrap;
 using CommunityToolkit.Diagnostics;
 
@@ -17,7 +18,8 @@ namespace Buildvana.Core.Process;
 /// </summary>
 public sealed class ProcessRunner : IProcessRunner
 {
-    private const int TailCapBytes = 4096;
+    private const int OutputHeadLines = 20;
+    private const int OutputTailLines = 20;
 
     /// <inheritdoc cref="IProcessRunner.RunAsync"/>
     public async Task<ProcessResult> RunAsync(
@@ -35,20 +37,27 @@ public sealed class ProcessRunner : IProcessRunner
 
         var stdoutBuffer = new StringBuilder();
         var stderrBuffer = new StringBuilder();
+        var stdoutCapture = new HeadTailPipeTarget(maxHeadLines: OutputHeadLines, maxTailLines: OutputTailLines);
+        var stderrCapture = new HeadTailPipeTarget(maxHeadLines: OutputHeadLines, maxTailLines: OutputTailLines);
 
-        // When the caller wants line-by-line stdout, fan the stream out to both the buffer and their callback.
+        // When the caller wants line-by-line stdout, fan the stream out to their callback too.
         var stdoutPipe = onStdout is null
-            ? PipeTarget.ToStringBuilder(stdoutBuffer)
+            ? PipeTarget.Merge(
+                stdoutCapture,
+                PipeTarget.ToStringBuilder(stdoutBuffer))
             : PipeTarget.Merge(
+                stdoutCapture,
                 PipeTarget.ToStringBuilder(stdoutBuffer),
                 PipeTarget.ToDelegate(onStdout));
+
+        var stderrPipe = PipeTarget.Merge(stderrCapture, PipeTarget.ToStringBuilder(stderrBuffer));
 
         var command = Cli.Wrap(executable)
 
             // ReSharper disable once PossibleMultipleEnumeration
             .WithArguments(args)
             .WithStandardOutputPipe(stdoutPipe)
-            .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stderrBuffer))
+            .WithStandardErrorPipe(stderrPipe)
             .WithValidation(CommandResultValidation.None);
 
         if (workingDirectory is not null)
@@ -59,6 +68,7 @@ public sealed class ProcessRunner : IProcessRunner
         var commandResult = await command.ExecuteAsync(cancellationToken).ConfigureAwait(false);
 
         var result = new ProcessResult(
+            command.ToString(),
             commandResult.ExitCode,
             stdoutBuffer.ToString(),
             stderrBuffer.ToString(),
@@ -66,58 +76,18 @@ public sealed class ProcessRunner : IProcessRunner
 
         if (throwOnNonZero && result.ExitCode != 0)
         {
-            throw new BuildFailedException(result.ExitCode, BuildFailureMessage(executable, result));
+            throw new BuildFailedException(result.ExitCode, BuildFailureMessage(executable, result, stdoutCapture, stderrCapture));
         }
 
         return result;
     }
 
-    private static string BuildFailureMessage(string executable, ProcessResult result)
-    {
-        var stdout = FormatTail(result.StandardOutput);
-        var stderr = FormatTail(result.StandardError);
-        var header = string.Create(
-            CultureInfo.InvariantCulture,
-            $"Command '{executable}' exited with code {result.ExitCode}.");
-        if (stdout is null && stderr is null)
-        {
-            return header;
-        }
-
-        var sb = new StringBuilder(header);
-        if (stdout is not null)
-        {
-            _ = sb.Append("\n--- stdout ---\n").Append(stdout);
-        }
-
-        if (stderr is not null)
-        {
-            _ = sb.Append("\n--- stderr ---\n").Append(stderr);
-        }
-
-        return sb.ToString();
-    }
-
-    private static string? FormatTail(string text)
-    {
-        var trimmed = text.TrimEnd();
-        if (trimmed.Length == 0)
-        {
-            return null;
-        }
-
-        var bytes = Encoding.UTF8.GetBytes(trimmed);
-        if (bytes.Length <= TailCapBytes)
-        {
-            return trimmed;
-        }
-
-        var start = bytes.Length - TailCapBytes;
-        while (start < bytes.Length && (bytes[start] & 0xC0) == 0x80)
-        {
-            start++;
-        }
-
-        return "…" + Encoding.UTF8.GetString(bytes, start, bytes.Length - start).TrimStart();
-    }
+    private static string BuildFailureMessage(string executable, ProcessResult result, HeadTailPipeTarget stdoutCapture, HeadTailPipeTarget stderrCapture)
+        => new StringBuilder()
+            .AppendLine(CultureInfo.InvariantCulture, $"Command '{executable}' exited with code {result.ExitCode}.")
+            .AppendHeader("full command line")
+            .AppendLine(result.CommandLine)
+            .AppendHeadTail(stdoutCapture, "stdout")
+            .AppendHeadTail(stderrCapture, "stderr")
+            .ToString();
 }
