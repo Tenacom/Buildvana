@@ -37,7 +37,7 @@ internal static class CliArgSplitter
         var nologo = reader.ReadFlag("--nologo");
         var version = reader.ReadFlag("--version");
         var helpRequested = reader.ReadFlag("--help", "-h");
-        var globals = new GlobalOptions(verbosity, color, noColor, nologo, version, mainBranch);
+        var globals = new GlobalSettings(verbosity, mainBranch, color, noColor, nologo, version);
 
         var (subcommand, positionals, optionTokens) = Classify(reader.Remaining);
         return new ParsedCommandLine(globals, helpRequested, subcommand, positionals, optionTokens, forwarded);

@@ -38,7 +38,7 @@ public sealed class DotNetService
     private readonly IServiceProvider _services;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
-    private readonly GlobalOptions _globals;
+    private readonly GlobalSettings _globals;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
@@ -49,7 +49,7 @@ public sealed class DotNetService
         IServiceProvider services,
         ServerAdapter server,
         VersionService version,
-        GlobalOptions globals)
+        GlobalSettings globals)
     {
         Guard.IsNotNull(logger);
         Guard.IsNotNull(processRunner);

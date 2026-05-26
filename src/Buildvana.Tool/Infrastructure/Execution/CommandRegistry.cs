@@ -6,54 +6,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using CommunityToolkit.Diagnostics;
-using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
 /// Discovers <c>bv</c> commands (classes marked with <see cref="ImplementsCommandAttribute"/>) by reflection
-/// and is the single authority for registering them with Spectre and answering forwarding questions.
+/// and is the single authority for command lookup, display order, and forwarding metadata.
 /// </summary>
 /// <remarks>
-/// <para>Command display/registration order follows <see cref="PipelineCommandNames"/>: the build pipeline, in
-/// execution order. Commands not listed there (e.g. <c>release</c>) are non-pipeline commands and are ordered
-/// after the pipeline, by name.</para>
+/// <para>Display order follows <see cref="PipelineCommandNames"/>: the build pipeline, in execution order.
+/// Commands not listed there (e.g. <c>release</c>) are ordered after the pipeline, by name.</para>
 /// </remarks>
 internal static class CommandRegistry
 {
-    // The build pipeline, in execution order. Defines the order pipeline commands are registered (hence the
-    // order they appear in `bv`'s help). Non-pipeline commands are appended after, ordered by name.
+    // The build pipeline, in execution order. Defines the order pipeline commands appear in `bv`'s help.
+    // Non-pipeline commands are appended after, ordered by name.
     private static readonly string[] PipelineCommandNames = ["clean", "restore", "build", "test", "pack"];
 
-    private static readonly MethodInfo AddCommandMethod = FindAddCommandMethod();
-
     /// <summary>
-    /// Gets the discovered commands, ordered for registration and help display.
+    /// Gets the discovered commands, ordered for help display.
     /// </summary>
     public static IReadOnlyList<CommandRegistration> Commands { get; } = Discover();
 
     /// <summary>
-    /// Registers every discovered command with the supplied Spectre configurator, in order.
+    /// Finds the command registered under the given name (case-insensitive).
     /// </summary>
-    /// <param name="config">The Spectre configurator.</param>
-    public static void RegisterAll(IConfigurator config)
+    /// <param name="name">The command name.</param>
+    /// <returns>The matching <see cref="CommandRegistration"/>, or <see langword="null"/> if there is none.</returns>
+    public static CommandRegistration? Find(string name)
     {
-        Guard.IsNotNull(config);
-        foreach (var command in Commands)
-        {
-            _ = AddCommandMethod.MakeGenericMethod(command.CommandType).Invoke(config, [command.Name]);
-        }
-    }
-
-    /// <summary>
-    /// Tells whether the command with the given name forwards all of its arguments verbatim.
-    /// </summary>
-    /// <param name="commandName">The command name.</param>
-    /// <returns><see langword="true"/> if the command consumes and forwards all of its arguments; otherwise, <see langword="false"/>.</returns>
-    public static bool ConsumesAllArguments(string commandName)
-    {
-        Guard.IsNotNullOrEmpty(commandName);
-        return Commands.Any(c => string.Equals(c.Name, commandName, StringComparison.OrdinalIgnoreCase) && c.ConsumesAllArguments);
+        Guard.IsNotNullOrEmpty(name);
+        return Commands.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     private static IReadOnlyList<CommandRegistration> Discover()
@@ -64,7 +47,7 @@ internal static class CommandRegistry
             var attribute = type.GetCustomAttribute<ImplementsCommandAttribute>();
             if (attribute is not null)
             {
-                discovered.Add(new CommandRegistration(attribute.Name, type, attribute.ConsumesAllArguments));
+                discovered.Add(new CommandRegistration(attribute.Name, type, attribute.ConsumesAllArguments, attribute.SettingsType));
             }
         }
 
@@ -85,27 +68,5 @@ internal static class CommandRegistry
     {
         var index = Array.FindIndex(PipelineCommandNames, n => string.Equals(n, command.Name, StringComparison.OrdinalIgnoreCase));
         return index < 0 ? int.MaxValue : index;
-    }
-
-    private static MethodInfo FindAddCommandMethod()
-    {
-        foreach (var method in typeof(IConfigurator).GetMethods())
-        {
-            if (!method.IsGenericMethodDefinition || method.Name != nameof(IConfigurator.AddCommand))
-            {
-                continue;
-            }
-
-            var parameters = method.GetParameters();
-            var isMatch = method.GetGenericArguments().Length == 1
-                && parameters.Length == 1
-                && parameters[0].ParameterType == typeof(string);
-            if (isMatch)
-            {
-                return method;
-            }
-        }
-
-        throw new InvalidOperationException("Could not locate IConfigurator.AddCommand<TCommand>(string) via reflection.");
     }
 }

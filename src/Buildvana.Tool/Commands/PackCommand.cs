@@ -6,18 +6,15 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.Infrastructure.Execution;
-using CommunityToolkit.Diagnostics;
-using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Commands;
 
 [ImplementsCommand("pack", consumesAllArguments: true)]
 [Description("Clean, restore, build all projects, run tests, and prepare build artifacts.")]
-internal sealed class PackCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
+internal sealed class PackCommand(IServiceProvider services) : IBvCommand
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, BaseSettings settings, CancellationToken cancellationToken)
+    public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        Guard.IsNotNull(settings);
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
         await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
         await BuildSteps.BuildAsync(services).ConfigureAwait(false);

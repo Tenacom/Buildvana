@@ -54,7 +54,7 @@ internal static class BuildSteps
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        var forwardedArgs = services.GetRequiredService<CommandParameters>().Forwarded;
         return dotnet.RestoreSolutionAsync(solution, forwardedArgs);
     }
 
@@ -63,7 +63,7 @@ internal static class BuildSteps
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        var forwardedArgs = services.GetRequiredService<CommandParameters>().Forwarded;
         return dotnet.BuildSolutionAsync(solution, configuration, forwardedArgs, restore: false);
     }
 
@@ -72,7 +72,7 @@ internal static class BuildSteps
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        var forwardedArgs = services.GetRequiredService<CommandParameters>().Forwarded;
         return dotnet.TestSolutionAsync(solution, configuration, forwardedArgs, restore: false, build: false);
     }
 
@@ -81,7 +81,7 @@ internal static class BuildSteps
         Guard.IsNotNull(services);
         var dotnet = services.GetRequiredService<DotNetService>();
         var solution = services.GetRequiredService<SolutionContext>();
-        var forwardedArgs = services.GetRequiredService<ForwardedArguments>().Args;
+        var forwardedArgs = services.GetRequiredService<CommandParameters>().Forwarded;
         return dotnet.PackSolutionAsync(solution, configuration, forwardedArgs, restore: false, build: false);
     }
 }

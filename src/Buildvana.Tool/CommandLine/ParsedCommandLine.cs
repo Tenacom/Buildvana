@@ -18,7 +18,7 @@ namespace Buildvana.Tool.CommandLine;
 /// <param name="OptionTokens">The remaining non-global, non-positional tokens before <c>--</c>, for the command to parse.</param>
 /// <param name="Forwarded">The tokens after the first <c>--</c>, to forward verbatim.</param>
 internal sealed record ParsedCommandLine(
-    GlobalOptions Globals,
+    GlobalSettings Globals,
     bool HelpRequested,
     string? Subcommand,
     IReadOnlyList<string> Positionals,

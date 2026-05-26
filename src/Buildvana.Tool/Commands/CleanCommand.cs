@@ -6,18 +6,15 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.Infrastructure.Execution;
-using CommunityToolkit.Diagnostics;
-using Spectre.Console.Cli;
 
 namespace Buildvana.Tool.Commands;
 
 [ImplementsCommand("clean")]
 [Description("Remove all build artifacts, intermediate output, and temporary files. Like 'dotnet clean', but more aggressive.")]
-internal sealed class CleanCommand(IServiceProvider services) : AsyncCommand<BaseSettings>
+internal sealed class CleanCommand(IServiceProvider services) : IBvCommand
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, BaseSettings settings, CancellationToken cancellationToken)
+    public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        Guard.IsNotNull(settings);
         await BuildSteps.CleanAsync(services).ConfigureAwait(false);
         return 0;
     }
