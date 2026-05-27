@@ -10,17 +10,16 @@ namespace Buildvana.Tool.CommandLine;
 /// <see cref="CliArgSplitter"/>: the options it should parse, its positional parameters, and the tokens
 /// forwarded verbatim after the <c>--</c> separator.
 /// </summary>
-internal sealed class CommandParameters
-{
-    /// <summary>
-    /// Gets the option tokens before <c>--</c> (minus globals, subcommand, and positionals), for the
-    /// command's settings to parse. Empty when none were given.
-    /// </summary>
-    public IReadOnlyList<string> Options { get; init; } = [];
+internal sealed record CommandParameters(
 
     /// <summary>
-    /// Gets the tokens after the first <c>--</c>, forwarded verbatim to the underlying <c>dotnet</c>
-    /// invocation(s). Empty when none.
+    /// Option tokens before <c>--</c> (minus globals, subcommand, and positionals), for the
+    /// command's settings to parse. Empty when none were given.
     /// </summary>
-    public IReadOnlyList<string> Forwarded { get; init; } = [];
-}
+    IReadOnlyList<string> Options,
+
+    /// <summary>
+    /// Tokens after the first <c>--</c>, forwarded verbatim to the invoked external command,
+    /// when applicable. Empty when none.
+    /// </summary>
+    IReadOnlyList<string> Forwarded);
