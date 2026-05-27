@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
@@ -56,9 +57,10 @@ internal sealed class BuildPipeline
     /// </summary>
     /// <param name="last">The last step to run.</param>
     /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="cancellationToken">A token to observe while running the pipeline. When signalled, the pipeline stops launching further steps and the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RunThroughAsync(BuildStep last, string configuration = DefaultConfiguration)
-        => RunRangeAsync(BuildStep.Clean, last, configuration);
+    public Task RunThroughAsync(BuildStep last, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
+        => RunRangeAsync(BuildStep.Clean, last, configuration, cancellationToken);
 
     /// <summary>
     /// Runs the pipeline from <paramref name="first"/> through <paramref name="last"/>, inclusive.
@@ -66,13 +68,15 @@ internal sealed class BuildPipeline
     /// <param name="first">The first step to run.</param>
     /// <param name="last">The last step to run.</param>
     /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="cancellationToken">A token to observe while running the pipeline. When signalled, the pipeline stops launching further steps and the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task RunRangeAsync(BuildStep first, BuildStep last, string configuration = DefaultConfiguration)
+    public async Task RunRangeAsync(BuildStep first, BuildStep last, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
     {
         Guard.IsLessThanOrEqualTo((int)first, (int)last, nameof(first));
         for (var step = first; step <= last; step++)
         {
-            await RunAsync(step, configuration).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            await RunAsync(step, configuration, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -81,19 +85,20 @@ internal sealed class BuildPipeline
     /// </summary>
     /// <param name="step">The step to run.</param>
     /// <param name="configuration">The MSBuild configuration to build (ignored by <see cref="BuildStep.Clean"/> and <see cref="BuildStep.Restore"/>).</param>
+    /// <param name="cancellationToken">A token to observe while running the step. When signalled, the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RunAsync(BuildStep step, string configuration = DefaultConfiguration)
+    public Task RunAsync(BuildStep step, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
         => step switch
         {
-            BuildStep.Clean => CleanAsync(),
-            BuildStep.Restore => RestoreAsync(),
-            BuildStep.Build => BuildAsync(configuration),
-            BuildStep.Test => TestAsync(configuration),
-            BuildStep.Pack => PackAsync(configuration),
+            BuildStep.Clean => CleanAsync(cancellationToken),
+            BuildStep.Restore => RestoreAsync(cancellationToken),
+            BuildStep.Build => BuildAsync(configuration, cancellationToken),
+            BuildStep.Test => TestAsync(configuration, cancellationToken),
+            BuildStep.Pack => PackAsync(configuration, cancellationToken),
             _ => ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(step), step, "Unknown build step."),
         };
 
-    private Task CleanAsync()
+    private Task CleanAsync(CancellationToken cancellationToken)
     {
         var logger = _loggerFactory.CreateLogger("Clean");
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), logger);
@@ -103,6 +108,7 @@ internal sealed class BuildPipeline
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.TestResults), logger);
         foreach (var project in _solution.Model.SolutionProjects)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var projectDirectory = Path.GetDirectoryName(_solution.ResolveProjectPath(project))!;
             FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "bin"), logger);
             FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "obj"), logger);
@@ -111,15 +117,15 @@ internal sealed class BuildPipeline
         return Task.CompletedTask;
     }
 
-    private Task RestoreAsync()
-        => _dotnet.RestoreSolutionAsync(_solution, _forwardedArgs);
+    private Task RestoreAsync(CancellationToken cancellationToken)
+        => _dotnet.RestoreSolutionAsync(_solution, _forwardedArgs, cancellationToken);
 
-    private Task BuildAsync(string configuration)
-        => _dotnet.BuildSolutionAsync(_solution, configuration, _forwardedArgs, restore: false);
+    private Task BuildAsync(string configuration, CancellationToken cancellationToken)
+        => _dotnet.BuildSolutionAsync(_solution, configuration, _forwardedArgs, restore: false, cancellationToken);
 
-    private Task TestAsync(string configuration)
-        => _dotnet.TestSolutionAsync(_solution, configuration, _forwardedArgs, restore: false, build: false);
+    private Task TestAsync(string configuration, CancellationToken cancellationToken)
+        => _dotnet.TestSolutionAsync(_solution, configuration, _forwardedArgs, restore: false, build: false, cancellationToken);
 
-    private Task PackAsync(string configuration)
-        => _dotnet.PackSolutionAsync(_solution, configuration, _forwardedArgs, restore: false, build: false);
+    private Task PackAsync(string configuration, CancellationToken cancellationToken)
+        => _dotnet.PackSolutionAsync(_solution, configuration, _forwardedArgs, restore: false, build: false, cancellationToken);
 }

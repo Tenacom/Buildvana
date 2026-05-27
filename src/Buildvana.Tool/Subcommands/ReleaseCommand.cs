@@ -34,7 +34,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 
         // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
-        await pipeline.RunThroughAsync(BuildStep.Test, configuration).ConfigureAwait(false);
+        await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
 
         var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Release");
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
@@ -170,7 +170,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Artifact pass (Restore→Pack, no Clean): rebuild against the resolved version and make artifacts.
-            await pipeline.RunRangeAsync(BuildStep.Restore, BuildStep.Pack, configuration).ConfigureAwait(false);
+            await pipeline.RunRangeAsync(BuildStep.Restore, BuildStep.Pack, configuration, cancellationToken).ConfigureAwait(false);
 
             if (changelogUpdated)
             {
@@ -220,7 +220,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             release.PushUpdates();
 
             // Publish NuGet packages
-            await dotnet.NuGetPushAllAsync(artifactsPath).ConfigureAwait(false);
+            await dotnet.NuGetPushAllAsync(artifactsPath, cancellationToken).ConfigureAwait(false);
 
             // Gather build assets from Buildvana.Sdk release asset lists
             logger.LogInformation("Reading release asset lists...");

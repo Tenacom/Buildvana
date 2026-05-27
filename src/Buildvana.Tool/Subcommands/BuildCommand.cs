@@ -15,7 +15,7 @@ internal sealed class BuildCommand(BuildPipeline pipeline) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await pipeline.RunThroughAsync(BuildStep.Build).ConfigureAwait(false);
+        await pipeline.RunThroughAsync(BuildStep.Build, cancellationToken: cancellationToken).ConfigureAwait(false);
         return 0;
     }
 }

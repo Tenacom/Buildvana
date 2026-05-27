@@ -29,6 +29,9 @@ namespace Buildvana.Tool;
 
 internal static class Program
 {
+    // 128 + SIGINT (2): the POSIX convention for a process terminated by Ctrl-C.
+    private const int CancelledExitCode = 130;
+
     public static async Task<int> Main(string[] args)
     {
         var console = AnsiConsole.Console;
@@ -84,8 +87,9 @@ internal static class Program
                 using var cts = new CancellationTokenSource();
                 void OnCancel(object? sender, ConsoleCancelEventArgs e)
                 {
-                    // Suppress the immediate process kill so commands can observe the token; child processes
-                    // still receive their own Ctrl-C from the console and terminate on their own.
+                    // Suppress bv's own immediate termination so the command can observe the token and shut down
+                    // cleanly: the token is forwarded down to the running `dotnet` child, whose process tree is
+                    // then killed.
                     e.Cancel = true;
 
                     // Safe: the handler is removed in the finally below before cts is disposed at end of scope.
@@ -104,6 +108,11 @@ internal static class Program
                     Console.CancelKeyPress -= OnCancel;
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            console.MarkupLine("[yellow]Operation cancelled.[/]");
+            return CancelledExitCode;
         }
         catch (BuildFailedException ex)
         {

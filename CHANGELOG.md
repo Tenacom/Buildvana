@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of `restore`/`build`/`test`/`pack`. MSBuild now uses its default parallelism unless you forward your own `-m`/`-maxcpucount` switch.
 - **BREAKING CHANGE**: The `-c`/`--configuration` option is no longer parsed by `bv restore`/`build`/`test`/`pack`; for those commands it is just another forwarded argument, passed after the `--` separator. `bv` emits `Release` as an overridable default, so a forwarded `-c`/`-p:Configuration=` still wins (e.g. `bv build -- -c Debug` builds `Debug`). `bv release` keeps `-c`/`--configuration` as a parsed option, since it needs the value to locate build artifacts.
 - `--main-branch` is now a global option: it is accepted at any position on the command line (before or after the subcommand name), appears in the `GLOBAL OPTIONS` section of help, and is honored by the commands that talk to Git.
+- `bv`'s build commands (`clean`, `restore`, `build`, `test`, `pack`) and `release` now observe cancellation. Pressing Ctrl-C (or a host cancelling the operation) stops the pipeline promptly: it stops launching further steps and terminates the running `dotnet` child process instead of waiting for it to finish, then `bv` exits with code 130. Partial build output may be left behind on cancellation; `bv clean` recovers.
 
 ### Bugs fixed in this release
 

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure;
@@ -74,8 +75,9 @@ internal sealed class DotNetService
     /// </summary>
     /// <param name="solution">The solution to restore.</param>
     /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
+    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RestoreSolutionAsync(SolutionContext solution, IReadOnlyList<string> forwardedArgs)
+    public Task RestoreSolutionAsync(SolutionContext solution, IReadOnlyList<string> forwardedArgs, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNull(forwardedArgs);
@@ -83,7 +85,7 @@ internal sealed class DotNetService
         List<string> args = ["restore", solution.SolutionPath, "--disable-parallel", "-nologo", "-v", Verbosity];
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args);
+        return RunDotNetAsync(args, cancellationToken);
     }
 
     /// <summary>
@@ -93,8 +95,9 @@ internal sealed class DotNetService
     /// <param name="configuration">The MSBuild configuration to build.</param>
     /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
+    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task BuildSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore)
+    public Task BuildSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
@@ -108,7 +111,7 @@ internal sealed class DotNetService
 
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args);
+        return RunDotNetAsync(args, cancellationToken);
     }
 
     /// <summary>
@@ -120,8 +123,9 @@ internal sealed class DotNetService
     /// (reaching the Microsoft.Testing.Platform test applications).</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before testing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
+    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task TestSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, bool build)
+    public async Task TestSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, bool build, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
@@ -136,7 +140,7 @@ internal sealed class DotNetService
             // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
             // test-application options that `dotnet msbuild` would reject.
             List<string> probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
-            var probe = await RunDotNetAsync(probeArgs).ConfigureAwait(false);
+            var probe = await RunDotNetAsync(probeArgs, cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
@@ -171,7 +175,7 @@ internal sealed class DotNetService
         args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", CommonPaths.TestResults]);
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: true));
-        await RunDotNetAsync(args).ConfigureAwait(false);
+        await RunDotNetAsync(args, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -182,8 +186,9 @@ internal sealed class DotNetService
     /// <param name="forwardedArgs">Extra arguments to forward verbatim to the <c>dotnet</c> invocation.</param>
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before packing, <see langword="false"/> otherwise.</param>
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
+    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task PackSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, bool build)
+    public Task PackSolutionAsync(SolutionContext solution, string configuration, IReadOnlyList<string> forwardedArgs, bool restore, bool build, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
@@ -202,15 +207,16 @@ internal sealed class DotNetService
 
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args);
+        return RunDotNetAsync(args, cancellationToken);
     }
 
     /// <summary>
     /// Asynchronously pushes all produced NuGet packages to the appropriate NuGet server.
     /// </summary>
     /// <param name="artifactsPath">The path of the directory containing the produced <c>*.nupkg</c> files.</param>
+    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task NuGetPushAllAsync(string artifactsPath)
+    public async Task NuGetPushAllAsync(string artifactsPath, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNullOrEmpty(artifactsPath);
         var packages = FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg").ToArray();
@@ -231,7 +237,8 @@ internal sealed class DotNetService
             await _processRunner
                 .RunAsync(
                     DotNetMuxer,
-                    ["nuget", "push", path, "--source", target.Source, "--api-key", target.ApiKey, "--skip-duplicate", "--force-english-output"])
+                    ["nuget", "push", path, "--source", target.Source, "--api-key", target.ApiKey, "--skip-duplicate", "--force-english-output"],
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
     }
@@ -244,6 +251,6 @@ internal sealed class DotNetService
         return $"{prefix}ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
     }
 
-    private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args)
-        => _processRunner.RunAsync(DotNetMuxer, args);
+    private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args, CancellationToken cancellationToken = default)
+        => _processRunner.RunAsync(DotNetMuxer, args, cancellationToken: cancellationToken);
 }

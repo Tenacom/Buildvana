@@ -15,7 +15,7 @@ internal sealed class RestoreCommand(BuildPipeline pipeline) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await pipeline.RunThroughAsync(BuildStep.Restore).ConfigureAwait(false);
+        await pipeline.RunThroughAsync(BuildStep.Restore, cancellationToken: cancellationToken).ConfigureAwait(false);
         return 0;
     }
 }
