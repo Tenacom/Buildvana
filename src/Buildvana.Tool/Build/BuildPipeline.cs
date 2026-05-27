@@ -69,6 +69,7 @@ internal sealed class BuildPipeline
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     public async Task RunRangeAsync(BuildStep first, BuildStep last, string configuration = DefaultConfiguration)
     {
+        Guard.IsLessThanOrEqualTo((int)first, (int)last, nameof(first));
         for (var step = first; step <= last; step++)
         {
             await RunAsync(step, configuration).ConfigureAwait(false);
