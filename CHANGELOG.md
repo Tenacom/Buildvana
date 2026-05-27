@@ -54,11 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `diagnostic` (or `diag`)
 
   Cake verbosity values (e.g., `verbose`) are no longer accepted.
-- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` now forward any extra command-line arguments verbatim to the underlying `dotnet` invocation(s), in the order given; `bv` no longer parses or validates them. Malformed or unknown arguments now produce an error from `dotnet` (or, for `bv test`, from the Microsoft.Testing.Platform test application) rather than from `bv`. Previously only `-p:`/`/p:` MSBuild properties were forwarded. `bv` also always forwards `--nologo` and its resolved `--verbosity` (default `normal`) to those invocations.
-  - `bv build -m:8 -v:minimal` forwards `-m:8 -v:minimal` to `dotnet build`.
-  - `bv test --report-trx` reaches the test application.
+- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` forward extra command-line arguments to the underlying `dotnet` invocation(s) only after a `--` separator: everything after the first `--` is passed through verbatim, in the order given, and `bv` no longer parses or validates it. A non-global, option-looking token _before_ `--` is now an error that points you at the separator. Malformed or unknown forwarded arguments produce an error from `dotnet` (or, for `bv test`, from the Microsoft.Testing.Platform test application) rather than from `bv`. Previously only `-p:`/`/p:` MSBuild properties were forwarded. `bv` also always forwards `--nologo` and its resolved `--verbosity` (default `normal`) to those invocations.
+  - `bv build -- -m:8 -v:minimal` forwards `-m:8 -v:minimal` to `dotnet build`.
+  - `bv test -- --report-trx` reaches the test application.
+- **BREAKING CHANGE**: `bv release` rejects a `--` separator (and anything after it): unlike the pipeline commands, it has no underlying `dotnet` pass-through to forward arguments to.
 - **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of `restore`/`build`/`test`/`pack`. MSBuild now uses its default parallelism unless you forward your own `-m`/`-maxcpucount` switch.
-- **BREAKING CHANGE**: The `-c`/`--configuration` option is no longer parsed by `bv restore`/`build`/`test`/`pack`; for those commands it is just another forwarded argument. `bv` emits `Release` as an overridable default, so a forwarded `-c`/`-p:Configuration=` still wins (e.g. `bv build -c Debug` builds `Debug`). `bv release` keeps `-c`/`--configuration` as a parsed option, since it needs the value to locate build artifacts.
+- **BREAKING CHANGE**: The `-c`/`--configuration` option is no longer parsed by `bv restore`/`build`/`test`/`pack`; for those commands it is just another forwarded argument, passed after the `--` separator. `bv` emits `Release` as an overridable default, so a forwarded `-c`/`-p:Configuration=` still wins (e.g. `bv build -- -c Debug` builds `Debug`). `bv release` keeps `-c`/`--configuration` as a parsed option, since it needs the value to locate build artifacts.
 - `--main-branch` is now a global option: it is accepted at any position on the command line (before or after the subcommand name), appears in the `GLOBAL OPTIONS` section of help, and is honored by the commands that talk to Git.
 
 ### Bugs fixed in this release
