@@ -9,6 +9,7 @@ using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
+using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure.Execution;
@@ -142,6 +143,7 @@ internal static class Program
             .AddSingleton<ChangelogService>()
             .AddSingleton<DocFxService>()
             .AddSingleton<DotNetService>()
+            .AddSingleton<BuildPipeline>()
             .AddSingleton(static _ => ToolConfiguration.FromEnvironment())
             .AddSingleton(static _ => NuGetPushConfiguration.FromEnvironment())
             .AddSingleton<SelfReferenceUpdater>();

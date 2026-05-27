@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
+using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
@@ -25,18 +26,15 @@ namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("release", settingsType: typeof(ReleaseSettings))]
 [Description("Publish a new public release (CI only).")]
-internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings settings) : IBvCommand
+internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings settings, BuildPipeline pipeline) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         var configuration = settings.ResolveConfiguration();
         var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 
-        // Pre-pipeline (mirrors today's [IsDependentOn(TestTask)] chain).
-        await BuildSteps.CleanAsync(services).ConfigureAwait(false);
-        await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
-        await BuildSteps.BuildAsync(services, configuration).ConfigureAwait(false);
-        await BuildSteps.TestAsync(services, configuration).ConfigureAwait(false);
+        // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
+        await pipeline.RunThroughAsync(BuildStep.Test, configuration).ConfigureAwait(false);
 
         var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Release");
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
@@ -171,11 +169,8 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // however, that is already a prerequisite for using Nerdbank.GitVersioning.
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
-            // Build, test, make artifacts
-            await BuildSteps.RestoreAsync(services).ConfigureAwait(false);
-            await BuildSteps.BuildAsync(services, configuration).ConfigureAwait(false);
-            await BuildSteps.TestAsync(services, configuration).ConfigureAwait(false);
-            await BuildSteps.PackAsync(services, configuration).ConfigureAwait(false);
+            // Artifact pass (Restore→Pack, no Clean): rebuild against the resolved version and make artifacts.
+            await pipeline.RunRangeAsync(BuildStep.Restore, BuildStep.Pack, configuration).ConfigureAwait(false);
 
             if (changelogUpdated)
             {
