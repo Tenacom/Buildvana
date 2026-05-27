@@ -122,7 +122,7 @@ internal static class Program
             .AddSingleton<SpectreLoggerProvider>(_ => new SpectreLoggerProvider(console) { MinLevel = initialLogLevel })
             .AddSingleton<ILoggerProvider>(static sp => sp.GetRequiredService<SpectreLoggerProvider>())
             .AddSingleton(globals)
-            .AddSingleton(new CommandParameters { Options = parsed.OptionTokens, Forwarded = parsed.Forwarded })
+            .AddSingleton(new CommandParameters(parsed.OptionTokens, parsed.Forwarded))
             .AddSingleton(static sp => ReleaseSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
             .AddLogging(static builder => builder.SetMinimumLevel(LogLevel.Trace))
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
