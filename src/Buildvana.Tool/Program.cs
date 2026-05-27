@@ -84,7 +84,13 @@ internal static class Program
             var services = BuildServiceProvider(console, globals, parsed, initialLogLevel);
             await using (services.ConfigureAwait(false))
             {
-                using var cts = new CancellationTokenSource();
+                var cts = new CancellationTokenSource();
+
+                // Serializes the Ctrl-C handler with cts disposal in the finally block below. Unsubscribing the
+                // handler does not wait for an in-flight invocation, so without this gate a cts.Cancel() racing
+                // cts.Dispose() could throw ObjectDisposedException on the handler thread.
+                var cancelGate = new Lock();
+                var ctsDisposed = false;
                 void OnCancel(object? sender, ConsoleCancelEventArgs e)
                 {
                     // Suppress bv's own immediate termination so the command can observe the token and shut down
@@ -92,9 +98,17 @@ internal static class Program
                     // then killed.
                     e.Cancel = true;
 
-                    // Safe: the handler is removed in the finally below before cts is disposed at end of scope.
-                    // ReSharper disable once AccessToDisposedClosure
-                    cts.Cancel();
+                    lock (cancelGate)
+                    {
+                        // ReSharper disable once AccessToModifiedClosure
+                        if (ctsDisposed)
+                        {
+                            return;
+                        }
+
+                        // ReSharper disable once AccessToDisposedClosure
+                        cts.Cancel();
+                    }
                 }
 
                 Console.CancelKeyPress += OnCancel;
@@ -106,6 +120,11 @@ internal static class Program
                 finally
                 {
                     Console.CancelKeyPress -= OnCancel;
+                    lock (cancelGate)
+                    {
+                        ctsDisposed = true;
+                        cts.Dispose();
+                    }
                 }
             }
         }
