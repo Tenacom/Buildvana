@@ -17,7 +17,7 @@ namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
 /// Bodies of the individual pipeline steps (clean / restore / build / test / pack), independent of the
-/// Spectre commands that invoke them. Each step resolves the services it needs from the supplied provider
+/// commands that invoke them. Each step resolves the services it needs from the supplied provider
 /// so it remains callable on its own (e.g., from a future <c>bv just &lt;step&gt;</c> subcommand).
 /// </summary>
 internal static class BuildSteps
