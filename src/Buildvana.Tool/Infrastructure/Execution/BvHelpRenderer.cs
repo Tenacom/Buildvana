@@ -140,6 +140,7 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         var grid = NewGrid();
         foreach (var (names, description) in options)
         {
+            // Description is not escaped because it may contain markup (e.g., `[bold]Required[/]`).
             grid.AddRow(new Markup(Markup.Escape(names)), new Markup(StripTrailingPeriod(description)));
         }
 
