@@ -10,7 +10,7 @@ using Buildvana.Tool.Infrastructure.Execution;
 namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("test", consumesAllArguments: true)]
-[Description("Build all projects and run tests.")]
+[Description("Clean, restore, build all projects, and run tests.")]
 internal sealed class TestCommand(BuildPipeline pipeline) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
