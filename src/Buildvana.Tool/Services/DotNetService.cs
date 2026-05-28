@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
@@ -15,7 +16,6 @@ using Buildvana.Tool.Subcommands;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 using IProcessRunner = Buildvana.Core.Process.IProcessRunner;
 using ProcessResult = Buildvana.Core.Process.ProcessResult;
@@ -34,7 +34,7 @@ internal sealed class DotNetService
             ? p
             : "dotnet";
 
-    private readonly ILogger<DotNetService> _logger;
+    private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
     private readonly IServiceProvider _services;
     private readonly ServerAdapter _server;
@@ -45,20 +45,20 @@ internal sealed class DotNetService
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
     /// </summary>
     public DotNetService(
-        ILogger<DotNetService> logger,
+        IReporter reporter,
         IProcessRunner processRunner,
         IServiceProvider services,
         ServerAdapter server,
         VersionService version,
         GlobalSettings globals)
     {
-        Guard.IsNotNull(logger);
+        Guard.IsNotNull(reporter);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(services);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         Guard.IsNotNull(globals);
-        _logger = logger;
+        _reporter = reporter;
         _processRunner = processRunner;
         _services = services;
         _server = server;
@@ -81,11 +81,11 @@ internal sealed class DotNetService
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNull(forwardedArgs);
-        _logger.LogInformation("Restoring NuGet packages for solution...");
+        _reporter.Info("Restoring NuGet packages for solution...");
         List<string> args = ["restore", solution.SolutionPath, "--disable-parallel", "-nologo", "-v", Verbosity];
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args, cancellationToken);
+        return RunDotNetAsync(args, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ internal sealed class DotNetService
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
         Guard.IsNotNull(forwardedArgs);
-        _logger.LogInformation("Building solution (restore = {Restore})...", restore);
+        _reporter.Info($"Building solution (restore = {restore})...");
         List<string> args = ["build", solution.SolutionPath, "-nologo", "-v", Verbosity, $"-p:Configuration={configuration}"];
         if (!restore)
         {
@@ -111,7 +111,7 @@ internal sealed class DotNetService
 
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args, cancellationToken);
+        return RunDotNetAsync(args, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -130,21 +130,21 @@ internal sealed class DotNetService
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
         Guard.IsNotNull(forwardedArgs);
-        _logger.LogInformation("Checking for MTP test projects...");
+        _reporter.Info("Checking for MTP test projects...");
         var hasTestProjects = false;
         foreach (var project in solution.Model.SolutionProjects)
         {
             var projectPath = solution.ResolveProjectPath(project);
-            _logger.LogDebug("Checking '{Path}'...", projectPath);
+            _reporter.Detail($"Checking '{projectPath}'...");
 
             // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
             // test-application options that `dotnet msbuild` would reject.
             List<string> probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
-            var probe = await RunDotNetAsync(probeArgs, cancellationToken).ConfigureAwait(false);
+            var probe = await RunDotNetAsync(probeArgs, streamOutput: false, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogDebug("Project '{Path}' is a test project, will run tests.", projectPath);
+                _reporter.Detail($"Project '{projectPath}' is a test project, will run tests.");
                 hasTestProjects = true;
                 break;
             }
@@ -152,11 +152,11 @@ internal sealed class DotNetService
 
         if (!hasTestProjects)
         {
-            _logger.LogInformation("No test projects found, skipping tests.");
+            _reporter.Info("No test projects found, skipping tests.");
             return;
         }
 
-        _logger.LogInformation("Running tests (restore = {Restore}, build = {Build})...", restore, build);
+        _reporter.Info($"Running tests (restore = {restore}, build = {build})...");
 
         // `dotnet test` consumes --verbosity itself; the configuration and ContinuousIntegrationBuild are
         // passed as MSBuild properties using the `--property:` form, which is what `dotnet test` understands
@@ -175,7 +175,7 @@ internal sealed class DotNetService
         args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", CommonPaths.TestResults]);
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: true));
-        await RunDotNetAsync(args, cancellationToken).ConfigureAwait(false);
+        await RunDotNetAsync(args, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ internal sealed class DotNetService
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
         Guard.IsNotNull(forwardedArgs);
-        _logger.LogInformation("Packing solution (restore = {Restore}, build = {Build})...", restore, build);
+        _reporter.Info($"Packing solution (restore = {restore}, build = {build})...");
         List<string> args = ["pack", solution.SolutionPath, "-nologo", "-v", Verbosity, $"-p:Configuration={configuration}"];
         if (!build)
         {
@@ -207,7 +207,7 @@ internal sealed class DotNetService
 
         args.AddRange(forwardedArgs);
         args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args, cancellationToken);
+        return RunDotNetAsync(args, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -222,7 +222,7 @@ internal sealed class DotNetService
         var packages = FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg").ToArray();
         if (packages.Length == 0)
         {
-            _logger.LogDebug("No .nupkg files to push.");
+            _reporter.Detail("No .nupkg files to push.");
             return;
         }
 
@@ -233,7 +233,7 @@ internal sealed class DotNetService
             : nugetConfig.Release;
         foreach (var path in packages)
         {
-            _logger.LogInformation("Pushing {Path} to {Source}...", path, target.Source);
+            _reporter.Info($"Pushing {path} to {target.Source}...");
             await _processRunner
                 .RunAsync(
                     DotNetMuxer,
@@ -251,6 +251,13 @@ internal sealed class DotNetService
         return $"{prefix}ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
     }
 
-    private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args, CancellationToken cancellationToken = default)
-        => _processRunner.RunAsync(DotNetMuxer, args, cancellationToken: cancellationToken);
+    // streamOutput is false for bv-internal evaluations (e.g. the MTP probe) whose output is captured and
+    // inspected rather than shown to the user; user-facing verbs stream the child's output live.
+    private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args, bool streamOutput = true, CancellationToken cancellationToken = default)
+        => _processRunner.RunAsync(
+            DotNetMuxer,
+            args,
+            onStdout: streamOutput ? _reporter.ChildOutput : null,
+            onStderr: streamOutput ? _reporter.ChildError : null,
+            cancellationToken: cancellationToken);
 }

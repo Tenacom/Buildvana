@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="Runtime" PrivateAssets="All" />
     <!-- Roslyn is referenced for compile only: the MSBuild task host always provides it at run time (the build uses it to compile), so bundling it would be redundant and is in fact stripped by the SDK's package-conflict resolution. -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" ExcludeAssets="Runtime" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <!-- Transitive vulnerability overrides -->

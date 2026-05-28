@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
@@ -13,7 +14,6 @@ using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure.Execution;
-using Buildvana.Tool.Infrastructure.Logging;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
@@ -22,7 +22,6 @@ using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Spectre.Console;
 
 namespace Buildvana.Tool;
@@ -35,6 +34,10 @@ internal static class Program
     public static async Task<int> Main(string[] args)
     {
         var console = AnsiConsole.Console;
+
+        // Assigned once --verbosity and --color/--no-color are known. The outer catch falls back to a default
+        // reporter for errors that occur before that point (e.g. an invalid --verbosity value).
+        IReporter? reporter = null;
 
         try
         {
@@ -77,11 +80,19 @@ internal static class Program
 
             CommandArgumentValidator.Validate(command, parsed);
 
-            // Parse --verbosity eagerly (so the error surfaces in the outer catch) but defer SpectreLoggerProvider
-            // construction to the DI factory below, so the container owns disposal.
-            var initialLogLevel = globals.Verbosity is null ? LogLevel.Information : ParseVerbosity(globals.Verbosity);
+            // Parse --verbosity eagerly so an invalid value surfaces in the outer catch.
+            var verbosity = globals.Verbosity is null ? Verbosity.Normal : ParseVerbosity(globals.Verbosity);
 
-            var services = BuildServiceProvider(console, globals, parsed, initialLogLevel);
+            // --color / --no-color win over auto-detection; neither (or both) leaves the reporter to auto-detect.
+            bool? colorOverride = (globals.Color, globals.NoColor) switch
+            {
+                (true, false) => true,
+                (false, true) => false,
+                _ => null,
+            };
+            reporter = new ConsoleReporter(verbosity, colorOverride);
+
+            var services = BuildServiceProvider(reporter, globals, parsed);
             await using (services.ConfigureAwait(false))
             {
                 var cts = new CancellationTokenSource();
@@ -130,30 +141,28 @@ internal static class Program
         }
         catch (OperationCanceledException)
         {
-            console.MarkupLine("[yellow]Operation cancelled.[/]");
+            (reporter ?? CreateDefaultReporter()).Error("Operation cancelled.");
             return CancelledExitCode;
         }
         catch (BuildFailedException ex)
         {
-            console.MarkupLineInterpolated($"[red]{ex.Message}[/]");
+            (reporter ?? CreateDefaultReporter()).Error(ex.Message);
             return ex.ExitCode;
         }
+
+        static IReporter CreateDefaultReporter() => new ConsoleReporter(Verbosity.Normal, colorOverride: null);
     }
 
     private static ServiceProvider BuildServiceProvider(
-        IAnsiConsole console,
+        IReporter reporter,
         GlobalSettings globals,
-        ParsedCommandLine parsed,
-        LogLevel initialLogLevel)
+        ParsedCommandLine parsed)
     {
         var services = new ServiceCollection()
-            .AddSingleton(console)
-            .AddSingleton<SpectreLoggerProvider>(_ => new SpectreLoggerProvider(console) { MinLevel = initialLogLevel })
-            .AddSingleton<ILoggerProvider>(static sp => sp.GetRequiredService<SpectreLoggerProvider>())
+            .AddSingleton(reporter)
             .AddSingleton(globals)
             .AddSingleton(new CommandParameters(parsed.OptionTokens, parsed.Forwarded))
             .AddSingleton(static sp => ReleaseSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
-            .AddLogging(static builder => builder.SetMinimumLevel(LogLevel.Trace))
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
 
             // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
@@ -184,13 +193,13 @@ internal static class Program
         return services.BuildServiceProvider();
     }
 
-    private static LogLevel ParseVerbosity(string raw) => raw.ToUpperInvariant() switch
+    private static Verbosity ParseVerbosity(string raw) => raw.ToUpperInvariant() switch
     {
-        "QUIET" or "Q" => LogLevel.Error,
-        "MINIMAL" or "M" => LogLevel.Warning,
-        "NORMAL" or "N" => LogLevel.Information,
-        "DETAILED" or "D" => LogLevel.Debug,
-        "DIAGNOSTIC" or "DIAG" => LogLevel.Trace,
+        "QUIET" or "Q" => Verbosity.Quiet,
+        "MINIMAL" or "M" => Verbosity.Minimal,
+        "NORMAL" or "N" => Verbosity.Normal,
+        "DETAILED" or "D" => Verbosity.Detailed,
+        "DIAGNOSTIC" or "DIAG" => Verbosity.Diagnostic,
         _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: quiet, minimal, normal, detailed, diagnostic."),
     };
 }

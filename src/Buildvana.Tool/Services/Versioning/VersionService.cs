@@ -2,12 +2,12 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.PublicApiFiles;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
 
 namespace Buildvana.Tool.Services.Versioning;
@@ -17,7 +17,7 @@ namespace Buildvana.Tool.Services.Versioning;
 /// </summary>
 internal sealed class VersionService
 {
-    private readonly ILogger<VersionService> _logger;
+    private readonly IReporter _reporter;
     private readonly IJsonHelper _jsonHelper;
     private readonly IProcessRunner _processRunner;
     private readonly PublicApiFilesService _publicApiFiles;
@@ -26,18 +26,18 @@ internal sealed class VersionService
     /// Initializes a new instance of the <see cref="VersionService"/> class.
     /// </summary>
     public VersionService(
-        ILogger<VersionService> logger,
+        IReporter reporter,
         IJsonHelper jsonHelper,
         IProcessRunner processRunner,
         GitService git,
         PublicApiFilesService publicApiFiles)
     {
-        Guard.IsNotNull(logger);
+        Guard.IsNotNull(reporter);
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(git);
         Guard.IsNotNull(publicApiFiles);
-        _logger = logger;
+        _reporter = reporter;
         _jsonHelper = jsonHelper;
         _processRunner = processRunner;
         _publicApiFiles = publicApiFiles;
@@ -121,14 +121,12 @@ internal sealed class VersionService
                                     : Current.Major > LatestStable.Major ? VersionIncrement.Major
                                     : Current.Minor > LatestStable.Minor ? VersionIncrement.Minor
                                     : VersionIncrement.None;
-        _logger.LogInformation("Current version increment: {Increment}", currentVersionIncrement);
+        _reporter.Info($"Current version increment: {currentVersionIncrement}");
 
         // Determine the kind of change in public API
         var publicApiChangeKind = checkPublicApiFiles ? _publicApiFiles.GetApiChangeKind() : ApiChangeKind.None;
-        _logger.LogInformation(
-            "Public API change kind: {Kind}{NotCheckedSuffix}",
-            publicApiChangeKind,
-            checkPublicApiFiles ? string.Empty : " (not checked)");
+        var notCheckedSuffix = checkPublicApiFiles ? string.Empty : " (not checked)";
+        _reporter.Info($"Public API change kind: {publicApiChangeKind}{notCheckedSuffix}");
 
         // Determine the version increment required by SemVer rules
         // When the major version is 0, "anything MAY change" according to SemVer;
@@ -139,16 +137,16 @@ internal sealed class VersionService
             ApiChangeKind.Additive => isMajorVersionZero ? VersionIncrement.None : VersionIncrement.Minor,
             _ => VersionIncrement.None,
         };
-        _logger.LogInformation("Required version increment according to Semantic Versioning rules: {Increment}", semanticVersionIncrement);
+        _reporter.Info($"Required version increment according to Semantic Versioning rules: {semanticVersionIncrement}");
 
         // Determine the requested version increment, if any.
-        _logger.LogInformation("Requested version spec change: {Change}", requestedChange);
+        _reporter.Info($"Requested version spec change: {requestedChange}");
         var requestedVersionIncrement = requestedChange switch {
             VersionSpecChange.Major => VersionIncrement.Major,
             VersionSpecChange.Minor => VersionIncrement.Minor,
             _ => VersionIncrement.None,
         };
-        _logger.LogInformation("Requested version increment: {Increment}.", requestedVersionIncrement);
+        _reporter.Info($"Requested version increment: {requestedVersionIncrement}.");
 
         // Adjust requested version increment to follow SemVer rules
         if (semanticVersionIncrement > requestedVersionIncrement)
@@ -158,7 +156,7 @@ internal sealed class VersionService
 
         // Determine the kind of version increment actually required
         var actualVersionIncrement = requestedVersionIncrement > currentVersionIncrement ? requestedVersionIncrement : VersionIncrement.None;
-        _logger.LogInformation("Required version increment with respect to current version: {Increment}", actualVersionIncrement);
+        _reporter.Info($"Required version increment with respect to current version: {actualVersionIncrement}");
 
         // Determine the actual version spec change to apply:
         //   - forget any increment-related change (already accounted for via requestedVersionIncrement)
@@ -172,7 +170,7 @@ internal sealed class VersionService
             VersionIncrement.Minor => VersionSpecChange.Minor,
             _ => actualChange,
         };
-        _logger.LogInformation("Actual version spec change: {Change}.", actualChange);
+        _reporter.Info($"Actual version spec change: {actualChange}.");
         return actualChange;
     }
 

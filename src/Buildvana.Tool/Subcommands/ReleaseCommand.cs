@@ -3,11 +3,13 @@
 
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Tool.Build;
@@ -20,7 +22,6 @@ using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Subcommands;
 
@@ -30,13 +31,15 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
+        var reporter = services.GetRequiredService<IReporter>();
+        using var activity = reporter.BeginActivity("Release");
+
         var configuration = settings.ResolveConfiguration();
         var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 
         // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
         await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
 
-        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("Release");
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
         var jsonHelper = services.GetRequiredService<IJsonHelper>();
         var server = services.GetRequiredService<ServerAdapter>();
@@ -55,19 +58,19 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
 
         // Ensure that the CI bot identity is used for commits, if not already set.
         git.CommitterIdentity ??= server.CIBotIdentity ?? throw new BuildFailedException("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
-        logger.LogInformation("Using committer identity: {Name} <{Email}>", git.CommitterIdentity.Name, git.CommitterIdentity.Email);
+        reporter.Info($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
 
         // Set fallback Git credentials if the server adapter can provide them.
         var pushUsername = server.PushUsername;
         var pushPassword = server.PushPassword;
         if (pushUsername is not null && pushPassword is not null)
         {
-            logger.LogInformation("Fallback push credentials provided by the server adapter (protocol username: '{Username}').", pushUsername);
+            reporter.Info($"Fallback push credentials provided by the server adapter (protocol username: '{pushUsername}').");
             git.PushCredentialsFallback = new(pushUsername, pushPassword);
         }
         else
         {
-            logger.LogWarning("No push credentials provided by the server adapter. Push operations may fail if the repository is not already authenticated.");
+            reporter.Warning("No push credentials provided by the server adapter. Push operations may fail if the repository is not already authenticated.");
         }
 
         // Perform an initial versioning consistency check.
@@ -91,20 +94,20 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 var previousVersionSpec = versionFile.VersionSpec;
                 if (versionFile.ApplyVersionSpecChange(versionSpecChange))
                 {
-                    logger.LogInformation("Version spec changed from {Previous} to {New}.", previousVersionSpec, versionFile.VersionSpec);
+                    reporter.Info($"Version spec changed from {previousVersionSpec} to {versionFile.VersionSpec}.");
                     versionFile.Save();
                     release.UpdateRepository(versionFile.Path);
                 }
                 else
                 {
-                    logger.LogInformation("Version spec not changed.");
+                    reporter.Info("Version spec not changed.");
                 }
             }
 
             // Update public API files only when releasing a stable version
             if (version.IsPrerelease)
             {
-                logger.LogInformation("Public API update skipped: not needed on prerelease.");
+                reporter.Info("Public API update skipped: not needed on prerelease.");
             }
             else
             {
@@ -112,13 +115,13 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 switch (modified.Length)
                 {
                     case 0:
-                        logger.LogInformation("No public API files were modified.");
+                        reporter.Info("No public API files were modified.");
                         break;
                     case 1:
-                        logger.LogInformation("1 public API file was modified.");
+                        reporter.Info("1 public API file was modified.");
                         break;
                     default:
-                        logger.LogInformation("{Count} public API files were modified.", modified.Length);
+                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{modified.Length} public API files were modified."));
                         break;
                 }
 
@@ -132,7 +135,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             var changelogUpdated = false;
             if (!changelog.Exists)
             {
-                logger.LogInformation("Changelog update skipped: {Path} not found.", ChangelogService.FileName);
+                reporter.Info($"Changelog update skipped: {ChangelogService.FileName} not found.");
             }
             else if (!version.IsPrerelease || settings.ResolveUnstableChangelog())
             {
@@ -142,11 +145,11 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         changelog.HasUnreleasedChanges(),
                         "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings.");
 
-                    logger.LogInformation("Changelog check successful: the \"Unreleased changes\" section is not empty.");
+                    reporter.Info("Changelog check successful: the \"Unreleased changes\" section is not empty.");
                 }
                 else
                 {
-                    logger.LogInformation("Changelog check skipped: option 'requireChangelog' is false.");
+                    reporter.Info("Changelog check skipped: option 'requireChangelog' is false.");
                 }
 
                 // Update the changelog and commit the change before building.
@@ -157,7 +160,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
             else
             {
-                logger.LogInformation("Changelog update skipped: not needed on prerelease.");
+                reporter.Info("Changelog update skipped: not needed on prerelease.");
             }
 
             // At this point we know what the actual published version will be.
@@ -180,7 +183,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
             else
             {
-                logger.LogInformation("Changelog section title update skipped: changelog has not been updated.");
+                reporter.Info("Changelog section title update skipped: changelog has not been updated.");
             }
 
             // Update in-tree references to packages produced by this release (dogfooding).
@@ -195,13 +198,13 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 switch (selfReferenceUpdates.Count)
                 {
                     case 0:
-                        logger.LogInformation("No self-referenced files were modified.");
+                        reporter.Info("No self-referenced files were modified.");
                         break;
                     case 1:
-                        logger.LogInformation("1 self-referenced file was modified.");
+                        reporter.Info("1 self-referenced file was modified.");
                         break;
                     default:
-                        logger.LogInformation("{Count} self-referenced files were modified.", selfReferenceUpdates.Count);
+                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
                         break;
                 }
 
@@ -214,7 +217,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
             else
             {
-                logger.LogInformation("Self-reference update skipped: option 'dogfood' is false.");
+                reporter.Info("Self-reference update skipped: option 'dogfood' is false.");
             }
 
             release.PushUpdates();
@@ -223,10 +226,10 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             await dotnet.NuGetPushAllAsync(artifactsPath, cancellationToken).ConfigureAwait(false);
 
             // Gather build assets from Buildvana.Sdk release asset lists
-            logger.LogInformation("Reading release asset lists...");
+            reporter.Info("Reading release asset lists...");
             foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.assets.txt"))
             {
-                logger.LogDebug("Reading release asset list {Path}...", path);
+                reporter.Detail($"Reading release asset list {path}...");
                 var i = 0;
                 await foreach (var line in File.ReadLinesAsync(path, cancellationToken).ConfigureAwait(false))
                 {
@@ -234,13 +237,13 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                     var parts = line.Split('\t');
                     if (parts.Length != 3)
                     {
-                        logger.LogWarning("Release asset list {Path}, line #{LineNumber}: invalid line '{Line}'", path, i, line);
+                        reporter.Warning(string.Create(CultureInfo.InvariantCulture, $"Release asset list {path}, line #{i}: invalid line '{line}'"));
                         continue;
                     }
 
                     if (!File.Exists(parts[0]))
                     {
-                        logger.LogWarning("Release asset list {Path}, line #{LineNumber}: asset not found '{Asset}'", path, i, parts[0]);
+                        reporter.Warning(string.Create(CultureInfo.InvariantCulture, $"Release asset list {path}, line #{i}: asset not found '{parts[0]}'"));
                         continue;
                     }
 
@@ -264,17 +267,17 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             {
                 if (version.IsPrerelease)
                 {
-                    logger.LogInformation("Documentation generation skipped: not needed on prerelease.");
+                    reporter.Info("Documentation generation skipped: not needed on prerelease.");
                 }
                 else if (git.CurrentBranch != git.MainBranch)
                 {
-                    logger.LogInformation("Documentation generation skipped: releasing from '{Current}', not '{Main}'.", git.CurrentBranch, git.MainBranch);
+                    reporter.Info($"Documentation generation skipped: releasing from '{git.CurrentBranch}', not '{git.MainBranch}'.");
                 }
                 else
                 {
-                    logger.LogInformation("Generating documentation web pages...");
+                    reporter.Info("Generating documentation web pages...");
                     await docfx.GenerateSiteAsync().ConfigureAwait(false);
-                    logger.LogInformation("Generating documentation PDF files...");
+                    reporter.Info("Generating documentation PDF files...");
                     await docfx.GeneratePdfsAsync().ConfigureAwait(false);
                 }
             }
@@ -283,6 +286,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             await release.PublishAsync().ConfigureAwait(false);
         }
 
+        activity.Complete();
         return 0;
     }
 }

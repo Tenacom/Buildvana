@@ -4,11 +4,11 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Services;
 
@@ -27,11 +27,11 @@ internal sealed class DocFxService
     /// Initializes a new instance of the <see cref="DocFxService"/> class.
     /// </summary>
     public DocFxService(
-        ILogger<DocFxService> logger,
+        IReporter reporter,
         ServerAdapter server,
         VersionService version)
     {
-        Guard.IsNotNull(logger);
+        Guard.IsNotNull(reporter);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
 
@@ -42,7 +42,7 @@ internal sealed class DocFxService
         IsEnabled = File.Exists(_configPath);
         if (!IsEnabled)
         {
-            logger.LogInformation("{ConfigPath} not found: DocFX operations will be skipped.", _configPath);
+            reporter.Info($"{_configPath} not found: DocFX operations will be skipped.");
         }
     }
 

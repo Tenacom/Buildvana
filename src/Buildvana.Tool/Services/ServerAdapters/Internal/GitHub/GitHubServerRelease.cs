@@ -3,12 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Octokit;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
@@ -19,7 +20,7 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 internal sealed class GitHubServerRelease : ServerRelease
 {
     private readonly GitHubServerAdapter _server;
-    private readonly ILogger<GitHubServerRelease> _logger;
+    private readonly IReporter _reporter;
     private readonly VersionService _version;
     private readonly Release _gitHubRelease;
 
@@ -33,7 +34,7 @@ internal sealed class GitHubServerRelease : ServerRelease
         Guard.IsNotNull(gitHubRelease);
 
         _server = server;
-        _logger = services.GetRequiredService<ILogger<GitHubServerRelease>>();
+        _reporter = services.GetRequiredService<IReporter>();
         _version = services.GetRequiredService<VersionService>();
         _gitHubRelease = gitHubRelease;
 
@@ -66,18 +67,15 @@ internal sealed class GitHubServerRelease : ServerRelease
             foreach (var asset in assets)
             {
                 i++;
-                _logger.LogInformation(
-                    "Uploading asset {Index} of {Count}: {Filename} ({Description})...",
-                    i,
-                    assetCount,
-                    Path.GetFileName(asset.Path),
-                    asset.Description);
+                _reporter.Info(string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"Uploading asset {i} of {assetCount}: {Path.GetFileName(asset.Path)} ({asset.Description})..."));
                 await _server.UploadReleaseAssetAsync(_gitHubRelease, asset.Path, asset.MimeType, asset.Description).ConfigureAwait(false);
             }
         }
         else
         {
-            _logger.LogInformation("Asset upload skipped: no release assets defined.");
+            _reporter.Info("Asset upload skipped: no release assets defined.");
         }
 
         await _server.PublishReleaseAsync(_gitHubRelease, ReleaseCommitSha).ConfigureAwait(false);

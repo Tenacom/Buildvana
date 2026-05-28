@@ -9,10 +9,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Services;
 
@@ -26,19 +26,19 @@ internal sealed partial class ChangelogService
     /// </summary>
     public const string FileName = "CHANGELOG.md";
 
-    private readonly ILogger<ChangelogService> _logger;
+    private readonly IReporter _reporter;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChangelogService"/> class.
     /// </summary>
-    public ChangelogService(ILogger<ChangelogService> logger, ServerAdapter server, VersionService version)
+    public ChangelogService(IReporter reporter, ServerAdapter server, VersionService version)
     {
-        Guard.IsNotNull(logger);
+        Guard.IsNotNull(reporter);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
-        _logger = logger;
+        _reporter = reporter;
         _server = server;
         _version = version;
         Exists = File.Exists(FileName);
@@ -94,7 +94,7 @@ internal sealed partial class ChangelogService
     /// </summary>
     public void PrepareForRelease()
     {
-        _logger.LogInformation("Updating changelog...");
+        _reporter.Info("Updating changelog...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
         using (var reader = new StreamReader(FileName, encoding))
@@ -224,7 +224,7 @@ internal sealed partial class ChangelogService
     /// </summary>
     public void UpdateNewSectionTitle()
     {
-        _logger.LogInformation("Updating changelog's new release section title...");
+        _reporter.Info("Updating changelog's new release section title...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
         using (var reader = new StreamReader(FileName, encoding))
