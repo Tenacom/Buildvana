@@ -22,6 +22,8 @@ public interface IProcessRunner
     /// <param name="throwOnNonZero">If <see langword="true"/> (the default), a <see cref="BuildFailedException"/> is thrown when the process exits with a non-zero exit code; if <see langword="false"/>, the result is returned regardless of exit code.</param>
     /// <param name="onStdout">An optional callback invoked once per line of standard output as it is produced.
     /// The full output text is captured into the returned <see cref="ProcessResult"/> regardless.</param>
+    /// <param name="onStderr">An optional callback invoked once per line of standard error as it is produced.
+    /// The full error text is captured into the returned <see cref="ProcessResult"/> regardless.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> used to cancel the process.</param>
     /// <returns>A <see cref="ProcessResult"/> describing the process's outcome.</returns>
     Task<ProcessResult> RunAsync(
@@ -30,5 +32,6 @@ public interface IProcessRunner
         string? workingDirectory = null,
         bool throwOnNonZero = true,
         Action<string>? onStdout = null,
+        Action<string>? onStderr = null,
         CancellationToken cancellationToken = default);
 }

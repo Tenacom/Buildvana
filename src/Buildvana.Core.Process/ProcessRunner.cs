@@ -28,6 +28,7 @@ public sealed class ProcessRunner : IProcessRunner
         string? workingDirectory = null,
         bool throwOnNonZero = true,
         Action<string>? onStdout = null,
+        Action<string>? onStderr = null,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNullOrEmpty(executable);
@@ -50,7 +51,15 @@ public sealed class ProcessRunner : IProcessRunner
                 PipeTarget.ToStringBuilder(stdoutBuffer),
                 PipeTarget.ToDelegate(onStdout));
 
-        var stderrPipe = PipeTarget.Merge(stderrCapture, PipeTarget.ToStringBuilder(stderrBuffer));
+        // When the caller wants line-by-line stderr, fan the stream out to their callback too.
+        var stderrPipe = onStderr is null
+            ? PipeTarget.Merge(
+                stderrCapture,
+                PipeTarget.ToStringBuilder(stderrBuffer))
+            : PipeTarget.Merge(
+                stderrCapture,
+                PipeTarget.ToStringBuilder(stderrBuffer),
+                PipeTarget.ToDelegate(onStderr));
 
         var command = Cli.Wrap(executable)
 
