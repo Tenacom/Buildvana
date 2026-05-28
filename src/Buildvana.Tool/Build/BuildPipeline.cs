@@ -5,13 +5,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Build;
 
@@ -30,7 +30,7 @@ internal sealed class BuildPipeline
 
     private readonly SolutionContext _solution;
     private readonly DotNetService _dotnet;
-    private readonly ILoggerFactory _loggerFactory;
+    private readonly IReporter _reporter;
     private readonly IReadOnlyList<string> _forwardedArgs;
 
     /// <summary>
@@ -39,16 +39,16 @@ internal sealed class BuildPipeline
     public BuildPipeline(
         SolutionContext solution,
         DotNetService dotnet,
-        ILoggerFactory loggerFactory,
+        IReporter reporter,
         CommandParameters parameters)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNull(dotnet);
-        Guard.IsNotNull(loggerFactory);
+        Guard.IsNotNull(reporter);
         Guard.IsNotNull(parameters);
         _solution = solution;
         _dotnet = dotnet;
-        _loggerFactory = loggerFactory;
+        _reporter = reporter;
         _forwardedArgs = parameters.Forwarded;
     }
 
@@ -87,8 +87,10 @@ internal sealed class BuildPipeline
     /// <param name="configuration">The MSBuild configuration to build (ignored by <see cref="BuildStep.Clean"/> and <see cref="BuildStep.Restore"/>).</param>
     /// <param name="cancellationToken">A token to observe while running the step. When signalled, the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RunAsync(BuildStep step, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
-        => step switch
+    public async Task RunAsync(BuildStep step, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
+    {
+        using var activity = _reporter.BeginActivity(step.ToString());
+        var task = step switch
         {
             BuildStep.Clean => CleanAsync(cancellationToken),
             BuildStep.Restore => RestoreAsync(cancellationToken),
@@ -97,21 +99,23 @@ internal sealed class BuildPipeline
             BuildStep.Pack => PackAsync(configuration, cancellationToken),
             _ => ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(step), step, "Unknown build step."),
         };
+        await task.ConfigureAwait(false);
+        activity.Complete();
+    }
 
     private Task CleanAsync(CancellationToken cancellationToken)
     {
-        var logger = _loggerFactory.CreateLogger("Clean");
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), logger);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath("_ReSharper.Caches"), logger);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath("temp"), logger);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.AllArtifacts), logger);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.TestResults), logger);
+        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), _reporter);
+        FileSystemHelper.DeleteDirectory(_solution.ResolvePath("_ReSharper.Caches"), _reporter);
+        FileSystemHelper.DeleteDirectory(_solution.ResolvePath("temp"), _reporter);
+        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.AllArtifacts), _reporter);
+        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.TestResults), _reporter);
         foreach (var project in _solution.Model.SolutionProjects)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var projectDirectory = Path.GetDirectoryName(_solution.ResolveProjectPath(project))!;
-            FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "bin"), logger);
-            FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "obj"), logger);
+            FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "bin"), _reporter);
+            FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "obj"), _reporter);
         }
 
         return Task.CompletedTask;

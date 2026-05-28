@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Louis.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Services.ServerAdapters;
 
@@ -19,7 +19,7 @@ namespace Buildvana.Tool.Services.ServerAdapters;
 /// </summary>
 internal abstract partial class ServerRelease : IAsyncDisposable
 {
-    private readonly ILogger _logger;
+    private readonly IReporter _reporter;
     private readonly GitService _git;
     private readonly VersionService _version;
     private readonly Stack<Func<ValueTask>> _rollbackActions = new();
@@ -35,7 +35,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     {
         Guard.IsNotNull(services);
 
-        _logger = services.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
+        _reporter = services.GetRequiredService<IReporter>();
         _git = services.GetRequiredService<GitService>();
         _version = services.GetRequiredService<VersionService>();
     }
@@ -77,12 +77,12 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             return;
         }
 
-        _logger.LogInformation("Creating release commit...");
+        _reporter.Info("Creating release commit...");
         _git.Commit("Prepare release [skip ci]", allowEmpty: true);
 
         // Git height has changed
         _version.Update();
-        _logger.LogInformation("Version changed to {Version}", _version.CurrentStr);
+        _reporter.Info($"Version changed to {_version.CurrentStr}");
         _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
         _repositoryUpdated = true;
         _releaseCommitSha = _git.HeadSha;
@@ -125,7 +125,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         EnsureReleaseCommit();
 
         _git.Stage(files);
-        _logger.LogInformation("Amending release commit...");
+        _reporter.Info("Amending release commit...");
         _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
         _releaseCommitSha = _git.HeadSha;
     }
@@ -156,7 +156,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         EnsureReleaseCommit();
 
         _git.Stage(files);
-        _logger.LogInformation("Committing post-release changed files...");
+        _reporter.Info("Committing post-release changed files...");
         _git.Commit(message);
         _postReleaseCommits++;
 
@@ -171,7 +171,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
         if (!_repositoryUpdated)
         {
-            _logger.LogInformation("Repository unchanged, no commit to push.");
+            _reporter.Info("Repository unchanged, no commit to push.");
             return;
         }
 
@@ -228,12 +228,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             }
             catch (Exception ex) when (!ex.IsCriticalError())
             {
-                _logger.LogWarning(
-                    "{ExceptionType} in release rollback action: {Message}{NewLine}{StackTrace}",
-                    ex.GetType().Name,
-                    ex.Message,
-                    Environment.NewLine,
-                    ex.StackTrace);
+                _reporter.Warning($"{ex.GetType().Name} in release rollback action: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
             }
         }
 

@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Buildvana.Core.ConsoleOutput;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Utilities;
 
@@ -39,18 +39,18 @@ internal static class FileSystemHelper
     /// Recursively delete a directory and all its contents. No-op if the directory does not exist.
     /// </summary>
     /// <param name="path">The directory to delete.</param>
-    /// <param name="logger">Optional logger. When provided, logs <c>Information</c> on actual deletion
-    /// and <c>Debug</c> when the directory does not exist and is therefore skipped.</param>
-    public static void DeleteDirectory(string path, ILogger? logger = null)
+    /// <param name="reporter">Optional reporter. When provided, reports at <c>Info</c> on actual deletion
+    /// and at <c>Detail</c> when the directory does not exist and is therefore skipped.</param>
+    public static void DeleteDirectory(string path, IReporter? reporter = null)
     {
         Guard.IsNotNull(path);
         if (!Directory.Exists(path))
         {
-            logger?.LogDebug("Skipping non-existent directory: {Path}", path);
+            reporter?.Detail($"Skipping non-existent directory: {path}");
             return;
         }
 
-        logger?.LogInformation("Deleting directory: {Path}", path);
+        reporter?.Info($"Deleting directory: {path}");
         Directory.Delete(path, recursive: true);
     }
 

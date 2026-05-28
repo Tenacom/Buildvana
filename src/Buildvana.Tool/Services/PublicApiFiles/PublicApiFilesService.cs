@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Louis.Collections;
-using Microsoft.Extensions.Logging;
 
 namespace Buildvana.Tool.Services.PublicApiFiles;
 
@@ -22,17 +22,17 @@ internal sealed class PublicApiFilesService
     private const string RemovedPrefix = "*REMOVED*";
 
     private readonly IHomeDirectoryProvider _home;
-    private readonly ILogger<PublicApiFilesService> _logger;
+    private readonly IReporter _reporter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PublicApiFilesService"/> class.
     /// </summary>
-    public PublicApiFilesService(IHomeDirectoryProvider home, ILogger<PublicApiFilesService> logger)
+    public PublicApiFilesService(IHomeDirectoryProvider home, IReporter reporter)
     {
         Guard.IsNotNull(home);
-        Guard.IsNotNull(logger);
+        Guard.IsNotNull(reporter);
         _home = home;
-        _logger = logger;
+        _reporter = reporter;
     }
 
     /// <summary>
@@ -46,12 +46,12 @@ internal sealed class PublicApiFilesService
     /// </returns>
     public ApiChangeKind GetApiChangeKind()
     {
-        _logger.LogInformation("Computing API change kind according to unshipped public API files...");
+        _reporter.Info("Computing API change kind according to unshipped public API files...");
         var result = ApiChangeKind.None;
         foreach (var unshippedPath in GetAllPublicApiFilePairs().Select(pair => pair.UnshippedPath))
         {
             var fileResult = GetApiChangeKind(unshippedPath);
-            _logger.LogDebug("{UnshippedPath} -> {Result}", unshippedPath, fileResult);
+            _reporter.Detail($"{unshippedPath} -> {fileResult}");
             if (fileResult == ApiChangeKind.Breaking)
             {
                 return ApiChangeKind.Breaking;
@@ -72,10 +72,10 @@ internal sealed class PublicApiFilesService
     /// <returns>An enumeration of the modified files.</returns>
     public IEnumerable<string> TransferAllPublicApisToShipped()
     {
-        _logger.LogInformation("Updating public API files...");
+        _reporter.Info("Updating public API files...");
         foreach (var (unshippedPath, shippedPath) in GetAllPublicApiFilePairs())
         {
-            _logger.LogDebug("Updating {ShippedPath}...", shippedPath);
+            _reporter.Detail($"Updating {shippedPath}...");
             if (!TransferPublicApisToShipped(unshippedPath, shippedPath))
             {
                 continue;

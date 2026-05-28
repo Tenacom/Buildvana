@@ -6,12 +6,12 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Octokit;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
@@ -22,7 +22,7 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 internal sealed class GitHubServerAdapter : ServerAdapter
 {
     private readonly IServiceProvider _services;
-    private readonly ILogger<GitHubServerAdapter> _logger;
+    private readonly IReporter _reporter;
     private readonly VersionService _version;
     private readonly GitService _git;
 
@@ -31,7 +31,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private GitHubServerAdapter(IServiceProvider services)
     {
         _services = services;
-        _logger = services.GetRequiredService<ILogger<GitHubServerAdapter>>();
+        _reporter = services.GetRequiredService<IReporter>();
         _version = services.GetRequiredService<VersionService>();
         _git = services.GetRequiredService<GitService>();
         BuildFailedException.ThrowIfNot(GitUrlInfo.TryCreate(_git.OriginUrl, out var originInfo), $"Couldn't get information from origin URL '{_git.OriginUrl}'.");
@@ -100,7 +100,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <inheritdoc/>
     public override async Task<bool> IsPrivateRepositoryAsync()
     {
-        _logger.LogInformation("Fetching repository information...");
+        _reporter.Info("Fetching repository information...");
         var client = CreateGitHubClient();
         var repository = await client.Repository.Get(RepositoryOwner, RepositoryName).ConfigureAwait(false);
         return repository.Private;
@@ -137,7 +137,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
                 // Create the release as a draft first, so if the token has no permissions we can bail out early
                 var tag = _version.CurrentStr;
                 var client = CreateGitHubClient();
-                _logger.LogInformation("Creating a provisional draft release...");
+                _reporter.Info("Creating a provisional draft release...");
                 var newRelease = new NewRelease(tag)
                 {
                     Name = $"{tag} [provisional]",
@@ -163,7 +163,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         Guard.IsNotNullOrEmpty(targetCommitish);
         var tag = _version.CurrentStr;
         var client = CreateGitHubClient();
-        _logger.LogInformation("Generating release notes for {Tag}...", tag);
+        _reporter.Info($"Generating release notes for {tag}...");
         var releaseNotesRequest = new GenerateReleaseNotesRequest(tag)
         {
             TargetCommitish = targetCommitish,
@@ -173,7 +173,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.MainBranch)}).\n\n---\n\n"
                 + generateNotesResponse.Body;
 
-        _logger.LogInformation("Publishing the previously created release as {Tag} (target {TargetCommitish})...", tag, targetCommitish);
+        _reporter.Info($"Publishing the previously created release as {tag} (target {targetCommitish})...");
         var update = release.ToUpdate();
         update.TagName = tag;
         update.Name = tag;
@@ -194,7 +194,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public async Task DeleteReleaseAsync(Release release, string? tagName)
     {
         Guard.IsNotNull(release);
-        _logger.LogInformation("Deleting the previously created release...");
+        _reporter.Info("Deleting the previously created release...");
         var client = CreateGitHubClient();
         await client.Repository.Release.Delete(RepositoryOwner, RepositoryName, release.Id).ConfigureAwait(false);
         if (string.IsNullOrEmpty(tagName))
@@ -203,18 +203,18 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         }
 
         var reference = "refs/tags/" + tagName;
-        _logger.LogInformation("Looking for reference '{Reference}' in GitHub repository...", reference);
+        _reporter.Info($"Looking for reference '{reference}' in GitHub repository...");
         try
         {
             _ = await client.Git.Reference.Get(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
         }
         catch (NotFoundException)
         {
-            _logger.LogInformation("Reference '{Reference}' not found in GitHub repository.", reference);
+            _reporter.Info($"Reference '{reference}' not found in GitHub repository.");
             return;
         }
 
-        _logger.LogInformation("Deleting reference '{Reference}' in GitHub repository...", reference);
+        _reporter.Info($"Deleting reference '{reference}' in GitHub repository...");
         await client.Git.Reference.Delete(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
     }
 
@@ -229,7 +229,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public async Task UploadReleaseAssetAsync(Release release, string path, string mimeType, string description)
     {
         var client = CreateGitHubClient();
-        _logger.LogDebug("Uploading asset {Path}...", path);
+        _reporter.Detail($"Uploading asset {path}...");
         ReleaseAsset asset;
         var assetContents = File.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
@@ -246,14 +246,14 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 
         if (!string.IsNullOrEmpty(description))
         {
-            _logger.LogDebug("Updating asset label...");
+            _reporter.Detail("Updating asset label...");
             var update = asset.ToUpdate();
             update.Label = description;
             _ = await client.Repository.Release.EditAsset(RepositoryOwner, RepositoryName, asset.Id, update).ConfigureAwait(false);
         }
         else
         {
-            _logger.LogDebug("Skipping label update: asset has no description.");
+            _reporter.Detail("Skipping label update: asset has no description.");
         }
     }
 

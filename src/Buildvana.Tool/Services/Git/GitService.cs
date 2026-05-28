@@ -7,11 +7,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
-using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
 using GlobalSettings = Buildvana.Tool.Subcommands.GlobalSettings;
 
@@ -23,16 +23,16 @@ namespace Buildvana.Tool.Services.Git;
 [PublicAPI]
 internal sealed class GitService : IDisposable
 {
-    private readonly ILogger<GitService> _logger;
+    private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
     private readonly Repository _repository;
 
-    public GitService(ILogger<GitService> logger, IHomeDirectoryProvider home, GlobalSettings globals)
+    public GitService(IReporter reporter, IHomeDirectoryProvider home, GlobalSettings globals)
     {
-        Guard.IsNotNull(logger);
+        Guard.IsNotNull(reporter);
         Guard.IsNotNull(home);
         Guard.IsNotNull(globals);
-        _logger = logger;
+        _reporter = reporter;
         _home = home;
         var homeDirectory = home.HomeDirectory;
         BuildFailedException.ThrowIfNot(Repository.IsValid(homeDirectory), $"There is no Git repository at {homeDirectory}");
@@ -180,7 +180,7 @@ internal sealed class GitService : IDisposable
             return pathInRepo;
         }).ToArray();
 
-        _logger.LogDebug("Git: staging {Count} file(s)...", pathsInRepo.Length);
+        _reporter.Detail(string.Create(CultureInfo.InvariantCulture, $"Staging {pathsInRepo.Length} file(s)..."));
         Commands.Stage(_repository, pathsInRepo, new StageOptions() { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
     }
 
@@ -208,7 +208,7 @@ internal sealed class GitService : IDisposable
     /// </remarks>
     public void UndoLastCommit()
     {
-        _logger.LogInformation("Git: undoing last commit...");
+        _reporter.Info("Undoing last commit...");
         var previousCommit = _repository.Head.Tip.Parents.FirstOrDefault();
         BuildFailedException.ThrowIfNot(previousCommit is not null, "Git: cannot reset, there is no commit to go back to.");
         _repository.Reset(ResetMode.Hard, previousCommit);
@@ -234,13 +234,13 @@ internal sealed class GitService : IDisposable
             // https://stackoverflow.com/a/47295101/5753412
             // https://github.com/libgit2/libgit2sharp/blob/5085a0c6173cdb2a3fde205330b327a8eb0a26c4/LibGit2Sharp.Tests/PushFixture.cs#L183-L187
             // https://github.com/libgit2/libgit2sharp/issues/104#issuecomment-1553347893
-            _logger.LogInformation("Git: force pushing changes to '{Remote}'...", remote);
+            _reporter.Info($"Force pushing changes to '{remote}'...");
             var pushRefSpec = string.Format(CultureInfo.InvariantCulture, "+{0}:{0}", _repository.Head.CanonicalName);
             _repository.Network.Push(_repository.Network.Remotes[remote], pushRefSpec, pushOptions);
         }
         else
         {
-            _logger.LogInformation("Git: pushing changes to '{Remote}'...", remote);
+            _reporter.Info($"Pushing changes to '{remote}'...");
             _repository.Network.Push(head, pushOptions);
         }
     }
@@ -254,12 +254,12 @@ internal sealed class GitService : IDisposable
         string? onlyRemoteName = null;
         string? onlyRemoteUrl = null;
         var isFirst = true;
-        _logger.LogDebug("Git: looking for origin remote...");
+        _reporter.Detail("Looking for origin remote...");
         foreach (var remote in _repository.Network.Remotes)
         {
             using (remote)
             {
-                _logger.LogDebug("Git:     '{Name}' ({Url})", remote.Name, remote.Url);
+                _reporter.Detail($"  '{remote.Name}' ({remote.Url})");
                 if (remote.Name == "origin")
                 {
                     originName = remote.Name;
@@ -286,7 +286,7 @@ internal sealed class GitService : IDisposable
         url = originUrl ?? onlyRemoteUrl;
         if (name is null || url is null)
         {
-            _logger.LogDebug("Git: origin remote not found.");
+            _reporter.Detail("Origin remote not found.");
             return false;
         }
 
@@ -297,7 +297,7 @@ internal sealed class GitService : IDisposable
             url = url[..^4];
         }
 
-        _logger.LogDebug("Git: origin remote is '{Name}' ({Url})", name, url);
+        _reporter.Detail($"Origin remote is '{name}' ({url})");
         return true;
     }
 
@@ -312,24 +312,24 @@ internal sealed class GitService : IDisposable
         var configuredValue = string.Empty;
         if (haveConfiguredMainBranch)
         {
-            _logger.LogDebug("Git: looking for main branch on remote '{Origin}' (configured value is '{Configured}')...", origin, configuredMainBranch);
+            _reporter.Detail($"Looking for main branch on remote '{origin}' (configured value is '{configuredMainBranch}')...");
             configuredValue = $"{origin}/{configuredMainBranch}";
         }
         else
         {
-            _logger.LogDebug("Git: looking for main branch on remote '{Origin}' (no configured value)...", origin);
+            _reporter.Detail($"Looking for main branch on remote '{origin}' (no configured value)...");
         }
 
         foreach (var branch in _repository.Branches.Select(static x => x.FriendlyName))
         {
             if (haveConfiguredMainBranch && branch == configuredValue)
             {
-                _logger.LogDebug("Git:     '{Branch}' <-- configured value", branch);
+                _reporter.Detail($"  '{branch}' <-- configured value");
                 mainBranchFound = true;
             }
             else
             {
-                _logger.LogDebug("Git:     '{Branch}'", branch);
+                _reporter.Detail($"  '{branch}'");
                 if (branch == mainValue)
                 {
                     mainFound = true;
@@ -348,11 +348,11 @@ internal sealed class GitService : IDisposable
 
         if (mainBranch is null)
         {
-            _logger.LogDebug("Git: main branch not found on remote '{Origin}'.", origin);
+            _reporter.Detail($"Main branch not found on remote '{origin}'.");
             return string.Empty;
         }
 
-        _logger.LogDebug("Git: main branch '{Branch}' found on remote '{Origin}'.", mainBranch, origin);
+        _reporter.Detail($"Main branch '{mainBranch}' found on remote '{origin}'.");
         return mainBranch;
     }
 }
