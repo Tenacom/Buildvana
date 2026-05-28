@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana console output</Title>
+    <Description>System.Console-backed IReporter: leveled human-facing console output with activity grouping and child-process passthrough.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Diagnostics" />
+  </ItemGroup>
+
+</Project>
