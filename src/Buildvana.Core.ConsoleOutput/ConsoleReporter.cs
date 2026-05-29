@@ -136,7 +136,7 @@ public sealed partial class ConsoleReporter : IReporter
     private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed)
         => elapsed is { } e
             ? string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: done ({2:F1}s)", depth, title, e.TotalSeconds)
-            : string.Format(CultureInfo.InvariantCulture, "[{0}] {1}", depth, title);
+            : string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: starting...", depth, title);
 
     private void WriteLeveledLine(MessageLevel level, string message)
     {
