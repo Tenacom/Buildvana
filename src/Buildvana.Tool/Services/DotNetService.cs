@@ -253,7 +253,10 @@ internal sealed class DotNetService
 
     // streamOutput is false for bv-internal evaluations (e.g. the MTP probe) whose output is captured and
     // inspected rather than shown to the user; user-facing verbs stream the child's output live.
-    private Task<ProcessResult> RunDotNetAsync(IEnumerable<string> args, bool streamOutput = true, CancellationToken cancellationToken = default)
+    private Task<ProcessResult> RunDotNetAsync(
+        IEnumerable<string> args,
+        bool streamOutput = true,
+        CancellationToken cancellationToken = default)
         => _processRunner.RunAsync(
             DotNetMuxer,
             args,
