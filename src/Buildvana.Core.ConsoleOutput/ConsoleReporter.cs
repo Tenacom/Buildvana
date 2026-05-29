@@ -168,7 +168,7 @@ public sealed partial class ConsoleReporter : IReporter
             }
 
             // No outcome line unless the activity was explicitly completed (e.g. the work threw before Complete).
-            if (completed && this.IsEnabled(MessageLevel.Detail))
+            if (completed && this.IsEnabled(MessageLevel.Info))
             {
                 Console.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed));
             }
