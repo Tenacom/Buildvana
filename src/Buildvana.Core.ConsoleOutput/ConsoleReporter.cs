@@ -112,6 +112,14 @@ public sealed partial class ConsoleReporter : IReporter
         }
     }
 
+    /// <summary>
+    /// Determines whether the <c>NO_COLOR</c> environment variable is set.
+    /// </summary>
+    /// <returns><see langword="true"/> if the <c>NO_COLOR</c> environment variable is set; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// <para>The <c>NO_COLOR</c> environment variable is a widely-adopted convention for opting out of color in command-line applications.
+    /// See <a href="https://no-color.org">https://no-color.org</a> for more information.</para>
+    /// </remarks>
     private static bool IsNoColorSet() => Environment.GetEnvironmentVariable("NO_COLOR") is { Length: > 0 };
 
     private static (ConsoleColor? Color, string Word) StyleFor(MessageLevel level) => level switch
