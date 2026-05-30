@@ -36,16 +36,16 @@ public interface IReporter
     /// Used to stream a spawned process's standard output through to this process's standard output.
     /// </summary>
     /// <param name="line">The line of child-process standard output to write.</param>
-    /// <param name="verbosity">The verbosity level at which the line should be written.
-    /// If `null`, the line is written regardless of the current verbosity.</param>
-    void ChildOutput(string line, Verbosity? verbosity);
+    /// <param name="minimumVerbosity">The line is written only when the reporter's <see cref="Verbosity"/> is at
+    /// least this value. If <see langword="null"/>, the line is always written.</param>
+    void ChildOutput(string line, Verbosity? minimumVerbosity);
 
     /// <summary>
     /// Writes a line from a child process's standard error verbatim: no level label, no color, no category.
     /// Used to stream a spawned process's standard error through to this process's standard error.
     /// </summary>
     /// <param name="line">The line of child-process standard error to write.</param>
-    /// <param name="verbosity">The verbosity level at which the line should be written.
-    /// If `null`, the line is written regardless of the current verbosity.</param>
-    void ChildError(string line, Verbosity? verbosity);
+    /// <param name="minimumVerbosity">The line is written only when the reporter's <see cref="Verbosity"/> is at
+    /// least this value. If <see langword="null"/>, the line is always written.</param>
+    void ChildError(string line, Verbosity? minimumVerbosity);
 }
