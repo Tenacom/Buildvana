@@ -20,5 +20,6 @@ public interface IActivityScope : IDisposable
     /// <summary>
     /// Marks the activity as successfully completed, so that disposing the scope reports its outcome.
     /// </summary>
-    void Complete();
+    /// <param name="outcomeMessage">An optional message describing the outcome of the activity.</param>
+    void Complete(string? outcomeMessage = null);
 }

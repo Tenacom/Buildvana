@@ -29,7 +29,13 @@ public sealed partial class ConsoleReporter
 
         public TimeSpan Elapsed => Stopwatch.GetElapsedTime(_startTimestamp);
 
-        public void Complete() => _completed = true;
+        public string? OutcomeMessage { get; private set; }
+
+        public void Complete(string? outcomeMessage = null)
+        {
+            _completed = true;
+            OutcomeMessage = outcomeMessage;
+        }
 
         public void Dispose()
         {

@@ -19,7 +19,7 @@ public sealed class NullActivityScope : IActivityScope
     public static NullActivityScope Instance { get; } = new();
 
     /// <inheritdoc/>
-    public void Complete()
+    public void Complete(string? outcomeMessage = null)
     {
     }
 

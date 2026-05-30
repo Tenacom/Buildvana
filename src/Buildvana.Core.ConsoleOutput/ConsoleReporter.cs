@@ -71,7 +71,7 @@ public sealed partial class ConsoleReporter : IReporter
             _activityStack.Push(scope);
             if (this.IsEnabled(MessageLevel.Info))
             {
-                Console.WriteLine(FormatActivityLine(depth, title, elapsed: null));
+                Console.WriteLine(FormatActivityLine(depth, title, elapsed: null, outcomeMessage: null));
             }
 
             return scope;
@@ -133,9 +133,9 @@ public sealed partial class ConsoleReporter : IReporter
     };
 
     // Activity header/outcome lines are label-less; the leading "[depth]" conveys nesting without indentation.
-    private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed)
+    private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed, string? outcomeMessage)
         => elapsed is { } e
-            ? string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: done ({2:F1}s)", depth, title, e.TotalSeconds)
+            ? string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: done ({2:F1}s){3}{4}", depth, title, e.TotalSeconds, outcomeMessage is null ? string.Empty : " - ", outcomeMessage)
             : string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: starting...", depth, title);
 
     private void WriteLeveledLine(MessageLevel level, string message)
@@ -170,7 +170,7 @@ public sealed partial class ConsoleReporter : IReporter
             // No outcome line unless the activity was explicitly completed (e.g. the work threw before Complete).
             if (completed && this.IsEnabled(MessageLevel.Info))
             {
-                Console.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed));
+                Console.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
             }
         }
     }
