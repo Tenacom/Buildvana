@@ -13,6 +13,7 @@ using Buildvana.Core.Process;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Configuration;
+using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
@@ -159,6 +160,7 @@ internal static class Program
         ParsedCommandLine parsed)
     {
         var services = new ServiceCollection()
+            .AddLazySupport()
             .AddSingleton(reporter)
             .AddSingleton(globals)
             .AddSingleton(new CommandParameters(parsed.OptionTokens, parsed.Forwarded))
