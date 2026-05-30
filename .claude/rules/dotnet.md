@@ -12,6 +12,18 @@ First of all, use `dotnet tool restore` to install global tools. Then use the fo
 
 Each one of the preceding commands includes the previous ones, so `dotnet bv build` also cleans and restores, `dotnet bv test` also builds, and so on.
 
+### Capturing build/test output
+
+`bv` streams a large amount of child-process output line by line. Captured through the agent's shell tools, this output is **truncated before the final summary** (`Build succeeded`, warning/error counts), so the result is invisible — do not run `dotnet bv build`/`test` and expect to read the outcome from the tail.
+
+To verify a build, run a plain `dotnet build` through PowerShell and keep only the tail:
+
+```powershell
+dotnet build Buildvana.slnx -v m | Select-Object -Last 25
+```
+
+This shows the per-project outputs plus the `Build succeeded` / warning / error summary. Use `dotnet bv build` (or `pack`/`test`) when you actually need the full clean + restore + build chain or the artifacts; use the direct `dotnet build` above for a quick compile-and-warning check.
+
 ## Efficiency
 
 - Use built-in Read, Glob, and Grep tools to examine files. Do not shell out to cat, grep, find, or similar when built-in tools exist.
