@@ -168,7 +168,7 @@ internal sealed partial class DotNetService
             "--results-directory",
             CommonPaths.TestResults,
             "--output",
-            _reporter.Verbosity >= Verbosity.Detailed ? "Normal" : "Detailed",
+            _reporter.IsVerbosityAtLeast(Verbosity.Detailed) ? "Detailed" : "Normal",
              ..forwardedArgs,
              ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
         ];

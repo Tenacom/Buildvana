@@ -79,13 +79,13 @@ public sealed partial class ConsoleReporter : IReporter
     }
 
     /// <inheritdoc/>
-    public void ChildOutput(string line, Verbosity? verbosity)
+    public void ChildOutput(string line, Verbosity? minimumVerbosity)
     {
         Guard.IsNotNull(line);
 
-        // If a verbosity is specified, respect it; otherwise, write regardless of current verbosity.
+        // If a minimum verbosity is specified, respect it; otherwise, write regardless of current verbosity.
         // This is useful for child processes whose verbosity we control, e.g., `dotnet`.
-        if (verbosity is not null && (int)verbosity <= (int)Verbosity)
+        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
         {
             return;
         }
@@ -97,13 +97,13 @@ public sealed partial class ConsoleReporter : IReporter
     }
 
     /// <inheritdoc/>
-    public void ChildError(string line, Verbosity? verbosity)
+    public void ChildError(string line, Verbosity? minimumVerbosity)
     {
         Guard.IsNotNull(line);
 
-        // If a verbosity is specified, respect it; otherwise, write regardless of current verbosity.
+        // If a minimum verbosity is specified, respect it; otherwise, write regardless of current verbosity.
         // This is useful for child processes whose verbosity we control, e.g., `dotnet`.
-        if (verbosity is not null && (int)verbosity <= (int)Verbosity)
+        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
         {
             return;
         }

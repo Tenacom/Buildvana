@@ -96,5 +96,16 @@ public static class ReporterExtensions
         /// <param name="level">The level to test.</param>
         /// <returns><see langword="true"/> if the level is enabled; otherwise, <see langword="false"/>.</returns>
         public bool IsEnabled(MessageLevel level) => (int)level <= (int)@this.Verbosity;
+
+        /// <summary>
+        /// Determines whether the reporter's <see cref="IReporter.Verbosity"/> is at least the given
+        /// <paramref name="minimumVerbosity"/>.
+        /// </summary>
+        /// <param name="minimumVerbosity">The minimum verbosity to test against.</param>
+        /// <returns>
+        /// <see langword="true"/> if the reporter's verbosity is at least <paramref name="minimumVerbosity"/>;
+        /// otherwise, <see langword="false"/>.
+        /// </returns>
+        public bool IsVerbosityAtLeast(Verbosity minimumVerbosity) => (int)minimumVerbosity <= (int)@this.Verbosity;
     }
 }
