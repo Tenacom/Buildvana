@@ -169,9 +169,6 @@ internal sealed partial class DotNetService
             CommonPaths.TestResults,
             "--output",
             _reporter.Verbosity >= Verbosity.Detailed ? "Normal" : "Detailed",
-            "--coverage",
-            "--coverage-output-format",
-            "cobertura",
              ..forwardedArgs,
              ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
         ];
@@ -242,7 +239,6 @@ internal sealed partial class DotNetService
                 "--api-key",
                 target.ApiKey,
                 "--skip-duplicate",
-                "--force-english-output",
             ];
             await _processRunner.RunAsync(DotNetMuxer, args, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
