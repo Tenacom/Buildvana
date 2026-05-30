@@ -15,7 +15,6 @@ using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 
 using IProcessRunner = Buildvana.Core.Process.IProcessRunner;
 using ProcessResult = Buildvana.Core.Process.ProcessResult;
@@ -36,7 +35,7 @@ internal sealed class DotNetService
 
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
-    private readonly IServiceProvider _services;
+    private readonly Lazy<NuGetPushConfiguration> _nugetPushConfigurationLazy;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
     private readonly GlobalSettings _globals;
@@ -47,20 +46,20 @@ internal sealed class DotNetService
     public DotNetService(
         IReporter reporter,
         IProcessRunner processRunner,
-        IServiceProvider services,
+        Lazy<NuGetPushConfiguration> nugetPushConfigurationLazy,
         ServerAdapter server,
         VersionService version,
         GlobalSettings globals)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(processRunner);
-        Guard.IsNotNull(services);
+        Guard.IsNotNull(nugetPushConfigurationLazy);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         Guard.IsNotNull(globals);
         _reporter = reporter;
         _processRunner = processRunner;
-        _services = services;
+        _nugetPushConfigurationLazy = nugetPushConfigurationLazy;
         _server = server;
         _version = version;
         _globals = globals;
@@ -227,7 +226,7 @@ internal sealed class DotNetService
         }
 
         var isPrivate = await _server.IsPrivateRepositoryAsync().ConfigureAwait(false);
-        var nugetConfig = _services.GetRequiredService<NuGetPushConfiguration>();
+        var nugetConfig = _nugetPushConfigurationLazy.Value;
         var target = isPrivate ? nugetConfig.Private
             : _version.IsPrerelease ? nugetConfig.Prerelease
             : nugetConfig.Release;
