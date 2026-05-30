@@ -15,7 +15,6 @@ partial class DotNetService
         /// <summary>
         /// An informational invocation: the user is interested in the output, but `dotnet` does not accept the `--verbosity` argument.
         /// </summary>
-        // ReSharper disable once UnusedMember.Local
         Informational,
 
         /// <summary>

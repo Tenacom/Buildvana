@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -269,10 +270,19 @@ internal sealed partial class DotNetService
         IEnumerable<string> args,
         InvocationKind invocationKind,
         CancellationToken cancellationToken = default)
-        => _processRunner.RunAsync(
+    {
+        var (appendVerbosity, streamOutput) = invocationKind switch {
+            InvocationKind.Normal => (AppendVerbosity: true, StreamOutput: true),
+            InvocationKind.Informational => (AppendVerbosity: false, StreamOutput: true),
+            InvocationKind.Internal => (AppendVerbosity: false, StreamOutput: false),
+            _ => throw new UnreachableException(),
+        };
+
+        return _processRunner.RunAsync(
             DotNetMuxer,
-            invocationKind == InvocationKind.Normal ? args.Append($"--verbosity={_reporter.Verbosity}") : args,
-            onStdout: invocationKind != InvocationKind.Internal ? (x) => _reporter.ChildOutput(x, null) : null,
-            onStderr: invocationKind != InvocationKind.Internal ? (x) => _reporter.ChildError(x, null) : null,
+            appendVerbosity ? args.Append($"--verbosity={_reporter.Verbosity}") : args,
+            onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, null) : null,
+            onStderr: streamOutput ? (x) => _reporter.ChildError(x, null) : null,
             cancellationToken: cancellationToken);
+    }
 }
