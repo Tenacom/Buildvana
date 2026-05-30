@@ -12,7 +12,6 @@ using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Subcommands;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
@@ -24,7 +23,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Provides shortcut methods for .NET SDK operations.
 /// </summary>
-internal sealed class DotNetService
+internal sealed partial class DotNetService
 {
     // The muxer sets DOTNET_HOST_PATH to the full path of the dotnet executable that launched us,
     // so we re-invoke that exact host instead of relying on `dotnet` being on PATH.
@@ -38,7 +37,6 @@ internal sealed class DotNetService
     private readonly Lazy<NuGetPushConfiguration> _nugetPushConfigurationLazy;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
-    private readonly GlobalSettings _globals;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
@@ -48,26 +46,19 @@ internal sealed class DotNetService
         IProcessRunner processRunner,
         Lazy<NuGetPushConfiguration> nugetPushConfigurationLazy,
         ServerAdapter server,
-        VersionService version,
-        GlobalSettings globals)
+        VersionService version)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(nugetPushConfigurationLazy);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
-        Guard.IsNotNull(globals);
         _reporter = reporter;
         _processRunner = processRunner;
         _nugetPushConfigurationLazy = nugetPushConfigurationLazy;
         _server = server;
         _version = version;
-        _globals = globals;
     }
-
-    // The verbosity bv forwards to every `dotnet` invocation. bv and the .NET CLI share the same vocabulary
-    // (quiet/minimal/normal/detailed/diagnostic and their short forms), so the raw value is forwarded as-is.
-    private string Verbosity => _globals.Verbosity ?? "normal";
 
     /// <summary>
     /// Asynchronously restores all NuGet packages for the solution.
@@ -81,10 +72,16 @@ internal sealed class DotNetService
         Guard.IsNotNull(solution);
         Guard.IsNotNull(forwardedArgs);
         _reporter.Info("Restoring NuGet packages for solution...");
-        List<string> args = ["restore", solution.SolutionPath, "--disable-parallel", "-nologo", "-v", Verbosity];
-        args.AddRange(forwardedArgs);
-        args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args, cancellationToken: cancellationToken);
+        string[] args = [
+            "restore",
+            solution.SolutionPath,
+            "--disable-parallel",
+            "-nologo",
+            ..forwardedArgs,
+            ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
+        ];
+
+        return RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -102,15 +99,17 @@ internal sealed class DotNetService
         Guard.IsNotNullOrEmpty(configuration);
         Guard.IsNotNull(forwardedArgs);
         _reporter.Info($"Building solution (restore = {restore})...");
-        List<string> args = ["build", solution.SolutionPath, "-nologo", "-v", Verbosity, $"-p:Configuration={configuration}"];
-        if (!restore)
-        {
-            args.Add("--no-restore");
-        }
+        string[] args = [
+            "build",
+            solution.SolutionPath,
+            "-nologo",
+            $"-p:Configuration={configuration}",
+            .. restore ? Array.Empty<string>() : ["--no-restore"],
+            ..forwardedArgs,
+            ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
+        ];
 
-        args.AddRange(forwardedArgs);
-        args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -138,8 +137,8 @@ internal sealed class DotNetService
 
             // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
             // test-application options that `dotnet msbuild` would reject.
-            List<string> probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
-            var probe = await RunDotNetAsync(probeArgs, streamOutput: false, cancellationToken: cancellationToken).ConfigureAwait(false);
+            string[] probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
+            var probe = await RunDotNetAsync(probeArgs, InvocationKind.Internal, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
@@ -160,21 +159,24 @@ internal sealed class DotNetService
         // `dotnet test` consumes --verbosity itself; the configuration and ContinuousIntegrationBuild are
         // passed as MSBuild properties using the `--property:` form, which is what `dotnet test` understands
         // (the `-p:` form is not supported here).
-        List<string> args = ["test", solution.SolutionPath, $"--verbosity={Verbosity}", $"--property:Configuration={configuration}"];
-        if (!build)
-        {
-            args.Add("--no-build");
-        }
+        string[] args = [
+            "test",
+            solution.SolutionPath,
+            $"--property:Configuration={configuration}",
+            .. restore ? Array.Empty<string>() : ["--no-restore"],
+            .. build ? Array.Empty<string>() : ["--no-build"],
+            "--results-directory",
+            CommonPaths.TestResults,
+            "--output",
+            _reporter.Verbosity >= Verbosity.Detailed ? "Normal" : "Detailed",
+            "--coverage",
+            "--coverage-output-format",
+            "cobertura",
+             ..forwardedArgs,
+             ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
+        ];
 
-        if (!restore)
-        {
-            args.Add("--no-restore");
-        }
-
-        args.AddRange(["--coverage", "--coverage-output-format", "cobertura", "--results-directory", CommonPaths.TestResults]);
-        args.AddRange(forwardedArgs);
-        args.Add(ContinuousIntegrationBuildArg(dotnetTest: true));
-        await RunDotNetAsync(args, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -193,20 +195,18 @@ internal sealed class DotNetService
         Guard.IsNotNullOrEmpty(configuration);
         Guard.IsNotNull(forwardedArgs);
         _reporter.Info($"Packing solution (restore = {restore}, build = {build})...");
-        List<string> args = ["pack", solution.SolutionPath, "-nologo", "-v", Verbosity, $"-p:Configuration={configuration}"];
-        if (!build)
-        {
-            args.Add("--no-build");
-        }
+        string[] args = [
+            "pack",
+            solution.SolutionPath,
+            "-nologo",
+            $"-p:Configuration={configuration}",
+            .. restore ? Array.Empty<string>() : ["--no-restore"],
+            .. build ? Array.Empty<string>() : ["--no-build"],
+            ..forwardedArgs,
+            ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
+        ];
 
-        if (!restore)
-        {
-            args.Add("--no-restore");
-        }
-
-        args.AddRange(forwardedArgs);
-        args.Add(ContinuousIntegrationBuildArg(dotnetTest: false));
-        return RunDotNetAsync(args, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -232,34 +232,51 @@ internal sealed class DotNetService
             : nugetConfig.Release;
         foreach (var path in packages)
         {
-            _reporter.Info($"Pushing {path} to {target.Source}...");
-            await _processRunner
-                .RunAsync(
-                    DotNetMuxer,
-                    ["nuget", "push", path, "--source", target.Source, "--api-key", target.ApiKey, "--skip-duplicate", "--force-english-output"],
-                    cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            _reporter.Detail($"Pushing {path} to {target.Source}...");
+            string[] args = [
+                "nuget",
+                "push",
+                path,
+                "--source",
+                target.Source,
+                "--api-key",
+                target.ApiKey,
+                "--skip-duplicate",
+                "--force-english-output",
+            ];
+            await _processRunner.RunAsync(DotNetMuxer, args, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
+
+        _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
     }
 
-    // bv's authoritative ContinuousIntegrationBuild value, emitted in the trailing group so it wins under
-    // MSBuild's last-wins resolution. `dotnet test` requires the `--property:` form; the other verbs accept `-p:`.
-    private string ContinuousIntegrationBuildArg(bool dotnetTest)
+    /// <summary>
+    /// Return a parameter string that reflects whether we're running in CI.
+    /// </summary>
+    /// <param name="asMSBuildPassthrough"><see langword="true"/> to use the MSBuild passthrough form (<c>-p:</c>),
+    /// <see langword="false"/> to use the standard form (<c>--property:</c>).</param>
+    /// <returns>A string representing the ContinuousIntegrationBuild property setting parameter for the <c>dotnet</c> command.</returns>
+    private string ContinuousIntegrationBuildArg(bool asMSBuildPassthrough)
     {
-        var prefix = dotnetTest ? "--property:" : "-p:";
+        var prefix = asMSBuildPassthrough ? "-p:" : "--property:";
         return $"{prefix}ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
     }
 
-    // streamOutput is false for bv-internal evaluations (e.g. the MTP probe) whose output is captured and
-    // inspected rather than shown to the user; user-facing verbs stream the child's output live.
+    /// <summary>
+    /// Runs a <c>dotnet</c> command with the specified arguments, forwarding the output to the reporter according to the current verbosity.
+    /// </summary>
+    /// <param name="args">The arguments to pass to <c>dotnet</c>, excluding the verbosity argument, which is automatically appended according to the current verbosity.</param>
+    /// <param name="invocationKind">The kind of invocation, which determines how `dotnet` verbosity and output streaming are handled.</param>
+    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
+    /// <returns>A <see cref="Task{ProcessResult}"/> representing the ongoing operation, with a result describing child process outcome.</returns>
     private Task<ProcessResult> RunDotNetAsync(
         IEnumerable<string> args,
-        bool streamOutput = true,
+        InvocationKind invocationKind,
         CancellationToken cancellationToken = default)
         => _processRunner.RunAsync(
             DotNetMuxer,
-            args,
-            onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, null) : null,
-            onStderr: streamOutput ? (x) => _reporter.ChildError(x, null) : null,
+            invocationKind == InvocationKind.Normal ? args.Append($"--verbosity={_reporter.Verbosity}") : args,
+            onStdout: invocationKind != InvocationKind.Internal ? (x) => _reporter.ChildOutput(x, null) : null,
+            onStderr: invocationKind != InvocationKind.Internal ? (x) => _reporter.ChildError(x, null) : null,
             cancellationToken: cancellationToken);
 }
