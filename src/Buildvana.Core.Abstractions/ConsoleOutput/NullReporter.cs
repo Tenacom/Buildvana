@@ -30,12 +30,12 @@ public sealed class NullReporter : IReporter
     public IActivityScope BeginActivity(string title) => NullActivityScope.Instance;
 
     /// <inheritdoc/>
-    public void ChildOutput(string line)
+    public void ChildOutput(string line, Verbosity? verbosity)
     {
     }
 
     /// <inheritdoc/>
-    public void ChildError(string line)
+    public void ChildError(string line, Verbosity? verbosity)
     {
     }
 }

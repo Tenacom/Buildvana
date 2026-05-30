@@ -260,7 +260,7 @@ internal sealed class DotNetService
         => _processRunner.RunAsync(
             DotNetMuxer,
             args,
-            onStdout: streamOutput ? _reporter.ChildOutput : null,
-            onStderr: streamOutput ? _reporter.ChildError : null,
+            onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, null) : null,
+            onStderr: streamOutput ? (x) => _reporter.ChildError(x, null) : null,
             cancellationToken: cancellationToken);
 }
