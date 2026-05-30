@@ -79,12 +79,13 @@ public sealed partial class ConsoleReporter : IReporter
     }
 
     /// <inheritdoc/>
-    public void ChildOutput(string line)
+    public void ChildOutput(string line, Verbosity? verbosity)
     {
         Guard.IsNotNull(line);
 
-        // Quiet swallows child output; the process runner's head/tail buffer still provides a failure tail.
-        if (Verbosity == Verbosity.Quiet)
+        // If a verbosity is specified, respect it; otherwise, write regardless of current verbosity.
+        // This is useful for child processes whose verbosity we control, e.g., `dotnet`.
+        if (verbosity is not null && (int)verbosity <= (int)Verbosity)
         {
             return;
         }
@@ -96,12 +97,13 @@ public sealed partial class ConsoleReporter : IReporter
     }
 
     /// <inheritdoc/>
-    public void ChildError(string line)
+    public void ChildError(string line, Verbosity? verbosity)
     {
         Guard.IsNotNull(line);
 
-        // As with ChildOutput, Quiet swallows the live stream and relies on the head/tail failure tail.
-        if (Verbosity == Verbosity.Quiet)
+        // If a verbosity is specified, respect it; otherwise, write regardless of current verbosity.
+        // This is useful for child processes whose verbosity we control, e.g., `dotnet`.
+        if (verbosity is not null && (int)verbosity <= (int)Verbosity)
         {
             return;
         }
