@@ -18,6 +18,7 @@ public interface IProcessRunner
     /// </summary>
     /// <param name="executable">The path to (or name of) the executable to run.</param>
     /// <param name="args">The arguments to pass to <paramref name="executable"/>.</param>
+    /// <param name="environment">Optional environment variables to set for the process, or <see langword="null"/> to inherit the current process's environment.</param>
     /// <param name="workingDirectory">The working directory in which to run the process, or <see langword="null"/> to inherit the current process's working directory.</param>
     /// <param name="throwOnNonZero">If <see langword="true"/> (the default), a <see cref="BuildFailedException"/> is thrown when the process exits with a non-zero exit code; if <see langword="false"/>, the result is returned regardless of exit code.</param>
     /// <param name="onStdout">An optional callback invoked once per line of standard output as it is produced.
@@ -29,6 +30,7 @@ public interface IProcessRunner
     Task<ProcessResult> RunAsync(
         string executable,
         IEnumerable<string> args,
+        IReadOnlyDictionary<string, string?>? environment = null,
         string? workingDirectory = null,
         bool throwOnNonZero = true,
         Action<string>? onStdout = null,

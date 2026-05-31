@@ -25,6 +25,7 @@ public sealed class ProcessRunner : IProcessRunner
     public async Task<ProcessResult> RunAsync(
         string executable,
         IEnumerable<string> args,
+        IReadOnlyDictionary<string, string?>? environment = null,
         string? workingDirectory = null,
         bool throwOnNonZero = true,
         Action<string>? onStdout = null,
@@ -68,6 +69,11 @@ public sealed class ProcessRunner : IProcessRunner
             .WithStandardOutputPipe(stdoutPipe)
             .WithStandardErrorPipe(stderrPipe)
             .WithValidation(CommandResultValidation.None);
+
+        if (environment is not null)
+        {
+            command = command.WithEnvironmentVariables(environment);
+        }
 
         if (workingDirectory is not null)
         {

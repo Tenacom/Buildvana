@@ -82,7 +82,7 @@ internal sealed partial class DotNetService
             ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ internal sealed partial class DotNetService
             ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -139,7 +139,7 @@ internal sealed partial class DotNetService
             // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
             // test-application options that `dotnet msbuild` would reject.
             string[] probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
-            var probe = await RunDotNetAsync(probeArgs, InvocationKind.Internal, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var probe = await RunDotNetAsync(probeArgs, null, InvocationKind.Internal, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
@@ -174,7 +174,7 @@ internal sealed partial class DotNetService
              ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
         ];
 
-        await RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await RunDotNetAsync(args, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -204,7 +204,7 @@ internal sealed partial class DotNetService
             ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, InvocationKind.Normal, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -241,7 +241,7 @@ internal sealed partial class DotNetService
                 target.ApiKey,
                 "--skip-duplicate",
             ];
-            await _processRunner.RunAsync(DotNetMuxer, args, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await RunDotNetAsync(args, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
@@ -268,7 +268,8 @@ internal sealed partial class DotNetService
     /// <returns>A <see cref="Task{ProcessResult}"/> representing the ongoing operation, with a result describing child process outcome.</returns>
     private Task<ProcessResult> RunDotNetAsync(
         IEnumerable<string> args,
-        InvocationKind invocationKind,
+        IReadOnlyDictionary<string, string?>? environment = null,
+        InvocationKind invocationKind = InvocationKind.Normal,
         CancellationToken cancellationToken = default)
     {
         var (appendVerbosity, streamOutput) = invocationKind switch {
@@ -281,6 +282,7 @@ internal sealed partial class DotNetService
         return _processRunner.RunAsync(
             DotNetMuxer,
             appendVerbosity ? args.Append($"--verbosity={_reporter.Verbosity}") : args,
+            environment: environment,
             onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, null) : null,
             onStderr: streamOutput ? (x) => _reporter.ChildError(x, null) : null,
             cancellationToken: cancellationToken);
