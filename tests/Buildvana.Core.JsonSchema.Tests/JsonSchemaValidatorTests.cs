@@ -114,6 +114,21 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[0].Column).IsEqualTo(11);
     }
 
+    [Test]
+    public async Task Validate_NumericObjectKeyVersusArrayIndex_DisambiguatesDisplayPath()
+    {
+        var errors = Validate(
+            """{"type":"object","properties":{"obj":{"type":"object","additionalProperties":{"type":"string"}},"arr":{"type":"array","items":{"type":"string"}}}}""",
+            """{"obj":{"1":true},"arr":["x",true]}""");
+        await Assert.That(errors.Count).IsEqualTo(2);
+
+        // Both offending values sit at a pointer token "1", but only the array element is an index.
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/obj/1");
+        await Assert.That(errors[0].DisplayPath).IsEqualTo("obj.1");
+        await Assert.That(errors[1].JsonPointer).IsEqualTo("/arr/1");
+        await Assert.That(errors[1].DisplayPath).IsEqualTo("arr[1]");
+    }
+
     private static JsonNode Schema(string json) => JsonNode.Parse(json)!;
 
     private static IReadOnlyList<JsonSchemaValidationError> Validate(string schema, string instance)

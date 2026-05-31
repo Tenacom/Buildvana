@@ -55,7 +55,7 @@ public static class JsonSchemaValidator
         ArgumentNullException.ThrowIfNull(schema);
 
         var errors = new List<JsonSchemaValidationError>();
-        ValidateNode(instance, schema, string.Empty, schema, [], errors);
+        ValidateNode(instance, schema, string.Empty, string.Empty, schema, [], errors);
         return errors;
     }
 
@@ -115,6 +115,7 @@ public static class JsonSchemaValidator
         JsonNode? instance,
         JsonNode schemaNode,
         string pointer,
+        string displayPath,
         JsonNode root,
         HashSet<string> visitedRefs,
         List<JsonSchemaValidationError> errors)
@@ -124,7 +125,7 @@ public static class JsonSchemaValidator
         {
             if (schemaNode.GetValueKind() is JsonValueKind.False)
             {
-                errors.Add(new JsonSchemaValidationError(JsonSchemaErrorKind.ValueNotAllowed, pointer, "No value is allowed here."));
+                errors.Add(new JsonSchemaValidationError(JsonSchemaErrorKind.ValueNotAllowed, pointer, displayPath, "No value is allowed here."));
             }
 
             return;
@@ -143,13 +144,13 @@ public static class JsonSchemaValidator
         {
             var target = reference.GetValue<string>();
             ThrowIfCircularReference(visitedRefs, target);
-            ValidateNode(instance, ResolveReference(root, target), pointer, root, visitedRefs, errors);
+            ValidateNode(instance, ResolveReference(root, target), pointer, displayPath, root, visitedRefs, errors);
         }
 
-        ValidateType(instance, schema, pointer, errors);
-        ValidateEnum(instance, schema, pointer, errors);
-        ValidateObject(instance, schema, pointer, root, errors);
-        ValidateArray(instance, schema, pointer, root, errors);
+        ValidateType(instance, schema, pointer, displayPath, errors);
+        ValidateEnum(instance, schema, pointer, displayPath, errors);
+        ValidateObject(instance, schema, pointer, displayPath, root, errors);
+        ValidateArray(instance, schema, pointer, displayPath, root, errors);
     }
 
     private static void ThrowIfCircularReference(HashSet<string> visitedRefs, string reference)
@@ -190,6 +191,7 @@ public static class JsonSchemaValidator
         JsonNode? instance,
         JsonObject schema,
         string pointer,
+        string displayPath,
         List<JsonSchemaValidationError> errors)
     {
         switch (schema["type"])
@@ -201,6 +203,7 @@ public static class JsonSchemaValidator
                     errors.Add(new JsonSchemaValidationError(
                         JsonSchemaErrorKind.TypeMismatch,
                         pointer,
+                        displayPath,
                         $"Expected {type}, but found {ActualType(instance)}."));
                 }
 
@@ -214,6 +217,7 @@ public static class JsonSchemaValidator
                     errors.Add(new JsonSchemaValidationError(
                         JsonSchemaErrorKind.TypeMismatch,
                         pointer,
+                        displayPath,
                         $"Expected {expected}, but found {ActualType(instance)}."));
                 }
 
@@ -225,6 +229,7 @@ public static class JsonSchemaValidator
         JsonNode? instance,
         JsonObject schema,
         string pointer,
+        string displayPath,
         List<JsonSchemaValidationError> errors)
     {
         if (schema["enum"] is not JsonArray allowed)
@@ -242,6 +247,7 @@ public static class JsonSchemaValidator
         errors.Add(new JsonSchemaValidationError(
             JsonSchemaErrorKind.DisallowedValue,
             pointer,
+            displayPath,
             $"{RenderValue(instance)} is not one of the allowed values: {rendered}."));
     }
 
@@ -249,6 +255,7 @@ public static class JsonSchemaValidator
         JsonNode? instance,
         JsonObject schema,
         string pointer,
+        string displayPath,
         JsonNode root,
         List<JsonSchemaValidationError> errors)
     {
@@ -267,6 +274,7 @@ public static class JsonSchemaValidator
                     errors.Add(new JsonSchemaValidationError(
                         JsonSchemaErrorKind.MissingProperty,
                         pointer,
+                        displayPath,
                         $"Missing required property '{name}'."));
                 }
             }
@@ -278,7 +286,7 @@ public static class JsonSchemaValidator
         {
             if (properties?[key] is { } propertySchema)
             {
-                ValidateNode(value, propertySchema, Append(pointer, key), root, [], errors);
+                ValidateNode(value, propertySchema, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
             }
             else if (additional is JsonValue additionalValue && additionalValue.GetValueKind() is JsonValueKind.False)
             {
@@ -286,11 +294,12 @@ public static class JsonSchemaValidator
                 errors.Add(new JsonSchemaValidationError(
                     JsonSchemaErrorKind.UnknownProperty,
                     Append(pointer, key),
+                    AppendKey(displayPath, key),
                     $"Unknown property '{key}'."));
             }
             else if (additional is JsonObject additionalSchema)
             {
-                ValidateNode(value, additionalSchema, Append(pointer, key), root, [], errors);
+                ValidateNode(value, additionalSchema, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
             }
         }
     }
@@ -299,6 +308,7 @@ public static class JsonSchemaValidator
         JsonNode? instance,
         JsonObject schema,
         string pointer,
+        string displayPath,
         JsonNode root,
         List<JsonSchemaValidationError> errors)
     {
@@ -314,8 +324,10 @@ public static class JsonSchemaValidator
 
         for (var i = 0; i < array.Count; i++)
         {
-            var itemPointer = $"{pointer}/{i.ToString(CultureInfo.InvariantCulture)}";
-            ValidateNode(array[i], items, itemPointer, root, [], errors);
+            var index = i.ToString(CultureInfo.InvariantCulture);
+            var itemPointer = $"{pointer}/{index}";
+            var itemDisplay = $"{displayPath}[{index}]";
+            ValidateNode(array[i], items, itemPointer, itemDisplay, root, [], errors);
         }
     }
 
@@ -367,4 +379,8 @@ public static class JsonSchemaValidator
         var escaped = key.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
         return $"{pointer}/{escaped}";
     }
+
+    // Appends one object-member step to a human-friendly display path: ".key", or just "key" at the root.
+    private static string AppendKey(string displayPath, string key)
+        => displayPath.Length == 0 ? key : $"{displayPath}.{key}";
 }
