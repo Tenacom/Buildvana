@@ -18,9 +18,13 @@ public interface IProcessRunner
     /// </summary>
     /// <param name="executable">The path to (or name of) the executable to run.</param>
     /// <param name="args">The arguments to pass to <paramref name="executable"/>.</param>
-    /// <param name="environment">Optional environment variables to set for the process, or <see langword="null"/> to inherit the current process's environment.</param>
-    /// <param name="workingDirectory">The working directory in which to run the process, or <see langword="null"/> to inherit the current process's working directory.</param>
-    /// <param name="throwOnNonZero">If <see langword="true"/> (the default), a <see cref="BuildFailedException"/> is thrown when the process exits with a non-zero exit code; if <see langword="false"/>, the result is returned regardless of exit code.</param>
+    /// <param name="environment">Environment variables to apply on top of the inherited environment: each entry adds or
+    /// overrides a variable, and a <see langword="null"/> value removes that variable from the child process. Pass
+    /// <see langword="null"/> to run with the current process's environment unchanged.</param>
+    /// <param name="workingDirectory">The working directory in which to run the process, or <see langword="null"/>
+    /// to inherit the current process's working directory.</param>
+    /// <param name="throwOnNonZero">If <see langword="true"/> (the default), a <see cref="BuildFailedException"/> is thrown when
+    /// the process exits with a non-zero exit code; if <see langword="false"/>, the result is returned regardless of exit code.</param>
     /// <param name="onStdout">An optional callback invoked once per line of standard output as it is produced.
     /// The full output text is captured into the returned <see cref="ProcessResult"/> regardless.</param>
     /// <param name="onStderr">An optional callback invoked once per line of standard error as it is produced.
