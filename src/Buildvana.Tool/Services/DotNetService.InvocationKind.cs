@@ -14,6 +14,7 @@ partial class DotNetService
 
         /// <summary>
         /// An informational invocation: the user is interested in the output, but `dotnet` does not accept the `--verbosity` argument.
+        /// `dotnet` output is streamed at `Normal` verbosity.
         /// </summary>
         Informational,
 

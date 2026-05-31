@@ -232,6 +232,9 @@ internal sealed partial class DotNetService
         {
             _reporter.Detail($"Pushing {path} to {target.Source}...");
             string[] args = [
+
+                // `dotnet nuget` has no verbosity option; use the global diagnostics flag when diagnostic output is enabled.
+                .. _reporter.IsVerbosityAtLeast(Verbosity.Diagnostic) ? ["-d"] : Array.Empty<string>(),
                 "nuget",
                 "push",
                 path,
@@ -241,7 +244,7 @@ internal sealed partial class DotNetService
                 target.ApiKey,
                 "--skip-duplicate",
             ];
-            await RunDotNetAsync(args, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await RunDotNetAsync(args, invocationKind: InvocationKind.Informational, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
@@ -272,10 +275,10 @@ internal sealed partial class DotNetService
         InvocationKind invocationKind = InvocationKind.Normal,
         CancellationToken cancellationToken = default)
     {
-        var (appendVerbosity, streamOutput) = invocationKind switch {
-            InvocationKind.Normal => (AppendVerbosity: true, StreamOutput: true),
-            InvocationKind.Informational => (AppendVerbosity: false, StreamOutput: true),
-            InvocationKind.Internal => (AppendVerbosity: false, StreamOutput: false),
+        var (appendVerbosity, streamOutput, streamVerbosity) = invocationKind switch {
+            InvocationKind.Normal => (AppendVerbosity: true, StreamOutput: true, StreamVerbosity: null as Verbosity?),
+            InvocationKind.Informational => (AppendVerbosity: false, StreamOutput: true, StreamVerbosity: Verbosity.Normal),
+            InvocationKind.Internal => (AppendVerbosity: false, StreamOutput: false, StreamVerbosity: null),
             _ => throw new UnreachableException(),
         };
 
@@ -283,8 +286,8 @@ internal sealed partial class DotNetService
             DotNetMuxer,
             appendVerbosity ? args.Append($"--verbosity={_reporter.Verbosity}") : args,
             environment: environment,
-            onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, null) : null,
-            onStderr: streamOutput ? (x) => _reporter.ChildError(x, null) : null,
+            onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, streamVerbosity) : null,
+            onStderr: streamOutput ? (x) => _reporter.ChildError(x, streamVerbosity) : null,
             cancellationToken: cancellationToken);
     }
 }
