@@ -2,7 +2,9 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Buildvana.Core;
@@ -20,12 +22,14 @@ public sealed class BuildFailedException : Exception
     /// </summary>
     public const int DefaultExitCode = 1;
 
+    private const string DefaultMessage = "The build failed.";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BuildFailedException"/> class
     /// with <see cref="DefaultExitCode"/> and a generic message.
     /// </summary>
     public BuildFailedException()
-        : this(DefaultExitCode, "The build failed.")
+        : this(DefaultExitCode, DefaultMessage)
     {
     }
 
@@ -61,6 +65,7 @@ public sealed class BuildFailedException : Exception
         : base(message)
     {
         ExitCode = exitCode;
+        Diagnostics = [];
     }
 
     /// <summary>
@@ -75,12 +80,44 @@ public sealed class BuildFailedException : Exception
         : base(message, innerException)
     {
         ExitCode = exitCode;
+        Diagnostics = [];
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BuildFailedException"/> class with <see cref="DefaultExitCode"/>
+    /// and the specified <paramref name="message"/> and <paramref name="diagnostics"/>.
+    /// </summary>
+    /// <param name="message">A message explaining the reason for failing the build.</param>
+    /// <param name="diagnostics">The diagnostics describing why the build failed.</param>
+    public BuildFailedException(string message, IReadOnlyList<BuildDiagnostic> diagnostics)
+        : this(DefaultExitCode, message, diagnostics)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BuildFailedException"/> class with the specified
+    /// <paramref name="exitCode"/>, <paramref name="message"/>, and <paramref name="diagnostics"/>.
+    /// </summary>
+    /// <param name="exitCode">The exit code that should be surfaced to the host's runtime, where applicable.</param>
+    /// <param name="message">A message explaining the reason for failing the build.</param>
+    /// <param name="diagnostics">The diagnostics describing why the build failed.</param>
+    public BuildFailedException(int exitCode, string message, IReadOnlyList<BuildDiagnostic> diagnostics)
+        : base(message)
+    {
+        ExitCode = exitCode;
+        Diagnostics = diagnostics;
     }
 
     /// <summary>
     /// Gets the exit code that should be surfaced to the host's runtime, where applicable.
     /// </summary>
     public int ExitCode { get; }
+
+    /// <summary>
+    /// Gets the structured diagnostics describing the failure, or an empty list when the failure was reported as
+    /// a plain message.
+    /// </summary>
+    public IReadOnlyList<BuildDiagnostic> Diagnostics { get; }
 
     /// <summary>
     /// Throws a <see cref="BuildFailedException"/> with <see cref="DefaultExitCode"/>
