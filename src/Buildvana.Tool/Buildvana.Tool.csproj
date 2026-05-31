@@ -34,7 +34,6 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Docfx.App" />
-    <PackageReference Include="JetBrains.Annotations.Sources" />
     <PackageReference Include="LibGit2Sharp" />
     <PackageReference Include="Louis" />
     <PackageReference Include="Microsoft.CodeAnalysis" />

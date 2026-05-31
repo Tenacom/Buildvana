@@ -1,0 +1,7 @@
+<Project>
+
+  <ItemGroup Condition="'$(UsingMicrosoftNoTargetsSdk)' != 'true'">
+    <PackageReference Include="JetBrains.Annotations.Sources" />
+  </ItemGroup>
+
+</Project>
