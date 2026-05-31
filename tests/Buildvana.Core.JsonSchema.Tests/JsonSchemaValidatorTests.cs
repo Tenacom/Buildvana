@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Text;
 using System.Text.Json.Nodes;
 using Buildvana.Core.JsonSchema;
 
@@ -107,7 +106,7 @@ internal sealed class JsonSchemaValidatorTests
     public async Task Validate_WithBytes_FillsLineAndColumn()
     {
         var schema = Schema("""{"type":"object","properties":{"name":{"type":"string"}}}""");
-        var bytes = Encoding.UTF8.GetBytes("{\n  \"name\": 42\n}");
+        var bytes = "{\n  \"name\": 42\n}"u8;
         var errors = JsonSchemaValidator.Validate(JsonNode.Parse(bytes), schema, bytes);
         await Assert.That(errors.Count).IsEqualTo(1);
         await Assert.That(errors[0].Line).IsEqualTo(2);

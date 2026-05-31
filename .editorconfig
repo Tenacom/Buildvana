@@ -536,11 +536,12 @@ dotnet_diagnostic.IDE0290.severity = none # Use primary constructor - No. Just n
 
 # Solution-specific overrides
 
-# This project generates no library packages; still, public types are used via reflection and/or DI, so "unused" public types are not a concern.
+# Some types and memberts are unused but present for completeness and/or future use, or instantiated via DI.
+# We don't need to flag every unused type or member: sprinkling PublicAPI and/or UsedImplicitly attributes around would be mostly noise.
 resharper_class_never_instantiated_global_highlighting = none
-
-# Some methods are unused but present for completeness and/or future use; "unused" members are not a concern.
+resharper_unused_type_global_highlighting = none
 resharper_unused_member_global_highlighting = none
+resharper_member_can_be_private_global_highlighting = none
 
 # Given the type of C# projects (compiled MSBuild tasks, CLI tool) we don't need to optimize logging with LoggerMessage delegates (CA1848),
 # nor do we need CA1873 to complain that "argument evaluation may be expensive when logging is disabled".

@@ -27,6 +27,7 @@ internal abstract class ServerAdapter
     /// <summary>
     /// Gets the name of the remote repository's host.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global - We may need this property in the future
     public abstract string HostName { get; }
 
     /// <summary>
@@ -101,6 +102,7 @@ internal abstract class ServerAdapter
     /// <param name="path">The path to the file.</param>
     /// <param name="commitish">The SHA or reference to which the file belongs.</param>
     /// <returns></returns>
+    // ReSharper disable once UnusedMemberInSuper.Global - We may need this method in the future
     public abstract Uri GetFileUrl(string path, string commitish);
 
     /// <summary>
