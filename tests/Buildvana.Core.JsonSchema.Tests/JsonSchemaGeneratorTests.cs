@@ -56,5 +56,37 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That((map["properties"] as JsonObject)!.Count).IsEqualTo(2);
     }
 
+    [Test]
+    public async Task Generate_KeepsNullOnNullableDictionaryValue()
+    {
+        var type = Generate()["properties"]!["env"]!["additionalProperties"]!["type"];
+        await Assert.That(type is JsonArray).IsTrue();
+        await Assert.That(((JsonArray)type!).Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Generate_StripsNullFromNonNullableDictionaryValue()
+    {
+        var type = Generate()["properties"]!["vars"]!["additionalProperties"]!["type"];
+        await Assert.That(type!.GetValueKind()).IsEqualTo(JsonValueKind.String);
+        await Assert.That(type.GetValue<string>()).IsEqualTo("string");
+    }
+
+    [Test]
+    public async Task Generate_KeepsNullOnNullableArrayElement()
+    {
+        var type = Generate()["properties"]!["items"]!["items"]!["type"];
+        await Assert.That(type is JsonArray).IsTrue();
+        await Assert.That(((JsonArray)type!).Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Generate_StripsNullFromNonNullableArrayElement()
+    {
+        var type = Generate()["properties"]!["tags"]!["items"]!["type"];
+        await Assert.That(type!.GetValueKind()).IsEqualTo(JsonValueKind.String);
+        await Assert.That(type.GetValue<string>()).IsEqualTo("string");
+    }
+
     private static JsonNode Generate() => JsonSchemaGenerator.Generate<GeneratorSample>(Options);
 }
