@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Text.Json.Serialization;
+using Buildvana.Core.JsonSchema;
 using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
@@ -13,6 +14,7 @@ namespace Buildvana.Core.Configuration;
 /// <remarks>
 /// <para>Every member is optional; an absent configuration file is equivalent to an instance with all members unset.</para>
 /// </remarks>
+[JsonSchemaTitle("Buildvana configuration")]
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record BuildvanaConfig
 {

@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using Buildvana.Core.JsonSchema;
 using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
@@ -13,11 +14,8 @@ namespace Buildvana.Core.Configuration;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record NuGetConfig
 {
-    // Allowed keys for Feeds, in schema-output order. Shared between loader validation and schema generation
-    // so the two cannot diverge.
-    internal static readonly string[] AllowedFeedKeys = ["prerelease", "release"];
-
     /// <summary>Gets the push feeds, keyed by channel name (<c>prerelease</c>, <c>release</c>).</summary>
     [Description("Push feeds, keyed by channel name (prerelease, release).")]
+    [JsonAllowedKeys("prerelease, release")]
     public IReadOnlyDictionary<string, NuGetFeedConfig>? Feeds { get; init; }
 }

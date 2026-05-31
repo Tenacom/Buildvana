@@ -1,10 +1,12 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using Buildvana.Core.JsonSchema;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Configuration;
@@ -17,14 +19,21 @@ public static class BuildvanaConfigLoader
     private const string JsonFileName = "buildvana.json";
     private const string JsoncFileName = "buildvana.jsonc";
 
+    private static readonly JsonDocumentOptions DocumentOptions = new()
+    {
+        CommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+    };
+
     /// <summary>
     /// Loads the configuration file found in <paramref name="homeDirectory"/>.
     /// </summary>
     /// <param name="homeDirectory">The home directory to search for a configuration file.</param>
     /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> if no file is present.</returns>
     /// <exception cref="BuildFailedException">
-    /// Both <c>buildvana.json</c> and <c>buildvana.jsonc</c> are present, the file cannot be read,
-    /// is not valid JSON, contains an unknown member, or contains an unknown dictionary key.
+    /// <para>Both <c>buildvana.json</c> and <c>buildvana.jsonc</c> are present, or the file cannot be read.</para>
+    /// <para>The file is present but not valid JSON, or does not conform to the schema; in that case
+    /// <see cref="BuildFailedException.Diagnostics"/> lists each problem with its source location.</para>
     /// </exception>
     public static BuildvanaConfig Load(string homeDirectory)
     {
@@ -47,79 +56,77 @@ public static class BuildvanaConfigLoader
             return new BuildvanaConfig();
         }
 
-        var config = Parse(path);
-        Validate(config, path);
-        return config;
+        var json = StripBom(ReadAllBytes(path));
+        var node = Parse(json, path);
+        Validate(node, json, path);
+
+        // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
+        return node!.Deserialize<BuildvanaConfig>(BuildvanaConfigSerialization.Options) ?? new BuildvanaConfig();
     }
 
-    private static BuildvanaConfig Parse(string path)
+    private static byte[] ReadAllBytes(string path)
     {
-        string text;
         try
         {
-            text = File.ReadAllText(path);
+            return File.ReadAllBytes(path);
         }
         catch (IOException e)
         {
             throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
+    }
 
+    // Removes a leading UTF-8 byte order mark, if present, so the reader sees only JSON and positions start at 1.
+    private static byte[] StripBom(byte[] bytes)
+        => bytes is [0xEF, 0xBB, 0xBF, .. var rest] ? rest : bytes;
+
+    private static JsonNode? Parse(byte[] json, string path)
+    {
         try
         {
-            var config = JsonSerializer.Deserialize<BuildvanaConfig>(text, BuildvanaConfigSerialization.Options);
-            return config ?? throw new BuildFailedException($"{path} was parsed as JSON null.");
+            return JsonNode.Parse(json, documentOptions: DocumentOptions);
         }
         catch (JsonException e)
         {
-            throw new BuildFailedException($"{path} is not a valid Buildvana configuration file: {e.Message}", e);
+            var line = (int)((e.LineNumber ?? 0) + 1);
+            var column = (int)((e.BytePositionInLine ?? 0) + 1);
+            throw new BuildFailedException(
+                $"Invalid JSON in {path}",
+                [new BuildDiagnostic(BuildDiagnosticSeverity.Error, DiagnosticCodes.InvalidJson, e.Message, path, line, column)]);
         }
     }
 
-    private static void Validate(BuildvanaConfig config, string path)
+    private static void Validate(JsonNode? node, byte[] json, string path)
     {
-        ValidateDictionaryKeys(config.DotNet?.Args?.Keys, DotNetConfig.AllowedArgsKeys, "dotnet.args", path);
-        ValidateDictionaryKeys(config.NuGet?.Feeds?.Keys, NuGetConfig.AllowedFeedKeys, "nuget.feeds", path);
-        ValidateNoNullItems(config.Release?.Branches, "release.branches", path);
-        ValidateNoNullItems(config.Release?.GenerateDocsFrom, "release.generateDocsFrom", path);
-
-        if (config.DotNet?.Args is { } args)
-        {
-            foreach (var (key, value) in args)
-            {
-                ValidateNoNullItems(value, $"dotnet.args.{key}", path);
-            }
-        }
-    }
-
-    private static void ValidateDictionaryKeys(IEnumerable<string>? keys, string[] allowed, string section, string path)
-    {
-        if (keys is null)
+        var errors = JsonSchemaValidator.Validate<BuildvanaConfig>(node, json, BuildvanaConfigSerialization.Options);
+        if (errors.Count == 0)
         {
             return;
         }
 
-        foreach (var key in keys)
+        var diagnostics = new List<BuildDiagnostic>(errors.Count);
+        foreach (var error in errors)
         {
-            BuildFailedException.ThrowIfNot(
-                Array.IndexOf(allowed, key) >= 0,
-                $"Unknown key '{key}' in {section} ({path}). Allowed keys: {string.Join(", ", allowed)}.");
-        }
-    }
-
-    private static void ValidateNoNullItems(IEnumerable<string?>? items, string section, string path)
-    {
-        if (items is null)
-        {
-            return;
+            diagnostics.Add(new BuildDiagnostic(
+                BuildDiagnosticSeverity.Error,
+                CodeFor(error.Kind),
+                error.Message,
+                path,
+                error.Line,
+                error.Column));
         }
 
-        var index = 0;
-        foreach (var item in items)
-        {
-            BuildFailedException.ThrowIf(
-                item is null,
-                $"Null item at index {index} in {section} ({path}). All items must be non-null strings.");
-            index++;
-        }
+        throw new BuildFailedException($"Invalid configuration file {path}", diagnostics);
     }
+
+    private static string CodeFor(JsonSchemaErrorKind kind)
+        => kind switch
+        {
+            JsonSchemaErrorKind.TypeMismatch => DiagnosticCodes.TypeMismatch,
+            JsonSchemaErrorKind.DisallowedValue => DiagnosticCodes.DisallowedValue,
+            JsonSchemaErrorKind.UnknownProperty => DiagnosticCodes.UnknownProperty,
+            JsonSchemaErrorKind.MissingProperty => DiagnosticCodes.MissingProperty,
+            JsonSchemaErrorKind.ValueNotAllowed => DiagnosticCodes.ValueNotAllowed,
+            _ => throw new UnreachableException(),
+        };
 }
