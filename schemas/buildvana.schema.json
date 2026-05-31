@@ -95,7 +95,10 @@
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
               "type": "object",
               "additionalProperties": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             }
           },

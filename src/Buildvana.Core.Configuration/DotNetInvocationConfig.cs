@@ -18,5 +18,5 @@ public sealed record DotNetInvocationConfig
     /// Gets environment variables forwarded to <c>dotnet</c>, keyed by variable name.
     /// </summary>
     [Description("Environment variables forwarded to `dotnet`, keyed by variable name.")]
-    public IReadOnlyDictionary<string, string>? Env { get; init; }
+    public IReadOnlyDictionary<string, string?>? Env { get; init; }
 }
