@@ -212,6 +212,6 @@ internal static class Program
         "NORMAL" or "N" => Verbosity.Normal,
         "DETAILED" or "D" => Verbosity.Detailed,
         "DIAGNOSTIC" or "DIAG" => Verbosity.Diagnostic,
-        _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: quiet, minimal, normal, detailed, diagnostic."),
+        _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic."),
     };
 }
