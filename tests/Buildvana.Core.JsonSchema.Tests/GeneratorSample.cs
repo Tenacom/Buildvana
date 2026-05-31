@@ -22,4 +22,16 @@ internal sealed record GeneratorSample
 
     [JsonAllowedKeys("alpha, beta")]
     public IReadOnlyDictionary<string, string>? Map { get; init; }
+
+    // Nullable dictionary value: the schema should keep "null" on the value type without any opt-in.
+    public IReadOnlyDictionary<string, string?>? Env { get; init; }
+
+    // Non-nullable dictionary value: the schema should strip the "null" the exporter adds.
+    public IReadOnlyDictionary<string, string>? Vars { get; init; }
+
+    // Nullable array element: the schema should keep "null" on the item type without any opt-in.
+    public IReadOnlyList<string?>? Items { get; init; }
+
+    // Non-nullable array element: the schema should strip the "null" the exporter adds.
+    public IReadOnlyList<string>? Tags { get; init; }
 }

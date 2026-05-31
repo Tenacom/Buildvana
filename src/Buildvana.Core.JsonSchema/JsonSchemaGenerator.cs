@@ -20,6 +20,13 @@ namespace Buildvana.Core.JsonSchema;
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
 /// schema always describes exactly what the deserializer accepts.</para>
+/// <para><see cref="System.Text.Json"/> marks every reference-type dictionary value and collection element
+/// nullable regardless of how the model annotates it, so the generator reconciles that against the declared
+/// nullability read from the owning property or field via <see cref="NullabilityInfoContext"/>. This requires
+/// a member to read the annotations from: when the type being described is <em>itself</em> a dictionary or
+/// collection (so its values or elements have no owning member), their declared nullability cannot be
+/// recovered and the nullability emitted by the exporter is kept as-is. Wrap such a type in a containing
+/// object property to control the nullability of its values or elements.</para>
 /// </remarks>
 public static class JsonSchemaGenerator
 {
@@ -44,7 +51,11 @@ public static class JsonSchemaGenerator
         ArgumentNullException.ThrowIfNull(type);
         ArgumentNullException.ThrowIfNull(options);
 
-        var exporterOptions = new JsonSchemaExporterOptions { TransformSchemaNode = TransformSchemaNode };
+        var nullabilityContext = new NullabilityInfoContext();
+        var exporterOptions = new JsonSchemaExporterOptions
+        {
+            TransformSchemaNode = (context, schema) => TransformSchemaNode(context, schema, nullabilityContext),
+        };
         var schema = options.GetJsonSchemaAsNode(type, exporterOptions);
 
         // Declare the dialect and (optionally) a title so editors recognize and label the document.
@@ -60,7 +71,10 @@ public static class JsonSchemaGenerator
         return schema;
     }
 
-    private static JsonNode TransformSchemaNode(JsonSchemaExporterContext context, JsonNode schema)
+    private static JsonNode TransformSchemaNode(
+        JsonSchemaExporterContext context,
+        JsonNode schema,
+        NullabilityInfoContext nullabilityContext)
     {
         var attributeProvider = context.PropertyInfo is not null
             ? context.PropertyInfo.AttributeProvider
@@ -68,23 +82,97 @@ public static class JsonSchemaGenerator
 
         schema = ApplyDescription(attributeProvider, schema);
 
-        // Strip "null" wherever the exporter emits it, except where a property opts in with [JsonNullable]:
-        // a nullable property otherwise means "unset" (an absent key), which needs no explicit null.
+        // Strip the "null" the exporter adds to a property's own type: a nullable property means "optional"
+        // (an absent key already expresses "unset"), so an explicit null is redundant unless the property
+        // opts in with [JsonNullable]. Value and element nodes skip this — their nullability is reconciled
+        // by the owning property below, because the exporter marks every reference-type value or element
+        // nullable regardless of how the model actually declares it.
+        var isValueOrElement = context.PropertyInfo is null && !context.Path.IsEmpty;
         var keepNull = attributeProvider?.IsDefined(typeof(JsonNullableAttribute), inherit: true) ?? false;
-        if (!keepNull && schema is JsonObject nullableSchema)
+        if (!isValueOrElement && !keepNull && schema is JsonObject ownSchema)
         {
-            RemoveNullFromType(nullableSchema);
-            RemoveNullFromEnum(nullableSchema);
+            RemoveNullFromType(ownSchema);
+            RemoveNullFromEnum(ownSchema);
         }
 
-        // Close a dictionary to a fixed set of keys when the property carries [JsonAllowedKeys]. The exporter
-        // runs this transform bottom-up, so the value schema cloned below is already null-stripped.
+        // Reconcile the nullability the exporter put on this property's values and elements with what the
+        // model actually declares (string vs string?), recursing through nested generics. This runs before
+        // ConstrainKeys so the keys it clones inherit the corrected value schema.
+        if (context.PropertyInfo?.AttributeProvider is MemberInfo member && schema is JsonObject propertySchema)
+        {
+            var nullability = CreateNullabilityInfo(nullabilityContext, member);
+            if (nullability is not null)
+            {
+                ReconcileValueNullability(propertySchema, nullability);
+            }
+        }
+
+        // Close a dictionary to a fixed set of keys when the property carries [JsonAllowedKeys].
         if (TryGetAllowedKeys(attributeProvider, out var keys) && schema is JsonObject dictionarySchema)
         {
             ConstrainKeys(dictionarySchema, keys);
         }
 
         return schema;
+    }
+
+    private static NullabilityInfo? CreateNullabilityInfo(NullabilityInfoContext context, MemberInfo member)
+        => member switch
+        {
+            PropertyInfo property => context.Create(property),
+            FieldInfo field => context.Create(field),
+            _ => null,
+        };
+
+    // Walks a property schema's value ("additionalProperties") and element ("items") subschemas alongside
+    // the matching nullability metadata, keeping "null" only where the model declares the value or element
+    // nullable. Recurses so nested generics (a dictionary of lists, say) are handled at every level.
+    private static void ReconcileValueNullability(JsonObject schema, NullabilityInfo nullability)
+    {
+        if (schema["additionalProperties"] is JsonObject valueSchema)
+        {
+            ApplyDeclaredNullability(valueSchema, GetValueNullability(nullability));
+        }
+
+        if (schema["items"] is JsonObject itemSchema)
+        {
+            ApplyDeclaredNullability(itemSchema, GetElementNullability(nullability));
+        }
+    }
+
+    private static void ApplyDeclaredNullability(JsonObject schema, NullabilityInfo? nullability)
+    {
+        if (nullability is null)
+        {
+            return;
+        }
+
+        if (nullability.ReadState != NullabilityState.Nullable)
+        {
+            RemoveNullFromType(schema);
+            RemoveNullFromEnum(schema);
+        }
+
+        ReconcileValueNullability(schema, nullability);
+    }
+
+    // The value type of a dictionary is its last generic argument (IReadOnlyDictionary<TKey, TValue>).
+    private static NullabilityInfo? GetValueNullability(NullabilityInfo nullability)
+    {
+        var args = nullability.GenericTypeArguments;
+        return args.Length > 0 ? args[^1] : null;
+    }
+
+    // The element type is the array element, or the single generic argument of a collection.
+    private static NullabilityInfo? GetElementNullability(NullabilityInfo nullability)
+    {
+        if (nullability.ElementType is { } elementType)
+        {
+            return elementType;
+        }
+
+        var args = nullability.GenericTypeArguments;
+        return args.Length == 1 ? args[0] : null;
     }
 
     // Surfaces a [Description] (on the property, or on the type) as a schema "description" keyword.
