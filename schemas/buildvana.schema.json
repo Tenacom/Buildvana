@@ -5,91 +5,60 @@
   "properties": {
     "$schema": {
       "description": "URI of the JSON schema describing this file.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "release": {
       "description": "Configuration for the bv release workflow.",
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "properties": {
         "branches": {
           "description": "Regular expressions (matched against the short branch name) identifying branches that produce public releases.",
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": "string"
           }
         },
         "generateDocsFrom": {
           "description": "Regular expressions (matched against the short branch name) identifying branches that documentation is generated from.",
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": "string"
           }
         },
         "configuration": {
           "description": "Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "checkPublicApi": {
           "description": "Whether public API files are checked before a release.",
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": "boolean"
         },
         "changelogUpdates": {
           "description": "Which releases require a changelog update.",
           "enum": [
             "none",
             "stable",
-            "all",
-            null
+            "all"
           ]
         },
         "emptyChangelog": {
           "description": "Text substituted when a release has no changelog entries. When omitted, an empty changelog fails the release.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
         "dogfood": {
           "description": "Whether self-references are updated (dogfooding) during a release.",
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": "boolean"
         },
         "prereleaseTag": {
           "description": "Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         }
       },
       "additionalProperties": false
     },
     "versioning": {
       "description": "Configuration for version computation.",
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "properties": {
         "assemblyVersionPrecision": {
           "description": "How many version components are carried into the assembly version.",
@@ -97,8 +66,7 @@
             "major",
             "minor",
             "build",
-            "revision",
-            null
+            "revision"
           ]
         }
       },
@@ -106,69 +74,104 @@
     },
     "dotnet": {
       "description": "Configuration for invocations of the dotnet CLI.",
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "properties": {
         "configuration": {
           "description": "Default build configuration (e.g. Debug, Release).",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         },
-        "args": {
-          "description": "Extra arguments forwarded to dotnet, keyed by command name (all, restore, build, test, pack).",
-          "type": [
-            "object",
-            "null"
-          ],
+        "all": {
+          "description": "Invocation configuration common to all \u0060dotnet\u0060 commands.",
+          "type": "object",
           "properties": {
-            "all": {
-              "type": [
-                "array",
-                "null"
-              ],
+            "args": {
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "type": "array",
               "items": {
                 "type": "string"
               }
             },
-            "restore": {
-              "type": [
-                "array",
-                "null"
-              ],
-              "items": {
+            "env": {
+              "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "type": "object",
+              "additionalProperties": {
                 "type": "string"
               }
+            }
+          },
+          "additionalProperties": false
+        },
+        "restore": {
+          "description": "Invocation configuration for the \u0060dotnet restore\u0060 command.",
+          "type": "object",
+          "properties": {
+            "args": {
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
-            "build": {
-              "type": [
-                "array",
-                "null"
-              ],
-              "items": {
-                "type": "string"
-              }
+            "env": {
+              "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "$ref": "#/properties/dotnet/properties/all/properties/env"
+            }
+          },
+          "additionalProperties": false
+        },
+        "build": {
+          "description": "Invocation configuration for the \u0060dotnet build\u0060 command.",
+          "type": "object",
+          "properties": {
+            "args": {
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
-            "test": {
-              "type": [
-                "array",
-                "null"
-              ],
-              "items": {
-                "type": "string"
-              }
+            "env": {
+              "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "$ref": "#/properties/dotnet/properties/all/properties/env"
+            }
+          },
+          "additionalProperties": false
+        },
+        "test": {
+          "description": "Invocation configuration for the \u0060dotnet test\u0060 command.",
+          "type": "object",
+          "properties": {
+            "args": {
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
-            "pack": {
-              "type": [
-                "array",
-                "null"
-              ],
-              "items": {
-                "type": "string"
-              }
+            "env": {
+              "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "$ref": "#/properties/dotnet/properties/all/properties/env"
+            }
+          },
+          "additionalProperties": false
+        },
+        "pack": {
+          "description": "Invocation configuration for the \u0060dotnet pack\u0060 command.",
+          "type": "object",
+          "properties": {
+            "args": {
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "$ref": "#/properties/dotnet/properties/all/properties/args"
+            },
+            "env": {
+              "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "$ref": "#/properties/dotnet/properties/all/properties/env"
+            }
+          },
+          "additionalProperties": false
+        },
+        "nugetPush": {
+          "description": "Invocation configuration for the \u0060dotnet nuget push\u0060 command.",
+          "type": "object",
+          "properties": {
+            "args": {
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "$ref": "#/properties/dotnet/properties/all/properties/args"
+            },
+            "env": {
+              "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "$ref": "#/properties/dotnet/properties/all/properties/env"
             }
           },
           "additionalProperties": false
@@ -178,60 +181,36 @@
     },
     "nuget": {
       "description": "Configuration for NuGet package publishing.",
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "properties": {
         "feeds": {
           "description": "Push feeds, keyed by channel name (prerelease, release).",
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": "object",
           "properties": {
             "prerelease": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": "object",
               "properties": {
                 "source": {
                   "description": "Source URL of the NuGet feed.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 },
                 "apiKeyEnv": {
                   "description": "Name of the environment variable that holds the feed API key.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 }
               },
               "additionalProperties": false
             },
             "release": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": "object",
               "properties": {
                 "source": {
                   "description": "Source URL of the NuGet feed.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 },
                 "apiKeyEnv": {
                   "description": "Name of the environment variable that holds the feed API key.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 }
               },
               "additionalProperties": false
@@ -244,48 +223,30 @@
     },
     "github": {
       "description": "Configuration for GitHub integration.",
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "properties": {
         "tokenEnv": {
           "description": "Name of the environment variable that holds the GitHub access token.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
         }
       },
       "additionalProperties": false
     },
     "git": {
       "description": "Configuration for Git-related behavior.",
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": "object",
       "properties": {
         "identity": {
           "description": "Git identity used by automated commits.",
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": "object",
           "properties": {
             "name": {
               "description": "Display name used as the Git author/committer.",
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             },
             "email": {
               "description": "Email address used as the Git author/committer.",
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             }
           },
           "additionalProperties": false
