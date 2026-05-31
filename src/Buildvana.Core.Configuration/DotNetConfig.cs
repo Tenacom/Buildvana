@@ -19,13 +19,13 @@ public sealed record DotNetConfig
     public string? Configuration { get; init; }
 
     /// <summary>
-    /// Gets invoaction configuration common to all <c>dotnet</c> commands.
+    /// Gets invocation configuration common to all <c>dotnet</c> commands.
     /// </summary>
     [Description("Invocation configuration common to all `dotnet` commands.")]
     public DotNetInvocationConfig? All { get; init; }
 
     /// <summary>
-    /// Gets invoaction configuration for the <c>dotnet restore</c> command.
+    /// Gets invocation configuration for the <c>dotnet restore</c> command.
     /// </summary>
     [Description("Invocation configuration for the `dotnet restore` command.")]
     public DotNetInvocationConfig? Restore { get; init; }
