@@ -1,0 +1,8 @@
+# Project-specific .editorconfig file
+
+root = false
+
+[*.cs]
+
+# Task properties are set by the build engine, not in our code. "Unused" getters are not a concern.
+resharper_auto_property_can_be_made_get_only_global_highlighting = none

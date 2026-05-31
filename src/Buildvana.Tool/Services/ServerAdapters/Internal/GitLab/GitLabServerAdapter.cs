@@ -14,7 +14,7 @@ namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
 /// </summary>
 internal sealed class GitLabServerAdapter : ServerAdapter
 {
-    internal GitLabServerAdapter()
+    private GitLabServerAdapter()
     {
         CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{Environment.GetEnvironmentVariable("CI_SERVER_HOST")}");
     }

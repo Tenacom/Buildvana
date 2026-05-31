@@ -124,7 +124,7 @@ internal static class JetBrainsAnnotationsExporter
 
     private static bool IsExternallyVisible(INamedTypeSymbol type)
     {
-        for (INamedTypeSymbol? current = type; current is not null; current = current.ContainingType)
+        for (var current = type; current is not null; current = current.ContainingType)
         {
             if (!IsExternallyVisible(current.DeclaredAccessibility))
             {

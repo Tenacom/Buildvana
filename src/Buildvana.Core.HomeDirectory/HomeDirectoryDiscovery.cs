@@ -35,7 +35,7 @@ public static class HomeDirectoryDiscovery
     {
         Guard.IsNotNullOrEmpty(startDirectory);
 
-        string? current = Path.GetFullPath(startDirectory);
+        var current = Path.GetFullPath(startDirectory);
         while (current is not null)
         {
             if (DirectoryContainsMarker(current))

@@ -14,6 +14,4 @@ namespace Buildvana.Core.JsonSchema;
 /// "unset", and an explicit <c>null</c> is disallowed by the generated schema.</para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property)]
-public sealed class JsonNullableAttribute : Attribute
-{
-}
+public sealed class JsonNullableAttribute : Attribute;
