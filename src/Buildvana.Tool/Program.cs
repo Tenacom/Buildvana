@@ -147,7 +147,17 @@ internal static class Program
         }
         catch (BuildFailedException ex)
         {
-            (reporter ?? CreateDefaultReporter()).Error(ex.Message);
+            var activeReporter = reporter ?? CreateDefaultReporter();
+            activeReporter.Error(ex.Message);
+
+            // Emit each diagnostic verbatim (no level label or color) in canonical compiler format, so a
+            // terminal such as VS Code renders the file(line,column) prefix as a clickable link.
+            // Verbosity.Quiet guarantees we emit them at any verbosity level.
+            foreach (var diagnostic in ex.Diagnostics)
+            {
+                activeReporter.ChildError(diagnostic.ToString(), Verbosity.Quiet);
+            }
+
             return ex.ExitCode;
         }
 
