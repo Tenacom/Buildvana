@@ -96,21 +96,6 @@ public static class JsonSchemaValidator
         return located;
     }
 
-    /// <summary>
-    /// Validates <paramref name="instance"/> against <paramref name="schema"/> and throws if it is invalid.
-    /// </summary>
-    /// <param name="instance">The JSON value to validate. <see langword="null"/> represents a JSON null.</param>
-    /// <param name="schema">The schema to validate against.</param>
-    /// <exception cref="JsonSchemaValidationException"><paramref name="instance"/> is invalid.</exception>
-    public static void ValidateAndThrow(JsonNode? instance, JsonNode schema)
-    {
-        var errors = Validate(instance, schema);
-        if (errors.Count > 0)
-        {
-            throw new JsonSchemaValidationException(errors);
-        }
-    }
-
     private static void ValidateNode(
         JsonNode? instance,
         JsonNode schemaNode,
