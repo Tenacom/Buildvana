@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana JSON schema</Title>
+    <Description>Generic JSON schema generation and validation, independent of any specific model. Reports validation failures via JsonSchemaValidationException.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+</Project>
