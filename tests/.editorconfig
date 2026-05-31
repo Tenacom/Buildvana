@@ -1,0 +1,8 @@
+# Test-specific .editorconfig file
+
+root = false
+
+[*.cs]
+
+# Test methods can have compound or expression bodies, as appropriate for the test.
+resharper_arrange_method_or_operator_body_highlighting = none
