@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Buildvana.Core.JsonSchema;
@@ -88,12 +89,38 @@ public static class BuildvanaConfigLoader
         }
         catch (JsonException e)
         {
-            var line = (int)((e.LineNumber ?? 0) + 1);
-            var column = (int)((e.BytePositionInLine ?? 0) + 1);
+            var (line, column) = ResolveParseErrorPosition(json, e);
             throw new BuildFailedException(
                 $"Invalid JSON in {path}",
                 [new BuildDiagnostic(BuildDiagnosticSeverity.Error, DiagnosticCodes.InvalidJson, e.Message, path, line, column)]);
         }
+    }
+
+    // Converts a JsonException's 0-based line and byte position into a 1-based line and *character* column, so a
+    // parse-error location lines up with the character-based columns JsonSchemaValidator reports for schema errors.
+    private static (int Line, int Column) ResolveParseErrorPosition(byte[] json, JsonException e)
+    {
+        var line = (int)(e.LineNumber ?? 0);
+        var byteInLine = (int)(e.BytePositionInLine ?? 0);
+
+        // Find the byte offset at which the error's line starts (just past the line-th newline).
+        var lineStart = 0;
+        var newlines = 0;
+        for (var i = 0; newlines < line && i < json.Length; i++)
+        {
+            if (json[i] == (byte)'\n')
+            {
+                newlines++;
+                lineStart = i + 1;
+            }
+        }
+
+        // Count characters (not bytes) from the line start to the offending position, clamping in the unlikely
+        // event the reported position lands past the end of the buffer.
+        var available = json.Length - lineStart;
+        var count = byteInLine < available ? byteInLine : available;
+        var column = Encoding.UTF8.GetCharCount(json, lineStart, count) + 1;
+        return (line + 1, column);
     }
 
     private static void Validate(JsonNode? node, byte[] json, string path)
