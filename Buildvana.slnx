@@ -51,6 +51,8 @@
   </Folder>
   <Folder Name="/tests/">
     <File Path="tests/Common.targets" />
+    <Project Path="tests/Buildvana.Core.Configuration.Tests/Buildvana.Core.Configuration.Tests.csproj" />
+    <Project Path="tests/Buildvana.Core.JsonSchema.Tests/Buildvana.Core.JsonSchema.Tests.csproj" />
     <Project Path="tests/Buildvana.Tool.Tests/Buildvana.Tool.Tests.csproj" />
   </Folder>
 </Solution>
