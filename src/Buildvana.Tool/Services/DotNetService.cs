@@ -286,6 +286,48 @@ internal sealed partial class DotNetService
     }
 
     /// <summary>
+    /// Folds the base arguments, configured tiers, command-line arguments, and trailing arguments into the final
+    /// argument list and resolved environment for a <c>dotnet</c> invocation.
+    /// </summary>
+    /// <param name="args">The base arguments constructed by the calling method.</param>
+    /// <param name="tiers">The configured settings to apply, folded left to right: each tier's arguments are appended
+    /// (after <paramref name="args"/>) and its environment variables are layered on top of the previous tiers', so a
+    /// later tier overrides an earlier one with the same variable name.</param>
+    /// <param name="commandLineArgs">Extra arguments forwarded verbatim from the command line, appended after the
+    /// configured arguments so they take precedence over them.</param>
+    /// <param name="trailingArgs">Arguments appended after everything else, so they cannot be overridden by configured
+    /// or command-line arguments.</param>
+    /// <returns>A tuple containing the final argument list and the resolved environment, the latter being
+    /// <see langword="null"/> when no tier contributes an environment variable (which leaves the child environment
+    /// unchanged).</returns>
+    internal static (string[] Args, IReadOnlyDictionary<string, string?>? Environment) MergeInvocation(
+        IReadOnlyList<string> args,
+        IReadOnlyList<DotNetInvocationSettings> tiers,
+        IReadOnlyList<string> commandLineArgs,
+        IReadOnlyList<string> trailingArgs)
+    {
+        // Fold the tiers in a single pass: append each tier's arguments, layer its environment variables on top of
+        // the previous tiers' (so a later tier overrides an earlier one with the same name). A null result environment
+        // leaves the child environment unchanged.
+        var foldedArgs = new List<string>(args);
+        Dictionary<string, string?>? environment = null;
+        foreach (var tier in tiers)
+        {
+            foldedArgs.AddRange(tier.Args);
+            foreach (var (key, value) in tier.Env)
+            {
+                environment ??= new Dictionary<string, string?>(StringComparer.Ordinal);
+                environment[key] = value;
+            }
+        }
+
+        // Order: base args → tier args → command-line args (override configured args) → trailing args (override
+        // everything, so a forwarded argument cannot countermand them).
+        string[] finalArgs = [.. foldedArgs, .. commandLineArgs, .. trailingArgs];
+        return (finalArgs, environment);
+    }
+
+    /// <summary>
     /// Return a parameter string that reflects whether we're running in CI.
     /// </summary>
     /// <param name="asMSBuildPassthrough"><see langword="true"/> to use the MSBuild passthrough form (<c>-p:</c>),
@@ -324,25 +366,7 @@ internal sealed partial class DotNetService
         OutputStreaming outputStreaming,
         CancellationToken cancellationToken = default)
     {
-        // Fold the tiers in a single pass: append each tier's arguments, layer its environment variables on top of
-        // the previous tiers' (so a later tier overrides an earlier one with the same name). A null result environment
-        // leaves the child environment unchanged.
-        var foldedArgs = new List<string>(args);
-        Dictionary<string, string?>? environment = null;
-        foreach (var tier in tiers)
-        {
-            foldedArgs.AddRange(tier.Args);
-            foreach (var (key, value) in tier.Env)
-            {
-                environment ??= new Dictionary<string, string?>(StringComparer.Ordinal);
-                environment[key] = value;
-            }
-        }
-
-        // Order: base args → tier args → command-line args (override configured args) → trailing args (override
-        // everything, so a forwarded argument cannot countermand them).
-        string[] finalArgs = [.. foldedArgs, .. commandLineArgs, .. trailingArgs];
-
+        var (finalArgs, environment) = MergeInvocation(args, tiers, commandLineArgs, trailingArgs);
         return _processRunner.RunAsync(
             DotNetMuxer,
             appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
