@@ -3,11 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.Process;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
@@ -15,9 +15,6 @@ using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
-
-using IProcessRunner = Buildvana.Core.Process.IProcessRunner;
-using ProcessResult = Buildvana.Core.Process.ProcessResult;
 
 namespace Buildvana.Tool.Services;
 
@@ -82,10 +79,16 @@ internal sealed partial class DotNetService
             solution.SolutionPath,
             "--disable-parallel",
             "-nologo",
-            ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, _settings.Restore, forwardedArgs, cancellationToken: cancellationToken);
+        return RunDotNetAsync(
+            args,
+            tiers: [_settings.All, _settings.Restore],
+            commandLineArgs: forwardedArgs,
+            trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: true)],
+            appendVerbosity: true,
+            outputStreaming: OutputStreaming.Unconditional,
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -109,10 +112,16 @@ internal sealed partial class DotNetService
             "-nologo",
             $"-p:Configuration={configuration}",
             .. restore ? Array.Empty<string>() : ["--no-restore"],
-            ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, _settings.Build, forwardedArgs, cancellationToken: cancellationToken);
+        return RunDotNetAsync(
+            args,
+            tiers: [_settings.All, _settings.Build],
+            commandLineArgs: forwardedArgs,
+            trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: true)],
+            appendVerbosity: true,
+            outputStreaming: OutputStreaming.Unconditional,
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -141,7 +150,14 @@ internal sealed partial class DotNetService
             // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
             // test-application options that `dotnet msbuild` would reject.
             string[] probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
-            var probe = await RunDotNetAsync(probeArgs, invocationKind: InvocationKind.Internal, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var probe = await RunDotNetAsync(
+                probeArgs,
+                tiers: [],
+                commandLineArgs: [],
+                trailingArgs: [],
+                appendVerbosity: false,
+                outputStreaming: OutputStreaming.Disabled,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
@@ -172,10 +188,16 @@ internal sealed partial class DotNetService
             CommonPaths.TestResults,
             "--output",
             _reporter.IsVerbosityAtLeast(Verbosity.Detailed) ? "Detailed" : "Normal",
-            ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
         ];
 
-        await RunDotNetAsync(args, _settings.Test, forwardedArgs, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await RunDotNetAsync(
+            args,
+            tiers: [_settings.All, _settings.Test],
+            commandLineArgs: forwardedArgs,
+            trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: false)],
+            appendVerbosity: true,
+            outputStreaming: OutputStreaming.Unconditional,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -201,10 +223,16 @@ internal sealed partial class DotNetService
             $"-p:Configuration={configuration}",
             .. restore ? Array.Empty<string>() : ["--no-restore"],
             .. build ? Array.Empty<string>() : ["--no-build"],
-            ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, _settings.Pack, forwardedArgs, cancellationToken: cancellationToken);
+        return RunDotNetAsync(
+            args,
+            tiers: [_settings.All, _settings.Pack],
+            commandLineArgs: forwardedArgs,
+            trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: true)],
+            appendVerbosity: true,
+            outputStreaming: OutputStreaming.Unconditional,
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -244,7 +272,14 @@ internal sealed partial class DotNetService
                 target.ApiKey,
                 "--skip-duplicate",
             ];
-            await RunDotNetAsync(args, _settings.NugetPush, invocationKind: InvocationKind.Informational, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await RunDotNetAsync(
+                args,
+                tiers: [_settings.All, _settings.NugetPush],
+                commandLineArgs: [],
+                trailingArgs: [],
+                appendVerbosity: false,
+                outputStreaming: OutputStreaming.AtVerbosity(Verbosity.Normal),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
@@ -265,69 +300,55 @@ internal sealed partial class DotNetService
     /// <summary>
     /// Runs a <c>dotnet</c> command, forwarding the output to the reporter according to the current verbosity.
     /// </summary>
-    /// <param name="args">The base arguments to pass to <c>dotnet</c> (everything the calling method constructs,
-    /// including the <c>ContinuousIntegrationBuild</c> argument). The verbosity argument is appended automatically
-    /// according to the current verbosity and invocation kind.</param>
-    /// <param name="invocation">The per-command configured settings, whose arguments and environment variables are
-    /// merged with the <see cref="DotNetSettings.All"/> settings and applied to the invocation. Pass
-    /// <see langword="null"/> for bv-internal invocations that must not receive user-configured arguments
-    /// (e.g. MSBuild property probes).</param>
+    /// <param name="args">The base arguments to pass to <c>dotnet</c>, constructed by the calling method.</param>
+    /// <param name="tiers">The configured settings to apply, folded left to right: each tier's arguments are
+    /// appended (after <paramref name="args"/>) and its environment variables are layered on top of the previous
+    /// tiers', so a later tier overrides an earlier one with the same variable name. Pass an empty list for
+    /// bv-internal invocations that must not receive user-configured arguments (e.g. MSBuild property probes).</param>
     /// <param name="commandLineArgs">Extra arguments forwarded verbatim from the command line, appended after the
-    /// configured arguments so they take precedence.</param>
-    /// <param name="invocationKind">The kind of invocation, which determines how <c>dotnet</c> verbosity and output streaming are handled.</param>
+    /// configured arguments so they take precedence over them.</param>
+    /// <param name="trailingArgs">Arguments appended after everything else, so they cannot be overridden by
+    /// configured or command-line arguments (e.g. the <c>ContinuousIntegrationBuild</c> property).</param>
+    /// <param name="appendVerbosity"><see langword="true"/> to append a <c>--verbosity</c> argument reflecting the
+    /// current verbosity; <see langword="false"/> for commands that do not accept it (e.g. <c>dotnet nuget push</c>)
+    /// or already carry it.</param>
+    /// <param name="outputStreaming">The output streaming configuration for the <c>dotnet</c> invocation.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task{ProcessResult}"/> representing the ongoing operation, with a result describing child process outcome.</returns>
     private Task<ProcessResult> RunDotNetAsync(
         IReadOnlyList<string> args,
-        DotNetInvocationSettings? invocation = null,
-        IReadOnlyList<string>? commandLineArgs = null,
-        InvocationKind invocationKind = InvocationKind.Normal,
+        IReadOnlyList<DotNetInvocationSettings> tiers,
+        IReadOnlyList<string> commandLineArgs,
+        IReadOnlyList<string> trailingArgs,
+        bool appendVerbosity,
+        OutputStreaming outputStreaming,
         CancellationToken cancellationToken = default)
     {
-        var (appendVerbosity, streamOutput, streamVerbosity) = invocationKind switch {
-            InvocationKind.Normal => (AppendVerbosity: true, StreamOutput: true, StreamVerbosity: null as Verbosity?),
-            InvocationKind.Informational => (AppendVerbosity: false, StreamOutput: true, StreamVerbosity: Verbosity.Normal),
-            InvocationKind.Internal => (AppendVerbosity: false, StreamOutput: false, StreamVerbosity: null),
-            _ => throw new UnreachableException(),
-        };
+        // Fold the tiers in a single pass: append each tier's arguments, layer its environment variables on top of
+        // the previous tiers' (so a later tier overrides an earlier one with the same name). A null result environment
+        // leaves the child environment unchanged.
+        var foldedArgs = new List<string>(args);
+        Dictionary<string, string?>? environment = null;
+        foreach (var tier in tiers)
+        {
+            foldedArgs.AddRange(tier.Args);
+            foreach (var (key, value) in tier.Env)
+            {
+                environment ??= new Dictionary<string, string?>(StringComparer.Ordinal);
+                environment[key] = value;
+            }
+        }
 
-        // Order: base args (constructed by the caller) → dotnet.all args → per-command args → command-line args.
-        // Command-line args come last so they override configured arguments.
-        IReadOnlyList<string> configuredArgs = invocation is null ? [] : [.. _settings.All.Args, .. invocation.Args];
-        string[] finalArgs = [.. args, .. configuredArgs, .. commandLineArgs ?? []];
-        var environment = invocation is null ? null : BuildEnvironment(invocation);
+        // Order: base args → tier args → command-line args (override configured args) → trailing args (override
+        // everything, so a forwarded argument cannot countermand them).
+        string[] finalArgs = [.. foldedArgs, .. commandLineArgs, .. trailingArgs];
 
         return _processRunner.RunAsync(
             DotNetMuxer,
             appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
             environment: environment,
-            onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, streamVerbosity) : null,
-            onStderr: streamOutput ? (x) => _reporter.ChildError(x, streamVerbosity) : null,
+            onStdout: outputStreaming.Enabled ? (x) => _reporter.ChildOutput(x, outputStreaming.Verbosity) : null,
+            onStderr: outputStreaming.Enabled ? (x) => _reporter.ChildError(x, outputStreaming.Verbosity) : null,
             cancellationToken: cancellationToken);
-    }
-
-    // Merges environment variables in the order dotnet.all env → per-command env, so a per-command entry overrides
-    // an "all" entry with the same name. Returns null when there is nothing to apply, leaving the child environment unchanged.
-    private Dictionary<string, string?>? BuildEnvironment(DotNetInvocationSettings invocation)
-    {
-        var all = _settings.All.Env;
-        var perCommand = invocation.Env;
-        if (all.Count == 0 && perCommand.Count == 0)
-        {
-            return null;
-        }
-
-        var merged = new Dictionary<string, string?>(all.Count + perCommand.Count, StringComparer.Ordinal);
-        foreach (var (key, value) in all)
-        {
-            merged[key] = value;
-        }
-
-        foreach (var (key, value) in perCommand)
-        {
-            merged[key] = value;
-        }
-
-        return merged;
     }
 }
