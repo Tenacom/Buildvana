@@ -174,13 +174,16 @@ internal static class Program
             .AddSingleton(reporter)
             .AddSingleton(globals)
             .AddSingleton(new CommandParameters(parsed.OptionTokens, parsed.Forwarded))
-            .AddSingleton(static sp => ReleaseSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
+            .AddSingleton(static sp => ReleaseSettings.Parse(
+                sp.GetRequiredService<CommandParameters>().Options,
+                sp.GetRequiredService<BuildvanaConfig>(),
+                sp.GetRequiredService<DotNetSettings>()))
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
 
             // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
-            // No Phase 1 command resolves BuildvanaConfig, so a malformed buildvana.json stays inert until a
-            // Phase 2 consumer reads it.
+            // A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or ReleaseSettings) reads it.
             .AddSingleton(static sp => BuildvanaConfigLoader.Load(sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory))
+            .AddSingleton<DotNetSettings>()
             .AddSingleton<IJsonHelper, JsonHelper>()
             .AddSingleton<IProcessRunner, ProcessRunner>()
             .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()

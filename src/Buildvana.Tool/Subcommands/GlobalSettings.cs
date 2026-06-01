@@ -13,7 +13,6 @@ namespace Buildvana.Tool.Subcommands;
 /// reflected by the help renderer.
 /// </summary>
 /// <param name="Verbosity">The raw <c>--verbosity</c> / <c>-v</c> value, or <see langword="null"/> if none was passed.</param>
-/// <param name="MainBranch">The raw <c>--main-branch</c> value, or <see langword="null"/> if none was passed.</param>
 /// <param name="Color">Whether <c>--color</c> was passed.</param>
 /// <param name="NoColor">Whether <c>--no-color</c> was passed.</param>
 /// <param name="Nologo">Whether <c>--nologo</c> was passed.</param>
@@ -23,9 +22,6 @@ internal sealed record GlobalSettings(
     [property: BvOption("-v|--verbosity <LEVEL>")]
     [property: Description("Logging verbosity. One of: quiet, minimal, normal, detailed, diagnostic. Defaults to normal.")]
     string? Verbosity,
-    [property: BvOption("--main-branch <NAME>")]
-    [property: Description("Name of the repository's main branch. Defaults to 'main'.")]
-    string? MainBranch,
     [property: BvOption("--color")]
     [property: Description("Force ANSI color output even when not connected to a TTY.")]
     bool Color,

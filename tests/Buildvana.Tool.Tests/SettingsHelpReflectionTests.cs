@@ -11,14 +11,14 @@ internal sealed class SettingsHelpReflectionTests
     public async Task GlobalSettings_ExposesOptionsInHelpOrder()
     {
         var names = OptionLongNames(typeof(GlobalSettings));
-        await Assert.That(names).IsEqualTo("--verbosity,--main-branch,--color,--no-color,--nologo,--version");
+        await Assert.That(names).IsEqualTo("--verbosity,--color,--no-color,--nologo,--version");
     }
 
     [Test]
     public async Task ReleaseSettings_ExposesOptionsInHelpOrder()
     {
         var names = OptionLongNames(typeof(ReleaseSettings));
-        await Assert.That(names).IsEqualTo("--configuration,--bump,--check-public-api,--unstable-changelog,--require-changelog,--dogfood");
+        await Assert.That(names).IsEqualTo("--configuration,--bump,--check-public-api,--dogfood");
     }
 
     private static string OptionLongNames(Type type)

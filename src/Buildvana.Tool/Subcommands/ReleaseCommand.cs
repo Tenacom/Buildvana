@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
@@ -131,36 +132,46 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 }
             }
 
-            // Update changelog only on non-prerelease, unless forced
+            // Update changelog according to the configured policy (none | stable | all).
             var changelogUpdated = false;
+            var changelogUpdates = settings.ResolveChangelogUpdates();
+            var shouldUpdateChangelog = changelogUpdates != ChangelogUpdates.None
+                && (changelogUpdates == ChangelogUpdates.All || !version.IsPrerelease);
             if (!changelog.Exists)
             {
                 reporter.Info($"Changelog update skipped: {ChangelogService.FileName} not found.");
             }
-            else if (!version.IsPrerelease || settings.ResolveUnstableChangelog())
+            else if (!shouldUpdateChangelog)
             {
-                if (settings.ResolveRequireChangelog())
+                var reason = changelogUpdates == ChangelogUpdates.None
+                    ? "changelog updates are disabled (release.changelogUpdates is 'none')."
+                    : "not needed on prerelease.";
+                reporter.Info($"Changelog update skipped: {reason}");
+            }
+            else
+            {
+                // An empty "Unreleased changes" section is substituted from release.emptyChangelog when configured;
+                // otherwise the release fails.
+                string? emptyChangelogSubstitute = null;
+                if (changelog.HasUnreleasedChanges())
                 {
-                    BuildFailedException.ThrowIfNot(
-                        changelog.HasUnreleasedChanges(),
-                        "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings.");
-
                     reporter.Info("Changelog check successful: the \"Unreleased changes\" section is not empty.");
                 }
                 else
                 {
-                    reporter.Info("Changelog check skipped: option 'requireChangelog' is false.");
+                    emptyChangelogSubstitute = settings.ResolveEmptyChangelog();
+                    BuildFailedException.ThrowIfNot(
+                        emptyChangelogSubstitute is not null,
+                        "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).");
+
+                    reporter.Info("Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
                 }
 
                 // Update the changelog and commit the change before building.
                 // This ensures that the Git height is up to date when computing a version for the build artifacts.
-                changelog.PrepareForRelease();
+                changelog.PrepareForRelease(emptyChangelogSubstitute);
                 release.UpdateRepository(ChangelogService.FileName);
                 changelogUpdated = true;
-            }
-            else
-            {
-                reporter.Info("Changelog update skipped: not needed on prerelease.");
             }
 
             // At this point we know what the actual published version will be.
@@ -269,9 +280,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 {
                     reporter.Info("Documentation generation skipped: not needed on prerelease.");
                 }
-                else if (git.CurrentBranch != git.MainBranch)
+                else if (!settings.MatchesDocsBranch(git.CurrentBranch))
                 {
-                    reporter.Info($"Documentation generation skipped: releasing from '{git.CurrentBranch}', not '{git.MainBranch}'.");
+                    reporter.Info($"Documentation generation skipped: branch '{git.CurrentBranch}' does not match release.generateDocsFrom.");
                 }
                 else
                 {

@@ -15,7 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bv --version` prints the tool's informational version and exits without running a command and without printing the startup logo.
 - `bv` root help (`bv --help`) now shows a `GLOBAL OPTIONS:` section listing the options every subcommand inherits (`--verbosity`/`-v`, `--color`, `--no-color`, `--nologo`, `--version`). These options are now position-independent (accepted before or after the subcommand name) and case-insensitive, matching the rest of `bv`'s option surface.
 - Commands that forward extra arguments to `dotnet` (`restore`, `build`, `test`, `pack`) are marked as such in `bv`'s root help, and their per-command help (`bv <command> --help`) includes a `FORWARDED ARGUMENTS` section.
-- Buildvana now recognizes a repository-root configuration file, `buildvana.json` (or its commented variant `buildvana.jsonc`). The file is **inert** in this release: it is discovered, parsed, validated, and exposed to `bv`, but no setting affects the build yet. A committed JSON schema (`schemas/buildvana.schema.json`) is generated from the typed model, so editors can validate and document the file; unknown keys, an invalid file, or the presence of both `buildvana.json` and `buildvana.jsonc` in the same directory are reported as errors. Both `bv` and the SDK now treat a `buildvana.json`/`buildvana.jsonc` file as a home-directory marker, alongside `.buildvana-home` and Git markers; home-directory discovery now stops at the nearest directory (the starting directory included) that contains any marker.
+- Buildvana now recognizes a repository-root configuration file, `buildvana.json` (or its commented variant `buildvana.jsonc`). It is discovered, parsed, validated, and exposed to `bv`; the settings it currently drives are listed below, and more are wired in over subsequent releases. A committed JSON schema (`schemas/buildvana.schema.json`) is generated from the typed model, so editors can validate and document the file; unknown keys, an invalid file, or the presence of both `buildvana.json` and `buildvana.jsonc` in the same directory are reported as errors. Both `bv` and the SDK now treat a `buildvana.json`/`buildvana.jsonc` file as a home-directory marker, alongside `.buildvana-home` and Git markers; home-directory discovery now stops at the nearest directory (the starting directory included) that contains any marker.
+- `buildvana.json` now drives several build and release settings that were previously CLI-only or hardcoded. Each resolves as CLI flag (where one exists) → `buildvana.json` → built-in default:
+  - the default build configuration (`dotnet.configuration`, default `Release`), used by `bv restore`/`build`/`test`/`pack` and as the base of `bv release`'s configuration chain (`--configuration` → `release.configuration` → `dotnet.configuration`);
+  - extra arguments and environment variables for each `dotnet` invocation: `dotnet.all` (applied to every invocation) merged with the per-command `dotnet.restore`/`dotnet.build`/`dotnet.test`/`dotnet.pack`/`dotnet.nugetPush`, each carrying `args` and `env`. Arguments are appended in the order base → `dotnet.all` → per-command → forwarded command-line arguments (so a `--` argument still wins); environment variables apply `dotnet.all` then the per-command entries;
+  - the `bv release` settings `release.checkPublicApi`, `release.dogfood`, `release.changelogUpdates` + `release.emptyChangelog`, and `release.generateDocsFrom`.
 
 ### Changes to existing features
 
@@ -29,19 +33,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGE**: `bv clean` (formerly known as `bv prepare`) now deletes the `TestResults` directory at the repository root.
 - `bv clean` (formerly known as `bv prepare`) no longer deletes per-project `TestResults` directories.
 - `dotnet bv release` no longer folds self-reference (dogfood) updates into the "Prepare release" commit. They now go into a separate `Update self-references to <version> [skip ci]` commit pushed on top, in the same push. The release tag binds to the "Prepare release" commit, so checking out the tag and rebuilding now reproduces the actually-released source state (which still references the previously-published versions). `[skip ci]` is required on the dogfood commit because the new packages are usually not yet published at push time.
-- **BREAKING CHANGE**: Five `bv release` options have been renamed:
+- **BREAKING CHANGE**: Three `bv release` options have been renamed:
   - `--versionSpecChange` → `--bump`
   - `--checkPublicApiFiles` → `--check-public-api`
-  - `--updateChangelogOnPrerelease` → `--unstable-changelog`
-  - `--ensureChangelogNotEmpty` → `--require-changelog`
   - `--updateSelfReferences` → `--dogfood`
 - **BREAKING CHANGE**: `bv` no longer accepts CLI option values via environment variables. The following env vars are no longer recognized as defaults for their CLI counterparts:
   - `CONFIGURATION` (`--configuration`)
-  - `MAIN_BRANCH` (`--main-branch`)
   - `VERSION_SPEC_CHANGE` (`--versionSpecChange`, now `--bump`)
   - `CHECK_PUBLIC_API_FILES` (`--checkPublicApiFiles`, now `--check-public-api`)
-  - `UPDATE_CHANGELOG_ON_PRERELEASE` (`--updateChangelogOnPrerelease`, now `--unstable-changelog`)
-  - `ENSURE_CHANGELOG_NOT_EMPTY` (`--ensureChangelogNotEmpty`, now `--require-changelog`)
   - `UPDATE_SELF_REFERENCES` (`--updateSelfReferences`, now `--dogfood`)
 
   Pass values via CLI flags instead.  
@@ -60,8 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `bv test -- --report-trx` reaches the test application.
 - **BREAKING CHANGE**: `bv release` rejects a `--` separator (and anything after it): unlike the pipeline commands, it has no underlying `dotnet` pass-through to forward arguments to.
 - **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of `restore`/`build`/`test`/`pack`. MSBuild now uses its default parallelism unless you forward your own `-m`/`-maxcpucount` switch.
-- **BREAKING CHANGE**: The `-c`/`--configuration` option is no longer parsed by `bv restore`/`build`/`test`/`pack`; for those commands it is just another forwarded argument, passed after the `--` separator. `bv` emits `Release` as an overridable default, so a forwarded `-c`/`-p:Configuration=` still wins (e.g. `bv build -- -c Debug` builds `Debug`). `bv release` keeps `-c`/`--configuration` as a parsed option, since it needs the value to locate build artifacts.
-- `--main-branch` is now a global option: it is accepted at any position on the command line (before or after the subcommand name), appears in the `GLOBAL OPTIONS` section of help, and is honored by the commands that talk to Git.
+- **BREAKING CHANGE**: The `-c`/`--configuration` option is no longer parsed by `bv restore`/`build`/`test`/`pack`; for those commands it is just another forwarded argument, passed after the `--` separator. `bv` emits the configured default build configuration (`dotnet.configuration` in `buildvana.json`, or `Release`) as an overridable default, so a forwarded `-c`/`-p:Configuration=` still wins (e.g. `bv build -- -c Debug` builds `Debug`). `bv release` keeps `-c`/`--configuration` as a parsed option, since it needs the value to locate build artifacts.
+- **BREAKING CHANGE**: The `--main-branch` global option has been removed, along with `bv`'s main-branch discovery. Documentation generation on release is now gated by `release.generateDocsFrom` in `buildvana.json`: a list of regular expressions matched against the current short branch name (default `["^main$", "^master$"]`, reproducing the previous main/master discovery). The human-curated changelog permalink in generated release notes now points at the release branch itself rather than the discovered main branch.
+- **BREAKING CHANGE**: The `--unstable-changelog` and `--require-changelog` options of `bv release` have been removed with no CLI replacement; changelog policy is repository-stable, not per-invocation. Configure it in `buildvana.json` instead: `release.changelogUpdates` (`none` | `stable` | `all`, default `stable`) selects which releases update the changelog, and `release.emptyChangelog` provides substitute text for an empty "Unreleased changes" section (when unset, an empty section fails the release, matching the previous `--require-changelog` default of `true`).
 - `bv`'s build commands (`clean`, `restore`, `build`, `test`, `pack`) and `release` now observe cancellation. Pressing Ctrl-C (or a host cancelling the operation) stops the pipeline promptly: it stops launching further steps and terminates the running `dotnet` child process instead of waiting for it to finish, then `bv` exits with code 130. Partial build output may be left behind on cancellation; `bv clean` recovers.
 
 ### Bugs fixed in this release

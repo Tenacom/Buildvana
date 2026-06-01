@@ -13,7 +13,6 @@ using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
 using NuGet.Versioning;
-using GlobalSettings = Buildvana.Tool.Subcommands.GlobalSettings;
 
 namespace Buildvana.Tool.Services.Git;
 
@@ -27,11 +26,10 @@ internal sealed class GitService : IDisposable
     private readonly IHomeDirectoryProvider _home;
     private readonly Repository _repository;
 
-    public GitService(IReporter reporter, IHomeDirectoryProvider home, GlobalSettings globals)
+    public GitService(IReporter reporter, IHomeDirectoryProvider home)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(home);
-        Guard.IsNotNull(globals);
         _reporter = reporter;
         _home = home;
         var homeDirectory = home.HomeDirectory;
@@ -42,7 +40,6 @@ internal sealed class GitService : IDisposable
         OriginUrl = new(originUrl);
         var headName = _repository.Head.CanonicalName;
         CurrentBranch = headName.StartsWith("refs/heads/", StringComparison.Ordinal) ? _repository.Head.FriendlyName : string.Empty;
-        MainBranch = FindMainBranch(origin, globals.MainBranch ?? string.Empty);
     }
 
     /// <summary>
@@ -54,12 +51,6 @@ internal sealed class GitService : IDisposable
     /// Gets the fetch URL of the origin remote.
     /// </summary>
     public Uri OriginUrl { get; }
-
-    /// <summary>
-    /// Gets the name of the main Git branch.
-    /// </summary>
-    /// <value>The name of the main branch.</value>
-    public string MainBranch { get; }
 
     /// <summary>
     /// Gets the name of the current Git branch.
@@ -299,60 +290,5 @@ internal sealed class GitService : IDisposable
 
         _reporter.Detail($"Origin remote is '{name}' ({url})");
         return true;
-    }
-
-    private string FindMainBranch(string origin, string configuredMainBranch)
-    {
-        var haveConfiguredMainBranch = !string.IsNullOrEmpty(configuredMainBranch);
-        var mainBranchFound = false;
-        var mainFound = false;
-        var masterFound = false;
-        var mainValue = $"{origin}/main";
-        var masterValue = $"{origin}/master";
-        var configuredValue = string.Empty;
-        if (haveConfiguredMainBranch)
-        {
-            _reporter.Detail($"Looking for main branch on remote '{origin}' (configured value is '{configuredMainBranch}')...");
-            configuredValue = $"{origin}/{configuredMainBranch}";
-        }
-        else
-        {
-            _reporter.Detail($"Looking for main branch on remote '{origin}' (no configured value)...");
-        }
-
-        foreach (var branch in _repository.Branches.Select(static x => x.FriendlyName))
-        {
-            if (haveConfiguredMainBranch && branch == configuredValue)
-            {
-                _reporter.Detail($"  '{branch}' <-- configured value");
-                mainBranchFound = true;
-            }
-            else
-            {
-                _reporter.Detail($"  '{branch}'");
-                if (branch == mainValue)
-                {
-                    mainFound = true;
-                }
-                else if (branch == masterValue)
-                {
-                    masterFound = true;
-                }
-            }
-        }
-
-        var mainBranch = mainBranchFound ? configuredMainBranch
-            : mainFound ? "main"
-            : masterFound ? "master"
-            : null;
-
-        if (mainBranch is null)
-        {
-            _reporter.Detail($"Main branch not found on remote '{origin}'.");
-            return string.Empty;
-        }
-
-        _reporter.Detail($"Main branch '{mainBranch}' found on remote '{origin}'.");
-        return mainBranch;
     }
 }

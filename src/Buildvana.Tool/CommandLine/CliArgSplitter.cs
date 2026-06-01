@@ -31,13 +31,12 @@ internal static class CliArgSplitter
 
         var reader = new CliOptionReader(working);
         var verbosity = reader.ReadValue("--verbosity", "-v");
-        var mainBranch = reader.ReadValue("--main-branch");
         var color = reader.ReadFlag("--color");
         var noColor = reader.ReadFlag("--no-color");
         var nologo = reader.ReadFlag("--nologo");
         var version = reader.ReadFlag("--version");
         var helpRequested = reader.ReadFlag("--help", "-h");
-        var globals = new GlobalSettings(verbosity, mainBranch, color, noColor, nologo, version);
+        var globals = new GlobalSettings(verbosity, color, noColor, nologo, version);
 
         var (subcommand, positionals, optionTokens) = Classify(reader.Remaining);
         return new ParsedCommandLine(globals, helpRequested, subcommand, positionals, optionTokens, forwarded);
