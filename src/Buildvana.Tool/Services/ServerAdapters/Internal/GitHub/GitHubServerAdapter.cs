@@ -6,10 +6,11 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
-using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
+using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Octokit;
@@ -40,7 +41,10 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         RepositoryOwner = originInfo.PathSegments[0];
         RepositoryName = originInfo.PathSegments[1];
         RepositoryUrl = new Uri($"https://{HostName}/{RepositoryOwner}/{RepositoryName}");
-        _token = services.GetRequiredService<ToolConfiguration>().GitHubToken;
+        var tokenEnv = services.GetRequiredService<BuildvanaConfig>().GitHub?.TokenEnv is { Length: > 0 } e
+            ? e
+            : "GITHUB_TOKEN";
+        _token = EnvVarHelper.Require(tokenEnv);
     }
 
     /// <inheritdoc/>

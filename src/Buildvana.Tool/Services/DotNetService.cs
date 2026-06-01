@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Process;
-using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
@@ -32,7 +31,6 @@ internal sealed partial class DotNetService
 
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
-    private readonly Lazy<NuGetPushConfiguration> _nugetPushConfigurationLazy;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
     private readonly DotNetSettings _settings;
@@ -43,20 +41,17 @@ internal sealed partial class DotNetService
     public DotNetService(
         IReporter reporter,
         IProcessRunner processRunner,
-        Lazy<NuGetPushConfiguration> nugetPushConfigurationLazy,
         ServerAdapter server,
         VersionService version,
         DotNetSettings settings)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(processRunner);
-        Guard.IsNotNull(nugetPushConfigurationLazy);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
         Guard.IsNotNull(settings);
         _reporter = reporter;
         _processRunner = processRunner;
-        _nugetPushConfigurationLazy = nugetPushConfigurationLazy;
         _server = server;
         _version = version;
         _settings = settings;
@@ -83,7 +78,7 @@ internal sealed partial class DotNetService
 
         return RunDotNetAsync(
             args,
-            tiers: [_settings.All, _settings.Restore],
+            tiers: [_settings.Invocations.All, _settings.Invocations.Restore],
             commandLineArgs: forwardedArgs,
             trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: true)],
             appendVerbosity: true,
@@ -116,7 +111,7 @@ internal sealed partial class DotNetService
 
         return RunDotNetAsync(
             args,
-            tiers: [_settings.All, _settings.Build],
+            tiers: [_settings.Invocations.All, _settings.Invocations.Build],
             commandLineArgs: forwardedArgs,
             trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: true)],
             appendVerbosity: true,
@@ -192,7 +187,7 @@ internal sealed partial class DotNetService
 
         await RunDotNetAsync(
             args,
-            tiers: [_settings.All, _settings.Test],
+            tiers: [_settings.Invocations.All, _settings.Invocations.Test],
             commandLineArgs: forwardedArgs,
             trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: false)],
             appendVerbosity: true,
@@ -227,7 +222,7 @@ internal sealed partial class DotNetService
 
         return RunDotNetAsync(
             args,
-            tiers: [_settings.All, _settings.Pack],
+            tiers: [_settings.Invocations.All, _settings.Invocations.Pack],
             commandLineArgs: forwardedArgs,
             trailingArgs: [ContinuousIntegrationBuildArg(asMSBuildPassthrough: true)],
             appendVerbosity: true,
@@ -251,11 +246,7 @@ internal sealed partial class DotNetService
             return;
         }
 
-        var isPrivate = await _server.IsPrivateRepositoryAsync().ConfigureAwait(false);
-        var nugetConfig = _nugetPushConfigurationLazy.Value;
-        var target = isPrivate ? nugetConfig.Private
-            : _version.IsPrerelease ? nugetConfig.Prerelease
-            : nugetConfig.Release;
+        var target = _settings.ResolvePushTarget(_version.IsPrerelease);
         foreach (var path in packages)
         {
             _reporter.Detail($"Pushing {path} to {target.Source}...");
@@ -274,7 +265,7 @@ internal sealed partial class DotNetService
             ];
             await RunDotNetAsync(
                 args,
-                tiers: [_settings.All, _settings.NugetPush],
+                tiers: [_settings.Invocations.All, _settings.Invocations.NugetPush],
                 commandLineArgs: [],
                 trailingArgs: [],
                 appendVerbosity: false,

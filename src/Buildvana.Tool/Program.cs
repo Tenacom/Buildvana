@@ -12,7 +12,6 @@ using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
-using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
@@ -196,8 +195,6 @@ internal static class Program
             .AddSingleton<DocFxService>()
             .AddSingleton<DotNetService>()
             .AddSingleton<BuildPipeline>()
-            .AddSingleton(static _ => ToolConfiguration.FromEnvironment())
-            .AddSingleton(static _ => NuGetPushConfiguration.FromEnvironment())
             .AddSingleton<SelfReferenceUpdater>();
 
         foreach (var registration in CommandRegistry.Commands)

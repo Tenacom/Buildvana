@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - the default build configuration (`dotnet.configuration`, default `Release`), used by `bv restore`/`build`/`test`/`pack` and as the base of `bv release`'s configuration chain (`--configuration` → `release.configuration` → `dotnet.configuration`);
   - extra arguments and environment variables for each `dotnet` invocation: `dotnet.all` (applied to every invocation) merged with the per-command `dotnet.restore`/`dotnet.build`/`dotnet.test`/`dotnet.pack`/`dotnet.nugetPush`, each carrying `args` and `env`. Arguments are appended in the order base → `dotnet.all` → per-command → forwarded command-line arguments (so a `--` argument still wins); environment variables apply `dotnet.all` then the per-command entries;
   - the `bv release` settings `release.checkPublicApi`, `release.dogfood`, `release.changelogUpdates` + `release.emptyChangelog`, and `release.generateDocsFrom`.
+- `buildvana.json` now also holds the secrets and endpoints `bv release` needs when publishing, replacing the fixed environment variables read previously. Secrets are never inlined: configuration names the environment variable that carries each one, and the value is read at the point of use.
+  - NuGet push feeds (`nuget.feeds`): a `release` channel and an optional `prerelease` channel, each `{ source, apiKeyEnv }`. `bv release` pushes prerelease versions to the `prerelease` feed — falling back to the `release` feed when `prerelease` is omitted — and stable versions to the `release` feed. The feed URL comes from `source`; the API key is read from the environment variable named by `apiKeyEnv`. Feed selection no longer depends on whether the repository is private: the old `private` channel is gone, although `bv` can still query a repository's visibility.
+  - the GitHub token (`github.tokenEnv`, default `GITHUB_TOKEN`): names the environment variable that holds the token used for release operations.
+- `buildvana.json` accepts a `git.identity` (`{ name, email }`) section describing the author/committer for automated commits. It is validated and exposed, but not yet wired to release commits.
 
 ### Changes to existing features
 
@@ -45,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `UPDATE_SELF_REFERENCES` (`--updateSelfReferences`, now `--dogfood`)
 
   Pass values via CLI flags instead.  
-  Secrets and endpoints (`GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`/`KEY`, `PRERELEASE_NUGET_SOURCE`/`KEY`, `RELEASE_NUGET_SOURCE`/`KEY`) are unaffected.
+  Secrets and endpoints are no longer read from fixed environment variables (`GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`/`KEY`, `PRERELEASE_NUGET_SOURCE`/`KEY`, `RELEASE_NUGET_SOURCE`/`KEY`) either; they are now configured in `buildvana.json` (`nuget.feeds`, `github.tokenEnv`) as described under _New features_ above.
 - **BREAKING CHANGE**: `bv`'s `--verbosity` setting now accepts the same values as the .NET CLI:
   - `quiet` (or `q`)
   - `minimal` (or `m`)
