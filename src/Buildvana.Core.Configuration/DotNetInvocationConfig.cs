@@ -3,9 +3,14 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
 
+/// <summary>
+/// Configures the extra arguments and environment variables for one kind of <c>dotnet</c> invocation.
+/// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record DotNetInvocationConfig
 {
     /// <summary>

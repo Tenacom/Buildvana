@@ -170,7 +170,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         };
 
         var generateNotesResponse = await client.Repository.Release.GenerateReleaseNotes(RepositoryOwner, RepositoryName, releaseNotesRequest).ConfigureAwait(false);
-        var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.MainBranch)}).\n\n---\n\n"
+        var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.CurrentBranch)}).\n\n---\n\n"
                 + generateNotesResponse.Body;
 
         _reporter.Info($"Publishing the previously created release as {tag} (target {targetCommitish})...");

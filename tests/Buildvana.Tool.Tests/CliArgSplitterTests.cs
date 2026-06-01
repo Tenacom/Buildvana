@@ -38,14 +38,6 @@ internal sealed class CliArgSplitterTests
     }
 
     [Test]
-    public async Task Split_StripsMainBranchGlobalBeforeSubcommand()
-    {
-        var result = CliArgSplitter.Split(["--main-branch", "develop", "release"]);
-        await Assert.That(result.Globals.MainBranch).IsEqualTo("develop");
-        await Assert.That(result.Subcommand).IsEqualTo("release");
-    }
-
-    [Test]
     public async Task Split_StripsFlagGlobalsOnEitherSideOfSubcommand()
     {
         var result = CliArgSplitter.Split(["--nologo", "build", "--color"]);

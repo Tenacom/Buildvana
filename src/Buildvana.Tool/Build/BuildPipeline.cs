@@ -22,14 +22,9 @@ namespace Buildvana.Tool.Build;
 /// </summary>
 internal sealed class BuildPipeline
 {
-    /// <summary>
-    /// The MSBuild configuration used when a caller does not specify one. It is emitted as an overridable
-    /// default, so a user-forwarded <c>-c</c>/<c>-p:Configuration=</c> wins.
-    /// </summary>
-    public const string DefaultConfiguration = "Release";
-
     private readonly SolutionContext _solution;
     private readonly DotNetService _dotnet;
+    private readonly DotNetSettings _dotnetSettings;
     private readonly IReporter _reporter;
     private readonly IReadOnlyList<string> _forwardedArgs;
 
@@ -39,15 +34,18 @@ internal sealed class BuildPipeline
     public BuildPipeline(
         SolutionContext solution,
         DotNetService dotnet,
+        DotNetSettings dotnetSettings,
         IReporter reporter,
         CommandParameters parameters)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNull(dotnet);
+        Guard.IsNotNull(dotnetSettings);
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(parameters);
         _solution = solution;
         _dotnet = dotnet;
+        _dotnetSettings = dotnetSettings;
         _reporter = reporter;
         _forwardedArgs = parameters.Forwarded;
     }
@@ -56,10 +54,10 @@ internal sealed class BuildPipeline
     /// Runs the pipeline from <see cref="BuildStep.Clean"/> through <paramref name="last"/>, inclusive.
     /// </summary>
     /// <param name="last">The last step to run.</param>
-    /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="configuration">The MSBuild configuration to build, or <see langword="null"/> to use the configured default (<see cref="DotNetSettings.Configuration"/>).</param>
     /// <param name="cancellationToken">A token to observe while running the pipeline. When signalled, the pipeline stops launching further steps and the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task RunThroughAsync(BuildStep last, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
+    public Task RunThroughAsync(BuildStep last, string? configuration = null, CancellationToken cancellationToken = default)
         => RunRangeAsync(BuildStep.Clean, last, configuration, cancellationToken);
 
     /// <summary>
@@ -67,10 +65,10 @@ internal sealed class BuildPipeline
     /// </summary>
     /// <param name="first">The first step to run.</param>
     /// <param name="last">The last step to run.</param>
-    /// <param name="configuration">The MSBuild configuration to build.</param>
+    /// <param name="configuration">The MSBuild configuration to build, or <see langword="null"/> to use the configured default (<see cref="DotNetSettings.Configuration"/>).</param>
     /// <param name="cancellationToken">A token to observe while running the pipeline. When signalled, the pipeline stops launching further steps and the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task RunRangeAsync(BuildStep first, BuildStep last, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
+    public async Task RunRangeAsync(BuildStep first, BuildStep last, string? configuration = null, CancellationToken cancellationToken = default)
     {
         Guard.IsLessThanOrEqualTo((int)first, (int)last, nameof(first));
         for (var step = first; step <= last; step++)
@@ -84,19 +82,20 @@ internal sealed class BuildPipeline
     /// Runs a single pipeline step.
     /// </summary>
     /// <param name="step">The step to run.</param>
-    /// <param name="configuration">The MSBuild configuration to build (ignored by <see cref="BuildStep.Clean"/> and <see cref="BuildStep.Restore"/>).</param>
+    /// <param name="configuration">The MSBuild configuration to build (ignored by <see cref="BuildStep.Clean"/> and <see cref="BuildStep.Restore"/>), or <see langword="null"/> to use the configured default (<see cref="DotNetSettings.Configuration"/>).</param>
     /// <param name="cancellationToken">A token to observe while running the step. When signalled, the running <c>dotnet</c> child process is terminated.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task RunAsync(BuildStep step, string configuration = DefaultConfiguration, CancellationToken cancellationToken = default)
+    public async Task RunAsync(BuildStep step, string? configuration = null, CancellationToken cancellationToken = default)
     {
+        var resolvedConfiguration = configuration ?? _dotnetSettings.Configuration;
         using var activity = _reporter.BeginActivity(step.ToString());
         var task = step switch
         {
             BuildStep.Clean => CleanAsync(cancellationToken),
             BuildStep.Restore => RestoreAsync(cancellationToken),
-            BuildStep.Build => BuildAsync(configuration, cancellationToken),
-            BuildStep.Test => TestAsync(configuration, cancellationToken),
-            BuildStep.Pack => PackAsync(configuration, cancellationToken),
+            BuildStep.Build => BuildAsync(resolvedConfiguration, cancellationToken),
+            BuildStep.Test => TestAsync(resolvedConfiguration, cancellationToken),
+            BuildStep.Pack => PackAsync(resolvedConfiguration, cancellationToken),
             _ => ThrowHelper.ThrowArgumentOutOfRangeException<Task>(nameof(step), step, "Unknown build step."),
         };
         await task.ConfigureAwait(false);

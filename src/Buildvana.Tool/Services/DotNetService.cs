@@ -38,6 +38,7 @@ internal sealed partial class DotNetService
     private readonly Lazy<NuGetPushConfiguration> _nugetPushConfigurationLazy;
     private readonly ServerAdapter _server;
     private readonly VersionService _version;
+    private readonly DotNetSettings _settings;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotNetService"/> class.
@@ -47,18 +48,21 @@ internal sealed partial class DotNetService
         IProcessRunner processRunner,
         Lazy<NuGetPushConfiguration> nugetPushConfigurationLazy,
         ServerAdapter server,
-        VersionService version)
+        VersionService version,
+        DotNetSettings settings)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(nugetPushConfigurationLazy);
         Guard.IsNotNull(server);
         Guard.IsNotNull(version);
+        Guard.IsNotNull(settings);
         _reporter = reporter;
         _processRunner = processRunner;
         _nugetPushConfigurationLazy = nugetPushConfigurationLazy;
         _server = server;
         _version = version;
+        _settings = settings;
     }
 
     /// <summary>
@@ -78,11 +82,10 @@ internal sealed partial class DotNetService
             solution.SolutionPath,
             "--disable-parallel",
             "-nologo",
-            ..forwardedArgs,
             ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, _settings.Restore, forwardedArgs, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -106,11 +109,10 @@ internal sealed partial class DotNetService
             "-nologo",
             $"-p:Configuration={configuration}",
             .. restore ? Array.Empty<string>() : ["--no-restore"],
-            ..forwardedArgs,
             ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, _settings.Build, forwardedArgs, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -139,7 +141,7 @@ internal sealed partial class DotNetService
             // bv-internal MSBuild evaluation: do not forward the user's arguments here, as they may be
             // test-application options that `dotnet msbuild` would reject.
             string[] probeArgs = ["msbuild", projectPath, "-nologo", "-getProperty:IsTestingPlatformApplication"];
-            var probe = await RunDotNetAsync(probeArgs, null, InvocationKind.Internal, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var probe = await RunDotNetAsync(probeArgs, invocationKind: InvocationKind.Internal, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
             {
@@ -170,11 +172,10 @@ internal sealed partial class DotNetService
             CommonPaths.TestResults,
             "--output",
             _reporter.IsVerbosityAtLeast(Verbosity.Detailed) ? "Detailed" : "Normal",
-             ..forwardedArgs,
-             ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
+            ContinuousIntegrationBuildArg(asMSBuildPassthrough: false),
         ];
 
-        await RunDotNetAsync(args, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await RunDotNetAsync(args, _settings.Test, forwardedArgs, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -200,11 +201,10 @@ internal sealed partial class DotNetService
             $"-p:Configuration={configuration}",
             .. restore ? Array.Empty<string>() : ["--no-restore"],
             .. build ? Array.Empty<string>() : ["--no-build"],
-            ..forwardedArgs,
             ContinuousIntegrationBuildArg(asMSBuildPassthrough: true),
         ];
 
-        return RunDotNetAsync(args, cancellationToken: cancellationToken);
+        return RunDotNetAsync(args, _settings.Pack, forwardedArgs, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -244,7 +244,7 @@ internal sealed partial class DotNetService
                 target.ApiKey,
                 "--skip-duplicate",
             ];
-            await RunDotNetAsync(args, invocationKind: InvocationKind.Informational, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await RunDotNetAsync(args, _settings.NugetPush, invocationKind: InvocationKind.Informational, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
@@ -263,15 +263,24 @@ internal sealed partial class DotNetService
     }
 
     /// <summary>
-    /// Runs a <c>dotnet</c> command with the specified arguments, forwarding the output to the reporter according to the current verbosity.
+    /// Runs a <c>dotnet</c> command, forwarding the output to the reporter according to the current verbosity.
     /// </summary>
-    /// <param name="args">The arguments to pass to <c>dotnet</c>, excluding the verbosity argument, which is automatically appended according to the current verbosity.</param>
-    /// <param name="invocationKind">The kind of invocation, which determines how `dotnet` verbosity and output streaming are handled.</param>
+    /// <param name="args">The base arguments to pass to <c>dotnet</c> (everything the calling method constructs,
+    /// including the <c>ContinuousIntegrationBuild</c> argument). The verbosity argument is appended automatically
+    /// according to the current verbosity and invocation kind.</param>
+    /// <param name="invocation">The per-command configured settings, whose arguments and environment variables are
+    /// merged with the <see cref="DotNetSettings.All"/> settings and applied to the invocation. Pass
+    /// <see langword="null"/> for bv-internal invocations that must not receive user-configured arguments
+    /// (e.g. MSBuild property probes).</param>
+    /// <param name="commandLineArgs">Extra arguments forwarded verbatim from the command line, appended after the
+    /// configured arguments so they take precedence.</param>
+    /// <param name="invocationKind">The kind of invocation, which determines how <c>dotnet</c> verbosity and output streaming are handled.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task{ProcessResult}"/> representing the ongoing operation, with a result describing child process outcome.</returns>
     private Task<ProcessResult> RunDotNetAsync(
-        IEnumerable<string> args,
-        IReadOnlyDictionary<string, string?>? environment = null,
+        IReadOnlyList<string> args,
+        DotNetInvocationSettings? invocation = null,
+        IReadOnlyList<string>? commandLineArgs = null,
         InvocationKind invocationKind = InvocationKind.Normal,
         CancellationToken cancellationToken = default)
     {
@@ -282,12 +291,43 @@ internal sealed partial class DotNetService
             _ => throw new UnreachableException(),
         };
 
+        // Order: base args (constructed by the caller) → dotnet.all args → per-command args → command-line args.
+        // Command-line args come last so they override configured arguments.
+        IReadOnlyList<string> configuredArgs = invocation is null ? [] : [.. _settings.All.Args, .. invocation.Args];
+        string[] finalArgs = [.. args, .. configuredArgs, .. commandLineArgs ?? []];
+        var environment = invocation is null ? null : BuildEnvironment(invocation);
+
         return _processRunner.RunAsync(
             DotNetMuxer,
-            appendVerbosity ? args.Append($"--verbosity={_reporter.Verbosity}") : args,
+            appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
             environment: environment,
             onStdout: streamOutput ? (x) => _reporter.ChildOutput(x, streamVerbosity) : null,
             onStderr: streamOutput ? (x) => _reporter.ChildError(x, streamVerbosity) : null,
             cancellationToken: cancellationToken);
+    }
+
+    // Merges environment variables in the order dotnet.all env → per-command env, so a per-command entry overrides
+    // an "all" entry with the same name. Returns null when there is nothing to apply, leaving the child environment unchanged.
+    private Dictionary<string, string?>? BuildEnvironment(DotNetInvocationSettings invocation)
+    {
+        var all = _settings.All.Env;
+        var perCommand = invocation.Env;
+        if (all.Count == 0 && perCommand.Count == 0)
+        {
+            return null;
+        }
+
+        var merged = new Dictionary<string, string?>(all.Count + perCommand.Count, StringComparer.Ordinal);
+        foreach (var (key, value) in all)
+        {
+            merged[key] = value;
+        }
+
+        foreach (var (key, value) in perCommand)
+        {
+            merged[key] = value;
+        }
+
+        return merged;
     }
 }

@@ -92,7 +92,10 @@ internal sealed partial class ChangelogService
     /// Prepares the changelog for a new release by moving the contents of the "Unreleased changes" section
     /// to a new section.
     /// </summary>
-    public void PrepareForRelease()
+    /// <param name="emptyChangelogSubstitute">Text to use as the new section's body when the "Unreleased changes"
+    /// section has no content. When <see langword="null"/>, an empty section is moved verbatim (producing a
+    /// title-only section).</param>
+    public void PrepareForRelease(string? emptyChangelogSubstitute = null)
     {
         _reporter.Info("Updating changelog...");
         var encoding = new UTF8Encoding(false, true);
@@ -209,6 +212,13 @@ internal sealed partial class ChangelogService
                 {
                     result.Add(header);
                     result.AddRange(lines);
+                }
+
+                // When the "Unreleased changes" section has no real content, substitute the configured text (if any).
+                if (emptyChangelogSubstitute is not null && result.All(string.IsNullOrWhiteSpace))
+                {
+                    result.Clear();
+                    result.AddRange(emptyChangelogSubstitute.ReplaceLineEndings("\n").Split('\n'));
                 }
 
                 return result;
