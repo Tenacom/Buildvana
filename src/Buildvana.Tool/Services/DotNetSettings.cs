@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Buildvana.Core.Configuration;
 using CommunityToolkit.Diagnostics;
 
@@ -59,5 +60,5 @@ internal sealed class DotNetSettings
     private static DotNetInvocationSettings Resolve(DotNetInvocationConfig? config)
         => config is null
             ? DotNetInvocationSettings.Empty
-            : new(config.Args ?? [], config.Env ?? new Dictionary<string, string?>());
+            : new(config.Args ?? [], config.Env ?? ReadOnlyDictionary<string, string?>.Empty);
 }
