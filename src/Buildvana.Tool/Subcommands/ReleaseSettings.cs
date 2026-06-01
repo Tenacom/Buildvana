@@ -155,7 +155,7 @@ internal sealed class ReleaseSettings
     public bool MatchesDocsBranch(string branch)
     {
         Guard.IsNotNull(branch);
-        if (string.IsNullOrEmpty(branch))
+        if (branch.Length == 0)
         {
             return false;
         }
