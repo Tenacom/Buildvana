@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana versioning</Title>
+    <Description>Host-agnostic version computation: the current-version.json model, semantic-version calculation from git height, and public-release branch matching. Reports malformed input via standard exceptions.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Diagnostics" />
+    <PackageReference Include="NuGet.Versioning" />
+  </ItemGroup>
+
+</Project>

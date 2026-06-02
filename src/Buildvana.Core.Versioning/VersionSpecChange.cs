@@ -1,12 +1,12 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-namespace Buildvana.Tool.Services.Versioning;
+namespace Buildvana.Core.Versioning;
 
 /// <summary>
 /// Specifies how to modify the version specification upon publishing a release.
 /// </summary>
-internal enum VersionSpecChange
+public enum VersionSpecChange
 {
     /// <summary>
     /// Do not force a version increment; do not modify the unstable tag.

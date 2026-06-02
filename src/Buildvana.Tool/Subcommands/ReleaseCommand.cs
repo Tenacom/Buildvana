@@ -13,6 +13,7 @@ using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
+using Buildvana.Core.Versioning;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Execution;

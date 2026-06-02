@@ -6,12 +6,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace Buildvana.Tool.Services.Versioning;
+namespace Buildvana.Core.Versioning;
 
 /// <summary>
 /// Represents a Major.Minor[-Tag] version as found in version.json.
 /// </summary>
-internal sealed partial record VersionSpec
+public sealed partial record VersionSpec
 {
     private static readonly Regex VersionSpecRegex = GetVersionSpecRegex();
 

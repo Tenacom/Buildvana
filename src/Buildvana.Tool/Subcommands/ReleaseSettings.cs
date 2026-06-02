@@ -7,9 +7,9 @@ using System.ComponentModel;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
+using Buildvana.Core.Versioning;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Services;
-using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Subcommands;

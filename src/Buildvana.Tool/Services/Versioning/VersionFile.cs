@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
+using Buildvana.Core.Versioning;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services.Versioning;

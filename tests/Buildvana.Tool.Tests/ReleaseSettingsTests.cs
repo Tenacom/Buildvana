@@ -3,8 +3,8 @@
 
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
+using Buildvana.Core.Versioning;
 using Buildvana.Tool.Services;
-using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 
 internal sealed class ReleaseSettingsTests
