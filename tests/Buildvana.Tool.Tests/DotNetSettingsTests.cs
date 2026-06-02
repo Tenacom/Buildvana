@@ -78,17 +78,41 @@ internal sealed class DotNetSettingsTests
     }
 
     [Test]
-    public async Task ResolvePushTarget_Throws_WhenFeedHasNoSource()
+    public async Task ResolvePushTarget_Throws_WhenPrereleaseFeedHasNoSource()
     {
-        var config = ConfigWithFeeds(("release", new() { ApiKeyEnv = "BV_TEST_RELEASE_API_KEY" }));
+        var config = ConfigWithFeeds(
+            ("prerelease", new() { ApiKeyEnv = "BV_TEST_PRERELEASE_API_KEY" }),
+            ("release", new() { Source = "https://release.example/v3/index.json", ApiKeyEnv = "BV_TEST_UNUSED" }));
+        var settings = new DotNetSettings(config);
+        await Assert.That(() => settings.ResolvePushTarget(isPrerelease: true)).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task ResolvePushTarget_Throws_WhenPrereleaseFeedHasNoApiKeyEnv()
+    {
+        var config = ConfigWithFeeds(
+            ("prerelease", new() { Source = "https://prerelease.example/v3/index.json" }),
+            ("release", new() { Source = "https://release.example/v3/index.json", ApiKeyEnv = "BV_TEST_UNUSED" }));
+        var settings = new DotNetSettings(config);
+        await Assert.That(() => settings.ResolvePushTarget(isPrerelease: true)).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task ResolvePushTarget_Throws_WhenReleaseFeedHasNoSource()
+    {
+        var config = ConfigWithFeeds(
+            ("prerelease", new() { Source = "https://prerelease.example/v3/index.json", ApiKeyEnv = "BV_TEST_UNUSED" }),
+            ("release", new() { ApiKeyEnv = "BV_TEST_RELEASE_API_KEY" }));
         var settings = new DotNetSettings(config);
         await Assert.That(() => settings.ResolvePushTarget(isPrerelease: false)).Throws<BuildFailedException>();
     }
 
     [Test]
-    public async Task ResolvePushTarget_Throws_WhenFeedHasNoApiKeyEnv()
+    public async Task ResolvePushTarget_Throws_WhenReleaseFeedHasNoApiKeyEnv()
     {
-        var config = ConfigWithFeeds(("release", new() { Source = "https://release.example/v3/index.json" }));
+        var config = ConfigWithFeeds(
+            ("prerelease", new() { Source = "https://prerelease.example/v3/index.json", ApiKeyEnv = "BV_TEST_UNUSED" }),
+            ("release", new() { Source = "https://release.example/v3/index.json" }));
         var settings = new DotNetSettings(config);
         await Assert.That(() => settings.ResolvePushTarget(isPrerelease: false)).Throws<BuildFailedException>();
     }
