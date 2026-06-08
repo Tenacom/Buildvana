@@ -111,7 +111,7 @@ jobs:
         dotnet bv release --verbosity "$BV_VERBOSITY" --bump "$VERSION_SPEC_CHANGE" --check-public-api "$CHECK_PUBLIC_API" --unstable-changelog "$FORCE_UPDATE_CHANGELOG" --require-changelog "$CHECK_CHANGELOG"
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         working-directory: TestResults
         files: '*.cobertura.xml'
