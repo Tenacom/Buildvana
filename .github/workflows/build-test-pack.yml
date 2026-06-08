@@ -51,7 +51,7 @@ jobs:
         dotnet bv pack --verbosity "$BV_VERBOSITY"
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         working-directory: TestResults
         files: '*.cobertura.xml'
