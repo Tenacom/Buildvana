@@ -25,7 +25,7 @@ jobs:
       shell: bash
       run: echo "NUGET_LOCAL_PACKAGES=$RUNNER_TEMP" >> "$GITHUB_ENV"
     - name: Checkout repository with full history
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
     - name: Setup .NET SDK

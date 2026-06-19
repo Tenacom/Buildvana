@@ -85,7 +85,7 @@ jobs:
         echo "Check changelog before update : $CHECK_CHANGELOG"
         echo "Buildvana verbosity           : $BV_VERBOSITY"
     - name: Checkout repository with full history
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
         token: ${{ secrets.RELEASE_TOKEN }}
