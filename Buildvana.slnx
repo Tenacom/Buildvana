@@ -44,6 +44,7 @@
     <Project Path="src/Buildvana.Core.Json/Buildvana.Core.Json.csproj" />
     <Project Path="src/Buildvana.Core.JsonSchema/Buildvana.Core.JsonSchema.csproj" />
     <Project Path="src/Buildvana.Core.Process/Buildvana.Core.Process.csproj" />
+    <Project Path="src/Buildvana.Core.Versioning/Buildvana.Core.Versioning.csproj" />
     <Project Path="src/Buildvana.Sdk.SourceGenerators/Buildvana.Sdk.SourceGenerators.csproj" />
     <Project Path="src/Buildvana.Sdk.Tasks/Buildvana.Sdk.Tasks.csproj" />
     <Project Path="src/Buildvana.Sdk/Buildvana.Sdk.csproj" />
@@ -53,6 +54,7 @@
     <File Path="tests/Common.targets" />
     <Project Path="tests/Buildvana.Core.Configuration.Tests/Buildvana.Core.Configuration.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.JsonSchema.Tests/Buildvana.Core.JsonSchema.Tests.csproj" />
+    <Project Path="tests/Buildvana.Core.Versioning.Tests/Buildvana.Core.Versioning.Tests.csproj" />
     <Project Path="tests/Buildvana.Tool.Tests/Buildvana.Tool.Tests.csproj" />
   </Folder>
 </Solution>

@@ -40,8 +40,4 @@ public sealed record ReleaseConfig
     /// <summary>Gets a value indicating whether self-references are updated (dogfooding) during a release.</summary>
     [Description("Whether self-references are updated (dogfooding) during a release.")]
     public bool? Dogfood { get; init; }
-
-    /// <summary>Gets the prerelease tag applied to prerelease versions.</summary>
-    [Description("Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.")]
-    public string? PrereleaseTag { get; init; }
 }
