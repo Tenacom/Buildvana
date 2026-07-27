@@ -49,8 +49,6 @@
   <!-- Transitive package overrides -->
   <!-- TODO: Items in this group should be TransitivePackageOverride items in Directory.Packages.props. -->
   <ItemGroup>
-    <PackageReference Include="NuGet.Packaging" />
-    <PackageReference Include="NuGet.Protocol" />
   </ItemGroup>
 
   <!--
