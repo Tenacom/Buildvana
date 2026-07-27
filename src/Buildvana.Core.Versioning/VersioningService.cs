@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Security;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
@@ -125,7 +126,7 @@ public sealed class VersioningService
         {
             text = File.ReadAllText(path);
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
         {
             throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
