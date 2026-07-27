@@ -44,7 +44,7 @@ public sealed class VersioningSettings
 
     /// <summary>
     /// Gets the assembly-version precision (<c>versioning.assemblyVersionPrecision</c>, or
-    /// <see cref="Configuration.AssemblyVersionPrecision.Major"/> when unset).
+    /// <see cref="AssemblyVersionPrecision.Major"/> when unset).
     /// </summary>
     public AssemblyVersionPrecision AssemblyVersionPrecision { get; }
 
