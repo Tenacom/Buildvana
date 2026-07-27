@@ -131,9 +131,10 @@ public sealed class VersioningService
             throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
 
+        text = text.Trim();
         BuildFailedException.ThrowIfNot(
             VersionSpec.TryParse(text, out var spec),
-            $"{path} contains an invalid version specification '{text.Trim()}'.");
+            $"{path} contains an invalid version specification '{text}'.");
         return spec;
     }
 
