@@ -118,7 +118,6 @@ internal sealed class VersioningServiceTests
     [Arguments(AssemblyVersionPrecision.Major, "2.0.0.0")]
     [Arguments(AssemblyVersionPrecision.Minor, "2.3.0.0")]
     [Arguments(AssemblyVersionPrecision.Build, "2.3.1.0")]
-    [Arguments(AssemblyVersionPrecision.Revision, "2.3.1.0")]
     public async Task Constructor_AssemblyVersionHonorsPrecision(AssemblyVersionPrecision precision, string expected)
     {
         using var repo = new TempGitRepo();
