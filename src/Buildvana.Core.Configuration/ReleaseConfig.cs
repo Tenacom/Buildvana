@@ -14,11 +14,11 @@ namespace Buildvana.Core.Configuration;
 public sealed record ReleaseConfig
 {
     /// <summary>Gets the regular expressions identifying branches that produce public releases.</summary>
-    [Description("Regular expressions (matched against the short branch name) identifying branches that produce public releases.")]
+    [Description("Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that produce public releases.")]
     public IReadOnlyList<string>? Branches { get; init; }
 
     /// <summary>Gets the regular expressions identifying branches that documentation is generated from.</summary>
-    [Description("Regular expressions (matched against the short branch name) identifying branches that documentation is generated from.")]
+    [Description("Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that documentation is generated from.")]
     public IReadOnlyList<string>? GenerateDocsFrom { get; init; }
 
     /// <summary>Gets the build configuration used to produce release artifacts.</summary>

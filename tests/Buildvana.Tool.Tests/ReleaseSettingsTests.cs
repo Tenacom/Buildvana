@@ -98,6 +98,20 @@ internal sealed class ReleaseSettingsTests
     }
 
     [Test]
+    public async Task MatchesDocsBranch_ImplicitlyAnchorsPatterns()
+    {
+        var config = new BuildvanaConfig { Release = new() { GenerateDocsFrom = ["main|master", @"release/\d+\.\d+"] } };
+        var settings = Parse([], config);
+        await Assert.That(settings.MatchesDocsBranch("main")).IsTrue();
+        await Assert.That(settings.MatchesDocsBranch("master")).IsTrue();
+        await Assert.That(settings.MatchesDocsBranch("domain")).IsFalse();
+        await Assert.That(settings.MatchesDocsBranch("main2")).IsFalse();
+        await Assert.That(settings.MatchesDocsBranch("release/2.0")).IsTrue();
+        await Assert.That(settings.MatchesDocsBranch("prerelease/2.0")).IsFalse();
+        await Assert.That(settings.MatchesDocsBranch("release/2.0.1")).IsFalse();
+    }
+
+    [Test]
     public async Task MatchesDocsBranch_Throws_OnInvalidPattern()
     {
         var config = new BuildvanaConfig { Release = new() { GenerateDocsFrom = ["["] } };
