@@ -65,8 +65,7 @@
           "enum": [
             "major",
             "minor",
-            "build",
-            "revision"
+            "build"
           ]
         }
       },

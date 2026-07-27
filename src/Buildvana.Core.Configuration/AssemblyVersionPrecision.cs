@@ -16,7 +16,4 @@ public enum AssemblyVersionPrecision
 
     /// <summary>The major, minor, and build components are significant (<c>major.minor.build.0</c>).</summary>
     Build,
-
-    /// <summary>All four components are significant (<c>major.minor.build.revision</c>).</summary>
-    Revision,
 }
