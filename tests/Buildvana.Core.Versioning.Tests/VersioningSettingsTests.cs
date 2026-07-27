@@ -48,6 +48,21 @@ internal sealed class VersioningSettingsTests
     }
 
     [Test]
+    [Arguments("main", true)]
+    [Arguments("master", true)]
+    [Arguments("domain", false)]
+    [Arguments("main2", false)]
+    [Arguments("release/2.0", true)]
+    [Arguments("prerelease/2.0", false)]
+    [Arguments("release/2.0.1", false)]
+    public async Task IsPublicReleaseBranch_ImplicitlyAnchorsPatterns(string branch, bool expected)
+    {
+        var config = new BuildvanaConfig { Release = new ReleaseConfig { Branches = ["main|master", @"release/\d+\.\d+"] } };
+        var settings = new VersioningSettings(config);
+        await Assert.That(settings.IsPublicReleaseBranch(branch)).IsEqualTo(expected);
+    }
+
+    [Test]
     public async Task IsPublicReleaseBranch_EmptyPatternList_NeverMatches()
     {
         var settings = new VersioningSettings(new BuildvanaConfig());

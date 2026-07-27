@@ -55,6 +55,10 @@ public sealed class VersioningSettings
     /// <param name="branch">The short name of the current branch, or the empty string if HEAD is not on a branch.</param>
     /// <returns><see langword="true"/> if <paramref name="branch"/> matches at least one pattern;
     /// otherwise, <see langword="false"/>. The empty string never matches.</returns>
+    /// <remarks>
+    /// Patterns are implicitly anchored (wrapped in <c>^(?:</c>&#8230;<c>)$</c>): a pattern must match the whole
+    /// branch name, so <c>main</c> matches neither <c>domain</c> nor <c>main2</c>.
+    /// </remarks>
     /// <exception cref="BuildFailedException">A configured pattern is not a valid regular expression, or matching timed out.</exception>
     public bool IsPublicReleaseBranch(string branch)
     {
@@ -79,7 +83,11 @@ public sealed class VersioningSettings
     {
         try
         {
-            return Regex.IsMatch(branch, pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant, RegexMatchTimeout);
+            return Regex.IsMatch(
+                branch,
+                $"^(?:{pattern})$",
+                RegexOptions.Compiled | RegexOptions.CultureInvariant,
+                RegexMatchTimeout);
         }
         catch (ArgumentException ex)
         {
