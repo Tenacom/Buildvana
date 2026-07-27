@@ -1,10 +1,13 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Text;
 using LibGit2Sharp;
 
 internal sealed class TempGitRepo : IDisposable
 {
+    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
     private readonly Repository _repository;
 
     public TempGitRepo()
@@ -20,7 +23,8 @@ internal sealed class TempGitRepo : IDisposable
 
     public string HeadSha => _repository.Head.Tip.Sha;
 
-    public void WriteFile(string name, string content) => File.WriteAllText(Path.Combine(RootPath, name), content);
+    public void WriteFile(string name, string content, Encoding? encoding = null)
+        => File.WriteAllText(Path.Combine(RootPath, name), content, encoding ?? Utf8NoBom);
 
     public void CommitAll(string message = "Test commit")
     {

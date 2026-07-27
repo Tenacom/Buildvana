@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
 
@@ -144,9 +145,7 @@ internal sealed class GitHeightCalculatorTests
         using var repo = new TempGitRepo();
         repo.WriteFile("VERSION", "1.0\n");
         repo.CommitAll();
-
-        // File.WriteAllText encodes the leading U+FEFF as the UTF-8 BOM bytes on disk.
-        repo.WriteFile("VERSION", "\uFEFF1.0\n");
+        repo.WriteFile("VERSION", "1.0\n", new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
         repo.CommitAll();
         await Assert.That(Calculate(repo, 1, 0).Height).IsEqualTo(2);
     }
