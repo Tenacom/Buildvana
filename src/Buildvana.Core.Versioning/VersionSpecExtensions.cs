@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Diagnostics;
@@ -21,6 +22,7 @@ public static partial class VersionSpecExtensions
         /// </summary>
         /// <param name="str">The string to parse.</param>
         /// <returns>A newly-created <see cref="VersionSpec"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="str"/> is <see langword="null"/>.</exception>
         /// <exception cref="BuildFailedException"><paramref name="str"/> is not a valid version specification.</exception>
         /// <remarks>
         /// <para>The presence of <c>-</c> after the minor version marks a prerelease line; the tag after it is
