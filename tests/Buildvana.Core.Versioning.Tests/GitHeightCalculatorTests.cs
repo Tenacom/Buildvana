@@ -139,6 +139,19 @@ internal sealed class GitHeightCalculatorTests
     }
 
     [Test]
+    public async Task Calculate_CommittedVersionFileWithBom_DoesNotStopWalk()
+    {
+        using var repo = new TempGitRepo();
+        repo.WriteFile("VERSION", "1.0\n");
+        repo.CommitAll();
+
+        // File.WriteAllText encodes the leading U+FEFF as the UTF-8 BOM bytes on disk.
+        repo.WriteFile("VERSION", "\uFEFF1.0\n");
+        repo.CommitAll();
+        await Assert.That(Calculate(repo, 1, 0).Height).IsEqualTo(2);
+    }
+
+    [Test]
     public async Task Calculate_OnBranch_ReportsBranchNameAndCommit()
     {
         using var repo = new TempGitRepo();
