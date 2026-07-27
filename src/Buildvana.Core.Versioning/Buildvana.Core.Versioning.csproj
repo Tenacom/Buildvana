@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana versioning</Title>
+    <Description>Native version computation: VERSION file parsing, Git height, and the version string forms needed by builds and releases. Reports failures via BuildFailedException.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\Buildvana.Core.Configuration\Buildvana.Core.Configuration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Diagnostics" />
+    <PackageReference Include="LibGit2Sharp" />
+    <PackageReference Include="NuGet.Versioning" />
+  </ItemGroup>
+
+</Project>

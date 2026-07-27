@@ -48,10 +48,6 @@
         "dogfood": {
           "description": "Whether self-references are updated (dogfooding) during a release.",
           "type": "boolean"
-        },
-        "prereleaseTag": {
-          "description": "Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.",
-          "type": "string"
         }
       },
       "additionalProperties": false
@@ -60,6 +56,10 @@
       "description": "Configuration for version computation.",
       "type": "object",
       "properties": {
+        "prereleaseTag": {
+          "description": "Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.",
+          "type": "string"
+        },
         "assemblyVersionPrecision": {
           "description": "How many version components are carried into the assembly version.",
           "enum": [
