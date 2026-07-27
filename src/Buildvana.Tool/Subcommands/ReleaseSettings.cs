@@ -22,7 +22,7 @@ namespace Buildvana.Tool.Subcommands;
 /// </summary>
 internal sealed class ReleaseSettings
 {
-    private static readonly IReadOnlyList<string> DefaultGenerateDocsFrom = ["^main$", "^master$"];
+    private static readonly IReadOnlyList<string> DefaultGenerateDocsFrom = ["main", "master"];
     private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(1);
 
     private readonly ReleaseConfig? _config;
@@ -147,11 +147,15 @@ internal sealed class ReleaseSettings
 
     /// <summary>
     /// Determines whether documentation is generated when releasing from <paramref name="branch"/>, by matching it
-    /// against the configured <c>release.generateDocsFrom</c> regular expressions (default <c>^main$</c>/<c>^master$</c>).
+    /// against the configured <c>release.generateDocsFrom</c> regular expressions (default <c>main</c>/<c>master</c>).
     /// </summary>
     /// <param name="branch">The short name of the branch the release is created from.</param>
     /// <returns><see langword="true"/> if <paramref name="branch"/> matches at least one pattern; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="BuildFailedException">A configured pattern is not a valid regular expression, or matching timed out.</exception>
+    /// <remarks>
+    /// Patterns are implicitly anchored (wrapped in <c>^(?:</c>&#8230;<c>)$</c>): a pattern must match the whole
+    /// branch name, so <c>main</c> matches neither <c>domain</c> nor <c>main2</c>.
+    /// </remarks>
     public bool MatchesDocsBranch(string branch)
     {
         Guard.IsNotNull(branch);
@@ -176,7 +180,7 @@ internal sealed class ReleaseSettings
     {
         try
         {
-            return Regex.IsMatch(branch, pattern, RegexOptions.CultureInvariant, RegexMatchTimeout);
+            return Regex.IsMatch(branch, $"^(?:{pattern})$", RegexOptions.CultureInvariant, RegexMatchTimeout);
         }
         catch (ArgumentException ex)
         {

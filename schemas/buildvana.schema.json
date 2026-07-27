@@ -12,14 +12,14 @@
       "type": "object",
       "properties": {
         "branches": {
-          "description": "Regular expressions (matched against the short branch name) identifying branches that produce public releases.",
+          "description": "Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that produce public releases.",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "generateDocsFrom": {
-          "description": "Regular expressions (matched against the short branch name) identifying branches that documentation is generated from.",
+          "description": "Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that documentation is generated from.",
           "type": "array",
           "items": {
             "type": "string"
