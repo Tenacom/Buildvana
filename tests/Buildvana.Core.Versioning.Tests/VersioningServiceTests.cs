@@ -13,7 +13,7 @@ internal sealed class VersioningServiceTests
     {
         using var repo = new TempGitRepo();
         repo.CommitAll();
-        var exception = Catch(() => CreateService(repo, new BuildvanaConfig()));
+        var exception = CatchCreate(repo, new BuildvanaConfig());
         await Assert.That(exception).IsNotNull();
         await Assert.That(exception!.Message).Contains("VERSION");
     }
@@ -24,7 +24,7 @@ internal sealed class VersioningServiceTests
         using var repo = new TempGitRepo();
         repo.WriteFile("VERSION", "banana\n");
         repo.CommitAll();
-        var exception = Catch(() => CreateService(repo, new BuildvanaConfig()));
+        var exception = CatchCreate(repo, new BuildvanaConfig());
         await Assert.That(exception).IsNotNull();
         await Assert.That(exception!.Message).Contains("banana");
     }
@@ -35,7 +35,7 @@ internal sealed class VersioningServiceTests
         using var repo = new TempGitRepo();
         repo.WriteFile("VERSION", "1.0-\n");
         repo.CommitAll();
-        var exception = Catch(() => CreateService(repo, new BuildvanaConfig()));
+        var exception = CatchCreate(repo, new BuildvanaConfig());
         await Assert.That(exception).IsNotNull();
         await Assert.That(exception!.Message).Contains("versioning.prereleaseTag");
     }
@@ -47,7 +47,7 @@ internal sealed class VersioningServiceTests
         repo.WriteFile("VERSION", "1.0-\n");
         repo.CommitAll();
         var config = new BuildvanaConfig { Versioning = new VersioningConfig { PrereleaseTag = "not valid" } };
-        var exception = Catch(() => CreateService(repo, config));
+        var exception = CatchCreate(repo, config);
         await Assert.That(exception).IsNotNull();
         await Assert.That(exception!.Message).Contains("not valid");
     }
@@ -146,11 +146,11 @@ internal sealed class VersioningServiceTests
             new VersioningSettings(config),
             new GitHeightCalculator(VersioningService.VersionFileName));
 
-    private static BuildFailedException? Catch(Action action)
+    private static BuildFailedException? CatchCreate(TempGitRepo repo, BuildvanaConfig config)
     {
         try
         {
-            action();
+            _ = CreateService(repo, config);
             return null;
         }
         catch (BuildFailedException e)
