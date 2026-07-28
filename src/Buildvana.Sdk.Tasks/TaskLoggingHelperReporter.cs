@@ -95,27 +95,9 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
         }
     }
 
-    public void ChildOutput(string line, Verbosity? minimumVerbosity)
-    {
-        ArgumentNullException.ThrowIfNull(line);
-        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
-        {
-            return;
-        }
+    public void ChildOutput(string line, Verbosity? minimumVerbosity) => LogChildLine(line, minimumVerbosity);
 
-        _log.LogMessage(MessageImportance.Low, "{0}", line);
-    }
-
-    public void ChildError(string line, Verbosity? minimumVerbosity)
-    {
-        ArgumentNullException.ThrowIfNull(line);
-        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
-        {
-            return;
-        }
-
-        _log.LogMessage(MessageImportance.Low, "{0}", line);
-    }
+    public void ChildError(string line, Verbosity? minimumVerbosity) => LogChildLine(line, minimumVerbosity);
 
     // Same line format as ConsoleReporter, so activities look the same whether a service runs under `bv` or MSBuild.
     private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed, string? outcomeMessage)
@@ -132,6 +114,17 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
 
     private bool LogsMessagesOfImportance(MessageImportance importance)
         => _engineServices?.LogsMessagesOfImportance(importance) ?? true;
+
+    private void LogChildLine(string line, Verbosity? minimumVerbosity)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
+        {
+            return;
+        }
+
+        _log.LogMessage(MessageImportance.Low, "{0}", line);
+    }
 
     private void EndActivity(ActivityScope scope, bool completed)
     {

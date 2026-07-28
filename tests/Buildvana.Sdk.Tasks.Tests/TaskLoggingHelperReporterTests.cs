@@ -2,10 +2,25 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Sdk;
 using Microsoft.Build.Framework;
 
 internal sealed class TaskLoggingHelperReporterTests
 {
+    [Test]
+    public async Task Constructor_NullLog_Throws()
+    {
+        var engine = new RecordingBuildEngine();
+        await Assert.That(() => new TaskLoggingHelperReporter(null!, engine)).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task Constructor_NullEngine_Throws()
+    {
+        var task = new ReporterProbeTask { BuildEngine = new RecordingBuildEngine() };
+        await Assert.That(() => new TaskLoggingHelperReporter(task.Log, null!)).Throws<ArgumentNullException>();
+    }
+
     [Test]
     public async Task Report_Error_LogsBuildError()
     {
@@ -50,6 +65,13 @@ internal sealed class TaskLoggingHelperReporterTests
     {
         var (reporter, _) = CreateReporter();
         await Assert.That(() => reporter.Report((MessageLevel)42, "x")).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
+    public async Task Report_NullMessage_Throws()
+    {
+        var (reporter, _) = CreateReporter();
+        await Assert.That(() => reporter.Report(MessageLevel.Info, null!)).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -116,6 +138,34 @@ internal sealed class TaskLoggingHelperReporterTests
         await Assert.That(engine.Messages.Count).IsEqualTo(3);
         await Assert.That(engine.Messages[1].Message).IsEqualTo("[2] Inner: starting...");
         await Assert.That(engine.Messages[2].Message).StartsWith("[2] Inner: done (");
+    }
+
+    [Test]
+    public async Task BeginActivity_NullTitle_Throws()
+    {
+        var (reporter, _) = CreateReporter();
+        await Assert.That(() => reporter.BeginActivity(null!)).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task BeginActivity_EmptyTitle_Throws()
+    {
+        var (reporter, _) = CreateReporter();
+        await Assert.That(() => reporter.BeginActivity(string.Empty)).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task ChildOutput_NullLine_Throws()
+    {
+        var (reporter, _) = CreateReporter();
+        await Assert.That(() => reporter.ChildOutput(null!, null)).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task ChildError_NullLine_Throws()
+    {
+        var (reporter, _) = CreateReporter();
+        await Assert.That(() => reporter.ChildError(null!, null)).Throws<ArgumentNullException>();
     }
 
     [Test]

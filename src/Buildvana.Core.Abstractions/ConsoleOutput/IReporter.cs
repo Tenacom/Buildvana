@@ -37,7 +37,8 @@ public interface IReporter
     /// </summary>
     /// <param name="line">The line of child-process standard output to write.</param>
     /// <param name="minimumVerbosity">The line is written only when the reporter's <see cref="Verbosity"/> is at
-    /// least this value. If <see langword="null"/>, the line is always written.</param>
+    /// least this value. If <see langword="null"/>, the reporter applies no verbosity gate of its own; an
+    /// underlying output system may still apply its own filtering.</param>
     void ChildOutput(string line, Verbosity? minimumVerbosity);
 
     /// <summary>
@@ -46,6 +47,7 @@ public interface IReporter
     /// </summary>
     /// <param name="line">The line of child-process standard error to write.</param>
     /// <param name="minimumVerbosity">The line is written only when the reporter's <see cref="Verbosity"/> is at
-    /// least this value. If <see langword="null"/>, the line is always written.</param>
+    /// least this value. If <see langword="null"/>, the reporter applies no verbosity gate of its own; an
+    /// underlying output system may still apply its own filtering.</param>
     void ChildError(string line, Verbosity? minimumVerbosity);
 }
