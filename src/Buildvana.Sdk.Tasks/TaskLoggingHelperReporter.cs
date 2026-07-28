@@ -38,7 +38,7 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
 {
     private readonly TaskLoggingHelper _log;
     private readonly EngineServices? _engineServices;
-    private readonly Lock _activityLock = new();
+    private readonly Lock _writeLock = new();
     private readonly Stack<ActivityScope> _activityStack = new();
 
     public TaskLoggingHelperReporter(TaskLoggingHelper log, IBuildEngine engine)
@@ -57,32 +57,35 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
     public void Report(MessageLevel level, string message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        switch (level)
+        lock (_writeLock)
         {
-            case MessageLevel.Error:
-                _log.LogError("{0}", message);
-                break;
-            case MessageLevel.Warning:
-                _log.LogWarning("{0}", message);
-                break;
-            case MessageLevel.Info:
-                _log.LogMessage(MessageImportance.High, "{0}", message);
-                break;
-            case MessageLevel.Detail:
-                _log.LogMessage(MessageImportance.Normal, "{0}", message);
-                break;
-            case MessageLevel.Trace:
-                _log.LogMessage(MessageImportance.Low, "{0}", message);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown message level.");
+            switch (level)
+            {
+                case MessageLevel.Error:
+                    _log.LogError("{0}", message);
+                    break;
+                case MessageLevel.Warning:
+                    _log.LogWarning("{0}", message);
+                    break;
+                case MessageLevel.Info:
+                    _log.LogMessage(MessageImportance.High, "{0}", message);
+                    break;
+                case MessageLevel.Detail:
+                    _log.LogMessage(MessageImportance.Normal, "{0}", message);
+                    break;
+                case MessageLevel.Trace:
+                    _log.LogMessage(MessageImportance.Low, "{0}", message);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown message level.");
+            }
         }
     }
 
     public IActivityScope BeginActivity(string title)
     {
         ArgumentException.ThrowIfNullOrEmpty(title);
-        lock (_activityLock)
+        lock (_writeLock)
         {
             var depth = _activityStack.Count + 1;
             var scope = new ActivityScope(this, title, depth);
@@ -123,12 +126,15 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
             return;
         }
 
-        _log.LogMessage(MessageImportance.Low, "{0}", line);
+        lock (_writeLock)
+        {
+            _log.LogMessage(MessageImportance.Low, "{0}", line);
+        }
     }
 
     private void EndActivity(ActivityScope scope, bool completed)
     {
-        lock (_activityLock)
+        lock (_writeLock)
         {
             if (_activityStack.Count > 0 && ReferenceEquals(_activityStack.Peek(), scope))
             {
