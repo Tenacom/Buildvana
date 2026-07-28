@@ -33,7 +33,7 @@
 3. We review the plan together
 4. You open a branch on my fork (rdeago) for the pull request
 5. You write the code; I review before every commit. Always ensure the solution builds with zero errors and zero warnings and all tests (if any) pass.
-6. Final sanity check:
+6. Sanity check. This gates _every_ push to the PR branch — follow-up commits (e.g., addressing review feedback) included, not just the final commit of the initial implementation:
    a. Execute `dotnet bv pack` to build everything, run tests, and produce build artifacts. After it runs, you should find artifacts (NuGet packages, Docker images, etc.) in the `artifacts` folder. You can inspect these artifacts to verify that they are correct and ready for release.
    b. Execute `dotnet dnx JetBrains.ReSharper.GlobalTools inspectcode --swea --severity=WARNING --output=inspect.sarif --format=Sarif --properties:Configuration=Release --no-build Buildvana.slnx --yes` to analyze the whole solution with ReSharper. Then run `dotnet run .claude/tools/inspect-sarif.cs` to summarize the report (one line per result), and address each one (with `--severity=WARNING`, every result will be at `error` or `warning` level — fix them all).
    c. Repeat from (a) until there are zero errors and zero warnings. If you have any doubts, or an error or warning that you think is a false positive, or that just won't go away, ask me.
