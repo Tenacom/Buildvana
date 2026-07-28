@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+    <ClsCompliant>false</ClsCompliant>
+    <ImplicitUsings>true</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Unlike the project under test (which gets it from the compiler host at run time), tests need Roslyn at run time to host the generator. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="TUnit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The alias keeps the project's internals (which include PolyKit polyfills, made visible by InternalsVisibleTo)
+         out of the global namespace, where they would clash with the framework's own types. -->
+    <ProjectReference Include="..\..\src\Buildvana.Sdk.SourceGenerators\Buildvana.Sdk.SourceGenerators.csproj" Aliases="Generators" />
+  </ItemGroup>
+
+</Project>

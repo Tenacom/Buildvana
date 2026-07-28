@@ -1,0 +1,89 @@
+<Project>
+
+  <PropertyGroup>
+    <ThisAssemblyClassName Condition="'$(ThisAssemblyClassName)' == ''">ThisAssembly</ThisAssemblyClassName>
+  </PropertyGroup>
+
+  <!-- Coalesce EnableDefaultThisAssemblyConstants to a boolean value, defaulting to true. -->
+  <PropertyGroup>
+    <EnableDefaultThisAssemblyConstants Condition="'$(EnableDefaultThisAssemblyConstants)' == ''">true</EnableDefaultThisAssemblyConstants>
+    <EnableDefaultThisAssemblyConstants Condition="'$(EnableDefaultThisAssemblyConstants)' != 'true'">false</EnableDefaultThisAssemblyConstants>
+  </PropertyGroup>
+
+  <!-- Make the class name and namespace visible to the source generator. -->
+  <ItemGroup>
+    <CompilerVisibleProperty Include="ThisAssemblyClassName" />
+    <CompilerVisibleProperty Include="ThisAssemblyClassNamespace" />
+  </ItemGroup>
+
+  <!--
+    The constants file is how ThisAssemblyConstant items reach the source generator.
+    It must be declared as an AdditionalFiles item at evaluation time, so that the compiler and the source generator see it;
+    its contents, however, are only written by the BV_WriteThisAssemblyConstantsFile target below,
+    because some constant values (most notably version numbers) are only computed during the build.
+  -->
+  <PropertyGroup>
+    <BV_ThisAssemblyConstantsFile>$(IntermediateOutputPath)$(MSBuildProjectName).ThisAssemblyConstants.txt</BV_ThisAssemblyConstantsFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(BV_ThisAssemblyConstantsFile)"
+                     BV_ItemType="ThisAssemblyConstants"
+                     Visible="false" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="BV_ItemType" />
+  </ItemGroup>
+
+  <!-- Default constants are (re)defined just before the constants file is written, overriding same-named user-defined constants. -->
+  <Target Name="BV_DefineDefaultThisAssemblyConstants"
+          Condition="$(EnableDefaultThisAssemblyConstants)">
+
+    <ItemGroup>
+      <ThisAssemblyConstant Remove="Version" />
+      <ThisAssemblyConstant Remove="FileVersion" />
+      <ThisAssemblyConstant Remove="InformationalVersion" />
+      <ThisAssemblyConstant Remove="Company" />
+      <ThisAssemblyConstant Remove="Copyright" />
+      <ThisAssemblyConstant Remove="Description" />
+      <ThisAssemblyConstant Remove="Product" />
+      <ThisAssemblyConstant Remove="Title" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ThisAssemblyConstant Include="Version" Value="string:$(AssemblyVersion)" />
+      <ThisAssemblyConstant Include="FileVersion" Value="string:$(FileVersion)" />
+      <ThisAssemblyConstant Include="InformationalVersion" Value="string:$(InformationalVersion)" />
+      <ThisAssemblyConstant Include="Company" Value="string:$(Company)" />
+      <ThisAssemblyConstant Include="Copyright" Value="string:$(Copyright)" />
+      <ThisAssemblyConstant Include="Description" Value="string:$(Description)" />
+      <ThisAssemblyConstant Include="Product" Value="string:$(Product)" />
+      <ThisAssemblyConstant Include="Title" Value="string:$(AssemblyTitle)" />
+    </ItemGroup>
+
+  </Target>
+
+  <!--
+    This must run before every invocation of CoreCompile to ensure that all compiler runs
+    see the constants file. There is at least one scenario involving Xaml
+    where CoreCompile is invoked without other potential hooks such as Compile or CoreBuild,
+    etc., so we hook directly on to CoreCompile. Furthermore, we must run *after*
+    PrepareForBuild to ensure that the intermediate directory has been created.
+  -->
+  <Target Name="BV_WriteThisAssemblyConstantsFile"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="PrepareForBuild;BV_DefineDefaultThisAssemblyConstants">
+
+    <WriteThisAssemblyConstantsFile Constants="@(ThisAssemblyConstant)"
+                                    OutputPath="$(BV_ThisAssemblyConstantsFile)" />
+
+    <ItemGroup>
+      <FileWrites Include="$(BV_ThisAssemblyConstantsFile)" />
+    </ItemGroup>
+
+  </Target>
+
+  <!-- Use Buildvana SDK code generators -->
+  <PropertyGroup>
+    <BV_UseSdkCodeGenerators>true</BV_UseSdkCodeGenerators>
+  </PropertyGroup>
+
+</Project>

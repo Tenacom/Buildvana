@@ -6,8 +6,19 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Buildvana.Sdk.SourceGenerators.Internal;
 
+/// <summary>
+/// Provides extension methods for <c>AnalyzerConfigOptionsProvider</c> instances.
+/// </summary>
+#pragma warning disable CA1034 // Nested types should not be visible — false positive on C# 14 extension blocks; fixed in .NET 11, backport to .NET 10 requested in https://github.com/dotnet/sdk/issues/53984
+#pragma warning disable CA1708 // Identifiers should differ by more than case — false positive on classes with C# 14 extension blocks; fixed in .NET 11, https://github.com/dotnet/sdk/issues/51716
 internal static class AnalyzerConfigOptionsProviderExtensions
 {
-    public static bool? GetBooleanMSBuildProperty(this AnalyzerConfigOptionsProvider @this, string name)
-        => @this.GlobalOptions.TryGetValue($"build_property.{name}", out var value) ? value.Equals("true", StringComparison.OrdinalIgnoreCase) : null;
+    extension(AnalyzerConfigOptionsProvider @this)
+    {
+        public bool? GetBooleanMSBuildProperty(string name)
+            => @this.GlobalOptions.TryGetValue($"build_property.{name}", out var value) ? value.Equals("true", StringComparison.OrdinalIgnoreCase) : null;
+
+        public string? GetMSBuildProperty(string name)
+            => @this.GlobalOptions.TryGetValue($"build_property.{name}", out var value) ? value : null;
+    }
 }

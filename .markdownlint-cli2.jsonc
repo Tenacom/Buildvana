@@ -1,14 +1,15 @@
 {
   "gitignore": true,
+
+  // Globs of files to ignore
+  "ignores": ["CLAUDE.md", ".claude/**/*.md", "**/AnalyzerReleases.*.md"],
+
   "config":{
     // Default state for all rules
     "default": true,
 
     // Path to configuration file to extend
     "extends": null,
-
-    // Globs of files to ignore
-    "ignores": ["CLAUDE.md", ".claude/**/*.md"],
 
     // MD001/heading-increment : Heading levels should only increment by one level at a time : https://github.com/DavidAnson/markdownlint/blob/main/doc/md001.md
     "heading-increment": true,

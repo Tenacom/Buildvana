@@ -1,0 +1,32 @@
+<Project>
+
+  <!-- Save the value of GenerateThisAssemblyClass for later determination of whether to issue a warning.
+       Force to false if Language property is not set (happens with several auxiliary targets, e.g. _IsProjectRestoreSupported),
+       to avoid warning BVSDK2300 on projects in supported languages.
+       Also force to false for projects using Microsoft.Build.NoTargets SDK. -->
+  <PropertyGroup>
+    <BV_SaveGenerateThisAssemblyClass>$(GenerateThisAssemblyClass)</BV_SaveGenerateThisAssemblyClass>
+    <BV_SaveGenerateThisAssemblyClass Condition="'$(Language)' == ''">false</BV_SaveGenerateThisAssemblyClass>
+    <BV_SaveGenerateThisAssemblyClass Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">false</BV_SaveGenerateThisAssemblyClass>
+  </PropertyGroup>
+
+  <!-- Coalesce GenerateThisAssemblyClass to a boolean value, defaulting to false:
+         - force to false for projects in unsupported languages;
+         - force to false for NoTargets projects. -->
+  <PropertyGroup>
+    <GenerateThisAssemblyClass Condition="'$(Language)' != 'C#'">false</GenerateThisAssemblyClass>
+    <GenerateThisAssemblyClass Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">false</GenerateThisAssemblyClass>
+    <GenerateThisAssemblyClass Condition="'$(GenerateThisAssemblyClass)' != 'true'">false</GenerateThisAssemblyClass>
+  </PropertyGroup>
+
+  <!-- Issue a warning if GenerateThisAssemblyClass was set to true for a project in an unsupported language. -->
+  <ItemGroup>
+    <EvaluationWarning Condition="'$(BV_SaveGenerateThisAssemblyClass)' == 'true' And !$(GenerateThisAssemblyClass)"
+                       Include="BVSDK2300"
+                       Text="ThisAssembly class generation is only supported in C# projects (Language='$(Language)')." />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)Module.Core.targets"
+          Condition="$(GenerateThisAssemblyClass)" />
+
+</Project>
