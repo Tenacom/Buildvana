@@ -33,8 +33,14 @@
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="BV_ItemType" />
   </ItemGroup>
 
-  <!-- Default constants are (re)defined just before the constants file is written, overriding same-named user-defined constants. -->
+  <!--
+    Default constants are (re)defined just before the constants file is written, overriding same-named user-defined constants.
+    AssemblyVersion, FileVersion, and InformationalVersion are not static properties: they are computed by the GetAssemblyVersion
+    target, and the source revision is appended to InformationalVersion by AddSourceRevisionToInformationalVersion (when enabled).
+    Both targets must be declared as dependencies, because MSBuild does not otherwise guarantee that they run before this target.
+  -->
   <Target Name="BV_DefineDefaultThisAssemblyConstants"
+          DependsOnTargets="GetAssemblyVersion;AddSourceRevisionToInformationalVersion"
           Condition="$(EnableDefaultThisAssemblyConstants)">
 
     <ItemGroup>
