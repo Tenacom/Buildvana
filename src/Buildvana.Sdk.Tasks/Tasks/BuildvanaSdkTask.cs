@@ -3,6 +3,7 @@
 
 using System;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Sdk.Internal;
 using Microsoft.Build.Utilities;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -12,6 +13,8 @@ namespace Buildvana.Sdk.Tasks;
 public abstract class BuildvanaSdkTask : Task
 {
     protected ILogger Logger => field ??= new TaskLoggingHelperLogger(Log, BuildEngine);
+
+    protected IReporter Reporter => field ??= new TaskLoggingHelperReporter(Log, BuildEngine);
 
     public sealed override bool Execute()
     {

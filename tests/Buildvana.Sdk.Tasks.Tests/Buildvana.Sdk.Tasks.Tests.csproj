@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+    <ClsCompliant>false</ClsCompliant>
+    <ImplicitUsings>true</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Unlike the project under test (which gets them from the MSBuild host at run time), tests need the MSBuild assemblies at run time, so no ExcludeAssets here. -->
+    <PackageReference Include="Microsoft.Build.Framework" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" />
+    <PackageReference Include="TUnit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Buildvana.Sdk.Tasks\Buildvana.Sdk.Tasks.csproj" />
+  </ItemGroup>
+
+</Project>
