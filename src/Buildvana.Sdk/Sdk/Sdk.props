@@ -118,6 +118,7 @@
   <UsingTask TaskName="GetWinePath" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="GetWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="ConvertToWinePaths" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
+  <UsingTask TaskName="WriteThisAssemblyConstantsFile" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
 
   <!-- Import Buildvana configuration -->
   <Import Condition="$(BV_IsConfigured)" Project="$(BuildvanaSdkDirectory)ImportConfiguration.props" />

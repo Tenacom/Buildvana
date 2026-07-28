@@ -19,6 +19,7 @@
 - [NerdbankGitVersioning module (2000-2099)](#nerdbankgitversioning-module-2000-2099)
 - [ReleaseAssetList module (2100-2199)](#releaseassetlist-module-2100-2199)
 - [Wine module (2200-2299)](#wine-module-2200-2299)
+- [ThisAssemblyClass module (2300-2399)](#thisassemblyclass-module-2300-2399)
 
 ## Overview
 
@@ -123,3 +124,10 @@ This module has no associated diagnostics.
 | Code      | Severity | Message                                                                                                       | Description                                                                                                                                                                                                                                                                                                          |
 | --------- | :------: | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | BVSDK2200 |  Error   | One or more tools need Wine to run on this system, but no Wine invocation command has been defined: ...[;...] | One or more tools needed to build and/or distribute your project need [Wine](https://winehq.org) to run under a non-Windows operating system. In order to use Wine with Buildvana SDK, the `WineInvocationCommand` property must be set as explained in [the module documentation](./modules/Wine.md#configuration). |
+
+## ThisAssemblyClass module (2300-2399)
+
+| Code      | Severity | Message                                                         | Description                                                                                                                                                                                                         |
+| --------- | :------: | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK2300 | Warning  | ThisAssembly class generation is only supported in C# projects. | Property `GenerateThisAssemblyClass` was set to `true` in a project whose language is not C#. No `ThisAssembly` class will be generated.                                                                            |
+| BVSDK2301 |  Error   | Constant '...' has invalid value '...'.                         | A `ThisAssemblyConstant` item has a `Value` metadata that cannot be parsed according to the [constants syntax](ConstantsSyntax.md): an unknown type prefix, or a value that cannot be parsed as the specified type. |
