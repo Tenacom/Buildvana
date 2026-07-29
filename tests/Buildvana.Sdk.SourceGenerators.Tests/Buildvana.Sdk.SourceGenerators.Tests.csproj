@@ -14,9 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The alias keeps the project's internals (which include PolyKit polyfills, made visible by InternalsVisibleTo)
-         out of the global namespace, where they would clash with the framework's own types. -->
-    <ProjectReference Include="..\..\src\Buildvana.Sdk.SourceGenerators\Buildvana.Sdk.SourceGenerators.csproj" Aliases="Generators" />
+    <ProjectReference Include="..\..\src\Buildvana.Sdk.SourceGenerators\Buildvana.Sdk.SourceGenerators.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,6 +4,11 @@
     <TargetFramework>$(SourceGeneratorsTfm)</TargetFramework>
     <CLSCompliant>false</CLSCompliant>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+
+    <!-- Restrict PolySharp to the polyfills this project actually uses; add types here as new needs arise.
+         Mind the polyfills' own dependencies (e.g. System.Index needs the nullable attributes, which would
+         collide with the BCL's in projects that see our internals through InternalsVisibleTo). -->
+    <PolySharpIncludeGeneratedTypes>System.Runtime.CompilerServices.IsExternalInit</PolySharpIncludeGeneratedTypes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +23,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Common" PrivateAssets="all" />
-    <PackageReference Include="PolyKit.Embedded" PrivateAssets="all" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

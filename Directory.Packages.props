@@ -48,12 +48,12 @@
     <PackageVersion Include="Microsoft.VisualStudio.SolutionPersistence" Version="1.0.52" />
     <PackageVersion Include="NuGet.Versioning" Version="7.6.0" />
     <PackageVersion Include="Octokit" Version="14.0.0" />
-    <PackageVersion Include="PolyKit.Embedded" Version="3.0.27-preview" />
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />
   </ItemGroup>
 
   <!-- Development dependencies-->
   <ItemGroup>
+    <PackageVersion Include="PolySharp" Version="1.16.0" />
   </ItemGroup>
 
   <!-- Test dependencies-->

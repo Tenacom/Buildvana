@@ -1,10 +1,8 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-extern alias Generators;
-
 using System.Globalization;
-using Generators::Buildvana.Sdk.SourceGenerators;
+using Buildvana.Sdk.SourceGenerators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
