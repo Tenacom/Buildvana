@@ -1,9 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-extern alias Generators;
-
-using Generators::Buildvana.Sdk.SourceGenerators.Internal;
+using Buildvana.Sdk.SourceGenerators.Internal;
 
 internal sealed class ConstantValueParserTests
 {
