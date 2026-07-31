@@ -12,7 +12,7 @@ using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
-using Buildvana.Core.Json;
+using Buildvana.Core.Versioning;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Execution;
@@ -42,7 +42,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
 
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
-        var jsonHelper = services.GetRequiredService<IJsonHelper>();
+        var versioningSettings = services.GetRequiredService<VersioningSettings>();
         var server = services.GetRequiredService<ServerAdapter>();
         var version = services.GetRequiredService<VersionService>();
         var dotnet = services.GetRequiredService<DotNetService>();
@@ -91,12 +91,12 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // Modify version file if required.
             if (versionSpecChange != VersionSpecChange.None)
             {
-                var versionFile = VersionFile.Load(home, jsonHelper);
-                var previousVersionSpec = versionFile.VersionSpec;
-                if (versionFile.ApplyVersionSpecChange(versionSpecChange))
+                var versionFile = VersionFile.Load(home);
+                var previousVersionSpec = versionFile.Spec;
+                if (versionFile.ApplyChange(versionSpecChange))
                 {
-                    reporter.Info($"Version spec changed from {previousVersionSpec} to {versionFile.VersionSpec}.");
-                    versionFile.Save();
+                    reporter.Info($"Version spec changed from {previousVersionSpec} to {versionFile.Spec}.");
+                    versionFile.Save(versioningSettings.PrereleaseTag);
                     release.UpdateRepository(versionFile.Path);
                 }
                 else
