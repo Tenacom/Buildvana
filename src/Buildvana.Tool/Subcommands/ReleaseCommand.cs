@@ -180,7 +180,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
 
             // Ensure that the release tag doesn't already exist.
             // This assumes that full repo history has been checked out;
-            // however, that is already a prerequisite for using Nerdbank.GitVersioning.
+            // however, that is already a prerequisite for computing the Git height.
             BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Artifact pass (Restore→Pack, no Clean): rebuild against the resolved version and make artifacts.
