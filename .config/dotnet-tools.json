@@ -7,12 +7,6 @@
       "commands": [
         "bv"
       ]
-    },
-    "nbgv": {
-      "version": "3.10.91",
-      "commands": [
-        "nbgv"
-      ]
     }
   }
 }
