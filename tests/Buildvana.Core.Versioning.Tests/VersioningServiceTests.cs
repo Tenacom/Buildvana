@@ -4,6 +4,8 @@
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.Testing;
 using Buildvana.Core.Versioning;
 
 internal sealed class VersioningServiceTests
@@ -138,12 +140,22 @@ internal sealed class VersioningServiceTests
         await Assert.That(service.AssemblyVersion).IsEqualTo("2.0.0.0");
     }
 
+    [Test]
+    public async Task Constructor_FileVersion_IsFullPrecisionRegardlessOfAssemblyVersionPrecision()
+    {
+        using var repo = new TempGitRepo();
+        repo.WriteFile("VERSION", "2.3\n");
+        repo.CommitAll();
+        var service = CreateService(repo, new BuildvanaConfig());
+        await Assert.That(service.FileVersion).IsEqualTo("2.3.1.0");
+    }
+
     private static VersioningService CreateService(TempGitRepo repo, BuildvanaConfig config)
         => new(
             NullReporter.Instance,
             new FixedHomeDirectoryProvider(repo.RootPath),
             new VersioningSettings(config),
-            new GitHeightCalculator(VersioningService.VersionFileName));
+            new GitHeightCalculator(VersionFile.FileName));
 
     private static BuildFailedException? CatchCreate(TempGitRepo repo, BuildvanaConfig config)
     {

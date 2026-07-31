@@ -2,8 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.IO;
-using System.Security;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
@@ -17,17 +15,12 @@ namespace Buildvana.Core.Versioning;
 /// and exposes it in the string forms needed by builds and releases.
 /// </summary>
 /// <remarks>
-/// <para>The version file (<see cref="VersionFileName"/>, in the home directory) holds a
+/// <para>The version file (<see cref="VersionFile.FileName"/>, in the home directory) holds a
 /// <c>MAJOR.MINOR[-[tag]]</c> specification; the patch number is the Git height of the version line
 /// (see <see cref="GitHeightCalculator"/>). All values are computed once, on construction.</para>
 /// </remarks>
 public sealed class VersioningService
 {
-    /// <summary>
-    /// The name of the version file, relative to the home directory.
-    /// </summary>
-    public const string VersionFileName = "VERSION";
-
     private const int ShortCommitIdLength = 10;
 
     /// <summary>
@@ -54,7 +47,7 @@ public sealed class VersioningService
         Guard.IsNotNull(heightCalculator);
 
         var homeDirectory = home.HomeDirectory;
-        Spec = ReadVersionFile(Path.Combine(homeDirectory, VersionFileName));
+        Spec = VersionFile.Load(home).Spec;
         var prereleaseTag = Spec.Prerelease ? GetPrereleaseTag(settings) : null;
         var facts = heightCalculator.Calculate(homeDirectory, Spec);
         Height = facts.Height;
@@ -63,6 +56,7 @@ public sealed class VersioningService
         SimpleVersion = FormattableString.Invariant($"{Spec.Major}.{Spec.Minor}.{Height}");
         SemVer = prereleaseTag is null ? SimpleVersion : $"{SimpleVersion}-{prereleaseTag}";
         AssemblyVersion = ComputeAssemblyVersion(Spec, Height, settings.AssemblyVersionPrecision);
+        FileVersion = FormattableString.Invariant($"{SimpleVersion}.0");
         InformationalVersion = ComputeInformationalVersion(SemVer, Spec.Prerelease, IsPublicRelease, CommitId);
         var publicity = IsPublicRelease ? "public release" : "not a public release";
         reporter.Info(FormattableString.Invariant($"Version {SemVer} (height {Height}, {publicity})"));
@@ -113,37 +107,23 @@ public sealed class VersioningService
     public string AssemblyVersion { get; }
 
     /// <summary>
+    /// Gets the file version: <see cref="SimpleVersion"/> at full precision, plus a fourth component
+    /// that is always 0.
+    /// </summary>
+    public string FileVersion { get; }
+
+    /// <summary>
     /// Gets the informational version: <see cref="SemVer"/>, plus a <c>g</c>-prefixed short commit ID
     /// appended to the prerelease part when the build is not a public release.
     /// </summary>
     public string InformationalVersion { get; }
-
-    private static VersionSpec ReadVersionFile(string path)
-    {
-        BuildFailedException.ThrowIfNot(File.Exists(path), $"Version file {path} not found.");
-        string text;
-        try
-        {
-            text = File.ReadAllText(path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
-        }
-
-        text = text.Trim();
-        BuildFailedException.ThrowIfNot(
-            VersionSpec.TryParse(text, out var spec),
-            $"{path} contains an invalid version specification '{text}'.");
-        return spec;
-    }
 
     private static string GetPrereleaseTag(VersioningSettings settings)
     {
         var tag = settings.PrereleaseTag;
         BuildFailedException.ThrowIf(
             string.IsNullOrEmpty(tag),
-            $"{VersionFileName} specifies a prerelease version, but versioning.prereleaseTag is not set in the configuration file.");
+            $"{VersionFile.FileName} specifies a prerelease version, but versioning.prereleaseTag is not set in the configuration file.");
         var isValid = SemanticVersion.TryParse(FormattableString.Invariant($"0.0.0-{tag}"), out _);
         BuildFailedException.ThrowIfNot(
             isValid,

@@ -3,6 +3,7 @@
 
 using System.Text;
 using Buildvana.Core;
+using Buildvana.Core.Testing;
 using Buildvana.Core.Versioning;
 
 internal sealed class GitHeightCalculatorTests
@@ -171,6 +172,56 @@ internal sealed class GitHeightCalculatorTests
         var result = Calculate(repo, 1, 0);
         await Assert.That(result.BranchName).IsEqualTo(string.Empty);
         await Assert.That(result.Height).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task TryGetRepositoryStateToken_WithoutRepository_ReturnsNull()
+    {
+        var directory = Directory.CreateTempSubdirectory("bv-test-");
+        try
+        {
+            var token = GitHeightCalculator.TryGetRepositoryStateToken(directory.FullName);
+            await Assert.That(token).IsNull();
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task TryGetRepositoryStateToken_UnchangedState_ReturnsEqualTokens()
+    {
+        using var repo = new TempGitRepo();
+        repo.CommitAll();
+        var first = GitHeightCalculator.TryGetRepositoryStateToken(repo.RootPath);
+        var second = GitHeightCalculator.TryGetRepositoryStateToken(repo.RootPath);
+        await Assert.That(first).IsNotNull();
+        await Assert.That(second).IsEqualTo(first);
+    }
+
+    [Test]
+    public async Task TryGetRepositoryStateToken_NewCommit_ChangesToken()
+    {
+        using var repo = new TempGitRepo();
+        repo.CommitAll();
+        var first = GitHeightCalculator.TryGetRepositoryStateToken(repo.RootPath);
+        repo.CommitAll();
+        var second = GitHeightCalculator.TryGetRepositoryStateToken(repo.RootPath);
+        await Assert.That(second).IsNotNull();
+        await Assert.That(string.Equals(second, first, StringComparison.Ordinal)).IsFalse();
+    }
+
+    [Test]
+    public async Task TryGetRepositoryStateToken_DetachedHead_ChangesToken()
+    {
+        using var repo = new TempGitRepo();
+        repo.CommitAll();
+        var first = GitHeightCalculator.TryGetRepositoryStateToken(repo.RootPath);
+        repo.CheckoutDetached();
+        var second = GitHeightCalculator.TryGetRepositoryStateToken(repo.RootPath);
+        await Assert.That(second).IsNotNull();
+        await Assert.That(string.Equals(second, first, StringComparison.Ordinal)).IsFalse();
     }
 
     private static GitHeightResult Calculate(TempGitRepo repo, int major, int minor)

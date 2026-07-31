@@ -26,7 +26,7 @@ namespace Buildvana.Core.Versioning;
 /// <para>This class is the library's only Git touchpoint; its public surface deliberately exposes no
 /// LibGit2Sharp types.</para>
 /// </remarks>
-public sealed class GitHeightCalculator
+public sealed partial class GitHeightCalculator
 {
     private readonly string _versionFileName;
 
@@ -38,6 +38,28 @@ public sealed class GitHeightCalculator
     {
         Guard.IsNotNullOrEmpty(versionFileName);
         _versionFileName = versionFileName;
+    }
+
+    /// <summary>
+    /// Gets an opaque token describing the repository state that <see cref="Calculate"/> depends on:
+    /// the current <c>HEAD</c> reference and the commit it points to. For a given version file name and
+    /// version specification, equal tokens guarantee equal <see cref="Calculate"/> results, because the
+    /// commit graph reachable from a commit is immutable.
+    /// </summary>
+    /// <param name="repositoryDirectory">The directory of the Git repository.</param>
+    /// <returns>A state token, or <see langword="null"/> if there is no Git repository at
+    /// <paramref name="repositoryDirectory"/>.</returns>
+    public static string? TryGetRepositoryStateToken(string repositoryDirectory)
+    {
+        Guard.IsNotNullOrEmpty(repositoryDirectory);
+        if (!Repository.IsValid(repositoryDirectory))
+        {
+            return null;
+        }
+
+        using var repository = new Repository(repositoryDirectory);
+        var head = repository.Head;
+        return FormattableString.Invariant($"{head.CanonicalName}\0{head.Tip?.Sha}");
     }
 
     /// <summary>
