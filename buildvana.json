@@ -1,0 +1,9 @@
+{
+  "release": {
+    "branches": ["^main$", "^v\\d+\\.\\d+$"]
+  },
+  "versioning": {
+    "prereleaseTag": "preview",
+    "assemblyVersionPrecision": "major"
+  }
+}

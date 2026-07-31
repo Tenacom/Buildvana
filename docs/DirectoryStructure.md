@@ -268,4 +268,12 @@ TODO
 
 ## `VERSION`
 
-TODO
+The single source of truth for the version of your product: a plain-text file, in the home directory, holding a single `MAJOR.MINOR[-[tag]]` version specification, for example:
+
+```text
+2.0-preview
+```
+
+The presence of `-` after the minor version marks a prerelease line; the tag text after it is optional and informational (the effective prerelease tag comes from the `versioning.prereleaseTag` key of `buildvana.json`). The patch number is not stored in the file: it is the Git height of the version line, i.e. the number of commits since the last change of `MAJOR.MINOR`.
+
+When a `VERSION` file is present, the Buildvana SDK computes `Version`, `AssemblyVersion`, `FileVersion`, and `InformationalVersion` for all projects in the repository; `bv` uses the same computation for releases and rewrites the file when advancing the version.
