@@ -1,7 +1,7 @@
 <Project>
 
   <!--
-    Stub target for projects that do not use Nerdbank.GitVersioning.
+    Stub target for projects that do not use versioning.
     This lets other modules have targets that depend on this target.
   -->
   <Target Name="GetBuildVersion" />

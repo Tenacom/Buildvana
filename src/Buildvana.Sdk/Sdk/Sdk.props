@@ -113,6 +113,7 @@
     <BV_SdkTasksAssembly>$(BV_BinariesDir)Buildvana.Sdk.Tasks.dll</BV_SdkTasksAssembly>
   </PropertyGroup>
 
+  <UsingTask TaskName="ComputeVersion" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="ConvertPfxToSnk" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="ExportJetBrainsAnnotations" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />
   <UsingTask TaskName="GetWinePath" AssemblyFile="$(BV_SdkTasksAssembly)" Runtime="NET" TaskFactory="TaskHostFactory" />

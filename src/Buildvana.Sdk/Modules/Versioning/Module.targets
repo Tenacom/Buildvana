@@ -1,0 +1,10 @@
+<Project>
+
+  <Import Project="Module.Core.targets"
+          Condition="$(UseVersioning)" />
+
+  <!-- Import stub targets if native versioning is not used. -->
+  <Import Project="Module.Stubs.targets"
+          Condition="!$(UseVersioning)" />
+
+</Project>

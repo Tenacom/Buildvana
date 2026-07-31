@@ -1,0 +1,72 @@
+<Project>
+
+  <!--
+    UseVersioning may be 'true', 'false', or not specified (empty).
+    Coalesce any other value to empty.
+  -->
+  <PropertyGroup>
+    <UseVersioning Condition="'$(UseVersioning)' != 'true' And '$(UseVersioning)' != 'false'" />
+  </PropertyGroup>
+
+  <!--
+    UseNerdbankGitVersioning is a deprecated alias for UseVersioning, kept for compatibility with projects
+    written for previous versions of the SDK, where versioning was implemented via Nerdbank.GitVersioning.
+    Its value (if valid) only applies when UseVersioning itself is not specified.
+  -->
+  <ItemGroup Condition="'$(UseNerdbankGitVersioning)' != ''">
+    <EvaluationWarning Include="BVSDK2001"
+                       Text="The UseNerdbankGitVersioning property is deprecated; use UseVersioning instead." />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(UseVersioning)' == ''">
+    <UseVersioning Condition="'$(UseNerdbankGitVersioning)' == 'true'">true</UseVersioning>
+    <UseVersioning Condition="'$(UseNerdbankGitVersioning)' == 'false'">false</UseVersioning>
+  </PropertyGroup>
+
+  <!--
+    Unless explicitly told not to, look for the version file (VERSION) in the home directory.
+    Unlike the version.json of Nerdbank.GitVersioning, the version file lives at the repository root only.
+  -->
+  <PropertyGroup Condition="'$(UseVersioning)' != 'false'">
+    <BV_VersionFilePath Condition="Exists('$(HomeDirectory)VERSION')">$(HomeDirectory)VERSION</BV_VersionFilePath>
+  </PropertyGroup>
+
+  <!--
+    If UseVersioning was not specified as 'true' or 'false':
+      - if the version file was found, set UseVersioning to 'true';
+      - otherwise, set UseVersioning to 'false'.
+  -->
+  <PropertyGroup Condition="'$(UseVersioning)' == ''">
+    <UseVersioning>false</UseVersioning>
+    <UseVersioning Condition="'$(BV_VersionFilePath)' != ''">true</UseVersioning>
+  </PropertyGroup>
+
+  <!--
+    Issue an error if UseVersioning is 'true' and no version file was found in the home directory.
+    Note that this can only happen if UseVersioning (or its deprecated alias) was *explicitly* set to 'true'.
+  -->
+  <ItemGroup Condition="'$(BV_VersionFilePath)' == ''">
+    <EvaluationError Condition="$(UseVersioning)"
+                     Include="BVSDK2000"
+                     Text="Version file (VERSION) not found in home directory." />
+  </ItemGroup>
+
+  <!--
+    Force UseVersioning to 'false' if no version file was found in the home directory,
+    to avoid confusing other modules that may use it.
+  -->
+  <PropertyGroup Condition="$(UseVersioning)">
+    <UseVersioning Condition="'$(BV_VersionFilePath)' == ''">false</UseVersioning>
+  </PropertyGroup>
+
+  <!--
+    Versioned C# projects get a ThisAssembly class carrying the version constants, unless they opt out.
+    This must happen here, not in Module.Core.targets: modules import in alphabetical order, so the
+    ThisAssemblyClass module (which reads GenerateThisAssemblyClass) evaluates before the Versioning module
+    within the Module.targets wave; the BeforeModules wave, instead, precedes both.
+  -->
+  <PropertyGroup Condition="$(UseVersioning) And '$(GenerateThisAssemblyClass)' == '' And '$(Language)' == 'C#'">
+    <GenerateThisAssemblyClass>true</GenerateThisAssemblyClass>
+  </PropertyGroup>
+
+</Project>
