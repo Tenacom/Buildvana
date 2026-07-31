@@ -10,6 +10,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
+using Buildvana.Core.Versioning;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
@@ -190,6 +191,7 @@ internal static class Program
             .AddSingleton<GitService>()
             .AddSingleton<PublicApiFilesService>()
             .AddSingleton(ServerAdapter.Create)
+            .AddSingleton<VersioningSettings>()
             .AddSingleton<VersionService>()
             .AddSingleton<ChangelogService>()
             .AddSingleton<DocFxService>()
