@@ -9,7 +9,7 @@
     <File Path="Directory.Build.targets" />
     <File Path="NuGet.config" />
     <File Path="stylecop.json" />
-    <File Path="version.json" />
+    <File Path="VERSION" />
     <File Path="Buildvana.slnx.DotSettings" />
   </Folder>
   <Folder Name="/- Dependencies/">

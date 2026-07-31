@@ -20,7 +20,7 @@ Directory.Build.* @rdeago
 stylecop.json @rdeago
 *.DotSettings @rdeago
 NuGet.config @rdeago
-version.json @rdeago
+VERSION @rdeago
 
 # Claude Code configuration
 /.claude/ @rdeago
