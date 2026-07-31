@@ -67,7 +67,7 @@
       <_SdkVersionPropsXml>
         <Project>
           <PropertyGroup>
-            <BuildvanaSdkVersion>$(NuGetPackageVersion)</BuildvanaSdkVersion>
+            <BuildvanaSdkVersion>$(PackageVersion)</BuildvanaSdkVersion>
             <BV_MinRoslynVersion>$(BV_MinRoslynVersion)</BV_MinRoslynVersion>
             <BV_MinRoslynVersionHint>$(BV_MinRoslynVersionHint)</BV_MinRoslynVersionHint>
           </PropertyGroup>
@@ -272,8 +272,19 @@
       <!-- Don't include .pdb files in non-debug configurations (i.e. Release). -->
       <_PublishedBinaries Remove="$(OutputPath)\**\*.pdb" Condition="'$(Configuration)' != 'Debug'" />
 
+      <!--
+        LibGit2Sharp composes the native library file name as 'git2-<hash>.<extension>', with no 'lib' prefix,
+        when probing the directory set as its native library path (see NativeMethods.ResolveDll in its sources).
+        The Unix binaries in its package carry a 'lib' prefix and are only found through a deps.json context,
+        which the packaged task layout does not have; rename them so that the explicit probe finds them.
+      -->
+      <_PublishedLibGit2NativeBinaries Include="$(OutputPath)\**\libgit2-*.so;$(OutputPath)\**\libgit2-*.dylib" />
+      <_PublishedBinaries Remove="@(_PublishedLibGit2NativeBinaries)" />
+
       <TfmSpecificPackageFile Include="@(_PublishedBinaries)" PackagePath="bin\%(RecursiveDir)%(Filename)%(Extension)" />
+      <TfmSpecificPackageFile Include="@(_PublishedLibGit2NativeBinaries)" PackagePath="bin\%(RecursiveDir)$([System.String]::Copy('%(Filename)').Substring(3))%(Extension)" />
       <_PublishedBinaries Remove="@(_PublishedBinaries)" /> <!-- Free up some memory. -->
+      <_PublishedLibGit2NativeBinaries Remove="@(_PublishedLibGit2NativeBinaries)" />
 
     </ItemGroup>
 

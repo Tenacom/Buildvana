@@ -1,0 +1,72 @@
+<Project>
+
+  <!--
+    The version being built already carries the short commit ID when appropriate (in non-public-release
+    builds); never let AddSourceRevisionToInformationalVersion append another one.
+  -->
+  <PropertyGroup>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <!--
+    Compute the version being built from the version file, Git height, and versioning settings,
+    and hand it to everything downstream: compilation (GetAssemblyVersion), packing (GenerateNuspec
+    and friends), and restore (project-to-project version stamping).
+    The target keeps the GetBuildVersion name established by the former NerdbankGitVersioning module,
+    because other modules and projects depend on targets by that name.
+  -->
+  <Target Name="GetBuildVersion"
+          BeforeTargets="CoreCompile;GetAssemblyVersion;GenerateNuspec;_GenerateRestoreProjectSpec;_GetOutputItemsFromPack">
+
+    <ComputeVersion HomeDirectory="$(HomeDirectory)">
+      <Output TaskParameter="SimpleVersion" PropertyName="BV_SimpleVersion" />
+      <Output TaskParameter="SemVer" PropertyName="BV_SemVer" />
+      <Output TaskParameter="AssemblyVersion" PropertyName="BV_AssemblyVersion" />
+      <Output TaskParameter="FileVersion" PropertyName="BV_FileVersion" />
+      <Output TaskParameter="InformationalVersion" PropertyName="BV_InformationalVersion" />
+      <Output TaskParameter="IsPublicRelease" PropertyName="BV_IsPublicRelease" />
+      <Output TaskParameter="IsPrerelease" PropertyName="BV_IsPrerelease" />
+      <Output TaskParameter="CommitId" PropertyName="BV_GitCommitId" />
+      <Output TaskParameter="Height" PropertyName="BV_GitHeight" />
+    </ComputeVersion>
+
+    <PropertyGroup>
+      <Version>$(BV_SemVer)</Version>
+      <PackageVersion>$(BV_SemVer)</PackageVersion>
+      <AssemblyVersion>$(BV_AssemblyVersion)</AssemblyVersion>
+      <FileVersion>$(BV_FileVersion)</FileVersion>
+      <InformationalVersion>$(BV_InformationalVersion)</InformationalVersion>
+    </PropertyGroup>
+
+  </Target>
+
+  <!--
+    Contribute the versioning constants to the generated ThisAssembly class, overriding same-named
+    user-defined constants, like the default constants defined by the ThisAssemblyClass module.
+    A BeforeTargets hook on a target that does not exist (because the ThisAssemblyClass module is
+    disabled) is silently ignored, and the contributed items are then inert.
+  -->
+  <Target Name="BV_DefineVersioningThisAssemblyConstants"
+          BeforeTargets="BV_WriteThisAssemblyConstantsFile"
+          DependsOnTargets="GetBuildVersion"
+          Condition="'$(EnableDefaultThisAssemblyConstants)' != 'false'">
+
+    <ItemGroup>
+      <ThisAssemblyConstant Remove="SimpleVersion" />
+      <ThisAssemblyConstant Remove="SemVer" />
+      <ThisAssemblyConstant Remove="IsPublicRelease" />
+      <ThisAssemblyConstant Remove="IsPrerelease" />
+      <ThisAssemblyConstant Remove="GitCommitId" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ThisAssemblyConstant Include="SimpleVersion" Value="string:$(BV_SimpleVersion)" />
+      <ThisAssemblyConstant Include="SemVer" Value="string:$(BV_SemVer)" />
+      <ThisAssemblyConstant Include="IsPublicRelease" Value="bool:$(BV_IsPublicRelease)" />
+      <ThisAssemblyConstant Include="IsPrerelease" Value="bool:$(BV_IsPrerelease)" />
+      <ThisAssemblyConstant Include="GitCommitId" Value="string:$(BV_GitCommitId)" />
+    </ItemGroup>
+
+  </Target>
+
+</Project>
