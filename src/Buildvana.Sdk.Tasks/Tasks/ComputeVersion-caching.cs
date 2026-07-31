@@ -14,7 +14,7 @@ namespace Buildvana.Sdk.Tasks;
 
 partial class ComputeVersion
 {
-    private static readonly ConcurrentDictionary<string, CachedVersion> Cache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, CachedVersion> Cache = new(StringComparer.Ordinal);
 
     private static CachedVersion GetOrComputeVersion(string homeDirectory, IReporter reporter)
     {
