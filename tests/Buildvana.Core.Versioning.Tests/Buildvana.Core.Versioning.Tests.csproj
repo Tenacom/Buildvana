@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibGit2Sharp" />
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Buildvana.Core.Testing\Buildvana.Core.Testing.csproj" />
     <ProjectReference Include="..\..\src\Buildvana.Core.Versioning\Buildvana.Core.Versioning.csproj" />
   </ItemGroup>
 

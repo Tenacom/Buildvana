@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Buildvana.Core.Versioning;
 
+#pragma warning disable CA1708 // Identifiers should differ by more than case — false positive on classes with C# 14 extension blocks; fixed in .NET 11, https://github.com/dotnet/sdk/issues/51716
 partial class VersionSpecExtensions
 {
     private static readonly Regex VersionSpecRegex = GetVersionSpecRegex();

@@ -75,4 +75,53 @@ public static partial class VersionSpecExtensions
             return true;
         }
     }
+
+    extension(VersionSpec @this)
+    {
+        /// <summary>
+        /// Gets a <see cref="VersionSpec"/> that represents the same version as this instance and is not
+        /// a prerelease.
+        /// </summary>
+        /// <returns>This instance if it is not a prerelease; otherwise, a newly-created
+        /// <see cref="VersionSpec"/>.</returns>
+        public VersionSpec Stable() => @this.Prerelease ? @this with { Prerelease = false } : @this;
+
+        /// <summary>
+        /// Gets a <see cref="VersionSpec"/> that represents the same version as this instance and is
+        /// a prerelease.
+        /// </summary>
+        /// <returns>This instance if it is a prerelease; otherwise, a newly-created
+        /// <see cref="VersionSpec"/>.</returns>
+        public VersionSpec Unstable() => @this.Prerelease ? @this : @this with { Prerelease = true };
+
+        /// <summary>
+        /// Gets a <see cref="VersionSpec"/> that represents the next minor version with respect to this
+        /// instance. The new version line starts as a prerelease.
+        /// </summary>
+        /// <returns>A newly-created <see cref="VersionSpec"/>.</returns>
+        public VersionSpec NextMinor() => new(@this.Major, @this.Minor + 1, true);
+
+        /// <summary>
+        /// Gets a <see cref="VersionSpec"/> that represents the next major version with respect to this
+        /// instance. The new version line starts as a prerelease.
+        /// </summary>
+        /// <returns>A newly-created <see cref="VersionSpec"/>.</returns>
+        public VersionSpec NextMajor() => new(@this.Major + 1, 0, true);
+
+        /// <summary>
+        /// Gets a <see cref="VersionSpec"/> that represents the result of applying the specified change
+        /// to this instance.
+        /// </summary>
+        /// <param name="change">A <see cref="VersionSpecChange"/> constant representing the kind of change to apply.</param>
+        /// <returns>A tuple of the result of applying <paramref name="change"/> to this instance, and a
+        /// value indicating whether the result differs from this instance.</returns>
+        public (VersionSpec Result, bool Changed) ApplyChange(VersionSpecChange change) => change switch
+        {
+            VersionSpecChange.Unstable => @this.Prerelease ? (@this, false) : (@this.Unstable(), true),
+            VersionSpecChange.Stable => @this.Prerelease ? (@this.Stable(), true) : (@this, false),
+            VersionSpecChange.Minor => (@this.NextMinor(), true),
+            VersionSpecChange.Major => (@this.NextMajor(), true),
+            _ => (@this, false),
+        };
+    }
 }
