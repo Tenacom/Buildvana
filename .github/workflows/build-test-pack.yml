@@ -19,6 +19,8 @@ jobs:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
       DOTNET_CLI_UI_LANGUAGE: 'en-US'
       FEEDZ_IO_PRIVATE_TOKEN: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
+      # bv reads its GitHub token from the environment variable named by github.tokenEnv in buildvana.jsonc.
+      # The automatic token is enough here: no release operation is performed.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - name: Set bogus local NuGet package directory
@@ -27,7 +29,7 @@ jobs:
     - name: Checkout repository with full history
       uses: actions/checkout@v7
       with:
-        fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
+        fetch-depth: 0 # Checkout with full history so Buildvana can compute the Git height of the version line correctly.
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v6
       with:

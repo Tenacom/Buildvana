@@ -94,10 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - When a release introduces no other file changes (typically a prerelease with no version-spec change and no changelog or public-API updates), the "Prepare release" commit is empty. The major public Git hosts accept empty commits, but self-hosted setups with custom `pre-receive` hooks may reject them. If this affects you:
   - either allow empty commits, or
-  - pass `--unstable-changelog=true` to `dotnet bv release` and ensure the changelog always has at least one new entry between releases, thus guaranteeing non-empty release commits.
+  - set `release.changelogUpdates` to `all` in `buildvana.json`, so that every release updates the changelog and its commit is therefore never empty. Since an empty "Unreleased changes" section fails a release that would update the changelog, you must also either ensure the changelog always has at least one new entry between releases, or provide substitute text in `release.emptyChangelog`.
 
   If neither option is acceptable for your workflow, please open an issue.
-- The check for `IsTestProject` is wrong, as it's a VSTest-related property. MTP uses `IsTestingPlatformApplication` instead.
 
 ## [1.1.10](https://github.com/Tenacom/Buildvanareleases/tag/1.1.10) (2026-04-27)
 

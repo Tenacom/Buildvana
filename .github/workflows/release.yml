@@ -11,29 +11,24 @@ concurrency:
 on:
   workflow_dispatch:
     inputs:
-      versionSpecChange:
+      bump:
         description: 'Version spec change'
         required: true
         type: choice
-        default: 'None'
+        default: 'none'
         options:
-        - None
-        - Unstable
-        - Stable
-        - Minor
-        - Major
+        - none
+        - unstable
+        - stable
+        - minor
+        - major
       checkPublicApi:
         description: 'Check public API files'
         required: false
         default: true
         type: boolean
-      forceUpdateChangelog:
-        description: 'Update changelog on preview'
-        required: false
-        default: false
-        type: boolean
-      checkChangelog:
-        description: 'Check changelog before update'
+      dogfood:
+        description: 'Update self-references to the released version'
         required: false
         default: true
         type: boolean
@@ -41,11 +36,11 @@ on:
         description: 'Buildvana verbosity'
         required: true
         type: choice
-        default: 'Normal'
+        default: 'normal'
         options:
-        - Normal
-        - Detailed
-        - Diagnostic
+        - normal
+        - detailed
+        - diagnostic
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -54,23 +49,18 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
       DOTNET_CLI_UI_LANGUAGE: 'en-US'
-      FEEDZ_IO_PRIVATE_TOKEN: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
+      # Secrets consumed by bv. Which environment variable carries each one is named in buildvana.jsonc:
+      # - github.tokenEnv (implicitly GITHUB_TOKEN) holds the token used for release operations and Git pushes;
+      #   here it is the release PAT, which - unlike the automatic token - can push to a protected branch.
+      # - nuget.feeds.prerelease.apiKeyEnv is FEEDZ_IO_PRIVATE_TOKEN (public Feedz.io preview feed);
+      # - nuget.feeds.release.apiKeyEnv is NUGET_DEPLOYMENT_KEY (nuget.org).
       GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      FEEDZ_IO_PRIVATE_TOKEN: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
+      NUGET_DEPLOYMENT_KEY: ${{ secrets.NUGET_DEPLOYMENT_KEY }}
 
-      # Deploy non-prerelease public packages on NuGet
-      RELEASE_NUGET_SOURCE: 'https://api.nuget.org/v3/index.json'
-      RELEASE_NUGET_KEY: ${{ secrets.NUGET_DEPLOYMENT_KEY }}
-      # Deploy prerelease public packages on a public Feedz.io feed
-      PRERELEASE_NUGET_SOURCE: 'https://f.feedz.io/tenacom/preview/nuget/index.json'
-      PRERELEASE_NUGET_KEY: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
-      # Deploy all private packages on a private Feedz.io feed
-      PRIVATE_NUGET_SOURCE: 'https://f.feedz.io/tenacom/private/nuget/index.json'
-      PRIVATE_NUGET_KEY: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
-
-      VERSION_SPEC_CHANGE: ${{ inputs.versionSpecChange }}
-      CHECK_PUBLIC_API: ${{ inputs.checkPublicApi }}
-      FORCE_UPDATE_CHANGELOG: ${{ inputs.forceUpdateChangelog }}
-      CHECK_CHANGELOG: ${{ inputs.checkChangelog }}
+      BV_BUMP: ${{ inputs.bump }}
+      BV_CHECK_PUBLIC_API: ${{ inputs.checkPublicApi }}
+      BV_DOGFOOD: ${{ inputs.dogfood }}
       BV_VERBOSITY: ${{ inputs.buildvanaVerbosity }}
     steps:
     - name: Set bogus local NuGet package directory
@@ -79,17 +69,16 @@ jobs:
     - name: Log workflow inputs
       shell: bash
       run: |
-        echo "Version spec change           : $VERSION_SPEC_CHANGE"
-        echo "Check public API files        : $CHECK_PUBLIC_API"
-        echo "Update changelog on preview   : $FORCE_UPDATE_CHANGELOG"
-        echo "Check changelog before update : $CHECK_CHANGELOG"
-        echo "Buildvana verbosity           : $BV_VERBOSITY"
+        echo "Version spec change     : $BV_BUMP"
+        echo "Check public API files  : $BV_CHECK_PUBLIC_API"
+        echo "Update self-references  : $BV_DOGFOOD"
+        echo "Buildvana verbosity     : $BV_VERBOSITY"
     - name: Checkout repository with full history
       uses: actions/checkout@v7
       with:
-        fetch-depth: 0 # Checkout with full history so nbgv can compute Git height correctly.
+        fetch-depth: 0 # Checkout with full history so Buildvana can compute the Git height of the version line correctly.
         token: ${{ secrets.RELEASE_TOKEN }}
-        persist-credentials: true # We need auth set up in Buildvana
+        persist-credentials: true # Buildvana pushes release commits and tags over the checkout's credentials.
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v6
       with:
@@ -106,9 +95,9 @@ jobs:
       id: build
       shell: bash
       run: |
-        if [ -z "$BV_VERBOSITY" ]; then BV_VERBOSITY=Normal; fi
-        if [ "$RUNNER_DEBUG" = "1" ]; then BV_VERBOSITY=Diagnostic; fi
-        dotnet bv release --verbosity "$BV_VERBOSITY" --bump "$VERSION_SPEC_CHANGE" --check-public-api "$CHECK_PUBLIC_API" --unstable-changelog "$FORCE_UPDATE_CHANGELOG" --require-changelog "$CHECK_CHANGELOG"
+        if [ -z "$BV_VERBOSITY" ]; then BV_VERBOSITY=normal; fi
+        if [ "$RUNNER_DEBUG" = "1" ]; then BV_VERBOSITY=diagnostic; fi
+        dotnet bv release --verbosity "$BV_VERBOSITY" --bump "$BV_BUMP" --check-public-api "$BV_CHECK_PUBLIC_API" --dogfood "$BV_DOGFOOD"
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
       uses: codecov/codecov-action@v7
