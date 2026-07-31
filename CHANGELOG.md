@@ -89,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bugs fixed in this release
 
 - Buildvana SDK now correctly checks the `IsTestingPlatformApplication` (required by MTP) instead of `IsTestProject` (required by VSTest) to determine whether a project is a test project and set `BV_IsTestProject` accordingly.
+- `bv release` no longer tags and publishes a version one patch above the one its artifacts were built with. The "Prepare release" commit bumps the Git height, hence the version, but it was only created when an earlier step had a file to commit; a release with nothing to commit before the build (typically a prerelease with no version-spec change and `release.changelogUpdates` set to `stable` or `none`) therefore built and pushed its packages at the pre-commit version, then created the commit, and tagged and released the version above. The release commit is now always created before the build.
 
 ### Known problems introduced by this release
 

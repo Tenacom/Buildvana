@@ -174,6 +174,12 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 changelogUpdated = true;
             }
 
+            // Create the release commit now, if none of the steps above had anything to commit.
+            // The Git height, hence the version, must be final before anything is built: a release commit
+            // created later (for example by AddPostReleaseCommit) would bump the height after the fact,
+            // tagging and publishing a version one patch above the one the artifacts were built with.
+            release.EnsureReleaseCommit();
+
             // At this point we know what the actual published version will be.
             // Time for a final consistency check.
             version.EnsureConsistency(true);
