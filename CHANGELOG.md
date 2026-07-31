@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Buildvana SDK now correctly checks the `IsTestingPlatformApplication` (required by MTP) instead of `IsTestProject` (required by VSTest) to determine whether a project is a test project and set `BV_IsTestProject` accordingly.
 - `bv release` no longer tags and publishes a version one patch above the one its artifacts were built with. The "Prepare release" commit bumps the Git height, hence the version, but it was only created when an earlier step had a file to commit; a release with nothing to commit before the build (typically a prerelease with no version-spec change and `release.changelogUpdates` set to `stable` or `none`) therefore built and pushed its packages at the pre-commit version, then created the commit, and tagged and released the version above. The release commit is now always created before the build.
+- URLs that `bv release` builds from the repository URL are no longer missing the separator before their first path segment: release links (`.../Buildvanareleases/tag/1.1.10`) and file links (`.../Buildvanablob/main/CHANGELOG.md`) now come out as `.../Buildvana/releases/tag/1.1.10` and `.../Buildvana/blob/main/CHANGELOG.md`. This affected the version section titles written into the changelog and the "human-curated changelog" link at the top of every generated release description; the titles already written for 1.0.220, 1.1.4, and 1.1.10 have been corrected in place.
 
 ### Known problems introduced by this release
 
@@ -99,13 +100,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   If neither option is acceptable for your workflow, please open an issue.
 
-## [1.1.10](https://github.com/Tenacom/Buildvanareleases/tag/1.1.10) (2026-04-27)
+## [1.1.10](https://github.com/Tenacom/Buildvana/releases/tag/1.1.10) (2026-04-27)
 
 ### Bugs fixed in this release
 
 - [Issue #243](https://github.com/Tenacom/Buildvana/issues/243) — `dotnet bv release` now rewrites `global.json`, `.config/dotnet-tools.json`, and `version.json` in place via a byte-level splice, preserving line endings, trailing newlines, indentation, comments, and BOM exactly as they were on disk. Previously, automatic dogfooding (and version-file updates) re-serialized the entire JSON document, producing all-lines-changed diffs and dropping the trailing newline.
 
-## [1.1.4](https://github.com/Tenacom/Buildvanareleases/tag/1.1.4) (2026-04-27)
+## [1.1.4](https://github.com/Tenacom/Buildvana/releases/tag/1.1.4) (2026-04-27)
 
 ### New features
 
@@ -121,7 +122,7 @@ To skip automatic dogfooding, either pass `--updateSelfReferences=false` to `dot
 
 - [Issue #243](https://github.com/Tenacom/Buildvana/issues/243) — Automatic dogfooding, introduced with [PR #242](https://github.com/Tenacom/Buildvana/pull/242), does not preserve line endings, traling newlines, and any non-standard formatting in `global.json` and `.config/dotnet-tools.json` if it happens to modify them.
 
-## [1.0.220](https://github.com/Tenacom/Buildvanareleases/tag/1.0.220) (2026-04-27)
+## [1.0.220](https://github.com/Tenacom/Buildvana/releases/tag/1.0.220) (2026-04-27)
 
 ### New features
 

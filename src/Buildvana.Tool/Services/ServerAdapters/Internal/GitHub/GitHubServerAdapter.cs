@@ -114,7 +114,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public override Uri GetReleaseUrl(string version)
     {
         Guard.IsNotNullOrEmpty(version);
-        return new Uri($"{RepositoryUrl}releases/tag/{version}");
+        return new Uri($"{RepositoryUrl}/releases/tag/{version}");
     }
 
     /// <inheritdoc/>
@@ -128,7 +128,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var remotePath = path.Replace('\\', '/');
         Guard.IsTrue(remotePath != ".." && !remotePath.StartsWith("../", StringComparison.Ordinal), "Only a path to a file in the repository can be converted to a file URL.");
 
-        return new Uri($"{RepositoryUrl}blob/{commitish}/{remotePath}");
+        return new Uri($"{RepositoryUrl}/blob/{commitish}/{remotePath}");
     }
 
     /// <inheritdoc/>
