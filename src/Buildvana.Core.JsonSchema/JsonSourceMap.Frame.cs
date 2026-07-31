@@ -3,6 +3,9 @@
 
 namespace Buildvana.Core.JsonSchema;
 
+// ReSharper disable once ClassCannotBeInstantiated -- false positive: ReSharper analyzes this partial part
+// in isolation, missing the instantiation in JsonSourceMap.cs (the class has a private constructor and is
+// created by its static Build method).
 partial class JsonSourceMap
 {
     // Tracks one open container while walking the document, so a value's pointer can be built from its parent.
