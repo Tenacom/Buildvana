@@ -60,8 +60,11 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     /// <para>The first call creates an empty commit, refreshes version information from the new Git height,
     /// then amends the commit with the final version-bearing message and captures its SHA into
     /// <see cref="ReleaseCommitSha"/>. Subsequent calls are no-ops.</para>
-    /// <para><see cref="UpdateRepository"/> calls this implicitly; callers only need to invoke it directly
-    /// when they want to guarantee a release commit exists without staging any file.</para>
+    /// <para><see cref="UpdateRepository"/> calls this implicitly, because it amends the release commit and
+    /// builds its own message afterwards. <see cref="AddPostReleaseCommit"/> does not: it requires a release
+    /// commit to exist already, so that the version cannot move under a message its caller has formatted.</para>
+    /// <para>Call this directly to settle the version before anything reads it - notably before building, so
+    /// that artifacts carry the same version that will be tagged and published.</para>
     /// </remarks>
     public void EnsureReleaseCommit()
     {
@@ -139,8 +142,12 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     /// been published to the feed yet).</param>
     /// <param name="files">The paths of the files to stage into the new commit.</param>
     /// <remarks>
-    /// If no release commit has been created yet, this method calls <see cref="EnsureReleaseCommit"/>
-    /// first, so the post-release commit always sits on top of a tagged release commit (possibly empty).
+    /// <para>A release commit must already exist: call <see cref="EnsureReleaseCommit"/> (directly or via
+    /// <see cref="UpdateRepository"/>) first.</para>
+    /// <para>This method deliberately does not create the release commit itself. Doing so would move the
+    /// Git height, and with it the version, in the middle of a call whose <paramref name="message"/> the
+    /// caller has already formatted - typically from that very version, which the message would then
+    /// misreport. Requiring the commit up front keeps the version settled before any caller reads it.</para>
     /// </remarks>
     public void AddPostReleaseCommit(string message, params string[] files)
     {
@@ -153,7 +160,10 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             ThrowHelper.ThrowInvalidOperationException("Internal error: cannot add a post-release commit when updates have already been pushed.");
         }
 
-        EnsureReleaseCommit();
+        if (!_repositoryUpdated)
+        {
+            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot add a post-release commit before the release commit has been created.");
+        }
 
         _git.Stage(files);
         _reporter.Info("Committing post-release changed files...");
