@@ -28,6 +28,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private readonly GitService _git;
 
     private readonly string _token;
+    private readonly GitHubRepositoryUrls _urls;
 
     private GitHubServerAdapter(IServiceProvider services)
     {
@@ -40,7 +41,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         HostName = originInfo.Host;
         RepositoryOwner = originInfo.PathSegments[0];
         RepositoryName = originInfo.PathSegments[1];
-        RepositoryUrl = new Uri($"https://{HostName}/{RepositoryOwner}/{RepositoryName}");
+        _urls = new GitHubRepositoryUrls(HostName, RepositoryOwner, RepositoryName);
         var tokenEnv = services.GetRequiredService<BuildvanaConfig>().GitHub?.TokenEnv is { Length: > 0 } e
             ? e
             : "GITHUB_TOKEN";
@@ -60,7 +61,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public override string RepositoryName { get; }
 
     /// <inheritdoc/>
-    public override Uri RepositoryUrl { get; }
+    public override Uri RepositoryUrl => _urls.Repository;
 
     /// <inheritdoc/>
     /// <value>Always <see langword="false"/>.</value>
@@ -111,25 +112,10 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     }
 
     /// <inheritdoc/>
-    public override Uri GetReleaseUrl(string version)
-    {
-        Guard.IsNotNullOrEmpty(version);
-        return new Uri($"{RepositoryUrl}/releases/tag/{version}");
-    }
+    public override Uri GetReleaseUrl(string version) => _urls.ReleaseTag(version);
 
     /// <inheritdoc/>
-    public override Uri GetFileUrl(string path, string commitish)
-    {
-        Guard.IsNotNullOrEmpty(path);
-        Guard.IsNotNullOrEmpty(commitish);
-        Guard.IsTrue(!Path.IsPathFullyQualified(path), "A path must be relative to be converted to a file URL.");
-
-        // Normalize to forward slashes for the URL, then reject paths that escape the repo.
-        var remotePath = path.Replace('\\', '/');
-        Guard.IsTrue(remotePath != ".." && !remotePath.StartsWith("../", StringComparison.Ordinal), "Only a path to a file in the repository can be converted to a file URL.");
-
-        return new Uri($"{RepositoryUrl}/blob/{commitish}/{remotePath}");
-    }
+    public override Uri GetFileUrl(string path, string commitish) => _urls.File(path, commitish);
 
     /// <inheritdoc/>
     public override async Task<ServerRelease> CreateReleaseAsync()
