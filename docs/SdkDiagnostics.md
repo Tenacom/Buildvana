@@ -16,7 +16,7 @@
 - [StandardAnalyzers module (1700-1799)](#standardanalyzers-module-1700-1799)
 - [XmlDocumentation module (1800-1899)](#xmldocumentation-module-1800-1899)
 - [AlternatePack module (1900-1999)](#alternatepack-module-1900-1999)
-- [NerdbankGitVersioning module (2000-2099)](#nerdbankgitversioning-module-2000-2099)
+- [Versioning module (2000-2099)](#versioning-module-2000-2099)
 - [ReleaseAssetList module (2100-2199)](#releaseassetlist-module-2100-2199)
 - [Wine module (2200-2299)](#wine-module-2200-2299)
 - [ThisAssemblyClass module (2300-2399)](#thisassemblyclass-module-2300-2399)
@@ -109,11 +109,12 @@ This module has no associated diagnostics.
 | BVSDK1901 |  Error   | InnoSetup script '...' referenced by '...' does not exist.       | An `InnoSetup` item's `Script` metadata refers to a non-existing file.                                                |
 | BVSDK1902 |  Error   | InnoSetup item '...' refers to non-existent PublishFolder '...'. | An `InnoSetup` item has a `SourcePublishFolder` metadata, but no `PublishFolder` item exists with the specified name. |
 
-## NerdbankGitVersioning module (2000-2099)
+## Versioning module (2000-2099)
 
-| Code      | Severity | Message                                    | Description                                                                                        |
-| --------- | :------: | ------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| BVSDK2000 |  Error   | Version specification JSON file not found. | A `version.json` or `.version.json` file for the project was not found within the repository root. |
+| Code      | Severity | Message                                                                         | Description                                                                                                                                           |
+| --------- | :------: | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK2000 |  Error   | Version file (VERSION) not found in home directory.                             | The `UseVersioning` property was explicitly set to `true`, but no `VERSION` file was found in the home directory.                                     |
+| BVSDK2001 | Warning  | The UseNerdbankGitVersioning property is deprecated; use UseVersioning instead. | The project sets the `UseNerdbankGitVersioning` property, which is a deprecated alias for `UseVersioning` kept for compatibility with older projects. |
 
 ## ReleaseAssetList module (2100-2199)
 

@@ -59,7 +59,7 @@ However, Buildvana SDK has already been used successfully in production, for bot
 ### Benefits
 
 - Helps you keep your project files clean and concise - even better than "plain" MSBuild SDKs
-- Single source of truth for assembly versions (via [`Nerdbank.GitVersioning`(https://github.com/dotnet/Nerdbank.GitVersioning)])
+- Single source of truth for assembly versions (a plain-text `VERSION` file, with the patch number computed from Git height)
 - Single source of truth for package licenses and copyright notices
 - More auto-generated assembly information (`ClsCompliant`, `COMVisible`)
 - Automatic configuration of commonly-used code analyzers
