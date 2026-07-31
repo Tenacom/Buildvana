@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana testing helpers</Title>
+    <Description>Shared test harnesses for Buildvana test projects, e.g. temporary Git repositories and home directories.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Buildvana.Core.HomeDirectory\Buildvana.Core.HomeDirectory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibGit2Sharp" />
+  </ItemGroup>
+
+</Project>
