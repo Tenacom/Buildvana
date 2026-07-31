@@ -44,6 +44,7 @@
     <Project Path="src/Buildvana.Core.Json/Buildvana.Core.Json.csproj" />
     <Project Path="src/Buildvana.Core.JsonSchema/Buildvana.Core.JsonSchema.csproj" />
     <Project Path="src/Buildvana.Core.Process/Buildvana.Core.Process.csproj" />
+    <Project Path="src/Buildvana.Core.Testing/Buildvana.Core.Testing.csproj" />
     <Project Path="src/Buildvana.Core.Versioning/Buildvana.Core.Versioning.csproj" />
     <Project Path="src/Buildvana.Sdk.SourceGenerators/Buildvana.Sdk.SourceGenerators.csproj" />
     <Project Path="src/Buildvana.Sdk.Tasks/Buildvana.Sdk.Tasks.csproj" />
