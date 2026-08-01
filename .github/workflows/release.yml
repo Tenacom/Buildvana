@@ -22,16 +22,6 @@ on:
         - stable
         - minor
         - major
-      checkPublicApi:
-        description: 'Check public API files'
-        required: false
-        default: true
-        type: boolean
-      dogfood:
-        description: 'Update self-references to the released version'
-        required: false
-        default: true
-        type: boolean
       buildvanaVerbosity:
         description: 'Buildvana verbosity'
         required: true
@@ -59,20 +49,16 @@ jobs:
       NUGET_DEPLOYMENT_KEY: ${{ secrets.NUGET_DEPLOYMENT_KEY }}
 
       BV_BUMP: ${{ inputs.bump }}
-      BV_CHECK_PUBLIC_API: ${{ inputs.checkPublicApi }}
-      BV_DOGFOOD: ${{ inputs.dogfood }}
       BV_VERBOSITY: ${{ inputs.buildvanaVerbosity }}
     steps:
-    - name: Set bogus local NuGet package directory
+    - name: Set bogus local NuGet package directory (to keep nuget.config formally correct)
       shell: bash
       run: echo "NUGET_LOCAL_PACKAGES=$RUNNER_TEMP" >> "$GITHUB_ENV"
     - name: Log workflow inputs
       shell: bash
       run: |
-        echo "Version spec change     : $BV_BUMP"
-        echo "Check public API files  : $BV_CHECK_PUBLIC_API"
-        echo "Update self-references  : $BV_DOGFOOD"
-        echo "Buildvana verbosity     : $BV_VERBOSITY"
+        echo "Version spec change : $BV_BUMP"
+        echo "Buildvana verbosity : $BV_VERBOSITY"
     - name: Checkout repository with full history
       uses: actions/checkout@v7
       with:
@@ -97,7 +83,7 @@ jobs:
       run: |
         if [ -z "$BV_VERBOSITY" ]; then BV_VERBOSITY=normal; fi
         if [ "$RUNNER_DEBUG" = "1" ]; then BV_VERBOSITY=diagnostic; fi
-        dotnet bv release --verbosity "$BV_VERBOSITY" --bump "$BV_BUMP" --check-public-api "$BV_CHECK_PUBLIC_API" --dogfood "$BV_DOGFOOD"
+        dotnet bv release --verbosity "$BV_VERBOSITY" --bump "$BV_BUMP"
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
       uses: codecov/codecov-action@v7
