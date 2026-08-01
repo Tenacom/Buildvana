@@ -76,6 +76,7 @@
     ".globalconfig": "editorconfig",
     "*.md": "markdown",
     "*.sarif": "json",
+    "CODEOWNERS": "gitignore",
   },
   // The default character set encoding to use when reading and writing files.
   "files.encoding": "utf8",
