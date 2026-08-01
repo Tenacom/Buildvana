@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased changes
 
-**There will be no stable 2.0 release.** Migrating this repository to native versioning restarted the patch number: `VERSION` was created as a new file, so its Git height is counted from the migration commit onwards, not from the history of the `version.json` it replaces. The last version published by the old machinery was 2.0.255-preview, and the 2.0 line would need hundreds of commits to climb back above it. The version line therefore moves straight to 2.1, and 2.0 ends its life as a preview-only line: everything listed below ships in 2.1. See the Nerdbank.GitVersioning removal entry under _Changes to existing features_ for how to avoid the same restart when migrating your own repository.
+**No stable 2.0 release: here's why.**  
+When we switched from Nerdbank.GitVersioning to our own versioning code, `version.json` gave way to `VERSION` and the patch number restarted from 1 — far below the 2.0.x versions we had already published. Releasing another 2.0.x was thus impossible (per SemVer, enforced by `bv release`) short of 200+ more commits, so we bumped the minor version instead: hence 2.1-preview.  
+See the Nerdbank.GitVersioning removal entry under _Changes to existing features_ for how to correctly handle the patch-number restart when migrating your own repository.
 
 ### New features
 
