@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+    <ClsCompliant>false</ClsCompliant>
+    <ImplicitUsings>true</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MSBuild assemblies are provided at run time by the instance registered via MSBuildLocator. -->
+    <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Locator" />
+    <PackageReference Include="TUnit" />
+  </ItemGroup>
+
+  <!-- The file under test: tests evaluate the real Sdk.props, copied into a stub SDK layout. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="RealSdkPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.props'))" />
+  </ItemGroup>
+
+</Project>

@@ -59,6 +59,7 @@
     <Project Path="tests/Buildvana.Core.Versioning.Tests/Buildvana.Core.Versioning.Tests.csproj" />
     <Project Path="tests/Buildvana.Sdk.SourceGenerators.Tests/Buildvana.Sdk.SourceGenerators.Tests.csproj" />
     <Project Path="tests/Buildvana.Sdk.Tasks.Tests/Buildvana.Sdk.Tasks.Tests.csproj" />
+    <Project Path="tests/Buildvana.Sdk.Tests/Buildvana.Sdk.Tests.csproj" />
     <Project Path="tests/Buildvana.Tool.Tests/Buildvana.Tool.Tests.csproj" />
   </Folder>
 </Solution>
