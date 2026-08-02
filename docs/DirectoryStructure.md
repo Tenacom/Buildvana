@@ -27,6 +27,10 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 ```text
 <some_path>\                   <<< (*) Home directory (the root of your repository)
 |
++--- .buildvana\               <<< Optional grouping directory for Buildvana files
+|    |
+|    +--- buildvana.jsonc      <<< Buildvana configuration file, if not in the home directory root
+|
 +--- artifacts\                <<< (*) Final results of builds
 |
 +--- samples\                  <<< Sample projects
@@ -43,6 +47,8 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |    |
 |    +--- Common.props         <<< Portions of MSBuild code common to all projects in tests\
 |    +--- Common.targets
+|
++--- buildvana.jsonc           <<< Buildvana configuration file (or buildvana.json), if not in .buildvana\
 |
 +--- Common.props              <<< Common parts of MSBuild projects
 +--- Common.targets
@@ -67,7 +73,7 @@ This document explains what each of this files and directories is and how it is 
 
 This is the "home" of your product. All files specific to your product should be here, or in a directory herein; once this directory is copied to another computer, as long as it has the right tools installed, the product may be built on the second computer exactly the same way as on the first.
 
-This is also the root of your repository: it is where you checked out to, or checked in from. In fact, **Buildvana SDK requires that you use a Git repository**, although this requirement may be relaxed in a future version.
+This is also, usually, the root of your repository: it is where you checked out to, or checked in from. A Git repository is not strictly required, though: any directory containing a Buildvana configuration file can serve as a home directory (see below).
 
 The full path of the home directory, including a trailing path separator, is stored in the `HomeDirectory` MSBuild property. You can use this property to define your own paths as needed. For example:
 
@@ -83,13 +89,15 @@ The full path of the home directory, including a trailing path separator, is sto
 
 ### Location of the home directory
 
-Buildvana SDK tries to determine the location of the home directory by following the rules below, in the listed order. The first directory found by a rule is assumed to be the home directory and its full path becomes the value of `HomeDirectory`.
+Buildvana SDK determines the location of the home directory by walking up the directory hierarchy, starting from the project's directory (included), and stopping at the nearest directory that contains any of these home markers:
 
-- **Git submodule:** starting from the project's directory and going up the directory hierarchy, find a directory that contains a file named `.git`.
+- a Buildvana configuration file (`buildvana.json` or `buildvana.jsonc`), either directly in the directory or in a `.buildvana` subdirectory (a `.buildvana` directory without a configuration file is _not_ a marker);
+- a Git worktree or submodule (a file named `.git`);
+- a regular Git repository (a file named `HEAD` in a `.git` subdirectory).
 
-- **Git repository:** starting from the project's directory and going up the directory hierarchy, find a directory named `.git` that contains a file named `HEAD`.
+The directory containing the marker becomes the home directory, and its full path becomes the value of `HomeDirectory`. Note that a configuration file inside `.buildvana` marks the directory containing `.buildvana`, not `.buildvana` itself. A configuration file does not have to actually configure anything: an empty JSON object (`{}`) is valid content, making the file usable as a pure home-directory marker.
 
-If no rule succeeds in identifying a home directory, the build (or project loading in Visual Studio) stops with error [BVE1002](ErrorsAndWarnings.md#buildvana-sdk-1000-1099).
+If no marker is found, the build (or project loading in Visual Studio) stops with error [BVSDK1003](SdkDiagnostics.md#buildvana-sdk-core-1000-1049).
 
 ## `artifacts\`
 
