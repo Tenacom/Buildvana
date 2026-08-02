@@ -55,6 +55,6 @@ jobs:
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
       uses: codecov/codecov-action@v7
       with:
-        working-directory: TestResults
-        files: '*.cobertura.xml'
+        files: TestResults/*.cobertura.xml
+        token: ${{ secrets.CODECOV_GLOBAL_UPLOAD_TOKEN }}
         verbose: true

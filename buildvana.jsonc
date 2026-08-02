@@ -74,7 +74,10 @@
     // "build": { "args": [], "env": {} },
 
     // Invocation configuration for the `dotnet test` command.
-    // "test": { "args": [], "env": {} },
+    "test": {
+      "args": ["--coverage", "--coverage-output-format", "cobertura"],
+      "env": {}
+    },
 
     // Invocation configuration for the `dotnet pack` command.
     // "pack": { "args": [], "env": {} },

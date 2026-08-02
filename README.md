@@ -8,6 +8,7 @@ Releases:
 CI:
 [![Build, test, and pack](https://github.com/Tenacom/Buildvana/actions/workflows/build-test-pack.yml/badge.svg)](https://github.com/Tenacom/Buildvana/actions/workflows/build-test-pack.yml)
 [![CodeQL](https://github.com/Tenacom/Buildvana/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Tenacom/Buildvana/actions/workflows/codeql-analysis.yml)
+[![Code coverage](https://codecov.io/gh/Tenacom/Buildvana/graph/badge.svg?token=70O2IH9GRT)](https://codecov.io/gh/Tenacom/Buildvana)
 
 Licensing and attributions:
 [![License](https://badgen.net/badge/license/MIT/blue)](https://github.com/Tenacom/Buildvana/blob/main/LICENSE)
