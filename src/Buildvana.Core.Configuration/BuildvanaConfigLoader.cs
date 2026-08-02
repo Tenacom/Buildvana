@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -19,6 +20,7 @@ public static class BuildvanaConfigLoader
 {
     private const string JsonFileName = "buildvana.json";
     private const string JsoncFileName = "buildvana.jsonc";
+    private const string SubdirectoryName = ".buildvana";
 
     private static readonly JsonDocumentOptions DocumentOptions = new()
     {
@@ -32,7 +34,8 @@ public static class BuildvanaConfigLoader
     /// <param name="homeDirectory">The home directory to search for a configuration file.</param>
     /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> if no file is present.</returns>
     /// <exception cref="BuildFailedException">
-    /// <para>Both <c>buildvana.json</c> and <c>buildvana.jsonc</c> are present, or the file cannot be read.</para>
+    /// <para>More than one configuration file is present (among <c>buildvana.json</c>, <c>buildvana.jsonc</c>,
+    /// <c>.buildvana/buildvana.json</c>, and <c>.buildvana/buildvana.jsonc</c>), or the file cannot be read.</para>
     /// <para>The file is present but not valid JSON, or does not conform to the schema; in that case
     /// <see cref="BuildFailedException.Diagnostics"/> lists each problem with its source location.</para>
     /// </exception>
@@ -40,22 +43,25 @@ public static class BuildvanaConfigLoader
     {
         Guard.IsNotNullOrEmpty(homeDirectory);
 
-        var jsonPath = Path.Combine(homeDirectory, JsonFileName);
-        var jsoncPath = Path.Combine(homeDirectory, JsoncFileName);
-        var hasJson = File.Exists(jsonPath);
-        var hasJsonc = File.Exists(jsoncPath);
+        string[] candidatePaths =
+        [
+            Path.Combine(homeDirectory, JsonFileName),
+            Path.Combine(homeDirectory, JsoncFileName),
+            Path.Combine(homeDirectory, SubdirectoryName, JsonFileName),
+            Path.Combine(homeDirectory, SubdirectoryName, JsoncFileName),
+        ];
+        var existingPaths = Array.FindAll(candidatePaths, File.Exists);
 
         BuildFailedException.ThrowIf(
-            hasJson && hasJsonc,
-            $"Both {JsonFileName} and {JsoncFileName} are present in {homeDirectory}. Keep only one.");
+            existingPaths.Length > 1,
+            $"Multiple Buildvana configuration files found: {string.Join(", ", existingPaths)}. Keep only one.");
 
-        var path = hasJson ? jsonPath
-            : hasJsonc ? jsoncPath
-            : null;
-        if (path is null)
+        if (existingPaths.Length == 0)
         {
             return new BuildvanaConfig();
         }
+
+        var path = existingPaths[0];
 
         var json = StripBom(ReadAllBytes(path));
         var node = Parse(json, path);

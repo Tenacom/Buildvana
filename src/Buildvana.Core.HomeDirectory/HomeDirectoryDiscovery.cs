@@ -10,13 +10,15 @@ namespace Buildvana.Core.HomeDirectory;
 /// <summary>
 /// Canonical implementation of the Buildvana "home directory" discovery algorithm:
 /// the nearest directory, starting at a given directory and walking upward, that contains any home marker —
-/// a <c>buildvana.json</c> or <c>buildvana.jsonc</c> configuration file, a <c>.buildvana-home</c> file
-/// (manual override), a <c>.git</c> file (worktree or submodule), or a <c>.git/HEAD</c> file (regular repository).
+/// a <c>buildvana.json</c> or <c>buildvana.jsonc</c> configuration file (either directly in the directory
+/// or in a <c>.buildvana</c> subdirectory), a <c>.buildvana-home</c> file (manual override),
+/// a <c>.git</c> file (worktree or submodule), or a <c>.git/HEAD</c> file (regular repository).
 /// </summary>
 /// <remarks>
 /// <para>The search stops at the first directory (the start directory included) that contains any marker;
-/// a configuration file only counts when it sits at that directory. Whether a configuration file is actually
-/// present there — and which one — is determined separately by <c>BuildvanaConfigLoader</c>.</para>
+/// a configuration file only counts when it sits at that directory or in its <c>.buildvana</c> subdirectory.
+/// A <c>.buildvana</c> directory without a configuration file is not a marker. Whether a configuration file
+/// is actually present there — and which one — is determined separately by <c>BuildvanaConfigLoader</c>.</para>
 /// <para>This algorithm mirrors the discovery performed by the Buildvana SDK in
 /// <c>src/Buildvana.Sdk/Sdk/Sdk.props</c>. Any change made here MUST be applied to that file as well.</para>
 /// </remarks>
@@ -54,7 +56,9 @@ public static class HomeDirectoryDiscovery
     private static bool DirectoryContainsMarker(string directory)
     {
         var hasConfigFile = File.Exists(Path.Combine(directory, "buildvana.json"))
-            || File.Exists(Path.Combine(directory, "buildvana.jsonc"));
+            || File.Exists(Path.Combine(directory, "buildvana.jsonc"))
+            || File.Exists(Path.Combine(directory, ".buildvana", "buildvana.json"))
+            || File.Exists(Path.Combine(directory, ".buildvana", "buildvana.jsonc"));
         var hasManualMarker = File.Exists(Path.Combine(directory, ".buildvana-home"));
 
         // A regular repository has a .git directory containing HEAD; a worktree or submodule has a .git file.
