@@ -14,7 +14,8 @@ namespace Buildvana.Tool.CommandLine;
 /// <c>*Settings</c> type binds its positionals explicitly. The help renderer reflects these attributes to print
 /// the usage line and the ARGUMENTS grid; the argument validator reflects them to bound the number of
 /// positionals a command accepts. Multiple arguments bind in property declaration order, which must list the
-/// required ones first.</para>
+/// required ones first; <see cref="Infrastructure.Execution.CommandRegistry"/> fails fast at discovery time
+/// when a required argument follows an optional one.</para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property)]
 internal sealed class BvArgumentAttribute : Attribute
