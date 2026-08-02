@@ -258,7 +258,7 @@ As you may have guessed, `Directory.Build.targets` is similar:
 </Project>
 ```
 
-The `BuildvanaSdkVersion` property makes sure that `Sdk.props` and `SdkTargets` are imported from the same version of Buildvana SDK; otherwise they might be incompatible with each other. Buildvana SDK will detect such a situation and issue a [`BVE1002`](ErrorsAndWarnings.md#buildvana-sdk-1000-1099) error.
+The `BuildvanaSdkVersion` property makes sure that `Sdk.props` and `SdkTargets` are imported from the same version of Buildvana SDK; otherwise they might be incompatible with each other. Buildvana SDK will detect such a situation and issue a [`BVSDK1002`](SdkDiagnostics.md#buildvana-sdk-core-1000-1049) error.
 
 It is important that no other `Directory.Build.props` and / or `Directory.Build.targets` files exist in the repository; use `Common.props` and `Common.targets`, instead, as explained above.
 
