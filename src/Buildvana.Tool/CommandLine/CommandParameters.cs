@@ -13,10 +13,9 @@ namespace Buildvana.Tool.CommandLine;
 /// <param name="Options">The non-global, non-positional tokens before <c>--</c>, for the command to parse. Empty when none were given.</param>
 /// <param name="Positionals">The positional tokens left over after subcommand resolution, for the command to bind. Empty when none were given.</param>
 /// <param name="Forwarded">The tokens after the first <c>--</c>, to forward verbatim to the invoked external command, when applicable. Empty when none.</param>
-// ReSharper disable NotAccessedPositionalProperty.Global -- false positive on Forwarded: read in the BuildPipeline constructor
 internal sealed record CommandParameters(
     IReadOnlyList<string> Options,
     IReadOnlyList<string> Positionals,
-    IReadOnlyList<string> Forwarded);
 
-// ReSharper restore NotAccessedPositionalProperty.Global
+    // ReSharper disable once NotAccessedPositionalProperty.Global -- false positive: Forwarded is read in the BuildPipeline constructor
+    IReadOnlyList<string> Forwarded);
