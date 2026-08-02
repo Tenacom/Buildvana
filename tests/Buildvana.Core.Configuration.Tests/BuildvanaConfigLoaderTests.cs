@@ -38,6 +38,24 @@ internal sealed class BuildvanaConfigLoaderTests
         }
     }
 
+    // An empty JSON object is a valid configuration; it makes a configuration file usable
+    // as a pure home-directory marker (the replacement for the retired .buildvana-home file).
+    [Test]
+    public async Task Load_EmptyObject_Loads()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.json", "{}");
+            var config = BuildvanaConfigLoader.Load(dir);
+            await Assert.That(config.Release).IsNull();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     [Test]
     public async Task Load_ConfigInSubdirectory_Loads()
     {

@@ -11,8 +11,8 @@ namespace Buildvana.Core.HomeDirectory;
 /// Canonical implementation of the Buildvana "home directory" discovery algorithm:
 /// the nearest directory, starting at a given directory and walking upward, that contains any home marker —
 /// a <c>buildvana.json</c> or <c>buildvana.jsonc</c> configuration file (either directly in the directory
-/// or in a <c>.buildvana</c> subdirectory), a <c>.buildvana-home</c> file (manual override),
-/// a <c>.git</c> file (worktree or submodule), or a <c>.git/HEAD</c> file (regular repository).
+/// or in a <c>.buildvana</c> subdirectory), a <c>.git</c> file (worktree or submodule),
+/// or a <c>.git/HEAD</c> file (regular repository).
 /// </summary>
 /// <remarks>
 /// <para>The search stops at the first directory (the start directory included) that contains any marker;
@@ -59,13 +59,12 @@ public static class HomeDirectoryDiscovery
             || File.Exists(Path.Combine(directory, "buildvana.jsonc"))
             || File.Exists(Path.Combine(directory, ".buildvana", "buildvana.json"))
             || File.Exists(Path.Combine(directory, ".buildvana", "buildvana.jsonc"));
-        var hasManualMarker = File.Exists(Path.Combine(directory, ".buildvana-home"));
 
         // A regular repository has a .git directory containing HEAD; a worktree or submodule has a .git file.
         var hasGitMarker = File.Exists(Path.Combine(directory, ".git", "HEAD"))
             || File.Exists(Path.Combine(directory, ".git"));
 
-        return hasConfigFile || hasManualMarker || hasGitMarker;
+        return hasConfigFile || hasGitMarker;
     }
 
     private static string NormalizeDirectory(string path)

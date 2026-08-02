@@ -22,7 +22,6 @@
       containing any of these home markers, and use it as the home directory:
         * a Buildvana configuration file (buildvana.json or buildvana.jsonc), either directly in the directory
           or in a .buildvana subdirectory (a .buildvana directory without a configuration file is NOT a marker);
-        * a file named .buildvana-home (manual override);
         * a Git worktree or submodule (a file named .git);
         * a regular Git repository (a file named HEAD in a .git subdirectory).
       "Nearest" means the deepest candidate: since every candidate is the project's directory or an ancestor of it,
@@ -48,7 +47,6 @@
     <_HomeDir_ByConfigJsonc>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','buildvana.jsonc'))</_HomeDir_ByConfigJsonc>
     <_HomeDir_BySubdirConfigJson>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana/buildvana.json'))</_HomeDir_BySubdirConfigJson>
     <_HomeDir_BySubdirConfigJsonc>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana/buildvana.jsonc'))</_HomeDir_BySubdirConfigJsonc>
-    <_HomeDir_ByManualMarker>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana-home'))</_HomeDir_ByManualMarker>
     <_HomeDir_ByGitFile>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git'))</_HomeDir_ByGitFile>
     <_HomeDir_ByGitHead>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git/HEAD'))</_HomeDir_ByGitHead>
   </PropertyGroup>
@@ -60,7 +58,6 @@
     <HomeDirectory Condition="$(_HomeDir_ByConfigJsonc.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByConfigJsonc)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_BySubdirConfigJson.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_BySubdirConfigJson)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_BySubdirConfigJsonc.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_BySubdirConfigJsonc)</HomeDirectory>
-    <HomeDirectory Condition="$(_HomeDir_ByManualMarker.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByManualMarker)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_ByGitFile.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByGitFile)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_ByGitHead.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByGitHead)</HomeDirectory>
   </PropertyGroup>

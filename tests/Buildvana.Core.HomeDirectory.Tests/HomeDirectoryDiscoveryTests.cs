@@ -8,7 +8,6 @@ internal sealed class HomeDirectoryDiscoveryTests
     [Test]
     [Arguments("buildvana.json")]
     [Arguments("buildvana.jsonc")]
-    [Arguments(".buildvana-home")]
     [Arguments(".buildvana/buildvana.json")]
     [Arguments(".buildvana/buildvana.jsonc")]
     [Arguments(".git")]
@@ -54,7 +53,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         var root = NewDir();
         try
         {
-            WriteFile(root, ".buildvana-home");
+            WriteFile(root, ".git/HEAD");
             var child = Path.Combine(root, "child");
             _ = Directory.CreateDirectory(Path.Combine(child, ".buildvana"));
             var found = HomeDirectoryDiscovery.TryDiscover(child, out var home);
