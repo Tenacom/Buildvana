@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Buildvana.Core;
+using Buildvana.Tool.CommandLine;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Infrastructure.Execution;
@@ -132,6 +133,45 @@ internal static class CommandRegistry
         return [..root.Children.OrderBy(NodePipelineIndexOf).ThenBy(static n => n.Name, StringComparer.OrdinalIgnoreCase)];
     }
 
+    /// <summary>
+    /// Validates that each command's settings type declares its required arguments before optional ones, as the
+    /// bind-by-declaration-order contract of <see cref="BvArgumentAttribute"/> demands, failing fast on a
+    /// violation. Exposed to tests; production code validates the discovered commands at discovery time.
+    /// </summary>
+    /// <param name="commands">The commands to validate.</param>
+    /// <exception cref="InvalidOperationException">A settings type declares a required argument after an optional one.</exception>
+    internal static void ValidateArgumentOrder(IReadOnlyList<CommandRegistration> commands)
+    {
+        foreach (var command in commands)
+        {
+            if (command.SettingsType is null)
+            {
+                continue;
+            }
+
+            var sawOptional = false;
+            var properties = command.SettingsType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            foreach (var property in properties)
+            {
+                var argument = property.GetCustomAttribute<BvArgumentAttribute>();
+                if (argument is null)
+                {
+                    continue;
+                }
+
+                if (!argument.Required)
+                {
+                    sawOptional = true;
+                }
+                else if (sawOptional)
+                {
+                    throw new InvalidOperationException(
+                        $"{command.SettingsType.Name}.{property.Name} declares required argument <{argument.Name}> after an optional argument; required arguments must be declared first.");
+                }
+            }
+        }
+    }
+
     private static CommandNode? FindTopLevel(string name)
         => TopLevelNodes.FirstOrDefault(n => string.Equals(n.Name, name, StringComparison.OrdinalIgnoreCase));
 
@@ -164,6 +204,7 @@ internal static class CommandRegistry
             }
         }
 
+        ValidateArgumentOrder(discovered);
         return [..discovered.OrderBy(PipelineIndexOf).ThenBy(static c => c.Name, StringComparer.OrdinalIgnoreCase)];
     }
 

@@ -94,4 +94,18 @@ internal sealed class CommandRegistryTests
         var second = new CommandRegistration([["dup"]], typeof(string), false, null);
         await Assert.That(() => CommandRegistry.BuildTree([first, second])).Throws<InvalidOperationException>();
     }
+
+    [Test]
+    public async Task ValidateArgumentOrder_Accepts_RequiredArgumentsFirst()
+    {
+        var command = new CommandRegistration([["fake"]], typeof(object), false, typeof(FakeOrderedArgumentSettings));
+        await Assert.That(() => CommandRegistry.ValidateArgumentOrder([command])).ThrowsNothing();
+    }
+
+    [Test]
+    public async Task ValidateArgumentOrder_Throws_WhenRequiredArgumentFollowsOptional()
+    {
+        var command = new CommandRegistration([["fake"]], typeof(object), false, typeof(FakeMisorderedArgumentSettings));
+        await Assert.That(() => CommandRegistry.ValidateArgumentOrder([command])).Throws<InvalidOperationException>();
+    }
 }
