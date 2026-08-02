@@ -10,6 +10,7 @@ internal sealed class ImplementsCommandAttributeTests
     public async Task Aliases_SplitIntoPaths_FirstIsCanonical()
     {
         var attribute = new ImplementsCommandAttribute("version show | version");
+        await Assert.That(attribute.Aliases).IsEqualTo("version show | version");
         await Assert.That(attribute.AliasPaths.Count).IsEqualTo(2);
         await Assert.That(string.Join(' ', attribute.AliasPaths[0])).IsEqualTo("version show");
         await Assert.That(string.Join(' ', attribute.AliasPaths[1])).IsEqualTo("version");
