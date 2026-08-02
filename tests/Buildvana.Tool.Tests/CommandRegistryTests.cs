@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Tool.Infrastructure.Execution;
 
 internal sealed class CommandRegistryTests
@@ -18,15 +19,79 @@ internal sealed class CommandRegistryTests
     }
 
     [Test]
+    public async Task Find_ResolvesMultiSegmentPaths()
+    {
+        await Assert.That(CommandRegistry.Find("version advance")?.Name).IsEqualTo("version advance");
+    }
+
+    [Test]
+    public async Task Find_ResolvesAliases()
+    {
+        await Assert.That(CommandRegistry.Find("version")?.Name).IsEqualTo("version show");
+    }
+
+    [Test]
     public async Task Release_CarriesItsSettingsType()
     {
         await Assert.That(CommandRegistry.Find("release")?.SettingsType).IsNotNull();
     }
 
     [Test]
-    public async Task PipelineCommands_AppearInExecutionOrderBeforeRelease()
+    public async Task PipelineCommands_AppearInExecutionOrderBeforeOthers()
     {
         var names = string.Join(",", CommandRegistry.Commands.Select(c => c.Name));
-        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release");
+        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,version advance,version show");
+    }
+
+    [Test]
+    public async Task TopLevelNodes_ListEachGroupOnce()
+    {
+        var names = string.Join(",", CommandRegistry.TopLevelNodes.Select(n => n.Name));
+        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,version");
+    }
+
+    [Test]
+    public async Task Resolve_WalksDownToSubcommand()
+    {
+        var (node, remaining) = CommandRegistry.Resolve("version", ["advance", "minor"]);
+        await Assert.That(node.FullName).IsEqualTo("version advance");
+        await Assert.That(remaining.Count).IsEqualTo(1);
+        await Assert.That(remaining[0]).IsEqualTo("minor");
+    }
+
+    [Test]
+    public async Task Resolve_BareGroupAlias_LandsOnAliasedCommand()
+    {
+        var (node, remaining) = CommandRegistry.Resolve("version", []);
+        await Assert.That(node.Command?.Name).IsEqualTo("version show");
+        await Assert.That(remaining.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Resolve_Throws_OnUnknownCommand()
+    {
+        await Assert.That(() => CommandRegistry.Resolve("frobnicate", [])).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task Resolve_Throws_OnUnknownSubcommand()
+    {
+        await Assert.That(() => CommandRegistry.Resolve("version", ["frobnicate"])).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task BuildTree_Throws_OnDuplicateCommandPath()
+    {
+        var first = new CommandRegistration([["dup"]], typeof(object), false, null);
+        var second = new CommandRegistration([["dup"]], typeof(string), false, null);
+        await Assert.That(() => CommandRegistry.BuildTree([first, second])).Throws<InvalidOperationException>();
+    }
+
+    [Test]
+    public async Task BuildTree_Throws_WhenAliasDuplicatesAnotherCommandPath()
+    {
+        var first = new CommandRegistration([["dup", "sub"], ["dup"]], typeof(object), false, null);
+        var second = new CommandRegistration([["dup"]], typeof(string), false, null);
+        await Assert.That(() => CommandRegistry.BuildTree([first, second])).Throws<InvalidOperationException>();
     }
 }

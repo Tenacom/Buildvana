@@ -15,9 +15,10 @@ namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
 /// Renders <c>bv</c>'s help pages using <c>Spectre.Console</c> primitives. Global options come from reflecting
-/// <see cref="GlobalSettings"/>; per-command options from the command's settings type; the command list and
-/// forwarding annotations from <see cref="CommandRegistry"/>. Option metadata is read from
-/// <see cref="BvOptionAttribute"/> and <see cref="DescriptionAttribute"/>.
+/// <see cref="GlobalSettings"/>; per-command options and arguments from the command's settings type; the command
+/// tree, node descriptions, and forwarding annotations from <see cref="CommandRegistry"/>. Option and argument
+/// metadata is read from <see cref="BvOptionAttribute"/>, <see cref="BvArgumentAttribute"/>, and
+/// <see cref="DescriptionAttribute"/>.
 /// </summary>
 internal sealed class BvHelpRenderer(IAnsiConsole console)
 {
@@ -32,27 +33,20 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
     }
 
     /// <summary>
-    /// Writes the help page for a single command.
+    /// Writes the help page for a command tree node: a subcommand listing for a node with children,
+    /// a single command's help page otherwise.
     /// </summary>
-    /// <param name="command">The command to describe.</param>
-    public void WriteCommandHelp(CommandRegistration command)
+    /// <param name="node">The node to describe.</param>
+    public void WriteNodeHelp(CommandNode node)
     {
-        Guard.IsNotNull(command);
-        if (command.ConsumesAllArguments)
+        Guard.IsNotNull(node);
+        if (node.HasChildren)
         {
-            WriteUsage($"{command.Name} [-- <ARGS FORWARDED TO DOTNET>]");
-            WriteGlobalOptions();
-            WriteForwardedArguments();
+            WriteGroupHelp(node);
         }
         else
         {
-            WriteUsage($"{command.Name} [OPTIONS]");
-            if (command.SettingsType is not null)
-            {
-                WriteOptionGrid("OPTIONS", EnumerateOptions(command.SettingsType));
-            }
-
-            WriteGlobalOptions();
+            WriteCommandHelp(node);
         }
     }
 
@@ -79,6 +73,29 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         }
     }
 
+    private static List<(string Template, string? Description)> EnumerateArguments(Type? settingsType)
+    {
+        if (settingsType is null)
+        {
+            return [];
+        }
+
+        var arguments = new List<(string Template, string? Description)>();
+        foreach (var property in settingsType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+        {
+            var argument = property.GetCustomAttribute<BvArgumentAttribute>();
+            if (argument is null)
+            {
+                continue;
+            }
+
+            var description = property.GetCustomAttribute<DescriptionAttribute>();
+            arguments.Add((argument.Template, description?.Description));
+        }
+
+        return arguments;
+    }
+
     private static string FormatNames(BvOptionAttribute option)
     {
         // Pad the short-name slot when an option has none, so long names align across rows.
@@ -88,8 +105,6 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         return shortPart + longPart + valuePart;
     }
 
-    private static string GetDescription(Type type) => type.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
-
     private static string StripTrailingPeriod(string? text)
     {
         if (string.IsNullOrEmpty(text))
@@ -98,6 +113,59 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         }
 
         return text.EndsWith('.') ? text[..^1] : text;
+    }
+
+    private void WriteGroupHelp(CommandNode node)
+    {
+        // When the node is also a command (one aliased onto the group's path), the subcommand is optional:
+        // invoking the group bare runs that command.
+        WriteUsage(node.Command is null ? $"{node.FullName} <SUBCOMMAND>" : $"{node.FullName} [SUBCOMMAND]");
+        WriteSubcommands(node);
+        if (node.Command?.SettingsType is { } settingsType)
+        {
+            var options = EnumerateOptions(settingsType).ToList();
+            if (options.Count > 0)
+            {
+                WriteOptionGrid("OPTIONS", options);
+            }
+        }
+
+        WriteGlobalOptions();
+    }
+
+    private void WriteCommandHelp(CommandNode node)
+    {
+        var command = node.Command;
+        Guard.IsNotNull(command);
+        if (command.ConsumesAllArguments)
+        {
+            WriteUsage($"{node.FullName} [-- <ARGS FORWARDED TO DOTNET>]");
+            WriteGlobalOptions();
+            WriteForwardedArguments();
+        }
+        else
+        {
+            var arguments = EnumerateArguments(command.SettingsType);
+            var usageParts = new List<string> { node.FullName };
+            usageParts.AddRange(arguments.Select(static a => a.Template));
+            usageParts.Add("[OPTIONS]");
+            WriteUsage(string.Join(' ', usageParts));
+            if (arguments.Count > 0)
+            {
+                WriteOptionGrid("ARGUMENTS", arguments);
+            }
+
+            if (command.SettingsType is not null)
+            {
+                var options = EnumerateOptions(command.SettingsType).ToList();
+                if (options.Count > 0)
+                {
+                    WriteOptionGrid("OPTIONS", options);
+                }
+            }
+
+            WriteGlobalOptions();
+        }
     }
 
     private void WriteUsage(string tail)
@@ -116,13 +184,31 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
     {
         console.Markup("\nCOMMANDS:\n");
         var grid = NewGrid();
-        foreach (var command in CommandRegistry.Commands)
+        foreach (var node in CommandRegistry.TopLevelNodes)
         {
-            var description = Markup.Escape(StripTrailingPeriod(GetDescription(command.CommandType)));
-            var rendered = command.ConsumesAllArguments
+            var description = Markup.Escape(StripTrailingPeriod(node.Description));
+            var rendered = node.Command is { ConsumesAllArguments: true }
                 ? $"{description}   [grey][[forwards extra args to dotnet]][/]"
                 : description;
-            grid.AddRow(new Markup(Markup.Escape(command.Name)), new Markup(rendered));
+            grid.AddRow(new Markup(Markup.Escape(node.Name)), new Markup(rendered));
+        }
+
+        console.Write(grid);
+    }
+
+    private void WriteSubcommands(CommandNode node)
+    {
+        console.Markup("\nSUBCOMMANDS:\n");
+        var grid = NewGrid();
+        foreach (var child in node.Children)
+        {
+            var description = Markup.Escape(StripTrailingPeriod(child.Description));
+            if (node.Command is not null && ReferenceEquals(child.Command, node.Command))
+            {
+                description += "   [grey][[default]][/]";
+            }
+
+            grid.AddRow(new Markup(Markup.Escape(child.Name)), new Markup(description));
         }
 
         console.Write(grid);
