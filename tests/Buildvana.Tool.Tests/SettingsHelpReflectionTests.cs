@@ -21,6 +21,13 @@ internal sealed class SettingsHelpReflectionTests
         await Assert.That(names).IsEqualTo("--configuration,--bump,--check-public-api,--dogfood");
     }
 
+    [Test]
+    public async Task VersionAdvanceSettings_ExposesOptionsInHelpOrder()
+    {
+        var names = OptionLongNames(typeof(VersionAdvanceSettings));
+        await Assert.That(names).IsEqualTo("--check-public-api,--force");
+    }
+
     private static string OptionLongNames(Type type)
     {
         var longNames = type

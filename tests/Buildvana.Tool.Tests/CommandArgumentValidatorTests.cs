@@ -12,7 +12,7 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("build")!;
         var parsed = CliArgSplitter.Split(["build", "--", "-p:Foo=Bar"]);
-        CommandArgumentValidator.Validate(command, parsed);
+        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(parsed.Forwarded.Count).IsEqualTo(1);
     }
 
@@ -21,7 +21,7 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("build")!;
         var parsed = CliArgSplitter.Split(["build", "-p:Foo"]);
-        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed)).Throws<BuildFailedException>();
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
 
     [Test]
@@ -29,7 +29,7 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("build")!;
         var parsed = CliArgSplitter.Split(["build", "extra"]);
-        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed)).Throws<BuildFailedException>();
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
 
     [Test]
@@ -37,7 +37,7 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "--", "x"]);
-        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed)).Throws<BuildFailedException>();
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
 
     [Test]
@@ -45,7 +45,49 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "-c", "Debug"]);
-        CommandArgumentValidator.Validate(command, parsed);
+        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(parsed.OptionTokens.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task NonForwardingCommand_RejectsPositionals_WhenNoArgumentsDeclared()
+    {
+        var command = CommandRegistry.Find("release")!;
+        var parsed = CliArgSplitter.Split(["release", "extra"]);
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task ArgumentCommand_AcceptsDeclaredPositional()
+    {
+        var command = CommandRegistry.Find("version advance")!;
+        var parsed = CliArgSplitter.Split(["version", "advance", "minor"]);
+        CommandArgumentValidator.Validate(command, parsed, ["minor"]);
+        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ArgumentCommand_AcceptsOmittedOptionalArgument()
+    {
+        var command = CommandRegistry.Find("version advance")!;
+        var parsed = CliArgSplitter.Split(["version", "advance"]);
+        CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ArgumentCommand_RejectsExcessPositionals()
+    {
+        var command = CommandRegistry.Find("version advance")!;
+        var parsed = CliArgSplitter.Split(["version", "advance", "minor", "extra"]);
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, ["minor", "extra"])).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task ArgumentCommand_RejectsMissingRequiredArgument()
+    {
+        var command = new CommandRegistration([["fake"]], typeof(FakeArgumentSettings), false, typeof(FakeArgumentSettings));
+        var parsed = CliArgSplitter.Split(["fake"]);
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, [])).Throws<BuildFailedException>();
     }
 }

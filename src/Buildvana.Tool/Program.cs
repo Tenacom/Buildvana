@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -70,19 +71,27 @@ internal static class Program
                 return 0;
             }
 
-            var command = CommandRegistry.Find(parsed.Subcommand)
-                ?? throw new BuildFailedException($"Unknown command '{parsed.Subcommand}'. Run 'bv --help' for the list of commands.");
+            var (node, positionals) = CommandRegistry.Resolve(parsed.Subcommand, parsed.Positionals);
 
             if (parsed.HelpRequested)
             {
-                help.WriteCommandHelp(command);
+                help.WriteNodeHelp(node);
                 return 0;
             }
 
-            CommandArgumentValidator.Validate(command, parsed);
+            // A pure command group invoked bare has nothing to execute: print its help, like bare `bv` prints the root help.
+            var command = node.Command;
+            if (command is null)
+            {
+                help.WriteNodeHelp(node);
+                return 0;
+            }
+
+            CommandArgumentValidator.Validate(command, parsed, positionals);
 
             // Parse --verbosity eagerly so an invalid value surfaces in the outer catch.
-            var verbosity = globals.Verbosity is null ? Verbosity.Normal : ParseVerbosity(globals.Verbosity);
+            // When absent, the command's own default applies (query commands default to Minimal).
+            var verbosity = globals.Verbosity is null ? command.DefaultVerbosity : ParseVerbosity(globals.Verbosity);
 
             // --color / --no-color win over auto-detection; neither (or both) leaves the reporter to auto-detect.
             bool? colorOverride = (globals.Color, globals.NoColor) switch
@@ -93,7 +102,7 @@ internal static class Program
             };
             reporter = new ConsoleReporter(verbosity, colorOverride);
 
-            var services = BuildServiceProvider(reporter, globals, parsed);
+            var services = BuildServiceProvider(console, reporter, globals, parsed, positionals);
             await using (services.ConfigureAwait(false))
             {
                 var cts = new CancellationTokenSource();
@@ -165,19 +174,26 @@ internal static class Program
     }
 
     private static ServiceProvider BuildServiceProvider(
+        IAnsiConsole console,
         IReporter reporter,
         GlobalSettings globals,
-        ParsedCommandLine parsed)
+        ParsedCommandLine parsed,
+        IReadOnlyList<string> positionals)
     {
         var services = new ServiceCollection()
             .AddLazySupport()
+            .AddSingleton(console)
             .AddSingleton(reporter)
             .AddSingleton(globals)
-            .AddSingleton(new CommandParameters(parsed.OptionTokens, parsed.Forwarded))
+            .AddSingleton(new CommandParameters(parsed.OptionTokens, positionals, parsed.Forwarded))
             .AddSingleton(static sp => ReleaseSettings.Parse(
                 sp.GetRequiredService<CommandParameters>().Options,
                 sp.GetRequiredService<BuildvanaConfig>(),
                 sp.GetRequiredService<DotNetSettings>()))
+            .AddSingleton(static sp => VersionAdvanceSettings.Parse(
+                sp.GetRequiredService<CommandParameters>().Positionals,
+                sp.GetRequiredService<CommandParameters>().Options,
+                sp.GetRequiredService<BuildvanaConfig>()))
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
 
             // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.

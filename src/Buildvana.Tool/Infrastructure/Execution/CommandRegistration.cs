@@ -2,16 +2,35 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using Buildvana.Core.ConsoleOutput;
 
 namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
-/// A discovered <c>bv</c> command: the name it is registered under, the class that implements it, whether
-/// it forwards all of its arguments verbatim, and its settings type (if any). Produced by
+/// A discovered <c>bv</c> command: the paths it is registered under, the class that implements it, whether
+/// it forwards all of its arguments verbatim, its settings type (if any), and its default verbosity. Produced by
 /// <see cref="CommandRegistry"/> from <see cref="ImplementsCommandAttribute"/>.
 /// </summary>
-/// <param name="Name">The command name as typed on the command line.</param>
+/// <param name="AliasPaths">The paths the command is invoked under, each as a list of segments. The first path is canonical.</param>
 /// <param name="CommandType">The class implementing the command.</param>
 /// <param name="ConsumesAllArguments">Whether the command forwards all of its arguments verbatim.</param>
 /// <param name="SettingsType">The command's <c>*Settings</c> type, or <see langword="null"/> if it has none.</param>
-internal sealed record CommandRegistration(string Name, Type CommandType, bool ConsumesAllArguments, Type? SettingsType);
+/// <param name="DefaultVerbosity">The verbosity in effect when <c>--verbosity</c> is not given.</param>
+internal sealed record CommandRegistration(
+    IReadOnlyList<IReadOnlyList<string>> AliasPaths,
+    Type CommandType,
+    bool ConsumesAllArguments,
+    Type? SettingsType,
+    Verbosity DefaultVerbosity = Verbosity.Normal)
+{
+    /// <summary>
+    /// Gets the canonical path: the first alias, whose segments name the command in help and error messages.
+    /// </summary>
+    public IReadOnlyList<string> CanonicalPath => AliasPaths[0];
+
+    /// <summary>
+    /// Gets the canonical command name, space-joined as typed on the command line (e.g. <c>"version advance"</c>).
+    /// </summary>
+    public string Name => string.Join(' ', CanonicalPath);
+}
