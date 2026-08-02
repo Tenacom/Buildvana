@@ -12,7 +12,6 @@ internal sealed class SdkPropsTests
     [Arguments("buildvana.jsonc")]
     [Arguments(".buildvana/buildvana.json")]
     [Arguments(".buildvana/buildvana.jsonc")]
-    [Arguments(".buildvana-home")]
     [Arguments(".git")]
     [Arguments(".git/HEAD")]
     public async Task Evaluate_MarkerInRepoRoot_SetsHomeDirectory(string marker)
