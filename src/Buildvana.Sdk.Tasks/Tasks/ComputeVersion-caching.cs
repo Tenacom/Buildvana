@@ -80,6 +80,8 @@ partial class ComputeVersion
                 File.ReadAllText(versionPath),
                 ReadOptionalFile(Path.Combine(homeDirectory, "buildvana.json")),
                 ReadOptionalFile(Path.Combine(homeDirectory, "buildvana.jsonc")),
+                ReadOptionalFile(Path.Combine(homeDirectory, ".buildvana", "buildvana.json")),
+                ReadOptionalFile(Path.Combine(homeDirectory, ".buildvana", "buildvana.jsonc")),
             ];
             return string.Join('\0', parts);
         }
