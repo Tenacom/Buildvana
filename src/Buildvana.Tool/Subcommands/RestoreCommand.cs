@@ -9,7 +9,7 @@ using Buildvana.Tool.Infrastructure.Execution;
 
 namespace Buildvana.Tool.Subcommands;
 
-[ImplementsCommand("restore", consumesAllArguments: true)]
+[ImplementsCommand("restore", consumesAllArguments: true, usesSdk: true)]
 [Description("Clean and restore dependencies.")]
 internal sealed class RestoreCommand(BuildPipeline pipeline) : IBvCommand
 {

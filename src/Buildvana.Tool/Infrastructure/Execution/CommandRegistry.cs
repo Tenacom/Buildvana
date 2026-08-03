@@ -190,7 +190,8 @@ internal static class CommandRegistry
                     type,
                     attribute.ConsumesAllArguments,
                     attribute.SettingsType,
-                    attribute.DefaultVerbosity));
+                    attribute.DefaultVerbosity,
+                    attribute.UsesSdk));
             }
         }
 

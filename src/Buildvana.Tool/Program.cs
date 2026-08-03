@@ -26,6 +26,7 @@ using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
+using NuGet.Versioning;
 using Spectre.Console;
 
 namespace Buildvana.Tool;
@@ -107,6 +108,11 @@ internal static class Program
             var services = BuildServiceProvider(console, reporter, globals, parsed, positionals);
             await using (services.ConfigureAwait(false))
             {
+                if (command.UsesSdk && !globals.SkipSdkCheck)
+                {
+                    services.GetRequiredService<SelfVersionService>().EnsureSdkVersionMatch();
+                }
+
                 var cts = new CancellationTokenSource();
 
                 // Serializes the Ctrl-C handler with cts disposal in the finally block below. Unsubscribing the
@@ -217,7 +223,13 @@ internal static class Program
             .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
             .AddSingleton<HookRunner>()
             .AddSingleton<BuildPipeline>()
-            .AddSingleton<SelfReferenceUpdater>();
+            .AddSingleton<SelfReferenceUpdater>()
+            .AddSingleton(static sp => new SelfVersionService(
+                sp.GetRequiredService<IReporter>(),
+                sp.GetRequiredService<IHomeDirectoryProvider>(),
+                sp.GetRequiredService<IJsonHelper>(),
+                sp.GetRequiredService<IProcessRunner>(),
+                NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion)));
 
         foreach (var registration in CommandRegistry.Commands)
         {

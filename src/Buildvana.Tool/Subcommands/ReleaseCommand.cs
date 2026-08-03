@@ -28,7 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Buildvana.Tool.Subcommands;
 
-[ImplementsCommand("release", settingsType: typeof(ReleaseSettings))]
+[ImplementsCommand("release", settingsType: typeof(ReleaseSettings), usesSdk: true)]
 [Description("Publish a new public release (CI only).")]
 internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings settings, BuildPipeline pipeline) : IBvCommand
 {

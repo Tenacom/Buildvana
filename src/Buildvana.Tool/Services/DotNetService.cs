@@ -22,13 +22,6 @@ namespace Buildvana.Tool.Services;
 /// </summary>
 internal sealed partial class DotNetService : IFileBasedAppRunner
 {
-    // The muxer sets DOTNET_HOST_PATH to the full path of the dotnet executable that launched us,
-    // so we re-invoke that exact host instead of relying on `dotnet` being on PATH.
-    private static readonly string DotNetMuxer
-        = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") is { Length: > 0 } p
-            ? p
-            : "dotnet";
-
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
     private readonly ServerAdapter _server;
@@ -288,7 +281,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         // No configured invocation tiers here: their arguments target solution-level dotnet commands,
         // and `dotnet run` would forward them to the app instead of consuming them.
         return _processRunner.RunAsync(
-            DotNetMuxer,
+            DotNetMuxer.Path,
             ["run", path],
             environment: environment,
             workingDirectory: workingDirectory,
@@ -380,7 +373,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     {
         var (finalArgs, environment) = MergeInvocation(args, tiers, commandLineArgs, trailingArgs);
         return _processRunner.RunAsync(
-            DotNetMuxer,
+            DotNetMuxer.Path,
             appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
             environment: environment,
             onStdout: outputStreaming.Enabled ? (x) => _reporter.ChildOutput(x, outputStreaming.Verbosity) : null,

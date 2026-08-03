@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Buildvana.Core.HomeDirectory\Buildvana.Core.HomeDirectory.csproj" />
   </ItemGroup>
 

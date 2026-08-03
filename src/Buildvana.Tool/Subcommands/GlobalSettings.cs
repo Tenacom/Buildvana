@@ -16,6 +16,7 @@ namespace Buildvana.Tool.Subcommands;
 /// <param name="Color">Whether <c>--color</c> was passed.</param>
 /// <param name="NoColor">Whether <c>--no-color</c> was passed.</param>
 /// <param name="Nologo">Whether <c>--nologo</c> was passed.</param>
+/// <param name="SkipSdkCheck">Whether <c>--skip-sdk-check</c> was passed.</param>
 /// <param name="Version">Whether <c>--version</c> was passed.</param>
 /// <remarks>The constructor parameter order is also the order in which these options appear in <c>bv</c>'s help.</remarks>
 internal sealed record GlobalSettings(
@@ -31,6 +32,9 @@ internal sealed record GlobalSettings(
     [property: BvOption("--nologo")]
     [property: Description("Suppress the startup logo line.")]
     bool Nologo,
+    [property: BvOption("--skip-sdk-check")]
+    [property: Description("Skip the Buildvana SDK version check performed by commands that use the SDK.")]
+    bool SkipSdkCheck,
     [property: BvOption("--version")]
     [property: Description("Print the bv version and exit.")]
     bool Version);

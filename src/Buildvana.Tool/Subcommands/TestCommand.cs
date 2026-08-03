@@ -9,7 +9,7 @@ using Buildvana.Tool.Infrastructure.Execution;
 
 namespace Buildvana.Tool.Subcommands;
 
-[ImplementsCommand("test", consumesAllArguments: true)]
+[ImplementsCommand("test", consumesAllArguments: true, usesSdk: true)]
 [Description("Clean, restore, build all projects, and run tests.")]
 internal sealed class TestCommand(BuildPipeline pipeline) : IBvCommand
 {
