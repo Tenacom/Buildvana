@@ -20,7 +20,7 @@ namespace Buildvana.Tool.Services;
 /// </summary>
 /// <remarks>
 /// <para>The caller supplies the map of produced packages, typically obtained from
-/// <see cref="Utilities.PackageArtifactsHelper.DiscoverProducedPackages"/>.</para>
+/// <see cref="Utilities.ArtifactsHelper.DiscoverProducedPackages"/>.</para>
 /// <para>Updates are applied in-place to the following well-known files, when present:</para>
 /// <list type="bullet">
 ///   <item><description><c>global.json</c> — entries under <c>msbuild-sdks</c>.</description></item>
