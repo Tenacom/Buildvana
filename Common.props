@@ -34,7 +34,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
-  <!-- Solution-wide build options -->
+  <!-- Solution-wide default build options -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <XmlDocs>false</XmlDocs> <!--Do not generate XML documentation -->
