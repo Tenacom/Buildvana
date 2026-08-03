@@ -8,7 +8,7 @@ namespace Buildvana.Tool.Services;
 
 /// <summary>
 /// The resolved extra arguments and environment variables for one kind of <c>dotnet</c> invocation,
-/// taken from a <see cref="Buildvana.Core.Configuration.DotNetInvocationConfig"/>.
+/// taken from a <see cref="Buildvana.Runtime.DotNetInvocationConfig"/>.
 /// </summary>
 /// <param name="Args">Extra arguments appended to the invocation.</param>
 /// <param name="Env">Environment variables applied on top of the inherited environment, keyed by variable name.</param>
