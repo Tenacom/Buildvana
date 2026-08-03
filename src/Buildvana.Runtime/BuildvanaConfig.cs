@@ -3,10 +3,9 @@
 
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Buildvana.Core.JsonSchema;
 using JetBrains.Annotations;
 
-namespace Buildvana.Core.Configuration;
+namespace Buildvana.Runtime;
 
 /// <summary>
 /// Represents the contents of a <c>buildvana.json</c> / <c>buildvana.jsonc</c> configuration file.
@@ -14,9 +13,10 @@ namespace Buildvana.Core.Configuration;
 /// <remarks>
 /// <para>Every member is optional; an absent configuration file is equivalent to an instance with all members unset.</para>
 /// </remarks>
-[JsonSchemaTitle("Buildvana configuration")]
+// This packaged model must depend on BCL types only, so it cannot carry [JsonSchemaTitle] (which lives in the
+// unpackaged Buildvana.Core.JsonSchema); the schema title is supplied programmatically at generation time instead.
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public sealed record BuildvanaConfig
+public sealed partial record BuildvanaConfig
 {
     /// <summary>Gets the URI of the JSON schema describing this file.</summary>
     /// <remarks>

@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Buildvana.Core.Configuration;
+using Buildvana.Runtime;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Versioning;

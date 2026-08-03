@@ -30,6 +30,7 @@
     <ProjectReference Include="..\Buildvana.Core.Json\Buildvana.Core.Json.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Process\Buildvana.Core.Process.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Versioning\Buildvana.Core.Versioning.csproj" />
+    <ProjectReference Include="..\Buildvana.Runtime\Buildvana.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.ObjectModel;
-using Buildvana.Core.Configuration;
+using Buildvana.Runtime;
 
 namespace Buildvana.Tool.Services;
 

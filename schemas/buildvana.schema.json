@@ -186,10 +186,11 @@
       "type": "object",
       "properties": {
         "feeds": {
-          "description": "Push feeds, keyed by channel name (prerelease, release).",
+          "description": "Push feeds, one per channel.",
           "type": "object",
           "properties": {
             "prerelease": {
+              "description": "Feed that prerelease versions are pushed to. When omitted, prerelease versions are pushed to the release feed.",
               "type": "object",
               "properties": {
                 "source": {
@@ -204,6 +205,7 @@
               "additionalProperties": false
             },
             "release": {
+              "description": "Feed that stable versions are pushed to.",
               "type": "object",
               "properties": {
                 "source": {

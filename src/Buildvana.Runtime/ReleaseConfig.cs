@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using JetBrains.Annotations;
 
-namespace Buildvana.Core.Configuration;
+namespace Buildvana.Runtime;
 
 /// <summary>
 /// Configures the <c>bv release</c> workflow.

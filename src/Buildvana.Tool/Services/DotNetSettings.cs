@@ -1,9 +1,8 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
 using Buildvana.Core;
-using Buildvana.Core.Configuration;
+using Buildvana.Runtime;
 using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
@@ -57,7 +56,7 @@ internal sealed class DotNetSettings
         var feeds = _nuget?.Feeds;
         string channel;
         NuGetFeedConfig? feed;
-        if (isPrerelease && GetFeed(feeds, "prerelease") is { } prerelease)
+        if (isPrerelease && feeds?.Prerelease is { } prerelease)
         {
             channel = "prerelease";
             feed = prerelease;
@@ -65,7 +64,7 @@ internal sealed class DotNetSettings
         else
         {
             channel = "release";
-            feed = GetFeed(feeds, "release");
+            feed = feeds?.Release;
         }
 
         if (feed is null)
@@ -82,7 +81,4 @@ internal sealed class DotNetSettings
             : throw new BuildFailedException($"NuGet feed 'nuget.feeds.{channel}' has no apiKeyEnv. Set its 'apiKeyEnv' in the configuration file.");
         return new NuGetPushTarget(source, EnvVarHelper.Require(apiKeyEnv));
     }
-
-    private static NuGetFeedConfig? GetFeed(IReadOnlyDictionary<string, NuGetFeedConfig>? feeds, string channel)
-        => feeds is not null && feeds.TryGetValue(channel, out var feed) ? feed : null;
 }

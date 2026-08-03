@@ -2,7 +2,8 @@
 // See the LICENSE file in the project root for full license information.
 
 /*
- * Generates or verifies schemas/buildvana.schema.json from the typed Buildvana.Core.Configuration model.
+ * Generates or verifies schemas/buildvana.schema.json from the typed configuration model
+ * (shipped in Buildvana.Runtime; the schema generation logic lives in Buildvana.Core.Configuration).
  *
  * Run from the repository root:
  *   dotnet run tools/generate-config-schema.cs                 # check mode (default): exits non-zero if the committed schema is stale
