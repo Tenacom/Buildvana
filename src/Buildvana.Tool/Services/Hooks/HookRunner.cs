@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
-using Buildvana.Tool.Infrastructure;
+using Buildvana.Runtime;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
@@ -20,11 +20,6 @@ namespace Buildvana.Tool.Services.Hooks;
 /// </summary>
 internal sealed class HookRunner
 {
-    private static readonly JsonSerializerOptions ContextSerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true,
-    };
-
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
     private readonly IFileBasedAppRunner _appRunner;
@@ -47,9 +42,10 @@ internal sealed class HookRunner
     /// </summary>
     /// <param name="command">The name of the command the hook belongs to.</param>
     /// <param name="moment">The name of the moment the hook fires at.</param>
-    /// <param name="context">The context to serialize into the well-known context file
-    /// (<see cref="CommonPaths.HookContext"/>) before running the hook. The file is left in place
-    /// after the run, so the hook can be re-run by hand against the same context.</param>
+    /// <param name="context">The context to serialize into the hook's context file
+    /// (<see cref="WellKnownPaths.GetHookContextFile"/>) before running the hook. Its type must be
+    /// registered in <see cref="BuildvanaJsonContext"/>. The file is left in place after the run,
+    /// so the hook can be re-run by hand against the same context.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the hook process.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is
     /// <see langword="true"/> if the hook ran and completed successfully, or <see langword="false"/>
@@ -69,9 +65,9 @@ internal sealed class HookRunner
             return false;
         }
 
-        var json = JsonSerializer.Serialize(context, ContextSerializerOptions);
+        var json = JsonSerializer.Serialize(context, context.GetType(), BuildvanaJsonContext.Default);
         _reporter.Detail($"Hook {hookName}: context: {json}");
-        var contextPath = Path.GetFullPath(CommonPaths.HookContext, _home.HomeDirectory);
+        var contextPath = Path.GetFullPath(WellKnownPaths.GetHookContextFile(command, moment), _home.HomeDirectory);
         _ = Directory.CreateDirectory(Path.GetDirectoryName(contextPath)!);
         await File.WriteAllTextAsync(contextPath, json, cancellationToken).ConfigureAwait(false);
         _reporter.Info($"Hook {hookName}: running {relativePath}...");

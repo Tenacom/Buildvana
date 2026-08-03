@@ -242,13 +242,20 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // and join the post-release commit alongside the self-reference rewrites.
             var hookContext = new PostReleaseHookContext
             {
-                HomeDirectory = home.HomeDirectory,
-                ReleaseVersion = version.CurrentSimpleStr,
-                ReleaseSemVer = version.CurrentStr,
-                PreviousVersion = version.Latest?.ToString(),
-                IsPrerelease = version.IsPrerelease,
-                IsPublicRelease = version.IsPublicRelease,
-                ArtifactsDirectory = Path.GetFullPath(artifactsPath),
+                Paths = new()
+                {
+                    HomeDirectory = home.HomeDirectory,
+                    ArtifactsDirectory = Path.GetFullPath(artifactsPath),
+                    ScratchDirectory = Path.GetFullPath(CommonPaths.Scratch, home.HomeDirectory),
+                },
+                Release = new()
+                {
+                    Version = version.CurrentSimpleStr,
+                    SemVer = version.CurrentStr,
+                    PreviousVersion = version.Latest?.ToString(),
+                    IsPrerelease = version.IsPrerelease,
+                    IsPublicRelease = version.IsPublicRelease,
+                },
                 ProducedPackages = producedPackages,
                 Dogfooded = dogfooded,
             };
