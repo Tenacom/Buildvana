@@ -10,9 +10,9 @@ using CommunityToolkit.Diagnostics;
 namespace Buildvana.Tool.Utilities;
 
 /// <summary>
-/// Provides helpers to inspect the NuGet packages produced by a build.
+/// Provides helpers to inspect the artifacts produced by a build.
 /// </summary>
-internal static class PackageArtifactsHelper
+internal static class ArtifactsHelper
 {
     /// <summary>
     /// Discovers the packages produced by the current build by inspecting the <c>*.nupkg</c> files in the
@@ -25,7 +25,7 @@ internal static class PackageArtifactsHelper
     /// <returns>A dictionary mapping the ID of each produced package to <paramref name="version"/>.</returns>
     public static Dictionary<string, string> DiscoverProducedPackages(string artifactsPath, string version, IReporter? reporter = null)
     {
-        Guard.IsNotNull(artifactsPath);
+        Guard.IsNotNullOrEmpty(artifactsPath);
         Guard.IsNotNullOrEmpty(version);
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (!FileSystemHelper.DirectoryExists(artifactsPath))

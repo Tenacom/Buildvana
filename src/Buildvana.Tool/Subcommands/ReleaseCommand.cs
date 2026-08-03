@@ -213,7 +213,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
             // state (which still references the previously-published versions); the post-release commit is
             // marked [skip ci] because the new packages aren't in the feed yet at push time.
-            var producedPackages = PackageArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
+            var producedPackages = ArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
             var dogfooded = settings.ResolveDogfood();
             IReadOnlyList<string> selfReferenceUpdates = [];
             if (dogfooded)
@@ -255,7 +255,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             var dirtyBefore = git.GetDirtyFiles();
             var hookRan = await hookRunner.RunHookAsync("release", "post-release", hookContext, cancellationToken).ConfigureAwait(false);
             string[] hookUpdates = hookRan
-                ? [.. git.GetDirtyFiles().Except(dirtyBefore, StringComparer.OrdinalIgnoreCase)]
+                ? [.. git.GetDirtyFiles().Except(dirtyBefore, StringComparer.Ordinal)]
                 : [];
             if (hookRan)
             {
@@ -274,7 +274,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
 
             // Assemble the post-release commit from the self-reference rewrites and the hook's changes.
-            string[] postReleaseUpdates = [.. selfReferenceUpdates.Union(hookUpdates, StringComparer.OrdinalIgnoreCase)];
+            string[] postReleaseUpdates = [.. selfReferenceUpdates.Union(hookUpdates, StringComparer.Ordinal)];
             if (postReleaseUpdates.Length > 0)
             {
                 release.AddPostReleaseCommit($"Post-release updates for {version.CurrentStr} [skip ci]", postReleaseUpdates);
