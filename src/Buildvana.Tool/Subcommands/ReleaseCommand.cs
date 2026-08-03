@@ -274,14 +274,10 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
 
             // Assemble the post-release commit from the self-reference rewrites and the hook's changes.
-            // The commit message stays the historical one when only self-references moved.
             string[] postReleaseUpdates = [.. selfReferenceUpdates.Union(hookUpdates, StringComparer.OrdinalIgnoreCase)];
             if (postReleaseUpdates.Length > 0)
             {
-                var commitMessage = hookUpdates.Length > 0
-                    ? $"Post-release updates for {version.CurrentStr} [skip ci]"
-                    : $"Update self-references to {version.CurrentStr} [skip ci]";
-                release.AddPostReleaseCommit(commitMessage, postReleaseUpdates);
+                release.AddPostReleaseCommit($"Post-release updates for {version.CurrentStr} [skip ci]", postReleaseUpdates);
             }
 
             release.PushUpdates();
