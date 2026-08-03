@@ -10,6 +10,7 @@ using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
@@ -148,19 +149,24 @@ internal sealed class GitService : IDisposable
 
     /// <summary>
     /// Gets the files that are new, modified, or otherwise different between the working directory
-    /// (including the index) and the current <c>HEAD</c> commit. Ignored files are not considered.
+    /// (including the index) and the current <c>HEAD</c> commit. Ignored files are not considered;
+    /// neither are files under bv's scratch directory (<see cref="CommonPaths.Scratch"/>),
+    /// whether or not the repository ignores it.
     /// </summary>
     /// <returns>The absolute paths of the differing files.</returns>
     public IReadOnlyList<string> GetDirtyFiles()
     {
         var homeDirectory = _home.HomeDirectory;
+        var scratchPrefix = Path.GetFullPath(CommonPaths.Scratch, homeDirectory) + Path.DirectorySeparatorChar;
         var options = new StatusOptions
         {
             IncludeIgnored = false,
             IncludeUntracked = true,
             RecurseUntrackedDirs = true,
         };
-        return [.. _repository.RetrieveStatus(options).Select(x => Path.GetFullPath(x.FilePath, homeDirectory))];
+        return [.. _repository.RetrieveStatus(options)
+            .Select(x => Path.GetFullPath(x.FilePath, homeDirectory))
+            .Where(x => !x.StartsWith(scratchPrefix, StringComparison.Ordinal))];
     }
 
     /// <summary>

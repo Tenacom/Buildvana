@@ -53,23 +53,25 @@ text = Regex.Replace(text, "(MyOrg/MyRepo/)[^/]+(/docs/)", $"${{1}}{context.Rele
 File.WriteAllText("some-file.md", text);
 ```
 
-Because the injection is path-based rather than gated on anything `bv` passes, a hook stays buildable and runnable by hand — set `BV_HOOK_CONTEXT` to a hand-written context file and `dotnet run` the hook from the home directory to try it outside a release.
+Because the injection is path-based rather than gated on anything `bv` passes, a hook stays buildable and runnable by hand: after `bv` has run the hook once, `dotnet run` it from the home directory to replay it against the context of the last run (or against a hand-written `.buildvana-temp/hook-context.json`).
 
 ## The hook context
 
-`bv` serializes the context of the run to a temporary JSON file and publishes its absolute path in the `BV_HOOK_CONTEXT` environment variable. The file is deleted when the hook completes; its content is logged at `Detail` verbosity. `BvHookContext.Load()` reads and parses it; the underlying JSON properties (camelCase) are:
+`bv` serializes the context of the run to `.buildvana-temp/hook-context.json` in the home directory, (re)writing the file before each hook run and leaving it in place afterwards — this is what makes hooks replayable by hand. Its content is logged at `Detail` verbosity. `BvHookContext.Load()` reads and parses it; the underlying JSON properties (camelCase) are:
 
-| Property              | Type              | Content                                                                                                                     |
-| --------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `homeDirectory`       | string            | Absolute path of the home directory (also the hook's working directory).                                                     |
-| `releaseVersion`      | string            | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                  |
-| `releaseSemVer`       | string            | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names. |
-| `previousVersion`     | string or null    | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.   |
-| `isPrerelease`        | boolean           | Whether the version being released is a prerelease.                                                                          |
-| `isPublicRelease`     | boolean           | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.              |
-| `artifactsDirectory`  | string            | Absolute path of the directory containing the build artifacts.                                                               |
-| `producedPackages`    | object            | The packages produced by the release, mapping package ID to version.                                                         |
-| `dogfooded`           | boolean           | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value. |
+| Property             | Type           | Content                                                                                                                                                                 |
+| -------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `homeDirectory`      | string         | Absolute path of the home directory (also the hook's working directory).                                                                                                |
+| `releaseVersion`     | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                             |
+| `releaseSemVer`      | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                        |
+| `previousVersion`    | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                              |
+| `isPrerelease`       | boolean        | Whether the version being released is a prerelease.                                                                                                                     |
+| `isPublicRelease`    | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                         |
+| `artifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                          |
+| `producedPackages`   | object         | The packages produced by the release, mapping package ID to version.                                                                                                    |
+| `dogfooded`          | boolean        | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value. |
+
+`.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the context file as untracked.
 
 ## Loading the repository configuration
 
@@ -96,7 +98,7 @@ Hooks also inherit the rest of the repository's implicit build files (`nuget.con
 
 ## Cleaning hook build caches
 
-Local file-based-app caching may not notice implicit-build-file changes; CI is always a cold build. `bv clean` runs `dotnet clean` on each `*.cs` file under `.buildvana/hooks/` (recursively), clearing its build cache.
+Local file-based-app caching may not notice implicit-build-file changes; CI is always a cold build. `bv clean` runs `dotnet clean` on each `*.cs` file under `.buildvana/hooks/` (recursively), clearing its build cache. It also deletes the `.buildvana-temp/` scratch directory, last hook context included.
 
 ## Contract evolution
 

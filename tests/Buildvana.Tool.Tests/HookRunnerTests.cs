@@ -5,6 +5,7 @@ using System.Text.Json;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.Hooks;
 
 internal sealed class HookRunnerTests
@@ -34,19 +35,21 @@ internal sealed class HookRunnerTests
 
         await Assert.That(ran).IsTrue();
         await Assert.That(appRunner.Runs.Count).IsEqualTo(1);
-        var (path, _, workingDirectory) = appRunner.Runs[0];
+        var (path, environment, workingDirectory) = appRunner.Runs[0];
         await Assert.That(path).IsEqualTo(hookPath);
+        await Assert.That(environment).IsNull();
         await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
     }
 
     [Test]
-    public async Task RunHookAsync_PublishesCamelCaseContextFileThroughEnvironmentVariable()
+    public async Task RunHookAsync_WritesCamelCaseContextFileAtWellKnownPath()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
+        var contextPath = ContextPath(home);
         string? contextJson = null;
-        appRunner.OnRun = (_, environment, _) => contextJson = File.ReadAllText(environment![HookRunner.ContextEnvironmentVariable]!);
+        appRunner.OnRun = (_, _, _) => contextJson = File.ReadAllText(contextPath);
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var context = SampleContext(home);
 
@@ -72,51 +75,43 @@ internal sealed class HookRunnerTests
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
-        string? contextJson = null;
-        appRunner.OnRun = (_, environment, _) => contextJson = File.ReadAllText(environment![HookRunner.ContextEnvironmentVariable]!);
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var context = SampleContext(home) with { PreviousVersion = "1.2.2" };
 
         _ = await runner.RunHookAsync("release", "post-release", context).ConfigureAwait(false);
 
-        using var document = JsonDocument.Parse(contextJson!);
+        var contextJson = await File.ReadAllTextAsync(ContextPath(home)).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(contextJson);
         await Assert.That(document.RootElement.GetProperty("previousVersion").GetString()).IsEqualTo("1.2.2");
     }
 
     [Test]
-    public async Task RunHookAsync_DeletesContextFile_AfterHookCompletes()
+    public async Task RunHookAsync_LeavesContextFileInPlace_AfterHookCompletes()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
-        string? contextPath = null;
-        appRunner.OnRun = (_, environment, _) => contextPath = environment![HookRunner.ContextEnvironmentVariable];
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
         _ = await runner.RunHookAsync("release", "post-release", SampleContext(home)).ConfigureAwait(false);
 
-        await Assert.That(contextPath).IsNotNull();
-        await Assert.That(File.Exists(contextPath!)).IsFalse();
+        await Assert.That(File.Exists(ContextPath(home))).IsTrue();
     }
 
     [Test]
-    public async Task RunHookAsync_WhenHookFails_PropagatesAndDeletesContextFile()
+    public async Task RunHookAsync_WhenHookFails_PropagatesAndLeavesContextFile()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
-        var appRunner = new FakeFileBasedAppRunner();
-        string? contextPath = null;
-        appRunner.OnRun = (_, environment, _) =>
+        var appRunner = new FakeFileBasedAppRunner
         {
-            contextPath = environment![HookRunner.ContextEnvironmentVariable];
-            throw new BuildFailedException("Hook failed.");
+            OnRun = (_, _, _) => throw new BuildFailedException("Hook failed."),
         };
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var context = SampleContext(home);
 
         await Assert.That(() => runner.RunHookAsync("release", "post-release", context)).Throws<BuildFailedException>();
-        await Assert.That(contextPath).IsNotNull();
-        await Assert.That(File.Exists(contextPath!)).IsFalse();
+        await Assert.That(File.Exists(ContextPath(home))).IsTrue();
     }
 
     [Test]
@@ -146,6 +141,9 @@ internal sealed class HookRunnerTests
         await Assert.That(appRunner.CleanedPaths.Contains(firstHookPath)).IsTrue();
         await Assert.That(appRunner.CleanedPaths.Contains(secondHookPath)).IsTrue();
     }
+
+    private static string ContextPath(TempHome home)
+        => Path.GetFullPath(CommonPaths.HookContext, home.RootPath);
 
     private static PostReleaseHookContext SampleContext(TempHome home) => new()
     {

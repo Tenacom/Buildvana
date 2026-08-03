@@ -7,6 +7,7 @@
 - [Overview](#overview)
 - [Home directory](#home-directory)
   - [Location of the home directory](#location-of-the-home-directory)
+- [`.buildvana-temp\`](#buildvana-temp)
 - [`artifacts\`](#artifacts)
 - [`src\`, `tests\`, `samples\`](#src-tests-samples)
 - [`Common.props` and `Common.targets`](#commonprops-and-commontargets)
@@ -36,6 +37,8 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |    |         +--- post-release.cs
 |    |
 |    +--- buildvana.jsonc      <<< Buildvana configuration file, if not in the home directory root
+|
++--- .buildvana-temp\          <<< bv's scratch directory (machine-generated; add to .gitignore)
 |
 +--- artifacts\                <<< (*) Final results of builds
 |
@@ -104,6 +107,10 @@ Buildvana SDK determines the location of the home directory by walking up the di
 The directory containing the marker becomes the home directory, and its full path becomes the value of `HomeDirectory`. Note that a configuration file inside `.buildvana` marks the directory containing `.buildvana`, not `.buildvana` itself. A configuration file does not have to actually configure anything: an empty JSON object (`{}`) is valid content, making the file usable as a pure home-directory marker.
 
 If no marker is found, the build (or project loading in Visual Studio) stops with error [BVSDK1003](SdkDiagnostics.md#buildvana-sdk-core-1000-1049).
+
+## `.buildvana-temp\`
+
+bv's scratch directory: machine-generated temporary files, such as the context file for [release hooks](ReleaseHooks.md#the-hook-context), live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
 
 ## `artifacts\`
 
