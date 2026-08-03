@@ -11,7 +11,7 @@ internal sealed class SettingsHelpReflectionTests
     public async Task GlobalSettings_ExposesOptionsInHelpOrder()
     {
         var names = OptionLongNames(typeof(GlobalSettings));
-        await Assert.That(names).IsEqualTo("--verbosity,--color,--no-color,--nologo,--version");
+        await Assert.That(names).IsEqualTo("--verbosity,--color,--no-color,--nologo,--skip-sdk-check,--version");
     }
 
     [Test]

@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 
 namespace Buildvana.Core.Json;
@@ -49,6 +50,25 @@ public interface IJsonHelper
     /// trailing newline (if any) and a UTF-8 BOM (if any) are preserved exactly.</para>
     /// </remarks>
     bool RewriteStringValues(string path, JsonStringValueRewriter rewriter);
+
+    /// <summary>
+    /// Inserts a property into an object of a JSON file in place, preserving every byte outside the
+    /// insertion point.
+    /// </summary>
+    /// <param name="path">The path of the file to rewrite.</param>
+    /// <param name="parentPath">The property path of the object to insert into: property names from the
+    /// root object down, an empty list denoting the root object itself. Fails the build if the path does
+    /// not lead to an object.</param>
+    /// <param name="propertyName">The name of the property to insert.</param>
+    /// <param name="value">The value of the property to insert.</param>
+    /// <returns><see langword="true"/> if the property was inserted; <see langword="false"/> if the object
+    /// already has a property with the given name (the file is left untouched on disk).</returns>
+    /// <remarks>
+    /// <para>The property is inserted as the first property of the object, mimicking the surrounding
+    /// formatting: line endings, indentation, comments, the trailing newline (if any) and a UTF-8 BOM
+    /// (if any) are preserved. Multi-line values are indented to match the insertion point.</para>
+    /// </remarks>
+    bool InsertProperty(string path, IReadOnlyList<string> parentPath, string propertyName, JsonNode value);
 
     /// <summary>
     /// Gets the value of a property from a JSON object. Fails the build if not successful.

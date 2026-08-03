@@ -17,12 +17,15 @@ namespace Buildvana.Tool.Infrastructure.Execution;
 /// <param name="ConsumesAllArguments">Whether the command forwards all of its arguments verbatim.</param>
 /// <param name="SettingsType">The command's <c>*Settings</c> type, or <see langword="null"/> if it has none.</param>
 /// <param name="DefaultVerbosity">The verbosity in effect when <c>--verbosity</c> is not given.</param>
+/// <param name="UsesSdk">Whether the command uses the repository's pinned Buildvana SDK and must therefore
+/// pass the SDK version check before running.</param>
 internal sealed record CommandRegistration(
     IReadOnlyList<IReadOnlyList<string>> AliasPaths,
     Type CommandType,
     bool ConsumesAllArguments,
     Type? SettingsType,
-    Verbosity DefaultVerbosity = Verbosity.Normal)
+    Verbosity DefaultVerbosity = Verbosity.Normal,
+    bool UsesSdk = false)
 {
     /// <summary>
     /// Gets the canonical path: the first alias, whose segments name the command in help and error messages.

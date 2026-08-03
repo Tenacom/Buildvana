@@ -46,13 +46,19 @@ internal sealed class ImplementsCommandAttribute : Attribute
     /// output (query commands) use <see cref="Verbosity.Minimal"/> so that only their result, warnings, and
     /// errors are shown by default.
     /// </param>
+    /// <param name="usesSdk">
+    /// <see langword="true"/> if the command uses the repository's pinned Buildvana SDK — by running MSBuild
+    /// targets on solution projects, or anything else whose outcome depends on the <c>global.json</c> pin —
+    /// and must therefore pass the SDK version check before running; <see langword="false"/> otherwise.
+    /// </param>
     /// <exception cref="ArgumentException"><paramref name="aliases"/> is empty or contains an empty alias.</exception>
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Lowercase is the display form of command names, not a comparison normalization.")]
     public ImplementsCommandAttribute(
         string aliases,
         bool consumesAllArguments = false,
         Type? settingsType = null,
-        Verbosity defaultVerbosity = Verbosity.Normal)
+        Verbosity defaultVerbosity = Verbosity.Normal,
+        bool usesSdk = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(aliases);
         var paths = new List<IReadOnlyList<string>>();
@@ -72,6 +78,7 @@ internal sealed class ImplementsCommandAttribute : Attribute
         ConsumesAllArguments = consumesAllArguments;
         SettingsType = settingsType;
         DefaultVerbosity = defaultVerbosity;
+        UsesSdk = usesSdk;
     }
 
     /// <summary>
@@ -98,4 +105,10 @@ internal sealed class ImplementsCommandAttribute : Attribute
     /// Gets the verbosity in effect when <c>--verbosity</c> is not given.
     /// </summary>
     public Verbosity DefaultVerbosity { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the command uses the repository's pinned Buildvana SDK and must
+    /// therefore pass the SDK version check before running.
+    /// </summary>
+    public bool UsesSdk { get; }
 }

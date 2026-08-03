@@ -4,18 +4,18 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure.Execution;
+using Buildvana.Tool.Services;
 
 namespace Buildvana.Tool.Subcommands;
 
-[ImplementsCommand("build", consumesAllArguments: true, usesSdk: true)]
-[Description("Clean, restore, and build all projects.")]
-internal sealed class BuildCommand(BuildPipeline pipeline) : IBvCommand
+[ImplementsCommand("sync-sdk")]
+[Description("Align the pinned Buildvana SDK version with this bv's version, updating whichever is older.")]
+internal sealed class SyncSdkCommand(SelfVersionService selfVersion) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await pipeline.RunThroughAsync(BuildStep.Build, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await selfVersion.SyncSdkAsync(cancellationToken).ConfigureAwait(false);
         return 0;
     }
 }
