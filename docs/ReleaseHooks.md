@@ -30,61 +30,71 @@ The hook runs from the home directory and reports nothing back. `bv` snapshots t
 
 ## Writing a hook
 
-A hook is an ordinary file-based app: top-level statements, run via `dotnet run`. Buildvana SDK injects two support types into the compilation of every file-based app located under `.buildvana/hooks/`, so a hook starts with no scaffolding:
+A hook is an ordinary file-based app: top-level statements, run via `dotnet run`. The types a hook needs — the typed hook context and the typed repository configuration — ship in the `Buildvana.Runtime` package. Reference it with an unversioned `#:package` directive; Buildvana SDK pins the package to its own version for every file-based app built in the repository, so `bv`, the SDK, and hooks always agree on the shape of the data:
 
-- `BvHookContext` — the context of the current run; load it with `BvHookContext.Load()`.
-- `BvConfig` — a loader for the repository's Buildvana configuration file; load it with `BvConfig.Load()`.
+```csharp
+#:package Buildvana.Runtime
+```
 
 A complete hook that rewrites a version-pinned URL in a file:
 
 ```csharp
+#:package Buildvana.Runtime
+
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using Buildvana.Runtime;
 
-var context = BvHookContext.Load();
+var context = PostReleaseHookContext.Load();
 if (!context.Dogfooded)
 {
     return;
 }
 
 var text = File.ReadAllText("some-file.md");
-text = Regex.Replace(text, "(MyOrg/MyRepo/)[^/]+(/docs/)", $"${{1}}{context.ReleaseSemVer}$2");
+text = Regex.Replace(text, "(MyOrg/MyRepo/)[^/]+(/docs/)", $"${{1}}{context.Release.SemVer}$2");
 File.WriteAllText("some-file.md", text);
 ```
 
-Because the injection is path-based rather than gated on anything `bv` passes, a hook stays buildable and runnable by hand: after `bv` has run the hook once, `dotnet run` it from the home directory to replay it against the context of the last run (or against a hand-written `.buildvana-temp/hook-context.json`).
+Because the version pin is applied by the SDK rather than gated on anything `bv` passes, a hook stays buildable and runnable by hand: after `bv` has run the hook once, `dotnet run` it from the home directory to replay it against the context of the last run (or against a hand-written context file).
 
 ## The hook context
 
-`bv` serializes the context of the run to `.buildvana-temp/hook-context.json` in the home directory, (re)writing the file before each hook run and leaving it in place afterwards — this is what makes hooks replayable by hand. Its content is logged at `Detail` verbosity. `BvHookContext.Load()` reads and parses it; the underlying JSON properties (camelCase) are:
+`bv` serializes the context of the run to a per-hook file, `.buildvana-temp/hook-contexts/<command>/<moment>.json` in the home directory — `.buildvana-temp/hook-contexts/release/post-release.json` for this hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at `Detail` verbosity. `PostReleaseHookContext.Load()` reads and deserializes it; the members are:
 
-| Property             | Type           | Content                                                                                                                                                                 |
-| -------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `homeDirectory`      | string         | Absolute path of the home directory (also the hook's working directory).                                                                                                |
-| `releaseVersion`     | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                             |
-| `releaseSemVer`      | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                        |
-| `previousVersion`    | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                              |
-| `isPrerelease`       | boolean        | Whether the version being released is a prerelease.                                                                                                                     |
-| `isPublicRelease`    | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                         |
-| `artifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                          |
-| `producedPackages`   | object         | The packages produced by the release, mapping package ID to version.                                                                                                    |
-| `dogfooded`          | boolean        | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value. |
+| Member                     | Type           | Content                                                                                                                                                                 |
+| -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Paths.HomeDirectory`      | string         | Absolute path of the home directory (also the hook's working directory).                                                                                                |
+| `Paths.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                          |
+| `Paths.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                    |
+| `Release.Version`          | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                             |
+| `Release.SemVer`           | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                        |
+| `Release.PreviousVersion`  | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                              |
+| `Release.IsPrerelease`     | boolean        | Whether the version being released is a prerelease.                                                                                                                     |
+| `Release.IsPublicRelease`  | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                         |
+| `ProducedPackages`         | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                    |
+| `Dogfooded`                | boolean        | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value. |
 
-`.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the context file as untracked.
+In the JSON file, member names are camelCase (`paths.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim.
+
+`.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the context files as untracked.
 
 ## Loading the repository configuration
 
-The context carries the facts of the run; for any standing repository setting, load the configuration file instead: `BvConfig.Load()` probes the four well-known candidates (`buildvana.json`, `buildvana.jsonc`, and the same names under `.buildvana/`), applies the usual exactly-one rule, tolerates comments and trailing commas, and returns the root `JsonElement` (an empty object when no configuration file exists):
+The context carries the facts of the run; for any standing repository setting, load the configuration file instead: `BuildvanaConfig.Load()` probes the four well-known candidates (`buildvana.json`, `buildvana.jsonc`, and the same names under `.buildvana/`), applies the usual exactly-one rule, tolerates comments and trailing commas, and returns the typed configuration (an empty instance when no configuration file exists):
 
 ```csharp
-var config = BvConfig.Load();
-var branches = config.GetProperty("release").GetProperty("branches");
+var config = BuildvanaConfig.Load();
+var branches = config.Release?.Branches;
 ```
+
+The loader is strict — an unknown member fails the load — but does not re-validate what `bv` has already validated with schema-based diagnostics before running any hook.
 
 ## Dependencies
 
-- **Prefer BCL-only hooks.** The BCL (including `System.Text.Json`) covers version-rewriting jobs.
+- `#:package Buildvana.Runtime` is special: its version comes from the SDK, not from central package management, so the pin can never lag or race the release.
+- **Beyond that, prefer BCL-only hooks.** The BCL (including `System.Text.Json`) covers version-rewriting jobs.
 - For third-party dependencies, prefer versionless `#:package` resolved through the repository's `Directory.Packages.props` (supported by file-based apps under central package management) — the version then lives where dependency updates already look.
 - **Never reference self-produced packages via versionless `#:package`**: at hook time `Directory.Packages.props` has already been rewritten to the version being released, which is on no feed until the release completes — restore fails mid-release, deterministically.
 - `#:project` is the sanctioned way to use repo-local library code: no version pin, compiles against `HEAD`.
@@ -94,7 +104,7 @@ var branches = config.GetProperty("release").GetProperty("branches");
 
 Hooks require Buildvana SDK, which reaches them through the repository's `Directory.Build.{props,targets}` parent-inclusion chain (see [Directory structure](DirectoryStructure.md#directorybuildprops-and-directorybuildtargets)). A repository may add its own `.buildvana/Directory.Build.{props,targets}`, but they must follow the well-known parent-inclusion pattern; otherwise hooks break and the repository owns both pieces.
 
-Hooks also inherit the rest of the repository's implicit build files (`nuget.config`, `global.json`, analyzer configuration): a hook compiles under the same rules as the rest of the repository, warnings-as-errors included. The injected support sources are marked as generated code and are exempt from the consuming repository's analyzers.
+Hooks also inherit the rest of the repository's implicit build files (`nuget.config`, `global.json`, analyzer configuration): a hook compiles under the same rules as the rest of the repository, warnings-as-errors included.
 
 ## Cleaning hook build caches
 
@@ -102,4 +112,4 @@ Local file-based-app caching may not notice implicit-build-file changes; CI is a
 
 ## Contract evolution
 
-The context file is written by the installed `bv` and read by loader code shipped with the repository's pinned Buildvana SDK; the two can transiently diverge. The contract is therefore additive-only: new properties may be added, but existing ones are never removed or repurposed. `BvHookContext.Load()` ignores unknown properties and gives missing ones their default values, so a version mismatch degrades gracefully instead of failing.
+The context file is written by the installed `bv` and read through the `Buildvana.Runtime` version pinned by the repository's Buildvana SDK; `bv` and the SDK are released in lockstep and designed as a matched pair. The contract is nevertheless additive-only: new members may be added, but existing ones are never removed or repurposed, and additions ship as optional members with default values — so a context file written before an update stays loadable after it.
