@@ -9,6 +9,7 @@ Sub-projects under `src/`:
 
 - `Buildvana.Core.Abstractions` — host-agnostic contracts shared by Buildvana libraries (e.g., `IHomeDirectoryProvider`, `IJsonHelper`, `IProcessRunner`) plus `BuildFailedException`. No host references (e.g., MSBuild).
 - `Buildvana.Core.Json` — JSON loading, parsing, saving, and in-place rewriting helpers; reports failures via `BuildFailedException`.
+- `Buildvana.Runtime` — packaged library holding the typed model of Buildvana configuration and run-time information (hook contexts, well-known paths), shared by `bv`, the SDK, and repository-owned hooks. Serialization is source-generated (`BuildvanaJsonContext`) so the same code works in file-based apps, where reflection-based JSON serialization is disabled. Depends on the BCL only.
 - `Buildvana.Sdk.Tasks` — compiled MSBuild tasks.
 - `Buildvana.Sdk.SourceGenerators` — Roslyn source generators.
 - `Buildvana.Sdk` — MSBuild SDK. Packages the above two projects and contains the SDK props/targets.
@@ -16,9 +17,10 @@ Sub-projects under `src/`:
 
 ### Project tiers
 
-Project names follow a three-tier convention:
+Project names follow a four-tier convention:
 
  - `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend on other `Buildvana.Core.*` libraries and ordinary BCL/NuGet dependencies, but must remain host-agnostic: no host references (e.g., MSBuild). See "Core tier layout" below for how the tier is structured.
+- `Buildvana.Runtime` — packaged library consumed by hooks (via an SDK-supplied version pin) as well as by `bv` and SDK tasks. Its public surface is an additive-only contract, and its dependency closure must stay BCL-only: no references to unpackaged `Buildvana.Core.*` projects.
 - `Buildvana.Sdk.*` — the MSBuild SDK and its components (tasks, source generators). Only `Buildvana.Sdk` is packaged; it bundles the others.
 - `Buildvana.Tool` — the `bv` .NET CLI global tool. Packaged as a `dotnet tool`.
 
