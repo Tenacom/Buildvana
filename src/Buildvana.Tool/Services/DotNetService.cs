@@ -20,7 +20,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Provides shortcut methods for .NET SDK operations.
 /// </summary>
-internal sealed partial class DotNetService
+internal sealed partial class DotNetService : IFileBasedAppRunner
 {
     // The muxer sets DOTNET_HOST_PATH to the full path of the dotnet executable that launched us,
     // so we re-invoke that exact host instead of relying on `dotnet` being on PATH.
@@ -274,6 +274,39 @@ internal sealed partial class DotNetService
         }
 
         _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
+    }
+
+    /// <inheritdoc/>
+    public Task<ProcessResult> RunFileBasedAppAsync(
+        string path,
+        IReadOnlyDictionary<string, string?>? environment = null,
+        string? workingDirectory = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNullOrEmpty(path);
+
+        // No configured invocation tiers here: their arguments target solution-level dotnet commands,
+        // and `dotnet run` would forward them to the app instead of consuming them.
+        return _processRunner.RunAsync(
+            DotNetMuxer,
+            ["run", path],
+            environment: environment,
+            workingDirectory: workingDirectory,
+            onStdout: (x) => _reporter.ChildOutput(x, null),
+            onStderr: (x) => _reporter.ChildError(x, null),
+            cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public Task<ProcessResult> CleanFileBasedAppAsync(string path, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNullOrEmpty(path);
+        return _processRunner.RunAsync(
+            DotNetMuxer,
+            ["clean", path],
+            onStdout: (x) => _reporter.ChildOutput(x, Verbosity.Detailed),
+            onStderr: (x) => _reporter.ChildError(x, Verbosity.Detailed),
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>

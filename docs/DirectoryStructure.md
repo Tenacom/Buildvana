@@ -29,6 +29,12 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |
 +--- .buildvana\               <<< Optional grouping directory for Buildvana files
 |    |
+|    +--- hooks\               <<< Repo-owned hooks run by bv (see ReleaseHooks.md)
+|    |    |
+|    |    +--- release\
+|    |         |
+|    |         +--- post-release.cs
+|    |
 |    +--- buildvana.jsonc      <<< Buildvana configuration file, if not in the home directory root
 |
 +--- artifacts\                <<< (*) Final results of builds

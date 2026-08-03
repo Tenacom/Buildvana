@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Buildvana.Core.Testing\Buildvana.Core.Testing.csproj" />
     <ProjectReference Include="..\..\src\Buildvana.Tool\Buildvana.Tool.csproj" />
   </ItemGroup>
 
