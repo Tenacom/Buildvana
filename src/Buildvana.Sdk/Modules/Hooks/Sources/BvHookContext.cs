@@ -14,8 +14,8 @@ using System.IO;
 using System.Text.Json;
 
 /// <summary>
-/// The context handed to a <c>release</c> hook by bv, deserialized from the JSON file whose absolute
-/// path is published in the <c>BV_HOOK_CONTEXT</c> environment variable.
+/// The context handed to a <c>release</c> hook by bv, deserialized from the JSON file that bv
+/// writes at the well-known path <c>.buildvana-temp/hook-context.json</c> before running the hook.
 /// </summary>
 /// <remarks>
 /// <para>The contract is additive-only: newer bv versions may add properties, never remove or
@@ -28,9 +28,11 @@ using System.Text.Json;
 internal sealed record BvHookContext
 {
     /// <summary>
-    /// The name of the environment variable holding the absolute path of the context file.
+    /// The path of the context file, relative to the home directory (the working directory of hooks).
+    /// The file is written by bv before each hook run and left in place afterwards, so a hook can be
+    /// re-run by hand against the context of the last run.
     /// </summary>
-    public const string EnvironmentVariable = "BV_HOOK_CONTEXT";
+    public const string RelativePath = ".buildvana-temp/hook-context.json";
 
     /// <summary>
     /// Gets the absolute path of the home directory. This is also the working directory of the hook.
@@ -86,22 +88,23 @@ internal sealed record BvHookContext
     /// </summary>
     /// <returns>The deserialized hook context.</returns>
     /// <exception cref="InvalidOperationException">
-    /// The <c>BV_HOOK_CONTEXT</c> environment variable is not set (the program is not running as a hook),
-    /// or the context file does not contain a JSON object.
+    /// The context file does not exist (bv has never run a hook in this repository, or the current
+    /// directory is not the home directory), or it does not contain a JSON object.
     /// </exception>
     public static BvHookContext Load()
     {
-        var path = Environment.GetEnvironmentVariable(EnvironmentVariable);
-        if (string.IsNullOrEmpty(path))
+        if (!File.Exists(RelativePath))
         {
-            throw new InvalidOperationException($"{EnvironmentVariable} is not set; this program must be run by bv as a hook.");
+            throw new InvalidOperationException(
+                $"The hook context file '{RelativePath}' does not exist. "
+                + "Run this program from the home directory of a repository where bv has run this hook at least once.");
         }
 
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(File.ReadAllText(RelativePath));
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
         {
-            throw new InvalidOperationException($"The hook context file '{path}' does not contain a JSON object.");
+            throw new InvalidOperationException($"The hook context file '{RelativePath}' does not contain a JSON object.");
         }
 
         return new BvHookContext

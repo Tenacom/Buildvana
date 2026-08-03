@@ -7,8 +7,8 @@ using JetBrains.Annotations;
 namespace Buildvana.Tool.Services.Hooks;
 
 /// <summary>
-/// The context handed to the <c>release/post-release</c> hook, serialized to a JSON file whose absolute path
-/// is published to the hook in the <c>BV_HOOK_CONTEXT</c> environment variable.
+/// The context handed to the <c>release/post-release</c> hook, serialized to a JSON file at the
+/// well-known path <see cref="Infrastructure.CommonPaths.HookContext"/> before the hook runs.
 /// </summary>
 /// <remarks>
 /// <para>Serialized property names are camelCase (e.g. <c>releaseSemVer</c>); dictionary keys are serialized

@@ -112,6 +112,7 @@ internal sealed class BuildPipeline
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), _reporter);
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath("_ReSharper.Caches"), _reporter);
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath("temp"), _reporter);
+        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.Scratch), _reporter);
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.AllArtifacts), _reporter);
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.TestResults), _reporter);
         foreach (var project in _solution.Model.SolutionProjects)

@@ -6,7 +6,7 @@
     their context and the repository configuration with no scaffolding.
 
     Detection is path-based rather than gated on a bv-supplied property, so hooks remain buildable
-    and runnable by hand (e.g. `dotnet run post-release.cs` with BV_HOOK_CONTEXT set). A hook file's
+    and runnable by hand (e.g. `dotnet run post-release.cs` from the home directory). A hook file's
     grandparent directory must be exactly {home}/.buildvana/hooks/, mirroring the path convention.
   -->
   <PropertyGroup Condition="'$(FileBasedProgram)' == 'true' And '$(EntryPointFilePath)' != '' And '$(HomeDirectory)' != ''">

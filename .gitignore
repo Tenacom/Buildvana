@@ -1,3 +1,6 @@
+# Buildvana temporary files
+.buildvana-temp/
+
 # Build artifacts
 artifacts/
 

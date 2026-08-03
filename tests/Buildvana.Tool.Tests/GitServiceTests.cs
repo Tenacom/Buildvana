@@ -4,6 +4,7 @@
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Testing;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.Git;
 
 internal sealed class GitServiceTests
@@ -44,6 +45,18 @@ internal sealed class GitServiceTests
 
         await Assert.That(dirty.Count).IsEqualTo(1);
         await Assert.That(dirty[0]).IsEqualTo(newFilePath);
+    }
+
+    [Test]
+    public async Task GetDirtyFiles_IgnoresScratchDirectory_EvenWhenNotGitignored()
+    {
+        using var repo = CreateRepoWithCommit();
+        using var git = CreateGitService(repo);
+        var directory = Path.Combine(repo.RootPath, CommonPaths.Scratch);
+        _ = Directory.CreateDirectory(directory);
+        await File.WriteAllTextAsync(Path.Combine(directory, "hook-context.json"), "{}").ConfigureAwait(false);
+
+        await Assert.That(git.GetDirtyFiles().Count).IsEqualTo(0);
     }
 
     private static TempGitRepo CreateRepoWithCommit()

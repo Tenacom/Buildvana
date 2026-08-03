@@ -1,8 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -10,6 +8,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
@@ -21,12 +20,6 @@ namespace Buildvana.Tool.Services.Hooks;
 /// </summary>
 internal sealed class HookRunner
 {
-    /// <summary>
-    /// The name of the environment variable through which the absolute path of the serialized
-    /// context file is published to hooks.
-    /// </summary>
-    public const string ContextEnvironmentVariable = "BV_HOOK_CONTEXT";
-
     private static readonly JsonSerializerOptions ContextSerializerOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
@@ -54,8 +47,9 @@ internal sealed class HookRunner
     /// </summary>
     /// <param name="command">The name of the command the hook belongs to.</param>
     /// <param name="moment">The name of the moment the hook fires at.</param>
-    /// <param name="context">The context to serialize and hand to the hook through the
-    /// <see cref="ContextEnvironmentVariable"/> environment variable.</param>
+    /// <param name="context">The context to serialize into the well-known context file
+    /// (<see cref="CommonPaths.HookContext"/>) before running the hook. The file is left in place
+    /// after the run, so the hook can be re-run by hand against the same context.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the hook process.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is
     /// <see langword="true"/> if the hook ran and completed successfully, or <see langword="false"/>
@@ -77,22 +71,14 @@ internal sealed class HookRunner
 
         var json = JsonSerializer.Serialize(context, ContextSerializerOptions);
         _reporter.Detail($"Hook {hookName}: context: {json}");
-        var contextPath = Path.Combine(Path.GetTempPath(), $"bv-hook-context-{Path.GetRandomFileName()}.json");
+        var contextPath = Path.GetFullPath(CommonPaths.HookContext, _home.HomeDirectory);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(contextPath)!);
         await File.WriteAllTextAsync(contextPath, json, cancellationToken).ConfigureAwait(false);
-        try
-        {
-            _reporter.Info($"Hook {hookName}: running {relativePath}...");
-            _ = await _appRunner.RunFileBasedAppAsync(
-                path,
-                environment: new Dictionary<string, string?>(StringComparer.Ordinal) { [ContextEnvironmentVariable] = contextPath },
-                workingDirectory: _home.HomeDirectory,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            File.Delete(contextPath);
-        }
-
+        _reporter.Info($"Hook {hookName}: running {relativePath}...");
+        _ = await _appRunner.RunFileBasedAppAsync(
+            path,
+            workingDirectory: _home.HomeDirectory,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         return true;
     }
 

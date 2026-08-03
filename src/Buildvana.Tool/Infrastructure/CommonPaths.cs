@@ -9,6 +9,20 @@ namespace Buildvana.Tool.Infrastructure;
 internal static class CommonPaths
 {
     /// <summary>
+    /// The path of bv's scratch directory, holding machine-generated temporary files.
+    /// Repositories are expected to gitignore it; bv never considers its contents
+    /// when detecting working-tree changes, whether or not they do.
+    /// </summary>
+    public const string Scratch = ".buildvana-temp";
+
+    /// <summary>
+    /// The path of the file holding the serialized context of the last hook run.
+    /// The same path is hard-coded in the SDK-injected <c>BvHookContext</c> loader,
+    /// which reads the file from the other side of the hook contract.
+    /// </summary>
+    public const string HookContext = Scratch + "/hook-context.json";
+
+    /// <summary>
     /// The path of the directory where build artifacts for all configurations are stored.
     /// </summary>
     public const string AllArtifacts = "artifacts";
