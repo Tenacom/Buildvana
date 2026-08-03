@@ -32,7 +32,7 @@ public static class JsonSchemaValidator
     /// </returns>
     /// <remarks>
     /// <para>The schema is generated on every call. To validate many documents against one schema, call
-    /// <see cref="JsonSchemaGenerator.Generate{T}(JsonSerializerOptions)"/> once and pass the result to
+    /// <see cref="JsonSchemaGenerator.Generate{T}(JsonSerializerOptions, string)"/> once and pass the result to
     /// <see cref="Validate(JsonNode?, JsonNode, ReadOnlySpan{byte})"/>.</para>
     /// </remarks>
     public static IReadOnlyList<JsonSchemaValidationError> Validate<T>(
