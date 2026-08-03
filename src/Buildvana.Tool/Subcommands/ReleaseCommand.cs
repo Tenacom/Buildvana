@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -18,6 +19,7 @@ using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
+using Buildvana.Tool.Services.Hooks;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
@@ -51,6 +53,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var publicApiFiles = services.GetRequiredService<PublicApiFilesService>();
         var docfx = services.GetRequiredService<DocFxService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
+        var hookRunner = services.GetRequiredService<HookRunner>();
 
         // Perform some preliminary checks
         BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
@@ -208,11 +211,14 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // Must happen after pack (so the produced .nupkg files exist and the build ran against the
             // previously-published versions) and before push (so the rewrites travel with the release commit).
             // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
-            // state (which still references the previously-published versions); the dogfood commit is marked
-            // [skip ci] because the new packages aren't in the feed yet at push time.
-            if (settings.ResolveDogfood())
+            // state (which still references the previously-published versions); the post-release commit is
+            // marked [skip ci] because the new packages aren't in the feed yet at push time.
+            var producedPackages = PackageArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
+            var dogfooded = settings.ResolveDogfood();
+            IReadOnlyList<string> selfReferenceUpdates = [];
+            if (dogfooded)
             {
-                var selfReferenceUpdates = selfReferenceUpdater.UpdateReferences(artifactsPath);
+                selfReferenceUpdates = selfReferenceUpdater.UpdateReferences(producedPackages);
                 switch (selfReferenceUpdates.Count)
                 {
                     case 0:
@@ -225,17 +231,57 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
                         break;
                 }
-
-                if (selfReferenceUpdates.Count > 0)
-                {
-                    release.AddPostReleaseCommit(
-                        $"Update self-references to {version.CurrentStr} [skip ci]",
-                        [..selfReferenceUpdates]);
-                }
             }
             else
             {
                 reporter.Info("Self-reference update skipped: option 'dogfood' is false.");
+            }
+
+            // Run the repo-owned post-release hook, if present. It runs whether or not dogfooding is
+            // enabled; the files it changes are detected by snapshotting the working tree around it
+            // and join the post-release commit alongside the self-reference rewrites.
+            var hookContext = new PostReleaseHookContext
+            {
+                HomeDirectory = home.HomeDirectory,
+                ReleaseVersion = version.CurrentSimpleStr,
+                ReleaseSemVer = version.CurrentStr,
+                PreviousVersion = version.Latest?.ToString(),
+                IsPrerelease = version.IsPrerelease,
+                IsPublicRelease = version.IsPublicRelease,
+                ArtifactsDirectory = Path.GetFullPath(artifactsPath),
+                ProducedPackages = producedPackages,
+                Dogfooded = dogfooded,
+            };
+            var dirtyBefore = git.GetDirtyFiles();
+            var hookRan = await hookRunner.RunHookAsync("release", "post-release", hookContext, cancellationToken).ConfigureAwait(false);
+            string[] hookUpdates = hookRan
+                ? [.. git.GetDirtyFiles().Except(dirtyBefore, StringComparer.OrdinalIgnoreCase)]
+                : [];
+            if (hookRan)
+            {
+                switch (hookUpdates.Length)
+                {
+                    case 0:
+                        reporter.Info("The post-release hook modified no files.");
+                        break;
+                    case 1:
+                        reporter.Info("The post-release hook modified 1 file.");
+                        break;
+                    default:
+                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Length} files."));
+                        break;
+                }
+            }
+
+            // Assemble the post-release commit from the self-reference rewrites and the hook's changes.
+            // The commit message stays the historical one when only self-references moved.
+            string[] postReleaseUpdates = [.. selfReferenceUpdates.Union(hookUpdates, StringComparer.OrdinalIgnoreCase)];
+            if (postReleaseUpdates.Length > 0)
+            {
+                var commitMessage = hookUpdates.Length > 0
+                    ? $"Post-release updates for {version.CurrentStr} [skip ci]"
+                    : $"Update self-references to {version.CurrentStr} [skip ci]";
+                release.AddPostReleaseCommit(commitMessage, postReleaseUpdates);
             }
 
             release.PushUpdates();

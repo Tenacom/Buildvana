@@ -10,8 +10,6 @@ using System.Text.RegularExpressions;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
-using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services;
@@ -21,9 +19,8 @@ namespace Buildvana.Tool.Services;
 /// project can bump its own SDK/tool/package references as part of the "Prepare release" commit.
 /// </summary>
 /// <remarks>
-/// <para>The updater discovers produced packages by inspecting the <c>*.nupkg</c> files in the artifacts directory:
-/// each filename is expected to match the form <c>{Id}.{CurrentVersion}.nupkg</c>; files whose version suffix
-/// does not match the version being released are ignored.</para>
+/// <para>The caller supplies the map of produced packages, typically obtained from
+/// <see cref="Utilities.PackageArtifactsHelper.DiscoverProducedPackages"/>.</para>
 /// <para>Updates are applied in-place to the following well-known files, when present:</para>
 /// <list type="bullet">
 ///   <item><description><c>global.json</c> — entries under <c>msbuild-sdks</c>.</description></item>
@@ -38,23 +35,19 @@ internal sealed class SelfReferenceUpdater
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
     private readonly IJsonHelper _jsonHelper;
-    private readonly VersionService _version;
-    private readonly (string RelativePath, Func<string, Dictionary<string, string>, bool> Update)[] _targets;
+    private readonly (string RelativePath, Func<string, IReadOnlyDictionary<string, string>, bool> Update)[] _targets;
 
     public SelfReferenceUpdater(
         IReporter reporter,
         IHomeDirectoryProvider home,
-        IJsonHelper jsonHelper,
-        VersionService version)
+        IJsonHelper jsonHelper)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(home);
         Guard.IsNotNull(jsonHelper);
-        Guard.IsNotNull(version);
         _reporter = reporter;
         _home = home;
         _jsonHelper = jsonHelper;
-        _version = version;
         _targets =
         [
             ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
@@ -66,22 +59,22 @@ internal sealed class SelfReferenceUpdater
     /// <summary>
     /// Rewrites in-tree references to packages produced by the current build.
     /// </summary>
-    /// <param name="artifactsPath">The path of the directory containing the produced <c>*.nupkg</c> files.</param>
+    /// <param name="producedPackages">The packages produced by the current build, as a map from package ID to version.</param>
     /// <returns>The list of files that were actually modified. Pass this to
     /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, string[])"/> to commit them
     /// into a separate post-release commit on top of the "Prepare release" commit.</returns>
-    public IReadOnlyList<string> UpdateReferences(string artifactsPath)
+    public IReadOnlyList<string> UpdateReferences(IReadOnlyDictionary<string, string> producedPackages)
     {
-        var produced = DiscoverProducedPackages(artifactsPath);
-        if (produced.Count == 0)
+        Guard.IsNotNull(producedPackages);
+        if (producedPackages.Count == 0)
         {
-            _reporter.Info("Self-reference update: no produced packages were found in the artifacts directory.");
+            _reporter.Info("Self-reference update: no produced packages.");
             return [];
         }
 
         _reporter.Info(string.Create(
             CultureInfo.InvariantCulture,
-            $"Self-reference update: {produced.Count} produced package(s) detected: {string.Join(", ", produced.Keys)}."));
+            $"Self-reference update: {producedPackages.Count} produced package(s): {string.Join(", ", producedPackages.Keys)}."));
 
         var modified = new List<string>();
         foreach (var (relativePath, update) in _targets)
@@ -93,7 +86,7 @@ internal sealed class SelfReferenceUpdater
                 continue;
             }
 
-            if (update(path, produced))
+            if (update(path, producedPackages))
             {
                 _reporter.Info($"Self-reference update: rewrote {relativePath}.");
                 modified.Add(path);
@@ -103,38 +96,12 @@ internal sealed class SelfReferenceUpdater
         return modified;
     }
 
-    private Dictionary<string, string> DiscoverProducedPackages(string artifactsPath)
-    {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (!FileSystemHelper.DirectoryExists(artifactsPath))
-        {
-            return result;
-        }
-
-        var version = _version.CurrentStr;
-        var suffix = $".{version}.nupkg";
-        foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg"))
-        {
-            var fileName = Path.GetFileName(path);
-            if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-            {
-                _reporter.Detail($"Self-reference update: skipping '{fileName}' (version does not match '{version}').");
-                continue;
-            }
-
-            var id = fileName[..^suffix.Length];
-            result[id] = version;
-        }
-
-        return result;
-    }
-
     // Splice the new version directly over the existing one in the source bytes, so unrelated
     // bytes — line endings, indentation, the trailing newline (if any), comments, BOM — survive untouched.
     // The expected location of each version string differs by container shape:
     //   - versionPropertyName == null → at depth 2 with path [container, packageId];
     //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
-    private bool UpdateJsonContainer(string path, Dictionary<string, string> produced, string container, string? versionPropertyName)
+    private bool UpdateJsonContainer(string path, IReadOnlyDictionary<string, string> produced, string container, string? versionPropertyName)
         => _jsonHelper.RewriteStringValues(path, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
@@ -158,7 +125,7 @@ internal sealed class SelfReferenceUpdater
                 : null;
         });
 
-    private bool UpdateMsBuildXml(string path, Dictionary<string, string> produced, string[] tagNames)
+    private bool UpdateMsBuildXml(string path, IReadOnlyDictionary<string, string> produced, string[] tagNames)
     {
         // Read while detecting the file's encoding from any BOM, and remember it so the rewrite
         // preserves the original encoding exactly. The fallback when no BOM is present is UTF-8
@@ -196,7 +163,7 @@ internal sealed class SelfReferenceUpdater
         return true;
     }
 
-    private string RewriteIncludeFirstMatch(Match match, Dictionary<string, string> produced)
+    private string RewriteIncludeFirstMatch(Match match, IReadOnlyDictionary<string, string> produced)
     {
         // Groups: 1 = head up to opening quote of Include value
         //         2 = Include value (package id)
@@ -218,7 +185,7 @@ internal sealed class SelfReferenceUpdater
         return match.Groups[1].Value + match.Groups[2].Value + match.Groups[3].Value + newVersion + match.Groups[5].Value;
     }
 
-    private string RewriteVersionFirstMatch(Match match, Dictionary<string, string> produced)
+    private string RewriteVersionFirstMatch(Match match, IReadOnlyDictionary<string, string> produced)
     {
         // Groups: 1 = head up to opening quote of Version value
         //         2 = Version value (current)

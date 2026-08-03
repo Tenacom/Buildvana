@@ -58,6 +58,11 @@ internal sealed partial class VersionService
     public string CurrentStr => _current.SemVer;
 
     /// <summary>
+    /// Gets the version to build in simple <c>MAJOR.MINOR.PATCH</c> form, without any prerelease tag.
+    /// </summary>
+    public string CurrentSimpleStr => _current.SimpleVersion;
+
+    /// <summary>
     /// Gets the version to build, as a SemanticVersion object.
     /// </summary>
     public SemanticVersion Current { get; private set; }

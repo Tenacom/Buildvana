@@ -9,6 +9,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Hooks;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
@@ -26,6 +27,7 @@ internal sealed class BuildPipeline
     private readonly DotNetService _dotnet;
     private readonly DotNetSettings _dotnetSettings;
     private readonly IReporter _reporter;
+    private readonly HookRunner _hookRunner;
     private readonly IReadOnlyList<string> _forwardedArgs;
 
     /// <summary>
@@ -36,17 +38,20 @@ internal sealed class BuildPipeline
         DotNetService dotnet,
         DotNetSettings dotnetSettings,
         IReporter reporter,
+        HookRunner hookRunner,
         CommandParameters parameters)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNull(dotnet);
         Guard.IsNotNull(dotnetSettings);
         Guard.IsNotNull(reporter);
+        Guard.IsNotNull(hookRunner);
         Guard.IsNotNull(parameters);
         _solution = solution;
         _dotnet = dotnet;
         _dotnetSettings = dotnetSettings;
         _reporter = reporter;
+        _hookRunner = hookRunner;
         _forwardedArgs = parameters.Forwarded;
     }
 
@@ -102,7 +107,7 @@ internal sealed class BuildPipeline
         activity.Complete();
     }
 
-    private Task CleanAsync(CancellationToken cancellationToken)
+    private async Task CleanAsync(CancellationToken cancellationToken)
     {
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), _reporter);
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath("_ReSharper.Caches"), _reporter);
@@ -117,7 +122,7 @@ internal sealed class BuildPipeline
             FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "obj"), _reporter);
         }
 
-        return Task.CompletedTask;
+        await _hookRunner.CleanBuildCachesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private Task RestoreAsync(CancellationToken cancellationToken)

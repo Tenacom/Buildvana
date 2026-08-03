@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    Hook support: a file-based app located at {home}/.buildvana/hooks/{command}/{moment}.cs gets the
+    hook support sources (BvHookContext, BvConfig) injected into its compilation, so hooks can load
+    their context and the repository configuration with no scaffolding.
+
+    Detection is path-based rather than gated on a bv-supplied property, so hooks remain buildable
+    and runnable by hand (e.g. `dotnet run post-release.cs` with BV_HOOK_CONTEXT set). A hook file's
+    grandparent directory must be exactly {home}/.buildvana/hooks/, mirroring the path convention.
+  -->
+  <PropertyGroup Condition="'$(FileBasedProgram)' == 'true' And '$(EntryPointFilePath)' != '' And '$(HomeDirectory)' != ''">
+    <_BV_HooksDirectory>$([MSBuild]::NormalizeDirectory('$(HomeDirectory)', '.buildvana', 'hooks'))</_BV_HooksDirectory>
+    <_BV_HookCommandDirectory>$([System.IO.Path]::GetDirectoryName('$(EntryPointFilePath)'))</_BV_HookCommandDirectory>
+    <_BV_HookGrandparentDirectory Condition="'$(_BV_HookCommandDirectory)' != ''">$([System.IO.Path]::GetDirectoryName('$(_BV_HookCommandDirectory)'))</_BV_HookGrandparentDirectory>
+    <_BV_HookGrandparentDirectory Condition="'$(_BV_HookGrandparentDirectory)' != ''">$([MSBuild]::NormalizeDirectory('$(_BV_HookGrandparentDirectory)'))</_BV_HookGrandparentDirectory>
+    <_BV_IsHookApp Condition="'$(_BV_HookGrandparentDirectory)' == '$(_BV_HooksDirectory)'">true</_BV_IsHookApp>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(_BV_IsHookApp)' == 'true'">
+    <Compile Include="$(MSBuildThisFileDirectory)Sources\*.cs" />
+  </ItemGroup>
+
+</Project>

@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -143,6 +144,23 @@ internal sealed class GitService : IDisposable
         }
 
         return (latest, latestStable);
+    }
+
+    /// <summary>
+    /// Gets the files that are new, modified, or otherwise different between the working directory
+    /// (including the index) and the current <c>HEAD</c> commit. Ignored files are not considered.
+    /// </summary>
+    /// <returns>The absolute paths of the differing files.</returns>
+    public IReadOnlyList<string> GetDirtyFiles()
+    {
+        var homeDirectory = _home.HomeDirectory;
+        var options = new StatusOptions
+        {
+            IncludeIgnored = false,
+            IncludeUntracked = true,
+            RecurseUntrackedDirs = true,
+        };
+        return [.. _repository.RetrieveStatus(options).Select(x => Path.GetFullPath(x.FilePath, homeDirectory))];
     }
 
     /// <summary>

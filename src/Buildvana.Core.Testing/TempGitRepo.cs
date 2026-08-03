@@ -53,6 +53,17 @@ public sealed class TempGitRepo : IDisposable
         => File.WriteAllText(Path.Combine(RootPath, name), content, encoding ?? Utf8NoBom);
 
     /// <summary>
+    /// Adds a remote to the repository.
+    /// </summary>
+    /// <param name="name">The name of the remote.</param>
+    /// <param name="url">The URL of the remote.</param>
+    public void AddRemote(string name, Uri url)
+    {
+        ArgumentNullException.ThrowIfNull(url);
+        _ = _repository.Network.Remotes.Add(name, url.AbsoluteUri);
+    }
+
+    /// <summary>
     /// Stages all changes and creates a commit, which may be empty.
     /// </summary>
     /// <param name="message">The commit message.</param>

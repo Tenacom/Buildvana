@@ -18,6 +18,7 @@ using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
+using Buildvana.Tool.Services.Hooks;
 using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
@@ -212,6 +213,8 @@ internal static class Program
             .AddSingleton<ChangelogService>()
             .AddSingleton<DocFxService>()
             .AddSingleton<DotNetService>()
+            .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
+            .AddSingleton<HookRunner>()
             .AddSingleton<BuildPipeline>()
             .AddSingleton<SelfReferenceUpdater>();
 
