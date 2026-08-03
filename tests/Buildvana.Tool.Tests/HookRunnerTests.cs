@@ -7,6 +7,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Utilities;
 
 internal sealed class HookRunnerTests
 {
@@ -119,31 +120,45 @@ internal sealed class HookRunnerTests
     }
 
     [Test]
-    public async Task CleanBuildCachesAsync_WithoutHooksDirectory_CleansNothing()
+    public async Task CleanBuildCaches_WithoutHooksDirectory_DeletesNothing()
     {
         using var home = new TempHome();
-        var appRunner = new FakeFileBasedAppRunner();
-        var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
+        var wouldBeHookPath = Path.Combine(home.RootPath, ".buildvana", "hooks", "release", "post-release.cs");
+        var artifactsPath = CreateFakeArtifactsDirectory(wouldBeHookPath);
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, new FakeFileBasedAppRunner());
 
-        await runner.CleanBuildCachesAsync().ConfigureAwait(false);
+        try
+        {
+            runner.CleanBuildCaches();
 
-        await Assert.That(appRunner.CleanedPaths.Count).IsEqualTo(0);
+            await Assert.That(Directory.Exists(artifactsPath)).IsTrue();
+        }
+        finally
+        {
+            Directory.Delete(artifactsPath, recursive: true);
+        }
     }
 
     [Test]
-    public async Task CleanBuildCachesAsync_CleansEveryHookFileRecursively()
+    public async Task CleanBuildCaches_DeletesArtifactsOfEveryHookFileRecursively()
     {
         using var home = new TempHome();
-        var firstHookPath = WriteHookFile(home, "release", "post-release");
-        var secondHookPath = WriteHookFile(home, "pack", "pre-pack");
-        var appRunner = new FakeFileBasedAppRunner();
-        var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
+        var firstArtifactsPath = CreateFakeArtifactsDirectory(WriteHookFile(home, "release", "post-release"));
+        var secondArtifactsPath = CreateFakeArtifactsDirectory(WriteHookFile(home, "pack", "pre-pack"));
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, new FakeFileBasedAppRunner());
 
-        await runner.CleanBuildCachesAsync().ConfigureAwait(false);
+        try
+        {
+            runner.CleanBuildCaches();
 
-        await Assert.That(appRunner.CleanedPaths.Count).IsEqualTo(2);
-        await Assert.That(appRunner.CleanedPaths.Contains(firstHookPath)).IsTrue();
-        await Assert.That(appRunner.CleanedPaths.Contains(secondHookPath)).IsTrue();
+            await Assert.That(Directory.Exists(firstArtifactsPath)).IsFalse();
+            await Assert.That(Directory.Exists(secondArtifactsPath)).IsFalse();
+        }
+        finally
+        {
+            FileSystemHelper.DeleteDirectory(firstArtifactsPath);
+            FileSystemHelper.DeleteDirectory(secondArtifactsPath);
+        }
     }
 
     private static string ContextPath(TempHome home)
@@ -175,6 +190,16 @@ internal sealed class HookRunnerTests
         _ = Directory.CreateDirectory(directory);
         var path = Path.Combine(directory, moment + ".cs");
         File.WriteAllText(path, "// test hook, never executed by these tests");
+        return path;
+    }
+
+    // The hook file paths these tests use are unique per run (TempHome lives in a randomly-named temporary
+    // directory), so the computed artifacts directories cannot collide with those of real file-based apps.
+    private static string CreateFakeArtifactsDirectory(string hookPath)
+    {
+        var path = FileBasedAppHelper.GetArtifactsDirectory(hookPath);
+        _ = Directory.CreateDirectory(path);
+        File.WriteAllText(Path.Combine(path, "build-success.cache"), string.Empty);
         return path;
     }
 }

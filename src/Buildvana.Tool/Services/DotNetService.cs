@@ -297,18 +297,6 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             cancellationToken: cancellationToken);
     }
 
-    /// <inheritdoc/>
-    public Task<ProcessResult> CleanFileBasedAppAsync(string path, CancellationToken cancellationToken = default)
-    {
-        Guard.IsNotNullOrEmpty(path);
-        return _processRunner.RunAsync(
-            DotNetMuxer,
-            ["clean", path],
-            onStdout: (x) => _reporter.ChildOutput(x, Verbosity.Detailed),
-            onStderr: (x) => _reporter.ChildError(x, Verbosity.Detailed),
-            cancellationToken: cancellationToken);
-    }
-
     /// <summary>
     /// Folds the base arguments, configured tiers, command-line arguments, and trailing arguments into the final
     /// argument list and resolved environment for a <c>dotnet</c> invocation.
