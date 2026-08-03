@@ -5,7 +5,7 @@ using System.Text.Json;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
-using Buildvana.Tool.Infrastructure;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services.Hooks;
 
 internal sealed class HookRunnerTests
@@ -58,13 +58,16 @@ internal sealed class HookRunnerTests
         await Assert.That(contextJson).IsNotNull();
         using var document = JsonDocument.Parse(contextJson!);
         var root = document.RootElement;
-        await Assert.That(root.GetProperty("homeDirectory").GetString()).IsEqualTo(home.RootPath);
-        await Assert.That(root.GetProperty("releaseVersion").GetString()).IsEqualTo("1.2.3");
-        await Assert.That(root.GetProperty("releaseSemVer").GetString()).IsEqualTo("1.2.3-preview");
-        await Assert.That(root.GetProperty("previousVersion").ValueKind).IsEqualTo(JsonValueKind.Null);
-        await Assert.That(root.GetProperty("isPrerelease").GetBoolean()).IsTrue();
-        await Assert.That(root.GetProperty("isPublicRelease").GetBoolean()).IsTrue();
-        await Assert.That(root.GetProperty("artifactsDirectory").GetString()).IsEqualTo(context.ArtifactsDirectory);
+        var paths = root.GetProperty("paths");
+        await Assert.That(paths.GetProperty("homeDirectory").GetString()).IsEqualTo(home.RootPath);
+        await Assert.That(paths.GetProperty("artifactsDirectory").GetString()).IsEqualTo(context.Paths.ArtifactsDirectory);
+        await Assert.That(paths.GetProperty("scratchDirectory").GetString()).IsEqualTo(context.Paths.ScratchDirectory);
+        var release = root.GetProperty("release");
+        await Assert.That(release.GetProperty("version").GetString()).IsEqualTo("1.2.3");
+        await Assert.That(release.GetProperty("semVer").GetString()).IsEqualTo("1.2.3-preview");
+        await Assert.That(release.GetProperty("previousVersion").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(release.GetProperty("isPrerelease").GetBoolean()).IsTrue();
+        await Assert.That(release.GetProperty("isPublicRelease").GetBoolean()).IsTrue();
         await Assert.That(root.GetProperty("producedPackages").GetProperty("Buildvana.Sdk").GetString()).IsEqualTo("1.2.3-preview");
         await Assert.That(root.GetProperty("dogfooded").GetBoolean()).IsFalse();
     }
@@ -76,13 +79,14 @@ internal sealed class HookRunnerTests
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
-        var context = SampleContext(home) with { PreviousVersion = "1.2.2" };
+        var context = SampleContext(home);
+        context = context with { Release = context.Release with { PreviousVersion = "1.2.2" } };
 
         _ = await runner.RunHookAsync("release", "post-release", context).ConfigureAwait(false);
 
         var contextJson = await File.ReadAllTextAsync(ContextPath(home)).ConfigureAwait(false);
         using var document = JsonDocument.Parse(contextJson);
-        await Assert.That(document.RootElement.GetProperty("previousVersion").GetString()).IsEqualTo("1.2.2");
+        await Assert.That(document.RootElement.GetProperty("release").GetProperty("previousVersion").GetString()).IsEqualTo("1.2.2");
     }
 
     [Test]
@@ -143,17 +147,24 @@ internal sealed class HookRunnerTests
     }
 
     private static string ContextPath(TempHome home)
-        => Path.GetFullPath(CommonPaths.HookContext, home.RootPath);
+        => Path.GetFullPath(WellKnownPaths.GetHookContextFile("release", "post-release"), home.RootPath);
 
     private static PostReleaseHookContext SampleContext(TempHome home) => new()
     {
-        HomeDirectory = home.RootPath,
-        ReleaseVersion = "1.2.3",
-        ReleaseSemVer = "1.2.3-preview",
-        PreviousVersion = null,
-        IsPrerelease = true,
-        IsPublicRelease = true,
-        ArtifactsDirectory = Path.Combine(home.RootPath, "artifacts", "Release"),
+        Paths = new()
+        {
+            HomeDirectory = home.RootPath,
+            ArtifactsDirectory = Path.Combine(home.RootPath, "artifacts", "Release"),
+            ScratchDirectory = Path.Combine(home.RootPath, WellKnownPaths.ScratchDirectory),
+        },
+        Release = new()
+        {
+            Version = "1.2.3",
+            SemVer = "1.2.3-preview",
+            PreviousVersion = null,
+            IsPrerelease = true,
+            IsPublicRelease = true,
+        },
         ProducedPackages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "1.2.3-preview" },
         Dogfooded = false,
     };

@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Runtime;
+
 namespace Buildvana.Tool.Infrastructure;
 
 /// <summary>
@@ -13,14 +15,7 @@ internal static class CommonPaths
     /// Repositories are expected to gitignore it; bv never considers its contents
     /// when detecting working-tree changes, whether or not they do.
     /// </summary>
-    public const string Scratch = ".buildvana-temp";
-
-    /// <summary>
-    /// The path of the file holding the serialized context of the last hook run.
-    /// The same path is hard-coded in the SDK-injected <c>BvHookContext</c> loader,
-    /// which reads the file from the other side of the hook contract.
-    /// </summary>
-    public const string HookContext = Scratch + "/hook-context.json";
+    public const string Scratch = WellKnownPaths.ScratchDirectory;
 
     /// <summary>
     /// The path of the directory where build artifacts for all configurations are stored.

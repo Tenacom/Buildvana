@@ -26,4 +26,5 @@ namespace Buildvana.Runtime;
     UseStringEnumConverter = true,
     WriteIndented = true)]
 [JsonSerializable(typeof(BuildvanaConfig))]
+[JsonSerializable(typeof(PostReleaseHookContext))]
 public sealed partial class BuildvanaJsonContext : JsonSerializerContext;
