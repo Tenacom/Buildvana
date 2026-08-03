@@ -8,16 +8,20 @@ using System.Text.Json.Serialization.Metadata;
 namespace Buildvana.Core.Configuration;
 
 /// <summary>
-/// Provides the shared <see cref="JsonSerializerOptions"/> used to read and describe Buildvana configuration files.
+/// Provides the <see cref="JsonSerializerOptions"/> used to generate the schema describing Buildvana
+/// configuration files.
 /// </summary>
 /// <remarks>
-/// <para>The same options drive both deserialization and schema generation, so the committed schema always
-/// reflects exactly what the loader accepts.</para>
+/// <para>Deserialization goes through the source-generated <c>Buildvana.Runtime</c> serializer context instead;
+/// these reflection-based options exist because <see cref="System.Text.Json.Schema.JsonSchemaExporter"/> needs a
+/// reflection-based resolver. They must mirror the context's options, so the committed schema always reflects
+/// exactly what the deserializer accepts.</para>
 /// </remarks>
 public static class BuildvanaConfigSerialization
 {
     /// <summary>
-    /// Gets the <see cref="JsonSerializerOptions"/> used to deserialize and generate schemas for <see cref="BuildvanaConfig"/>.
+    /// Gets the <see cref="JsonSerializerOptions"/> used to generate schemas for
+    /// <see cref="Buildvana.Runtime.BuildvanaConfig"/>.
     /// </summary>
     public static JsonSerializerOptions Options { get; } = CreateOptions();
 

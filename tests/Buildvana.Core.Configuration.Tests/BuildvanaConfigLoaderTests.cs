@@ -4,6 +4,7 @@
 using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
+using Buildvana.Runtime;
 
 internal sealed class BuildvanaConfigLoaderTests
 {

@@ -37,16 +37,21 @@ public static class JsonSchemaGenerator
     /// </summary>
     /// <typeparam name="T">The type to describe.</typeparam>
     /// <param name="options">The serializer options that govern property naming, enum formatting, and so on.</param>
+    /// <param name="title">The schema title; when omitted, the type's <see cref="JsonSchemaTitleAttribute"/>
+    /// (if any) supplies it. Useful when the type cannot carry the attribute.</param>
     /// <returns>The schema as a <see cref="JsonNode"/>.</returns>
-    public static JsonNode Generate<T>(JsonSerializerOptions options) => Generate(typeof(T), options);
+    public static JsonNode Generate<T>(JsonSerializerOptions options, string? title = null)
+        => Generate(typeof(T), options, title);
 
     /// <summary>
     /// Generates the JSON schema describing <paramref name="type"/>.
     /// </summary>
     /// <param name="type">The type to describe.</param>
     /// <param name="options">The serializer options that govern property naming, enum formatting, and so on.</param>
+    /// <param name="title">The schema title; when omitted, the type's <see cref="JsonSchemaTitleAttribute"/>
+    /// (if any) supplies it. Useful when the type cannot carry the attribute.</param>
     /// <returns>The schema as a <see cref="JsonNode"/>.</returns>
-    public static JsonNode Generate(Type type, JsonSerializerOptions options)
+    public static JsonNode Generate(Type type, JsonSerializerOptions options, string? title = null)
     {
         ArgumentNullException.ThrowIfNull(type);
         ArgumentNullException.ThrowIfNull(options);
@@ -62,7 +67,8 @@ public static class JsonSchemaGenerator
         if (schema is JsonObject root)
         {
             root.Insert(0, "$schema", Dialect);
-            if (type.GetCustomAttribute<JsonSchemaTitleAttribute>() is { Title: var title })
+            title ??= type.GetCustomAttribute<JsonSchemaTitleAttribute>()?.Title;
+            if (title is not null)
             {
                 root.Insert(1, "title", title);
             }

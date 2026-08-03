@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Buildvana.Core.JsonSchema;
+using Buildvana.Runtime;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Configuration;
@@ -16,12 +16,14 @@ namespace Buildvana.Core.Configuration;
 /// <summary>
 /// Loads and validates the Buildvana configuration file found in a home directory.
 /// </summary>
+/// <remarks>
+/// <para>Unlike the lean loader shipped with <c>Buildvana.Runtime</c> (<see cref="BuildvanaConfig.Load"/>), this
+/// loader validates the file against the configuration schema and reports each problem as a diagnostic with its
+/// source location. It is the loader used by <c>bv</c> and by Buildvana SDK tasks; hooks, which read a file
+/// <c>bv</c> has already validated, use the lean loader instead.</para>
+/// </remarks>
 public static class BuildvanaConfigLoader
 {
-    private const string JsonFileName = "buildvana.json";
-    private const string JsoncFileName = "buildvana.jsonc";
-    private const string SubdirectoryName = ".buildvana";
-
     private static readonly JsonDocumentOptions DocumentOptions = new()
     {
         CommentHandling = JsonCommentHandling.Skip,
@@ -43,32 +45,27 @@ public static class BuildvanaConfigLoader
     {
         Guard.IsNotNullOrEmpty(homeDirectory);
 
-        string[] candidatePaths =
-        [
-            Path.Combine(homeDirectory, JsonFileName),
-            Path.Combine(homeDirectory, JsoncFileName),
-            Path.Combine(homeDirectory, SubdirectoryName, JsonFileName),
-            Path.Combine(homeDirectory, SubdirectoryName, JsoncFileName),
-        ];
-        var existingPaths = Array.FindAll(candidatePaths, File.Exists);
+        string? path;
+        try
+        {
+            path = BuildvanaConfig.FindFile(homeDirectory);
+        }
+        catch (BuildvanaRuntimeException e)
+        {
+            throw new BuildFailedException(e.Message, e);
+        }
 
-        BuildFailedException.ThrowIf(
-            existingPaths.Length > 1,
-            $"Multiple Buildvana configuration files found: {string.Join(", ", existingPaths)}. Keep only one.");
-
-        if (existingPaths.Length == 0)
+        if (path is null)
         {
             return new BuildvanaConfig();
         }
-
-        var path = existingPaths[0];
 
         var json = StripBom(ReadAllBytes(path));
         var node = Parse(json, path);
         Validate(node, json, path);
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
-        return node!.Deserialize<BuildvanaConfig>(BuildvanaConfigSerialization.Options) ?? new BuildvanaConfig();
+        return node!.Deserialize(BuildvanaJsonContext.Default.BuildvanaConfig) ?? new BuildvanaConfig();
     }
 
     private static byte[] ReadAllBytes(string path)

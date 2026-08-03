@@ -2,8 +2,8 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
-using Buildvana.Core.Configuration;
 using Buildvana.Core.Versioning;
+using Buildvana.Runtime;
 
 internal sealed class VersioningSettingsTests
 {

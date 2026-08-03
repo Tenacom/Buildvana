@@ -2,11 +2,11 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
-using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Testing;
 using Buildvana.Core.Versioning;
+using Buildvana.Runtime;
 
 internal sealed class VersioningServiceTests
 {

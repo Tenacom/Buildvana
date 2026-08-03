@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana runtime</Title>
+    <Summary>Typed model of Buildvana configuration and run-time information, shared by the bv tool, Buildvana SDK, and repository-owned hooks.</Summary>
+    <Description>$(Summary)</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <XmlDocs>true</XmlDocs>
+    <PackageTags>build msbuild dotnet buildvana</PackageTags>
+  </PropertyGroup>
+
+</Project>

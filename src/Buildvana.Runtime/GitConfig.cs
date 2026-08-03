@@ -4,7 +4,7 @@
 using System.ComponentModel;
 using JetBrains.Annotations;
 
-namespace Buildvana.Core.Configuration;
+namespace Buildvana.Runtime;
 
 /// <summary>
 /// Configures Git-related behavior.
