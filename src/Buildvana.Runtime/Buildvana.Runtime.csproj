@@ -4,10 +4,11 @@
     <Title>Buildvana runtime</Title>
     <Summary>Typed model of Buildvana configuration and run-time information, shared by the bv tool, Buildvana SDK, and repository-owned hooks.</Summary>
     <Description>$(Summary)</Description>
+    <PackageTags>build msbuild dotnet buildvana</PackageTags>
     <TargetFramework>$(StandardTfm)</TargetFramework>
     <IsPackable>true</IsPackable>
     <XmlDocs>true</XmlDocs>
-    <PackageTags>build msbuild dotnet buildvana</PackageTags>
+    <UsePublicApiAnalyzers>true</UsePublicApiAnalyzers>
   </PropertyGroup>
 
 </Project>

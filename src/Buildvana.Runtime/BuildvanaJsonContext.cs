@@ -13,13 +13,16 @@ namespace Buildvana.Runtime;
 /// <remarks>
 /// <para>Being source-generated, the context works in every host, including file-based apps, which run with
 /// reflection-based serialization disabled.</para>
-/// <para>Reading is strict: comments and trailing commas are allowed, but unknown object members are rejected.
+/// <para>Reading is strict: comments and trailing commas are allowed, but unknown object members are rejected,
+/// as are <see langword="null"/> values for non-nullable properties (although not for collection elements,
+/// a known limitation of nullability enforcement in System.Text.Json).
 /// A configuration file has already been validated by <c>bv</c> when a hook reads it, and hook context files are
 /// written by the same <c>bv</c> version that runs the hook, so a strict read can only fail on files edited by
 /// hand after the fact.</para>
 /// </remarks>
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    RespectNullableAnnotations = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
     AllowTrailingCommas = true,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
