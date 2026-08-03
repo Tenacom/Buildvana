@@ -118,10 +118,6 @@ public sealed partial class JsonHelper
         out int firstContentIndex,
         out bool objectIsEmpty)
     {
-        braceIndex = -1;
-        firstContentIndex = -1;
-        objectIsEmpty = false;
-
         var reader = new Utf8JsonReader(
             jsonSpan,
             new JsonReaderOptions
@@ -130,10 +126,29 @@ public sealed partial class JsonHelper
                 CommentHandling = JsonCommentHandling.Skip,
             });
 
-        // Same path-tracking technique as CollectJsonStringEdits; see there for the containerPushedSegment
-        // rationale. An object is the target only if its own property name completes parentPath (or it is
-        // the root object and parentPath is empty): array-element objects never match, as they push no
-        // segment and would otherwise be confused with their containing array's property.
+        if (!TryFindParentObject(ref reader, parentPath))
+        {
+            var description = parentPath.Count == 0
+                ? "a root object"
+                : $"an object at '{string.Join('.', parentPath)}'";
+            throw new BuildFailedException($"{path} does not contain {description}.");
+        }
+
+        return TryGetInsertionPoints(
+            ref reader,
+            offsetInFile,
+            propertyName,
+            out braceIndex,
+            out firstContentIndex,
+            out objectIsEmpty);
+    }
+
+    // Walks the document until it enters the object at parentPath (the root object, if parentPath is
+    // empty), leaving the reader positioned on its opening brace. Returns false if the document contains
+    // no such object. Same path-tracking technique as CollectJsonStringEdits; see there for the
+    // containerPushedSegment rationale.
+    private static bool TryFindParentObject(ref Utf8JsonReader reader, IReadOnlyList<string> parentPath)
+    {
         var pathSegments = new List<string>();
         var containerPushedSegment = new Stack<bool>();
         string? pendingProperty = null;
@@ -146,8 +161,7 @@ public sealed partial class JsonHelper
                     pendingProperty = reader.GetString();
                     break;
 
-                case JsonTokenType.StartObject:
-                case JsonTokenType.StartArray:
+                case JsonTokenType.StartObject or JsonTokenType.StartArray:
                     var pushed = pendingProperty is not null;
                     if (pushed)
                     {
@@ -158,14 +172,12 @@ public sealed partial class JsonHelper
                     containerPushedSegment.Push(pushed);
                     if (reader.TokenType == JsonTokenType.StartObject)
                     {
-                        var isRootTarget = parentPath.Count == 0 && containerPushedSegment.Count == 1;
-                        found = isRootTarget || (pushed && pathSegments.SequenceEqual(parentPath, StringComparer.Ordinal));
+                        found = IsParentObject(parentPath, pathSegments, containerPushedSegment.Count, pushed);
                     }
 
                     break;
 
-                case JsonTokenType.EndObject:
-                case JsonTokenType.EndArray:
+                case JsonTokenType.EndObject or JsonTokenType.EndArray:
                     if (containerPushedSegment.Pop())
                     {
                         pathSegments.RemoveAt(pathSegments.Count - 1);
@@ -179,13 +191,38 @@ public sealed partial class JsonHelper
             }
         }
 
-        if (!found)
-        {
-            var description = parentPath.Count == 0 ? "a root object" : $"an object at '{string.Join('.', parentPath)}'";
-            throw new BuildFailedException($"{path} does not contain {description}.");
-        }
+        return found;
+    }
 
+    // The object just entered is the parent object only if its own property name completes parentPath
+    // (or it is the root object and parentPath is empty): array-element objects never match, as they
+    // push no segment and would otherwise be confused with their containing array's property.
+    private static bool IsParentObject(
+        IReadOnlyList<string> parentPath,
+        IReadOnlyList<string> pathSegments,
+        int containerDepth,
+        bool pushedSegment)
+    {
+        var isRoot = parentPath.Count == 0 && containerDepth == 1;
+        return isRoot || (pushedSegment && pathSegments.SequenceEqual(parentPath, StringComparer.Ordinal));
+    }
+
+    // Reports the byte positions relevant to inserting into the object whose opening brace the reader
+    // is positioned on (file coordinates): the brace itself and the object's first content token (the
+    // closing brace, for an empty object). Returns false if the object already has a property named
+    // propertyName.
+    private static bool TryGetInsertionPoints(
+        ref Utf8JsonReader reader,
+        int offsetInFile,
+        string propertyName,
+        out int braceIndex,
+        out int firstContentIndex,
+        out bool objectIsEmpty)
+    {
         braceIndex = (int)reader.TokenStartIndex + offsetInFile;
+        firstContentIndex = -1;
+        objectIsEmpty = false;
+
         var nesting = 0;
         while (reader.Read())
         {
@@ -201,13 +238,11 @@ public sealed partial class JsonHelper
 
             switch (reader.TokenType)
             {
-                case JsonTokenType.StartObject:
-                case JsonTokenType.StartArray:
+                case JsonTokenType.StartObject or JsonTokenType.StartArray:
                     nesting++;
                     break;
 
-                case JsonTokenType.EndObject:
-                case JsonTokenType.EndArray:
+                case JsonTokenType.EndObject or JsonTokenType.EndArray:
                     if (nesting == 0)
                     {
                         return true;
