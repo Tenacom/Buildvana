@@ -4,6 +4,7 @@
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
+using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
 using Buildvana.Tool.Services;
 using NuGet.Versioning;
@@ -208,6 +209,21 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(executable).IsNotNull();
         await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.42-preview"]);
         await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
+    }
+
+    [Test]
+    public async Task SyncSdkAsync_WhenToolUpdateFails_Propagates()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.42-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        var runner = new FakeProcessRunner
+        {
+            OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 1, string.Empty, "simulated failure", TimeSpan.Zero),
+        };
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        await Assert.That(() => service.SyncSdkAsync()).Throws<BuildFailedException>();
     }
 
     [Test]
