@@ -15,11 +15,6 @@ internal sealed class FakeFileBasedAppRunner : IFileBasedAppRunner
     public List<(string Path, IReadOnlyDictionary<string, string?>? Environment, string? WorkingDirectory)> Runs { get; } = [];
 
     /// <summary>
-    /// Gets the paths passed to <see cref="CleanFileBasedAppAsync"/>, in order.
-    /// </summary>
-    public List<string> CleanedPaths { get; } = [];
-
-    /// <summary>
     /// Gets or sets a callback invoked during <see cref="RunFileBasedAppAsync"/>, simulating the app's behavior.
     /// Exceptions thrown by the callback propagate to the caller, simulating a failing app.
     /// </summary>
@@ -35,13 +30,6 @@ internal sealed class FakeFileBasedAppRunner : IFileBasedAppRunner
         Runs.Add((path, environment, workingDirectory));
         OnRun?.Invoke(path, environment, workingDirectory);
         return Task.FromResult(Result($"dotnet run {path}"));
-    }
-
-    /// <inheritdoc/>
-    public Task<ProcessResult> CleanFileBasedAppAsync(string path, CancellationToken cancellationToken = default)
-    {
-        CleanedPaths.Add(path);
-        return Task.FromResult(Result($"dotnet clean {path}"));
     }
 
     private static ProcessResult Result(string commandLine)

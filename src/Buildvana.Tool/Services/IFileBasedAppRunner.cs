@@ -10,7 +10,7 @@ using Buildvana.Core.Process;
 namespace Buildvana.Tool.Services;
 
 /// <summary>
-/// Runs and cleans file-based apps (standalone C# files executed via <c>dotnet run</c>).
+/// Runs file-based apps (standalone C# files executed via <c>dotnet run</c>).
 /// </summary>
 internal interface IFileBasedAppRunner
 {
@@ -31,14 +31,4 @@ internal interface IFileBasedAppRunner
         IReadOnlyDictionary<string, string?>? environment = null,
         string? workingDirectory = null,
         CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Asynchronously clears the build cache of a file-based app.
-    /// </summary>
-    /// <param name="path">The path of the C# file whose build cache to clear.</param>
-    /// <param name="cancellationToken">A token that, when signalled, terminates the spawned process.</param>
-    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, with a result describing
-    /// the process outcome.</returns>
-    /// <exception cref="BuildFailedException">The clean operation exited with a non-zero exit code.</exception>
-    Task<ProcessResult> CleanFileBasedAppAsync(string path, CancellationToken cancellationToken = default);
 }

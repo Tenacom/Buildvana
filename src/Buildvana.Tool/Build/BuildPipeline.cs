@@ -107,7 +107,7 @@ internal sealed class BuildPipeline
         activity.Complete();
     }
 
-    private async Task CleanAsync(CancellationToken cancellationToken)
+    private Task CleanAsync(CancellationToken cancellationToken)
     {
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), _reporter);
         FileSystemHelper.DeleteDirectory(_solution.ResolvePath("_ReSharper.Caches"), _reporter);
@@ -123,7 +123,8 @@ internal sealed class BuildPipeline
             FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "obj"), _reporter);
         }
 
-        await _hookRunner.CleanBuildCachesAsync(cancellationToken).ConfigureAwait(false);
+        _hookRunner.CleanBuildCaches(cancellationToken);
+        return Task.CompletedTask;
     }
 
     private Task RestoreAsync(CancellationToken cancellationToken)

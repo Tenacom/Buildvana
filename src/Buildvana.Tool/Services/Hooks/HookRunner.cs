@@ -79,11 +79,11 @@ internal sealed class HookRunner
     }
 
     /// <summary>
-    /// Clears the build cache of every hook file under <c>.buildvana/hooks/</c>.
+    /// Clears the build cache of every hook file under <c>.buildvana/hooks/</c>, by deleting each file's
+    /// artifacts directory (see <see cref="FileBasedAppHelper.GetArtifactsDirectory"/>).
     /// </summary>
-    /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing clean operation.</param>
-    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task CleanBuildCachesAsync(CancellationToken cancellationToken = default)
+    /// <param name="cancellationToken">A token that, when signalled, stops the operation before the next deletion.</param>
+    public void CleanBuildCaches(CancellationToken cancellationToken = default)
     {
         var hooksRelativePath = Path.Combine(".buildvana", "hooks");
         var hooksPath = Path.GetFullPath(hooksRelativePath, _home.HomeDirectory);
@@ -97,7 +97,7 @@ internal sealed class HookRunner
         {
             cancellationToken.ThrowIfCancellationRequested();
             _reporter.Info($"Clearing build cache of hook file {path}...");
-            _ = await _appRunner.CleanFileBasedAppAsync(path, cancellationToken).ConfigureAwait(false);
+            FileSystemHelper.DeleteDirectory(FileBasedAppHelper.GetArtifactsDirectory(path), _reporter);
         }
     }
 }
