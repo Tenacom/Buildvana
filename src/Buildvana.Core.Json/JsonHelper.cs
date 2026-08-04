@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -62,7 +63,7 @@ public sealed partial class JsonHelper : IJsonHelper
                     CommentHandling = JsonCommentHandling.Skip,
                 });
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
         {
             throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
@@ -97,7 +98,7 @@ public sealed partial class JsonHelper : IJsonHelper
             json.WriteTo(writer);
             stream.SetLength(stream.Position);
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
         {
             throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
         }
@@ -114,7 +115,7 @@ public sealed partial class JsonHelper : IJsonHelper
         {
             originalBytes = File.ReadAllBytes(path);
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
         {
             throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
@@ -160,7 +161,7 @@ public sealed partial class JsonHelper : IJsonHelper
         {
             File.WriteAllBytes(path, output.ToArray());
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
         {
             throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
         }
