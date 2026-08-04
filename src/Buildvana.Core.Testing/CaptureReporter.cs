@@ -7,8 +7,10 @@ using Buildvana.Core.ConsoleOutput;
 namespace Buildvana.Core.Testing;
 
 /// <summary>
-/// A capture fake for <see cref="IReporter"/>: records everything, renders nothing. Unlike a real reporter,
-/// it applies no verbosity gating, so tests can assert on messages of any level.
+/// A capture fake for <see cref="IReporter"/>: records everything, renders nothing. Its <see cref="Verbosity"/>
+/// is fixed at the maximum, so even gating helpers that consult it before reporting (e.g. the
+/// <c>CompositeFormat</c>-based overloads in <c>ReporterExtensions</c>) never drop a message, and tests
+/// can assert on messages of any level.
 /// </summary>
 public sealed class CaptureReporter : IReporter
 {
@@ -38,7 +40,7 @@ public sealed class CaptureReporter : IReporter
     public IReadOnlyList<string> ChildErrorLines => _childErrorLines;
 
     /// <inheritdoc/>
-    public Verbosity Verbosity { get; init; } = Verbosity.Diagnostic;
+    public Verbosity Verbosity => Verbosity.Diagnostic;
 
     /// <inheritdoc/>
     public void Report(MessageLevel level, string message) => _messages.Add((level, message));
