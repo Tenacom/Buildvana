@@ -126,7 +126,7 @@ bv's scratch directory: machine-generated temporary files, such as the context f
 
 Besides being read by the .NET CLI itself, the manifest matters to [`bv sync-sdk`](#globaljson) in two ways:
 
-- It acts as a provenance guard for self-updates: when the version pinned in `global.json` is newer than the running `bv`, `sync-sdk` updates `bv` via `dotnet tool update` only if the running `bv` is the one the manifest pins. A `bv` installed in any other way is never updated behind the manifest's back.
+- It acts as a provenance guard for self-updates: when the version pinned in `global.json` is newer than the running `bv`, `sync-sdk` updates `bv` via `dotnet tool update` only if the running `bv`'s version matches the manifest's `bv` entry. Version equality is how `sync-sdk` decides that the running `bv` is the manifest's; a `bv` installed some other way can therefore slip past the guard only when its version coincides with the manifest's entry, in which case the update is harmless — the manifest ends up pinning exactly the version `global.json` asks for.
 - When the `global.json` pin ends up matching the running `bv` but the manifest still pins a different version of `bv`, `sync-sdk` warns that the next `dotnet bv` invocation will run the manifest's version and fail the SDK version check, and suggests how to complete the alignment.
 
 ## `artifacts\`
@@ -304,7 +304,7 @@ Of course, `global.json` can also serve its better-known purpose, pinning the ve
 
 The pinned version is not just a build input: `bv`, Buildvana SDK, and the `Buildvana.Runtime` library are released in lockstep and designed to work as a matched group. Every `bv` command that uses the SDK (`restore`, `build`, `test`, `pack`, and `release`) first verifies that the pinned version matches the version of the running `bv`, and refuses to run on a mismatch — including a missing `global.json`, section, or entry (pass `--skip-sdk-check` to bypass the check when you need a deliberate mismatch).
 
-To align the two versions, run `bv sync-sdk`: when the pin is older, missing, or invalid, it rewrites (or creates) the `global.json` pin to match the running `bv`; when the pin is newer, it updates `bv` itself via `dotnet tool update` — provided the running `bv` comes from the repository's [tool manifest](#configdotnet-toolsjson) (`.config/dotnet-tools.json`), so that a `bv` installed some other way is never updated behind the manifest's back.
+To align the two versions, run `bv sync-sdk`: when the pin is older, missing, or invalid, it rewrites (or creates) the `global.json` pin to match the running `bv`; when the pin is newer, it updates `bv` itself via `dotnet tool update` — but only when the running `bv`'s version matches the one pinned in the repository's [tool manifest](#configdotnet-toolsjson) (`.config\dotnet-tools.json`), as described in that section.
 
 ## `LICENSE`
 
