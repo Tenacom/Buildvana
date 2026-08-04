@@ -214,7 +214,8 @@ internal sealed class SelfVersionServiceTests
         var before = home.ReadFile("global.json");
         WriteToolManifest(home, "2.1.41-preview");
         var runner = new FakeProcessRunner();
-        var service = CreateService(home, "2.1.41-preview", runner);
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", runner, reporter);
 
         await service.SyncSdkAsync().ConfigureAwait(false);
 
@@ -224,6 +225,9 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(executable).IsNotNull();
         await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.42-preview"]);
         await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
+        var postUpdateInfo = InfosOf(reporter)[^1];
+        await Assert.That(postUpdateInfo).Contains("bv updated to 2.1.42-preview");
+        await Assert.That(postUpdateInfo).Contains("Re-run your command with 'dotnet bv'");
     }
 
     [Test]
@@ -375,6 +379,8 @@ internal sealed class SelfVersionServiceTests
     private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);
 
     private static List<string> DetailsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Detail);
+
+    private static List<string> InfosOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Info);
 
     private static List<string> MessagesOf(CaptureReporter reporter, MessageLevel level)
         => [.. reporter.Messages.Where(m => m.Level == level).Select(static m => m.Message)];
