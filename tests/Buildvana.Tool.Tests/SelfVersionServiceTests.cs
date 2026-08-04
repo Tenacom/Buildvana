@@ -90,13 +90,16 @@ internal sealed class SelfVersionServiceTests
     }
 
     [Test]
-    public async Task SyncSdkAsync_WhenInSync_ChangesNothing()
+    [Arguments("2.1.41-preview", "2.1.41-preview")]
+    [Arguments("2.1.41-preview+g0123abc", "2.1.41-preview")]
+    [Arguments("2.1.41-preview", "2.1.41-preview+g0123abc")]
+    public async Task SyncSdkAsync_WhenInSync_ChangesNothing(string ownVersion, string pin)
     {
         using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.41-preview");
+        WriteGlobalJson(home, pin);
         var before = home.ReadFile("global.json");
         var runner = new FakeProcessRunner();
-        var service = CreateService(home, "2.1.41-preview", runner);
+        var service = CreateService(home, ownVersion, runner);
 
         await service.SyncSdkAsync().ConfigureAwait(false);
 
