@@ -58,7 +58,10 @@ public interface IJsonHelper
     /// <param name="path">The path of the file to rewrite.</param>
     /// <param name="parentPath">The property path of the object to insert into: property names from the
     /// root object down, an empty list denoting the root object itself. Fails the build if the path does
-    /// not lead to an object.</param>
+    /// not lead to an object. Array elements contribute no path segment, so a path can also lead into an
+    /// object nested inside an array element (e.g. <c>["a", "b"]</c> matches the <c>b</c> property of an
+    /// object element of the <c>a</c> array); callers are expected to pass paths that do not traverse
+    /// arrays.</param>
     /// <param name="propertyName">The name of the property to insert.</param>
     /// <param name="value">The value of the property to insert.</param>
     /// <returns><see langword="true"/> if the property was inserted; <see langword="false"/> if the object
@@ -66,7 +69,10 @@ public interface IJsonHelper
     /// <remarks>
     /// <para>The property is inserted as the first property of the object, mimicking the surrounding
     /// formatting: line endings, indentation, comments, the trailing newline (if any) and a UTF-8 BOM
-    /// (if any) are preserved. Multi-line values are indented to match the insertion point.</para>
+    /// (if any) are preserved. Multi-line values are indented to match the insertion point. When the target
+    /// object is empty there is no sibling property to mimic: the object's body, and the nested lines of a
+    /// multi-line value, are then indented by two spaces per level regardless of the file's own indentation
+    /// unit.</para>
     /// </remarks>
     bool InsertProperty(string path, IReadOnlyList<string> parentPath, string propertyName, JsonNode value);
 

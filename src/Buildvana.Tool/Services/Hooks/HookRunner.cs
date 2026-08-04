@@ -96,8 +96,16 @@ internal sealed class HookRunner
         foreach (var path in FileSystemHelper.EnumerateFiles(hooksPath, "**/*.cs"))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var artifactsDirectory = FileBasedAppHelper.GetArtifactsDirectory(path);
+            if (artifactsDirectory is null)
+            {
+                // The cache root is per-machine, not per-hook: when it is missing, no hook has ever been built.
+                _reporter.Info("Hook build cache cleaning skipped: this machine has no file-based app cache root.");
+                return;
+            }
+
             _reporter.Info($"Clearing build cache of hook file {path}...");
-            FileSystemHelper.DeleteDirectory(FileBasedAppHelper.GetArtifactsDirectory(path), _reporter);
+            FileSystemHelper.DeleteDirectory(artifactsDirectory, _reporter);
         }
     }
 }

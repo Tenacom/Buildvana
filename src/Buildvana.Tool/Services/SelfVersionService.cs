@@ -72,6 +72,8 @@ internal sealed class SelfVersionService
 
     private string GlobalJsonPath => Path.Combine(_home.HomeDirectory, GlobalJsonFileName);
 
+    private string ToolManifestPath => Path.Combine(_home.HomeDirectory, ".config", "dotnet-tools.json");
+
     private string OwnVersionText => _ownVersion.ToNormalizedString();
 
     /// <summary>
@@ -117,6 +119,9 @@ internal sealed class SelfVersionService
     /// equal to except for build metadata) this bv, the pin is rewritten; when the pin is newer, bv itself is
     /// updated via <c>dotnet tool update</c> — but only when the running bv comes from the repository's tool
     /// manifest, so that e.g. a <c>dnx bv</c> invocation never touches <c>dotnet-tools.json</c>.</para>
+    /// <para>Whenever the pin ends up matching this bv but the tool manifest still pins a different bv (e.g.
+    /// a newer globally-installed bv synced a repository whose manifest pins the older one), a warning points
+    /// out that the manifest is not aligned yet and how to finish the job.</para>
     /// </remarks>
     /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing operation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
@@ -134,6 +139,7 @@ internal sealed class SelfVersionService
         if (pinnedVersion is not null && VersionComparer.VersionRelease.Equals(pinnedVersion, _ownVersion))
         {
             _reporter.Info($"{SdkPackageId} {pin} and bv {OwnVersionText} are already in sync.");
+            WarnIfToolManifestDisagrees();
             return;
         }
 
@@ -145,6 +151,7 @@ internal sealed class SelfVersionService
         else
         {
             WritePin(OwnVersionText);
+            WarnIfToolManifestDisagrees();
         }
     }
 
@@ -225,6 +232,23 @@ internal sealed class SelfVersionService
         _reporter.Info($"Added a {SdkPackageId} {version} pin to {GlobalJsonFileName}.");
     }
 
+    // A heads-up for the half-synced state: the pin now matches this bv, but the tool manifest still pins a
+    // different bv, so the next `dotnet bv` invocation will run that version and fail the SDK version check.
+    private void WarnIfToolManifestDisagrees()
+    {
+        var manifestVersion = ReadToolManifestPin();
+        if (manifestVersion is null || VersionComparer.VersionRelease.Equals(manifestVersion, _ownVersion))
+        {
+            return;
+        }
+
+        _reporter.Warning(
+            $"The tool manifest (.config/dotnet-tools.json) still pins {ToolPackageId} {manifestVersion.ToNormalizedString()}, "
+            + $"so the next 'dotnet {ToolPackageId}' invocation will run that version and fail the SDK version check. "
+            + $"Run 'dotnet tool update {ToolPackageId} --version {OwnVersionText}', or re-run sync-sdk through the manifest "
+            + $"('dotnet {ToolPackageId} sync-sdk'), to align it.");
+    }
+
     // Updates bv itself to the pinned SDK version via `dotnet tool update`, which rewrites the tool manifest
     // and downloads the new version in one go. Guarded on the manifest pinning the running bv's version, per
     // the contract described in SyncSdkAsync's remarks.
@@ -233,24 +257,14 @@ internal sealed class SelfVersionService
         var target = pinnedVersion.ToNormalizedString();
         var mismatchPreamble = $"The pinned {SdkPackageId} version ({target}) is newer than this bv ({OwnVersionText})";
         var manualFixHint = $"update the bv you are running yourself (e.g. 'dotnet tool update -g {ToolPackageId}' for a global install), then retry";
-        var manifestPath = Path.Combine(_home.HomeDirectory, ".config", "dotnet-tools.json");
-        if (!File.Exists(manifestPath))
+        if (!File.Exists(ToolManifestPath))
         {
             throw new BuildFailedException($"{mismatchPreamble}, but this repository has no tool manifest (.config/dotnet-tools.json); {manualFixHint}.");
         }
 
-        var manifest = _jsonHelper.LoadObject(manifestPath);
-        string? manifestVersion = null;
-        var hasEntry = manifest.TryGetPropertyValue("tools", out var toolsNode)
-            && toolsNode is JsonObject tools
-            && tools.TryGetPropertyValue(ToolPackageId, out var toolNode)
-            && toolNode is JsonObject toolEntry
-            && toolEntry.TryGetPropertyValue("version", out var versionNode)
-            && versionNode is JsonValue versionValue
-            && versionValue.TryGetValue(out manifestVersion);
-        var runningBvComesFromManifest = hasEntry
-            && NuGetVersion.TryParse(manifestVersion, out var manifestVersionParsed)
-            && VersionComparer.VersionRelease.Equals(manifestVersionParsed, _ownVersion);
+        var manifestVersion = ReadToolManifestPin();
+        var runningBvComesFromManifest = manifestVersion is not null
+            && VersionComparer.VersionRelease.Equals(manifestVersion, _ownVersion);
         if (!runningBvComesFromManifest)
         {
             throw new BuildFailedException(
@@ -267,5 +281,27 @@ internal sealed class SelfVersionService
             onStderr: line => _reporter.ChildError(line, null),
             cancellationToken: cancellationToken).ConfigureAwait(false);
         _reporter.Info($"{ToolPackageId} updated to {target}. Re-run your command to use the new version.");
+    }
+
+    // Reads the bv version pinned in the repository's tool manifest; null when the manifest, the bv entry,
+    // or a parseable version is missing.
+    private NuGetVersion? ReadToolManifestPin()
+    {
+        var path = ToolManifestPath;
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        var manifest = _jsonHelper.LoadObject(path);
+        string? version = null;
+        var hasEntry = manifest.TryGetPropertyValue("tools", out var toolsNode)
+            && toolsNode is JsonObject tools
+            && tools.TryGetPropertyValue(ToolPackageId, out var toolNode)
+            && toolNode is JsonObject toolEntry
+            && toolEntry.TryGetPropertyValue("version", out var versionNode)
+            && versionNode is JsonValue versionValue
+            && versionValue.TryGetValue(out version);
+        return hasEntry && NuGetVersion.TryParse(version, out var parsed) ? parsed : null;
     }
 }

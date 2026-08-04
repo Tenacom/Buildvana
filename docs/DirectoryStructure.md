@@ -12,6 +12,7 @@
 - [`src\`, `tests\`, `samples\`](#src-tests-samples)
 - [`Common.props` and `Common.targets`](#commonprops-and-commontargets)
 - [`Directory.Build.props` and `Directory.Build.targets`](#directorybuildprops-and-directorybuildtargets)
+- [`global.json`](#globaljson)
 - [`LICENSE`](#license)
 - [`README.md`](#readmemd)
 - [`THIRD-PARTY-NOTICES`](#third-party-notices)
@@ -40,6 +41,10 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |
 +--- .buildvana-temp\          <<< bv's scratch directory (machine-generated; add to .gitignore)
 |
++--- .config\
+|    |
+|    +--- dotnet-tools.json    <<< .NET local tool manifest; pins the bv version used by `dotnet bv`
+|
 +--- artifacts\                <<< (*) Final results of builds
 |
 +--- samples\                  <<< Sample projects
@@ -64,6 +69,8 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |
 +--- Directory.Build.props     <<< (*) Scaffold files used to import Buildvana SDK
 +--- Directory.Build.targets
+|
++--- global.json               <<< (*) Pins the Buildvana SDK version (and, optionally, the .NET SDK version)
 |
 +--- LICENSE                   <<< License file
 |
@@ -240,7 +247,7 @@ An example `tests\Common.props` file may look like this:
 
 ## `Directory.Build.props` and `Directory.Build.targets`
 
-These two files are the only exception to the "no-Directory.Build-files" rule outlined [in the previous section](commonprops-and-commontargets).
+These two files are the only exception to the "no-Directory.Build-files" rule outlined [in the previous section](#commonprops-and-commontargets).
 
 These files, which must be in the home directory, serve two purposes:
 
@@ -252,11 +259,7 @@ Here's what must be in `Directory.Build.props`:
 ```XML
 <Project>
 
-  <PropertyGroup>
-    <BuildvanaSdkVersion>0.1.0</BuildvanaSdkVersion>
-  </PropertyGroup>
-  
-  <Import Project="Sdk.props" Sdk="Buildvana.Sdk" Version="$(BuildvanaSdkVersion)" />
+  <Import Project="Sdk.props" Sdk="Buildvana.Sdk" /> <!-- Buildvana.Sdk version is specified in global.json -->
 
 </Project>
 ```
@@ -266,14 +269,32 @@ As you may have guessed, `Directory.Build.targets` is similar:
 ```XML
 <Project>
 
-  <Import Project="Sdk.targets" Sdk="Buildvana.Sdk" Version="$(BuildvanaSdkVersion)" />
+  <Import Project="Sdk.targets" Sdk="Buildvana.Sdk" /> <!-- Buildvana.Sdk version is specified in global.json -->
 
 </Project>
 ```
 
-The `BuildvanaSdkVersion` property makes sure that `Sdk.props` and `SdkTargets` are imported from the same version of Buildvana SDK; otherwise they might be incompatible with each other. Buildvana SDK will detect such a situation and issue a [`BVSDK1002`](SdkDiagnostics.md#buildvana-sdk-core-1000-1049) error.
+Note that neither `<Import>` carries a `Version` attribute: the version of Buildvana SDK is pinned once, for the whole repository, in [`global.json`](#globaljson). Pinning the version in a single place keeps the two files identical across repositories and guarantees that `Sdk.props` and `Sdk.targets` are imported from the same version of Buildvana SDK. Should they ever come from different versions — for example, because of stray `Version` attributes — they might be incompatible with each other; Buildvana SDK detects such a situation and issues a [`BVSDK1002`](SdkDiagnostics.md#buildvana-sdk-core-1000-1049) error.
 
 It is important that no other `Directory.Build.props` and / or `Directory.Build.targets` files exist in the repository; use `Common.props` and `Common.targets`, instead, as explained above.
+
+## `global.json`
+
+[`global.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json) is where the .NET SDK looks up the version of any MSBuild project SDK referenced without an explicit version, under the `msbuild-sdks` key. Since the `<Import>` elements in `Directory.Build.props` and `Directory.Build.targets` reference Buildvana SDK without a `Version` attribute (see [the previous section](#directorybuildprops-and-directorybuildtargets)), the version of Buildvana SDK used by the repository is pinned here:
+
+```JSON
+{
+  "msbuild-sdks": {
+    "Buildvana.Sdk": "1.0.0"
+  }
+}
+```
+
+Of course, `global.json` can also serve its better-known purpose, pinning the version of the .NET SDK itself via the `sdk` key; the two uses coexist in the same file.
+
+The pinned version is not just a build input: `bv`, Buildvana SDK, and the `Buildvana.Runtime` library are released in lockstep and designed to work as a matched group. Every `bv` command that uses the SDK (`restore`, `build`, `test`, `pack`, and `release`) first verifies that the pinned version matches the version of the running `bv`, and refuses to run on a mismatch — including a missing `global.json`, section, or entry (pass `--skip-sdk-check` to bypass the check when you need a deliberate mismatch).
+
+To align the two versions, run `bv sync-sdk`: when the pin is older, missing, or invalid, it rewrites (or creates) the `global.json` pin to match the running `bv`; when the pin is newer, it updates `bv` itself via `dotnet tool update` — provided the running `bv` comes from the repository's tool manifest (`.config/dotnet-tools.json`), so that a `bv` installed some other way is never updated behind the manifest's back.
 
 ## `LICENSE`
 
