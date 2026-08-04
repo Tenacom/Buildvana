@@ -306,6 +306,25 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(WarningsOf(reporter).Count).IsEqualTo(0);
     }
 
+    [Test]
+    public async Task SyncSdkAsync_WithOlderPinAndUnreadableManifest_StillRewritesPin()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
+        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), "this is not JSON");
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
+
+        await service.SyncSdkAsync().ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
+        await Assert.That(WarningsOf(reporter).Count).IsEqualTo(0);
+        var details = DetailsOf(reporter);
+        await Assert.That(details.Count).IsEqualTo(1);
+        await Assert.That(details[0]).Contains("dotnet-tools.json");
+    }
+
     private static SelfVersionService CreateService(
         TempHome home,
         string ownVersion,
@@ -318,8 +337,12 @@ internal sealed class SelfVersionServiceTests
             processRunner ?? new FakeProcessRunner(),
             NuGetVersion.Parse(ownVersion));
 
-    private static List<string> WarningsOf(CaptureReporter reporter)
-        => [.. reporter.Messages.Where(static m => m.Level == MessageLevel.Warning).Select(static m => m.Message)];
+    private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);
+
+    private static List<string> DetailsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Detail);
+
+    private static List<string> MessagesOf(CaptureReporter reporter, MessageLevel level)
+        => [.. reporter.Messages.Where(m => m.Level == level).Select(static m => m.Message)];
 
     private static void WriteGlobalJson(TempHome home, string pin) => home.WriteFile("global.json", GlobalJsonText(pin));
 
