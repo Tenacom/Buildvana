@@ -8,6 +8,7 @@
 - [Home directory](#home-directory)
   - [Location of the home directory](#location-of-the-home-directory)
 - [`.buildvana-temp\`](#buildvana-temp)
+- [`.config\dotnet-tools.json`](#configdotnet-toolsjson)
 - [`artifacts\`](#artifacts)
 - [`src\`, `tests\`, `samples\`](#src-tests-samples)
 - [`Common.props` and `Common.targets`](#commonprops-and-commontargets)
@@ -118,6 +119,15 @@ If no marker is found, the build (or project loading in Visual Studio) stops wit
 ## `.buildvana-temp\`
 
 bv's scratch directory: machine-generated temporary files, such as the context files for [release hooks](ReleaseHooks.md#the-hook-context), live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
+
+## `.config\dotnet-tools.json`
+
+[`dotnet-tools.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use) is the .NET local tool manifest: it pins the versions of the .NET tools used by the repository, so that `dotnet <tool>` invocations run the pinned versions. In a repository using Buildvana, this usually includes `bv` itself, which is why the manifest appears in the directory structure above. It is optional, though: `bv` can also be installed globally, or run via `dnx`, in which case the manifest (or its `bv` entry) may be absent.
+
+Besides being read by the .NET CLI itself, the manifest matters to [`bv sync-sdk`](#globaljson) in two ways:
+
+- It acts as a provenance guard for self-updates: when the version pinned in `global.json` is newer than the running `bv`, `sync-sdk` updates `bv` via `dotnet tool update` only if the running `bv` is the one the manifest pins. A `bv` installed in any other way is never updated behind the manifest's back.
+- When the `global.json` pin ends up matching the running `bv` but the manifest still pins a different version of `bv`, `sync-sdk` warns that the next `dotnet bv` invocation will run the manifest's version and fail the SDK version check, and suggests how to complete the alignment.
 
 ## `artifacts\`
 
@@ -294,7 +304,7 @@ Of course, `global.json` can also serve its better-known purpose, pinning the ve
 
 The pinned version is not just a build input: `bv`, Buildvana SDK, and the `Buildvana.Runtime` library are released in lockstep and designed to work as a matched group. Every `bv` command that uses the SDK (`restore`, `build`, `test`, `pack`, and `release`) first verifies that the pinned version matches the version of the running `bv`, and refuses to run on a mismatch — including a missing `global.json`, section, or entry (pass `--skip-sdk-check` to bypass the check when you need a deliberate mismatch).
 
-To align the two versions, run `bv sync-sdk`: when the pin is older, missing, or invalid, it rewrites (or creates) the `global.json` pin to match the running `bv`; when the pin is newer, it updates `bv` itself via `dotnet tool update` — provided the running `bv` comes from the repository's tool manifest (`.config/dotnet-tools.json`), so that a `bv` installed some other way is never updated behind the manifest's back.
+To align the two versions, run `bv sync-sdk`: when the pin is older, missing, or invalid, it rewrites (or creates) the `global.json` pin to match the running `bv`; when the pin is newer, it updates `bv` itself via `dotnet tool update` — provided the running `bv` comes from the repository's [tool manifest](#configdotnet-toolsjson) (`.config/dotnet-tools.json`), so that a `bv` installed some other way is never updated behind the manifest's back.
 
 ## `LICENSE`
 
