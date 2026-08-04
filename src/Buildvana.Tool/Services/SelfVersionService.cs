@@ -81,8 +81,9 @@ internal sealed class SelfVersionService
     /// <summary>
     /// Ensures that the repository's pinned Buildvana SDK version matches this bv's version.
     /// </summary>
-    /// <exception cref="BuildFailedException">There is no pin, the pin is not a valid version, or the pinned
-    /// version differs from this bv's version.</exception>
+    /// <exception cref="BuildFailedException">The check failed — e.g. <c>global.json</c> could not be read,
+    /// does not pin the SDK version, or pins a version different from this bv's; the message names the
+    /// failure.</exception>
     public void EnsureSdkVersionMatch()
     {
         var (pin, missingReason) = ReadPin();
