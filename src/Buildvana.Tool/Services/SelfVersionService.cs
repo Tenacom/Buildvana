@@ -235,7 +235,8 @@ internal sealed class SelfVersionService
     // A heads-up for the half-synced state: the pin now matches this bv, but the tool manifest still pins a
     // different bv, so the next `dotnet bv` invocation will run that version and fail the SDK version check.
     // The manifest read is purely advisory here, unlike in UpdateToolManifestAsync: an unreadable manifest
-    // must not fail a sync that has already done its job.
+    // must not fail a sync that has already done its job. It must stay visible at default verbosity, though
+    // (warnings never affect the exit code): the next `dotnet bv` invocation will trip over the same file.
     private void WarnIfToolManifestDisagrees()
     {
         NuGetVersion? manifestVersion;
@@ -245,7 +246,7 @@ internal sealed class SelfVersionService
         }
         catch (BuildFailedException e)
         {
-            _reporter.Detail($"Tool manifest not checked for agreement: {e.Message}");
+            _reporter.Warning($"Tool manifest not checked for agreement: {e.Message}");
             return;
         }
 

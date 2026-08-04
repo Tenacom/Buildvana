@@ -326,7 +326,7 @@ internal sealed class SelfVersionServiceTests
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithOlderPinAndUnreadableManifest_StillRewritesPin()
+    public async Task SyncSdkAsync_WithOlderPinAndUnreadableManifest_StillRewritesPinAndWarns()
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.40-preview");
@@ -338,10 +338,11 @@ internal sealed class SelfVersionServiceTests
         await service.SyncSdkAsync().ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
-        await Assert.That(WarningsOf(reporter).Count).IsEqualTo(0);
-        var details = DetailsOf(reporter);
-        await Assert.That(details.Count).IsEqualTo(1);
-        await Assert.That(details[0]).Contains("dotnet-tools.json");
+        await Assert.That(DetailsOf(reporter).Count).IsEqualTo(0);
+        var warnings = WarningsOf(reporter);
+        await Assert.That(warnings.Count).IsEqualTo(1);
+        await Assert.That(warnings[0]).Contains("not checked for agreement");
+        await Assert.That(warnings[0]).Contains("dotnet-tools.json");
     }
 
     private static SelfVersionService CreateService(
