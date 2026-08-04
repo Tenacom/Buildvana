@@ -110,15 +110,7 @@ public sealed partial class JsonHelper : IJsonHelper
         Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNull(rewriter);
 
-        byte[] originalBytes;
-        try
-        {
-            originalBytes = File.ReadAllBytes(path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
-        }
+        var originalBytes = ReadFileBytes(path);
 
         // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
         var bomLength = HasUtf8Bom(originalBytes) ? 3 : 0;
@@ -157,15 +149,7 @@ public sealed partial class JsonHelper : IJsonHelper
             output.Write(originalBytes, cursor, originalBytes.Length - cursor);
         }
 
-        try
-        {
-            File.WriteAllBytes(path, output.ToArray());
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
-        }
-
+        WriteFileBytes(path, output.ToArray());
         return true;
     }
 
@@ -184,6 +168,18 @@ public sealed partial class JsonHelper : IJsonHelper
                 return result;
             default:
                 throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
+        }
+    }
+
+    private static byte[] ReadFileBytes(string path)
+    {
+        try
+        {
+            return File.ReadAllBytes(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
+        {
+            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
     }
 
@@ -287,5 +283,17 @@ public sealed partial class JsonHelper : IJsonHelper
         var innerLength = reader.ValueSpan.Length;
         var encoded = JsonEncodedText.Encode(newValue.AsSpan(), JavaScriptEncoder.UnsafeRelaxedJsonEscaping).EncodedUtf8Bytes.ToArray();
         edits.Add(new JsonValueEdit(innerStart, innerLength, encoded));
+    }
+
+    private static void WriteFileBytes(string path, byte[] bytes)
+    {
+        try
+        {
+            File.WriteAllBytes(path, bytes);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
+        {
+            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
+        }
     }
 }

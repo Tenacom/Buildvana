@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -24,124 +23,73 @@ public sealed partial class JsonHelper
         Guard.IsNotNullOrEmpty(propertyName);
         Guard.IsNotNull(value);
 
-        byte[] originalBytes;
-        try
+        var originalBytes = ReadFileBytes(path);
+        var inserting = TryLocateInsertion(
+            path,
+            originalBytes,
+            parentPath,
+            propertyName,
+            out var braceIndex,
+            out var firstContentIndex,
+            out var objectIsEmpty);
+        if (!inserting)
         {
-            originalBytes = File.ReadAllBytes(path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
-        }
-
-        var bomLength = HasUtf8Bom(originalBytes) ? 3 : 0;
-        int braceIndex;
-        int firstContentIndex;
-        bool objectIsEmpty;
-        try
-        {
-            var inserting = TryLocateInsertion(
-                path,
-                originalBytes.AsSpan(bomLength),
-                bomLength,
-                parentPath,
-                propertyName,
-                out braceIndex,
-                out firstContentIndex,
-                out objectIsEmpty);
-            if (!inserting)
-            {
-                return false;
-            }
-        }
-        catch (JsonException e)
-        {
-            throw new BuildFailedException($"{path} does not contain valid JSON.", e);
+            return false;
         }
 
-        var newline = ContainsCrLf(originalBytes) ? "\r\n" : "\n";
-        string insertionText;
-        var replaceStart = braceIndex + 1;
-        var replaceLength = 0;
-        if (objectIsEmpty)
-        {
-            var baseIndent = LeadingWhitespaceOfLine(originalBytes, braceIndex);
-            var innerIndent = baseIndent + "  ";
-            var valueText = SerializeValue(value, newline, innerIndent);
-            insertionText = $"{newline}{innerIndent}{EncodePropertyName(propertyName)}: {valueText}{newline}{baseIndent}";
-
-            // Replace the whitespace between the braces; anything else (e.g. a comment) stays in place.
-            if (IsJsonWhitespace(originalBytes, replaceStart, firstContentIndex))
-            {
-                replaceLength = firstContentIndex - replaceStart;
-            }
-        }
-        else
-        {
-            // On a multi-line object, mimic the indentation of the first existing property; on a single-line
-            // object, splice the new property right after the opening brace.
-            var indent = IndentBeforeContent(originalBytes, replaceStart, firstContentIndex);
-            var valueText = SerializeValue(value, newline, indent ?? string.Empty);
-            insertionText = indent is null
-                ? $"{EncodePropertyName(propertyName)}: {valueText}, "
-                : $"{newline}{indent}{EncodePropertyName(propertyName)}: {valueText},";
-        }
-
-        var insertion = Encoding.UTF8.GetBytes(insertionText);
-        using var output = new MemoryStream(originalBytes.Length + insertion.Length);
-        output.Write(originalBytes, 0, replaceStart);
-        output.Write(insertion, 0, insertion.Length);
-        output.Write(originalBytes, replaceStart + replaceLength, originalBytes.Length - replaceStart - replaceLength);
-
-        try
-        {
-            File.WriteAllBytes(path, output.ToArray());
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
-        }
-
+        var (insertionText, replaceLength) = objectIsEmpty
+            ? ComposeInsertionForEmptyObject(originalBytes, braceIndex, firstContentIndex, propertyName, value)
+            : ComposeInsertionBeforeFirstProperty(originalBytes, braceIndex, firstContentIndex, propertyName, value);
+        var newBytes = Splice(originalBytes, braceIndex + 1, replaceLength, insertionText);
+        WriteFileBytes(path, newBytes);
         return true;
     }
 
     // Finds the object at parentPath and the byte positions relevant to inserting into it (file coordinates):
     // its opening brace and its first content token (the closing brace, for an empty object). Returns false,
     // without positions, if the object already has a property named propertyName. Fails the build if the
-    // document contains no object at parentPath; JsonException bubbles up on malformed JSON.
+    // document is not valid JSON, or contains no object at parentPath.
     private static bool TryLocateInsertion(
         string path,
-        ReadOnlySpan<byte> jsonSpan,
-        int offsetInFile,
+        byte[] originalBytes,
         IReadOnlyList<string> parentPath,
         string propertyName,
         out int braceIndex,
         out int firstContentIndex,
         out bool objectIsEmpty)
     {
-        var reader = new Utf8JsonReader(
-            jsonSpan,
-            new JsonReaderOptions
-            {
-                AllowTrailingCommas = true,
-                CommentHandling = JsonCommentHandling.Skip,
-            });
-
-        if (!TryFindParentObject(ref reader, parentPath))
+        // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing, but keep positions in file coordinates.
+        var bomLength = HasUtf8Bom(originalBytes) ? 3 : 0;
+        try
         {
-            var description = parentPath.Count == 0
-                ? "a root object"
-                : $"an object at '{string.Join('.', parentPath)}'";
-            throw new BuildFailedException($"{path} does not contain {description}.");
-        }
+            var reader = new Utf8JsonReader(
+                originalBytes.AsSpan(bomLength),
+                new JsonReaderOptions
+                {
+                    AllowTrailingCommas = true,
+                    CommentHandling = JsonCommentHandling.Skip,
+                });
 
-        return TryGetInsertionPoints(
-            ref reader,
-            offsetInFile,
-            propertyName,
-            out braceIndex,
-            out firstContentIndex,
-            out objectIsEmpty);
+            if (!TryFindParentObject(ref reader, parentPath))
+            {
+                var description = parentPath.Count == 0
+                    ? "a root object"
+                    : $"an object at '{string.Join('.', parentPath)}'";
+                throw new BuildFailedException($"{path} does not contain {description}.");
+            }
+
+            return TryGetInsertionPoints(
+                ref reader,
+                bomLength,
+                propertyName,
+                out braceIndex,
+                out firstContentIndex,
+                out objectIsEmpty);
+        }
+        catch (JsonException e)
+        {
+            throw new BuildFailedException($"{path} does not contain valid JSON.", e);
+        }
     }
 
     // Walks the document until it enters the object at parentPath (the root object, if parentPath is
@@ -261,6 +209,60 @@ public sealed partial class JsonHelper
 
         // Unreachable: on truncated JSON, reader.Read() throws before running out of tokens.
         throw new JsonException($"Unexpected end of JSON while scanning the object at index {braceIndex}.");
+    }
+
+    // The insertion for an empty object rewrites it in multi-line form: the new property sits on its own
+    // line, indented one level deeper than the line holding the opening brace, and the closing brace moves
+    // to its own line at that line's indentation.
+    private static (string Text, int ReplaceLength) ComposeInsertionForEmptyObject(
+        byte[] originalBytes,
+        int braceIndex,
+        int firstContentIndex,
+        string propertyName,
+        JsonNode value)
+    {
+        var newline = ContainsCrLf(originalBytes) ? "\r\n" : "\n";
+        var baseIndent = LeadingWhitespaceOfLine(originalBytes, braceIndex);
+        var innerIndent = baseIndent + "  ";
+        var valueText = SerializeValue(value, newline, innerIndent);
+        var text = $"{newline}{innerIndent}{EncodePropertyName(propertyName)}: {valueText}{newline}{baseIndent}";
+
+        // Replace the whitespace between the braces; anything else (e.g. a comment) stays in place.
+        var replaceStart = braceIndex + 1;
+        var replaceLength = IsJsonWhitespace(originalBytes, replaceStart, firstContentIndex)
+            ? firstContentIndex - replaceStart
+            : 0;
+        return (text, replaceLength);
+    }
+
+    // On a multi-line object, the new property goes on its own line before the first existing property,
+    // mimicking its indentation; on a single-line object, it is spliced right after the opening brace.
+    // Nothing is replaced in either case.
+    private static (string Text, int ReplaceLength) ComposeInsertionBeforeFirstProperty(
+        byte[] originalBytes,
+        int braceIndex,
+        int firstContentIndex,
+        string propertyName,
+        JsonNode value)
+    {
+        var newline = ContainsCrLf(originalBytes) ? "\r\n" : "\n";
+        var indent = IndentBeforeContent(originalBytes, braceIndex + 1, firstContentIndex);
+        var valueText = SerializeValue(value, newline, indent ?? string.Empty);
+        var text = indent is null
+            ? $"{EncodePropertyName(propertyName)}: {valueText}, "
+            : $"{newline}{indent}{EncodePropertyName(propertyName)}: {valueText},";
+        return (text, 0);
+    }
+
+    // A copy of bytes with the replaceLength bytes at replaceStart replaced by the UTF-8 encoding of text.
+    private static byte[] Splice(byte[] bytes, int replaceStart, int replaceLength, string text)
+    {
+        var insertion = Encoding.UTF8.GetBytes(text);
+        using var output = new MemoryStream(bytes.Length + insertion.Length);
+        output.Write(bytes, 0, replaceStart);
+        output.Write(insertion, 0, insertion.Length);
+        output.Write(bytes, replaceStart + replaceLength, bytes.Length - replaceStart - replaceLength);
+        return output.ToArray();
     }
 
     private static string SerializeValue(JsonNode value, string newline, string indent)
