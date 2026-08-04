@@ -1,8 +1,10 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -166,7 +168,14 @@ internal sealed class SelfVersionService
             "}",
             string.Empty,
         ];
-        File.WriteAllText(path, string.Join('\n', lines));
+        try
+        {
+            File.WriteAllText(path, string.Join('\n', lines));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
+        {
+            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
+        }
     }
 
     private static bool IsPinPath(IReadOnlyList<string> propertyPath)

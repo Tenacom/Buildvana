@@ -191,6 +191,21 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(home.ReadFile("global.json")).IsEqualTo("{\n  \"msbuild-sdks\": {\n    \"Buildvana.Sdk\": \"2.1.41-preview\"\n  }\n}\n");
     }
 
+    // A directory named global.json is invisible to File.Exists, so the sync takes the create-new-file path
+    // and the write hits a directory — the denied-access failure mode (not an IOException) on every platform.
+    [Test]
+    public async Task SyncSdkAsync_WithDeniedGlobalJsonWrite_Fails()
+    {
+        using var home = new TempHome();
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, "global.json"));
+        var service = CreateService(home, "2.1.41-preview");
+
+        var exception = await Assert.That(() => service.SyncSdkAsync()).Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("Could not write to");
+        await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
+    }
+
     [Test]
     public async Task SyncSdkAsync_WithNewerPin_UpdatesToolViaDotnetToolUpdate()
     {
