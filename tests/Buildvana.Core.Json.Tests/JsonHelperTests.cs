@@ -20,6 +20,7 @@ internal sealed partial class JsonHelperTests
 
         var exception = await Assert.That(act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
+        await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
     [Test]
@@ -29,6 +30,7 @@ internal sealed partial class JsonHelperTests
 
         var exception = await Assert.That(act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");
+        await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
     [Test]
@@ -38,6 +40,7 @@ internal sealed partial class JsonHelperTests
 
         var exception = await Assert.That(act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
+        await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
     [Test]
@@ -47,6 +50,7 @@ internal sealed partial class JsonHelperTests
 
         var exception = await Assert.That(act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
+        await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
     [Test]
