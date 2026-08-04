@@ -130,8 +130,9 @@ internal sealed class SelfVersionService
     /// </remarks>
     /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing operation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    /// <exception cref="BuildFailedException">The pin is newer than this bv, but bv cannot be updated from the
-    /// repository's tool manifest.</exception>
+    /// <exception cref="BuildFailedException">The synchronization failed — e.g. <c>global.json</c> could not
+    /// be read or written, or the pin is newer than this bv but bv cannot be updated from the repository's
+    /// tool manifest; the message names the failure.</exception>
     public async Task SyncSdkAsync(CancellationToken cancellationToken = default)
     {
         var (pin, _) = ReadPin();
