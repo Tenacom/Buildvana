@@ -306,7 +306,9 @@ internal sealed class SelfVersionService
             onStdout: line => _reporter.ChildOutput(line, null),
             onStderr: line => _reporter.ChildError(line, null),
             cancellationToken: cancellationToken).ConfigureAwait(false);
-        _reporter.Info($"{ToolPackageId} updated to {target}. Re-run your command to use the new version.");
+        _reporter.Info(
+            $"{ToolPackageId} updated to {target} in the tool manifest. Re-run your command with "
+            + $"'dotnet {ToolPackageId}', which always runs the manifest's version.");
     }
 
     // Reads the bv version pinned in the repository's tool manifest; null when the manifest, the bv entry,
