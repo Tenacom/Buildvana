@@ -254,11 +254,15 @@ internal sealed class SelfVersionService
             return;
         }
 
+        var manifestIsNewer = VersionComparer.VersionRelease.Compare(manifestVersion, _ownVersion) > 0;
+        var remedy = manifestIsNewer
+            ? $"Run 'dotnet {ToolPackageId} sync-sdk' to let the manifest's newer {ToolPackageId} re-pin the SDK to its own version."
+            : $"Run 'dotnet tool update {ToolPackageId} --version {OwnVersionText}', or re-run sync-sdk through the manifest "
+                + $"('dotnet {ToolPackageId} sync-sdk'), to align it.";
         _reporter.Warning(
-            $"The tool manifest (.config/dotnet-tools.json) still pins {ToolPackageId} {manifestVersion.ToNormalizedString()}, "
-            + $"so the next 'dotnet {ToolPackageId}' invocation will run that version and fail the SDK version check. "
-            + $"Run 'dotnet tool update {ToolPackageId} --version {OwnVersionText}', or re-run sync-sdk through the manifest "
-            + $"('dotnet {ToolPackageId} sync-sdk'), to align it.");
+            $"The tool manifest (.config/dotnet-tools.json) pins {ToolPackageId} {manifestVersion.ToNormalizedString()} "
+            + $"while this {ToolPackageId} is version {OwnVersionText}, so the next 'dotnet {ToolPackageId}' invocation "
+            + $"will run that version and fail the SDK version check. {remedy}");
     }
 
     // Updates bv itself to the pinned SDK version via `dotnet tool update`, which rewrites the tool manifest

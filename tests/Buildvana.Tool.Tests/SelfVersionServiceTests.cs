@@ -290,6 +290,25 @@ internal sealed class SelfVersionServiceTests
         var warnings = WarningsOf(reporter);
         await Assert.That(warnings.Count).IsEqualTo(1);
         await Assert.That(warnings[0]).Contains("dotnet-tools.json");
+        await Assert.That(warnings[0]).Contains("dotnet tool update");
+    }
+
+    [Test]
+    public async Task SyncSdkAsync_WhenInSyncButManifestIsNewer_WarnsAdvisingSyncSdkThroughTheManifest()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.42-preview");
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
+
+        await service.SyncSdkAsync().ConfigureAwait(false);
+
+        var warnings = WarningsOf(reporter);
+        await Assert.That(warnings.Count).IsEqualTo(1);
+        await Assert.That(warnings[0]).Contains("2.1.42-preview");
+        await Assert.That(warnings[0]).Contains("dotnet bv sync-sdk");
+        await Assert.That(warnings[0]).DoesNotContain("dotnet tool update");
     }
 
     [Test]
