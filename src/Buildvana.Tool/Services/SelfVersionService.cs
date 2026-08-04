@@ -117,13 +117,13 @@ internal sealed class SelfVersionService
     /// Aligns the repository's pinned Buildvana SDK version with this bv's version, updating whichever is older.
     /// </summary>
     /// <remarks>
-    /// <para>A missing, or unparseable, pin counts as older than any version. When the pin is older than (or
-    /// equal to except for build metadata) this bv, the pin is rewritten; when the pin is newer, bv itself is
-    /// updated via <c>dotnet tool update</c> — but only when the running bv's version matches the bv entry in
-    /// the repository's tool manifest: version equality is how sync-sdk decides that the running bv is the
-    /// manifest's, so e.g. a <c>dnx bv</c> invocation can rewrite <c>dotnet-tools.json</c> only when its
-    /// version coincides with the manifest's entry, in which case the manifest ends up pinning exactly the
-    /// version <c>global.json</c> asks for.</para>
+    /// <para>A missing, or unparseable, pin counts as older than any version. When the pin equals this bv's
+    /// version (ignoring build metadata), nothing changes; when the pin is older, it is rewritten to this
+    /// bv's version; when the pin is newer, bv itself is updated via <c>dotnet tool update</c> — but only
+    /// when the running bv's version matches the bv entry in the repository's tool manifest: version equality
+    /// is how sync-sdk decides that the running bv is the manifest's, so e.g. a <c>dnx bv</c> invocation can
+    /// rewrite <c>dotnet-tools.json</c> only when its version coincides with the manifest's entry, in which
+    /// case the manifest ends up pinning exactly the version <c>global.json</c> asks for.</para>
     /// <para>Whenever the pin ends up matching this bv but the tool manifest still pins a different bv (e.g.
     /// a newer globally-installed bv synced a repository whose manifest pins the older one), a warning points
     /// out that the manifest is not aligned yet and how to finish the job.</para>
