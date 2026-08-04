@@ -197,7 +197,8 @@ internal sealed class HookRunnerTests
     // directory), so the computed artifacts directories cannot collide with those of real file-based apps.
     private static string CreateFakeArtifactsDirectory(string hookPath)
     {
-        var path = FileBasedAppHelper.GetArtifactsDirectory(hookPath);
+        var path = FileBasedAppHelper.GetArtifactsDirectory(hookPath)
+            ?? throw new InvalidOperationException("This machine has no file-based app cache root.");
         _ = Directory.CreateDirectory(path);
         File.WriteAllText(Path.Combine(path, "build-success.cache"), string.Empty);
         return path;

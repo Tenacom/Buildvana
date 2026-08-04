@@ -255,13 +255,71 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
 
-    private static SelfVersionService CreateService(TempHome home, string ownVersion, FakeProcessRunner? processRunner = null)
+    [Test]
+    public async Task SyncSdkAsync_WithOlderPinAndOlderManifest_RewritesPinAndWarns()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, "2.1.40-preview");
+        var runner = new FakeProcessRunner();
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", runner, reporter);
+
+        await service.SyncSdkAsync().ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        var warnings = WarningsOf(reporter);
+        await Assert.That(warnings.Count).IsEqualTo(1);
+        await Assert.That(warnings[0]).Contains("dotnet-tools.json");
+        await Assert.That(warnings[0]).Contains("2.1.40-preview");
+        await Assert.That(warnings[0]).Contains("2.1.41-preview");
+    }
+
+    [Test]
+    public async Task SyncSdkAsync_WhenInSyncButManifestDisagrees_Warns()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.40-preview");
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
+
+        await service.SyncSdkAsync().ConfigureAwait(false);
+
+        var warnings = WarningsOf(reporter);
+        await Assert.That(warnings.Count).IsEqualTo(1);
+        await Assert.That(warnings[0]).Contains("dotnet-tools.json");
+    }
+
+    [Test]
+    public async Task SyncSdkAsync_WithOlderPinAndMatchingManifest_DoesNotWarn()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
+
+        await service.SyncSdkAsync().ConfigureAwait(false);
+
+        await Assert.That(WarningsOf(reporter).Count).IsEqualTo(0);
+    }
+
+    private static SelfVersionService CreateService(
+        TempHome home,
+        string ownVersion,
+        FakeProcessRunner? processRunner = null,
+        IReporter? reporter = null)
         => new(
-            NullReporter.Instance,
+            reporter ?? NullReporter.Instance,
             home.Provider,
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
             NuGetVersion.Parse(ownVersion));
+
+    private static List<string> WarningsOf(CaptureReporter reporter)
+        => [.. reporter.Messages.Where(static m => m.Level == MessageLevel.Warning).Select(static m => m.Message)];
 
     private static void WriteGlobalJson(TempHome home, string pin) => home.WriteFile("global.json", GlobalJsonText(pin));
 

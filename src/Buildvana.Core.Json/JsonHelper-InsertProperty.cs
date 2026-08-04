@@ -196,7 +196,9 @@ public sealed partial class JsonHelper
 
     // The object just entered is the parent object only if its own property name completes parentPath
     // (or it is the root object and parentPath is empty): array-element objects never match, as they
-    // push no segment and would otherwise be confused with their containing array's property.
+    // push no segment and would otherwise be confused with their containing array's property. Their
+    // descendants can still match, though: since elements push no segment, a property inside one
+    // continues its array's path (see the interface doc's caveat about paths that traverse arrays).
     private static bool IsParentObject(
         IReadOnlyList<string> parentPath,
         IReadOnlyList<string> pathSegments,

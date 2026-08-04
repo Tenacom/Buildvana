@@ -16,6 +16,8 @@ internal sealed class FileBasedAppHelperTests
 
         var result = FileBasedAppHelper.GetArtifactsDirectory(Path.Combine(Path.GetTempPath(), "app.cs"));
 
+        await Assert.That(result).IsNotNull();
+        await Assert.That(Path.IsPathRooted(result)).IsTrue();
         await Assert.That(Path.GetDirectoryName(result)).IsEqualTo(expectedParent);
     }
 
@@ -47,8 +49,8 @@ internal sealed class FileBasedAppHelperTests
         var first = Path.Combine(Path.GetTempPath(), "first", "app.cs");
         var second = Path.Combine(Path.GetTempPath(), "second", "app.cs");
 
-        await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(first))
-            .IsNotEqualTo(FileBasedAppHelper.GetArtifactsDirectory(second));
+        await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(first)!)
+            .IsNotEqualTo(FileBasedAppHelper.GetArtifactsDirectory(second)!);
     }
 
     [Test]
