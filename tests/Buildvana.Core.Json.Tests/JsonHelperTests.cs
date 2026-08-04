@@ -8,6 +8,47 @@ using Buildvana.Core.Json;
 
 internal sealed partial class JsonHelperTests
 {
+    // Opening a directory as a file raises UnauthorizedAccessException on every platform — the
+    // access-denied failure mode that is not an IOException, which JsonHelper must still wrap
+    // in BuildFailedException per the IJsonHelper contract.
+    private static string DeniedAccessPath => Path.TrimEndingDirectorySeparator(Path.GetTempPath());
+
+    [Test]
+    public async Task LoadObject_WithDeniedAccess_Fails()
+    {
+        var act = () => new JsonHelper().LoadObject(DeniedAccessPath);
+
+        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("Could not read from");
+    }
+
+    [Test]
+    public async Task SaveObject_WithDeniedAccess_Fails()
+    {
+        var act = () => new JsonHelper().SaveObject(new JsonObject(), DeniedAccessPath);
+
+        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("Could not write to");
+    }
+
+    [Test]
+    public async Task RewriteStringValues_WithDeniedAccess_Fails()
+    {
+        var act = () => new JsonHelper().RewriteStringValues(DeniedAccessPath, (_, _) => null);
+
+        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("Could not read from");
+    }
+
+    [Test]
+    public async Task InsertProperty_WithDeniedAccess_Fails()
+    {
+        var act = () => new JsonHelper().InsertProperty(DeniedAccessPath, [], "a", JsonValue.Create("x"));
+
+        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("Could not read from");
+    }
+
     [Test]
     public async Task InsertProperty_InsertsFirst_MimickingIndentation()
     {
