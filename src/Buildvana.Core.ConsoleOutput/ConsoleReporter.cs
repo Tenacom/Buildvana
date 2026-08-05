@@ -10,12 +10,17 @@ using CommunityToolkit.Diagnostics;
 namespace Buildvana.Core.ConsoleOutput;
 
 /// <summary>
-/// An <see cref="IReporter"/> that writes to the process's standard output via <see cref="Console"/>.
+/// An <see cref="IReporter"/> that writes to the process's standard streams via <see cref="Console"/>.
 /// </summary>
 /// <remarks>
+/// <para>Diagnostics (leveled messages and activity header/outcome lines) go to standard error, so that
+/// standard output carries only command deliverables and child-process standard output
+/// (<see cref="ChildOutput"/>) and stays pipeable at any verbosity, per the prevailing CLI convention.</para>
 /// <para>Color is a function of message level, decided here and never by the caller: <c>error:</c> renders in
 /// red and <c>warning:</c> in yellow (foreground only, no background fill); the remaining levels are uncolored
-/// so they inherit the terminal's theme. The message body is never colored.</para>
+/// so they inherit the terminal's theme. The message body is never colored. Coloring uses
+/// <see cref="AnsiEscapes"/> rather than <see cref="Console.ForegroundColor"/>, because the latter is tied to
+/// standard output and would corrupt a redirected deliverable stream.</para>
 /// <para>Output is serialized through an internal lock so that lines streamed from a child process's standard
 /// output and standard error (which arrive on background threads) never interleave mid-line with each other or
 /// with narration.</para>
@@ -32,14 +37,14 @@ public sealed partial class ConsoleReporter : IReporter
     /// <param name="verbosity">The verbosity that gates which message levels are rendered.</param>
     /// <param name="colorOverride">
     /// <see langword="true"/> to force color on, <see langword="false"/> to force it off, or
-    /// <see langword="null"/> to auto-detect (color on unless output is redirected or the <c>NO_COLOR</c>
-    /// environment variable is set). A non-<see langword="null"/> value wins over both, so <c>--color</c>
-    /// overrides <c>NO_COLOR</c>.
+    /// <see langword="null"/> to auto-detect (color on unless standard error is redirected, the <c>NO_COLOR</c>
+    /// environment variable is set, or the console cannot interpret ANSI escape sequences). A
+    /// non-<see langword="null"/> value wins over all three, so <c>--color</c> overrides <c>NO_COLOR</c>.
     /// </param>
     public ConsoleReporter(Verbosity verbosity, bool? colorOverride)
     {
         Verbosity = verbosity;
-        _useColor = colorOverride ?? (!IsNoColorSet() && !Console.IsOutputRedirected);
+        _useColor = colorOverride ?? DetectColor();
     }
 
     /// <inheritdoc/>
@@ -71,7 +76,7 @@ public sealed partial class ConsoleReporter : IReporter
             _activityStack.Push(scope);
             if (this.IsEnabled(MessageLevel.Info))
             {
-                Console.WriteLine(FormatActivityLine(depth, title, elapsed: null, outcomeMessage: null));
+                Console.Error.WriteLine(FormatActivityLine(depth, title, elapsed: null, outcomeMessage: null));
             }
 
             return scope;
@@ -114,6 +119,9 @@ public sealed partial class ConsoleReporter : IReporter
         }
     }
 
+    private static bool DetectColor()
+        => !IsNoColorSet() && !Console.IsErrorRedirected && VirtualTerminal.TryEnableOnStandardError();
+
     /// <summary>
     /// Determines whether the <c>NO_COLOR</c> environment variable is set.
     /// </summary>
@@ -145,19 +153,19 @@ public sealed partial class ConsoleReporter : IReporter
         var (color, word) = StyleFor(level);
         if (_useColor && color is { } foreground)
         {
-            Console.ForegroundColor = foreground;
-            Console.Write(word);
-            Console.Write(':');
-            Console.ResetColor();
+            Console.Error.Write(AnsiEscapes.Foreground(foreground));
+            Console.Error.Write(word);
+            Console.Error.Write(':');
+            Console.Error.Write(AnsiEscapes.Reset);
         }
         else
         {
-            Console.Write(word);
-            Console.Write(':');
+            Console.Error.Write(word);
+            Console.Error.Write(':');
         }
 
-        Console.Write(' ');
-        Console.WriteLine(message);
+        Console.Error.Write(' ');
+        Console.Error.WriteLine(message);
     }
 
     private void EndActivity(ActivityScope scope, bool completed)
@@ -172,7 +180,7 @@ public sealed partial class ConsoleReporter : IReporter
             // No outcome line unless the activity was explicitly completed (e.g. the work threw before Complete).
             if (completed && this.IsEnabled(MessageLevel.Info))
             {
-                Console.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
+                Console.Error.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
             }
         }
     }
