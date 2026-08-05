@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Buildvana.Core.ConsoleOutput;
@@ -15,6 +16,7 @@ namespace Buildvana.Core.ConsoleOutput;
 /// enable by default but legacy conhost does not, so it must be enabled explicitly before writing sequences
 /// from <see cref="AnsiEscapes"/>.</para>
 /// </remarks>
+[ExcludeFromCodeCoverage(Justification = "Thin wrapper over Win32 console-mode APIs; behavior is owned by the console attached to the process, which a test cannot control (under a test runner standard error is redirected, so only the failure path would ever run).")]
 public static partial class VirtualTerminal
 {
     private const int StdErrorHandle = -12; // STD_ERROR_HANDLE
