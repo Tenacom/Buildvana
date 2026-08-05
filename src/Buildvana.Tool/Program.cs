@@ -61,10 +61,12 @@ internal static class Program
                 return 0;
             }
 
+            // The logo is narration, not a deliverable: it goes to standard error so that piped standard
+            // output stays clean even without --nologo.
             if (!globals.Nologo)
             {
-                console.WriteLine($"Buildvana CLI tool v{ThisAssembly.AssemblyInformationalVersion}");
-                console.WriteLine();
+                await Console.Error.WriteLineAsync($"Buildvana CLI tool v{ThisAssembly.AssemblyInformationalVersion}").ConfigureAwait(false);
+                await Console.Error.WriteLineAsync().ConfigureAwait(false);
             }
 
             var help = new BvHelpRenderer(console);

@@ -4,6 +4,8 @@
     <Title>Buildvana console output</Title>
     <Description>System.Console-backed IReporter: leveled human-facing console output with activity grouping and child-process passthrough.</Description>
     <TargetFramework>$(StandardTfm)</TargetFramework>
+    <!-- Required by the LibraryImport source generator (VirtualTerminal's console-mode P/Invokes). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
