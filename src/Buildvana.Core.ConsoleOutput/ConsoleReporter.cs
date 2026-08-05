@@ -41,11 +41,21 @@ public sealed partial class ConsoleReporter : IReporter
     /// <see langword="null"/> to auto-detect (color on unless standard error is redirected, the <c>NO_COLOR</c>
     /// environment variable is set, or the console cannot interpret ANSI escape sequences). A
     /// non-<see langword="null"/> value wins over all three, so <c>--color</c> overrides <c>NO_COLOR</c>.
+    /// Forcing color on also attempts to enable escape-sequence interpretation on the console, but wins even
+    /// when that fails.
     /// </param>
     public ConsoleReporter(Verbosity verbosity, bool? colorOverride)
     {
         Verbosity = verbosity;
         _useColor = colorOverride ?? DetectColor();
+
+        // Auto-detection folds the virtual-terminal attempt into DetectColor; an explicit "on" override skips
+        // detection, so the attempt must happen here or legacy conhost would print raw escape sequences. The
+        // override stays authoritative even when enabling fails: the user asked for color.
+        if (colorOverride == true)
+        {
+            _ = VirtualTerminal.TryEnableOnStandardError();
+        }
     }
 
     /// <inheritdoc/>
