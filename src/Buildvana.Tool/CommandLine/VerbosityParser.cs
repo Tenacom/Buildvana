@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using CommunityToolkit.Diagnostics;
@@ -17,6 +18,7 @@ internal static class VerbosityParser
     /// </summary>
     /// <param name="raw">The raw option value, in any casing.</param>
     /// <returns>The corresponding <see cref="Verbosity"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="raw"/> is <see langword="null"/>.</exception>
     /// <exception cref="BuildFailedException"><paramref name="raw"/> is not a recognized verbosity level.</exception>
     public static Verbosity Parse(string raw)
     {
