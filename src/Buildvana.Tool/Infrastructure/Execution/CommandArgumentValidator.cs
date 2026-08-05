@@ -15,6 +15,8 @@ namespace Buildvana.Tool.Infrastructure.Execution;
 /// forwarding commands take no tokens before <c>--</c> (everything to forward goes after it);
 /// non-forwarding commands have nowhere to forward, so they reject anything after <c>--</c>, and accept only as
 /// many positionals as their settings type declares via <see cref="BvArgumentAttribute"/>.
+/// Option tokens are left to the command's settings type to parse (and reject leftovers of); a command with no
+/// settings type takes no options at all, so any option token is rejected here.
 /// </summary>
 internal static class CommandArgumentValidator
 {
@@ -44,6 +46,11 @@ internal static class CommandArgumentValidator
             if (parsed.Forwarded.Count > 0)
             {
                 throw new BuildFailedException($"Command '{command.Name}' does not forward arguments; remove the '--' separator and everything after it.");
+            }
+
+            if (command.SettingsType is null && parsed.OptionTokens.Count > 0)
+            {
+                throw new BuildFailedException($"Unknown option '{parsed.OptionTokens[0]}' for command '{command.Name}'.");
             }
 
             var arguments = DeclaredArguments(command);

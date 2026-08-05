@@ -50,6 +50,31 @@ internal sealed class CommandArgumentValidatorTests
     }
 
     [Test]
+    public async Task SettingsLessCommand_RejectsUnknownOption()
+    {
+        var command = CommandRegistry.Find("clean")!;
+        var parsed = CliArgSplitter.Split(["clean", "--bogus"]);
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task SettingsLessCommand_RejectsUnknownOption_ViaAlias()
+    {
+        var command = CommandRegistry.Find("version")!;
+        var parsed = CliArgSplitter.Split(["version", "--bogus"]);
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task SettingsCarryingCommand_LeavesOptionTokensToSettings()
+    {
+        var command = CommandRegistry.Find("release")!;
+        var parsed = CliArgSplitter.Split(["release", "--bogus"]);
+        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
+        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task NonForwardingCommand_RejectsPositionals_WhenNoArgumentsDeclared()
     {
         var command = CommandRegistry.Find("release")!;
