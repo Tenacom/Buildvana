@@ -12,9 +12,11 @@ namespace Buildvana.Tool.CommandLine;
 /// <c>"-c|--configuration &lt;NAME&gt;"</c> or <c>"--no-color"</c>.
 /// </summary>
 /// <remarks>
-/// <para>This attribute carries help metadata only. It does not drive parsing: the option reader
-/// (<see cref="CliOptionReader"/>) is fed explicit names by each <c>*Settings</c> type. The help renderer
-/// reflects these attributes to print the OPTIONS grid.</para>
+/// <para>This attribute does not drive parsing — the option reader (<see cref="CliOptionReader"/>) is fed
+/// explicit names by each <c>*Settings</c> type — but it does drive validation: the argument validator reflects
+/// it to determine which options a command accepts, and whether they consume a value token, so the declared
+/// names must match the names the settings type reads. The help renderer reflects these attributes to print
+/// the OPTIONS grid.</para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property)]
 internal sealed class BvOptionAttribute : Attribute

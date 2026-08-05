@@ -146,12 +146,6 @@ internal sealed class ReleaseSettingsTests
         await Assert.That(() => Parse(["--dogfood", "maybe"])).Throws<BuildFailedException>();
     }
 
-    [Test]
-    public async Task Parse_Throws_OnUnknownOption()
-    {
-        await Assert.That(() => Parse(["--bogus"])).Throws<BuildFailedException>();
-    }
-
     private static ReleaseSettings Parse(string[] options, BuildvanaConfig? config = null)
     {
         config ??= new BuildvanaConfig();
