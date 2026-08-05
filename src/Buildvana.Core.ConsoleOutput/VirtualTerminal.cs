@@ -11,10 +11,11 @@ namespace Buildvana.Core.ConsoleOutput;
 /// Enables interpretation of ANSI (virtual terminal) escape sequences on the console.
 /// </summary>
 /// <remarks>
-/// <para>POSIX terminals interpret escape sequences natively. On Windows, interpretation is a per-screen-buffer
-/// console mode (<c>ENABLE_VIRTUAL_TERMINAL_PROCESSING</c>) that ConPTY-based hosts such as Windows Terminal
-/// enable by default but legacy conhost does not, so it must be enabled explicitly before writing sequences
-/// from <see cref="AnsiEscapes"/>.</para>
+/// <para>POSIX terminals interpret escape sequences natively, as long as there is a capable terminal at all: an
+/// unset, empty, or <c>dumb</c> <c>TERM</c> environment variable signals one that does not understand them. On
+/// Windows, interpretation is a per-screen-buffer console mode (<c>ENABLE_VIRTUAL_TERMINAL_PROCESSING</c>) that
+/// ConPTY-based hosts such as Windows Terminal enable by default but legacy conhost does not, so it must be
+/// enabled explicitly before writing sequences from <see cref="AnsiEscapes"/>.</para>
 /// </remarks>
 [ExcludeFromCodeCoverage(Justification = "Thin wrapper over Win32 console-mode APIs; behavior is owned by the console attached to the process, which a test cannot control (under a test runner standard error is redirected, so only the failure path would ever run).")]
 public static partial class VirtualTerminal
@@ -32,7 +33,10 @@ public static partial class VirtualTerminal
     {
         if (!OperatingSystem.IsWindows())
         {
-            return true;
+            // Interpretation is native, but only when a capable terminal is attached; TERM is the POSIX way to
+            // declare one (Console.ForegroundColor consults full terminfo, of which this is the cheap proxy).
+            var term = Environment.GetEnvironmentVariable("TERM");
+            return !string.IsNullOrEmpty(term) && !string.Equals(term, "dumb", StringComparison.Ordinal);
         }
 
         var handle = GetStdHandle(StdErrorHandle);
