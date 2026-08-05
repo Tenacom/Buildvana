@@ -33,8 +33,9 @@ public static class AnsiEscapes
     /// <remarks>
     /// <para>The mapping follows the same correspondence the BCL uses on Unix: the eight "dark" colors map to
     /// standard-intensity ANSI colors (SGR 30-37) and the remaining eight to high-intensity colors (SGR 90-97),
-    /// so a label rendered through these sequences looks the same as one rendered by setting
-    /// <see cref="Console.ForegroundColor"/>.</para>
+    /// so a label rendered through these sequences selects the same color indices as one rendered by setting
+    /// <see cref="Console.ForegroundColor"/> (whose Unix implementation may emit terminfo-derived sequences
+    /// rather than these literal codes).</para>
     /// </remarks>
     public static string Foreground(ConsoleColor color)
     {
