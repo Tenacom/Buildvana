@@ -33,4 +33,10 @@ internal sealed class VerbosityParserTests
         await Assert.That(exception!.Message)
             .IsEqualTo("Unknown verbosity level 'loud'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic.");
     }
+
+    [Test]
+    public async Task Parse_Null_ThrowsArgumentNullException()
+    {
+        await Assert.That(() => VerbosityParser.Parse(null!)).Throws<ArgumentNullException>();
+    }
 }

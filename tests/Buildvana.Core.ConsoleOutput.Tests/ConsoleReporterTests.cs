@@ -146,6 +146,28 @@ internal sealed class ConsoleReporterTests
     }
 
     [Test]
+    public async Task ActivityScope_DisposedOutOfOrder_DoesNotPopInnerScope()
+    {
+        var reporter = new ConsoleReporter(Verbosity.Normal, colorOverride: false);
+        var (stdout, stderr) = CaptureConsole(() =>
+        {
+            var outer = reporter.BeginActivity("Outer");
+            var inner = reporter.BeginActivity("Inner");
+            outer.Complete();
+            outer.Dispose();
+            inner.Dispose();
+
+            // Disposing Outer while Inner was still open must not pop Inner; Outer itself is never popped, so
+            // the next sibling still nests under it.
+            using var next = reporter.BeginActivity("Next");
+        });
+
+        await Assert.That(stderr).Contains("[1] Outer: done (");
+        await Assert.That(stderr).Contains("[2] Next: starting...");
+        await Assert.That(stdout).IsEmpty();
+    }
+
+    [Test]
     public async Task ChildOutput_WritesToStandardOutput()
     {
         var reporter = new ConsoleReporter(Verbosity.Normal, colorOverride: false);
@@ -160,6 +182,15 @@ internal sealed class ConsoleReporterTests
         var reporter = new ConsoleReporter(Verbosity.Minimal, colorOverride: false);
         var (stdout, stderr) = CaptureConsole(() => reporter.ChildOutput("child stdout line", Verbosity.Normal));
         await Assert.That(stdout).IsEmpty();
+        await Assert.That(stderr).IsEmpty();
+    }
+
+    [Test]
+    public async Task ChildOutput_AtMinimumVerbosity_Writes()
+    {
+        var reporter = new ConsoleReporter(Verbosity.Normal, colorOverride: false);
+        var (stdout, stderr) = CaptureConsole(() => reporter.ChildOutput("child stdout line", Verbosity.Normal));
+        await Assert.That(stdout).IsEqualTo($"child stdout line{Environment.NewLine}");
         await Assert.That(stderr).IsEmpty();
     }
 
@@ -188,6 +219,24 @@ internal sealed class ConsoleReporterTests
         var (stdout, stderr) = CaptureConsole(() => reporter.ChildError("child stderr line", Verbosity.Normal));
         await Assert.That(stdout).IsEmpty();
         await Assert.That(stderr).IsEmpty();
+    }
+
+    [Test]
+    public async Task ChildError_AtMinimumVerbosity_Writes()
+    {
+        var reporter = new ConsoleReporter(Verbosity.Normal, colorOverride: false);
+        var (stdout, stderr) = CaptureConsole(() => reporter.ChildError("child stderr line", Verbosity.Normal));
+        await Assert.That(stderr).IsEqualTo($"child stderr line{Environment.NewLine}");
+        await Assert.That(stdout).IsEmpty();
+    }
+
+    [Test]
+    public async Task ChildError_NoMinimumVerbosity_IgnoresVerbosity()
+    {
+        var reporter = new ConsoleReporter(Verbosity.Quiet, colorOverride: false);
+        var (stdout, stderr) = CaptureConsole(() => reporter.ChildError("child stderr line", null));
+        await Assert.That(stderr).IsEqualTo($"child stderr line{Environment.NewLine}");
+        await Assert.That(stdout).IsEmpty();
     }
 
     private static (string Stdout, string Stderr) CaptureConsole(Action action)
