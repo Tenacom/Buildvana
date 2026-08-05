@@ -48,15 +48,17 @@ internal static class CommandArgumentValidator
                 throw new BuildFailedException($"Command '{command.Name}' does not forward arguments; remove the '--' separator and everything after it.");
             }
 
-            if (command.SettingsType is null && parsed.OptionTokens.Count > 0)
-            {
-                throw new BuildFailedException($"Unknown option '{parsed.OptionTokens[0]}' for command '{command.Name}'.");
-            }
-
+            // Excess positionals are checked before unknown options so that in the typical shape of a botched
+            // command line (`bv clean junk --bogus`) the offending tokens are reported in command-line order.
             var arguments = DeclaredArguments(command);
             if (positionals.Count > arguments.Count)
             {
                 throw new BuildFailedException($"Unexpected argument '{positionals[arguments.Count]}' for command '{command.Name}'.");
+            }
+
+            if (command.SettingsType is null && parsed.OptionTokens.Count > 0)
+            {
+                throw new BuildFailedException($"Unknown option '{parsed.OptionTokens[0]}' for command '{command.Name}'.");
             }
 
             for (var i = positionals.Count; i < arguments.Count; i++)

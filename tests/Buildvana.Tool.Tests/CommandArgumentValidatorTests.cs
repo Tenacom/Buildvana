@@ -66,6 +66,16 @@ internal sealed class CommandArgumentValidatorTests
     }
 
     [Test]
+    public async Task SettingsLessCommand_ReportsOffendingTokensInCommandLineOrder()
+    {
+        var command = CommandRegistry.Find("clean")!;
+        var parsed = CliArgSplitter.Split(["clean", "junk", "--bogus"]);
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Unexpected argument 'junk' for command 'clean'.");
+    }
+
+    [Test]
     public async Task SettingsCarryingCommand_LeavesOptionTokensToSettings()
     {
         var command = CommandRegistry.Find("release")!;
