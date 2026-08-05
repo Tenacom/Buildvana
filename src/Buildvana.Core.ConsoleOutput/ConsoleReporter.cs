@@ -161,24 +161,16 @@ public sealed partial class ConsoleReporter : IReporter
             ? string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: done ({2:F1}s){3}{4}", depth, title, e.TotalSeconds, outcomeMessage is null ? string.Empty : " - ", outcomeMessage)
             : string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: starting...", depth, title);
 
+    // A single WriteLine per message: Console.Error auto-flushes, so composing first keeps the line atomic at
+    // the OS level (the lock only serializes this reporter, not the logo or Spectre's stdout writes) and costs
+    // one write syscall instead of up to five.
     private void WriteLeveledLine(MessageLevel level, string message)
     {
         var (color, word) = StyleFor(level);
-        if (_useColor && color is { } foreground)
-        {
-            Console.Error.Write(AnsiEscapes.Foreground(foreground));
-            Console.Error.Write(word);
-            Console.Error.Write(':');
-            Console.Error.Write(AnsiEscapes.Reset);
-        }
-        else
-        {
-            Console.Error.Write(word);
-            Console.Error.Write(':');
-        }
-
-        Console.Error.Write(' ');
-        Console.Error.WriteLine(message);
+        var line = _useColor && color is { } foreground
+            ? $"{AnsiEscapes.Foreground(foreground)}{word}:{AnsiEscapes.Reset} {message}"
+            : $"{word}: {message}";
+        Console.Error.WriteLine(line);
     }
 
     private void EndActivity(ActivityScope scope, bool completed)
