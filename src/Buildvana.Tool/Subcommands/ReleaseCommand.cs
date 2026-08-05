@@ -207,39 +207,19 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 reporter.Info("Changelog section title update skipped: changelog has not been updated.");
             }
 
-            // Update in-tree references to packages produced by this release (dogfooding).
-            // Must happen after pack (so the produced .nupkg files exist and the build ran against the
-            // previously-published versions) and before push (so the rewrites travel with the release commit).
-            // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
-            // state (which still references the previously-published versions); the post-release commit is
-            // marked [skip ci] because the new packages aren't in the feed yet at push time.
+            // Discover the packages produced by the pack step; both the post-release hook context and
+            // the self-reference update consume the map.
             var producedPackages = ArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
             var dogfooded = settings.ResolveDogfood();
-            IReadOnlyList<string> selfReferenceUpdates = [];
-            if (dogfooded)
-            {
-                selfReferenceUpdates = selfReferenceUpdater.UpdateReferences(producedPackages);
-                switch (selfReferenceUpdates.Count)
-                {
-                    case 0:
-                        reporter.Info("No self-referenced files were modified.");
-                        break;
-                    case 1:
-                        reporter.Info("1 self-referenced file was modified.");
-                        break;
-                    default:
-                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
-                        break;
-                }
-            }
-            else
-            {
-                reporter.Info("Self-reference update skipped: option 'dogfood' is false.");
-            }
 
             // Run the repo-owned post-release hook, if present. It runs whether or not dogfooding is
             // enabled; the files it changes are detected by snapshotting the working tree around it
             // and join the post-release commit alongside the self-reference rewrites.
+            // The hook must run before the self-reference update: it is a file-based app inside the
+            // repository tree, so building it resolves the in-tree version pins (e.g. the Buildvana.Sdk
+            // entry in global.json), and the packages produced by this release reach a feed only after
+            // publish. A hook that needs the new versions can read them from the context's
+            // Release properties instead of the rewritten files.
             var hookContext = new PostReleaseHookContext
             {
                 Paths = new()
@@ -278,6 +258,34 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         reporter.Info(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Length} files."));
                         break;
                 }
+            }
+
+            // Update in-tree references to packages produced by this release (dogfooding).
+            // Must happen after pack (so the produced .nupkg files exist and the build ran against the
+            // previously-published versions) and before push (so the rewrites travel with the release commit).
+            // Goes into a separate commit so the tagged "Prepare release" commit reflects the actual built
+            // state (which still references the previously-published versions); the post-release commit is
+            // marked [skip ci] because the new packages aren't in the feed yet at push time.
+            IReadOnlyList<string> selfReferenceUpdates = [];
+            if (dogfooded)
+            {
+                selfReferenceUpdates = selfReferenceUpdater.UpdateReferences(producedPackages);
+                switch (selfReferenceUpdates.Count)
+                {
+                    case 0:
+                        reporter.Info("No self-referenced files were modified.");
+                        break;
+                    case 1:
+                        reporter.Info("1 self-referenced file was modified.");
+                        break;
+                    default:
+                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
+                        break;
+                }
+            }
+            else
+            {
+                reporter.Info("Self-reference update skipped: option 'dogfood' is false.");
             }
 
             // Assemble the post-release commit from the self-reference rewrites and the hook's changes.
