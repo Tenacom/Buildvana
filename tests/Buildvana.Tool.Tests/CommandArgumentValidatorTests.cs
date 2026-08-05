@@ -54,7 +54,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("clean")!;
         var parsed = CliArgSplitter.Split(["clean", "--bogus"]);
-        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'clean'.");
     }
 
     [Test]
@@ -62,7 +64,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("version")!;
         var parsed = CliArgSplitter.Split(["version", "--bogus"]);
-        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'version show'.");
     }
 
     [Test]
