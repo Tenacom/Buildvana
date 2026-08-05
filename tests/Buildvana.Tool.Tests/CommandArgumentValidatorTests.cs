@@ -80,12 +80,50 @@ internal sealed class CommandArgumentValidatorTests
     }
 
     [Test]
-    public async Task SettingsCarryingCommand_LeavesOptionTokensToSettings()
+    public async Task SettingsCarryingCommand_RejectsUnknownOption()
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "--bogus"]);
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'release'.");
+    }
+
+    [Test]
+    public async Task SettingsCarryingCommand_ConsumesOptionValue()
+    {
+        var command = CommandRegistry.Find("release")!;
+        var parsed = CliArgSplitter.Split(["release", "--bump", "minor"]);
+        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
+        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task SettingsCarryingCommand_AllowsInlineOptionValue()
+    {
+        var command = CommandRegistry.Find("release")!;
+        var parsed = CliArgSplitter.Split(["release", "--bump=minor"]);
         CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(parsed.OptionTokens.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task SettingsCarryingCommand_AllowsFlagOption()
+    {
+        var command = CommandRegistry.Find("version advance")!;
+        var parsed = CliArgSplitter.Split(["version", "advance", "--force"]);
+        CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task SettingsCarryingCommand_RejectsValueOptionWithoutValue()
+    {
+        var command = CommandRegistry.Find("release")!;
+        var parsed = CliArgSplitter.Split(["release", "--bump"]);
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Option '--bump' requires a value.");
     }
 
     [Test]

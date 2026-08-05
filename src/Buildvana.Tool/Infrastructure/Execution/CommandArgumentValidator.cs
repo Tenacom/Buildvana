@@ -14,9 +14,10 @@ namespace Buildvana.Tool.Infrastructure.Execution;
 /// Enforces the argument contract for a dispatched command:
 /// forwarding commands take no tokens before <c>--</c> (everything to forward goes after it);
 /// non-forwarding commands have nowhere to forward, so they reject anything after <c>--</c>, and accept only as
-/// many positionals as their settings type declares via <see cref="BvArgumentAttribute"/>.
-/// Option tokens are left to the command's settings type to parse (and reject leftovers of); a command with no
-/// settings type takes no options at all, so any option token is rejected here.
+/// many positionals as their settings type declares via <see cref="BvArgumentAttribute"/> and the options it
+/// declares via <see cref="BvOptionAttribute"/> (a command with no settings type declares none, so it takes no
+/// options at all). The settings type's <c>Parse</c> can therefore assume every option token it receives is one
+/// the command declares.
 /// </summary>
 internal static class CommandArgumentValidator
 {
@@ -56,9 +57,11 @@ internal static class CommandArgumentValidator
                 throw new BuildFailedException($"Unexpected argument '{positionals[arguments.Count]}' for command '{command.Name}'.");
             }
 
-            if (command.SettingsType is null && parsed.OptionTokens.Count > 0)
+            var reader = new CliOptionReader(parsed.OptionTokens);
+            ConsumeDeclaredOptions(reader, command);
+            if (reader.Remaining.Count > 0)
             {
-                throw new BuildFailedException($"Unknown option '{parsed.OptionTokens[0]}' for command '{command.Name}'.");
+                throw new BuildFailedException($"Unknown option '{reader.Remaining[0]}' for command '{command.Name}'.");
             }
 
             for (var i = positionals.Count; i < arguments.Count; i++)
@@ -82,5 +85,36 @@ internal static class CommandArgumentValidator
             .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Select(static p => p.GetCustomAttribute<BvArgumentAttribute>())
             .OfType<BvArgumentAttribute>()];
+    }
+
+    private static void ConsumeDeclaredOptions(CliOptionReader reader, CommandRegistration command)
+    {
+        foreach (var option in DeclaredOptions(command))
+        {
+            foreach (var name in option.LongNames.Concat(option.ShortNames))
+            {
+                if (option.ValueName is null)
+                {
+                    _ = reader.ReadFlag(name);
+                }
+                else
+                {
+                    _ = reader.ReadValue(name);
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<BvOptionAttribute> DeclaredOptions(CommandRegistration command)
+    {
+        if (command.SettingsType is null)
+        {
+            return [];
+        }
+
+        return command.SettingsType
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Select(static p => p.GetCustomAttribute<BvOptionAttribute>())
+            .OfType<BvOptionAttribute>();
     }
 }

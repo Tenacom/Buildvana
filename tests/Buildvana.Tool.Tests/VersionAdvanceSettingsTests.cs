@@ -64,18 +64,6 @@ internal sealed class VersionAdvanceSettingsTests
         await Assert.That(() => Parse([], ["--check-public-api", "maybe"])).Throws<BuildFailedException>();
     }
 
-    [Test]
-    public async Task Parse_Throws_OnUnknownOption()
-    {
-        await Assert.That(() => Parse([], ["--bogus"])).Throws<BuildFailedException>();
-    }
-
-    [Test]
-    public async Task Parse_Throws_OnExcessPositionals()
-    {
-        await Assert.That(() => Parse(["minor", "extra"], [])).Throws<BuildFailedException>();
-    }
-
     private static VersionAdvanceSettings Parse(string[] positionals, string[] options, BuildvanaConfig? config = null)
         => VersionAdvanceSettings.Parse(positionals, options, config ?? new BuildvanaConfig());
 }

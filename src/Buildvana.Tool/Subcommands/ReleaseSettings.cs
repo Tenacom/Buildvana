@@ -70,34 +70,28 @@ internal sealed class ReleaseSettings
     public bool? Dogfood { get; init; }
 
     /// <summary>
-    /// Parses the command's option tokens into a <see cref="ReleaseSettings"/>, rejecting any option the command
-    /// does not recognize, and binds the configuration sources consulted by the <c>Resolve*</c> methods.
+    /// Parses the command's option tokens into a <see cref="ReleaseSettings"/> and binds the configuration
+    /// sources consulted by the <c>Resolve*</c> methods. Unknown options have already been rejected by
+    /// <c>CommandArgumentValidator</c>, so every option token is one the command declares.
     /// </summary>
     /// <param name="options">The option tokens for the <c>release</c> command (from <c>CommandParameters.Options</c>).</param>
     /// <param name="config">The Buildvana configuration whose <c>release</c> section layers between the flags and the defaults.</param>
     /// <param name="dotNetSettings">The resolved <c>dotnet</c> settings, providing the fallback build configuration.</param>
     /// <returns>The parsed settings.</returns>
-    /// <exception cref="BuildFailedException">An option value is invalid, or an unrecognized option was given.</exception>
+    /// <exception cref="BuildFailedException">An option value is invalid.</exception>
     public static ReleaseSettings Parse(IReadOnlyList<string> options, BuildvanaConfig config, DotNetSettings dotNetSettings)
     {
         Guard.IsNotNull(options);
         Guard.IsNotNull(config);
         Guard.IsNotNull(dotNetSettings);
         var reader = new CliOptionReader(options);
-        var settings = new ReleaseSettings(config.Release, dotNetSettings)
+        return new ReleaseSettings(config.Release, dotNetSettings)
         {
             Configuration = reader.ReadValue("--configuration", "-c"),
             Bump = reader.ReadValue("--bump"),
             CheckPublicApi = ParseBool(reader.ReadValue("--check-public-api"), "--check-public-api"),
             Dogfood = ParseBool(reader.ReadValue("--dogfood"), "--dogfood"),
         };
-
-        if (reader.Remaining.Count > 0)
-        {
-            throw new BuildFailedException($"Unknown option '{reader.Remaining[0]}' for command 'release'.");
-        }
-
-        return settings;
     }
 
     /// <summary>

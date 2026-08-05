@@ -57,39 +57,28 @@ internal sealed class VersionAdvanceSettings
     public bool Force { get; init; }
 
     /// <summary>
-    /// Parses the command's positional and option tokens into a <see cref="VersionAdvanceSettings"/>, rejecting
-    /// anything the command does not recognize, and binds the configuration sources consulted by the
-    /// <c>Resolve*</c> methods.
+    /// Parses the command's positional and option tokens into a <see cref="VersionAdvanceSettings"/> and binds
+    /// the configuration sources consulted by the <c>Resolve*</c> methods. Excess positionals and unknown options
+    /// have already been rejected by <c>CommandArgumentValidator</c>, so at most one positional is present and
+    /// every option token is one the command declares.
     /// </summary>
     /// <param name="positionals">The positional tokens for the <c>version advance</c> command (from <c>CommandParameters.Positionals</c>).</param>
     /// <param name="options">The option tokens for the <c>version advance</c> command (from <c>CommandParameters.Options</c>).</param>
     /// <param name="config">The Buildvana configuration whose <c>release</c> section layers between the flags and the defaults.</param>
     /// <returns>The parsed settings.</returns>
-    /// <exception cref="BuildFailedException">An option value is invalid, or an unrecognized argument or option was given.</exception>
+    /// <exception cref="BuildFailedException">An option value is invalid.</exception>
     public static VersionAdvanceSettings Parse(IReadOnlyList<string> positionals, IReadOnlyList<string> options, BuildvanaConfig config)
     {
         Guard.IsNotNull(positionals);
         Guard.IsNotNull(options);
         Guard.IsNotNull(config);
-        if (positionals.Count > 1)
-        {
-            throw new BuildFailedException($"Unexpected argument '{positionals[1]}' for command 'version advance'.");
-        }
-
         var reader = new CliOptionReader(options);
-        var settings = new VersionAdvanceSettings(config.Release)
+        return new VersionAdvanceSettings(config.Release)
         {
             Change = positionals.Count > 0 ? positionals[0] : null,
             CheckPublicApi = ParseBool(reader.ReadValue("--check-public-api"), "--check-public-api"),
             Force = reader.ReadFlag("--force"),
         };
-
-        if (reader.Remaining.Count > 0)
-        {
-            throw new BuildFailedException($"Unknown option '{reader.Remaining[0]}' for command 'version advance'.");
-        }
-
-        return settings;
     }
 
     /// <summary>
