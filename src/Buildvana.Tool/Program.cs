@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -31,6 +32,7 @@ using Spectre.Console;
 
 namespace Buildvana.Tool;
 
+[ExcludeFromCodeCoverage(Justification = "Process composition root (DI wiring, Ctrl-C handling, top-level exception mapping); exercised end to end, not unit-testable.")]
 internal static class Program
 {
     // 128 + SIGINT (2): the POSIX convention for a process terminated by Ctrl-C.
@@ -96,7 +98,7 @@ internal static class Program
 
             // Parse --verbosity eagerly so an invalid value surfaces in the outer catch.
             // When absent, the command's own default applies (query commands default to Minimal).
-            var verbosity = globals.Verbosity is null ? command.DefaultVerbosity : ParseVerbosity(globals.Verbosity);
+            var verbosity = globals.Verbosity is null ? command.DefaultVerbosity : VerbosityParser.Parse(globals.Verbosity);
 
             // --color / --no-color win over auto-detection; neither (or both) leaves the reporter to auto-detect.
             bool? colorOverride = (globals.Color, globals.NoColor) switch
@@ -240,14 +242,4 @@ internal static class Program
 
         return services.BuildServiceProvider();
     }
-
-    private static Verbosity ParseVerbosity(string raw) => raw.ToUpperInvariant() switch
-    {
-        "QUIET" or "Q" => Verbosity.Quiet,
-        "MINIMAL" or "M" => Verbosity.Minimal,
-        "NORMAL" or "N" => Verbosity.Normal,
-        "DETAILED" or "D" => Verbosity.Detailed,
-        "DIAGNOSTIC" or "DIAG" => Verbosity.Diagnostic,
-        _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic."),
-    };
 }

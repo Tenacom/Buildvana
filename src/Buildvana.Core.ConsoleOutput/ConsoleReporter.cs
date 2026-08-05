@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using CommunityToolkit.Diagnostics;
@@ -119,6 +120,7 @@ public sealed partial class ConsoleReporter : IReporter
         }
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Reads process-global console state; under a test runner standard error is always redirected, so only one outcome is ever reachable.")]
     private static bool DetectColor()
         => !IsNoColorSet() && !Console.IsErrorRedirected && VirtualTerminal.TryEnableOnStandardError();
 
@@ -130,6 +132,7 @@ public sealed partial class ConsoleReporter : IReporter
     /// <para>The <c>NO_COLOR</c> environment variable is a widely-adopted convention for opting out of color in command-line applications.
     /// See <a href="https://no-color.org">https://no-color.org</a> for more information.</para>
     /// </remarks>
+    [ExcludeFromCodeCoverage(Justification = "Reads the process environment; covering both outcomes would require mutating process-global state under a parallel test runner.")]
     private static bool IsNoColorSet() => Environment.GetEnvironmentVariable("NO_COLOR") is { Length: > 0 };
 
     private static (ConsoleColor? Color, string Word) StyleFor(MessageLevel level) => level switch

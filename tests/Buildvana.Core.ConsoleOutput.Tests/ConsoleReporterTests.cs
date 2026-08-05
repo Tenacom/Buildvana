@@ -55,6 +55,13 @@ internal sealed class ConsoleReporterTests
     }
 
     [Test]
+    public async Task Report_UnknownLevel_Throws()
+    {
+        var reporter = new ConsoleReporter(Verbosity.Diagnostic, colorOverride: false);
+        await Assert.That(() => reporter.Report((MessageLevel)(-1), "something happened")).Throws<ArgumentOutOfRangeException>();
+    }
+
+    [Test]
     public async Task BeginActivity_AtNormalVerbosity_WritesHeaderToStandardError()
     {
         var reporter = new ConsoleReporter(Verbosity.Normal, colorOverride: false);
@@ -117,6 +124,24 @@ internal sealed class ConsoleReporterTests
         });
 
         await Assert.That(stderr).IsEqualTo($"[1] Doing stuff: starting...{Environment.NewLine}");
+        await Assert.That(stdout).IsEmpty();
+    }
+
+    [Test]
+    public async Task ActivityScope_DisposedTwice_WritesOutcomeOnlyOnce()
+    {
+        var reporter = new ConsoleReporter(Verbosity.Normal, colorOverride: false);
+        var (stdout, stderr) = CaptureConsole(() =>
+        {
+            var scope = reporter.BeginActivity("Doing stuff");
+            scope.Complete();
+            scope.Dispose();
+            scope.Dispose();
+        });
+
+        var lines = stderr.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        var outcomeLines = lines.Count(static line => line.Contains("done (", StringComparison.Ordinal));
+        await Assert.That(outcomeLines).IsEqualTo(1);
         await Assert.That(stdout).IsEmpty();
     }
 
