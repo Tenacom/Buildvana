@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Globalization;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.ConsoleOutput;
@@ -35,24 +36,18 @@ public static class AnsiEscapes
     /// so a label rendered through these sequences looks the same as one rendered by setting
     /// <see cref="Console.ForegroundColor"/>.</para>
     /// </remarks>
-    public static string Foreground(ConsoleColor color) => color switch
+    public static string Foreground(ConsoleColor color)
     {
-        ConsoleColor.Black => "\e[30m",
-        ConsoleColor.DarkRed => "\e[31m",
-        ConsoleColor.DarkGreen => "\e[32m",
-        ConsoleColor.DarkYellow => "\e[33m",
-        ConsoleColor.DarkBlue => "\e[34m",
-        ConsoleColor.DarkMagenta => "\e[35m",
-        ConsoleColor.DarkCyan => "\e[36m",
-        ConsoleColor.Gray => "\e[37m",
-        ConsoleColor.DarkGray => "\e[90m",
-        ConsoleColor.Red => "\e[91m",
-        ConsoleColor.Green => "\e[92m",
-        ConsoleColor.Yellow => "\e[93m",
-        ConsoleColor.Blue => "\e[94m",
-        ConsoleColor.Magenta => "\e[95m",
-        ConsoleColor.Cyan => "\e[96m",
-        ConsoleColor.White => "\e[97m",
-        _ => ThrowHelper.ThrowArgumentOutOfRangeException<string>(nameof(color), color, "Unknown console color."),
-    };
+        var value = (int)color;
+        if (value is < 0 or > 15)
+        {
+            return ThrowHelper.ThrowArgumentOutOfRangeException<string>(nameof(color), color, "Unknown console color.");
+        }
+
+        // ConsoleColor packs channels blue-lowest (B=1, G=2, R=4); SGR packs them red-lowest (R=1, G=2, B=4):
+        // swap the red and blue bits, then offset into the standard- (30) or high-intensity (90) SGR range.
+        var rgb = ((value & 0b100) >> 2) | (value & 0b010) | ((value & 0b001) << 2);
+        var code = (value < 8 ? 30 : 90) + rgb;
+        return string.Create(CultureInfo.InvariantCulture, $"\e[{code}m");
+    }
 }
