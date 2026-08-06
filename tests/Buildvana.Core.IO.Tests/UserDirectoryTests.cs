@@ -48,6 +48,14 @@ internal sealed class UserDirectoryTests
     }
 
     [Test]
+    public async Task CreateDirectory_WithNullPath_ThrowsRaw()
+    {
+        var act = () => UserDirectory.CreateDirectory(null!);
+
+        await Assert.That(act).Throws<ArgumentNullException>();
+    }
+
+    [Test]
     public async Task Delete_WithEmptyDirectory_DeletesIt()
     {
         var path = Path.Combine(Path.GetTempPath(), $"bv-test-{Guid.NewGuid():N}");
@@ -149,6 +157,16 @@ internal sealed class UserDirectoryTests
         UserDirectory.DeleteIfExists(path);
 
         await Assert.That(Directory.Exists(path)).IsFalse();
+    }
+
+    // The null/empty guard lives in Exists, the first call DeleteIfExists makes; this test pins the
+    // raw-throw contract so it survives reorderings of the implementation.
+    [Test]
+    public async Task DeleteIfExists_WithNullPath_ThrowsRaw()
+    {
+        var act = () => UserDirectory.DeleteIfExists(null!);
+
+        await Assert.That(act).Throws<ArgumentNullException>();
     }
 
     [Test]
