@@ -52,18 +52,30 @@ public static class UserDirectory
     /// <exception cref="BuildFailedException">The directory could not be deleted.</exception>
     /// <remarks>
     /// <para>This method is a Buildvana-level convenience with no <see cref="Directory"/> counterpart.</para>
+    /// <para>A directory that disappears between the existence check and the deletion counts as non-existent:
+    /// the method succeeds.</para>
     /// </remarks>
     public static void DeleteIfExists(string path, IReporter? reporter = null)
     {
-        Guard.IsNotNullOrEmpty(path);
-        if (!Directory.Exists(path))
+        if (!Exists(path))
         {
             reporter?.Detail($"Skipping non-existent directory: {path}");
             return;
         }
 
         reporter?.Info($"Deleting directory: {path}");
-        Delete(path, recursive: true);
+        try
+        {
+            Directory.Delete(path, recursive: true);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // The directory vanished between the check and the delete; "if it exists" still holds.
+        }
+        catch (Exception e) when (e.IsIORelatedException)
+        {
+            throw new BuildFailedException($"Could not delete directory {path}: {e.Message}", e);
+        }
     }
 
     /// <summary>
