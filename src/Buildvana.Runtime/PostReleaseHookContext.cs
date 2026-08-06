@@ -28,9 +28,10 @@ public sealed record PostReleaseHookContext
     public const string Moment = "post-release";
 
     /// <summary>
-    /// Gets the absolute paths of the well-known directories of the run.
+    /// Gets run-time information about the bv run: the running version, how the run was launched, and the
+    /// absolute paths of the run's well-known directories.
     /// </summary>
-    public required BuildvanaPaths Paths { get; init; }
+    public required RuntimeInfo RuntimeInfo { get; init; }
 
     /// <summary>
     /// Gets the description of the version being released.

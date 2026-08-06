@@ -6,11 +6,23 @@ using JetBrains.Annotations;
 namespace Buildvana.Runtime;
 
 /// <summary>
-/// The absolute paths of the well-known directories of a <c>bv</c> run.
+/// Run-time information about the <c>bv</c> run a hook belongs to: the running version, how the run was
+/// launched, and the absolute paths of the run's well-known directories. Shared by all hook contexts.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public sealed record BuildvanaPaths
+public sealed record RuntimeInfo
 {
+    /// <summary>
+    /// Gets the version of the running bv, in semantic version form without build metadata.
+    /// </summary>
+    public required string Version { get; init; }
+
+    /// <summary>
+    /// Gets the version of the bv that delegated the run to the version pinned in the repository's tool
+    /// manifest, or <see langword="null"/> when the run was not delegated.
+    /// </summary>
+    public string? DelegatingVersion { get; init; }
+
     /// <summary>
     /// Gets the absolute path of the home directory. This is also the working directory of hooks.
     /// </summary>

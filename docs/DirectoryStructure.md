@@ -124,10 +124,18 @@ bv's scratch directory: machine-generated temporary files, such as the context f
 
 [`dotnet-tools.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use) is the .NET local tool manifest: it pins the versions of the .NET tools used by the repository, so that `dotnet <tool>` invocations run the pinned versions. In a repository using Buildvana, this usually includes `bv` itself, which is why the manifest appears in the directory structure above. It is optional, though: `bv` can also be installed globally, or run via `dnx`, in which case the manifest (or its `bv` entry) may be absent.
 
-Besides being read by the .NET CLI itself, the manifest matters to [`bv sync-sdk`](#globaljson) in two ways:
+Besides being read by the .NET CLI itself, the manifest drives `bv`'s _delegation_: whenever it pins `bv`, the pinned version is the one that runs, no matter which `bv` you invoke — like the Angular CLI, where a global `ng` always hands over to the project-local install. On every invocation, `bv` reads the manifest's `bv` entry and, unless it is itself the pinned version running from the local tool cache, delegates the entire command line to the pinned version: it makes sure the version is available (`dotnet tool restore`), runs it (`dotnet tool run bv`) with inherited standard streams, and forwards its exit code. When the versions differ, an info line on standard error names the version that runs:
 
-- It acts as a provenance guard for self-updates: when the version pinned in `global.json` is newer than the running `bv`, `sync-sdk` updates `bv` via `dotnet tool update` only if the running `bv`'s version matches the manifest's `bv` entry. Version equality is how `sync-sdk` decides that the running `bv` is the manifest's; a `bv` installed some other way can therefore slip past the guard only when its version coincides with the manifest's entry, in which case the update is harmless — the manifest ends up pinning exactly the version `global.json` asks for.
-- When the `global.json` pin ends up matching the running `bv` but the manifest still pins a different version of `bv`, `sync-sdk` warns that the next `dotnet bv` invocation will run the manifest's version and fail the SDK version check, and suggests how to complete the alignment.
+```text
+Delegating to bv 2.1.58-preview from this repository's tool manifest.
+```
+
+A delegating `bv` neither parses the command line nor reads the configuration file: both may be valid for the pinned version and not for the invoked one, and judging them is the pinned version's job. There are two exceptions:
+
+- the `--skip-delegation` global option runs the exact binary you invoked;
+- the [`update`](#globaljson) subcommand always runs the invoked `bv`, since its job is precisely to re-pin the repository to that `bv`'s version.
+
+An [environment variable](EnvironmentVariables.md), `BV_DELEGATED`, is set on the delegated `bv` (carrying the delegating `bv`'s version) so that a delegated invocation never delegates again.
 
 ## `artifacts\`
 
@@ -302,9 +310,11 @@ It is important that no other `Directory.Build.props` and / or `Directory.Build.
 
 Of course, `global.json` can also serve its better-known purpose, pinning the version of the .NET SDK itself via the `sdk` key; the two uses coexist in the same file.
 
-The pinned version is not just a build input: `bv`, Buildvana SDK, and the `Buildvana.Runtime` library are released in lockstep and designed to work as a matched group. Every `bv` command that uses the SDK (`restore`, `build`, `test`, `pack`, and `release`) first verifies that the pinned version matches the version of the running `bv`, and refuses to run on a mismatch — including a missing `global.json`, section, or entry (pass `--skip-sdk-check` to bypass the check when you need a deliberate mismatch).
+The pinned version is not just a build input: `bv`, Buildvana SDK, and the `Buildvana.Runtime` library are released in lockstep and designed to work as a matched group. Every `bv` command that uses the SDK (`restore`, `build`, `test`, `pack`, and `release`) first verifies that the pinned version matches the version of the running `bv`, and refuses to run on a mismatch — including a missing `global.json`, section, or entry (pass `--skip-sdk-check` to bypass the check when you need a deliberate mismatch). Thanks to [delegation](#configdotnet-toolsjson), the `bv` that runs is normally the one pinned in the tool manifest, so the check can only trip when the repository's own pins disagree with each other — a half-updated repository.
 
-To align the two versions, run `bv sync-sdk`: when the pin is older, missing, or invalid, it rewrites (or creates) the `global.json` pin to match the running `bv`; when the pin is newer, it updates `bv` itself via `dotnet tool update` — but only when the running `bv`'s version matches the one pinned in the repository's [tool manifest](#configdotnet-toolsjson) (`.config\dotnet-tools.json`), as described in that section.
+To update the repository as a whole, run `bv update`: it re-pins the repository's entire Buildvana surface — the `bv` entry in the [tool manifest](#configdotnet-toolsjson), the `Buildvana.Sdk` entry in `global.json`, and the [configuration file](ConfigurationFiles.md)'s `$schema` reference — to the version of the running `bv`, creating files and sections as needed and preserving formatting everywhere. The tool manifest is updated through `dotnet tool update` (or `dotnet tool install --create-manifest-if-needed`), which also downloads the version so the next `dotnet bv` invocation can run it; afterwards, the configuration file is loaded with the new version's model, and any problems are reported as warnings for you to review.
+
+`update` is exempt from delegation — it updates the repository to the `bv` you actually invoked ("bring this repository to me"). The usual upgrade flow is therefore: update your global `bv` (`dotnet tool update -g bv`), then run `bv update` in the repository; `dnx bv@<version> update` targets any specific version without touching the global install. As a safety net, `bv update` refuses to move a repository backwards when its pins are newer than the running `bv`, unless you pass `--force`.
 
 ## `LICENSE`
 

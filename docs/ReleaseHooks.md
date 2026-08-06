@@ -63,20 +63,22 @@ Because the version pin is applied by the SDK rather than gated on anything `bv`
 
 `bv` serializes the context of the run to a per-hook file, `.buildvana-temp/hook-contexts/<command>/<moment>.json` in the home directory — `.buildvana-temp/hook-contexts/release/post-release.json` for this hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at `Detail` verbosity. `PostReleaseHookContext.Load()` reads and deserializes it; the members are:
 
-| Member                     | Type           | Content                                                                                                                                                                 |
-| -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Paths.HomeDirectory`      | string         | Absolute path of the home directory (also the hook's working directory).                                                                                                |
-| `Paths.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                          |
-| `Paths.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                    |
-| `Release.Version`          | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                             |
-| `Release.SemVer`           | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                        |
-| `Release.PreviousVersion`  | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                              |
-| `Release.IsPrerelease`     | boolean        | Whether the version being released is a prerelease.                                                                                                                     |
-| `Release.IsPublicRelease`  | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                         |
-| `ProducedPackages`         | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                    |
-| `Dogfooded`                | boolean        | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value. |
+| Member                           | Type           | Content                                                                                                                                                                              |
+| -------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `RuntimeInfo.Version`            | string         | The version of the `bv` running the hook, in semantic version form without build metadata.                                                                                           |
+| `RuntimeInfo.DelegatingVersion`  | string or null | The version of the `bv` that [delegated](DirectoryStructure.md#configdotnet-toolsjson) the run to the version pinned in the tool manifest, or `null` when the run was not delegated. |
+| `RuntimeInfo.HomeDirectory`      | string         | Absolute path of the home directory (also the hook's working directory).                                                                                                             |
+| `RuntimeInfo.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                                       |
+| `RuntimeInfo.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                                 |
+| `Release.Version`                | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                                          |
+| `Release.SemVer`                 | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                                     |
+| `Release.PreviousVersion`        | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                                           |
+| `Release.IsPrerelease`           | boolean        | Whether the version being released is a prerelease.                                                                                                                                  |
+| `Release.IsPublicRelease`        | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                                      |
+| `ProducedPackages`               | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                                 |
+| `Dogfooded`                      | boolean        | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value.              |
 
-In the JSON file, member names are camelCase (`paths.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim.
+In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim.
 
 `.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the context files as untracked.
 
