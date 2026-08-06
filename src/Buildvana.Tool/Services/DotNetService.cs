@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
@@ -232,7 +233,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     public async Task NuGetPushAllAsync(string artifactsPath, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNullOrEmpty(artifactsPath);
-        var packages = FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg").ToArray();
+        var packages = UserDirectory.EnumerateFiles(artifactsPath, "*.nupkg").ToArray();
         if (packages.Length == 0)
         {
             _reporter.Detail("No .nupkg files to push.");

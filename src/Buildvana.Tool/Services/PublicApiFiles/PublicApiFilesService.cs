@@ -9,7 +9,6 @@ using System.Text;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.IO;
-using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Louis.Collections;
 
@@ -146,7 +145,7 @@ internal sealed class PublicApiFilesService
 
     private IEnumerable<(string UnshippedPath, string ShippedPath)> GetAllPublicApiFilePairs()
     {
-        return FileSystemHelper
+        return UserDirectory
             .EnumerateFiles(_home.HomeDirectory, "**/PublicAPI.Shipped.txt", caseSensitive: true)
             .Select(GetPair)
             .WhereNotNull();
@@ -154,7 +153,7 @@ internal sealed class PublicApiFilesService
         static (string UnshippedPath, string ShippedPath)? GetPair(string shippedPath)
         {
             var unshippedPath = Path.Combine(Path.GetDirectoryName(shippedPath)!, "PublicAPI.Unshipped.txt");
-            return FileSystemHelper.FileExists(unshippedPath) ? (unshippedPath, shippedPath) : null;
+            return UserFile.Exists(unshippedPath) ? (unshippedPath, shippedPath) : null;
         }
     }
 }

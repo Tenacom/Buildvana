@@ -33,9 +33,16 @@ public static partial class UserFile
         }
     }
 
-    private static async Task<T> ReadAsync<T>(string path, Func<Task<T>> read)
+    private static Task<T> ReadAsync<T>(string path, Func<Task<T>> read)
     {
+        // Validate before the async state machine starts, so that a bad path throws synchronously,
+        // like the BCL async File methods do.
         Guard.IsNotNullOrEmpty(path);
+        return ReadAsyncCore(path, read);
+    }
+
+    private static async Task<T> ReadAsyncCore<T>(string path, Func<Task<T>> read)
+    {
         try
         {
             return await read().ConfigureAwait(false);
@@ -59,9 +66,16 @@ public static partial class UserFile
         }
     }
 
-    private static async Task WriteAsync(string path, Func<Task> write)
+    private static Task WriteAsync(string path, Func<Task> write)
     {
+        // Validate before the async state machine starts, so that a bad path throws synchronously,
+        // like the BCL async File methods do.
         Guard.IsNotNullOrEmpty(path);
+        return WriteAsyncCore(path, write);
+    }
+
+    private static async Task WriteAsyncCore(string path, Func<Task> write)
+    {
         try
         {
             await write().ConfigureAwait(false);

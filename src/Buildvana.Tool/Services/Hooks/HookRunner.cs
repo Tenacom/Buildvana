@@ -88,13 +88,13 @@ internal sealed class HookRunner
     {
         var hooksRelativePath = Path.Combine(".buildvana", "hooks");
         var hooksPath = Path.GetFullPath(hooksRelativePath, _home.HomeDirectory);
-        if (!FileSystemHelper.DirectoryExists(hooksPath))
+        if (!UserDirectory.Exists(hooksPath))
         {
             _reporter.Detail($"Hook build cache cleaning skipped: no {hooksRelativePath} directory.");
             return;
         }
 
-        foreach (var path in FileSystemHelper.EnumerateFiles(hooksPath, "**/*.cs"))
+        foreach (var path in UserDirectory.EnumerateFiles(hooksPath, "**/*.cs"))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var artifactsDirectory = FileBasedAppHelper.GetArtifactsDirectory(path);
@@ -106,7 +106,7 @@ internal sealed class HookRunner
             }
 
             _reporter.Info($"Clearing build cache of hook file {path}...");
-            FileSystemHelper.DeleteDirectory(artifactsDirectory, _reporter);
+            UserDirectory.DeleteIfExists(artifactsDirectory, _reporter);
         }
     }
 }

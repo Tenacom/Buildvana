@@ -47,6 +47,7 @@ More task-specific diagnostics (if any) are listed under relevant modules.
 | --------- | :------: | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | BVSDK1050 |  Error   | Parameter '...' is missing or empty. | Something went wrong with a Buildvana SDK module. Please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose).                                                                      |
 | BVSDK1051 |  Error   | The file '...' could not be created. | There was an error trying to write to a file. Try cleaning the project and rebuilding it. If the problem arises again, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). |
+| BVSDK1052 |  Error   | The file '...' could not be read.    | There was an error trying to read a file. Try cleaning the project and rebuilding it. If the problem arises again, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose).     |
 
 ## Source generators (1100-1199)
 

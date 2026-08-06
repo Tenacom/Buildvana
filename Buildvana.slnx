@@ -57,6 +57,7 @@
     <File Path="tests/Common.targets" />
     <Project Path="tests/Buildvana.Core.Configuration.Tests/Buildvana.Core.Configuration.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.ConsoleOutput.Tests/Buildvana.Core.ConsoleOutput.Tests.csproj" />
+    <Project Path="tests/Buildvana.Core.Diagnostics.Tests/Buildvana.Core.Diagnostics.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.HomeDirectory.Tests/Buildvana.Core.HomeDirectory.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.IO.Tests/Buildvana.Core.IO.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.Json.Tests/Buildvana.Core.Json.Tests.csproj" />

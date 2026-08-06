@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Title>Buildvana Core Abstractions</Title>
-    <Description>Host-agnostic contracts shared by Buildvana libraries. Contracts only — no concrete helpers.</Description>
+    <Description>Host-agnostic contracts and implementation-independent helpers shared by Buildvana libraries.</Description>
     <RootNamespace>Buildvana.Core</RootNamespace>
     <TargetFramework>$(StandardTfm)</TargetFramework>
     <IsPackable>false</IsPackable>

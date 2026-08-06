@@ -303,7 +303,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
 
             // Gather build assets from Buildvana.Sdk release asset lists
             reporter.Info("Reading release asset lists...");
-            foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.assets.txt"))
+            foreach (var path in UserDirectory.EnumerateFiles(artifactsPath, "*.assets.txt"))
             {
                 reporter.Detail($"Reading release asset list {path}...");
                 var i = 0;
@@ -328,7 +328,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
 
             // Add NuGet packages as assets
-            foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg"))
+            foreach (var path in UserDirectory.EnumerateFiles(artifactsPath, "*.nupkg"))
             {
                 release.AddAsset(path);
                 var snupkgPath = Path.ChangeExtension(path, ".snupkg");

@@ -64,6 +64,11 @@ partial class UserFile
     /// <param name="path">The file to write to.</param>
     /// <param name="contents">The lines to write to the file.</param>
     /// <exception cref="BuildFailedException">The file could not be written.</exception>
+    /// <remarks>
+    /// <para><paramref name="contents"/> is enumerated inside the guarded region: a failure raised by a
+    /// lazily-evaluated collection is reported, misleadingly, as a failure to write to <paramref name="path"/>.
+    /// Prefer materialized collections.</para>
+    /// </remarks>
     public static void WriteAllLines(string path, IEnumerable<string> contents)
         => Write(path, () => File.WriteAllLines(path, contents));
 
@@ -75,6 +80,11 @@ partial class UserFile
     /// <param name="contents">The lines to write to the file.</param>
     /// <param name="encoding">The encoding to apply to each line.</param>
     /// <exception cref="BuildFailedException">The file could not be written.</exception>
+    /// <remarks>
+    /// <para><paramref name="contents"/> is enumerated inside the guarded region: a failure raised by a
+    /// lazily-evaluated collection is reported, misleadingly, as a failure to write to <paramref name="path"/>.
+    /// Prefer materialized collections.</para>
+    /// </remarks>
     public static void WriteAllLines(string path, IEnumerable<string> contents, Encoding encoding)
         => Write(path, () => File.WriteAllLines(path, contents, encoding));
 
@@ -87,6 +97,11 @@ partial class UserFile
     /// <param name="cancellationToken">A token that may be signalled to cancel the operation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     /// <exception cref="BuildFailedException">The file could not be written.</exception>
+    /// <remarks>
+    /// <para><paramref name="contents"/> is enumerated inside the guarded region: a failure raised by a
+    /// lazily-evaluated collection is reported, misleadingly, as a failure to write to <paramref name="path"/>.
+    /// Prefer materialized collections.</para>
+    /// </remarks>
     public static Task WriteAllLinesAsync(string path, IEnumerable<string> contents, CancellationToken cancellationToken = default)
         => WriteAsync(path, () => File.WriteAllLinesAsync(path, contents, cancellationToken));
 
@@ -100,6 +115,11 @@ partial class UserFile
     /// <param name="cancellationToken">A token that may be signalled to cancel the operation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     /// <exception cref="BuildFailedException">The file could not be written.</exception>
+    /// <remarks>
+    /// <para><paramref name="contents"/> is enumerated inside the guarded region: a failure raised by a
+    /// lazily-evaluated collection is reported, misleadingly, as a failure to write to <paramref name="path"/>.
+    /// Prefer materialized collections.</para>
+    /// </remarks>
     public static Task WriteAllLinesAsync(string path, IEnumerable<string> contents, Encoding encoding, CancellationToken cancellationToken = default)
         => WriteAsync(path, () => File.WriteAllLinesAsync(path, contents, encoding, cancellationToken));
 

@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Security;
 using System.Text.Json;
 
 namespace Buildvana.Runtime;
@@ -67,7 +66,7 @@ public partial record BuildvanaConfig
         {
             json = File.ReadAllText(path);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
+        catch (Exception e) when (e.IsIORelatedException)
         {
             throw new BuildvanaRuntimeException($"Could not read from {path}: {e.Message}", e);
         }
