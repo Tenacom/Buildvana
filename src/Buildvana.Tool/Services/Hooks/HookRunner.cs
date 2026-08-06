@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using Buildvana.Runtime;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
@@ -68,8 +69,8 @@ internal sealed class HookRunner
         var json = JsonSerializer.Serialize(context, context.GetType(), BuildvanaJsonContext.Default);
         _reporter.Detail($"Hook {hookName}: context: {json}");
         var contextPath = Path.GetFullPath(WellKnownPaths.GetHookContextFile(command, moment), _home.HomeDirectory);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(contextPath)!);
-        await File.WriteAllTextAsync(contextPath, json, cancellationToken).ConfigureAwait(false);
+        _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(contextPath)!);
+        await UserFile.WriteAllTextAsync(contextPath, json, cancellationToken).ConfigureAwait(false);
         _reporter.Info($"Hook {hookName}: running {relativePath}...");
         _ = await _appRunner.RunFileBasedAppAsync(
             path,

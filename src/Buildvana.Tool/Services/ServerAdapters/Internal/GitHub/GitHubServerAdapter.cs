@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
@@ -99,7 +100,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         var outputFile = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
         BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
-        File.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
+        UserFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
     }
 
     /// <inheritdoc/>
@@ -221,7 +222,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var client = CreateGitHubClient();
         _reporter.Detail($"Uploading asset {path}...");
         ReleaseAsset asset;
-        var assetContents = File.OpenRead(path);
+        var assetContents = UserFile.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
         {
             var upload = new ReleaseAssetUpload()

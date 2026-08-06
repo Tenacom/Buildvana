@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Buildvana.Core.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Json;
@@ -23,7 +24,7 @@ public sealed partial class JsonHelper
         Guard.IsNotNullOrEmpty(propertyName);
         Guard.IsNotNull(value);
 
-        var originalBytes = ReadFileBytes(path);
+        var originalBytes = UserFile.ReadAllBytes(path);
         var inserting = TryLocateInsertion(
             path,
             originalBytes,
@@ -41,7 +42,7 @@ public sealed partial class JsonHelper
             ? ComposeInsertionForEmptyObject(originalBytes, braceIndex, firstContentIndex, propertyName, value)
             : ComposeInsertionBeforeFirstProperty(originalBytes, braceIndex, firstContentIndex, propertyName, value);
         var newBytes = Splice(originalBytes, braceIndex + 1, replaceLength, insertionText);
-        WriteFileBytes(path, newBytes);
+        UserFile.WriteAllBytes(path, newBytes);
         return true;
     }
 

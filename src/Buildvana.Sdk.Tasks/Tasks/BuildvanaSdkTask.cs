@@ -4,7 +4,7 @@
 using System;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
-using Buildvana.Sdk.Internal;
+using Buildvana.Core.Diagnostics;
 using Microsoft.Build.Utilities;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -26,7 +26,7 @@ public abstract class BuildvanaSdkTask : Task
         {
             Log.LogError(ex.Message);
         }
-        catch (Exception e) when (!e.IsFatalException())
+        catch (Exception e) when (!e.IsFatalException)
         {
             Log.LogErrorFromException(e, true, true, GetType().Name + ".cs");
         }

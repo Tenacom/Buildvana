@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 using Buildvana.Core;
+using Buildvana.Core.Diagnostics;
 using Buildvana.Sdk.Internal;
 using Buildvana.Sdk.Resources;
 using Microsoft.Build.Framework;
@@ -43,7 +44,7 @@ public sealed class ExportJetBrainsAnnotations : BuildvanaSdkTask
             var document = JetBrainsAnnotationsExporter.Export(AssemblyName, compileFilePaths, referencePaths, preprocessorSymbols, LangVersion);
             document.Save(OutputFile, SaveOptions.None);
         }
-        catch (Exception e) when (!e.IsFatalException())
+        catch (Exception e) when (!e.IsFatalException)
         {
             throw new BuildFailedException(
                 string.Format(CultureInfo.InvariantCulture, Strings.JetBrainsAnnotations.ExportFailedFmt, AssemblyName, e.Message),

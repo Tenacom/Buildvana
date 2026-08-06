@@ -6,9 +6,9 @@ using System.Collections.Concurrent;
 using System.IO;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.Diagnostics;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Versioning;
-using Buildvana.Sdk.Internal;
 
 namespace Buildvana.Sdk.Tasks;
 
@@ -85,7 +85,7 @@ partial class ComputeVersion
             ];
             return string.Join('\0', parts);
         }
-        catch (Exception e) when (!e.IsFatalException())
+        catch (Exception e) when (!e.IsFatalException)
         {
             return null;
         }

@@ -120,6 +120,25 @@ internal sealed class HookRunnerTests
     }
 
     [Test]
+    public async Task RunHookAsync_WhenContextFileCannotBeWritten_FailsWithCleanError()
+    {
+        using var home = new TempHome();
+        _ = WriteHookFile(home, "release", "post-release");
+        var appRunner = new FakeFileBasedAppRunner();
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
+
+        // A directory planted at the context file's well-known path denies writing the context file.
+        _ = Directory.CreateDirectory(ContextPath(home));
+        var context = SampleContext(home);
+
+        var act = () => runner.RunHookAsync("release", "post-release", context);
+
+        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("Could not write to");
+        await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
+    }
+
+    [Test]
     public async Task CleanBuildCaches_WithoutHooksDirectory_DeletesNothing()
     {
         using var home = new TempHome();

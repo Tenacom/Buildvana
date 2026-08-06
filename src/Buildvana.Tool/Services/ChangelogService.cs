@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
@@ -61,7 +62,7 @@ internal sealed partial class ChangelogService
             return false;
         }
 
-        using var reader = new StreamReader(FileName, Encoding.UTF8);
+        using var reader = UserFile.OpenText(FileName, Encoding.UTF8);
         var sectionHeadingRegex = GetSectionHeadingRegex();
         var subSectionHeadingRegex = GetSubsectionHeadingRegex();
         string? line;
@@ -100,7 +101,7 @@ internal sealed partial class ChangelogService
         _reporter.Info("Updating changelog...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
-        using (var reader = new StreamReader(FileName, encoding))
+        using (var reader = UserFile.OpenText(FileName, encoding))
         using (var writer = new StringWriter(sb, CultureInfo.InvariantCulture))
         {
             // Using a StringWriter instead of a StringBuilder allows for a custom line separator
@@ -225,7 +226,7 @@ internal sealed partial class ChangelogService
             }
         }
 
-        File.WriteAllText(FileName, sb.ToString(), encoding);
+        UserFile.WriteAllText(FileName, sb.ToString(), encoding);
     }
 
     /// <summary>
@@ -237,7 +238,7 @@ internal sealed partial class ChangelogService
         _reporter.Info("Updating changelog's new release section title...");
         var encoding = new UTF8Encoding(false, true);
         var sb = new StringBuilder();
-        using (var reader = new StreamReader(FileName, encoding))
+        using (var reader = UserFile.OpenText(FileName, encoding))
         using (var writer = new StringWriter(sb, CultureInfo.InvariantCulture))
         {
             // Using a StringWriter instead of a StringBuilder allows for a custom line separator
@@ -289,7 +290,7 @@ internal sealed partial class ChangelogService
             }
         }
 
-        File.WriteAllText(FileName, sb.ToString(), encoding);
+        UserFile.WriteAllText(FileName, sb.ToString(), encoding);
     }
 
     [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]

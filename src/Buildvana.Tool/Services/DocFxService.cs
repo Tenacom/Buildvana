@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
@@ -106,7 +107,6 @@ internal sealed class DocFxService
 #pragma warning restore
 
         var jsonPath = Path.Combine(CommonPaths.Docs, "globalMetadata.json");
-        using var stream = File.Create(jsonPath);
-        JsonSerializer.Serialize(stream, globalMetadata, options);
+        UserFile.WriteAllText(jsonPath, JsonSerializer.Serialize(globalMetadata, options));
     }
 }

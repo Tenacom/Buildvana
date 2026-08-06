@@ -6,7 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using Buildvana.Core;
-using Buildvana.Sdk.Internal;
+using Buildvana.Core.IO;
 using Buildvana.Sdk.Resources;
 using Microsoft.Build.Framework;
 
@@ -51,18 +51,11 @@ public sealed class WriteThisAssemblyConstantsFile : BuildvanaSdkTask
 
     private static void SaveIfDifferent(string outputPath, string content)
     {
-        try
+        if (File.Exists(outputPath) && UserFile.ReadAllText(outputPath) == content)
         {
-            if (File.Exists(outputPath) && File.ReadAllText(outputPath) == content)
-            {
-                return;
-            }
+            return;
+        }
 
-            File.WriteAllText(outputPath, content);
-        }
-        catch (Exception e) when (e.IsIORelatedException())
-        {
-            throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.CouldNotWriteFileFmt, outputPath, e.Message), e);
-        }
+        UserFile.WriteAllText(outputPath, content);
     }
 }
