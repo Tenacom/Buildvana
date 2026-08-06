@@ -1,11 +1,10 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.IO;
-using System.Linq;
 using System.Threading;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.VisualStudio.SolutionPersistence.Serializer;
 
@@ -42,6 +41,13 @@ internal sealed class HomeDirectorySolutionContextFactory : ISolutionContextFact
     }
 
     private static string? FindSolutionFile(string directory)
-        => Directory.EnumerateFiles(directory, "*.slnx").FirstOrDefault()
-            ?? Directory.EnumerateFiles(directory, "*.sln").FirstOrDefault();
+    {
+        var candidates = UserDirectory.EnumerateFiles(directory, "*.slnx");
+        if (candidates.Count == 0)
+        {
+            candidates = UserDirectory.EnumerateFiles(directory, "*.sln");
+        }
+
+        return candidates.Count > 0 ? candidates[0] : null;
+    }
 }
