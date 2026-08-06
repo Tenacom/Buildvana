@@ -95,6 +95,30 @@ internal sealed class BuildvanaConfigLoadTests
         }
     }
 
+    // An exclusively-locked file is the portable trigger for the read-failure branch: File.Exists stays true
+    // (it checks attributes, not access), while File.ReadAllText fails on every platform — .NET maps FileShare
+    // to advisory locks on Unix, so the sharing violation holds there too.
+    [Test]
+    public async Task Load_UnreadableFile_Throws()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.json", "{}");
+            var path = Path.Combine(dir, "buildvana.json");
+            using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+
+            var act = () => BuildvanaConfig.Load(dir);
+
+            var exception = await Assert.That(act).Throws<BuildvanaRuntimeException>();
+            await Assert.That(exception!.Message).Contains("Could not read from");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     [Test]
     public async Task FindFile_NoFile_ReturnsNull()
     {

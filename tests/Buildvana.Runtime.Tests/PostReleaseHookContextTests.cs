@@ -65,6 +65,31 @@ internal sealed class PostReleaseHookContextTests
         }
     }
 
+    // An exclusively-locked file is the portable trigger for the read-failure branch: File.Exists stays true
+    // (it checks attributes, not access), while File.ReadAllText fails on every platform — .NET maps FileShare
+    // to advisory locks on Unix, so the sharing violation holds there too.
+    [Test]
+    public async Task Load_UnreadableContextFile_Throws()
+    {
+        var dir = NewDir();
+        try
+        {
+            var path = Path.Combine(dir, WellKnownPaths.GetHookContextFile("release", "post-release"));
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            await File.WriteAllTextAsync(path, "{}").ConfigureAwait(false);
+            using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+
+            var act = () => PostReleaseHookContext.Load(dir);
+
+            var exception = await Assert.That(act).Throws<BuildvanaRuntimeException>();
+            await Assert.That(exception!.Message).Contains("Could not read from");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     private static PostReleaseHookContext SampleContext(string home) => new()
     {
         Paths = new()
