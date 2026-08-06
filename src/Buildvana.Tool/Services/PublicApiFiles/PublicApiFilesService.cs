@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Louis.Collections;
@@ -88,7 +89,7 @@ internal sealed class PublicApiFilesService
 
     private static ApiChangeKind GetApiChangeKind(string unshippedPath)
     {
-        var unshippedLines = File.ReadAllLines(unshippedPath, Encoding.UTF8);
+        var unshippedLines = UserFile.ReadAllLines(unshippedPath, Encoding.UTF8);
         static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';
         var unshippedPublicApiLines = unshippedLines.SkipWhile(IsEmptyOrStartsWithHash);
         var newApiPresent = false;
@@ -108,14 +109,14 @@ internal sealed class PublicApiFilesService
     private static bool TransferPublicApisToShipped(string unshippedPath, string shippedPath)
     {
         var utf8 = new UTF8Encoding(false);
-        var unshippedLines = File.ReadAllLines(unshippedPath, utf8);
+        var unshippedLines = UserFile.ReadAllLines(unshippedPath, utf8);
         var unshippedHeaderLines = unshippedLines.TakeWhile(IsEmptyOrStartsWithHash).ToArray();
         if (unshippedHeaderLines.Length == unshippedLines.Length)
         {
             return false;
         }
 
-        var shippedLines = File.ReadAllLines(shippedPath, utf8);
+        var shippedLines = UserFile.ReadAllLines(shippedPath, utf8);
         var shippedHeaderLines = shippedLines.TakeWhile(IsEmptyOrStartsWithHash).ToArray();
 
         var removedLines = unshippedLines
@@ -133,8 +134,8 @@ internal sealed class PublicApiFilesService
                 .Where(DoesNotStartWithRemovedPrefix))
             .OrderBy(static l => l, StringComparer.Ordinal);
 
-        File.WriteAllLines(shippedPath, shippedHeaderLines.Concat(newShippedLines), utf8);
-        File.WriteAllLines(unshippedPath, unshippedHeaderLines, utf8);
+        UserFile.WriteAllLines(shippedPath, shippedHeaderLines.Concat(newShippedLines), utf8);
+        UserFile.WriteAllLines(unshippedPath, unshippedHeaderLines, utf8);
         return true;
 
         static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';

@@ -1,16 +1,15 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Utilities;
@@ -173,14 +172,7 @@ internal sealed class SelfVersionService
             "}",
             string.Empty,
         ];
-        try
-        {
-            File.WriteAllText(path, string.Join('\n', lines));
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
-        }
+        UserFile.WriteAllText(path, string.Join('\n', lines));
     }
 
     private static bool IsPinPath(IReadOnlyList<string> propertyPath)

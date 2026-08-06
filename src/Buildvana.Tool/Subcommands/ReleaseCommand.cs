@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.Build;
@@ -306,7 +307,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             {
                 reporter.Detail($"Reading release asset list {path}...");
                 var i = 0;
-                await foreach (var line in File.ReadLinesAsync(path, cancellationToken).ConfigureAwait(false))
+                foreach (var line in await UserFile.ReadAllLinesAsync(path, cancellationToken).ConfigureAwait(false))
                 {
                     i++;
                     var parts = line.Split('\t');

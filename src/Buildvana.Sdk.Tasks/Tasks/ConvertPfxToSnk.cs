@@ -7,7 +7,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Buildvana.Core;
-using Buildvana.Sdk.Internal;
+using Buildvana.Core.Diagnostics;
 using Buildvana.Sdk.Resources;
 using Microsoft.Build.Framework;
 
@@ -67,7 +67,7 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
             // Overwrites file if it already exists (and can be overwritten)
             File.WriteAllBytes(outputPath, bytes);
         }
-        catch (Exception e) when (e.IsIORelatedException())
+        catch (Exception e) when (e.IsIORelatedException)
         {
             throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.CouldNotWriteFileFmt, outputPath, e.Message), e);
         }

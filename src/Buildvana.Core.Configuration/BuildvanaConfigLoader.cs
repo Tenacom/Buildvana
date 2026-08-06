@@ -3,10 +3,10 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Buildvana.Core.IO;
 using Buildvana.Core.JsonSchema;
 using Buildvana.Runtime;
 using CommunityToolkit.Diagnostics;
@@ -60,24 +60,12 @@ public static class BuildvanaConfigLoader
             return new BuildvanaConfig();
         }
 
-        var json = StripBom(ReadAllBytes(path));
+        var json = StripBom(UserFile.ReadAllBytes(path));
         var node = Parse(json, path);
         Validate(node, json, path);
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
         return node!.Deserialize(BuildvanaJsonContext.Default.BuildvanaConfig) ?? new BuildvanaConfig();
-    }
-
-    private static byte[] ReadAllBytes(string path)
-    {
-        try
-        {
-            return File.ReadAllBytes(path);
-        }
-        catch (IOException e)
-        {
-            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
-        }
     }
 
     // Removes a leading UTF-8 byte order mark, if present, so the reader sees only JSON and positions start at 1.

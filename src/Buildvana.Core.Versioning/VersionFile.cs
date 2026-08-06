@@ -3,8 +3,8 @@
 
 using System;
 using System.IO;
-using System.Security;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Versioning;
@@ -82,30 +82,13 @@ public sealed class VersionFile
     public void Save(string? prereleaseTag = null)
     {
         var text = Format(Spec, prereleaseTag);
-        try
-        {
-            File.WriteAllText(Path, text);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not write to {Path}: {e.Message}", e);
-        }
+        UserFile.WriteAllText(Path, text);
     }
 
     private static VersionSpec ReadSpec(string path)
     {
         BuildFailedException.ThrowIfNot(File.Exists(path), $"Version file {path} not found.");
-        string text;
-        try
-        {
-            text = File.ReadAllText(path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
-        }
-
-        text = text.Trim();
+        var text = UserFile.ReadAllText(path).Trim();
         BuildFailedException.ThrowIfNot(
             VersionSpec.TryParse(text, out var spec),
             $"{path} contains an invalid version specification '{text}'.");

@@ -4,10 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Buildvana.Core.Diagnostics;
+using Buildvana.Core.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Json;
@@ -63,7 +64,7 @@ public sealed partial class JsonHelper : IJsonHelper
                     CommentHandling = JsonCommentHandling.Skip,
                 });
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
+        catch (Exception e) when (e.IsIORelatedException)
         {
             throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
@@ -98,7 +99,7 @@ public sealed partial class JsonHelper : IJsonHelper
             json.WriteTo(writer);
             stream.SetLength(stream.Position);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
+        catch (Exception e) when (e.IsIORelatedException)
         {
             throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
         }
@@ -110,7 +111,7 @@ public sealed partial class JsonHelper : IJsonHelper
         Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNull(rewriter);
 
-        var originalBytes = ReadFileBytes(path);
+        var originalBytes = UserFile.ReadAllBytes(path);
 
         // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
         var bomLength = HasUtf8Bom(originalBytes) ? 3 : 0;
@@ -149,7 +150,7 @@ public sealed partial class JsonHelper : IJsonHelper
             output.Write(originalBytes, cursor, originalBytes.Length - cursor);
         }
 
-        WriteFileBytes(path, output.ToArray());
+        UserFile.WriteAllBytes(path, output.ToArray());
         return true;
     }
 
@@ -168,18 +169,6 @@ public sealed partial class JsonHelper : IJsonHelper
                 return result;
             default:
                 throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
-        }
-    }
-
-    private static byte[] ReadFileBytes(string path)
-    {
-        try
-        {
-            return File.ReadAllBytes(path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not read from {path}: {e.Message}", e);
         }
     }
 
@@ -283,17 +272,5 @@ public sealed partial class JsonHelper : IJsonHelper
         var innerLength = reader.ValueSpan.Length;
         var encoded = JsonEncodedText.Encode(newValue.AsSpan(), JavaScriptEncoder.UnsafeRelaxedJsonEscaping).EncodedUtf8Bytes.ToArray();
         edits.Add(new JsonValueEdit(innerStart, innerLength, encoded));
-    }
-
-    private static void WriteFileBytes(string path, byte[] bytes)
-    {
-        try
-        {
-            File.WriteAllBytes(path, bytes);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SecurityException)
-        {
-            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
-        }
     }
 }

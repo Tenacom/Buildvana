@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using Buildvana.Core.Json;
 using CommunityToolkit.Diagnostics;
 
@@ -133,7 +134,7 @@ internal sealed class SelfReferenceUpdater
         // silently add a BOM on rewrite to files that did not have one.
         string original;
         Encoding encoding;
-        using (var reader = new StreamReader(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
+        using (var reader = UserFile.OpenText(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
         {
             original = reader.ReadToEnd();
             encoding = reader.CurrentEncoding;
@@ -159,7 +160,7 @@ internal sealed class SelfReferenceUpdater
             return false;
         }
 
-        File.WriteAllText(path, current, encoding);
+        UserFile.WriteAllText(path, current, encoding);
         return true;
     }
 
