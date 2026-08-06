@@ -159,6 +159,74 @@ internal sealed partial class UserFileTests
         await Assert.That(exception.InnerException).IsTypeOf<ArgumentException>();
     }
 
+    // Null and empty paths are programmer errors, not user input: the guard rejects them before
+    // the guarded region, so they surface raw instead of being wrapped in BuildFailedException.
+    [Test]
+    public async Task ReadAllText_WithNullPath_ThrowsRaw()
+    {
+        var act = () => UserFile.ReadAllText(null!);
+
+        await Assert.That(act).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task ReadAllText_WithEmptyPath_ThrowsRaw()
+    {
+        var act = () => UserFile.ReadAllText(string.Empty);
+
+        await Assert.That(act).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task WriteAllText_WithNullPath_ThrowsRaw()
+    {
+        var act = () => UserFile.WriteAllText(null!, "x");
+
+        await Assert.That(act).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task WriteAllText_WithEmptyPath_ThrowsRaw()
+    {
+        var act = () => UserFile.WriteAllText(string.Empty, "x");
+
+        await Assert.That(act).Throws<ArgumentException>();
+    }
+
+    // The async methods are invoked without await: the guard must throw synchronously,
+    // before a task is even created, like the BCL async File methods do.
+    [Test]
+    public async Task ReadAllTextAsync_WithNullPath_ThrowsRawAndSynchronously()
+    {
+        var act = () => { _ = UserFile.ReadAllTextAsync(null!); };
+
+        await Assert.That(act).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task ReadAllTextAsync_WithEmptyPath_ThrowsRawAndSynchronously()
+    {
+        var act = () => { _ = UserFile.ReadAllTextAsync(string.Empty); };
+
+        await Assert.That(act).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task WriteAllTextAsync_WithNullPath_ThrowsRawAndSynchronously()
+    {
+        var act = () => { _ = UserFile.WriteAllTextAsync(null!, "x"); };
+
+        await Assert.That(act).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task WriteAllTextAsync_WithEmptyPath_ThrowsRawAndSynchronously()
+    {
+        var act = () => { _ = UserFile.WriteAllTextAsync(string.Empty, "x"); };
+
+        await Assert.That(act).Throws<ArgumentException>();
+    }
+
     [Test]
     public async Task WriteAllText_ReadAllText_RoundTrip()
     {
@@ -405,6 +473,69 @@ internal sealed partial class UserFileTests
             using var reader = UserFile.OpenText(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true);
             return reader.ReadToEnd();
         }
+    }
+
+    [Test]
+    public async Task OpenTextWithEncoding_WithoutByteOrderMarkDetection_ReadsByteOrderMarkAsContent()
+    {
+        using var file = new TempFile();
+
+        var read = Act(file.Path);
+
+        await Assert.That(read).IsEqualTo((char)0xFEFF + "héllo wörld");
+
+        static string Act(string path)
+        {
+            // Emit an explicit UTF-8 BOM, then read with detection off and a preamble-free encoding:
+            // the BOM must come back as content instead of being consumed.
+            UserFile.WriteAllText(path, "héllo wörld", new UTF8Encoding(true));
+            using var reader = UserFile.OpenText(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: false);
+            return reader.ReadToEnd();
+        }
+    }
+
+    [Test]
+    public async Task Exists_WithExistingFile_ReturnsTrue()
+    {
+        using var file = new TempFile();
+
+        var exists = Act(file.Path);
+
+        await Assert.That(exists).IsTrue();
+
+        static bool Act(string path)
+        {
+            UserFile.WriteAllText(path, "x");
+            return UserFile.Exists(path);
+        }
+    }
+
+    [Test]
+    public async Task Exists_WithMissingFile_ReturnsFalse()
+    {
+        using var file = new TempFile();
+
+        await Assert.That(UserFile.Exists(file.Path)).IsFalse();
+    }
+
+    [Test]
+    public async Task Exists_WithDirectoryAtPath_ReturnsFalse()
+        => await Assert.That(UserFile.Exists(DeniedAccessPath)).IsFalse();
+
+    [Test]
+    public async Task Exists_WithNullPath_ThrowsRaw()
+    {
+        var act = () => UserFile.Exists(null!);
+
+        await Assert.That(act).Throws<ArgumentNullException>();
+    }
+
+    [Test]
+    public async Task Exists_WithEmptyPath_ThrowsRaw()
+    {
+        var act = () => UserFile.Exists(string.Empty);
+
+        await Assert.That(act).Throws<ArgumentException>();
     }
 
     private static async Task AssertDenied(Action act, string expectedMessagePrefix)

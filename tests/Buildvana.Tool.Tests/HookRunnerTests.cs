@@ -4,6 +4,7 @@
 using System.Text.Json;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Hooks;
@@ -175,8 +176,8 @@ internal sealed class HookRunnerTests
         }
         finally
         {
-            FileSystemHelper.DeleteDirectory(firstArtifactsPath);
-            FileSystemHelper.DeleteDirectory(secondArtifactsPath);
+            UserDirectory.DeleteIfExists(firstArtifactsPath);
+            UserDirectory.DeleteIfExists(secondArtifactsPath);
         }
     }
 

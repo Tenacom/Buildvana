@@ -86,23 +86,21 @@ public sealed partial class JsonHelper : IJsonHelper
         Guard.IsNotNull(json);
         Guard.IsNotNullOrEmpty(path);
 
-        try
+        var writerOptions = new JsonWriterOptions
         {
-            using var stream = File.OpenWrite(path);
-            var writerOptions = new JsonWriterOptions
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                Indented = true,
-            };
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            Indented = true,
+        };
 
-            using var writer = new Utf8JsonWriter(stream, writerOptions);
-            json.WriteTo(writer);
-            stream.SetLength(stream.Position);
-        }
-        catch (Exception e) when (e.IsIORelatedException)
+        // Serialize to memory first, so that only the file write sits in the guarded region:
+        // a serialization failure is a payload error and must not be reported as a failure to write to path.
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer, writerOptions))
         {
-            throw new BuildFailedException($"Could not write to {path}: {e.Message}", e);
+            json.WriteTo(writer);
         }
+
+        UserFile.WriteAllBytes(path, buffer.ToArray());
     }
 
     /// <inheritdoc cref="IJsonHelper.RewriteStringValues"/>

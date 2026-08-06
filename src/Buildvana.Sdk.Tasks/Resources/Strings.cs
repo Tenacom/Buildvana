@@ -12,4 +12,5 @@ internal static partial class Strings
 {
     public static readonly CompositeFormat MissingParameterFmt = CompositeFormat.Parse("BVSDK1050: Parameter '{0}' is missing or empty.");
     public static readonly CompositeFormat CouldNotWriteFileFmt = CompositeFormat.Parse("BVSDK1051: The file '{0}' could not be created. {1}");
+    public static readonly CompositeFormat CouldNotReadFileFmt = CompositeFormat.Parse("BVSDK1052: The file '{0}' could not be read. {1}");
 }

@@ -12,8 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Buildvana.Core.IO\Buildvana.Core.IO.csproj" />
-    <ProjectReference Include="..\..\src\Buildvana.Core.Testing\Buildvana.Core.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

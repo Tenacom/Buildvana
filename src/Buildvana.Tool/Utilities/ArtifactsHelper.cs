@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Utilities;
@@ -28,13 +29,13 @@ internal static class ArtifactsHelper
         Guard.IsNotNullOrEmpty(artifactsPath);
         Guard.IsNotNullOrEmpty(version);
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (!FileSystemHelper.DirectoryExists(artifactsPath))
+        if (!UserDirectory.Exists(artifactsPath))
         {
             return result;
         }
 
         var suffix = $".{version}.nupkg";
-        foreach (var path in FileSystemHelper.EnumerateFiles(artifactsPath, "*.nupkg"))
+        foreach (var path in UserDirectory.EnumerateFiles(artifactsPath, "*.nupkg"))
         {
             var fileName = Path.GetFileName(path);
             if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))

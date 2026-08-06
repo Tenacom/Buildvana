@@ -6,7 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using Buildvana.Core;
-using Buildvana.Core.IO;
+using Buildvana.Core.Diagnostics;
 using Buildvana.Sdk.Resources;
 using Microsoft.Build.Framework;
 
@@ -51,11 +51,33 @@ public sealed class WriteThisAssemblyConstantsFile : BuildvanaSdkTask
 
     private static void SaveIfDifferent(string outputPath, string content)
     {
-        if (File.Exists(outputPath) && UserFile.ReadAllText(outputPath) == content)
+        // I/O failures are wrapped inline, not via UserFile, because SDK diagnostics are a documented
+        // contract (see docs/SdkDiagnostics.md): every message a task issues must carry a BVSDK code.
+        if (ReadCurrentContent(outputPath) == content)
         {
             return;
         }
 
-        UserFile.WriteAllText(outputPath, content);
+        try
+        {
+            File.WriteAllText(outputPath, content);
+        }
+        catch (Exception e) when (e.IsIORelatedException)
+        {
+            throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.CouldNotWriteFileFmt, outputPath, e.Message), e);
+        }
+    }
+
+    // Null when the file does not exist, so a first-time write never compares equal.
+    private static string? ReadCurrentContent(string outputPath)
+    {
+        try
+        {
+            return File.Exists(outputPath) ? File.ReadAllText(outputPath) : null;
+        }
+        catch (Exception e) when (e.IsIORelatedException)
+        {
+            throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.CouldNotReadFileFmt, outputPath, e.Message), e);
+        }
     }
 }

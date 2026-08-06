@@ -6,12 +6,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.IO;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Hooks;
 using Buildvana.Tool.Services.Solution;
-using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Build;
@@ -109,18 +109,18 @@ internal sealed class BuildPipeline
 
     private Task CleanAsync(CancellationToken cancellationToken)
     {
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(".vs"), _reporter);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath("_ReSharper.Caches"), _reporter);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath("temp"), _reporter);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.Scratch), _reporter);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.AllArtifacts), _reporter);
-        FileSystemHelper.DeleteDirectory(_solution.ResolvePath(CommonPaths.TestResults), _reporter);
+        UserDirectory.DeleteIfExists(_solution.ResolvePath(".vs"), _reporter);
+        UserDirectory.DeleteIfExists(_solution.ResolvePath("_ReSharper.Caches"), _reporter);
+        UserDirectory.DeleteIfExists(_solution.ResolvePath("temp"), _reporter);
+        UserDirectory.DeleteIfExists(_solution.ResolvePath(CommonPaths.Scratch), _reporter);
+        UserDirectory.DeleteIfExists(_solution.ResolvePath(CommonPaths.AllArtifacts), _reporter);
+        UserDirectory.DeleteIfExists(_solution.ResolvePath(CommonPaths.TestResults), _reporter);
         foreach (var project in _solution.Model.SolutionProjects)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var projectDirectory = Path.GetDirectoryName(_solution.ResolveProjectPath(project))!;
-            FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "bin"), _reporter);
-            FileSystemHelper.DeleteDirectory(Path.Combine(projectDirectory, "obj"), _reporter);
+            UserDirectory.DeleteIfExists(Path.Combine(projectDirectory, "bin"), _reporter);
+            UserDirectory.DeleteIfExists(Path.Combine(projectDirectory, "obj"), _reporter);
         }
 
         _hookRunner.CleanBuildCaches(cancellationToken);
