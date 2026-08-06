@@ -177,6 +177,18 @@ internal sealed class UserDirectoryTests
         }
     }
 
+    // Call sites (e.g. NuGetPushAllAsync's "No .nupkg files to push.") rely on this instead of pre-checking
+    // existence; the behavior comes from the globbing package, so pin it here.
+    [Test]
+    public async Task EnumerateFiles_WithMissingBaseDirectory_ReturnsEmptyList()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"bv-test-{Guid.NewGuid():N}");
+
+        var result = UserDirectory.EnumerateFiles(path, "*.nupkg");
+
+        await Assert.That(result.Count).IsEqualTo(0);
+    }
+
     [Test]
     public async Task EnumerateFiles_WithNullBaseDirectory_ThrowsRaw()
     {
