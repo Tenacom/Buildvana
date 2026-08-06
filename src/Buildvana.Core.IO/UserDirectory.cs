@@ -121,6 +121,8 @@ public static class UserDirectory
     /// <remarks>
     /// <para>Unlike its <see cref="Directory"/> counterpart, this method matches glob patterns and returns
     /// a fully-materialized list, so that failures raised while walking the tree are reported at call time.</para>
+    /// <para>Also unlike its <see cref="Directory"/> counterpart, a non-existent
+    /// <paramref name="baseDirectory"/> yields an empty list rather than a failure.</para>
     /// </remarks>
     public static IReadOnlyList<string> EnumerateFiles(string baseDirectory, string pattern, bool caseSensitive = false)
     {
