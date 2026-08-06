@@ -89,6 +89,15 @@ internal sealed class CliArgSplitterTests
     }
 
     [Test]
+    public async Task Split_RecognizesSkipDelegationFlag()
+    {
+        var result = CliArgSplitter.Split(["--skip-delegation", "build"]);
+        await Assert.That(result.Globals.SkipDelegation).IsTrue();
+        await Assert.That(result.Subcommand).IsEqualTo("build");
+        await Assert.That(result.OptionTokens.Count).IsEqualTo(0);
+    }
+
+    [Test]
     public async Task Split_LeavesCommandOptionsAfterSubcommandInOptionTokens()
     {
         var result = CliArgSplitter.Split(["release", "-c", "Debug", "--bump", "minor"]);

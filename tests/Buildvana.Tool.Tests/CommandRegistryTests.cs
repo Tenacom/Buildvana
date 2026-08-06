@@ -40,14 +40,14 @@ internal sealed class CommandRegistryTests
     public async Task PipelineCommands_AppearInExecutionOrderBeforeOthers()
     {
         var names = string.Join(",", CommandRegistry.Commands.Select(c => c.Name));
-        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,sync-sdk,version advance,version show");
+        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,update,version advance,version show");
     }
 
     [Test]
     public async Task TopLevelNodes_ListEachGroupOnce()
     {
         var names = string.Join(",", CommandRegistry.TopLevelNodes.Select(n => n.Name));
-        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,sync-sdk,version");
+        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,update,version");
     }
 
     [Test]
@@ -57,7 +57,7 @@ internal sealed class CommandRegistryTests
     [Arguments("test", true)]
     [Arguments("pack", true)]
     [Arguments("release", true)]
-    [Arguments("sync-sdk", false)]
+    [Arguments("update", false)]
     [Arguments("version show", false)]
     [Arguments("version advance", false)]
     public async Task Commands_DeclareExpectedSdkUsage(string path, bool usesSdk)

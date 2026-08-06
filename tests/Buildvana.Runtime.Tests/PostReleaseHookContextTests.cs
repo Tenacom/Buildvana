@@ -37,7 +37,7 @@ internal sealed class PostReleaseHookContextTests
 
             var loaded = PostReleaseHookContext.Load(dir);
 
-            await Assert.That(loaded.Paths).IsEqualTo(written.Paths);
+            await Assert.That(loaded.RuntimeInfo).IsEqualTo(written.RuntimeInfo);
             await Assert.That(loaded.Release).IsEqualTo(written.Release);
             await Assert.That(loaded.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("1.2.3-preview");
             await Assert.That(loaded.Dogfooded).IsEqualTo(written.Dogfooded);
@@ -92,8 +92,10 @@ internal sealed class PostReleaseHookContextTests
 
     private static PostReleaseHookContext SampleContext(string home) => new()
     {
-        Paths = new()
+        RuntimeInfo = new()
         {
+            Version = "1.2.3-preview",
+            DelegatingVersion = "1.2.4",
             HomeDirectory = home,
             ArtifactsDirectory = Path.Combine(home, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home, WellKnownPaths.ScratchDirectory),

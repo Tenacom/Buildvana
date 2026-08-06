@@ -17,6 +17,7 @@ using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure;
+using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
@@ -26,6 +27,7 @@ using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using NuGet.Versioning;
 
 namespace Buildvana.Tool.Subcommands;
 
@@ -223,8 +225,10 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // Release properties instead of the rewritten files.
             var hookContext = new PostReleaseHookContext
             {
-                Paths = new()
+                RuntimeInfo = new()
                 {
+                    Version = NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion).ToNormalizedString(),
+                    DelegatingVersion = Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar),
                     HomeDirectory = home.HomeDirectory,
                     ArtifactsDirectory = Path.GetFullPath(artifactsPath),
                     ScratchDirectory = Path.GetFullPath(CommonPaths.Scratch, home.HomeDirectory),

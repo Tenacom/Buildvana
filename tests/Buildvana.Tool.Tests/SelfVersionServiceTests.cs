@@ -38,7 +38,7 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(exception!.Message).Contains(pin);
         await Assert.That(exception.Message).Contains("2.1.41-preview");
-        await Assert.That(exception.Message).Contains("bv sync-sdk");
+        await Assert.That(exception.Message).Contains("bv update");
     }
 
     [Test]
@@ -50,7 +50,7 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert.That(() => service.EnsureSdkVersionMatch()).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("global.json");
-        await Assert.That(exception.Message).Contains("bv sync-sdk");
+        await Assert.That(exception.Message).Contains("bv update");
     }
 
     [Test]
@@ -93,38 +93,77 @@ internal sealed class SelfVersionServiceTests
     [Arguments("2.1.41-preview", "2.1.41-preview")]
     [Arguments("2.1.41-preview+g0123abc", "2.1.41-preview")]
     [Arguments("2.1.41-preview", "2.1.41-preview+g0123abc")]
-    public async Task SyncSdkAsync_WhenInSync_ChangesNothing(string ownVersion, string pin)
+    public async Task UpdateRepository_WhenEverythingCurrent_ChangesNothing(string ownVersion, string pin)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, pin);
+        WriteToolManifest(home, pin);
         var before = home.ReadFile("global.json");
         var runner = new FakeProcessRunner();
         var service = CreateService(home, ownVersion, runner);
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(summary.ToolManifestLine).Contains("tool manifest, unchanged");
+        await Assert.That(summary.GlobalJsonLine).Contains("global.json, unchanged");
+        await Assert.That(summary.ConfigFileLine).IsNull();
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithOlderManifestPin_RunsDotnetToolUpdate()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.40-preview");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        var (executable, args, workingDirectory) = runner.Runs[0];
+        await Assert.That(executable).IsNotNull();
+        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithoutManifestEntry_RunsDotnetToolInstall()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        var (_, args, _) = runner.Runs[0];
+        await Assert.That(args).IsEquivalentTo(["tool", "install", "bv", "--version", "2.1.41-preview", "--create-manifest-if-needed"]);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
     }
 
     [Test]
     [Arguments("2.1.40-preview")]
     [Arguments("not-a-version")]
-    public async Task SyncSdkAsync_WithOlderOrInvalidPin_RewritesPinInPlace(string pin)
+    public async Task UpdateRepository_WithOlderOrInvalidSdkPin_RewritesPinInPlace(string pin)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, pin);
-        var runner = new FakeProcessRunner();
-        var service = CreateService(home, "2.1.41-preview", runner);
+        WriteToolManifest(home, "2.1.41-preview");
+        var service = CreateService(home, "2.1.41-preview");
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
-        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(summary.GlobalJsonLine).IsEqualTo($"Buildvana.Sdk: {pin} -> 2.1.41-preview (global.json)");
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithoutPinEntry_AddsPin()
+    public async Task UpdateRepository_WithoutPinEntry_AddsPin()
     {
         using var home = new TempHome();
         var content = """
@@ -136,9 +175,10 @@ internal sealed class SelfVersionServiceTests
 
             """;
         home.WriteFile("global.json", content);
+        WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(
             """
@@ -150,10 +190,11 @@ internal sealed class SelfVersionServiceTests
             }
 
             """);
+        await Assert.That(summary.GlobalJsonLine).IsEqualTo("Buildvana.Sdk: 2.1.41-preview (global.json, added)");
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithoutSdksSection_AddsSection()
+    public async Task UpdateRepository_WithoutSdksSection_AddsSection()
     {
         using var home = new TempHome();
         var content = """
@@ -165,9 +206,10 @@ internal sealed class SelfVersionServiceTests
 
             """;
         home.WriteFile("global.json", content);
+        WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(
             """
@@ -184,187 +226,234 @@ internal sealed class SelfVersionServiceTests
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithoutGlobalJson_CreatesIt()
+    public async Task UpdateRepository_WithoutGlobalJson_CreatesIt()
     {
         using var home = new TempHome();
+        WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo("{\n  \"msbuild-sdks\": {\n    \"Buildvana.Sdk\": \"2.1.41-preview\"\n  }\n}\n");
     }
 
-    // A directory named global.json is invisible to File.Exists, so the sync takes the create-new-file path
+    // A directory named global.json is invisible to File.Exists, so the update takes the create-new-file path
     // and the write hits a directory — the denied-access failure mode (not an IOException) on every platform.
     [Test]
-    public async Task SyncSdkAsync_WithDeniedGlobalJsonWrite_Fails()
+    public async Task UpdateRepository_WithDeniedGlobalJsonWrite_Fails()
     {
         using var home = new TempHome();
         _ = Directory.CreateDirectory(Path.Combine(home.RootPath, "global.json"));
+        WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(() => service.SyncSdkAsync()).Throws<BuildFailedException>();
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("Could not write to");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithNewerPin_UpdatesToolViaDotnetToolUpdate()
+    [Arguments("2.1.42-preview", "2.1.41-preview", "tool manifest")]
+    [Arguments("2.1.41-preview", "2.1.42-preview", "global.json")]
+    [Arguments("2.1.42-preview", "2.1.42-preview", "tool manifest")]
+    public async Task UpdateRepository_WithNewerPin_FailsWithoutForce(string manifestPin, string sdkPin, string offender)
     {
         using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.42-preview");
+        WriteGlobalJson(home, sdkPin);
+        WriteToolManifest(home, manifestPin);
         var before = home.ReadFile("global.json");
-        WriteToolManifest(home, "2.1.41-preview");
         var runner = new FakeProcessRunner();
-        var reporter = new CaptureReporter();
-        var service = CreateService(home, "2.1.41-preview", runner, reporter);
+        var service = CreateService(home, "2.1.41-preview", runner);
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
 
+        await Assert.That(exception!.Message).Contains("downgrade");
+        await Assert.That(exception.Message).Contains("--force");
+        await Assert.That(exception.Message).Contains(offender);
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
-        await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        var (executable, args, workingDirectory) = runner.Runs[0];
-        await Assert.That(executable).IsNotNull();
-        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.42-preview"]);
-        await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
-        var postUpdateInfo = InfosOf(reporter)[^1];
-        await Assert.That(postUpdateInfo).Contains("bv updated to 2.1.42-preview");
-        await Assert.That(postUpdateInfo).Contains("Re-run your command with 'dotnet bv'");
     }
 
     [Test]
-    public async Task SyncSdkAsync_WhenToolUpdateFails_Propagates()
+    public async Task UpdateRepository_WithNewerPins_AndForce_Downgrades()
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.42-preview");
-        WriteToolManifest(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.42-preview");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service.UpdateRepositoryAsync(force: true).ConfigureAwait(false);
+
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        var (_, args, _) = runner.Runs[0];
+        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.42-preview -> 2.1.41-preview (tool manifest)");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WhenToolUpdateFails_Propagates()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.40-preview");
         var runner = new FakeProcessRunner
         {
             OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 1, string.Empty, "simulated failure", TimeSpan.Zero),
         };
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        await Assert.That(() => service.SyncSdkAsync()).Throws<BuildFailedException>();
+        await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithNewerPinButNoManifest_Fails()
-    {
-        using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.42-preview");
-        var runner = new FakeProcessRunner();
-        var service = CreateService(home, "2.1.41-preview", runner);
-
-        var exception = await Assert.That(() => service.SyncSdkAsync()).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("dotnet-tools.json");
-        await Assert.That(runner.Runs.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task SyncSdkAsync_WithNewerPinButForeignBv_Fails()
-    {
-        using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.42-preview");
-        WriteToolManifest(home, "2.1.40-preview");
-        var runner = new FakeProcessRunner();
-        var service = CreateService(home, "2.1.41-preview", runner);
-
-        var exception = await Assert.That(() => service.SyncSdkAsync()).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("tool manifest");
-        await Assert.That(runner.Runs.Count).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task SyncSdkAsync_WithOlderPinAndOlderManifest_RewritesPinAndWarns()
-    {
-        using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.40-preview");
-        WriteToolManifest(home, "2.1.40-preview");
-        var runner = new FakeProcessRunner();
-        var reporter = new CaptureReporter();
-        var service = CreateService(home, "2.1.41-preview", runner, reporter);
-
-        await service.SyncSdkAsync().ConfigureAwait(false);
-
-        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
-        await Assert.That(runner.Runs.Count).IsEqualTo(0);
-        var warnings = WarningsOf(reporter);
-        await Assert.That(warnings.Count).IsEqualTo(1);
-        await Assert.That(warnings[0]).Contains("dotnet-tools.json");
-        await Assert.That(warnings[0]).Contains("2.1.40-preview");
-        await Assert.That(warnings[0]).Contains("2.1.41-preview");
-    }
-
-    [Test]
-    public async Task SyncSdkAsync_WhenInSyncButManifestDisagrees_Warns()
+    [Arguments("buildvana.jsonc")]
+    [Arguments("buildvana.json")]
+    public async Task UpdateRepository_WithRecognizedSchemaReference_RewritesVersionSegment(string configFileName)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
-        WriteToolManifest(home, "2.1.40-preview");
-        var reporter = new CaptureReporter();
-        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
-
-        await service.SyncSdkAsync().ConfigureAwait(false);
-
-        var warnings = WarningsOf(reporter);
-        await Assert.That(warnings.Count).IsEqualTo(1);
-        await Assert.That(warnings[0]).Contains("dotnet-tools.json");
-        await Assert.That(warnings[0]).Contains("dotnet tool update");
-    }
-
-    [Test]
-    public async Task SyncSdkAsync_WhenInSyncButManifestIsNewer_WarnsAdvisingSyncSdkThroughTheManifest()
-    {
-        using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.41-preview");
-        WriteToolManifest(home, "2.1.42-preview");
-        var reporter = new CaptureReporter();
-        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
-
-        await service.SyncSdkAsync().ConfigureAwait(false);
-
-        var warnings = WarningsOf(reporter);
-        await Assert.That(warnings.Count).IsEqualTo(1);
-        await Assert.That(warnings[0]).Contains("2.1.42-preview");
-        await Assert.That(warnings[0]).Contains("dotnet bv sync-sdk");
-        await Assert.That(warnings[0]).DoesNotContain("dotnet tool update");
-    }
-
-    [Test]
-    public async Task SyncSdkAsync_WithOlderPinAndMatchingManifest_DoesNotWarn()
-    {
-        using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.40-preview");
         WriteToolManifest(home, "2.1.41-preview");
+        home.WriteFile(configFileName, SchemaConfigText("2.1.40-preview"));
+        var service = CreateService(home, "2.1.41-preview");
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile(configFileName)).IsEqualTo(SchemaConfigText("2.1.41-preview"));
+        await Assert.That(summary.ConfigFileLine).IsEqualTo($"{configFileName}: schema reference updated");
+    }
+
+    // The rewrite must be byte-preserving outside the version segment; comments are the acid test, since a
+    // parse-and-save cycle would lose them.
+    [Test]
+    public async Task UpdateRepository_WithSchemaReference_PreservesCommentsAndFormatting()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        var content = """
+            // This comment must survive the update.
+            {
+              /* so must this one */
+              "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.40-preview/schemas/buildvana.schema.json"
+            }
+
+            """;
+        home.WriteFile("buildvana.jsonc", content);
+        var service = CreateService(home, "2.1.41-preview");
+
+        _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(content.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithCurrentSchemaReference_LeavesFileUntouched()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        home.WriteFile("buildvana.jsonc", SchemaConfigText("2.1.41-preview"));
+        var before = home.ReadFile("buildvana.jsonc");
+        var service = CreateService(home, "2.1.41-preview");
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(before);
+        await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: schema reference unchanged");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithForeignSchemaReference_LeavesItAlone()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        var content = """
+            {
+              "$schema": "https://example.com/hand-rolled.schema.json"
+            }
+
+            """;
+        home.WriteFile("buildvana.jsonc", content);
+        var service = CreateService(home, "2.1.41-preview");
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(content);
+        await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: schema reference not recognized, left unchanged");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithoutSchemaReference_ReportsIt()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        home.WriteFile("buildvana.jsonc", "{}\n");
+        var service = CreateService(home, "2.1.41-preview");
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: no schema reference found");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithConfigInvalidUnderOwnModel_WarnsButSucceeds()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        home.WriteFile("buildvana.jsonc", """{ "definitelyNotASetting": true }""" + "\n");
         var reporter = new CaptureReporter();
         var service = CreateService(home, "2.1.41-preview", reporter: reporter);
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: no schema reference found");
+        var warnings = WarningsOf(reporter);
+        await Assert.That(warnings.Count).IsEqualTo(1);
+        await Assert.That(warnings[0]).Contains("buildvana.jsonc");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithValidConfig_DoesNotWarn()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        home.WriteFile("buildvana.jsonc", SchemaConfigText("2.1.41-preview"));
+        var reporter = new CaptureReporter();
+        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
+
+        _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
 
         await Assert.That(WarningsOf(reporter).Count).IsEqualTo(0);
     }
 
     [Test]
-    public async Task SyncSdkAsync_WithOlderPinAndUnreadableManifest_StillRewritesPinAndWarns()
+    public async Task UpdateRepository_WithMultipleConfigFiles_Fails()
     {
         using var home = new TempHome();
-        WriteGlobalJson(home, "2.1.40-preview");
-        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
-        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), "this is not JSON");
-        var reporter = new CaptureReporter();
-        var service = CreateService(home, "2.1.41-preview", reporter: reporter);
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        home.WriteFile("buildvana.json", "{}\n");
+        home.WriteFile("buildvana.jsonc", "{}\n");
+        var service = CreateService(home, "2.1.41-preview");
 
-        await service.SyncSdkAsync().ConfigureAwait(false);
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
 
-        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
-        await Assert.That(DetailsOf(reporter).Count).IsEqualTo(0);
-        var warnings = WarningsOf(reporter);
-        await Assert.That(warnings.Count).IsEqualTo(1);
-        await Assert.That(warnings[0]).Contains("not checked for agreement");
-        await Assert.That(warnings[0]).Contains("dotnet-tools.json");
+        await Assert.That(exception!.Message).Contains("Multiple");
     }
 
     private static SelfVersionService CreateService(
@@ -381,14 +470,17 @@ internal sealed class SelfVersionServiceTests
 
     private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);
 
-    private static List<string> DetailsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Detail);
-
-    private static List<string> InfosOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Info);
-
     private static List<string> MessagesOf(CaptureReporter reporter, MessageLevel level)
         => [.. reporter.Messages.Where(m => m.Level == level).Select(static m => m.Message)];
 
     private static void WriteGlobalJson(TempHome home, string pin) => home.WriteFile("global.json", GlobalJsonText(pin));
+
+    private static string SchemaConfigText(string version) => $$"""
+        {
+          "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/{{version}}/schemas/buildvana.schema.json"
+        }
+
+        """;
 
     private static string GlobalJsonText(string pin) => $$"""
         {

@@ -60,10 +60,12 @@ internal sealed class HookRunnerTests
         await Assert.That(contextJson).IsNotNull();
         using var document = JsonDocument.Parse(contextJson!);
         var root = document.RootElement;
-        var paths = root.GetProperty("paths");
-        await Assert.That(paths.GetProperty("homeDirectory").GetString()).IsEqualTo(home.RootPath);
-        await Assert.That(paths.GetProperty("artifactsDirectory").GetString()).IsEqualTo(context.Paths.ArtifactsDirectory);
-        await Assert.That(paths.GetProperty("scratchDirectory").GetString()).IsEqualTo(context.Paths.ScratchDirectory);
+        var runtimeInfo = root.GetProperty("runtimeInfo");
+        await Assert.That(runtimeInfo.GetProperty("version").GetString()).IsEqualTo("1.2.3-preview");
+        await Assert.That(runtimeInfo.GetProperty("delegatingVersion").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(runtimeInfo.GetProperty("homeDirectory").GetString()).IsEqualTo(home.RootPath);
+        await Assert.That(runtimeInfo.GetProperty("artifactsDirectory").GetString()).IsEqualTo(context.RuntimeInfo.ArtifactsDirectory);
+        await Assert.That(runtimeInfo.GetProperty("scratchDirectory").GetString()).IsEqualTo(context.RuntimeInfo.ScratchDirectory);
         var release = root.GetProperty("release");
         await Assert.That(release.GetProperty("version").GetString()).IsEqualTo("1.2.3");
         await Assert.That(release.GetProperty("semVer").GetString()).IsEqualTo("1.2.3-preview");
@@ -186,8 +188,10 @@ internal sealed class HookRunnerTests
 
     private static PostReleaseHookContext SampleContext(TempHome home) => new()
     {
-        Paths = new()
+        RuntimeInfo = new()
         {
+            Version = "1.2.3-preview",
+            DelegatingVersion = null,
             HomeDirectory = home.RootPath,
             ArtifactsDirectory = Path.Combine(home.RootPath, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home.RootPath, WellKnownPaths.ScratchDirectory),

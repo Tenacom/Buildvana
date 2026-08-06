@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Threading;
@@ -95,6 +97,97 @@ public sealed class ProcessRunner : IProcessRunner
         }
 
         return result;
+    }
+
+    /// <inheritdoc cref="IProcessRunner.RunWithInheritedStdioAsync"/>
+    public async Task<int> RunWithInheritedStdioAsync(
+        string executable,
+        IEnumerable<string> args,
+        IReadOnlyDictionary<string, string?>? environment = null,
+        string? workingDirectory = null,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNullOrEmpty(executable);
+
+        // ReSharper disable once PossibleMultipleEnumeration
+        Guard.IsNotNull(args);
+
+        var startInfo = new ProcessStartInfo(executable) { UseShellExecute = false };
+
+        // ReSharper disable once PossibleMultipleEnumeration
+        foreach (var arg in args)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+
+        if (environment is not null)
+        {
+            foreach (var (name, value) in environment)
+            {
+                if (value is null)
+                {
+                    _ = startInfo.Environment.Remove(name);
+                }
+                else
+                {
+                    startInfo.Environment[name] = value;
+                }
+            }
+        }
+
+        if (workingDirectory is not null)
+        {
+            startInfo.WorkingDirectory = workingDirectory;
+        }
+
+        // Keep this process alive across Ctrl-C: the child shares the console and receives the same signal;
+        // it owns its shutdown, and this process must survive to observe and report the exit code.
+        ConsoleCancelEventHandler suppressCancel = static (_, e) => e.Cancel = true;
+        Console.CancelKeyPress += suppressCancel;
+        try
+        {
+            using var process = StartProcess(startInfo);
+            try
+            {
+                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                KillProcessTree(process);
+                throw;
+            }
+
+            return process.ExitCode;
+        }
+        finally
+        {
+            Console.CancelKeyPress -= suppressCancel;
+        }
+    }
+
+    private static System.Diagnostics.Process StartProcess(ProcessStartInfo startInfo)
+    {
+        try
+        {
+            return System.Diagnostics.Process.Start(startInfo)
+                ?? throw new BuildFailedException($"Failed to start '{startInfo.FileName}'.");
+        }
+        catch (Win32Exception e)
+        {
+            throw new BuildFailedException($"Failed to start '{startInfo.FileName}': {e.Message}", e);
+        }
+    }
+
+    private static void KillProcessTree(System.Diagnostics.Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+            // The process exited between the cancellation and the kill: there is nothing left to stop.
+        }
     }
 
     private static string BuildFailureMessage(string executable, ProcessResult result, HeadTailPipeTarget stdoutCapture, HeadTailPipeTarget stderrCapture)

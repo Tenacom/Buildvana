@@ -16,6 +16,7 @@ using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
+using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
@@ -55,6 +56,16 @@ internal static class Program
             if (globals.Color != globals.NoColor)
             {
                 console.Profile.Capabilities.Ansi = globals.Color;
+            }
+
+            // Delegation comes before everything else — the logo, --version, command resolution, argument
+            // validation, configuration loading: when the repository's tool manifest pins bv, every judgment
+            // about this invocation belongs to the pinned version, which prints its own logo and parses the
+            // arguments itself.
+            var delegatedExitCode = await TryDelegateAsync(args, parsed, globals).ConfigureAwait(false);
+            if (delegatedExitCode is { } delegated)
+            {
+                return delegated;
             }
 
             if (globals.Version)
@@ -185,6 +196,24 @@ internal static class Program
         static IReporter CreateDefaultReporter() => new ConsoleReporter(Verbosity.Normal, colorOverride: null);
     }
 
+    private static Task<int?> TryDelegateAsync(string[] args, ParsedCommandLine parsed, GlobalSettings globals)
+    {
+        var ownVersion = NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion);
+        var layout = InstallLayoutDetector.Detect(
+            AppContext.BaseDirectory,
+            ToolManifest.BvPackageId,
+            ownVersion.ToNormalizedString());
+        var delegation = new DelegationService(new JsonHelper(), new ProcessRunner(), ownVersion, Console.Error);
+        var context = new DelegationContext(
+            args,
+            parsed.Subcommand,
+            globals.SkipDelegation,
+            Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar) is not null,
+            layout,
+            Environment.CurrentDirectory);
+        return delegation.TryDelegateAsync(context);
+    }
+
     private static ServiceProvider BuildServiceProvider(
         IAnsiConsole console,
         IReporter reporter,
@@ -206,6 +235,7 @@ internal static class Program
                 sp.GetRequiredService<CommandParameters>().Positionals,
                 sp.GetRequiredService<CommandParameters>().Options,
                 sp.GetRequiredService<BuildvanaConfig>()))
+            .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
             .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
 
             // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
