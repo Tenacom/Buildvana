@@ -8,6 +8,15 @@ namespace Buildvana.Tool.Infrastructure.Delegation;
 /// <see cref="InstallLayoutDetector"/>. The layouts are not contractual SDK surface, so detection degrades to
 /// <see cref="Unknown"/> for anything unrecognized; see each member for how the delegation decision treats it.
 /// </summary>
+/// <remarks>
+/// The layout matters only when the running bv's version equals the manifest pin — a mismatch always delegates.
+/// Equal versions do not guarantee equal bits: build metadata never participates in version comparison, so a
+/// locally built bv carries the same version as the published package it descends from (and a mutable private
+/// feed can even republish a version outright). Delegation's rule is that the manifest's restored install is the
+/// authority, so only <see cref="PackageCache"/> — the layout that means this process runs from the very files
+/// <c>dotnet tool run</c> would launch, identical by location rather than by version-number inference — may run
+/// in place on an equal version; every other layout yields.
+/// </remarks>
 internal enum InstallLayout
 {
     /// <summary>

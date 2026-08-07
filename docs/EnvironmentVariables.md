@@ -12,6 +12,10 @@ The variable is not meant to be set by hand; to keep `bv` from delegating, pass 
 
 Like the rest of the environment, the variable is inherited by `bv`'s child processes, [release hooks](ReleaseHooks.md) included; hooks, however, should prefer the `RuntimeInfo.DelegatingVersion` member of their typed context, which carries the same information.
 
+### `DOTNET_CLI_HOME`
+
+Read the way the .NET CLI itself reads it: when set, it replaces the user profile directory as the root under which the CLI keeps its per-user state. `bv` consults it to locate the SDK's tool resolver cache (`.dotnet/toolResolverCache` under that root), which [delegation](DirectoryStructure.md#configdotnet-toolsjson) probes to decide whether the pinned `bv` is already installed or a `dotnet tool restore` must run first. When the variable is absent, the platform home directory applies (`USERPROFILE` on Windows, `HOME` elsewhere), as in the CLI.
+
 ### `DOTNET_HOST_PATH`
 
 Set by the `dotnet` muxer on every process it launches, with the full path of the `dotnet` executable as the value. `bv` uses it to launch its child `dotnet` invocations (builds, tool restores, delegated runs, hooks) through the exact host that launched `bv` itself, instead of relying on `dotnet` being on the `PATH`. When the variable is absent — e.g. `bv` was installed as a global tool and run through its native shim — `bv` falls back to `dotnet` from the `PATH`.

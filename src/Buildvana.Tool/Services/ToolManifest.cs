@@ -25,14 +25,18 @@ internal static class ToolManifest
     public const string BvPackageId = "bv";
 
     /// <summary>
-    /// Reads the bv version pinned in the tool manifest of the given home directory.
+    /// Reads the bv entry in the tool manifest of the given home directory.
     /// </summary>
+    /// <remarks>
+    /// Version parseability is judged with <see cref="NuGetVersion.TryParse(string?, out NuGetVersion)"/> — the
+    /// same call the dotnet CLI makes when it reads the manifest (see <c>ToolManifestEditor</c> in the
+    /// dotnet/sdk repository) — so "no usable version" here is exactly "a manifest the dotnet CLI cannot use".
+    /// </remarks>
     /// <param name="jsonHelper">The JSON helper used to read the manifest.</param>
     /// <param name="homeDirectory">The home directory whose manifest to read.</param>
-    /// <returns>The pinned version, or <see langword="null"/> when the manifest, the bv entry, or a parseable
-    /// version is missing.</returns>
+    /// <returns>What the manifest says about bv; a missing manifest reads as no entry.</returns>
     /// <exception cref="Buildvana.Core.BuildFailedException">The manifest exists but cannot be read or parsed.</exception>
-    public static NuGetVersion? ReadBvPin(IJsonHelper jsonHelper, string homeDirectory)
+    public static BvManifestPin ReadBvPin(IJsonHelper jsonHelper, string homeDirectory)
     {
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNullOrEmpty(homeDirectory);
@@ -40,18 +44,19 @@ internal static class ToolManifest
         var path = Path.Combine(homeDirectory, RelativePath);
         if (!File.Exists(path))
         {
-            return null;
+            return new BvManifestPin(HasEntry: false, VersionText: null, Version: null);
         }
 
         var manifest = jsonHelper.LoadObject(path);
-        string? version = null;
-        var hasEntry = manifest.TryGetPropertyValue("tools", out var toolsNode)
-            && toolsNode is JsonObject tools
-            && tools.TryGetPropertyValue(BvPackageId, out var toolNode)
-            && toolNode is JsonObject toolEntry
-            && toolEntry.TryGetPropertyValue("version", out var versionNode)
-            && versionNode is JsonValue versionValue
-            && versionValue.TryGetValue(out version);
-        return hasEntry && NuGetVersion.TryParse(version, out var parsed) ? parsed : null;
+        var toolNode = manifest["tools"] is JsonObject tools ? tools[BvPackageId] : null;
+        if (toolNode is not JsonObject toolEntry)
+        {
+            return new BvManifestPin(HasEntry: false, VersionText: null, Version: null);
+        }
+
+        string? versionText = null;
+        _ = toolEntry["version"] is JsonValue versionValue && versionValue.TryGetValue(out versionText);
+        var version = NuGetVersion.TryParse(versionText, out var parsed) ? parsed : null;
+        return new BvManifestPin(HasEntry: true, versionText, version);
     }
 }

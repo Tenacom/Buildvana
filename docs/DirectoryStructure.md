@@ -124,7 +124,7 @@ bv's scratch directory: machine-generated temporary files, such as the context f
 
 [`dotnet-tools.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use) is the .NET local tool manifest: it pins the versions of the .NET tools used by the repository, so that `dotnet <tool>` invocations run the pinned versions. In a repository using Buildvana, this usually includes `bv` itself, which is why the manifest appears in the directory structure above. It is optional, though: `bv` can also be installed globally, or run via `dnx`, in which case the manifest (or its `bv` entry) may be absent.
 
-Besides being read by the .NET CLI itself, the manifest drives `bv`'s _delegation_: whenever it pins `bv`, the pinned version is the one that runs, no matter which `bv` you invoke — like the Angular CLI, where a global `ng` always hands over to the project-local install. On every invocation, `bv` reads the manifest's `bv` entry and, unless it is itself the pinned version running from the local tool cache, delegates the entire command line to the pinned version: it makes sure the version is available (`dotnet tool restore`), runs it (`dotnet tool run bv`) with inherited standard streams, and forwards its exit code. When the versions differ, an info line on standard error names the version that runs:
+Besides being read by the .NET CLI itself, the manifest drives `bv`'s _delegation_: whenever it pins `bv`, the pinned version is the one that runs, no matter which `bv` you invoke — like the Angular CLI, where a global `ng` always hands over to the project-local install. On every invocation, `bv` reads the manifest's `bv` entry and, unless it is itself the pinned version running from the local tool cache, delegates the entire command line to the pinned version: it makes sure the version is installed — probing the same cache `dotnet tool run` resolves tools from, and running `dotnet tool restore` only on a miss; a failed restore is reported but does not block the attempt — then runs it (`dotnet tool run bv`) with inherited standard streams, and forwards its exit code. When the versions differ, an info line on standard error names the version that runs:
 
 ```text
 Delegating to bv 2.1.58-preview from this repository's tool manifest.
@@ -134,6 +134,8 @@ A delegating `bv` neither parses the command line nor reads the configuration fi
 
 - the `--skip-delegation` global option runs the exact binary you invoked;
 - the [`update`](#globaljson) subcommand always runs the invoked `bv`, since its job is precisely to re-pin the repository to that `bv`'s version.
+
+Two details of the hand-over are worth knowing. The delegated `bv` runs from the home directory, not from the directory you invoked it in, so that the .NET CLI resolves this repository's manifest rather than a nested one; `bv`'s own arguments are unaffected — they are interpreted against the home directory anyway — but a relative path inside _forwarded_ arguments (e.g. `bv build -- -p:SomeDir=../out` from a subdirectory) is interpreted by the pinned `bv` from the home directory, not from where you typed it. And `--version` answers for the `bv` that actually runs — the pinned one, consistent with the rest of the invocation; pass `--skip-delegation --version` to ask the exact binary you invoked.
 
 An [environment variable](EnvironmentVariables.md), `BV_DELEGATED`, is set on the delegated `bv` (carrying the delegating `bv`'s version) so that a delegated invocation never delegates again.
 

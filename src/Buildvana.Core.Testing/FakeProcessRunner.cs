@@ -30,7 +30,9 @@ public sealed class FakeProcessRunner : IProcessRunner
 
     /// <summary>
     /// Gets or sets a callback that produces the result of each invocation, simulating the process's behavior.
-    /// When <see langword="null"/>, every invocation succeeds with exit code 0 and empty output.
+    /// When <see langword="null"/>, every invocation succeeds with exit code 0 and empty output. The result's
+    /// <see cref="ProcessResult.StandardOutput"/> and <see cref="ProcessResult.StandardError"/> are replayed,
+    /// line by line, through the caller's <c>onStdout</c>/<c>onStderr</c> callbacks, like the real runner streams them.
     /// </summary>
     public Func<string, IReadOnlyList<string>, ProcessResult>? OnRun { get; set; }
 
@@ -55,6 +57,11 @@ public sealed class FakeProcessRunner : IProcessRunner
         _runs.Add((executable, argList, workingDirectory));
         var commandLine = $"{executable} {string.Join(' ', argList)}";
         var result = OnRun?.Invoke(executable, argList) ?? new ProcessResult(commandLine, 0, string.Empty, string.Empty, TimeSpan.Zero);
+
+        // Replay the scripted output through the line callbacks, mirroring the real runner's streaming — and,
+        // like it, before the non-zero check: a real process produces its output before its exit code.
+        InvokePerLine(result.StandardOutput, onStdout);
+        InvokePerLine(result.StandardError, onStderr);
         if (throwOnNonZero && result.ExitCode != 0)
         {
             throw new BuildFailedException($"Process failed with exit code {result.ExitCode}: {commandLine}");
@@ -74,5 +81,18 @@ public sealed class FakeProcessRunner : IProcessRunner
         var argList = args.ToList();
         _inheritedStdioRuns.Add(new InheritedStdioRun(executable, argList, environment, workingDirectory));
         return Task.FromResult(OnRunWithInheritedStdio?.Invoke(executable, argList) ?? 0);
+    }
+
+    private static void InvokePerLine(string text, Action<string>? callback)
+    {
+        if (callback is null || text.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var line in text.ReplaceLineEndings("\n").Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            callback(line);
+        }
     }
 }

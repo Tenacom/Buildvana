@@ -27,8 +27,8 @@ using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
+using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using NuGet.Versioning;
 using Spectre.Console;
 
 namespace Buildvana.Tool;
@@ -198,12 +198,17 @@ internal static class Program
 
     private static Task<int?> TryDelegateAsync(string[] args, ParsedCommandLine parsed, GlobalSettings globals)
     {
-        var ownVersion = NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion);
+        var ownVersion = OwnVersion.Value;
         var layout = InstallLayoutDetector.Detect(
             AppContext.BaseDirectory,
             ToolManifest.BvPackageId,
             ownVersion.ToNormalizedString());
-        var delegation = new DelegationService(new JsonHelper(), new ProcessRunner(), ownVersion, Console.Error);
+        var delegation = new DelegationService(
+            new JsonHelper(),
+            new ProcessRunner(),
+            ToolResolverCacheProbe.CreateDefault(),
+            ownVersion,
+            Console.Error);
         var context = new DelegationContext(
             args,
             parsed.Subcommand,
@@ -263,7 +268,7 @@ internal static class Program
                 sp.GetRequiredService<IHomeDirectoryProvider>(),
                 sp.GetRequiredService<IJsonHelper>(),
                 sp.GetRequiredService<IProcessRunner>(),
-                NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion)));
+                OwnVersion.Value));
 
         foreach (var registration in CommandRegistry.Commands)
         {

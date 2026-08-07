@@ -32,7 +32,9 @@ internal sealed class ProcessRunnerTests
         await Assert.That(exitCode).IsEqualTo(5);
     }
 
+    // Mutates the process-global environment; must not run alongside other tests (see .claude/rules/testing.md).
     [Test]
+    [NotInParallel]
     public async Task RunWithInheritedStdio_RemovesNullEnvironmentEntries()
     {
         // The variable exists in the parent's environment; a null override must remove it from the child's.

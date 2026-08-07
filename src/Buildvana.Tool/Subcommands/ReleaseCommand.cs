@@ -27,7 +27,6 @@ using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using NuGet.Versioning;
 
 namespace Buildvana.Tool.Subcommands;
 
@@ -227,7 +226,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             {
                 RuntimeInfo = new()
                 {
-                    Version = NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion).ToNormalizedString(),
+                    Version = OwnVersion.Value.ToNormalizedString(),
                     DelegatingVersion = Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar),
                     HomeDirectory = home.HomeDirectory,
                     ArtifactsDirectory = Path.GetFullPath(artifactsPath),

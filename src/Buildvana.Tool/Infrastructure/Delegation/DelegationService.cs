@@ -26,19 +26,25 @@ namespace Buildvana.Tool.Infrastructure.Delegation;
 /// mismatched bv cannot be the manifest's — and the delegated child, which does match, never delegates again);
 /// on a version match, only a confidently local bv (<see cref="InstallLayout.PackageCache"/>) runs in place,
 /// so that the manifest's install always runs no matter how bv was launched.</para>
-/// <para>Delegation runs <c>dotnet tool restore</c> and then hands the original arguments, unparsed and
-/// unvalidated, to <c>dotnet tool run bv</c> with inherited standard streams, forwarding the child's exit code.
-/// The configuration file is likewise never read on this side: arguments and configuration may be valid for the
+/// <para>Delegation hands the original arguments, unparsed and unvalidated, to <c>dotnet tool run bv</c> with
+/// inherited standard streams, forwarding the child's exit code. When the pinned version is not already
+/// installed — judged by <see cref="ToolResolverCacheProbe"/>, the same way <c>dotnet tool run</c> judges it —
+/// a <c>dotnet tool restore</c> runs first, its output streamed to <paramref name="output"/>; a failed restore
+/// degrades to a warning and the run is attempted anyway (see <see cref="RestoreToolsAsync"/>). The
+/// configuration file is likewise never read on this side: arguments and configuration may be valid for the
 /// pinned version and not for this one, and judging them is the pinned version's job.</para>
 /// </remarks>
 /// <param name="jsonHelper">The JSON helper used to read the tool manifest.</param>
 /// <param name="processRunner">The process runner used for <c>dotnet tool restore</c> and the delegated run.</param>
+/// <param name="resolverCacheProbe">The probe that tells whether the pinned version is already installed.</param>
 /// <param name="ownVersion">The version of the running bv.</param>
-/// <param name="output">The writer for the delegation info line and warnings, typically standard error: it is
-/// narration about how the command runs, not command output, and must not dirty a piped standard output.</param>
+/// <param name="output">The writer for the delegation info line, warnings, and restore output, typically
+/// standard error: it is narration about how the command runs, not command output, and must not dirty a piped
+/// standard output.</param>
 internal sealed class DelegationService(
     IJsonHelper jsonHelper,
     IProcessRunner processRunner,
+    ToolResolverCacheProbe resolverCacheProbe,
     NuGetVersion ownVersion,
     TextWriter output)
 {
@@ -60,8 +66,8 @@ internal sealed class DelegationService(
     /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing operation.</param>
     /// <returns>The delegated invocation's exit code, to be forwarded verbatim; or <see langword="null"/> when
     /// this bv should run in place.</returns>
-    /// <exception cref="BuildFailedException"><c>dotnet tool restore</c> failed, so the pinned version cannot
-    /// run; the message names the failure.</exception>
+    /// <exception cref="BuildFailedException">The delegated process could not be started (e.g. the dotnet
+    /// muxer was not found).</exception>
     public async Task<int?> TryDelegateAsync(DelegationContext context, CancellationToken cancellationToken = default)
     {
         var runInPlace = context.DelegationMarkerPresent
@@ -77,10 +83,10 @@ internal sealed class DelegationService(
             return null;
         }
 
-        NuGetVersion? pin;
+        BvManifestPin manifestPin;
         try
         {
-            pin = ToolManifest.ReadBvPin(jsonHelper, homeDirectory);
+            manifestPin = ToolManifest.ReadBvPin(jsonHelper, homeDirectory);
         }
         catch (BuildFailedException e)
         {
@@ -88,8 +94,18 @@ internal sealed class DelegationService(
             return null;
         }
 
-        if (pin is null)
+        if (manifestPin.Version is not { } pin)
         {
+            // An entry the dotnet CLI itself could not use deserves a word; no entry at all is just a
+            // repository that does not pin bv, which is not worth narrating.
+            if (manifestPin.HasEntry)
+            {
+                var problem = manifestPin.VersionText is null
+                    ? "has no version"
+                    : $"pins version '{manifestPin.VersionText}', which is not a valid version";
+                await output.WriteLineAsync($"Warning: delegation skipped, the tool manifest's {ToolManifest.BvPackageId} entry {problem}.").ConfigureAwait(false);
+            }
+
             return null;
         }
 
@@ -104,7 +120,11 @@ internal sealed class DelegationService(
             await output.WriteLineAsync($"Delegating to bv {pin.ToNormalizedString()} from this repository's tool manifest.").ConfigureAwait(false);
         }
 
-        await RestoreToolsAsync(pin, homeDirectory, cancellationToken).ConfigureAwait(false);
+        if (!resolverCacheProbe.IsInstalled(ToolManifest.BvPackageId, pin))
+        {
+            await RestoreToolsAsync(pin, homeDirectory, cancellationToken).ConfigureAwait(false);
+        }
+
         return await processRunner.RunWithInheritedStdioAsync(
             DotNetMuxer.Path,
             ["tool", "run", ToolManifest.BvPackageId, "--", ..context.RawArgs],
@@ -113,9 +133,11 @@ internal sealed class DelegationService(
             cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
-    // Makes sure the pinned bv is restored before `dotnet tool run` resolves it. Always run: probing whether a
-    // restore is needed would mean relying on cache layouts even less contractual than the install layouts, and
-    // a satisfied restore is quick and offline.
+    // Restores the manifest's tools so `dotnet tool run` can resolve the pinned bv, streaming the restore's
+    // output so a cold download does not look like a hang. A failed restore is a warning, not a dead end:
+    // `dotnet tool restore` attempts every tool in the manifest even when one fails, so an unrelated tool's
+    // unreachable feed must not block a bv whose own package did restore — and when bv itself is the missing
+    // one, the delegated run fails immediately with the CLI's own actionable message.
     private async Task RestoreToolsAsync(NuGetVersion pin, string homeDirectory, CancellationToken cancellationToken)
     {
         try
@@ -124,13 +146,13 @@ internal sealed class DelegationService(
                 DotNetMuxer.Path,
                 ["tool", "restore"],
                 workingDirectory: homeDirectory,
+                onStdout: output.WriteLine,
+                onStderr: output.WriteLine,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
-        catch (BuildFailedException e)
+        catch (BuildFailedException)
         {
-            throw new BuildFailedException(
-                $"Cannot delegate to bv {pin.ToNormalizedString()}: 'dotnet tool restore' failed. {e.Message}",
-                e);
+            await output.WriteLineAsync($"Warning: 'dotnet tool restore' failed; attempting to run bv {pin.ToNormalizedString()} anyway.").ConfigureAwait(false);
         }
     }
 }
