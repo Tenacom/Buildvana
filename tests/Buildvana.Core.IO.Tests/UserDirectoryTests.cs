@@ -35,9 +35,9 @@ internal sealed class UserDirectoryTests
         await File.WriteAllTextAsync(path, string.Empty).ConfigureAwait(false);
         try
         {
-            var act = () => UserDirectory.CreateDirectory(path);
+            DirectoryInfo Act() => UserDirectory.CreateDirectory(path);
 
-            var exception = await Assert.That(act).Throws<BuildFailedException>();
+            var exception = await Assert.That(Act).Throws<BuildFailedException>();
             await Assert.That(exception!.Message).Contains("Could not create directory");
             await Assert.That(exception.InnerException).IsTypeOf<IOException>();
         }
@@ -50,9 +50,9 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task CreateDirectory_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserDirectory.CreateDirectory(null!);
+        static DirectoryInfo Act() => UserDirectory.CreateDirectory(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -75,9 +75,9 @@ internal sealed class UserDirectoryTests
         await File.WriteAllTextAsync(Path.Combine(root, "file.tmp"), string.Empty).ConfigureAwait(false);
         try
         {
-            var act = () => UserDirectory.Delete(root);
+            void Act() => UserDirectory.Delete(root);
 
-            var exception = await Assert.That(act).Throws<BuildFailedException>();
+            var exception = await Assert.That(Act).Throws<BuildFailedException>();
             await Assert.That(exception!.Message).Contains("Could not delete directory");
             await Assert.That(exception.InnerException).IsTypeOf<IOException>();
         }
@@ -92,9 +92,9 @@ internal sealed class UserDirectoryTests
     {
         var path = Path.Combine(Path.GetTempPath(), $"bv-test-{Guid.NewGuid():N}");
 
-        var act = () => UserDirectory.Delete(path);
+        void Act() => UserDirectory.Delete(path);
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not delete directory");
         await Assert.That(exception.InnerException).IsTypeOf<DirectoryNotFoundException>();
     }
@@ -114,9 +114,9 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task Delete_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserDirectory.Delete(null!);
+        static void Act() => UserDirectory.Delete(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -164,9 +164,9 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task DeleteIfExists_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserDirectory.DeleteIfExists(null!);
+        static void Act() => UserDirectory.DeleteIfExists(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -210,17 +210,17 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task EnumerateFiles_WithNullBaseDirectory_ThrowsRaw()
     {
-        var act = () => UserDirectory.EnumerateFiles(null!, "*.nupkg");
+        static IReadOnlyList<string> Act() => UserDirectory.EnumerateFiles(null!, "*.nupkg");
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That((Func<IReadOnlyList<string>>)Act).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task EnumerateFiles_WithNullPattern_ThrowsRaw()
     {
-        var act = () => UserDirectory.EnumerateFiles(Path.GetTempPath(), null!);
+        static IReadOnlyList<string> Act() => UserDirectory.EnumerateFiles(Path.GetTempPath(), null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That((Func<IReadOnlyList<string>>)Act).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -234,8 +234,8 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task Exists_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserDirectory.Exists(null!);
+        static bool Act() => UserDirectory.Exists(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 }

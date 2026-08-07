@@ -34,13 +34,13 @@ public sealed class FakeProcessRunner : IProcessRunner
     /// <see cref="ProcessResult.StandardOutput"/> and <see cref="ProcessResult.StandardError"/> are replayed,
     /// line by line, through the caller's <c>onStdout</c>/<c>onStderr</c> callbacks, like the real runner streams them.
     /// </summary>
-    public Func<string, IReadOnlyList<string>, ProcessResult>? OnRun { get; set; }
+    public Func<string, IReadOnlyList<string>, ProcessResult>? OnRun { get; init; }
 
     /// <summary>
     /// Gets or sets a callback that produces the exit code of each <see cref="RunWithInheritedStdioAsync"/>
     /// invocation, simulating the process's behavior. When <see langword="null"/>, every invocation returns 0.
     /// </summary>
-    public Func<string, IReadOnlyList<string>, int>? OnRunWithInheritedStdio { get; set; }
+    public Func<string, IReadOnlyList<string>, int>? OnRunWithInheritedStdio { get; init; }
 
     /// <inheritdoc/>
     public Task<ProcessResult> RunAsync(

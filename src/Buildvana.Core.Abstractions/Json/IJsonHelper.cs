@@ -32,6 +32,7 @@ public interface IJsonHelper
     /// </summary>
     /// <param name="json">The JSON object to save.</param>
     /// <param name="path">The path of the file to save <paramref name="json"/> to.</param>
+    // ReSharper disable once UnusedMemberInSuper.Global // SaveObject is half of the load/save contract, so it stays, even if it has no current usage.
     void SaveObject(JsonNode json, string path);
 
     /// <summary>

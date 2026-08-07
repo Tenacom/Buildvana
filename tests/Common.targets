@@ -13,12 +13,6 @@
     <!-- No need for public API analyzers -->
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
 
-    <!-- Disable some warnings that have no sense in test projects -->
-    <NoWarn>$(NoWarn);CA1050</NoWarn> <!-- Declare types in namespaces -->
-    <NoWarn>$(NoWarn);CA1707</NoWarn> <!-- Identifiers should not contain underscores -->
-    <NoWarn>$(NoWarn);IDE0058</NoWarn> <!-- Expression value is never used -->
-    <NoWarn>$(NoWarn);SA1600</NoWarn> <!-- Elements should be documented - test code is self-describing -->
-
   </PropertyGroup>
 
   <!-- Hide test result files in Visual Studio -->

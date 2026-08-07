@@ -134,9 +134,9 @@ internal sealed class HookRunnerTests
         _ = Directory.CreateDirectory(ContextPath(home));
         var context = SampleContext(home);
 
-        var act = () => runner.RunHookAsync("release", "post-release", context);
+        Task<bool> Act() => runner.RunHookAsync("release", "post-release", context);
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
     }

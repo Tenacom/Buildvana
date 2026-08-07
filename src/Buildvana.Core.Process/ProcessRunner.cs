@@ -142,8 +142,8 @@ public sealed class ProcessRunner : IProcessRunner
 
         // Keep this process alive across Ctrl-C: the child shares the console and receives the same signal;
         // it owns its shutdown, and this process must survive to observe and report the exit code.
-        ConsoleCancelEventHandler suppressCancel = static (_, e) => e.Cancel = true;
-        Console.CancelKeyPress += suppressCancel;
+        static void SuppressCancel(object? sender, ConsoleCancelEventArgs e) => e.Cancel = true;
+        Console.CancelKeyPress += SuppressCancel;
         try
         {
             using var process = StartProcess(startInfo);
@@ -161,7 +161,7 @@ public sealed class ProcessRunner : IProcessRunner
         }
         finally
         {
-            Console.CancelKeyPress -= suppressCancel;
+            Console.CancelKeyPress -= SuppressCancel;
         }
     }
 

@@ -142,9 +142,9 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllText_WithMalformedPath_Fails()
     {
-        var act = () => UserFile.ReadAllText("a\0b");
+        string Act() => UserFile.ReadAllText("a\0b");
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<ArgumentException>();
     }
@@ -152,9 +152,9 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task WriteAllText_WithMalformedPath_Fails()
     {
-        var act = () => UserFile.WriteAllText("a\0b", "x");
+        static void Act() => UserFile.WriteAllText("a\0b", "x");
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");
         await Assert.That(exception.InnerException).IsTypeOf<ArgumentException>();
     }
@@ -164,33 +164,33 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllText_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserFile.ReadAllText(null!);
+        static string Act() => UserFile.ReadAllText(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That((Func<string>)Act).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task ReadAllText_WithEmptyPath_ThrowsRaw()
     {
-        var act = () => UserFile.ReadAllText(string.Empty);
+        static string Act() => UserFile.ReadAllText(string.Empty);
 
-        await Assert.That(act).Throws<ArgumentException>();
+        await Assert.That((Func<string>)Act).Throws<ArgumentException>();
     }
 
     [Test]
     public async Task WriteAllText_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserFile.WriteAllText(null!, "x");
+        static void Act() => UserFile.WriteAllText(null!, "x");
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task WriteAllText_WithEmptyPath_ThrowsRaw()
     {
-        var act = () => UserFile.WriteAllText(string.Empty, "x");
+        static void Act() => UserFile.WriteAllText(string.Empty, "x");
 
-        await Assert.That(act).Throws<ArgumentException>();
+        await Assert.That(Act).Throws<ArgumentException>();
     }
 
     // The async methods are invoked without await: the guard must throw synchronously,
@@ -198,49 +198,49 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllTextAsync_WithNullPath_ThrowsRawAndSynchronously()
     {
-        var act = () => { _ = UserFile.ReadAllTextAsync(null!); };
+        static void Act() => _ = UserFile.ReadAllTextAsync(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task ReadAllTextAsync_WithEmptyPath_ThrowsRawAndSynchronously()
     {
-        var act = () => { _ = UserFile.ReadAllTextAsync(string.Empty); };
+        static void Act() => _ = UserFile.ReadAllTextAsync(string.Empty);
 
-        await Assert.That(act).Throws<ArgumentException>();
+        await Assert.That(Act).Throws<ArgumentException>();
     }
 
     [Test]
     public async Task WriteAllTextAsync_WithNullPath_ThrowsRawAndSynchronously()
     {
-        var act = () => { _ = UserFile.WriteAllTextAsync(null!, "x"); };
+        static void Act() => _ = UserFile.WriteAllTextAsync(null!, "x");
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task WriteAllTextAsync_WithEmptyPath_ThrowsRawAndSynchronously()
     {
-        var act = () => { _ = UserFile.WriteAllTextAsync(string.Empty, "x"); };
+        static void Act() => _ = UserFile.WriteAllTextAsync(string.Empty, "x");
 
-        await Assert.That(act).Throws<ArgumentException>();
+        await Assert.That(Act).Throws<ArgumentException>();
     }
 
     [Test]
     public async Task WriteAllText_ReadAllText_RoundTrip()
     {
-        using var file = new TempFile();
-
-        var read = Act(file.Path);
-
-        await Assert.That(read).IsEqualTo("héllo wörld");
-
         static string Act(string path)
         {
             UserFile.WriteAllText(path, "héllo wörld");
             return UserFile.ReadAllText(path);
         }
+
+        using var file = new TempFile();
+
+        var read = Act(file.Path);
+
+        await Assert.That(read).IsEqualTo("héllo wörld");
     }
 
     [Test]
@@ -525,17 +525,17 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task Exists_WithNullPath_ThrowsRaw()
     {
-        var act = () => UserFile.Exists(null!);
+        static bool Act() => UserFile.Exists(null!);
 
-        await Assert.That(act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
     public async Task Exists_WithEmptyPath_ThrowsRaw()
     {
-        var act = () => UserFile.Exists(string.Empty);
+        static bool Act() => UserFile.Exists(string.Empty);
 
-        await Assert.That(act).Throws<ArgumentException>();
+        await Assert.That(Act).Throws<ArgumentException>();
     }
 
     private static async Task AssertDenied(Action act, string expectedMessagePrefix)

@@ -201,7 +201,7 @@ internal sealed partial class SelfVersionService
     }
 
     private static bool IsPinPath(IReadOnlyList<string> propertyPath)
-        => propertyPath.Count == 2 && propertyPath[0] == MsbuildSdksPropertyName && propertyPath[1] == SdkPackageId;
+        => propertyPath is [MsbuildSdksPropertyName, SdkPackageId];
 
     // The update never downgrades silently: an old bv run by habit in a newer repository must not roll the
     // repository back. `dotnet bv update` runs the repository's own pinned bv (the update command is exempt

@@ -6,3 +6,25 @@ root = false
 
 # Test methods can have compound or expression bodies, as appropriate for the test.
 resharper_arrange_method_or_operator_body_highlighting = none
+
+# TUnit test methods must be public instance methods, so "member can be made static" is a trap here.
+resharper_member_can_be_made_static_global_highlighting = none
+
+# Local functions go wherever they make the test easiest to read, free of placement and separation rules
+resharper_move_local_function_after_jump_statement_highlighting = none
+resharper_separate_local_functions_with_jump_statement_highlighting = none
+
+# new Type() (as opposed to new()) is often clearer in tests.
+resharper_arrange_object_creation_when_type_evident_highlighting = none
+
+# Declare types in namespaces - test projects have no root namespace on purpose (see Common.targets)
+dotnet_diagnostic.CA1050.severity = none
+
+# Identifiers should not contain underscores - underscores are the test naming convention
+dotnet_diagnostic.CA1707.severity = none
+
+# Expression value is never used - a test method may call a method for its side effects, and not use the return value
+dotnet_diagnostic.IDE0058.severity = none
+
+# Elements should be documented - test code is self-describing
+dotnet_diagnostic.SA1600.severity = none

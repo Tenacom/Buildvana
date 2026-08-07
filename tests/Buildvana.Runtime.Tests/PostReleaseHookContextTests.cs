@@ -77,11 +77,11 @@ internal sealed class PostReleaseHookContextTests
             var path = Path.Combine(dir, WellKnownPaths.GetHookContextFile("release", "post-release"));
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(path, "{}").ConfigureAwait(false);
-            using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+            await using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None).ConfigureAwait(false);
 
-            var act = () => PostReleaseHookContext.Load(dir);
+            PostReleaseHookContext Act() => PostReleaseHookContext.Load(dir);
 
-            var exception = await Assert.That(act).Throws<BuildvanaRuntimeException>();
+            var exception = await Assert.That(Act).Throws<BuildvanaRuntimeException>();
             await Assert.That(exception!.Message).Contains("Could not read from");
         }
         finally

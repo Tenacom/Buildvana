@@ -24,6 +24,28 @@ Use latest C# features whenever possible. Non-exhaustive list of features to use
 - `field` keyword
 - Primary constructors
 - Extension blocks
+- Pattern matching (see below)
+
+## Pattern matching
+
+Prefer pattern matching over equivalent chains of comparisons, type checks, and casts: a pattern states the shape of the data, while a chain of checks makes the reader reassemble it. In particular:
+
+- List patterns over count checks + indexed comparisons:
+
+  ```csharp
+  // This is wrong
+  var isPinPath = propertyPath.Count == 2 && propertyPath[0] == PropertyName && propertyPath[1] == PackageId;
+
+  // This is correct
+  var isPinPath = propertyPath is [PropertyName, PackageId];
+  ```
+
+- `is T x` over `as` + null check, and over `is` check + cast.
+- Property patterns over chains of dotted comparisons: `result is { ExitCode: 0, StandardError.Length: 0 }`.
+- `is null` / `is not null` over `== null` / `!= null`.
+- Switch expressions over `if`/`else if` chains or switch statements whose branches produce a value.
+
+Exception: constant patterns compare with `Equals`, while `==` uses the type's equality operator. In the rare case of a type that overloads `==` with semantics that differ from `Equals`, keep the operator form.
 
 ## Partial classes
 
