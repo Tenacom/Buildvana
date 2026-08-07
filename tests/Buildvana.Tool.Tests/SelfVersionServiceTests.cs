@@ -312,9 +312,27 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (_, args, _) = runner.Runs[0];
-        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview", "--allow-downgrade"]);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.42-preview -> 2.1.41-preview (tool manifest)");
+    }
+
+    // --allow-downgrade keys on the actual direction of the manifest change, not on --force: a forced update
+    // whose manifest pin is older is a plain upgrade, and the CLI's own downgrade guard must stay armed for it.
+    [Test]
+    public async Task UpdateRepository_WithForce_AndOlderManifestPin_UpdatesWithoutAllowDowngrade()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.42-preview");
+        WriteToolManifest(home, "2.1.40-preview");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service.UpdateRepositoryAsync(force: true).ConfigureAwait(false);
+
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
 
     // An entry whose version the dotnet CLI cannot parse is beyond any `dotnet tool` verb's reach — update must
