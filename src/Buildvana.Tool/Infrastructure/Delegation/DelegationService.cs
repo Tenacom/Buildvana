@@ -112,13 +112,14 @@ internal sealed class DelegationService(
         }
 
         var pinMatches = VersionComparer.VersionRelease.Equals(pin, ownVersion);
-        switch (pinMatches)
+        if (pinMatches && context.InstallLayout == InstallLayout.PackageCache)
         {
-            case true when context.InstallLayout == InstallLayout.PackageCache:
-                return null;
-            case false:
-                await output.WriteLineAsync($"Delegating to bv {pin.ToNormalizedString()} from this repository's tool manifest.").ConfigureAwait(false);
-                break;
+            return null;
+        }
+
+        if (!pinMatches)
+        {
+            await output.WriteLineAsync($"Delegating to bv {pin.ToNormalizedString()} from this repository's tool manifest.").ConfigureAwait(false);
         }
 
         if (!resolverCacheProbe.IsInstalled(ToolManifest.BvPackageId, pin))

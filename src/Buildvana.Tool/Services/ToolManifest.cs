@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.IO;
 using System.Text.Json.Nodes;
 using Buildvana.Core.Json;
@@ -28,9 +29,13 @@ internal static class ToolManifest
     /// Reads the bv entry in the tool manifest of the given home directory.
     /// </summary>
     /// <remarks>
-    /// Version parseability is judged with <see cref="NuGetVersion.TryParse(string?, out NuGetVersion)"/> — the
+    /// <para>The bv entry is matched case-insensitively: NuGet package IDs are case-insensitive, and the
+    /// dotnet CLI normalizes manifest keys through its <c>PackageId</c> type (which lowercases them), so a
+    /// differently-cased entry is fully usable by <c>dotnet tool restore</c> and <c>tool run</c> and must be
+    /// found here too.</para>
+    /// <para>Version parseability is judged with <see cref="NuGetVersion.TryParse(string?, out NuGetVersion)"/> — the
     /// same call the dotnet CLI makes when it reads the manifest (see <c>ToolManifestEditor</c> in the
-    /// dotnet/sdk repository) — so "no usable version" here is exactly "a manifest the dotnet CLI cannot use".
+    /// dotnet/sdk repository) — so "no usable version" here is exactly "a manifest the dotnet CLI cannot use".</para>
     /// </remarks>
     /// <param name="jsonHelper">The JSON helper used to read the manifest.</param>
     /// <param name="homeDirectory">The home directory whose manifest to read.</param>
@@ -48,7 +53,7 @@ internal static class ToolManifest
         }
 
         var manifest = jsonHelper.LoadObject(path);
-        var toolNode = manifest["tools"] is JsonObject tools ? tools[BvPackageId] : null;
+        var toolNode = manifest["tools"] is JsonObject tools ? FindBvEntry(tools) : null;
         if (toolNode is not JsonObject toolEntry)
         {
             return new BvManifestPin(HasEntry: false, VersionText: null, Version: null);
@@ -58,5 +63,18 @@ internal static class ToolManifest
         _ = toolEntry["version"] is JsonValue versionValue && versionValue.TryGetValue(out versionText);
         var version = NuGetVersion.TryParse(versionText, out var parsed) ? parsed : null;
         return new BvManifestPin(HasEntry: true, versionText, version);
+    }
+
+    private static JsonNode? FindBvEntry(JsonObject tools)
+    {
+        foreach (var (name, node) in tools)
+        {
+            if (string.Equals(name, BvPackageId, StringComparison.OrdinalIgnoreCase))
+            {
+                return node;
+            }
+        }
+
+        return null;
     }
 }

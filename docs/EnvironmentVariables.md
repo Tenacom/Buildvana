@@ -10,7 +10,7 @@ The recursion guard for [delegation](DirectoryStructure.md#configdotnet-toolsjso
 
 The variable is not meant to be set by hand; to keep `bv` from delegating, pass `--skip-delegation` instead.
 
-Like the rest of the environment, the variable is inherited by `bv`'s child processes, [release hooks](ReleaseHooks.md) included; hooks, however, should prefer the `RuntimeInfo.DelegatingVersion` member of their typed context, which carries the same information.
+The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [release hooks](ReleaseHooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed context.
 
 ### `DOTNET_CLI_HOME`
 
@@ -29,5 +29,5 @@ Set by the `dotnet` muxer on every process it launches, with the full path of th
 
 ## Variables set by `bv`
 
-- `BV_DELEGATED` on the delegated `bv`, as described above.
+- `BV_DELEGATED` on the delegated `bv`, as described above — and removed from the environment of `bv`'s other child processes.
 - The variables configured under `dotnet.all.env` and the per-command `dotnet.<command>.env` sections of the configuration file, on the corresponding child `dotnet` invocations; a `null` value removes the variable from the child's environment.

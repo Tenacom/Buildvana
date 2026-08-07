@@ -157,6 +157,9 @@ internal sealed partial class SelfVersionService
 
         EnsureNoUnforcedDowngrade(manifestPin.Version, sdkPin, force);
 
+        // Manifest first: pinning it spawns the dotnet CLI, the one step with an external actor, so a failure
+        // there leaves the repository untouched. A failed file write after it leaves the manifest already
+        // pinned — a state a rerun reads as "unchanged" before retrying the writes, so the window self-heals.
         var toolManifestLine = await PinToolManifestAsync(manifestPin, cancellationToken).ConfigureAwait(false);
         var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin);
         var configFileLine = UpdateConfigSchemaReference();
