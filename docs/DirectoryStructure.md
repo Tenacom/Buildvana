@@ -130,7 +130,7 @@ Besides being read by the .NET CLI itself, the manifest drives `bv`'s _delegatio
 Delegating to bv 2.1.58-preview from this repository's tool manifest.
 ```
 
-A delegating `bv` neither parses the command line nor reads the configuration file: both may be valid for the pinned version and not for the invoked one, and judging them is the pinned version's job. There are two exceptions:
+A delegating `bv` does not judge the command line beyond the minimal split that finds the subcommand and the global options, and does not read the configuration file at all: both may be valid for the pinned version and not for the invoked one, and judging them is the pinned version's job. The split does reject one malformed shape on its own — a value-bearing global option with nothing after it, such as a trailing `-v` — but every `bv` version phrases that rejection the same way, so the answer does not depend on which binary gives it. There are two exceptions to the hand-over itself:
 
 - the `--skip-delegation` global option runs the exact binary you invoked;
 - the [`update`](#globaljson) subcommand always runs the invoked `bv`, since its job is precisely to re-pin the repository to that `bv`'s version.
