@@ -4,5 +4,7 @@ root = false
 
 [*.cs]
 
-# Task properties are set by the build engine, not in our code. "Unused" getters are not a concern.
+# Task properties are set by the build engine via reflection, not in our code: neither "unused" getters
+# nor "never mutated" setters say anything about the real contract.
 resharper_auto_property_can_be_made_get_only_global_highlighting = none
+resharper_property_can_be_made_init_only_global_highlighting = none

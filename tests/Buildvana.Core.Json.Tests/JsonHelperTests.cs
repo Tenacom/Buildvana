@@ -16,9 +16,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task LoadObject_WithDeniedAccess_Fails()
     {
-        var act = () => new JsonHelper().LoadObject(DeniedAccessPath);
+        static JsonObject Act() => new JsonHelper().LoadObject(DeniedAccessPath);
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That((Func<JsonObject>)Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
@@ -26,9 +26,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task SaveObject_WithDeniedAccess_Fails()
     {
-        var act = () => new JsonHelper().SaveObject(new JsonObject(), DeniedAccessPath);
+        static void Act() => new JsonHelper().SaveObject(new JsonObject(), DeniedAccessPath);
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
@@ -36,9 +36,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task RewriteStringValues_WithDeniedAccess_Fails()
     {
-        var act = () => new JsonHelper().RewriteStringValues(DeniedAccessPath, (_, _) => null);
+        static bool Act() => new JsonHelper().RewriteStringValues(DeniedAccessPath, (_, _) => null);
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
@@ -46,9 +46,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task InsertProperty_WithDeniedAccess_Fails()
     {
-        var act = () => new JsonHelper().InsertProperty(DeniedAccessPath, [], "a", JsonValue.Create("x"));
+        static bool Act() => new JsonHelper().InsertProperty(DeniedAccessPath, [], "a", JsonValue.Create("x"));
 
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
@@ -179,9 +179,9 @@ internal sealed partial class JsonHelperTests
         using var file = new TempJsonFile("""{"sdk": {}}""");
         var path = file.Path;
 
-        var act = () => new JsonHelper().InsertProperty(path, ["msbuild-sdks"], "Buildvana.Sdk", JsonValue.Create("x"));
+        bool Act() => new JsonHelper().InsertProperty(path, ["msbuild-sdks"], "Buildvana.Sdk", JsonValue.Create("x"));
 
-        await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(Act).Throws<BuildFailedException>();
     }
 
     [Test]
@@ -190,9 +190,9 @@ internal sealed partial class JsonHelperTests
         using var file = new TempJsonFile("""{"msbuild-sdks": [{"a": 1}]}""");
         var path = file.Path;
 
-        var act = () => new JsonHelper().InsertProperty(path, ["msbuild-sdks"], "Buildvana.Sdk", JsonValue.Create("x"));
+        bool Act() => new JsonHelper().InsertProperty(path, ["msbuild-sdks"], "Buildvana.Sdk", JsonValue.Create("x"));
 
-        await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(Act).Throws<BuildFailedException>();
     }
 
     [Test]
@@ -201,9 +201,9 @@ internal sealed partial class JsonHelperTests
         using var file = new TempJsonFile("{ not json");
         var path = file.Path;
 
-        var act = () => new JsonHelper().InsertProperty(path, [], "a", JsonValue.Create("x"));
+        bool Act() => new JsonHelper().InsertProperty(path, [], "a", JsonValue.Create("x"));
 
-        await Assert.That(act).Throws<BuildFailedException>();
+        await Assert.That(Act).Throws<BuildFailedException>();
     }
 
     [Test]
@@ -253,7 +253,7 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task InsertProperty_PreservesUtf8Bom()
     {
-        var contentBytes = Encoding.UTF8.GetBytes("{\n  \"a\": 1\n}\n");
+        var contentBytes = "{\n  \"a\": 1\n}\n"u8.ToArray();
         using var file = new TempJsonFile([0xEF, 0xBB, 0xBF, .. contentBytes]);
 
         _ = new JsonHelper().InsertProperty(file.Path, [], "b", JsonValue.Create("x"));

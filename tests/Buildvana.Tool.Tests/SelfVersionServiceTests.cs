@@ -21,7 +21,7 @@ internal sealed class SelfVersionServiceTests
         WriteGlobalJson(home, pin);
         var service = CreateService(home, ownVersion);
 
-        await Assert.That(() => service.EnsureSdkVersionMatch()).ThrowsNothing();
+        await Assert.That(service.EnsureSdkVersionMatch).ThrowsNothing();
     }
 
     [Test]
@@ -34,7 +34,7 @@ internal sealed class SelfVersionServiceTests
         WriteGlobalJson(home, pin);
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(() => service.EnsureSdkVersionMatch()).Throws<BuildFailedException>();
+        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains(pin);
         await Assert.That(exception.Message).Contains("2.1.41-preview");
@@ -47,7 +47,7 @@ internal sealed class SelfVersionServiceTests
         using var home = new TempHome();
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(() => service.EnsureSdkVersionMatch()).Throws<BuildFailedException>();
+        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("global.json");
         await Assert.That(exception.Message).Contains("bv update");
@@ -60,7 +60,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("global.json", """{ "sdk": { "version": "10.0.302" } }""");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(() => service.EnsureSdkVersionMatch()).Throws<BuildFailedException>();
+        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("msbuild-sdks");
     }
@@ -72,7 +72,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("global.json", """{ "msbuild-sdks": { "Microsoft.Build.NoTargets": "3.7.134" } }""");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(() => service.EnsureSdkVersionMatch()).Throws<BuildFailedException>();
+        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("Buildvana.Sdk");
     }
@@ -84,7 +84,7 @@ internal sealed class SelfVersionServiceTests
         WriteGlobalJson(home, "not-a-version");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(() => service.EnsureSdkVersionMatch()).Throws<BuildFailedException>();
+        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("not-a-version");
     }

@@ -171,9 +171,9 @@ csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
 
 # Code-block preferences
-csharp_prefer_braces = true:suggestion
-csharp_prefer_simple_using_statement = true:suggestion
-csharp_style_prefer_method_group_conversion = true:suggestion
+csharp_prefer_braces = true:warning
+csharp_prefer_simple_using_statement = true:warning
+csharp_style_prefer_method_group_conversion = true:warning
 csharp_style_prefer_top_level_statements = false
 
 # Expression-level preferences
@@ -182,7 +182,7 @@ csharp_style_deconstructed_variable_declaration = true:suggestion
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 csharp_style_inlined_variable_declaration = true:suggestion
 csharp_style_prefer_index_operator = true:suggestion
-csharp_style_prefer_local_over_anonymous_function = true:suggestion
+csharp_style_prefer_local_over_anonymous_function = true:warning
 csharp_style_prefer_null_check_over_type_check = true:suggestion
 csharp_style_prefer_range_operator = true:suggestion
 csharp_style_prefer_tuple_swap = true:suggestion
@@ -536,7 +536,7 @@ dotnet_diagnostic.IDE0290.severity = none # Use primary constructor - No. Just n
 
 # Solution-specific overrides
 
-# Some types and memberts are unused but present for completeness and/or future use, or instantiated via DI.
+# Some types and members are unused but present for completeness and/or future use, or instantiated via DI.
 # We don't need to flag every unused type or member: sprinkling PublicAPI and/or UsedImplicitly attributes around would be mostly noise.
 resharper_class_never_instantiated_global_highlighting = none
 resharper_unused_type_global_highlighting = none
@@ -548,3 +548,18 @@ resharper_member_can_be_private_global_highlighting = none
 # Disabling these rules globally helps keep code clean and simple without needing to sprinkle pragmas or suppression attributes around the codebase.
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
+
+# Promote selected ReSharper hints to warnings, so that the inspectcode gate (which runs with --severity=WARNING) enforces them.
+
+# Pattern matching is preferred over equivalent comparison / type-check / cast chains: see .claude/rules/csharp-style-guide.md.
+resharper_merge_into_pattern_highlighting = warning
+resharper_use_pattern_matching_highlighting = warning
+resharper_merge_cast_with_type_check_highlighting = warning
+
+# Modernizations that are essentially always improvements.
+resharper_use_await_using_highlighting = warning
+resharper_use_utf8_string_literal_highlighting = warning
+resharper_can_simplify_dictionary_try_get_value_with_get_value_or_default_highlighting = warning
+resharper_convert_closure_to_method_group_highlighting = warning
+resharper_convert_to_local_function_highlighting = warning
+resharper_property_can_be_made_init_only_global_highlighting = warning

@@ -60,7 +60,7 @@ internal sealed class CommandNode
     public CommandNode? FindChild(string name)
     {
         Guard.IsNotNullOrEmpty(name);
-        return _children.TryGetValue(name, out var child) ? child : null;
+        return _children.GetValueOrDefault(name);
     }
 
     internal CommandNode GetOrAddChild(string name)
