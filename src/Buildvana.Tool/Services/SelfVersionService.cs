@@ -252,8 +252,14 @@ internal sealed partial class SelfVersionService
         }
 
         var hasEntry = manifestPin.HasEntry;
-        string[] args = hasEntry
-            ? ["tool", "update", ToolPackageId, "--version", OwnVersionText]
+
+        // The dotnet CLI has a downgrade guard of its own: `tool update` refuses to move a tool to a lower
+        // version unless --allow-downgrade is passed. A downgrade only reaches this point forced (see
+        // EnsureNoUnforcedDowngrade), so pass the flag exactly when bv has itself authorized the downgrade,
+        // leaving the CLI's guard armed on every other path.
+        var isDowngrade = currentPin is not null && VersionComparer.VersionRelease.Compare(currentPin, _ownVersion) > 0;
+        string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", OwnVersionText, "--allow-downgrade"]
+            : hasEntry ? ["tool", "update", ToolPackageId, "--version", OwnVersionText]
             : ["tool", "install", ToolPackageId, "--version", OwnVersionText, "--create-manifest-if-needed"];
         _ = await _processRunner.RunAsync(
             DotNetMuxer.Path,
