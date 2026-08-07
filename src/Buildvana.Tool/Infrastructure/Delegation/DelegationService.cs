@@ -98,26 +98,27 @@ internal sealed class DelegationService(
         {
             // An entry the dotnet CLI itself could not use deserves a word; no entry at all is just a
             // repository that does not pin bv, which is not worth narrating.
-            if (manifestPin.HasEntry)
+            if (!manifestPin.HasEntry)
             {
-                var problem = manifestPin.VersionText is null
-                    ? "has no version"
-                    : $"pins version '{manifestPin.VersionText}', which is not a valid version";
-                await output.WriteLineAsync($"Warning: delegation skipped, the tool manifest's {ToolManifest.BvPackageId} entry {problem}.").ConfigureAwait(false);
+                return null;
             }
+
+            var problem = manifestPin.VersionText is null
+                ? "has no version"
+                : $"pins version '{manifestPin.VersionText}', which is not a valid version";
+            await output.WriteLineAsync($"Warning: delegation skipped, the tool manifest's {ToolManifest.BvPackageId} entry {problem}.").ConfigureAwait(false);
 
             return null;
         }
 
         var pinMatches = VersionComparer.VersionRelease.Equals(pin, ownVersion);
-        if (pinMatches && context.InstallLayout == InstallLayout.PackageCache)
+        switch (pinMatches)
         {
-            return null;
-        }
-
-        if (!pinMatches)
-        {
-            await output.WriteLineAsync($"Delegating to bv {pin.ToNormalizedString()} from this repository's tool manifest.").ConfigureAwait(false);
+            case true when context.InstallLayout == InstallLayout.PackageCache:
+                return null;
+            case false:
+                await output.WriteLineAsync($"Delegating to bv {pin.ToNormalizedString()} from this repository's tool manifest.").ConfigureAwait(false);
+                break;
         }
 
         if (!resolverCacheProbe.IsInstalled(ToolManifest.BvPackageId, pin))
