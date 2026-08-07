@@ -16,6 +16,8 @@ if (!context.Dogfooded)
     return;
 }
 
+// Same expression as SelfVersionService.SchemaUrlRegex in src/Buildvana.Tool, which `bv update` applies to
+// consumer repositories' configuration files; keep the two copies identical.
 var text = File.ReadAllText("buildvana.jsonc");
 text = Regex.Replace(text, "(Tenacom/Buildvana/)[^/]+(/schemas/)", $"${{1}}{context.Release.SemVer}$2");
 File.WriteAllText("buildvana.jsonc", text);

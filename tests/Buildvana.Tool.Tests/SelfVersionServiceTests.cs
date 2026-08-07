@@ -297,6 +297,31 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.42-preview -> 2.1.41-preview (tool manifest)");
     }
 
+    // An entry whose version the dotnet CLI cannot parse is beyond any `dotnet tool` verb's reach — update must
+    // fail up front with a message pointing at the file, before touching anything.
+    [Test]
+    [Arguments("""{ "version": 1, "isRoot": true, "tools": { "bv": { "version": "not-a-version", "commands": [ "bv" ] } } }""", "not-a-version")]
+    [Arguments("""{ "version": 1, "isRoot": true, "tools": { "bv": { "commands": [ "bv" ] } } }""", "has no version")]
+    public async Task UpdateRepository_WithUnusableManifestEntry_FailsBeforeChangingAnything(string manifestContent, string expectedDetail)
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
+        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), manifestContent);
+        var before = home.ReadFile("global.json");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains(expectedDetail);
+        await Assert.That(exception.Message).Contains(".config/dotnet-tools.json");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
+    }
+
     [Test]
     public async Task UpdateRepository_WhenToolUpdateFails_Propagates()
     {

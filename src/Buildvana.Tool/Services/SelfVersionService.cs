@@ -35,17 +35,13 @@ namespace Buildvana.Tool.Services;
 /// <para>Versions are compared by SemVer precedence, prerelease included (so <c>-preview</c> sorts before
 /// stable); build metadata never participates in comparisons and is never written to pins.</para>
 /// </remarks>
-internal sealed class SelfVersionService
+internal sealed partial class SelfVersionService
 {
     private const string GlobalJsonFileName = "global.json";
     private const string MsbuildSdksPropertyName = "msbuild-sdks";
     private const string SdkPackageId = "Buildvana.Sdk";
     private const string ToolPackageId = ToolManifest.BvPackageId;
     private const string SchemaPropertyName = "$schema";
-
-    // The well-known shape of the configuration file's schema reference: the version segment between the
-    // repository slug and the schema path is the only part the update rewrites. Anything else is left alone.
-    private static readonly Regex SchemaUrlRegex = new("(Tenacom/Buildvana/)[^/]+(/schemas/)", RegexOptions.CultureInvariant);
 
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
@@ -79,6 +75,13 @@ internal sealed class SelfVersionService
         _processRunner = processRunner;
         _ownVersion = ownVersion;
     }
+
+    // The well-known shape of the configuration file's schema reference: the version segment between the
+    // repository slug and the schema path is the only part the update rewrites. Anything else is left alone.
+    // The dogfooding release hook (.buildvana/hooks/release/post-release.cs) applies the same expression to the
+    // same file when a release moves this repository's own self-references; keep the two copies identical.
+    [GeneratedRegex("(Tenacom/Buildvana/)[^/]+(/schemas/)", RegexOptions.CultureInvariant)]
+    private static partial Regex SchemaUrlRegex { get; }
 
     private string GlobalJsonPath => Path.Combine(_home.HomeDirectory, GlobalJsonFileName);
 
@@ -144,6 +147,7 @@ internal sealed class SelfVersionService
     public async Task<UpdateSummary> UpdateRepositoryAsync(bool force, CancellationToken cancellationToken = default)
     {
         var manifestPin = ToolManifest.ReadBvPin(_jsonHelper, _home.HomeDirectory);
+        EnsureUsableManifestEntry(manifestPin);
         var (sdkPinText, _) = ReadPin();
         NuGetVersion? sdkPin = null;
         if (sdkPinText is not null && NuGetVersion.TryParse(sdkPinText, out var parsedSdkPin))
@@ -151,12 +155,31 @@ internal sealed class SelfVersionService
             sdkPin = parsedSdkPin;
         }
 
-        EnsureNoUnforcedDowngrade(manifestPin, sdkPin, force);
+        EnsureNoUnforcedDowngrade(manifestPin.Version, sdkPin, force);
 
         var toolManifestLine = await PinToolManifestAsync(manifestPin, cancellationToken).ConfigureAwait(false);
         var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin);
         var configFileLine = UpdateConfigSchemaReference();
         return new UpdateSummary(toolManifestLine, globalJsonLine, configFileLine);
+    }
+
+    // The dotnet CLI reads the manifest with the same version parser bv uses, so an entry whose version bv
+    // cannot parse is an entry no `dotnet tool` verb can rewrite either — the CLI fails reading the manifest
+    // before it gets to the entry. The only way forward is fixing the file by hand, so say so up front instead
+    // of forwarding a confusing CLI error.
+    private static void EnsureUsableManifestEntry(BvManifestPin manifestPin)
+    {
+        if (!manifestPin.HasEntry || manifestPin.Version is not null)
+        {
+            return;
+        }
+
+        var problem = manifestPin.VersionText is null
+            ? "has no version"
+            : $"pins version '{manifestPin.VersionText}', which is not a valid version";
+        throw new BuildFailedException(
+            $"Cannot update this repository: the {ToolPackageId} entry in {ToolManifest.RelativePath} {problem}. "
+            + $"Fix or remove the entry, then run '{ToolPackageId} update' again.");
     }
 
     private static void CreateGlobalJson(string path, string version)
@@ -180,7 +203,9 @@ internal sealed class SelfVersionService
     // The update never downgrades silently: an old bv run by habit in a newer repository must not roll the
     // repository back. `dotnet bv update` runs the repository's own pinned bv (the update command is exempt
     // from delegation, so a plain `bv update` runs the invoked binary), and --force covers the deliberate
-    // downgrade (e.g. bisecting a regression).
+    // downgrade (e.g. bisecting a regression). The guard deliberately covers the two version pins only: the
+    // $schema reference is cosmetic metadata, and when either pin is newer the update throws right here,
+    // before the schema reference is ever touched.
     private void EnsureNoUnforcedDowngrade(NuGetVersion? manifestPin, NuGetVersion? sdkPin, bool force)
     {
         if (force)
@@ -212,16 +237,18 @@ internal sealed class SelfVersionService
 
     // Pins bv's own version in the tool manifest through the dotnet CLI, which rewrites the manifest and
     // downloads the version in one go — hand-editing the manifest would leave the pin unrestored. The choice
-    // between update and install mirrors what the manifest already contains: with no usable bv entry, update
-    // would fail, and install creates the manifest itself when the repository has none.
-    private async Task<string> PinToolManifestAsync(NuGetVersion? currentPin, CancellationToken cancellationToken)
+    // between update and install is keyed on entry presence, mirroring the CLI's own contract: update rewrites
+    // an existing entry, and install creates the manifest itself when the repository has none. (An entry with
+    // an unusable version never reaches this point; EnsureUsableManifestEntry rejects it up front.)
+    private async Task<string> PinToolManifestAsync(BvManifestPin manifestPin, CancellationToken cancellationToken)
     {
+        var currentPin = manifestPin.Version;
         if (currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, _ownVersion))
         {
             return $"{ToolPackageId}: {OwnVersionText} (tool manifest, unchanged)";
         }
 
-        var hasEntry = currentPin is not null;
+        var hasEntry = manifestPin.HasEntry;
         string[] args = hasEntry
             ? ["tool", "update", ToolPackageId, "--version", OwnVersionText]
             : ["tool", "install", ToolPackageId, "--version", OwnVersionText, "--create-manifest-if-needed"];
