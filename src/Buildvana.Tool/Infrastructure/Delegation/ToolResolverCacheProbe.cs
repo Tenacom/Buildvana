@@ -90,7 +90,8 @@ internal sealed class ToolResolverCacheProbe(string cacheDirectory)
 
     // Mirrors CliFolderPathCalculatorCore in the dotnet/sdk repository: DOTNET_CLI_HOME wins, then the
     // platform home variable (USERPROFILE on Windows, HOME elsewhere), then whatever the BCL considers the
-    // user profile. An empty result yields a directory that cannot exist, i.e. a guaranteed miss.
+    // user profile. Should every source come up empty, the result degrades to a relative path resolved
+    // against the current directory; wherever that lands, a wrong cache directory only costs a restore.
     internal static string GetDefaultCacheDirectory()
     {
         var home = Environment.GetEnvironmentVariable("DOTNET_CLI_HOME");

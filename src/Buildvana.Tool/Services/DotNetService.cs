@@ -10,6 +10,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Infrastructure;
+using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
@@ -284,7 +285,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         return _processRunner.RunAsync(
             DotNetMuxer.Path,
             ["run", path],
-            environment: environment,
+            environment: ChildEnvironment(environment),
             workingDirectory: workingDirectory,
             onStdout: (x) => _reporter.ChildOutput(x, null),
             onStderr: (x) => _reporter.ChildError(x, null),
@@ -334,6 +335,34 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     }
 
     /// <summary>
+    /// Computes the environment for a child process: the given variables layered over the removal of the
+    /// delegation marker.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="DelegationService.DelegatedEnvVar"/> means "this process is the delegation target", which is
+    /// only true for the delegated bv itself. Inherited any further, the marker would make a bv reached through
+    /// a child process — a release hook shelling out to a globally-installed bv, say — skip delegation and
+    /// silently run in place at whatever version it happens to be. Every child bv spawns therefore gets the
+    /// marker removed (a <see langword="null"/> value removes the variable), while explicitly configured
+    /// values, layered on top, still win.
+    /// </remarks>
+    /// <param name="environment">The variables the invocation wants to set, or <see langword="null"/> for none.</param>
+    /// <returns>The environment to pass to the child process.</returns>
+    internal static Dictionary<string, string?> ChildEnvironment(IReadOnlyDictionary<string, string?>? environment)
+    {
+        var result = new Dictionary<string, string?>(StringComparer.Ordinal) { [DelegationService.DelegatedEnvVar] = null };
+        if (environment is not null)
+        {
+            foreach (var (key, value) in environment)
+            {
+                result[key] = value;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Return a parameter string that reflects whether we're running in CI.
     /// </summary>
     /// <param name="asMSBuildPassthrough"><see langword="true"/> to use the MSBuild passthrough form (<c>-p:</c>),
@@ -376,7 +405,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         return _processRunner.RunAsync(
             DotNetMuxer.Path,
             appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
-            environment: environment,
+            environment: ChildEnvironment(environment),
             onStdout: outputStreaming.Enabled ? (x) => _reporter.ChildOutput(x, outputStreaming.Verbosity) : null,
             onStderr: outputStreaming.Enabled ? (x) => _reporter.ChildError(x, outputStreaming.Verbosity) : null,
             cancellationToken: cancellationToken);

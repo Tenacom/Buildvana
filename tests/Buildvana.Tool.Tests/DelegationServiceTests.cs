@@ -122,6 +122,25 @@ internal sealed class DelegationServiceTests
         await Assert.That(output.ToString()).Contains(expectedDetail);
     }
 
+    // The dotnet CLI matches manifest keys case-insensitively (it lowercases them into package IDs), so a
+    // differently-cased bv entry still pins bv and must delegate like any other.
+    [Test]
+    public async Task TryDelegate_WithDifferentlyCasedManifestKey_ReadsThePin()
+    {
+        using var home = new TempHome();
+        MarkAsHome(home);
+        WriteToolManifest(home, """{ "version": 1, "isRoot": true, "tools": { "BV": { "version": "2.1.40-preview", "commands": [ "bv" ] } } }""");
+        var runner = new FakeProcessRunner();
+        var output = new StringWriter();
+        var service = CreateService(runner, output);
+
+        var result = await service.TryDelegateAsync(Context(home)).ConfigureAwait(false);
+
+        await Assert.That(result).IsEqualTo(0);
+        await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(1);
+        await Assert.That(output.ToString()).Contains("Delegating to bv 2.1.40-preview");
+    }
+
     [Test]
     public async Task TryDelegate_WithMatchingPin_FromPackageCache_RunsInPlace()
     {

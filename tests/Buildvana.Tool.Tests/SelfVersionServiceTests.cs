@@ -146,6 +146,26 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
     }
 
+    // The dotnet CLI matches manifest keys case-insensitively (it lowercases them into package IDs), so a
+    // differently-cased bv entry is still an existing entry: the pin must go through `dotnet tool update`,
+    // not `dotnet tool install`.
+    [Test]
+    public async Task UpdateRepository_WithDifferentlyCasedManifestKey_RunsDotnetToolUpdate()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        var manifest = """{ "version": 1, "isRoot": true, "tools": { "BV": { "version": "2.1.40-preview", "commands": [ "bv" ] } } }""";
+        WriteRawToolManifest(home, manifest);
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service.UpdateRepositoryAsync(force: false).ConfigureAwait(false);
+
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
+    }
+
     [Test]
     [Arguments("2.1.40-preview")]
     [Arguments("not-a-version")]
@@ -522,7 +542,6 @@ internal sealed class SelfVersionServiceTests
 
     private static void WriteToolManifest(TempHome home, string version)
     {
-        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
         var content = $$"""
             {
               "version": 1,
@@ -538,6 +557,12 @@ internal sealed class SelfVersionServiceTests
             }
 
             """;
+        WriteRawToolManifest(home, content);
+    }
+
+    private static void WriteRawToolManifest(TempHome home, string content)
+    {
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
         home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), content);
     }
 }
