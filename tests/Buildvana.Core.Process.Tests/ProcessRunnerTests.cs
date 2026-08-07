@@ -59,6 +59,36 @@ internal sealed class ProcessRunnerTests
         }
     }
 
+    // Twin of the test above for the CliWrap-backed path: there the "null removes the variable" contract is
+    // CliWrap's to honor, not this code's, and this test is what locks it in when CliWrap is updated.
+    // Mutates the process-global environment; must not run alongside other tests (see .claude/rules/testing.md).
+    [Test]
+    [NotInParallel]
+    public async Task Run_RemovesNullEnvironmentEntries()
+    {
+        // The variable exists in the parent's environment; a null override must remove it from the child's.
+        Environment.SetEnvironmentVariable("BV_TEST_REMOVED_VAR", "1");
+        try
+        {
+            var runner = new ProcessRunner();
+            var (executable, args) = ShellCommand(
+                "if defined BV_TEST_REMOVED_VAR (exit 1) else (exit 9)",
+                "if [ -z \"${BV_TEST_REMOVED_VAR+x}\" ]; then exit 9; else exit 1; fi");
+
+            var result = await runner.RunAsync(
+                executable,
+                args,
+                environment: new Dictionary<string, string?> { ["BV_TEST_REMOVED_VAR"] = null },
+                throwOnNonZero: false).ConfigureAwait(false);
+
+            await Assert.That(result.ExitCode).IsEqualTo(9);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BV_TEST_REMOVED_VAR", null);
+        }
+    }
+
     [Test]
     public async Task RunWithInheritedStdio_RunsInGivenWorkingDirectory()
     {
