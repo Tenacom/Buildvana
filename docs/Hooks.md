@@ -114,7 +114,7 @@ Hooks also inherit the rest of the repository's implicit build files (`nuget.con
 
 ## Cleaning hook build caches
 
-Local file-based-app caching may not notice implicit-build-file changes; CI is always a cold build. `bv clean` runs `dotnet clean` on each `*.cs` file under `.buildvana/hooks/` (recursively), clearing its build cache. It also deletes the `.buildvana-temp/` scratch directory, last hook args file included.
+Local file-based-app caching may not notice implicit-build-file changes; CI is always a cold build. `bv clean` clears the build cache of each `*.cs` file under `.buildvana/hooks/` (recursively), deleting its file-based-app artifacts directory. It also deletes the `.buildvana-temp/` scratch directory, last hook args file included.
 
 ## Contract evolution
 
