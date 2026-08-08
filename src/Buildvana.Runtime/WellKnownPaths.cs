@@ -4,7 +4,7 @@
 namespace Buildvana.Runtime;
 
 /// <summary>
-/// Provides the well-known paths that make up the contract between <c>bv</c> and repository-owned hooks.
+/// Provides the well-known paths that make up the contract between <c>bv</c>, the SDK, and repository-owned hooks.
 /// All paths are relative to the home directory and use forward slashes.
 /// </summary>
 public static class WellKnownPaths
