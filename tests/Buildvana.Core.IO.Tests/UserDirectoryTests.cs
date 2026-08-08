@@ -212,7 +212,7 @@ internal sealed class UserDirectoryTests
     {
         static IReadOnlyList<string> Act() => UserDirectory.EnumerateFiles(null!, "*.nupkg");
 
-        await Assert.That((Func<IReadOnlyList<string>>)Act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -220,7 +220,7 @@ internal sealed class UserDirectoryTests
     {
         static IReadOnlyList<string> Act() => UserDirectory.EnumerateFiles(Path.GetTempPath(), null!);
 
-        await Assert.That((Func<IReadOnlyList<string>>)Act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]

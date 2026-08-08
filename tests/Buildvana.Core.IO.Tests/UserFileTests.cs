@@ -142,7 +142,7 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllText_WithMalformedPath_Fails()
     {
-        string Act() => UserFile.ReadAllText("a\0b");
+        static string Act() => UserFile.ReadAllText("a\0b");
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
@@ -166,7 +166,7 @@ internal sealed partial class UserFileTests
     {
         static string Act() => UserFile.ReadAllText(null!);
 
-        await Assert.That((Func<string>)Act).Throws<ArgumentNullException>();
+        await Assert.That(Act).Throws<ArgumentNullException>();
     }
 
     [Test]
@@ -174,7 +174,7 @@ internal sealed partial class UserFileTests
     {
         static string Act() => UserFile.ReadAllText(string.Empty);
 
-        await Assert.That((Func<string>)Act).Throws<ArgumentException>();
+        await Assert.That(Act).Throws<ArgumentException>();
     }
 
     [Test]
@@ -230,17 +230,17 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task WriteAllText_ReadAllText_RoundTrip()
     {
-        static string Act(string path)
-        {
-            UserFile.WriteAllText(path, "héllo wörld");
-            return UserFile.ReadAllText(path);
-        }
-
         using var file = new TempFile();
 
         var read = Act(file.Path);
 
         await Assert.That(read).IsEqualTo("héllo wörld");
+
+        static string Act(string path)
+        {
+            UserFile.WriteAllText(path, "héllo wörld");
+            return UserFile.ReadAllText(path);
+        }
     }
 
     [Test]
