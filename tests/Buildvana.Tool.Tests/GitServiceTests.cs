@@ -54,7 +54,7 @@ internal sealed class GitServiceTests
         using var git = CreateGitService(repo);
         var directory = Path.Combine(repo.RootPath, CommonPaths.Scratch);
         _ = Directory.CreateDirectory(directory);
-        await File.WriteAllTextAsync(Path.Combine(directory, "hook-context.json"), "{}").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(directory, "hook-args.json"), "{}").ConfigureAwait(false);
 
         await Assert.That(git.GetDirtyFiles().Count).IsEqualTo(0);
     }
