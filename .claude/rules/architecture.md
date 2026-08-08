@@ -19,8 +19,8 @@ Sub-projects under `src/`:
 
 Project names follow a four-tier convention:
 
- - `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend on other `Buildvana.Core.*` libraries and ordinary BCL/NuGet dependencies, but must remain host-agnostic: no host references (e.g., MSBuild). See "Core tier layout" below for how the tier is structured.
-- `Buildvana.Runtime` — packaged library consumed by hooks (via an SDK-supplied version pin) as well as by `bv` and SDK tasks. Its public surface is an additive-only contract, and its dependency closure must stay BCL-only: no references to unpackaged `Buildvana.Core.*` projects.
+ - `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend on other `Buildvana.Core.*` libraries, on `Buildvana.Runtime` (whose BCL-only dependency closure keeps the tier host-agnostic), and on ordinary BCL/NuGet dependencies, but must remain host-agnostic: no host references (e.g., MSBuild). See "Core tier layout" below for how the tier is structured.
+- `Buildvana.Runtime` — packaged library consumed by hooks (via an SDK-supplied version pin) as well as by `bv` and SDK tasks. Its public surface is an additive-only contract, and its dependency closure must stay BCL-only: no references to unpackaged `Buildvana.Core.*` projects. The prohibition is one-directional: `Buildvana.Core.*` projects may reference `Buildvana.Runtime`.
 - `Buildvana.Sdk.*` — the MSBuild SDK and its components (tasks, source generators). Only `Buildvana.Sdk` is packaged; it bundles the others.
 - `Buildvana.Tool` — the `bv` .NET CLI global tool. Packaged as a `dotnet tool`.
 
