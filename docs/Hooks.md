@@ -22,6 +22,8 @@ Hooks live at well-known paths of the form `.buildvana/hooks/<context>/<event>.c
 
 Exactly one event exists today: `release/post-release`. A hook is optional; when the file is absent, `bv` skips it with an info message.
 
+Whatever the context and event, a hook is guaranteed to run with the home directory as its working directory: relative paths in a hook resolve against the repository root, as the example below relies on.
+
 ## The `release/post-release` hook
 
 During a release, `bv` rewrites the three well-known self-reference files (`global.json`, `.config/dotnet-tools.json`, `Directory.Packages.props`) when dogfooding is enabled. But a repository can embed the released version in arbitrary other files; this hook is the escape hatch for those.
