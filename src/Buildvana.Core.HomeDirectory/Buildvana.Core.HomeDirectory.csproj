@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
+    <ProjectReference Include="..\Buildvana.Runtime\Buildvana.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

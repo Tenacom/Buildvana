@@ -167,6 +167,8 @@ Buildvana.Runtime.VersioningConfig.PrereleaseTag.get -> string?
 Buildvana.Runtime.VersioningConfig.PrereleaseTag.init -> void
 Buildvana.Runtime.VersioningConfig.VersioningConfig() -> void
 Buildvana.Runtime.WellKnownPaths
+const Buildvana.Runtime.BuildvanaConfig.JsonFileName = "buildvana.json" -> string!
+const Buildvana.Runtime.BuildvanaConfig.JsoncFileName = "buildvana.jsonc" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Context = "release" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Event = "post-release" -> string!
 const Buildvana.Runtime.WellKnownPaths.BuildvanaDirectory = ".buildvana" -> string!
