@@ -48,7 +48,7 @@ Prefer pattern matching over equivalent chains of comparisons, type checks, and 
 Semantic differences to keep in mind when converting:
 
 - List, property, and recursive patterns imply a null test: `propertyPath is [PropertyName, PackageId]` is `false` when `propertyPath` is null, where `propertyPath.Count == 2` would throw. Usually an improvement, but it is a behavior change, not a pure rewrite.
-- Constant patterns compare with `Equals`, while `==` uses the type's equality operator. With `float` / `double` the pattern is what you want: `x is double.NaN` matches NaN, while `x == double.NaN` is always `false`. Exception: in the rare case of a type that overloads `==` with semantics that differ from `Equals` (so `x == null` and `x is null` disagree), keep the operator form.
+- Constant patterns never use the type's `==` operator. Non-null constants compare with `Equals`; `null` is a plain reference test (a `HasValue` check for nullable value types). With `float` / `double` the pattern is what you want: `x is double.NaN` matches NaN, while `x == double.NaN` is always `false`. Exception: in the rare case of a type that overloads `==` so that `x == null` and `x is null` disagree, keep the operator form.
 
 ## Partial classes
 
