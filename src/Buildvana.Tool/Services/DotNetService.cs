@@ -341,7 +341,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     /// <remarks>
     /// <see cref="DelegationService.DelegatedEnvVar"/> means "this process is the delegation target", which is
     /// only true for the delegated bv itself. Inherited any further, the marker would make a bv reached through
-    /// a child process — a release hook shelling out to a globally-installed bv, say — skip delegation and
+    /// a child process — a hook shelling out to a globally-installed bv, say — skip delegation and
     /// silently run in place at whatever version it happens to be. Every child bv spawns therefore gets the
     /// marker removed (a <see langword="null"/> value removes the variable), while explicitly configured
     /// values, layered on top, still win.

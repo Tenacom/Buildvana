@@ -78,7 +78,7 @@ internal sealed partial class SelfVersionService
 
     // The well-known shape of the configuration file's schema reference: the version segment between the
     // repository slug and the schema path is the only part the update rewrites. Anything else is left alone.
-    // The dogfooding release hook (.buildvana/hooks/release/post-release.cs) applies the same expression to the
+    // The dogfooding post-release hook (.buildvana/hooks/release/post-release.cs) applies the same expression to the
     // same file when a release moves this repository's own self-references; keep the two copies identical.
     [GeneratedRegex("(Tenacom/Buildvana/)[^/]+(/schemas/)", RegexOptions.CultureInvariant)]
     private static partial Regex SchemaUrlRegex { get; }

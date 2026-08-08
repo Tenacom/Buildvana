@@ -17,7 +17,7 @@ namespace Buildvana.Tool.Services.Hooks;
 
 /// <summary>
 /// Runs repo-owned hooks: optional file-based apps at well-known paths of the form
-/// <c>.buildvana/hooks/{command}/{moment}.cs</c>, executed at named moments of bv commands.
+/// <c>.buildvana/hooks/{context}/{event}.cs</c>, executed at named events of bv commands.
 /// </summary>
 internal sealed class HookRunner
 {
@@ -39,26 +39,26 @@ internal sealed class HookRunner
     }
 
     /// <summary>
-    /// Runs the hook for the given command and moment, if its file exists.
+    /// Runs the hook for the given context and event, if its file exists.
     /// </summary>
-    /// <param name="command">The name of the command the hook belongs to.</param>
-    /// <param name="moment">The name of the moment the hook fires at.</param>
-    /// <param name="context">The context to serialize into the hook's context file
-    /// (<see cref="WellKnownPaths.GetHookContextFile"/>) before running the hook. Its type must be
+    /// <param name="context">The name of the context the hook's event belongs to.</param>
+    /// <param name="event">The name of the event that triggers the hook.</param>
+    /// <param name="args">The args to serialize into the hook's args file
+    /// (<see cref="WellKnownPaths.GetHookArgsFile"/>) before running the hook. Its type must be
     /// registered in <see cref="BuildvanaJsonContext"/>. The file is left in place after the run,
-    /// so the hook can be re-run by hand against the same context.</param>
+    /// so the hook can be re-run by hand against the same args.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the hook process.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is
     /// <see langword="true"/> if the hook ran and completed successfully, or <see langword="false"/>
     /// if there is no hook file.</returns>
     /// <exception cref="BuildFailedException">The hook exited with a non-zero exit code.</exception>
-    public async Task<bool> RunHookAsync(string command, string moment, object context, CancellationToken cancellationToken = default)
+    public async Task<bool> RunHookAsync(string context, string @event, object args, CancellationToken cancellationToken = default)
     {
-        Guard.IsNotNullOrEmpty(command);
-        Guard.IsNotNullOrEmpty(moment);
-        Guard.IsNotNull(context);
-        var hookName = $"{command}/{moment}";
-        var relativePath = Path.Combine(".buildvana", "hooks", command, moment + ".cs");
+        Guard.IsNotNullOrEmpty(context);
+        Guard.IsNotNullOrEmpty(@event);
+        Guard.IsNotNull(args);
+        var hookName = $"{context}/{@event}";
+        var relativePath = Path.Combine(".buildvana", "hooks", context, @event + ".cs");
         var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
         if (!File.Exists(path))
         {
@@ -66,11 +66,11 @@ internal sealed class HookRunner
             return false;
         }
 
-        var json = JsonSerializer.Serialize(context, context.GetType(), BuildvanaJsonContext.Default);
-        _reporter.Detail($"Hook {hookName}: context: {json}");
-        var contextPath = Path.GetFullPath(WellKnownPaths.GetHookContextFile(command, moment), _home.HomeDirectory);
-        _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(contextPath)!);
-        await UserFile.WriteAllTextAsync(contextPath, json, cancellationToken).ConfigureAwait(false);
+        var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
+        _reporter.Detail($"Hook {hookName}: args: {json}");
+        var argsPath = Path.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event), _home.HomeDirectory);
+        _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
+        await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
         _reporter.Info($"Hook {hookName}: running {relativePath}...");
         _ = await _appRunner.RunFileBasedAppAsync(
             path,

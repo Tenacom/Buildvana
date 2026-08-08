@@ -10,22 +10,22 @@ using JetBrains.Annotations;
 namespace Buildvana.Runtime;
 
 /// <summary>
-/// The context handed to the <c>release/post-release</c> hook: serialized by <c>bv</c> to the hook's context
+/// The args handed to the <c>release/post-release</c> hook: serialized by <c>bv</c> to the hook's args
 /// file before the hook runs, deserialized by the hook via <see cref="Load"/>.
 /// </summary>
 /// <remarks>
 /// <para>The contract is additive-only: newer <c>bv</c> versions may add properties, never remove or repurpose
-/// existing ones. Properties added after the initial release must be optional with a default value, so that a
-/// context file written before an update can still be loaded.</para>
+/// existing ones. Properties added after the initial release must be optional with a default value, so that an
+/// args file written before an update can still be loaded.</para>
 /// </remarks>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public sealed record PostReleaseHookContext
+public sealed record PostReleaseHookArgs
 {
-    /// <summary>The name of the command this hook belongs to.</summary>
-    public const string Command = "release";
+    /// <summary>The name of the context this hook's event belongs to.</summary>
+    public const string Context = "release";
 
-    /// <summary>The name of the moment this hook fires at.</summary>
-    public const string Moment = "post-release";
+    /// <summary>The name of the event that triggers this hook.</summary>
+    public const string Event = "post-release";
 
     /// <summary>
     /// Gets run-time information about the bv run: the running version, how the run was launched, and the
@@ -49,23 +49,23 @@ public sealed record PostReleaseHookContext
     public required bool Dogfooded { get; init; }
 
     /// <summary>
-    /// Loads the context of the current hook run from the hook's context file.
+    /// Loads the args of the current hook run from the hook's args file.
     /// </summary>
-    /// <param name="homeDirectory">The home directory the context file path is resolved against;
+    /// <param name="homeDirectory">The home directory the args file path is resolved against;
     /// the current directory when omitted (hooks run from the home directory).</param>
-    /// <returns>The deserialized hook context.</returns>
+    /// <returns>The deserialized hook args.</returns>
     /// <exception cref="BuildvanaRuntimeException">
-    /// The context file does not exist (<c>bv</c> has never run this hook in this repository, or the current
-    /// directory is not the home directory), cannot be read, or does not contain a valid context.
+    /// The args file does not exist (<c>bv</c> has never run this hook in this repository, or the current
+    /// directory is not the home directory), cannot be read, or does not contain valid args.
     /// </exception>
-    public static PostReleaseHookContext Load(string? homeDirectory = null)
+    public static PostReleaseHookArgs Load(string? homeDirectory = null)
     {
-        var relativePath = WellKnownPaths.GetHookContextFile(Command, Moment);
+        var relativePath = WellKnownPaths.GetHookArgsFile(Context, Event);
         var path = string.IsNullOrEmpty(homeDirectory) ? relativePath : Path.Combine(homeDirectory, relativePath);
         if (!File.Exists(path))
         {
             throw new BuildvanaRuntimeException(
-                $"The hook context file '{path}' does not exist. "
+                $"The hook args file '{path}' does not exist. "
                 + "Run this program from the home directory of a repository where bv has run this hook at least once.");
         }
 
@@ -81,12 +81,12 @@ public sealed record PostReleaseHookContext
 
         try
         {
-            return JsonSerializer.Deserialize(json, BuildvanaJsonContext.Default.PostReleaseHookContext)
-                ?? throw new BuildvanaRuntimeException($"The hook context file '{path}' does not contain a JSON object.");
+            return JsonSerializer.Deserialize(json, BuildvanaJsonContext.Default.PostReleaseHookArgs)
+                ?? throw new BuildvanaRuntimeException($"The hook args file '{path}' does not contain a JSON object.");
         }
         catch (JsonException e)
         {
-            throw new BuildvanaRuntimeException($"Invalid hook context file {path}: {e.Message}", e);
+            throw new BuildvanaRuntimeException($"Invalid hook args file {path}: {e.Message}", e);
         }
     }
 }

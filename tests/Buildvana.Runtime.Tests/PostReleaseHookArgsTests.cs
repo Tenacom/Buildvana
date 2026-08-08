@@ -4,15 +4,15 @@
 using System.Text.Json;
 using Buildvana.Runtime;
 
-internal sealed class PostReleaseHookContextTests
+internal sealed class PostReleaseHookArgsTests
 {
     [Test]
-    public async Task Load_NoContextFile_Throws()
+    public async Task Load_NoArgsFile_Throws()
     {
         var dir = NewDir();
         try
         {
-            await Assert.That(() => PostReleaseHookContext.Load(dir)).Throws<BuildvanaRuntimeException>();
+            await Assert.That(() => PostReleaseHookArgs.Load(dir)).Throws<BuildvanaRuntimeException>();
         }
         finally
         {
@@ -28,14 +28,14 @@ internal sealed class PostReleaseHookContextTests
         var dir = NewDir();
         try
         {
-            var written = SampleContext(dir);
-            var relativePath = WellKnownPaths.GetHookContextFile(PostReleaseHookContext.Command, PostReleaseHookContext.Moment);
+            var written = SampleArgs(dir);
+            var relativePath = WellKnownPaths.GetHookArgsFile(PostReleaseHookArgs.Context, PostReleaseHookArgs.Event);
             var path = Path.Combine(dir, relativePath);
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             object boxed = written;
             await File.WriteAllTextAsync(path, JsonSerializer.Serialize(boxed, boxed.GetType(), BuildvanaJsonContext.Default)).ConfigureAwait(false);
 
-            var loaded = PostReleaseHookContext.Load(dir);
+            var loaded = PostReleaseHookArgs.Load(dir);
 
             await Assert.That(loaded.RuntimeInfo).IsEqualTo(written.RuntimeInfo);
             await Assert.That(loaded.Release).IsEqualTo(written.Release);
@@ -54,10 +54,10 @@ internal sealed class PostReleaseHookContextTests
         var dir = NewDir();
         try
         {
-            var path = Path.Combine(dir, WellKnownPaths.GetHookContextFile("release", "post-release"));
+            var path = Path.Combine(dir, WellKnownPaths.GetHookArgsFile("release", "post-release"));
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(path, "{ not json ").ConfigureAwait(false);
-            await Assert.That(() => PostReleaseHookContext.Load(dir)).Throws<BuildvanaRuntimeException>();
+            await Assert.That(() => PostReleaseHookArgs.Load(dir)).Throws<BuildvanaRuntimeException>();
         }
         finally
         {
@@ -69,17 +69,17 @@ internal sealed class PostReleaseHookContextTests
     // (it checks attributes, not access), while File.ReadAllText fails on every platform — .NET maps FileShare
     // to advisory locks on Unix, so the sharing violation holds there too.
     [Test]
-    public async Task Load_UnreadableContextFile_Throws()
+    public async Task Load_UnreadableArgsFile_Throws()
     {
         var dir = NewDir();
         try
         {
-            var path = Path.Combine(dir, WellKnownPaths.GetHookContextFile("release", "post-release"));
+            var path = Path.Combine(dir, WellKnownPaths.GetHookArgsFile("release", "post-release"));
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             await File.WriteAllTextAsync(path, "{}").ConfigureAwait(false);
             await using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None).ConfigureAwait(false);
 
-            PostReleaseHookContext Act() => PostReleaseHookContext.Load(dir);
+            PostReleaseHookArgs Act() => PostReleaseHookArgs.Load(dir);
 
             var exception = await Assert.That(Act).Throws<BuildvanaRuntimeException>();
             await Assert.That(exception!.Message).Contains("Could not read from");
@@ -90,7 +90,7 @@ internal sealed class PostReleaseHookContextTests
         }
     }
 
-    private static PostReleaseHookContext SampleContext(string home) => new()
+    private static PostReleaseHookArgs SampleArgs(string home) => new()
     {
         RuntimeInfo = new()
         {

@@ -7,7 +7,7 @@ namespace Buildvana.Runtime;
 
 /// <summary>
 /// Run-time information about the <c>bv</c> run a hook belongs to: the running version, how the run was
-/// launched, and the absolute paths of the run's well-known directories. Shared by all hook contexts.
+/// launched, and the absolute paths of the run's well-known directories. Shared by every hook's args.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record RuntimeInfo

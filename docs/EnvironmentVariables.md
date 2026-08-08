@@ -10,7 +10,7 @@ The recursion guard for [delegation](DirectoryStructure.md#configdotnet-toolsjso
 
 The variable is not meant to be set by hand; to keep `bv` from delegating, pass `--skip-delegation` instead.
 
-The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [release hooks](ReleaseHooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed context.
+The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [hooks](Hooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed args.
 
 ### `DOTNET_CLI_HOME`
 

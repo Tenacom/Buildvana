@@ -17,20 +17,20 @@ public static class WellKnownPaths
     public const string ScratchDirectory = ".buildvana-temp";
 
     /// <summary>
-    /// The path of the directory holding hook context files, one per hook, at
-    /// <c>{command}/{moment}.json</c> paths mirroring the <c>.buildvana/hooks/{command}/{moment}.cs</c>
+    /// The path of the directory holding hook args files, one per hook, at
+    /// <c>{context}/{event}.json</c> paths mirroring the <c>.buildvana/hooks/{context}/{event}.cs</c>
     /// convention for hook files.
     /// </summary>
-    public const string HookContextsDirectory = ScratchDirectory + "/hook-contexts";
+    public const string HookArgsDirectory = ScratchDirectory + "/hook-args";
 
     /// <summary>
-    /// Gets the path of the context file for the hook of a command and moment.
+    /// Gets the path of the args file for the hook of a context and event.
     /// The file is (re)written by <c>bv</c> before each run of that hook and left in place afterwards,
-    /// so a hook can be re-run by hand against the context of the last run.
+    /// so a hook can be re-run by hand against the args of the last run.
     /// </summary>
-    /// <param name="command">The name of the command the hook belongs to.</param>
-    /// <param name="moment">The name of the moment the hook fires at.</param>
-    /// <returns>The path of the hook's context file, relative to the home directory.</returns>
-    public static string GetHookContextFile(string command, string moment)
-        => $"{HookContextsDirectory}/{command}/{moment}.json";
+    /// <param name="context">The name of the context the hook's event belongs to.</param>
+    /// <param name="event">The name of the event that triggers the hook.</param>
+    /// <returns>The path of the hook's args file, relative to the home directory.</returns>
+    public static string GetHookArgsFile(string context, string @event)
+        => $"{HookArgsDirectory}/{context}/{@event}.json";
 }

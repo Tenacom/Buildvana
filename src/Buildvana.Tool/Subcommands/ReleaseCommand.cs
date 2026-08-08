@@ -209,7 +209,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 reporter.Info("Changelog section title update skipped: changelog has not been updated.");
             }
 
-            // Discover the packages produced by the pack step; both the post-release hook context and
+            // Discover the packages produced by the pack step; both the post-release hook args and
             // the self-reference update consume the map.
             var producedPackages = ArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
             var dogfooded = settings.ResolveDogfood();
@@ -220,9 +220,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // The hook must run before the self-reference update: it is a file-based app inside the
             // repository tree, so building it resolves the in-tree version pins (e.g. the Buildvana.Sdk
             // entry in global.json), and the packages produced by this release reach a feed only after
-            // publish. A hook that needs the new versions can read them from the context's
+            // publish. A hook that needs the new versions can read them from its args'
             // Release properties instead of the rewritten files.
-            var hookContext = new PostReleaseHookContext
+            var hookArgs = new PostReleaseHookArgs
             {
                 RuntimeInfo = new()
                 {
@@ -244,7 +244,11 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 Dogfooded = dogfooded,
             };
             var dirtyBefore = git.GetDirtyFiles();
-            var hookRan = await hookRunner.RunHookAsync("release", "post-release", hookContext, cancellationToken).ConfigureAwait(false);
+            var hookRan = await hookRunner.RunHookAsync(
+                PostReleaseHookArgs.Context,
+                PostReleaseHookArgs.Event,
+                hookArgs,
+                cancellationToken).ConfigureAwait(false);
             string[] hookUpdates = hookRan
                 ? [.. git.GetDirtyFiles().Except(dirtyBefore, StringComparer.Ordinal)]
                 : [];

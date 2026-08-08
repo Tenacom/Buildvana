@@ -19,7 +19,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var ran = await runner.RunHookAsync("release", "post-release", SampleContext(home)).ConfigureAwait(false);
+        var ran = await runner.RunHookAsync("release", "post-release", SampleArgs(home)).ConfigureAwait(false);
 
         await Assert.That(ran).IsFalse();
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
@@ -33,7 +33,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var ran = await runner.RunHookAsync("release", "post-release", SampleContext(home)).ConfigureAwait(false);
+        var ran = await runner.RunHookAsync("release", "post-release", SampleArgs(home)).ConfigureAwait(false);
 
         await Assert.That(ran).IsTrue();
         await Assert.That(appRunner.Runs.Count).IsEqualTo(1);
@@ -44,28 +44,28 @@ internal sealed class HookRunnerTests
     }
 
     [Test]
-    public async Task RunHookAsync_WritesCamelCaseContextFileAtWellKnownPath()
+    public async Task RunHookAsync_WritesCamelCaseArgsFileAtWellKnownPath()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
-        var contextPath = ContextPath(home);
-        string? contextJson = null;
-        appRunner.OnRun = (_, _, _) => contextJson = File.ReadAllText(contextPath);
+        var argsPath = ArgsPath(home);
+        string? argsJson = null;
+        appRunner.OnRun = (_, _, _) => argsJson = File.ReadAllText(argsPath);
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
-        var context = SampleContext(home);
+        var args = SampleArgs(home);
 
-        _ = await runner.RunHookAsync("release", "post-release", context).ConfigureAwait(false);
+        _ = await runner.RunHookAsync("release", "post-release", args).ConfigureAwait(false);
 
-        await Assert.That(contextJson).IsNotNull();
-        using var document = JsonDocument.Parse(contextJson!);
+        await Assert.That(argsJson).IsNotNull();
+        using var document = JsonDocument.Parse(argsJson!);
         var root = document.RootElement;
         var runtimeInfo = root.GetProperty("runtimeInfo");
         await Assert.That(runtimeInfo.GetProperty("version").GetString()).IsEqualTo("1.2.3-preview");
         await Assert.That(runtimeInfo.GetProperty("delegatingVersion").ValueKind).IsEqualTo(JsonValueKind.Null);
         await Assert.That(runtimeInfo.GetProperty("homeDirectory").GetString()).IsEqualTo(home.RootPath);
-        await Assert.That(runtimeInfo.GetProperty("artifactsDirectory").GetString()).IsEqualTo(context.RuntimeInfo.ArtifactsDirectory);
-        await Assert.That(runtimeInfo.GetProperty("scratchDirectory").GetString()).IsEqualTo(context.RuntimeInfo.ScratchDirectory);
+        await Assert.That(runtimeInfo.GetProperty("artifactsDirectory").GetString()).IsEqualTo(args.RuntimeInfo.ArtifactsDirectory);
+        await Assert.That(runtimeInfo.GetProperty("scratchDirectory").GetString()).IsEqualTo(args.RuntimeInfo.ScratchDirectory);
         var release = root.GetProperty("release");
         await Assert.That(release.GetProperty("version").GetString()).IsEqualTo("1.2.3");
         await Assert.That(release.GetProperty("semVer").GetString()).IsEqualTo("1.2.3-preview");
@@ -83,31 +83,31 @@ internal sealed class HookRunnerTests
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
-        var context = SampleContext(home);
-        context = context with { Release = context.Release with { PreviousVersion = "1.2.2" } };
+        var args = SampleArgs(home);
+        args = args with { Release = args.Release with { PreviousVersion = "1.2.2" } };
 
-        _ = await runner.RunHookAsync("release", "post-release", context).ConfigureAwait(false);
+        _ = await runner.RunHookAsync("release", "post-release", args).ConfigureAwait(false);
 
-        var contextJson = await File.ReadAllTextAsync(ContextPath(home)).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(contextJson);
+        var argsJson = await File.ReadAllTextAsync(ArgsPath(home)).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(argsJson);
         await Assert.That(document.RootElement.GetProperty("release").GetProperty("previousVersion").GetString()).IsEqualTo("1.2.2");
     }
 
     [Test]
-    public async Task RunHookAsync_LeavesContextFileInPlace_AfterHookCompletes()
+    public async Task RunHookAsync_LeavesArgsFileInPlace_AfterHookCompletes()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        _ = await runner.RunHookAsync("release", "post-release", SampleContext(home)).ConfigureAwait(false);
+        _ = await runner.RunHookAsync("release", "post-release", SampleArgs(home)).ConfigureAwait(false);
 
-        await Assert.That(File.Exists(ContextPath(home))).IsTrue();
+        await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
 
     [Test]
-    public async Task RunHookAsync_WhenHookFails_PropagatesAndLeavesContextFile()
+    public async Task RunHookAsync_WhenHookFails_PropagatesAndLeavesArgsFile()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
@@ -116,25 +116,25 @@ internal sealed class HookRunnerTests
             OnRun = (_, _, _) => throw new BuildFailedException("Hook failed."),
         };
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
-        var context = SampleContext(home);
+        var args = SampleArgs(home);
 
-        await Assert.That(() => runner.RunHookAsync("release", "post-release", context)).Throws<BuildFailedException>();
-        await Assert.That(File.Exists(ContextPath(home))).IsTrue();
+        await Assert.That(() => runner.RunHookAsync("release", "post-release", args)).Throws<BuildFailedException>();
+        await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
 
     [Test]
-    public async Task RunHookAsync_WhenContextFileCannotBeWritten_FailsWithCleanError()
+    public async Task RunHookAsync_WhenArgsFileCannotBeWritten_FailsWithCleanError()
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        // A directory planted at the context file's well-known path denies writing the context file.
-        _ = Directory.CreateDirectory(ContextPath(home));
-        var context = SampleContext(home);
+        // A directory planted at the args file's well-known path denies writing the args file.
+        _ = Directory.CreateDirectory(ArgsPath(home));
+        var args = SampleArgs(home);
 
-        Task<bool> Act() => runner.RunHookAsync("release", "post-release", context);
+        Task<bool> Act() => runner.RunHookAsync("release", "post-release", args);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");
@@ -183,10 +183,10 @@ internal sealed class HookRunnerTests
         }
     }
 
-    private static string ContextPath(TempHome home)
-        => Path.GetFullPath(WellKnownPaths.GetHookContextFile("release", "post-release"), home.RootPath);
+    private static string ArgsPath(TempHome home)
+        => Path.GetFullPath(WellKnownPaths.GetHookArgsFile("release", "post-release"), home.RootPath);
 
-    private static PostReleaseHookContext SampleContext(TempHome home) => new()
+    private static PostReleaseHookArgs SampleArgs(TempHome home) => new()
     {
         RuntimeInfo = new()
         {
@@ -208,11 +208,11 @@ internal sealed class HookRunnerTests
         Dogfooded = false,
     };
 
-    private static string WriteHookFile(TempHome home, string command, string moment)
+    private static string WriteHookFile(TempHome home, string context, string @event)
     {
-        var directory = Path.Combine(home.RootPath, ".buildvana", "hooks", command);
+        var directory = Path.Combine(home.RootPath, ".buildvana", "hooks", context);
         _ = Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, moment + ".cs");
+        var path = Path.Combine(directory, @event + ".cs");
         File.WriteAllText(path, "// test hook, never executed by these tests");
         return path;
     }
