@@ -18,7 +18,7 @@ internal sealed partial class JsonHelperTests
     {
         static JsonObject Act() => new JsonHelper().LoadObject(DeniedAccessPath);
 
-        var exception = await Assert.That((Func<JsonObject>)Act).Throws<BuildFailedException>();
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
