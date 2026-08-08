@@ -38,7 +38,7 @@
    b. Execute `dotnet dnx JetBrains.ReSharper.GlobalTools inspectcode --swea --severity=WARNING --output=inspect.sarif --format=Sarif --properties:Configuration=Release --no-build Buildvana.slnx --yes` to analyze the whole solution with ReSharper. Then run `dotnet run .claude/tools/inspect-sarif.cs` to summarize the report (one line per result), and address each one (with `--severity=WARNING`, every result will be at `error` or `warning` level — fix them all).
    c. Repeat from (a) until there are zero errors and zero warnings. If you have any doubts, or an error or warning that you think is a false positive, or that just won't go away, ask me.
    d. You can leave `inspect.sarif` in the repo, it's in `.gitignore` and won't be committed.
-7. When you're done, you prepare the title, text , and labels for the PR.
+7. When you're done, you prepare the title, text, and labels for the PR, following the [org-wide PR template](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md). Issue and PR templates live in the org-wide repo `Tenacom/.github`, not in this repo.
 8. I review the PR and propose edits if necessary.
 9. When I approve, you post the PR using the GitHub MCP tool.
 
