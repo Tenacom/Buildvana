@@ -63,6 +63,8 @@ File.WriteAllText("some-file.md", text);
 
 Because the version pin is applied by the SDK rather than gated on anything `bv` passes, a hook stays buildable and runnable by hand: after `bv` has run the hook once, `dotnet run` it from the home directory to replay it against the args of the last run (or against a hand-written args file).
 
+The well-known paths themselves ship in the package too: `WellKnownPaths` exposes the hook and args directories plus per-hook path helpers, so repository tooling can compute these paths instead of hard-coding them.
+
 ## The hook args
 
 `bv` serializes the args of the run to a per-hook file, `.buildvana-temp/hook-args/<context>/<event>.json` in the home directory — `.buildvana-temp/hook-args/release/post-release.json` for this hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at `Detail` verbosity. `PostReleaseHookArgs.Load()` reads and deserializes it; the members are:
