@@ -10,8 +10,8 @@ using Buildvana.Runtime;
 // release/post-release hook: keeps the $schema URL in buildvana.jsonc pointing at the release tag
 // of the version being released. The guard mirrors the built-in self-reference rewrites: the
 // $schema URL is itself a self-reference, so it moves only when dogfooding moves the rest.
-var context = PostReleaseHookContext.Load();
-if (!context.Dogfooded)
+var args = PostReleaseHookArgs.Load();
+if (!args.Dogfooded)
 {
     return;
 }
@@ -19,5 +19,5 @@ if (!context.Dogfooded)
 // Same expression as SelfVersionService.SchemaUrlRegex in src/Buildvana.Tool, which `bv update` applies to
 // consumer repositories' configuration files; keep the two copies identical.
 var text = File.ReadAllText("buildvana.jsonc");
-text = Regex.Replace(text, "(Tenacom/Buildvana/)[^/]+(/schemas/)", $"${{1}}{context.Release.SemVer}$2");
+text = Regex.Replace(text, "(Tenacom/Buildvana/)[^/]+(/schemas/)", $"${{1}}{args.Release.SemVer}$2");
 File.WriteAllText("buildvana.jsonc", text);

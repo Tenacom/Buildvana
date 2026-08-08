@@ -32,7 +32,7 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |
 +--- .buildvana\               <<< Optional grouping directory for Buildvana files
 |    |
-|    +--- hooks\               <<< Repo-owned hooks run by bv (see ReleaseHooks.md)
+|    +--- hooks\               <<< Repo-owned hooks run by bv (see Hooks.md)
 |    |    |
 |    |    +--- release\
 |    |         |
@@ -118,7 +118,7 @@ If no marker is found, the build (or project loading in Visual Studio) stops wit
 
 ## `.buildvana-temp\`
 
-bv's scratch directory: machine-generated temporary files, such as the context files for [release hooks](ReleaseHooks.md#the-hook-context), live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
+bv's scratch directory: machine-generated temporary files, such as the args files for [hooks](Hooks.md#the-hook-args), live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
 
 ## `.config\dotnet-tools.json`
 

@@ -100,18 +100,18 @@ Buildvana.Runtime.NuGetFeedsConfig.Prerelease.get -> Buildvana.Runtime.NuGetFeed
 Buildvana.Runtime.NuGetFeedsConfig.Prerelease.init -> void
 Buildvana.Runtime.NuGetFeedsConfig.Release.get -> Buildvana.Runtime.NuGetFeedConfig?
 Buildvana.Runtime.NuGetFeedsConfig.Release.init -> void
-Buildvana.Runtime.PostReleaseHookContext
-Buildvana.Runtime.PostReleaseHookContext.<Clone>$() -> Buildvana.Runtime.PostReleaseHookContext!
-Buildvana.Runtime.PostReleaseHookContext.Dogfooded.get -> bool
-Buildvana.Runtime.PostReleaseHookContext.Dogfooded.init -> void
-Buildvana.Runtime.PostReleaseHookContext.Equals(Buildvana.Runtime.PostReleaseHookContext? other) -> bool
-Buildvana.Runtime.PostReleaseHookContext.PostReleaseHookContext() -> void
-Buildvana.Runtime.PostReleaseHookContext.ProducedPackages.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-Buildvana.Runtime.PostReleaseHookContext.ProducedPackages.init -> void
-Buildvana.Runtime.PostReleaseHookContext.Release.get -> Buildvana.Runtime.ReleaseInfo!
-Buildvana.Runtime.PostReleaseHookContext.Release.init -> void
-Buildvana.Runtime.PostReleaseHookContext.RuntimeInfo.get -> Buildvana.Runtime.RuntimeInfo!
-Buildvana.Runtime.PostReleaseHookContext.RuntimeInfo.init -> void
+Buildvana.Runtime.PostReleaseHookArgs
+Buildvana.Runtime.PostReleaseHookArgs.<Clone>$() -> Buildvana.Runtime.PostReleaseHookArgs!
+Buildvana.Runtime.PostReleaseHookArgs.Dogfooded.get -> bool
+Buildvana.Runtime.PostReleaseHookArgs.Dogfooded.init -> void
+Buildvana.Runtime.PostReleaseHookArgs.Equals(Buildvana.Runtime.PostReleaseHookArgs? other) -> bool
+Buildvana.Runtime.PostReleaseHookArgs.PostReleaseHookArgs() -> void
+Buildvana.Runtime.PostReleaseHookArgs.ProducedPackages.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Buildvana.Runtime.PostReleaseHookArgs.ProducedPackages.init -> void
+Buildvana.Runtime.PostReleaseHookArgs.Release.get -> Buildvana.Runtime.ReleaseInfo!
+Buildvana.Runtime.PostReleaseHookArgs.Release.init -> void
+Buildvana.Runtime.PostReleaseHookArgs.RuntimeInfo.get -> Buildvana.Runtime.RuntimeInfo!
+Buildvana.Runtime.PostReleaseHookArgs.RuntimeInfo.init -> void
 Buildvana.Runtime.ReleaseConfig
 Buildvana.Runtime.ReleaseConfig.<Clone>$() -> Buildvana.Runtime.ReleaseConfig!
 Buildvana.Runtime.ReleaseConfig.Branches.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -167,9 +167,9 @@ Buildvana.Runtime.VersioningConfig.PrereleaseTag.get -> string?
 Buildvana.Runtime.VersioningConfig.PrereleaseTag.init -> void
 Buildvana.Runtime.VersioningConfig.VersioningConfig() -> void
 Buildvana.Runtime.WellKnownPaths
-const Buildvana.Runtime.PostReleaseHookContext.Command = "release" -> string!
-const Buildvana.Runtime.PostReleaseHookContext.Moment = "post-release" -> string!
-const Buildvana.Runtime.WellKnownPaths.HookContextsDirectory = ".buildvana-temp/hook-contexts" -> string!
+const Buildvana.Runtime.PostReleaseHookArgs.Context = "release" -> string!
+const Buildvana.Runtime.PostReleaseHookArgs.Event = "post-release" -> string!
+const Buildvana.Runtime.WellKnownPaths.HookArgsDirectory = ".buildvana-temp/hook-args" -> string!
 const Buildvana.Runtime.WellKnownPaths.ScratchDirectory = ".buildvana-temp" -> string!
 override Buildvana.Runtime.BuildvanaConfig.Equals(object? obj) -> bool
 override Buildvana.Runtime.BuildvanaConfig.GetHashCode() -> int
@@ -199,9 +199,9 @@ override Buildvana.Runtime.NuGetFeedConfig.ToString() -> string!
 override Buildvana.Runtime.NuGetFeedsConfig.Equals(object? obj) -> bool
 override Buildvana.Runtime.NuGetFeedsConfig.GetHashCode() -> int
 override Buildvana.Runtime.NuGetFeedsConfig.ToString() -> string!
-override Buildvana.Runtime.PostReleaseHookContext.Equals(object? obj) -> bool
-override Buildvana.Runtime.PostReleaseHookContext.GetHashCode() -> int
-override Buildvana.Runtime.PostReleaseHookContext.ToString() -> string!
+override Buildvana.Runtime.PostReleaseHookArgs.Equals(object? obj) -> bool
+override Buildvana.Runtime.PostReleaseHookArgs.GetHashCode() -> int
+override Buildvana.Runtime.PostReleaseHookArgs.ToString() -> string!
 override Buildvana.Runtime.ReleaseConfig.Equals(object? obj) -> bool
 override Buildvana.Runtime.ReleaseConfig.GetHashCode() -> int
 override Buildvana.Runtime.ReleaseConfig.ToString() -> string!
@@ -235,9 +235,9 @@ static Buildvana.Runtime.NuGetFeedConfig.operator !=(Buildvana.Runtime.NuGetFeed
 static Buildvana.Runtime.NuGetFeedConfig.operator ==(Buildvana.Runtime.NuGetFeedConfig? left, Buildvana.Runtime.NuGetFeedConfig? right) -> bool
 static Buildvana.Runtime.NuGetFeedsConfig.operator !=(Buildvana.Runtime.NuGetFeedsConfig? left, Buildvana.Runtime.NuGetFeedsConfig? right) -> bool
 static Buildvana.Runtime.NuGetFeedsConfig.operator ==(Buildvana.Runtime.NuGetFeedsConfig? left, Buildvana.Runtime.NuGetFeedsConfig? right) -> bool
-static Buildvana.Runtime.PostReleaseHookContext.Load(string? homeDirectory = null) -> Buildvana.Runtime.PostReleaseHookContext!
-static Buildvana.Runtime.PostReleaseHookContext.operator !=(Buildvana.Runtime.PostReleaseHookContext? left, Buildvana.Runtime.PostReleaseHookContext? right) -> bool
-static Buildvana.Runtime.PostReleaseHookContext.operator ==(Buildvana.Runtime.PostReleaseHookContext? left, Buildvana.Runtime.PostReleaseHookContext? right) -> bool
+static Buildvana.Runtime.PostReleaseHookArgs.Load(string? homeDirectory = null) -> Buildvana.Runtime.PostReleaseHookArgs!
+static Buildvana.Runtime.PostReleaseHookArgs.operator !=(Buildvana.Runtime.PostReleaseHookArgs? left, Buildvana.Runtime.PostReleaseHookArgs? right) -> bool
+static Buildvana.Runtime.PostReleaseHookArgs.operator ==(Buildvana.Runtime.PostReleaseHookArgs? left, Buildvana.Runtime.PostReleaseHookArgs? right) -> bool
 static Buildvana.Runtime.ReleaseConfig.operator !=(Buildvana.Runtime.ReleaseConfig? left, Buildvana.Runtime.ReleaseConfig? right) -> bool
 static Buildvana.Runtime.ReleaseConfig.operator ==(Buildvana.Runtime.ReleaseConfig? left, Buildvana.Runtime.ReleaseConfig? right) -> bool
 static Buildvana.Runtime.ReleaseInfo.operator !=(Buildvana.Runtime.ReleaseInfo? left, Buildvana.Runtime.ReleaseInfo? right) -> bool
@@ -246,7 +246,7 @@ static Buildvana.Runtime.RuntimeInfo.operator !=(Buildvana.Runtime.RuntimeInfo? 
 static Buildvana.Runtime.RuntimeInfo.operator ==(Buildvana.Runtime.RuntimeInfo? left, Buildvana.Runtime.RuntimeInfo? right) -> bool
 static Buildvana.Runtime.VersioningConfig.operator !=(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
 static Buildvana.Runtime.VersioningConfig.operator ==(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
-static Buildvana.Runtime.WellKnownPaths.GetHookContextFile(string! command, string! moment) -> string!
+static Buildvana.Runtime.WellKnownPaths.GetHookArgsFile(string! context, string! event) -> string!
 ~Buildvana.Runtime.BuildvanaJsonContext.AssemblyVersionPrecision.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.AssemblyVersionPrecision>
 ~Buildvana.Runtime.BuildvanaJsonContext.Boolean.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<bool>
 ~Buildvana.Runtime.BuildvanaJsonContext.BuildvanaConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.BuildvanaConfig>
@@ -264,7 +264,7 @@ static Buildvana.Runtime.WellKnownPaths.GetHookContextFile(string! command, stri
 ~Buildvana.Runtime.BuildvanaJsonContext.NullableAssemblyVersionPrecision.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.AssemblyVersionPrecision?>
 ~Buildvana.Runtime.BuildvanaJsonContext.NullableBoolean.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<bool?>
 ~Buildvana.Runtime.BuildvanaJsonContext.NullableChangelogUpdates.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ChangelogUpdates?>
-~Buildvana.Runtime.BuildvanaJsonContext.PostReleaseHookContext.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.PostReleaseHookContext>
+~Buildvana.Runtime.BuildvanaJsonContext.PostReleaseHookArgs.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.PostReleaseHookArgs>
 ~Buildvana.Runtime.BuildvanaJsonContext.ReleaseConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ReleaseConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.ReleaseInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ReleaseInfo>
 ~Buildvana.Runtime.BuildvanaJsonContext.RuntimeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.RuntimeInfo>
