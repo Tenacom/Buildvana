@@ -4,8 +4,8 @@
     Hook support: file-based apps built in the repository (hooks under {home}/.buildvana/hooks/, but
     also any other file-based app, e.g. under a tools/ directory) can reference the Buildvana.Runtime
     package with an unversioned `#:package Buildvana.Runtime` directive; the SDK pins the package to
-    its own version, so bv, the SDK, and hooks always agree on the shape of configuration and hook
-    args. An explicitly versioned directive is left alone. Under central package management a
+    its own version, so bv, the SDK, and hooks always agree on the shape of configuration and
+    hook args. An explicitly versioned directive is left alone. Under central package management a
     versioned directive fails with NU1008 (upstream SDK behavior); pin via your own PackageVersion
     item instead, which the SDK likewise leaves alone.
 
