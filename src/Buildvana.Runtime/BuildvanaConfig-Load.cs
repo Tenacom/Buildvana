@@ -9,8 +9,17 @@ namespace Buildvana.Runtime;
 
 public partial record BuildvanaConfig
 {
-    private const string JsonFileName = "buildvana.json";
-    private const string JsoncFileName = "buildvana.jsonc";
+    /// <summary>
+    /// The name of the configuration file in plain JSON form. The file may live directly in the
+    /// home directory or in its <see cref="WellKnownPaths.BuildvanaDirectory"/> subdirectory.
+    /// </summary>
+    public const string JsonFileName = "buildvana.json";
+
+    /// <summary>
+    /// The name of the configuration file in JSON-with-comments form, subject to the same
+    /// two candidate locations as <see cref="JsonFileName"/>.
+    /// </summary>
+    public const string JsoncFileName = "buildvana.jsonc";
 
     /// <summary>
     /// Finds the configuration file in a home directory, probing the four well-known candidates

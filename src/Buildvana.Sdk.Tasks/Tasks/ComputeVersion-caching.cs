@@ -9,6 +9,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Diagnostics;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Versioning;
+using Buildvana.Runtime;
 
 namespace Buildvana.Sdk.Tasks;
 
@@ -74,14 +75,15 @@ partial class ComputeVersion
                 return null;
             }
 
+            var buildvanaDirectory = Path.Combine(homeDirectory, WellKnownPaths.BuildvanaDirectory);
             string?[] parts =
             [
                 repositoryStateToken,
                 File.ReadAllText(versionPath),
-                ReadOptionalFile(Path.Combine(homeDirectory, "buildvana.json")),
-                ReadOptionalFile(Path.Combine(homeDirectory, "buildvana.jsonc")),
-                ReadOptionalFile(Path.Combine(homeDirectory, ".buildvana", "buildvana.json")),
-                ReadOptionalFile(Path.Combine(homeDirectory, ".buildvana", "buildvana.jsonc")),
+                ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaConfig.JsonFileName)),
+                ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaConfig.JsoncFileName)),
+                ReadOptionalFile(Path.Combine(buildvanaDirectory, BuildvanaConfig.JsonFileName)),
+                ReadOptionalFile(Path.Combine(buildvanaDirectory, BuildvanaConfig.JsoncFileName)),
             ];
             return string.Join('\0', parts);
         }
