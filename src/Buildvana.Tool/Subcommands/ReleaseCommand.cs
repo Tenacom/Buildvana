@@ -17,7 +17,6 @@ using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure;
-using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
@@ -222,39 +221,24 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // entry in global.json), and the packages produced by this release reach a feed only after
             // publish. A hook that needs the new versions can read them from its args'
             // Release properties instead of the rewritten files.
-            var hookArgs = new PostReleaseHookArgs
-            {
-                RuntimeInfo = new()
-                {
-                    Version = OwnVersion.Value.ToNormalizedString(),
-                    DelegatingVersion = Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar),
-                    HomeDirectory = home.HomeDirectory,
-                    ArtifactsDirectory = Path.GetFullPath(artifactsPath),
-                    ScratchDirectory = Path.GetFullPath(CommonPaths.Scratch, home.HomeDirectory),
-                },
-                Release = new()
-                {
-                    Version = version.CurrentSimpleStr,
-                    SemVer = version.CurrentStr,
-                    PreviousVersion = version.Latest?.ToString(),
-                    IsPrerelease = version.IsPrerelease,
-                    IsPublicRelease = version.IsPublicRelease,
-                },
-                ProducedPackages = producedPackages,
-                Dogfooded = dogfooded,
-            };
-            var dirtyBefore = git.GetDirtyFiles();
-            var hookRan = await hookRunner.RunHookAsync(
+            var hookArgs = PostReleaseHookArgsFactory.Create(
+                homeDirectory: home.HomeDirectory,
+                artifactsPath: artifactsPath,
+                simpleVersion: version.CurrentSimpleStr,
+                semVer: version.CurrentStr,
+                latest: version.Latest,
+                isPrerelease: version.IsPrerelease,
+                isPublicRelease: version.IsPublicRelease,
+                producedPackages: producedPackages,
+                dogfooded: dogfooded);
+            var (hookRan, hookUpdates) = await git.TrackChangesAsync(() => hookRunner.RunHookAsync(
                 PostReleaseHookArgs.Context,
                 PostReleaseHookArgs.Event,
                 hookArgs,
-                cancellationToken).ConfigureAwait(false);
-            string[] hookUpdates = hookRan
-                ? [.. git.GetDirtyFiles().Except(dirtyBefore, StringComparer.Ordinal)]
-                : [];
+                cancellationToken)).ConfigureAwait(false);
             if (hookRan)
             {
-                switch (hookUpdates.Length)
+                switch (hookUpdates.Count)
                 {
                     case 0:
                         reporter.Info("The post-release hook modified no files.");
@@ -263,7 +247,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         reporter.Info("The post-release hook modified 1 file.");
                         break;
                     default:
-                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Length} files."));
+                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Count} files."));
                         break;
                 }
             }

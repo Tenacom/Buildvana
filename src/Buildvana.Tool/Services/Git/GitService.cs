@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
@@ -145,6 +146,24 @@ internal sealed class GitService : IDisposable
         }
 
         return (latest, latestStable);
+    }
+
+    /// <summary>
+    /// Runs an operation and detects the files it modified, by comparing working-tree snapshots
+    /// (as per <see cref="GetDirtyFiles"/>) taken before and after the operation.
+    /// </summary>
+    /// <typeparam name="T">The type of the operation's result.</typeparam>
+    /// <param name="operation">The operation to run.</param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is a tuple
+    /// of the operation's result and the absolute paths of the files the operation modified. Files that
+    /// were already dirty before the operation are not reported, even if the operation modified them again.</returns>
+    public async Task<(T Result, IReadOnlyList<string> ChangedFiles)> TrackChangesAsync<T>(Func<Task<T>> operation)
+    {
+        Guard.IsNotNull(operation);
+        var dirtyBefore = GetDirtyFiles();
+        var result = await operation().ConfigureAwait(false);
+        IReadOnlyList<string> changedFiles = [.. GetDirtyFiles().Except(dirtyBefore, StringComparer.Ordinal)];
+        return (result, changedFiles);
     }
 
     /// <summary>

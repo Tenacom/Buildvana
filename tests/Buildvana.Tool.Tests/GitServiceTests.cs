@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Testing;
@@ -57,6 +58,70 @@ internal sealed class GitServiceTests
         await File.WriteAllTextAsync(Path.Combine(directory, "hook-args.json"), "{}").ConfigureAwait(false);
 
         await Assert.That(git.GetDirtyFiles().Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task TrackChangesAsync_ReturnsOperationResult_AndNoChangesOnUntouchedTree()
+    {
+        using var repo = CreateRepoWithCommit();
+        using var git = CreateGitService(repo);
+
+        var (result, changedFiles) = await git.TrackChangesAsync(() => Task.FromResult(42)).ConfigureAwait(false);
+
+        await Assert.That(result).IsEqualTo(42);
+        await Assert.That(changedFiles.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task TrackChangesAsync_ReportsFilesModifiedByOperation_AsAbsolutePaths()
+    {
+        using var repo = CreateRepoWithCommit();
+        using var git = CreateGitService(repo);
+        var rootPath = repo.RootPath;
+
+        var (_, changedFiles) = await git.TrackChangesAsync(async () =>
+        {
+            await File.WriteAllTextAsync(Path.Combine(rootPath, "b.txt"), "new file").ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(rootPath, "c.txt"), "another new file").ConfigureAwait(false);
+            return true;
+        }).ConfigureAwait(false);
+
+        var sorted = changedFiles.Order(StringComparer.Ordinal).ToArray();
+        await Assert.That(sorted.Length).IsEqualTo(2);
+        await Assert.That(sorted[0]).IsEqualTo(Path.Combine(repo.RootPath, "b.txt"));
+        await Assert.That(sorted[1]).IsEqualTo(Path.Combine(repo.RootPath, "c.txt"));
+    }
+
+    [Test]
+    public async Task TrackChangesAsync_ExcludesFilesAlreadyDirtyBeforeOperation()
+    {
+        using var repo = CreateRepoWithCommit();
+        using var git = CreateGitService(repo);
+        var rootPath = repo.RootPath;
+        repo.WriteFile("a.txt", "dirty before the operation");
+
+        var (_, changedFiles) = await git.TrackChangesAsync(async () =>
+        {
+            await File.WriteAllTextAsync(Path.Combine(rootPath, "a.txt"), "dirty again during the operation").ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(rootPath, "b.txt"), "new file").ConfigureAwait(false);
+            return true;
+        }).ConfigureAwait(false);
+
+        await Assert.That(changedFiles.Count).IsEqualTo(1);
+        await Assert.That(changedFiles[0]).IsEqualTo(Path.Combine(repo.RootPath, "b.txt"));
+    }
+
+    [Test]
+    public async Task TrackChangesAsync_WhenOperationThrows_Propagates()
+    {
+        using var repo = CreateRepoWithCommit();
+        using var git = CreateGitService(repo);
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the enclosing scope disposes git
+        Task<(bool Result, IReadOnlyList<string> ChangedFiles)> Act()
+            => git.TrackChangesAsync<bool>(() => throw new BuildFailedException("Operation failed."));
+
+        _ = await Assert.That(Act).Throws<BuildFailedException>();
     }
 
     private static TempGitRepo CreateRepoWithCommit()
