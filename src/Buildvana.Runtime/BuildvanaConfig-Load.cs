@@ -11,7 +11,6 @@ public partial record BuildvanaConfig
 {
     private const string JsonFileName = "buildvana.json";
     private const string JsoncFileName = "buildvana.jsonc";
-    private const string SubdirectoryName = ".buildvana";
 
     /// <summary>
     /// Finds the configuration file in a home directory, probing the four well-known candidates
@@ -27,8 +26,8 @@ public partial record BuildvanaConfig
         [
             Path.Combine(baseDirectory, JsonFileName),
             Path.Combine(baseDirectory, JsoncFileName),
-            Path.Combine(baseDirectory, SubdirectoryName, JsonFileName),
-            Path.Combine(baseDirectory, SubdirectoryName, JsoncFileName),
+            Path.Combine(baseDirectory, WellKnownPaths.BuildvanaDirectory, JsonFileName),
+            Path.Combine(baseDirectory, WellKnownPaths.BuildvanaDirectory, JsoncFileName),
         ];
         var existingPaths = Array.FindAll(candidatePaths, File.Exists);
         if (existingPaths.Length > 1)

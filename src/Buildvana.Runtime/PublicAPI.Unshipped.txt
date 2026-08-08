@@ -169,6 +169,7 @@ Buildvana.Runtime.VersioningConfig.VersioningConfig() -> void
 Buildvana.Runtime.WellKnownPaths
 const Buildvana.Runtime.PostReleaseHookArgs.Context = "release" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Event = "post-release" -> string!
+const Buildvana.Runtime.WellKnownPaths.BuildvanaDirectory = ".buildvana" -> string!
 const Buildvana.Runtime.WellKnownPaths.HookArgsDirectory = ".buildvana-temp/hook-args" -> string!
 const Buildvana.Runtime.WellKnownPaths.HooksDirectory = ".buildvana/hooks" -> string!
 const Buildvana.Runtime.WellKnownPaths.ScratchDirectory = ".buildvana-temp" -> string!
