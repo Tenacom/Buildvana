@@ -55,6 +55,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var docfx = services.GetRequiredService<DocFxService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
         var hookRunner = services.GetRequiredService<HookRunner>();
+        var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
 
         // Perform some preliminary checks
         BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
@@ -221,8 +222,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // entry in global.json), and the packages produced by this release reach a feed only after
             // publish. A hook that needs the new versions can read them from its args'
             // Release properties instead of the rewritten files.
-            var hookArgs = PostReleaseHookArgsFactory.Create(
-                homeDirectory: home.HomeDirectory,
+            var hookArgs = hookArgsFactory.Create(
                 artifactsPath: artifactsPath,
                 simpleVersion: version.CurrentSimpleStr,
                 semVer: version.CurrentStr,
@@ -231,11 +231,8 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 isPublicRelease: version.IsPublicRelease,
                 producedPackages: producedPackages,
                 dogfooded: dogfooded);
-            var (hookRan, hookUpdates) = await git.TrackChangesAsync(() => hookRunner.RunHookAsync(
-                PostReleaseHookArgs.Context,
-                PostReleaseHookArgs.Event,
-                hookArgs,
-                cancellationToken)).ConfigureAwait(false);
+            var (hookRan, hookUpdates) = await git.TrackChangesAsync(
+                () => hookRunner.RunHookAsync(hookArgs, cancellationToken)).ConfigureAwait(false);
             if (hookRan)
             {
                 switch (hookUpdates.Count)

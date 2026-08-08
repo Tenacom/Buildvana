@@ -1,13 +1,9 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
-using System.IO;
+using Buildvana.Core.HomeDirectory;
 using Buildvana.Runtime;
-using Buildvana.Tool.Infrastructure;
-using Buildvana.Tool.Infrastructure.Delegation;
-using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
@@ -17,12 +13,12 @@ namespace Buildvana.Tool.Services.Hooks;
 /// Assembles the args for the <c>release/post-release</c> hook
 /// (see <see cref="PostReleaseHookArgs"/>).
 /// </summary>
-internal static class PostReleaseHookArgsFactory
+/// <param name="home">The home directory provider.</param>
+internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home) : HookArgsFactory<PostReleaseHookArgs>(home)
 {
     /// <summary>
     /// Creates the args for a <c>release/post-release</c> hook run.
     /// </summary>
-    /// <param name="homeDirectory">The absolute path of the home directory.</param>
     /// <param name="artifactsPath">The path of the directory containing the build artifacts,
     /// either absolute or relative to the current directory.</param>
     /// <param name="simpleVersion">The version being released, in simple <c>MAJOR.MINOR.PATCH</c> form.</param>
@@ -34,8 +30,7 @@ internal static class PostReleaseHookArgsFactory
     /// <param name="producedPackages">The packages produced by the release, as a map from package ID to version.</param>
     /// <param name="dogfooded">Whether the built-in self-reference rewrites ran in this release.</param>
     /// <returns>A newly-created <see cref="PostReleaseHookArgs"/> instance.</returns>
-    public static PostReleaseHookArgs Create(
-        string homeDirectory,
+    public PostReleaseHookArgs Create(
         string artifactsPath,
         string simpleVersion,
         string semVer,
@@ -45,21 +40,12 @@ internal static class PostReleaseHookArgsFactory
         IReadOnlyDictionary<string, string> producedPackages,
         bool dogfooded)
     {
-        Guard.IsNotNullOrEmpty(homeDirectory);
-        Guard.IsNotNullOrEmpty(artifactsPath);
         Guard.IsNotNullOrEmpty(simpleVersion);
         Guard.IsNotNullOrEmpty(semVer);
         Guard.IsNotNull(producedPackages);
         return new()
         {
-            RuntimeInfo = new()
-            {
-                Version = OwnVersion.Value.ToNormalizedString(),
-                DelegatingVersion = Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar),
-                HomeDirectory = homeDirectory,
-                ArtifactsDirectory = Path.GetFullPath(artifactsPath),
-                ScratchDirectory = Path.GetFullPath(CommonPaths.Scratch, homeDirectory),
-            },
+            RuntimeInfo = CreateRuntimeInfo(artifactsPath),
             Release = new()
             {
                 Version = simpleVersion,

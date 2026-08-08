@@ -1,17 +1,14 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
 using JetBrains.Annotations;
 
 namespace Buildvana.Runtime;
 
 /// <summary>
 /// The args handed to the <c>release/post-release</c> hook: serialized by <c>bv</c> to the hook's args
-/// file before the hook runs, deserialized by the hook via <see cref="Load"/>.
+/// file before the hook runs, deserialized by the hook via <see cref="Load(string)"/>.
 /// </summary>
 /// <remarks>
 /// <para>The contract is additive-only: newer <c>bv</c> versions may add properties, never remove or repurpose
@@ -19,7 +16,7 @@ namespace Buildvana.Runtime;
 /// args file written before an update can still be loaded.</para>
 /// </remarks>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public sealed record PostReleaseHookArgs
+public sealed record PostReleaseHookArgs : HookArgs, IHookEvent
 {
     /// <summary>The name of the context this hook's event belongs to.</summary>
     public const string Context = "release";
@@ -27,11 +24,11 @@ public sealed record PostReleaseHookArgs
     /// <summary>The name of the event that triggers this hook.</summary>
     public const string Event = "post-release";
 
-    /// <summary>
-    /// Gets run-time information about the bv run: the running version, how the run was launched, and the
-    /// absolute paths of the run's well-known directories.
-    /// </summary>
-    public required RuntimeInfo RuntimeInfo { get; init; }
+    /// <inheritdoc/>
+    static string IHookEvent.Context => Context;
+
+    /// <inheritdoc/>
+    static string IHookEvent.Event => Event;
 
     /// <summary>
     /// Gets the description of the version being released.
@@ -59,34 +56,5 @@ public sealed record PostReleaseHookArgs
     /// directory is not the home directory), cannot be read, or does not contain valid args.
     /// </exception>
     public static PostReleaseHookArgs Load(string? homeDirectory = null)
-    {
-        var relativePath = WellKnownPaths.GetHookArgsFile(Context, Event);
-        var path = string.IsNullOrEmpty(homeDirectory) ? relativePath : Path.Combine(homeDirectory, relativePath);
-        if (!File.Exists(path))
-        {
-            throw new BuildvanaRuntimeException(
-                $"The hook args file '{path}' does not exist. "
-                + "Run this program from the home directory of a repository where bv has run this hook at least once.");
-        }
-
-        string json;
-        try
-        {
-            json = File.ReadAllText(path);
-        }
-        catch (Exception e) when (e.IsIORelatedException)
-        {
-            throw new BuildvanaRuntimeException($"Could not read from {path}: {e.Message}", e);
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize(json, BuildvanaJsonContext.Default.PostReleaseHookArgs)
-                ?? throw new BuildvanaRuntimeException($"The hook args file '{path}' does not contain a JSON object.");
-        }
-        catch (JsonException e)
-        {
-            throw new BuildvanaRuntimeException($"Invalid hook args file {path}: {e.Message}", e);
-        }
-    }
+        => Load(BuildvanaJsonContext.Default.PostReleaseHookArgs, homeDirectory);
 }

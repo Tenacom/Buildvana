@@ -261,6 +261,7 @@ internal static class Program
             .AddSingleton<DotNetService>()
             .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
             .AddSingleton<HookRunner>()
+            .AddSingleton<PostReleaseHookArgsFactory>()
             .AddSingleton<BuildPipeline>()
             .AddSingleton<SelfReferenceUpdater>()
             .AddSingleton(static sp => new SelfVersionService(
