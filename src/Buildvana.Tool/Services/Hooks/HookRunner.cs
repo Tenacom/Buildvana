@@ -17,7 +17,8 @@ namespace Buildvana.Tool.Services.Hooks;
 
 /// <summary>
 /// Runs repo-owned hooks: optional file-based apps at well-known paths of the form
-/// <c>.buildvana/hooks/{context}/{event}.cs</c>, executed at named events of bv commands.
+/// <c>.buildvana/hooks/{context}/{event}.cs</c> (<see cref="WellKnownPaths.GetHookFile"/>),
+/// executed at named events of bv commands.
 /// </summary>
 internal sealed class HookRunner
 {
@@ -58,7 +59,7 @@ internal sealed class HookRunner
         Guard.IsNotNullOrEmpty(@event);
         Guard.IsNotNull(args);
         var hookName = $"{context}/{@event}";
-        var relativePath = Path.Combine(".buildvana", "hooks", context, @event + ".cs");
+        var relativePath = WellKnownPaths.GetHookFile(context, @event);
         var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
         if (!File.Exists(path))
         {
@@ -80,17 +81,16 @@ internal sealed class HookRunner
     }
 
     /// <summary>
-    /// Clears the build cache of every hook file under <c>.buildvana/hooks/</c>, by deleting each file's
-    /// artifacts directory (see <see cref="FileBasedAppHelper.GetArtifactsDirectory"/>).
+    /// Clears the build cache of every hook file under <see cref="WellKnownPaths.HooksDirectory"/>,
+    /// by deleting each file's artifacts directory (see <see cref="FileBasedAppHelper.GetArtifactsDirectory"/>).
     /// </summary>
     /// <param name="cancellationToken">A token that, when signalled, stops the operation before the next deletion.</param>
     public void CleanBuildCaches(CancellationToken cancellationToken = default)
     {
-        var hooksRelativePath = Path.Combine(".buildvana", "hooks");
-        var hooksPath = Path.GetFullPath(hooksRelativePath, _home.HomeDirectory);
+        var hooksPath = Path.GetFullPath(WellKnownPaths.HooksDirectory, _home.HomeDirectory);
         if (!UserDirectory.Exists(hooksPath))
         {
-            _reporter.Detail($"Hook build cache cleaning skipped: no {hooksRelativePath} directory.");
+            _reporter.Detail($"Hook build cache cleaning skipped: no {WellKnownPaths.HooksDirectory} directory.");
             return;
         }
 

@@ -17,11 +17,28 @@ public static class WellKnownPaths
     public const string ScratchDirectory = ".buildvana-temp";
 
     /// <summary>
+    /// The path of the directory holding hook files, one per hook, at <c>{context}/{event}.cs</c>
+    /// paths (see <see cref="GetHookFile"/>).
+    /// </summary>
+    public const string HooksDirectory = ".buildvana/hooks";
+
+    /// <summary>
     /// The path of the directory holding hook args files, one per hook, at
-    /// <c>{context}/{event}.json</c> paths mirroring the <c>.buildvana/hooks/{context}/{event}.cs</c>
-    /// convention for hook files.
+    /// <c>{context}/{event}.json</c> paths mirroring the hook file convention under
+    /// <see cref="HooksDirectory"/>.
     /// </summary>
     public const string HookArgsDirectory = ScratchDirectory + "/hook-args";
+
+    /// <summary>
+    /// Gets the path of the hook file for a context and event.
+    /// This is the file <c>bv</c> looks for when the event occurs: the hook runs if the file
+    /// exists, and is skipped otherwise.
+    /// </summary>
+    /// <param name="context">The name of the context the hook's event belongs to.</param>
+    /// <param name="event">The name of the event that triggers the hook.</param>
+    /// <returns>The path of the hook file, relative to the home directory.</returns>
+    public static string GetHookFile(string context, string @event)
+        => $"{HooksDirectory}/{context}/{@event}.cs";
 
     /// <summary>
     /// Gets the path of the args file for the hook of a context and event.
