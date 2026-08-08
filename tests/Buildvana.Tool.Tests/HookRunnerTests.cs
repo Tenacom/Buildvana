@@ -19,7 +19,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var ran = await runner.RunHookAsync("release", "post-release", SampleArgs(home)).ConfigureAwait(false);
+        var ran = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
 
         await Assert.That(ran).IsFalse();
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
@@ -33,7 +33,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var ran = await runner.RunHookAsync("release", "post-release", SampleArgs(home)).ConfigureAwait(false);
+        var ran = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
 
         await Assert.That(ran).IsTrue();
         await Assert.That(appRunner.Runs.Count).IsEqualTo(1);
@@ -55,7 +55,7 @@ internal sealed class HookRunnerTests
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var args = SampleArgs(home);
 
-        _ = await runner.RunHookAsync("release", "post-release", args).ConfigureAwait(false);
+        _ = await runner.RunHookAsync(args).ConfigureAwait(false);
 
         await Assert.That(argsJson).IsNotNull();
         using var document = JsonDocument.Parse(argsJson!);
@@ -86,7 +86,7 @@ internal sealed class HookRunnerTests
         var args = SampleArgs(home);
         args = args with { Release = args.Release with { PreviousVersion = "1.2.2" } };
 
-        _ = await runner.RunHookAsync("release", "post-release", args).ConfigureAwait(false);
+        _ = await runner.RunHookAsync(args).ConfigureAwait(false);
 
         var argsJson = await File.ReadAllTextAsync(ArgsPath(home)).ConfigureAwait(false);
         using var document = JsonDocument.Parse(argsJson);
@@ -101,7 +101,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        _ = await runner.RunHookAsync("release", "post-release", SampleArgs(home)).ConfigureAwait(false);
+        _ = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
 
         await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
@@ -118,7 +118,7 @@ internal sealed class HookRunnerTests
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var args = SampleArgs(home);
 
-        await Assert.That(() => runner.RunHookAsync("release", "post-release", args)).Throws<BuildFailedException>();
+        await Assert.That(() => runner.RunHookAsync(args)).Throws<BuildFailedException>();
         await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
 
@@ -134,7 +134,7 @@ internal sealed class HookRunnerTests
         _ = Directory.CreateDirectory(ArgsPath(home));
         var args = SampleArgs(home);
 
-        Task<bool> Act() => runner.RunHookAsync("release", "post-release", args);
+        Task<bool> Act() => runner.RunHookAsync(args);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");

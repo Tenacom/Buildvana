@@ -40,10 +40,10 @@ internal sealed class HookRunner
     }
 
     /// <summary>
-    /// Runs the hook for the given context and event, if its file exists.
+    /// Runs the hook identified by the type of its args, if the hook's file exists.
     /// </summary>
-    /// <param name="context">The name of the context the hook's event belongs to.</param>
-    /// <param name="event">The name of the event that triggers the hook.</param>
+    /// <typeparam name="TArgs">The type of the hook's args, identifying the hook to run
+    /// (see <see cref="IHookEvent"/>).</typeparam>
     /// <param name="args">The args to serialize into the hook's args file
     /// (<see cref="WellKnownPaths.GetHookArgsFile"/>) before running the hook. Its type must be
     /// registered in <see cref="BuildvanaJsonContext"/>. The file is left in place after the run,
@@ -53,31 +53,11 @@ internal sealed class HookRunner
     /// <see langword="true"/> if the hook ran and completed successfully, or <see langword="false"/>
     /// if there is no hook file.</returns>
     /// <exception cref="BuildFailedException">The hook exited with a non-zero exit code.</exception>
-    public async Task<bool> RunHookAsync(string context, string @event, object args, CancellationToken cancellationToken = default)
+    public Task<bool> RunHookAsync<TArgs>(TArgs args, CancellationToken cancellationToken = default)
+        where TArgs : HookArgs, IHookEvent
     {
-        Guard.IsNotNullOrEmpty(context);
-        Guard.IsNotNullOrEmpty(@event);
         Guard.IsNotNull(args);
-        var hookName = $"{context}/{@event}";
-        var relativePath = WellKnownPaths.GetHookFile(context, @event);
-        var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
-        if (!File.Exists(path))
-        {
-            _reporter.Info($"Hook {hookName}: skipped: no {relativePath} file.");
-            return false;
-        }
-
-        var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
-        _reporter.Detail($"Hook {hookName}: args: {json}");
-        var argsPath = Path.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event), _home.HomeDirectory);
-        _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
-        await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
-        _reporter.Info($"Hook {hookName}: running {relativePath}...");
-        _ = await _appRunner.RunFileBasedAppAsync(
-            path,
-            workingDirectory: _home.HomeDirectory,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-        return true;
+        return RunHookAsync(TArgs.Context, TArgs.Event, args, cancellationToken);
     }
 
     /// <summary>
@@ -108,5 +88,30 @@ internal sealed class HookRunner
             _reporter.Info($"Clearing build cache of hook file {path}...");
             UserDirectory.DeleteIfExists(artifactsDirectory, _reporter);
         }
+    }
+
+    // The core of RunHookAsync<TArgs>, working on the hook's context and event names.
+    private async Task<bool> RunHookAsync(string context, string @event, object args, CancellationToken cancellationToken)
+    {
+        var hookName = $"{context}/{@event}";
+        var relativePath = WellKnownPaths.GetHookFile(context, @event);
+        var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
+        if (!File.Exists(path))
+        {
+            _reporter.Info($"Hook {hookName}: skipped: no {relativePath} file.");
+            return false;
+        }
+
+        var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
+        _reporter.Detail($"Hook {hookName}: args: {json}");
+        var argsPath = Path.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event), _home.HomeDirectory);
+        _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
+        await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
+        _reporter.Info($"Hook {hookName}: running {relativePath}...");
+        _ = await _appRunner.RunFileBasedAppAsync(
+            path,
+            workingDirectory: _home.HomeDirectory,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+        return true;
     }
 }
