@@ -251,3 +251,7 @@ Invocation, correct:
             onStdout: line => log.WriteLine(line),
             cancellationToken).ConfigureAwait(false);
 ```
+
+## ReSharper suppressions
+
+Canonical form: `// ReSharper disable once <DiagnosticId> // <justification>` — the justification comment is mandatory.
