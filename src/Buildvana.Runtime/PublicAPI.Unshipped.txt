@@ -170,6 +170,7 @@ Buildvana.Runtime.WellKnownPaths
 const Buildvana.Runtime.PostReleaseHookArgs.Context = "release" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Event = "post-release" -> string!
 const Buildvana.Runtime.WellKnownPaths.HookArgsDirectory = ".buildvana-temp/hook-args" -> string!
+const Buildvana.Runtime.WellKnownPaths.HooksDirectory = ".buildvana/hooks" -> string!
 const Buildvana.Runtime.WellKnownPaths.ScratchDirectory = ".buildvana-temp" -> string!
 override Buildvana.Runtime.BuildvanaConfig.Equals(object? obj) -> bool
 override Buildvana.Runtime.BuildvanaConfig.GetHashCode() -> int
@@ -247,6 +248,7 @@ static Buildvana.Runtime.RuntimeInfo.operator ==(Buildvana.Runtime.RuntimeInfo? 
 static Buildvana.Runtime.VersioningConfig.operator !=(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
 static Buildvana.Runtime.VersioningConfig.operator ==(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
 static Buildvana.Runtime.WellKnownPaths.GetHookArgsFile(string! context, string! event) -> string!
+static Buildvana.Runtime.WellKnownPaths.GetHookFile(string! context, string! event) -> string!
 ~Buildvana.Runtime.BuildvanaJsonContext.AssemblyVersionPrecision.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.AssemblyVersionPrecision>
 ~Buildvana.Runtime.BuildvanaJsonContext.Boolean.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<bool>
 ~Buildvana.Runtime.BuildvanaJsonContext.BuildvanaConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.BuildvanaConfig>
