@@ -16,6 +16,7 @@ using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
+using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
@@ -241,7 +242,8 @@ internal static class Program
                 sp.GetRequiredService<CommandParameters>().Options,
                 sp.GetRequiredService<BuildvanaConfig>()))
             .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
-            .AddSingleton<IHomeDirectoryProvider>(static _ => new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory))
+            .AddSingleton<IHomeDirectoryProvider>(static _ => new AnchoringHomeDirectoryProvider(
+                new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory)))
 
             // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
             // A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or ReleaseSettings) reads it.
