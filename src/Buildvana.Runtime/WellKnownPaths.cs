@@ -17,10 +17,16 @@ public static class WellKnownPaths
     public const string ScratchDirectory = ".buildvana-temp";
 
     /// <summary>
+    /// The path of the optional grouping directory for Buildvana files: the hooks directory
+    /// (<see cref="HooksDirectory"/>) always lives here, and the configuration file may.
+    /// </summary>
+    public const string BuildvanaDirectory = ".buildvana";
+
+    /// <summary>
     /// The path of the directory holding hook files, one per hook, at <c>{context}/{event}.cs</c>
     /// paths (see <see cref="GetHookFile"/>).
     /// </summary>
-    public const string HooksDirectory = ".buildvana/hooks";
+    public const string HooksDirectory = BuildvanaDirectory + "/hooks";
 
     /// <summary>
     /// The path of the directory holding hook args files, one per hook, at
