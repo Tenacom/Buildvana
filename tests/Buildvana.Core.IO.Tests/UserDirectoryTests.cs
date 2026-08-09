@@ -238,4 +238,43 @@ internal sealed class UserDirectoryTests
 
         await Assert.That(Act).Throws<ArgumentNullException>();
     }
+
+    [Test]
+    [NotInParallel]
+    public async Task SetCurrentDirectory_MakesTheDirectoryCurrent()
+    {
+        var previousCurrentDirectory = Directory.GetCurrentDirectory();
+        var root = Directory.CreateTempSubdirectory("bv-test-");
+        try
+        {
+            UserDirectory.SetCurrentDirectory(root.FullName);
+
+            await Assert.That(Directory.GetCurrentDirectory()).IsEqualTo(root.FullName);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCurrentDirectory);
+            root.Delete();
+        }
+    }
+
+    [Test]
+    public async Task SetCurrentDirectory_WithMissingDirectory_Fails()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"bv-test-{Guid.NewGuid():N}");
+
+        void Act() => UserDirectory.SetCurrentDirectory(path);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("the current directory");
+        await Assert.That(exception.InnerException).IsTypeOf<DirectoryNotFoundException>();
+    }
+
+    [Test]
+    public async Task SetCurrentDirectory_WithNullPath_ThrowsRaw()
+    {
+        static void Act() => UserDirectory.SetCurrentDirectory(null!);
+
+        await Assert.That(Act).Throws<ArgumentNullException>();
+    }
 }

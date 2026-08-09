@@ -156,4 +156,23 @@ public static class UserDirectory
         Guard.IsNotNullOrEmpty(path);
         return Directory.Exists(path);
     }
+
+    /// <summary>
+    /// Makes a directory the process's current directory.
+    /// </summary>
+    /// <param name="path">The directory to make current.</param>
+    /// <exception cref="BuildFailedException">The current directory could not be changed: the directory does
+    /// not exist, or the environment denied or failed the operation.</exception>
+    public static void SetCurrentDirectory(string path)
+    {
+        Guard.IsNotNullOrEmpty(path);
+        try
+        {
+            Directory.SetCurrentDirectory(path);
+        }
+        catch (Exception e) when (e.IsIORelatedException)
+        {
+            throw new BuildFailedException($"Could not make {path} the current directory: {e.Message}", e);
+        }
+    }
 }
