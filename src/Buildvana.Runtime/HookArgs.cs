@@ -50,7 +50,8 @@ public abstract record HookArgs
     {
         ArgumentNullException.ThrowIfNull(jsonTypeInfo);
         var relativePath = WellKnownPaths.GetHookArgsFile(TArgs.Context, TArgs.Event);
-        var path = string.IsNullOrEmpty(homeDirectory) ? relativePath : Path.Combine(homeDirectory, relativePath);
+        homeDirectory = string.IsNullOrEmpty(homeDirectory) ? Environment.CurrentDirectory : homeDirectory;
+        var path = Path.Combine(homeDirectory, relativePath);
         if (!File.Exists(path))
         {
             throw new BuildvanaRuntimeException(
