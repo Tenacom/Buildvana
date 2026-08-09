@@ -26,10 +26,13 @@ Project names follow a four-tier convention:
 
 ### `.Abstractions` discipline
 
-`*.Abstractions` libraries (henceforth "abstraction libraries") contain contracts (interfaces and/or abstract base classes), plus implementation-independent helpers, provided as extension methods on contracts.
+`*.Abstractions` libraries (henceforth "abstraction libraries") contain contracts (interfaces and/or abstract base classes), plus implementation-independent helpers: usually extension methods on contracts, but free-standing static helpers where there is no contract to hang them off.
 
 Helpers provided in an abstraction library are part of the contract for callers, but do not have to be implemented every time.
 Example: method `Log(string message)` is part of the contract; extension method `Log(CompositeFormat format, params ReadOnlySpan<object?> args)` formats the message and calls the contract's `Log`.
+
+A free-standing helper belongs here when its job is to make every implementation of a contract behave identically in some respect, but its inputs are plain values rather than the contract itself.
+Example: `ActivityLineFormatter.FormatStart(depth, title)` renders an activity's opening line, so that activities look the same whichever `IReporter` implementation reports them.
 
 The root namespace of an astraction library does not include the `.Abstractions" suffix. Example: the root namespace of `Buildvana.Core.Abstractions` is `Buildvana.Core`.
 
