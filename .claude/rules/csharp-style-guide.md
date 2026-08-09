@@ -193,14 +193,21 @@ result = foo is not null ? ComputeSomething(firstParam, secondParam, foo)
     : ComputeSomethingElse();
 ```
 
+## Line length
+
+Code and comment lines are limited to 140 characters, including indentation. The limit covers C# source in full: code, ordinary comments, and XML documentation comments alike. Prose files (Markdown and the like) have no line-length limit.
+
+The limit is a review rule, not a formatter setting: there is deliberately no `max_line_length` in `.editorconfig`, so no tool reformats existing code behind your back.
+
+New and modified lines always comply. Beyond that, leave the file cleaner than you found it: when you are actually working in a file — adding to it, reworking it, fixing something in it — bring the whole file within the limit, and commit the leftover wraps separately, so that the change under review stays readable. A mechanical sweep that touches many files with a line or two each does not count as working in them: comply on the lines you touch, and leave the rest.
+
+Declarations are held to a stricter limit; see "Long parameter lists" below.
+
 ## Long parameter lists
 
-When a parameter list (in a declaration) or argument list (in an invocation) makes the line exceed 120 characters including indentation, wrap it. This rule applies to:
+When a parameter list makes a declaration exceed 120 characters including indentation, wrap it. Declarations are held to a stricter limit than the 140 characters allowed elsewhere, because a signature is the one line a reader has to parse in full in order to use the member. The rule covers methods, constructors (including primary constructors), records, delegates, indexers, and local functions.
 
-- declarations: methods, constructors (including primary constructors), records, delegates, indexers, local functions;
-- invocations: any call site of the above, plus base/this constructor calls (`: base(...)` / `: this(...)`).
-
-The 120-character threshold is specific to this rule and is independent of any editor or formatter line-length setting (the project intentionally has no `max_line_length` in `.editorconfig`).
+Invocations are not subject to the 120-character threshold: they follow the general 140-character limit. When a call does have to be wrapped — because it exceeds 140 characters, or because its argument list is long enough that one argument per line simply reads better — wrap it with the mechanics below, which apply to parameter and argument lists alike, base/this constructor calls (`: base(...)` / `: this(...)`) included.
 
 When wrapping:
 
