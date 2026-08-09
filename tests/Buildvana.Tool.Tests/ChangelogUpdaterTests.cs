@@ -1,0 +1,393 @@
+﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// See the LICENSE file in the project root for full license information.
+
+using Buildvana.Core;
+using Buildvana.Tool.Services;
+
+internal sealed class ChangelogUpdaterTests
+{
+    private const string NewSectionTitle = "[1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)";
+
+    [Test]
+    public async Task HasUnreleasedChanges_IsFalseWhenSectionIsEmpty()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "### New features",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+            string.Empty,
+            "- Something released.",
+        ];
+
+        await Assert.That(HasUnreleasedChanges(lines)).IsFalse();
+    }
+
+    [Test]
+    public async Task HasUnreleasedChanges_IsTrueWhenSectionHasContent()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "### New features",
+            string.Empty,
+            "- Something new.",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        await Assert.That(HasUnreleasedChanges(lines)).IsTrue();
+    }
+
+    // The "Unreleased changes" section is the last one before a published release exists;
+    // reaching EOF without finding content is not a failure.
+    [Test]
+    public async Task HasUnreleasedChanges_IsFalseWhenEmptySectionEndsTheFile()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "### New features",
+            string.Empty,
+        ];
+
+        await Assert.That(HasUnreleasedChanges(lines)).IsFalse();
+    }
+
+    [Test]
+    public async Task HasUnreleasedChanges_FailsWhenThereAreNoSections()
+    {
+        string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
+        bool Act() => HasUnreleasedChanges(lines);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
+    }
+
+    [Test]
+    public async Task PrepareForRelease_MovesUnreleasedContentToNewSection()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "- Something new.",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+            string.Empty,
+            "- Something released.",
+        ];
+
+        var result = PrepareForRelease(lines);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - Something new.
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            - Something released.
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // Subsection headings are recreated (empty) in the "Unreleased changes" section, so that the next
+    // release starts from the same skeleton; only those with actual content move to the new section.
+    [Test]
+    public async Task PrepareForRelease_RecreatesSubsectionsAndMovesOnlyNonEmptyOnes()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "### New features",
+            string.Empty,
+            "- Something new.",
+            string.Empty,
+            "### Bugs fixed in this release",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        var result = PrepareForRelease(lines);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ### New features
+
+            ### Bugs fixed in this release
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            ### New features
+
+            - Something new.
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // The substitute replaces the whole body of the moved section, blank lines included, so the blank
+    // lines that set the new section apart are ours: however the substitute is padded in configuration,
+    // the section comes out spaced like any other.
+    [Test]
+    public async Task PrepareForRelease_SubstitutesConfiguredTextForEmptySection()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "### New features",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        var result = PrepareForRelease(lines, emptyChangelogSubstitute: "\n- Maintenance release.\r\n- No user-visible changes.\r\n\n");
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ### New features
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - Maintenance release.
+            - No user-visible changes.
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // The blank line added after the substitute is subject to the same EOF trimming as moved content.
+    [Test]
+    public async Task PrepareForRelease_SubstitutesConfiguredTextWhenNewSectionIsLast()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+        ];
+
+        var result = PrepareForRelease(lines, emptyChangelogSubstitute: "- Maintenance release.");
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - Maintenance release.
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // Without a substitute, an empty section moves verbatim: the new section gets a title and nothing else.
+    [Test]
+    public async Task PrepareForRelease_MovesEmptySectionVerbatimWithoutSubstitute()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        var result = PrepareForRelease(lines);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // When the new section is the last one in the file, the blank lines that separated the moved content
+    // from the section that followed it would end up trailing at EOF, and are trimmed.
+    [Test]
+    public async Task PrepareForRelease_TrimsTrailingBlankLinesWhenNewSectionIsLast()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "- Something new.",
+            string.Empty,
+            string.Empty,
+        ];
+
+        var result = PrepareForRelease(lines);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - Something new.
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // The rewritten changelog always uses LF, whatever the line endings of the file it was read from
+    // (which never reach this code) and whatever the platform it runs on.
+    [Test]
+    public async Task PrepareForRelease_UsesLineFeedAsLineSeparator()
+    {
+        string[] lines = ["# Changelog", string.Empty, "## Unreleased changes", string.Empty, "- Something new."];
+
+        var result = PrepareForRelease(lines, emptyChangelogSubstitute: "- Maintenance release.\r\n- No user-visible changes.");
+
+        await Assert.That(result).DoesNotContain("\r");
+        await Assert.That(result).EndsWith("\n");
+    }
+
+    [Test]
+    public async Task PrepareForRelease_FailsWhenThereAreNoSections()
+    {
+        string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
+        string Act() => PrepareForRelease(lines);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
+    }
+
+    // The title is only needed when a new section is actually written: a changelog that fails validation
+    // must report that failure, not one raised while composing a title that will never be used.
+    [Test]
+    public async Task PrepareForRelease_DoesNotMakeSectionTitleWhenThereAreNoSections()
+    {
+        string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
+        var titleMade = false;
+        string MakeSectionTitle()
+        {
+            titleMade = true;
+            return NewSectionTitle;
+        }
+
+        string Act() => ChangelogUpdater.PrepareForRelease(lines, MakeSectionTitle, null);
+
+        _ = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(titleMade).IsFalse();
+    }
+
+    [Test]
+    public async Task UpdateNewSectionTitle_ReplacesTitleOfSectionAfterUnreleasedChanges()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "### New features",
+            string.Empty,
+            "## [1.2.3-preview.1](https://example.com/releases/tag/1.2.3-preview.1) (2026-01-01)",
+            string.Empty,
+            "- Something new.",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        var result = ChangelogUpdater.UpdateNewSectionTitle(lines, () => NewSectionTitle);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ### New features
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - Something new.
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    [Test]
+    public async Task UpdateNewSectionTitle_FailsWhenThereIsOnlyOneSection()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "- Something new.",
+        ];
+
+        string Act() => ChangelogUpdater.UpdateNewSectionTitle(lines, () => NewSectionTitle);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains only one section.");
+    }
+
+    [Test]
+    public async Task UpdateNewSectionTitle_FailsWhenThereAreNoSections()
+    {
+        string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
+        string Act() => ChangelogUpdater.UpdateNewSectionTitle(lines, () => NewSectionTitle);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
+    }
+
+    private static bool HasUnreleasedChanges(string[] lines)
+    {
+        using var reader = new StringReader(string.Join('\n', lines));
+        return ChangelogUpdater.HasUnreleasedChanges(reader);
+    }
+
+    private static string PrepareForRelease(string[] lines, string? emptyChangelogSubstitute = null)
+        => ChangelogUpdater.PrepareForRelease(lines, () => NewSectionTitle, emptyChangelogSubstitute);
+}

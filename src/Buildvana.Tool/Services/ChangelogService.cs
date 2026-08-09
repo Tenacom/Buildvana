@@ -2,13 +2,8 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
 using Buildvana.Tool.Services.ServerAdapters;
@@ -20,7 +15,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Manages the repository's changelog in Markdown format, according to the <see href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</see> specification.
 /// </summary>
-internal sealed partial class ChangelogService
+internal sealed class ChangelogService
 {
     /// <summary>
     /// The name of the changelog file.
@@ -62,31 +57,11 @@ internal sealed partial class ChangelogService
             return false;
         }
 
+        // Unlike the methods that rewrite the changelog, this one only needs a prefix of the file:
+        // it stops at the first line of content in the "Unreleased changes" section. Streaming the file
+        // is therefore worth the narrower guarantee of OpenText, which guards the open but not the reads.
         using var reader = UserFile.OpenText(FileName, Encoding.UTF8);
-        var sectionHeadingRegex = GetSectionHeadingRegex();
-        var subSectionHeadingRegex = GetSubsectionHeadingRegex();
-        string? line;
-        do
-        {
-            line = reader.ReadLine();
-        } while (line != null && !sectionHeadingRegex.IsMatch(line));
-
-        BuildFailedException.ThrowIfNot(line != null, $"{FileName} contains no sections.");
-        for (; ;)
-        {
-            line = reader.ReadLine();
-            if (line == null || sectionHeadingRegex.IsMatch(line))
-            {
-                break;
-            }
-
-            if (!string.IsNullOrWhiteSpace(line) && !subSectionHeadingRegex.IsMatch(line))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return ChangelogUpdater.HasUnreleasedChanges(reader);
     }
 
     /// <summary>
@@ -100,133 +75,12 @@ internal sealed partial class ChangelogService
     {
         _reporter.Info("Updating changelog...");
         var encoding = new UTF8Encoding(false, true);
-        var sb = new StringBuilder();
-        using (var reader = UserFile.OpenText(FileName, encoding))
-        using (var writer = new StringWriter(sb, CultureInfo.InvariantCulture))
-        {
-            // Using a StringWriter instead of a StringBuilder allows for a custom line separator
-            // Under Windows, a StringBuilder would only use "\r\n" as a line separator, which would be wrong in this case
-            writer.NewLine = "\n";
-            var sectionHeadingRegex = GetSectionHeadingRegex();
-            var subSectionHeadingRegex = GetSubsectionHeadingRegex();
-            var subSections = new List<(string Header, List<string> Lines)> { (string.Empty, []) };
-            var subSectionIndex = 0;
 
-            const int readingFileHeader = 0;
-            const int readingUnreleasedChangesSection = 1;
-            const int readingRemainderOfFile = 2;
-            const int readingDone = 3;
-            var state = readingFileHeader;
-            while (state != readingDone)
-            {
-                var line = reader.ReadLine();
-                switch (state)
-                {
-                    case readingFileHeader:
-                        BuildFailedException.ThrowIfNot(line != null, $"{FileName} contains no sections.");
-
-                        // Copy everything up to an including the first section heading (which we assume is "Unreleased changes")
-                        writer.WriteLine(line);
-                        if (sectionHeadingRegex.IsMatch(line))
-                        {
-                            state = readingUnreleasedChangesSection;
-                        }
-
-                        break;
-                    case readingUnreleasedChangesSection:
-                        if (line == null)
-                        {
-                            // The changelog only contains the "Unreleased changes" section;
-                            // this happens when no release has been published yet
-                            WriteNewSections(true);
-                            state = readingDone;
-                            break;
-                        }
-
-                        if (sectionHeadingRegex.IsMatch(line))
-                        {
-                            // Reached header of next section
-                            WriteNewSections(false);
-                            writer.WriteLine(line);
-                            state = readingRemainderOfFile;
-                            break;
-                        }
-
-                        if (subSectionHeadingRegex.IsMatch(line))
-                        {
-                            subSections.Add((line, []));
-                            ++subSectionIndex;
-                            break;
-                        }
-
-                        subSections[subSectionIndex].Lines.Add(line);
-                        break;
-                    case readingRemainderOfFile:
-                        if (line == null)
-                        {
-                            state = readingDone;
-                            break;
-                        }
-
-                        writer.WriteLine(line);
-                        break;
-                }
-            }
-
-            void WriteNewSections(bool atEndOfFile)
-            {
-                // Create empty subsections in new "Unreleased changes" section
-                foreach (var (header, _) in subSections.Skip(1))
-                {
-                    writer.WriteLine(string.Empty);
-                    writer.WriteLine(header);
-                }
-
-                // Write header of new release section
-                writer.WriteLine(string.Empty);
-                writer.WriteLine("## " + MakeSectionTitle());
-
-                var newSectionLines = CollectNewSectionLines();
-                var newSectionCount = newSectionLines.Count;
-                if (atEndOfFile)
-                {
-                    // If there is no other section after the new release,
-                    // we don't want extra blank lines at EOF
-                    while (newSectionCount > 0 && string.IsNullOrEmpty(newSectionLines[newSectionCount - 1]))
-                    {
-                        --newSectionCount;
-                    }
-                }
-
-                foreach (var newSectionLine in newSectionLines.Take(newSectionCount))
-                {
-                    writer.WriteLine(newSectionLine);
-                }
-            }
-
-            List<string> CollectNewSectionLines()
-            {
-                var result = new List<string>(subSections[0].Lines);
-
-                // Copy only subsections that have actual content
-                foreach (var (header, lines) in subSections.Skip(1).Where(s => s.Lines.Any(l => !string.IsNullOrWhiteSpace(l))))
-                {
-                    result.Add(header);
-                    result.AddRange(lines);
-                }
-
-                // When the "Unreleased changes" section has no real content, substitute the configured text (if any).
-                if (emptyChangelogSubstitute is not null && result.All(string.IsNullOrWhiteSpace))
-                {
-                    result.Clear();
-                    result.AddRange(emptyChangelogSubstitute.ReplaceLineEndings("\n").Split('\n'));
-                }
-
-                return result;
-            }
-        }
-
-        UserFile.WriteAllText(FileName, sb.ToString(), encoding);
+        // The whole changelog is rewritten anyway, so it is read in one guarded call:
+        // an I/O failure at any point is then reported as a clean error, not as an unhandled exception.
+        var lines = UserFile.ReadAllLines(FileName, encoding);
+        var text = ChangelogUpdater.PrepareForRelease(lines, MakeSectionTitle, emptyChangelogSubstitute);
+        UserFile.WriteAllText(FileName, text, encoding);
     }
 
     /// <summary>
@@ -237,67 +91,13 @@ internal sealed partial class ChangelogService
     {
         _reporter.Info("Updating changelog's new release section title...");
         var encoding = new UTF8Encoding(false, true);
-        var sb = new StringBuilder();
-        using (var reader = UserFile.OpenText(FileName, encoding))
-        using (var writer = new StringWriter(sb, CultureInfo.InvariantCulture))
-        {
-            // Using a StringWriter instead of a StringBuilder allows for a custom line separator
-            // Under Windows, a StringBuilder would only use "\r\n" as a line separator, which would be wrong in this case
-            writer.NewLine = "\n";
-            var sectionHeadingRegex = GetSectionHeadingRegex();
 
-            const int readingFileHeader = 0;
-            const int readingUnreleasedChangesSection = 1;
-            const int readingRemainderOfFile = 2;
-            const int readingDone = 3;
-            var state = readingFileHeader;
-            while (state != readingDone)
-            {
-                var line = reader.ReadLine();
-                switch (state)
-                {
-                    case readingFileHeader:
-                        BuildFailedException.ThrowIfNot(line != null, $"{FileName} contains no sections.");
-                        writer.WriteLine(line);
-                        if (sectionHeadingRegex.IsMatch(line))
-                        {
-                            state = readingUnreleasedChangesSection;
-                        }
-
-                        break;
-                    case readingUnreleasedChangesSection:
-                        BuildFailedException.ThrowIfNot(line != null, $"{FileName} contains only one section.");
-                        if (sectionHeadingRegex.IsMatch(line))
-                        {
-                            // Replace header of second section
-                            writer.WriteLine("## " + MakeSectionTitle());
-                            state = readingRemainderOfFile;
-                            break;
-                        }
-
-                        writer.WriteLine(line);
-                        break;
-                    case readingRemainderOfFile:
-                        if (line == null)
-                        {
-                            state = readingDone;
-                            break;
-                        }
-
-                        writer.WriteLine(line);
-                        break;
-                }
-            }
-        }
-
-        UserFile.WriteAllText(FileName, sb.ToString(), encoding);
+        // The whole changelog is rewritten anyway, so it is read in one guarded call:
+        // an I/O failure at any point is then reported as a clean error, not as an unhandled exception.
+        var lines = UserFile.ReadAllLines(FileName, encoding);
+        var text = ChangelogUpdater.UpdateNewSectionTitle(lines, MakeSectionTitle);
+        UserFile.WriteAllText(FileName, text, encoding);
     }
-
-    [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex GetSectionHeadingRegex();
-
-    [GeneratedRegex("^ {0,3}###($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
-    private static partial Regex GetSubsectionHeadingRegex();
 
     private string MakeSectionTitle()
         => $"[{_version.CurrentStr}]({_server.GetReleaseUrl(_version.CurrentStr)}) ({DateTime.Now:yyyy-MM-dd})";
