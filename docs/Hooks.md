@@ -28,7 +28,9 @@ Whatever the context and event, a hook is guaranteed to run with the home direct
 
 During a release, `bv` rewrites the three well-known self-reference files (`global.json`, `.config/dotnet-tools.json`, `Directory.Packages.props`) when dogfooding is enabled. But a repository can embed the released version in arbitrary other files; this hook is the escape hatch for those.
 
-`.buildvana/hooks/release/post-release.cs` runs at the moment the post-release commit is assembled: after the well-known self-reference rewrites (when dogfooding is enabled) and before anything is pushed. The hook runs whether or not dogfooding is enabled; the `dogfood` option gates only the built-in rewrites.
+`.buildvana/hooks/release/post-release.cs` runs at the moment the post-release commit is assembled: before the well-known self-reference rewrites (when dogfooding is enabled) and before anything is pushed. The hook runs whether or not dogfooding is enabled; the `dogfood` option gates only the built-in rewrites, and the args tell the hook which way it resolved.
+
+The hook runs _before_ the built-in rewrites, rather than after, because it is a file-based app inside the repository tree: building it resolves the repository's own version pins, and the version being released is on no feed until the release completes. At hook time, therefore, `global.json`, `.config/dotnet-tools.json`, and `Directory.Packages.props` still carry the previously published versions; the version being released is in the args, not yet in the files.
 
 The hook runs from the home directory and reports nothing back. `bv` snapshots the working tree before and after the hook; the files the hook changed join the post-release commit alongside the well-known rewrites (or constitute it entirely, when dogfooding is off or rewrote nothing).
 
@@ -106,7 +108,7 @@ The loader is strict — an unknown member fails the load — but does not re-va
 - `#:package Buildvana.Runtime` is special: its version comes from the SDK, not from central package management, so the pin can never lag or race the release.
 - **Beyond that, prefer BCL-only hooks.** The BCL (including `System.Text.Json`) covers version-rewriting jobs.
 - For third-party dependencies, prefer versionless `#:package` resolved through the repository's `Directory.Packages.props` (supported by file-based apps under central package management) — the version then lives where dependency updates already look.
-- **Never reference self-produced packages via versionless `#:package`**: at hook time `Directory.Packages.props` has already been rewritten to the version being released, which is on no feed until the release completes — restore fails mid-release, deterministically.
+- **Never reference self-produced packages via versionless `#:package`**: at hook time `Directory.Packages.props` still pins the previously published version, because the built-in rewrites happen after the hook — so the hook silently builds against the last release, and fails to compile, mid-release, against anything the release itself adds.
 - `#:project` is the sanctioned way to use repo-local library code: no version pin, compiles against `HEAD`.
 - Pinned `#:package Foo@x.y.z` is allowed but owned by the repository: pins drift on dependency updates, and a pin on a self-produced package lags its own release by one. If you break your own repository, you own both pieces.
 
