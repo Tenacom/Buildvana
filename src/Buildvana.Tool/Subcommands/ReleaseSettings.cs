@@ -79,7 +79,10 @@ internal sealed class ReleaseSettings
     /// <param name="dotNetSettings">The resolved <c>dotnet</c> settings, providing the fallback build configuration.</param>
     /// <returns>The parsed settings.</returns>
     /// <exception cref="BuildFailedException">An option value is invalid.</exception>
-    public static ReleaseSettings Parse(IReadOnlyList<string> options, BuildvanaConfig config, DotNetSettings dotNetSettings)
+    public static ReleaseSettings Parse(
+        IReadOnlyList<string> options,
+        BuildvanaConfig config,
+        DotNetSettings dotNetSettings)
     {
         Guard.IsNotNull(options);
         Guard.IsNotNull(config);
