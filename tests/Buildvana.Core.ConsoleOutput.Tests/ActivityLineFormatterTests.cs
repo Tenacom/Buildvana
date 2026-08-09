@@ -40,8 +40,10 @@ internal sealed class ActivityLineFormatterTests
     [Test]
     public async Task FormatOutcome_UnderACommaDecimalCulture_StillUsesTheInvariantSeparator()
     {
-        // The swap is confined to a synchronous region, so no concurrently running test can observe it:
-        // the current culture is per-thread, and a region that never awaits never yields its thread.
+        // No [NotInParallel]: the current culture is ambient to the executing flow, not process-global. Its setter
+        // writes an AsyncLocal whose change handler maintains the thread-static the getter reads, so the swap is
+        // confined to this test's execution context and no sibling test can observe it. The restore below is
+        // hygiene for the remainder of this test, not what keeps the others clean.
         var previousCulture = CultureInfo.CurrentCulture;
         string line;
         try
