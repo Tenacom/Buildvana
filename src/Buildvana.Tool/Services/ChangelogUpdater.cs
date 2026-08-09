@@ -26,30 +26,27 @@ internal static partial class ChangelogUpdater
     /// <summary>
     /// Checks a changelog for contents in the "Unreleased changes" section.
     /// </summary>
-    /// <param name="reader">A <see cref="TextReader"/> positioned at the beginning of the changelog.</param>
+    /// <param name="lines">The lines of the changelog.</param>
     /// <returns>If there are any contents (excluding blank lines and subsection headings)
     /// in the "Unreleased changes" section, <see langword="true"/>; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="BuildFailedException">The changelog contains no sections.</exception>
-    /// <remarks>
-    /// <para>Only as much of the changelog as needed is read: reading stops at the first line of content
-    /// found in the "Unreleased changes" section.</para>
-    /// </remarks>
-    public static bool HasUnreleasedChanges(TextReader reader)
+    public static bool HasUnreleasedChanges(IReadOnlyList<string> lines)
     {
-        Guard.IsNotNull(reader);
+        Guard.IsNotNull(lines);
         var sectionHeadingRegex = GetSectionHeadingRegex();
         var subSectionHeadingRegex = GetSubsectionHeadingRegex();
+        var lineIndex = 0;
         string? line;
         do
         {
-            line = reader.ReadLine();
-        } while (line != null && !sectionHeadingRegex.IsMatch(line));
+            line = GetLineOrNull(lines, lineIndex++);
+        } while (line is not null && !sectionHeadingRegex.IsMatch(line));
 
-        BuildFailedException.ThrowIfNot(line != null, $"{ChangelogService.FileName} contains no sections.");
+        BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains no sections.");
         for (; ;)
         {
-            line = reader.ReadLine();
-            if (line == null || sectionHeadingRegex.IsMatch(line))
+            line = GetLineOrNull(lines, lineIndex++);
+            if (line is null || sectionHeadingRegex.IsMatch(line))
             {
                 break;
             }
@@ -71,8 +68,8 @@ internal static partial class ChangelogUpdater
     /// <param name="makeSectionTitle">A callback that produces the title of the new section. It is called
     /// at most once, and only if a new section is actually written.</param>
     /// <param name="emptyChangelogSubstitute">Text to use as the new section's body when the "Unreleased changes"
-    /// section has no content. When <see langword="null"/>, an empty section is moved verbatim (producing a
-    /// title-only section).</param>
+    /// section has no content. When <see langword="null"/>, or all whitespace, an empty section is moved
+    /// verbatim (producing a title-only section).</param>
     /// <returns>The rewritten changelog, with lines separated by <c>"\n"</c>.</returns>
     /// <exception cref="BuildFailedException">The changelog contains no sections.</exception>
     public static string PrepareForRelease(IReadOnlyList<string> lines, Func<string> makeSectionTitle, string? emptyChangelogSubstitute)
@@ -98,11 +95,11 @@ internal static partial class ChangelogUpdater
         var state = readingFileHeader;
         while (state != readingDone)
         {
-            var line = lineIndex < lines.Count ? lines[lineIndex++] : null;
+            var line = GetLineOrNull(lines, lineIndex++);
             switch (state)
             {
                 case readingFileHeader:
-                    BuildFailedException.ThrowIfNot(line != null, $"{ChangelogService.FileName} contains no sections.");
+                    BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains no sections.");
 
                     // Copy everything up to an including the first section heading (which we assume is "Unreleased changes")
                     writer.WriteLine(line);
@@ -113,7 +110,7 @@ internal static partial class ChangelogUpdater
 
                     break;
                 case readingUnreleasedChangesSection:
-                    if (line == null)
+                    if (line is null)
                     {
                         // The changelog only contains the "Unreleased changes" section;
                         // this happens when no release has been published yet
@@ -141,7 +138,7 @@ internal static partial class ChangelogUpdater
                     subSections[subSectionIndex].Lines.Add(line);
                     break;
                 case readingRemainderOfFile:
-                    if (line == null)
+                    if (line is null)
                     {
                         state = readingDone;
                         break;
@@ -199,12 +196,16 @@ internal static partial class ChangelogUpdater
             // When the "Unreleased changes" section has no real content, substitute the configured text (if any).
             // The substitute replaces the whole body of the section, blank lines included, so it is trimmed
             // and surrounded with blank lines of our own: whatever padding it was configured with, the new
-            // section reads like every other one.
-            if (emptyChangelogSubstitute is not null && result.All(string.IsNullOrWhiteSpace))
+            // section reads like every other one. A substitute that is all whitespace has nothing to
+            // contribute once trimmed, and is treated as no substitute at all.
+            var substitute = emptyChangelogSubstitute is not null && result.All(string.IsNullOrWhiteSpace)
+                ? emptyChangelogSubstitute.ReplaceLineEndings("\n").Trim()
+                : null;
+            if (!string.IsNullOrEmpty(substitute))
             {
                 result.Clear();
                 result.Add(string.Empty);
-                result.AddRange(emptyChangelogSubstitute.ReplaceLineEndings("\n").Trim().Split('\n'));
+                result.AddRange(substitute.Split('\n'));
                 result.Add(string.Empty);
             }
 
@@ -241,11 +242,11 @@ internal static partial class ChangelogUpdater
         var state = readingFileHeader;
         while (state != readingDone)
         {
-            var line = lineIndex < lines.Count ? lines[lineIndex++] : null;
+            var line = GetLineOrNull(lines, lineIndex++);
             switch (state)
             {
                 case readingFileHeader:
-                    BuildFailedException.ThrowIfNot(line != null, $"{ChangelogService.FileName} contains no sections.");
+                    BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains no sections.");
                     writer.WriteLine(line);
                     if (sectionHeadingRegex.IsMatch(line))
                     {
@@ -254,7 +255,7 @@ internal static partial class ChangelogUpdater
 
                     break;
                 case readingUnreleasedChangesSection:
-                    BuildFailedException.ThrowIfNot(line != null, $"{ChangelogService.FileName} contains only one section.");
+                    BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains only one section.");
                     if (sectionHeadingRegex.IsMatch(line))
                     {
                         // Replace header of second section
@@ -266,7 +267,7 @@ internal static partial class ChangelogUpdater
                     writer.WriteLine(line);
                     break;
                 case readingRemainderOfFile:
-                    if (line == null)
+                    if (line is null)
                     {
                         state = readingDone;
                         break;
@@ -279,6 +280,10 @@ internal static partial class ChangelogUpdater
 
         return sb.ToString();
     }
+
+    // Reading past the last line yields null, just as TextReader.ReadLine does at end of file:
+    // the state machines above pivot on it to recognize the end of the changelog.
+    private static string? GetLineOrNull(IReadOnlyList<string> lines, int index) => index < lines.Count ? lines[index] : null;
 
     [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex GetSectionHeadingRegex();

@@ -24,7 +24,7 @@ internal sealed class ChangelogUpdaterTests
             "- Something released.",
         ];
 
-        await Assert.That(HasUnreleasedChanges(lines)).IsFalse();
+        await Assert.That(ChangelogUpdater.HasUnreleasedChanges(lines)).IsFalse();
     }
 
     [Test]
@@ -43,7 +43,7 @@ internal sealed class ChangelogUpdaterTests
             "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
         ];
 
-        await Assert.That(HasUnreleasedChanges(lines)).IsTrue();
+        await Assert.That(ChangelogUpdater.HasUnreleasedChanges(lines)).IsTrue();
     }
 
     // The "Unreleased changes" section is the last one before a published release exists;
@@ -61,14 +61,14 @@ internal sealed class ChangelogUpdaterTests
             string.Empty,
         ];
 
-        await Assert.That(HasUnreleasedChanges(lines)).IsFalse();
+        await Assert.That(ChangelogUpdater.HasUnreleasedChanges(lines)).IsFalse();
     }
 
     [Test]
     public async Task HasUnreleasedChanges_FailsWhenThereAreNoSections()
     {
         string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
-        bool Act() => HasUnreleasedChanges(lines);
+        bool Act() => ChangelogUpdater.HasUnreleasedChanges(lines);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
@@ -244,6 +244,36 @@ internal sealed class ChangelogUpdaterTests
             """.ReplaceLineEndings("\n"));
     }
 
+    // A substitute that is all whitespace has nothing left to contribute once trimmed. Emitting it anyway would
+    // write the blank lines that surround it and nothing else, i.e. three consecutive blank lines into a file
+    // whose linter forbids them; it is treated as no substitute at all instead.
+    [Test]
+    public async Task PrepareForRelease_IgnoresWhitespaceOnlySubstitute()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        var result = PrepareForRelease(lines, emptyChangelogSubstitute: " \n\t\n ");
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            """.ReplaceLineEndings("\n"));
+    }
+
     // When the new section is the last one in the file, the blank lines that separated the moved content
     // from the section that followed it would end up trailing at EOF, and are trimmed.
     [Test]
@@ -276,11 +306,18 @@ internal sealed class ChangelogUpdaterTests
     }
 
     // The rewritten changelog always uses LF, whatever the line endings of the file it was read from
-    // (which never reach this code) and whatever the platform it runs on.
+    // (which never reach this code), of the configured substitute (which does), and of the platform it runs on.
     [Test]
     public async Task PrepareForRelease_UsesLineFeedAsLineSeparator()
     {
-        string[] lines = ["# Changelog", string.Empty, "## Unreleased changes", string.Empty, "- Something new."];
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
 
         var result = PrepareForRelease(lines, emptyChangelogSubstitute: "- Maintenance release.\r\n- No user-visible changes.");
 
@@ -382,10 +419,22 @@ internal sealed class ChangelogUpdaterTests
         await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
     }
 
-    private static bool HasUnreleasedChanges(string[] lines)
+    // Same guarantee as PrepareForRelease: the title is composed only when a heading is actually replaced.
+    [Test]
+    public async Task UpdateNewSectionTitle_DoesNotMakeSectionTitleWhenThereAreNoSections()
     {
-        using var reader = new StringReader(string.Join('\n', lines));
-        return ChangelogUpdater.HasUnreleasedChanges(reader);
+        string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
+        var titleMade = false;
+        string MakeSectionTitle()
+        {
+            titleMade = true;
+            return NewSectionTitle;
+        }
+
+        string Act() => ChangelogUpdater.UpdateNewSectionTitle(lines, MakeSectionTitle);
+
+        _ = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(titleMade).IsFalse();
     }
 
     private static string PrepareForRelease(string[] lines, string? emptyChangelogSubstitute = null)
