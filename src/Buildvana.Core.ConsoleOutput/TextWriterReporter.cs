@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Threading;
 using CommunityToolkit.Diagnostics;
@@ -87,7 +86,7 @@ public abstract partial class TextWriterReporter(Verbosity verbosity, bool useCo
             _activityStack.Push(scope);
             if (this.IsEnabled(MessageLevel.Info))
             {
-                ErrorWriter.WriteLine(FormatActivityLine(depth, title, elapsed: null, outcomeMessage: null));
+                ErrorWriter.WriteLine(ActivityLineFormatter.FormatStart(depth, title));
             }
 
             return scope;
@@ -140,19 +139,6 @@ public abstract partial class TextWriterReporter(Verbosity verbosity, bool useCo
         _ => ThrowHelper.ThrowArgumentOutOfRangeException<(ConsoleColor?, string)>(nameof(level), level, "Unknown message level."),
     };
 
-    // Activity header/outcome lines are label-less; the leading "[depth]" conveys nesting without indentation.
-    private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed, string? outcomeMessage)
-    {
-        if (elapsed is null)
-        {
-            return $"[{depth}] {title}: starting...";
-        }
-
-        var elapsedStr = elapsed.Value.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture);
-        var separator = outcomeMessage is null ? string.Empty : " - ";
-        return $"[{depth}] {title}: done ({elapsedStr}s){separator}{outcomeMessage}";
-    }
-
     // A single WriteLine per message: the error writer is expected to auto-flush, so composing first keeps the
     // line atomic at the OS level (the lock only serializes this reporter, not the logo or Spectre's stdout
     // writes) and costs one write syscall instead of up to five.
@@ -177,7 +163,7 @@ public abstract partial class TextWriterReporter(Verbosity verbosity, bool useCo
             // No outcome line unless the activity was explicitly completed (e.g. the work threw before Complete).
             if (completed && this.IsEnabled(MessageLevel.Info))
             {
-                ErrorWriter.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
+                ErrorWriter.WriteLine(ActivityLineFormatter.FormatOutcome(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
             }
         }
     }

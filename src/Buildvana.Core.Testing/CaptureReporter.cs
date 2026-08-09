@@ -12,6 +12,11 @@ namespace Buildvana.Core.Testing;
 /// <c>CompositeFormat</c>-based overloads in <c>ReporterExtensions</c>) never drop a message, and tests
 /// can assert on messages of any level.
 /// </summary>
+/// <remarks>
+/// <para>This is the capture fake for reporting calls; <see cref="StringWriterReporter"/> is the one for
+/// rendered text. Use this to check what code under test reports, and <see cref="StringWriterReporter"/> to
+/// pin what output looks like.</para>
+/// </remarks>
 public sealed class CaptureReporter : IReporter
 {
     private readonly List<(MessageLevel Level, string Message)> _messages = [];
