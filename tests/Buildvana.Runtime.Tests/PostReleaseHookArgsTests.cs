@@ -48,6 +48,36 @@ internal sealed class PostReleaseHookArgsTests
         }
     }
 
+    // The parameterless overload is the shape hooks actually use, and it holds up its end of the contract
+    // only because bv runs every hook from the home directory.
+    [Test]
+    [NotInParallel]
+    public async Task Load_WithoutHomeDirectory_ReadsTheArgsFileOfTheCurrentDirectory()
+    {
+        var dir = NewDir();
+        var previousCurrentDirectory = Directory.GetCurrentDirectory();
+        try
+        {
+            var relativePath = WellKnownPaths.GetHookArgsFile(PostReleaseHookArgs.Context, PostReleaseHookArgs.Event);
+            var path = Path.Combine(dir, relativePath);
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            object boxed = SampleArgs(dir);
+            var json = JsonSerializer.Serialize(boxed, boxed.GetType(), BuildvanaJsonContext.Default);
+            await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
+            Directory.SetCurrentDirectory(dir);
+
+            var loaded = PostReleaseHookArgs.Load();
+
+            await Assert.That(loaded.RuntimeInfo.HomeDirectory).IsEqualTo(dir);
+            await Assert.That(loaded.Release.SemVer).IsEqualTo("1.2.3-preview");
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previousCurrentDirectory);
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     [Test]
     public async Task Load_InvalidJson_Throws()
     {
