@@ -59,7 +59,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
 
         // Perform some preliminary checks
         BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
-        BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
+        BuildFailedException.ThrowIf(string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
         BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
 
         // Ensure that the CI bot identity is used for commits, if not already set.
@@ -165,8 +165,8 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 else
                 {
                     emptyChangelogSubstitute = settings.ResolveEmptyChangelog();
-                    BuildFailedException.ThrowIfNot(
-                        emptyChangelogSubstitute is not null,
+                    BuildFailedException.ThrowIf(
+                        emptyChangelogSubstitute is null,
                         "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).");
 
                     reporter.Info("Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
@@ -193,7 +193,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // Ensure that the release tag doesn't already exist.
             // This assumes that full repo history has been checked out;
             // however, that is already a prerequisite for computing the Git height.
-            BuildFailedException.ThrowIfNot(!git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
+            BuildFailedException.ThrowIf(git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // Artifact pass (Restore→Pack, no Clean): rebuild against the resolved version and make artifacts.
             await pipeline.RunRangeAsync(BuildStep.Restore, BuildStep.Pack, configuration, cancellationToken).ConfigureAwait(false);

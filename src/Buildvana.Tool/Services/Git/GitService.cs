@@ -227,7 +227,7 @@ internal sealed class GitService : IDisposable
     public void Commit(string message, bool amend = false, bool allowEmpty = false)
     {
         var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
-        BuildFailedException.ThrowIfNot(signature is not null, "Git: committer identity not set.");
+        BuildFailedException.ThrowIf(signature is null, "Git: committer identity not set.");
         var options = new CommitOptions() { AmendPreviousCommit = amend, AllowEmptyCommit = allowEmpty };
         _ = _repository.Commit(message, signature, signature, options);
     }
@@ -244,7 +244,7 @@ internal sealed class GitService : IDisposable
     {
         _reporter.Info("Undoing last commit...");
         var previousCommit = _repository.Head.Tip.Parents.FirstOrDefault();
-        BuildFailedException.ThrowIfNot(previousCommit is not null, "Git: cannot reset, there is no commit to go back to.");
+        BuildFailedException.ThrowIf(previousCommit is null, "Git: cannot reset, there is no commit to go back to.");
         _repository.Reset(ResetMode.Hard, previousCommit);
     }
 
@@ -255,7 +255,7 @@ internal sealed class GitService : IDisposable
     {
         var head = _repository.Head;
         var remote = head.RemoteName;
-        BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(remote), "Git: cannot push, HEAD is not tracking any remote.");
+        BuildFailedException.ThrowIf(string.IsNullOrEmpty(remote), "Git: cannot push, HEAD is not tracking any remote.");
         var pushOptions = new PushOptions();
         var pushCredentialsFallback = PushCredentialsFallback;
         if (pushCredentialsFallback is not null)

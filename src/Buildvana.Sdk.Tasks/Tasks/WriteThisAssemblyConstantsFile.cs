@@ -30,8 +30,8 @@ public sealed class WriteThisAssemblyConstantsFile : BuildvanaSdkTask
 
     protected override Undefined Run()
     {
-        BuildFailedException.ThrowIfNot(
-            !string.IsNullOrEmpty(OutputPath),
+        BuildFailedException.ThrowIf(
+            string.IsNullOrEmpty(OutputPath),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(OutputPath)));
 
         var sb = new StringBuilder();

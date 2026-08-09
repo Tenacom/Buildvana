@@ -42,7 +42,7 @@ internal static partial class ChangelogUpdater
             line = GetLineOrNull(lines, lineIndex++);
         } while (line is not null && !sectionHeadingRegex.IsMatch(line));
 
-        BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains no sections.");
+        BuildFailedException.ThrowIf(line is null, $"{ChangelogService.FileName} contains no sections.");
         for (; ;)
         {
             line = GetLineOrNull(lines, lineIndex++);
@@ -99,7 +99,7 @@ internal static partial class ChangelogUpdater
             switch (state)
             {
                 case readingFileHeader:
-                    BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains no sections.");
+                    BuildFailedException.ThrowIf(line is null, $"{ChangelogService.FileName} contains no sections.");
 
                     // Copy everything up to an including the first section heading (which we assume is "Unreleased changes")
                     writer.WriteLine(line);
@@ -246,7 +246,7 @@ internal static partial class ChangelogUpdater
             switch (state)
             {
                 case readingFileHeader:
-                    BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains no sections.");
+                    BuildFailedException.ThrowIf(line is null, $"{ChangelogService.FileName} contains no sections.");
                     writer.WriteLine(line);
                     if (sectionHeadingRegex.IsMatch(line))
                     {
@@ -255,7 +255,7 @@ internal static partial class ChangelogUpdater
 
                     break;
                 case readingUnreleasedChangesSection:
-                    BuildFailedException.ThrowIfNot(line is not null, $"{ChangelogService.FileName} contains only one section.");
+                    BuildFailedException.ThrowIf(line is null, $"{ChangelogService.FileName} contains only one section.");
                     if (sectionHeadingRegex.IsMatch(line))
                     {
                         // Replace header of second section
