@@ -130,9 +130,18 @@ internal sealed class ReleaseSettings
 
     /// <summary>
     /// Returns the text substituted for an empty changelog (<c>release.emptyChangelog</c>), or <see langword="null"/>
-    /// when unset (in which case an empty changelog fails the release).
+    /// when unset or all whitespace (in which case an empty changelog fails the release).
     /// </summary>
-    public string? ResolveEmptyChangelog() => _config?.EmptyChangelog;
+    /// <remarks>
+    /// <para>Text that is all whitespace would substitute nothing for nothing, so it counts as no substitute at all:
+    /// the release fails with the same actionable message as when <c>release.emptyChangelog</c> is missing, instead
+    /// of silently producing a release section with no body.</para>
+    /// </remarks>
+    public string? ResolveEmptyChangelog()
+    {
+        var configured = _config?.EmptyChangelog;
+        return string.IsNullOrWhiteSpace(configured) ? null : configured;
+    }
 
     /// <summary>
     /// Returns <see cref="Dogfood"/> if set, otherwise <c>release.dogfood</c>, otherwise <see langword="true"/>.

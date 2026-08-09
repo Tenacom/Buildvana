@@ -69,6 +69,15 @@ internal sealed class ReleaseSettingsTests
         await Assert.That(settings.ResolveEmptyChangelog()).IsEqualTo("Nothing to see here.");
     }
 
+    // Substituting whitespace for an empty changelog would substitute nothing for nothing, so it counts
+    // as no substitute at all and lets the release fail with the message that says so.
+    [Test]
+    public async Task ResolveEmptyChangelog_IsNull_WhenConfiguredTextIsAllWhitespace()
+    {
+        var config = new BuildvanaConfig { Release = new() { EmptyChangelog = " \n\t " } };
+        await Assert.That(Parse([], config).ResolveEmptyChangelog()).IsNull();
+    }
+
     [Test]
     public async Task Resolve_FlagsWin_OverReleaseConfig()
     {
