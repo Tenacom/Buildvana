@@ -83,7 +83,7 @@ internal sealed partial class SelfVersionService
     [GeneratedRegex("(Tenacom/Buildvana/)[^/]+(/schemas/)", RegexOptions.CultureInvariant)]
     private static partial Regex SchemaUrlRegex { get; }
 
-    private string GlobalJsonPath => Path.Combine(_home.HomeDirectory, GlobalJsonFileName);
+    private string GlobalJsonPath => _home.GetFullPath(GlobalJsonFileName);
 
     private string OwnVersionText => _ownVersion.ToNormalizedString();
 

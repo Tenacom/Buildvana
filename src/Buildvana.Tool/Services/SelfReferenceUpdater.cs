@@ -81,7 +81,7 @@ internal sealed class SelfReferenceUpdater
         foreach (var (relativePath, update) in _targets)
         {
             // Resolve up-front so the path returned to the caller (and shown in logs) is unambiguous.
-            var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
+            var path = _home.GetFullPath(relativePath);
             if (!File.Exists(path))
             {
                 continue;
