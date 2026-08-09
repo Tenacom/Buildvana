@@ -2,36 +2,26 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Threading;
-using CommunityToolkit.Diagnostics;
+using System.IO;
 
 namespace Buildvana.Core.ConsoleOutput;
 
 /// <summary>
-/// An <see cref="IReporter"/> that writes to the process's standard streams via <see cref="Console"/>.
+/// A <see cref="TextWriterReporter"/> that writes to the process's standard streams via <see cref="Console"/>.
 /// </summary>
 /// <remarks>
-/// <para>Diagnostics (leveled messages and activity header/outcome lines) go to standard error, so that
-/// standard output carries only command deliverables and child-process standard output
-/// (<see cref="ChildOutput"/>) and stays pipeable at any verbosity, per the prevailing CLI convention.</para>
-/// <para>Color is a function of message level, decided here and never by the caller: <c>error:</c> renders in
-/// red and <c>warning:</c> in yellow (foreground only, no background fill); the remaining levels are uncolored
-/// so they inherit the terminal's theme. The message body is never colored. Coloring uses
-/// <see cref="AnsiEscapes"/> rather than <see cref="Console.ForegroundColor"/>, because the latter is tied to
-/// standard output and would corrupt a redirected deliverable stream.</para>
-/// <para>Output is serialized through an internal lock so that lines streamed from a child process's standard
-/// output and standard error (which arrive on background threads) never interleave mid-line with each other or
-/// with narration.</para>
+/// <para>This class is the whole of the reporter's coupling to the environment: it decides whether the console
+/// can render color, and it names the standard streams as the writers to render to. Everything else — what a
+/// rendered line looks like and when it is written at all — lives in <see cref="TextWriterReporter"/>, where it
+/// can be tested without a console. Anything added here that would deserve a test belongs there instead.</para>
+/// <para><see cref="Console.Out"/> and <see cref="Console.Error"/> are read at every write, not captured at
+/// construction, so a later <see cref="Console.SetOut"/> or <see cref="Console.SetError"/> is honored.</para>
 /// </remarks>
-public sealed partial class ConsoleReporter : IReporter
+[ExcludeFromCodeCoverage(
+    Justification = "Every member reads or manipulates the process console, whose state a test runner owns and redirects.")]
+public sealed class ConsoleReporter : TextWriterReporter
 {
-    private readonly Lock _writeLock = new();
-    private readonly Stack<ActivityScope> _activityStack = new();
-    private readonly bool _useColor;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="ConsoleReporter"/> class.
     /// </summary>
@@ -45,148 +35,38 @@ public sealed partial class ConsoleReporter : IReporter
     /// when that fails.
     /// </param>
     public ConsoleReporter(Verbosity verbosity, bool? colorOverride)
+        : base(verbosity, ResolveColor(colorOverride))
     {
-        Verbosity = verbosity;
-        _useColor = colorOverride ?? DetectColor();
+    }
+
+    /// <inheritdoc/>
+    protected override TextWriter OutputWriter => Console.Out;
+
+    /// <inheritdoc/>
+    protected override TextWriter ErrorWriter => Console.Error;
+
+    private static bool ResolveColor(bool? colorOverride)
+    {
+        if (colorOverride is not { } forced)
+        {
+            return DetectColor();
+        }
 
         // Auto-detection folds the virtual-terminal attempt into DetectColor; an explicit "on" override skips
         // detection, so the attempt must happen here or legacy conhost would print raw escape sequences. The
         // override stays authoritative even when enabling fails: the user asked for color.
-        if (colorOverride == true)
+        if (forced)
         {
             _ = VirtualTerminal.TryEnableOnStandardError();
         }
+
+        return forced;
     }
 
-    /// <inheritdoc/>
-    public Verbosity Verbosity { get; }
-
-    /// <inheritdoc/>
-    public void Report(MessageLevel level, string message)
-    {
-        Guard.IsNotNull(message);
-        if (!this.IsEnabled(level))
-        {
-            return;
-        }
-
-        lock (_writeLock)
-        {
-            WriteLeveledLine(level, message);
-        }
-    }
-
-    /// <inheritdoc/>
-    public IActivityScope BeginActivity(string title)
-    {
-        Guard.IsNotNullOrEmpty(title);
-        lock (_writeLock)
-        {
-            var depth = _activityStack.Count + 1;
-            var scope = new ActivityScope(this, title, depth);
-            _activityStack.Push(scope);
-            if (this.IsEnabled(MessageLevel.Info))
-            {
-                Console.Error.WriteLine(FormatActivityLine(depth, title, elapsed: null, outcomeMessage: null));
-            }
-
-            return scope;
-        }
-    }
-
-    /// <inheritdoc/>
-    public void ChildOutput(string line, Verbosity? minimumVerbosity)
-    {
-        Guard.IsNotNull(line);
-
-        // If a minimum verbosity is specified, respect it; otherwise, write regardless of current verbosity.
-        // This is useful for child processes whose verbosity we control, e.g., `dotnet`.
-        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
-        {
-            return;
-        }
-
-        lock (_writeLock)
-        {
-            Console.WriteLine(line);
-        }
-    }
-
-    /// <inheritdoc/>
-    public void ChildError(string line, Verbosity? minimumVerbosity)
-    {
-        Guard.IsNotNull(line);
-
-        // If a minimum verbosity is specified, respect it; otherwise, write regardless of current verbosity.
-        // This is useful for child processes whose verbosity we control, e.g., `dotnet`.
-        if (minimumVerbosity is { } v && !this.IsVerbosityAtLeast(v))
-        {
-            return;
-        }
-
-        lock (_writeLock)
-        {
-            Console.Error.WriteLine(line);
-        }
-    }
-
-    [ExcludeFromCodeCoverage(Justification = "Reads process-global console state; under a test runner standard error is always redirected, so only one outcome is ever reachable.")]
     private static bool DetectColor()
         => !IsNoColorSet() && !Console.IsErrorRedirected && VirtualTerminal.TryEnableOnStandardError();
 
-    /// <summary>
-    /// Determines whether the <c>NO_COLOR</c> environment variable is set.
-    /// </summary>
-    /// <returns><see langword="true"/> if the <c>NO_COLOR</c> environment variable is set; otherwise, <see langword="false"/>.</returns>
-    /// <remarks>
-    /// <para>The <c>NO_COLOR</c> environment variable is a widely-adopted convention for opting out of color in command-line applications.
-    /// See <a href="https://no-color.org">https://no-color.org</a> for more information.</para>
-    /// </remarks>
-    [ExcludeFromCodeCoverage(Justification = "Reads the process environment; covering both outcomes would require mutating process-global state under a parallel test runner.")]
+    // The NO_COLOR environment variable is a widely-adopted convention for opting out of color in command-line
+    // applications. See https://no-color.org for more information.
     private static bool IsNoColorSet() => Environment.GetEnvironmentVariable("NO_COLOR") is { Length: > 0 };
-
-    private static (ConsoleColor? Color, string Word) StyleFor(MessageLevel level) => level switch
-    {
-        MessageLevel.Error => (ConsoleColor.Red, "error"),
-        MessageLevel.Warning => (ConsoleColor.Yellow, "warning"),
-        MessageLevel.Info => (null, "info"),
-        MessageLevel.Detail => (null, "detail"),
-        MessageLevel.Trace => (null, "trace"),
-        _ => ThrowHelper.ThrowArgumentOutOfRangeException<(ConsoleColor?, string)>(nameof(level), level, "Unknown message level."),
-    };
-
-    // Activity header/outcome lines are label-less; the leading "[depth]" conveys nesting without indentation.
-    private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed, string? outcomeMessage)
-        => elapsed is { } e
-            ? string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: done ({2:F1}s){3}{4}", depth, title, e.TotalSeconds, outcomeMessage is null ? string.Empty : " - ", outcomeMessage)
-            : string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: starting...", depth, title);
-
-    // A single WriteLine per message: Console.Error auto-flushes, so composing first keeps the line atomic at
-    // the OS level (the lock only serializes this reporter, not the logo or Spectre's stdout writes) and costs
-    // one write syscall instead of up to five.
-    private void WriteLeveledLine(MessageLevel level, string message)
-    {
-        var (color, word) = StyleFor(level);
-        var line = _useColor && color is { } foreground
-            ? $"{AnsiEscapes.Foreground(foreground)}{word}:{AnsiEscapes.Reset} {message}"
-            : $"{word}: {message}";
-        Console.Error.WriteLine(line);
-    }
-
-    private void EndActivity(ActivityScope scope, bool completed)
-    {
-        lock (_writeLock)
-        {
-            if (_activityStack.Count > 0 && ReferenceEquals(_activityStack.Peek(), scope))
-            {
-                _activityStack.Pop();
-            }
-
-            // No outcome line unless the activity was explicitly completed (e.g. the work threw before Complete).
-            if (completed && this.IsEnabled(MessageLevel.Info))
-            {
-                Console.Error.WriteLine(FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
-            }
-        }
-    }
 }
