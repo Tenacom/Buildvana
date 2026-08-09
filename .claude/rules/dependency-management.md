@@ -1,5 +1,11 @@
 # Dependency management
 
+## Baseline dependencies
+
+`Louis` (our own general-purpose library) and `CommunityToolkit.Diagnostics` rank alongside the BCL in repo-scoped contexts, as would any other general-purpose, dependency-light utility library we adopt. Where `architecture.md` calls for a "BCL-only" dependency closure, or for BCL-only types in public signatures, types from these libraries do not count against the rule.
+
+The exception is `Buildvana.Runtime`, whose dependency closure must stay strictly BCL: it is consumed by repository-owned hooks, so every dependency it carries becomes one of theirs.
+
 ## NuGet package dependencies
 
 We use `Directory.Packages.props` for central package version management. It contains separate `ItemGroup`s based on the intended usage of the dependency:

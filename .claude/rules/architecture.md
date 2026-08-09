@@ -20,7 +20,7 @@ Sub-projects under `src/`:
 Project names follow a four-tier convention:
 
  - `Buildvana.Core.*` — internal libraries shared between sibling projects in this repo. Not packaged. May depend on other `Buildvana.Core.*` libraries, on `Buildvana.Runtime` (whose BCL-only dependency closure keeps the tier host-agnostic), and on ordinary BCL/NuGet dependencies, but must remain host-agnostic: no host references (e.g., MSBuild). See "Core tier layout" below for how the tier is structured.
-- `Buildvana.Runtime` — packaged library consumed by hooks (via an SDK-supplied version pin) as well as by `bv` and SDK tasks. Its public surface is an additive-only contract, and its dependency closure must stay BCL-only: no references to unpackaged `Buildvana.Core.*` projects. The prohibition is one-directional: `Buildvana.Core.*` projects may reference `Buildvana.Runtime`.
+- `Buildvana.Runtime` — packaged library consumed by hooks (via an SDK-supplied version pin) as well as by `bv` and SDK tasks. Its public surface is an additive-only contract, and its dependency closure must stay BCL-only: no references to unpackaged `Buildvana.Core.*` projects. Strictly BCL, here: the baseline-dependency allowance in `dependency-management.md` does not extend to this project. The prohibition is one-directional: `Buildvana.Core.*` projects may reference `Buildvana.Runtime`.
 - `Buildvana.Sdk.*` — the MSBuild SDK and its components (tasks, source generators). Only `Buildvana.Sdk` is packaged; it bundles the others.
 - `Buildvana.Tool` — the `bv` .NET CLI global tool. Packaged as a `dotnet tool`.
 
@@ -54,7 +54,7 @@ Until at least one of these holds, the area's contracts live in `Buildvana.Core.
 
 #### Hygiene
 
-- Contracts in `Buildvana.Core.Abstractions` should prefer BCL-only types in public signatures (`Stream`, `string`, primitives) over package-specific types when there is a choice. This delays promotion pressure and keeps the shared dependency footprint minimal.
+- Contracts in `Buildvana.Core.Abstractions` should prefer BCL-only types in public signatures (`Stream`, `string`, primitives) over package-specific types when there is a choice. This delays promotion pressure and keeps the shared dependency footprint minimal. Baseline dependencies (see `dependency-management.md`) count as BCL for this purpose.
 - Null/no-op stubs go in `Buildvana.Core.Abstractions` (matches the `Microsoft.Extensions.*` pattern, e.g., `NullLogger`).
 - Capture/recording test doubles go in `Buildvana.Core.Testing`, never in abstractions.
 
