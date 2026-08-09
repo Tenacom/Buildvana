@@ -449,6 +449,8 @@ internal sealed class ChangelogUpdaterTests
     // The title ends up in a file that is read, and released from, on every machine: the date must not follow
     // the calendar of whoever runs the release. Formatted with the current culture, it would read 2569-01-01
     // under th-TH, matching neither the release tag nor the other section titles.
+    // This test needs ICU data to bite: with InvariantGlobalization enabled, th-TH would fall back to the
+    // Gregorian calendar and the assertion would pass whatever culture MakeSectionTitle formatted with.
     [Test]
     [NotInParallel]
     public async Task MakeSectionTitle_UsesInvariantCalendar_WhateverTheCurrentCulture()

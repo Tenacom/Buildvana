@@ -104,7 +104,7 @@ internal static partial class ChangelogUpdater
                 case readingFileHeader:
                     BuildFailedException.ThrowIf(line is null, $"{ChangelogService.FileName} contains no sections.");
 
-                    // Copy everything up to an including the first section heading (which we assume is "Unreleased changes")
+                    // Copy everything up to and including the first section heading (which we assume is "Unreleased changes")
                     writer.WriteLine(line);
                     if (sectionHeadingRegex.IsMatch(line))
                     {
