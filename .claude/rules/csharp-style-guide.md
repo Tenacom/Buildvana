@@ -201,7 +201,7 @@ The limit is a review rule, not a formatter setting: there is deliberately no `m
 
 New and modified lines always comply. Beyond that, leave the file cleaner than you found it: when you are actually working in a file — adding to it, reworking it, fixing something in it — bring the whole file within the limit, and commit the leftover wraps separately, so that the change under review stays readable. A mechanical sweep that touches many files with a line or two each does not count as working in them: comply on the lines you touch, and leave the rest.
 
-Declarations are held to a stricter limit; see "Long parameter lists" below.
+Declarations are held to a stricter limit; see "Long parameter lists" below. Whole-file cleanup covers that limit too: a file brought within the general limit but left with over-long declarations is a file that still owes a second sweep.
 
 ## Long parameter lists
 
