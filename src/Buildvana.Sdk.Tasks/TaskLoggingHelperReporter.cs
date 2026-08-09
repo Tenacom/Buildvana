@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using Buildvana.Core.ConsoleOutput;
 using Microsoft.Build.Framework;
@@ -90,10 +89,7 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
             var depth = _activityStack.Count + 1;
             var scope = new ActivityScope(this, title, depth);
             _activityStack.Push(scope);
-            _log.LogMessage(
-                MessageImportance.Normal,
-                "{0}",
-                FormatActivityLine(depth, title, elapsed: null, outcomeMessage: null));
+            _log.LogMessage(MessageImportance.Normal, "{0}", ActivityLineFormatter.FormatStart(depth, title));
             return scope;
         }
     }
@@ -101,19 +97,6 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
     public void ChildOutput(string line, Verbosity? minimumVerbosity) => LogChildLine(line, minimumVerbosity);
 
     public void ChildError(string line, Verbosity? minimumVerbosity) => LogChildLine(line, minimumVerbosity);
-
-    // Same line format as ConsoleReporter, so activities look the same whether a service runs under `bv` or MSBuild.
-    private static string FormatActivityLine(int depth, string title, TimeSpan? elapsed, string? outcomeMessage)
-        => elapsed is { } e
-            ? string.Format(
-                CultureInfo.InvariantCulture,
-                "[{0}] {1}: done ({2:F1}s){3}{4}",
-                depth,
-                title,
-                e.TotalSeconds,
-                outcomeMessage is null ? string.Empty : " - ",
-                outcomeMessage)
-            : string.Format(CultureInfo.InvariantCulture, "[{0}] {1}: starting...", depth, title);
 
     private bool LogsMessagesOfImportance(MessageImportance importance)
         => _engineServices?.LogsMessagesOfImportance(importance) ?? true;
@@ -147,7 +130,7 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
                 _log.LogMessage(
                     MessageImportance.Normal,
                     "{0}",
-                    FormatActivityLine(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
+                    ActivityLineFormatter.FormatOutcome(scope.Depth, scope.Title, scope.Elapsed, scope.OutcomeMessage));
             }
         }
     }
