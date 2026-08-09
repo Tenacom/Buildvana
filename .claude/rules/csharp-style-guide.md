@@ -79,7 +79,7 @@ Extension blocks need some warning suppression because of bugs in Roslyn analyze
 /// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible — false positive on C# 14 extension blocks; fixed in .NET 11, backport to .NET 10 requested in https://github.com/dotnet/sdk/issues/53984
 #pragma warning disable CA1708 // Identifiers should differ by more than case — false positive on classes with C# 14 extension blocks; fixed in .NET 11, https://github.com/dotnet/sdk/issues/51716
-public static partial class MyClassExtensions
+public static class MyClassExtensions
 {
     extension(MyClass @this)
     {
@@ -89,6 +89,8 @@ public static partial class MyClassExtensions
 ```
 
 The "this" parameter MUST be named `@this`.
+
+Add `partial` only when the class is actually split across files, as described in "Partial classes" above and "Extension classes" below. ReSharper's `PartialTypeWithSinglePart` flags a partial class with a single part, and every warning is an error here.
 
 Do not mix extension blocks with regular static methods of the same class. Refer to "Partial classes" above and "Extension classes" below for splitting extension classes into multiple files if needed.
 
