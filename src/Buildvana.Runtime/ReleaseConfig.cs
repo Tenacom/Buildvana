@@ -34,7 +34,7 @@ public sealed record ReleaseConfig
     public ChangelogUpdates? ChangelogUpdates { get; init; }
 
     /// <summary>Gets the text substituted when a release has no changelog entries.</summary>
-    [Description("Text substituted when a release has no changelog entries. When omitted, an empty changelog fails the release.")]
+    [Description("Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the release.")]
     public string? EmptyChangelog { get; init; }
 
     /// <summary>Gets a value indicating whether self-references are updated (dogfooding) during a release.</summary>

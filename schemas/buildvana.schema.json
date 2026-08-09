@@ -42,7 +42,7 @@
           ]
         },
         "emptyChangelog": {
-          "description": "Text substituted when a release has no changelog entries. When omitted, an empty changelog fails the release.",
+          "description": "Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the release.",
           "type": "string"
         },
         "dogfood": {

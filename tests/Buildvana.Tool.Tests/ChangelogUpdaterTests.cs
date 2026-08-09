@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using Buildvana.Core;
 using Buildvana.Tool.Services;
 
@@ -436,6 +437,38 @@ internal sealed class ChangelogUpdaterTests
         _ = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(titleMade).IsFalse();
     }
+
+    [Test]
+    public async Task MakeSectionTitle_ComposesVersionUrlAndDate()
+    {
+        var title = ComposeSectionTitle();
+
+        await Assert.That(title).IsEqualTo(NewSectionTitle);
+    }
+
+    // The title ends up in a file that is read, and released from, on every machine: the date must not follow
+    // the calendar of whoever runs the release. Formatted with the current culture, it would read 2569-01-01
+    // under th-TH, matching neither the release tag nor the other section titles.
+    [Test]
+    [NotInParallel]
+    public async Task MakeSectionTitle_UsesInvariantCalendar_WhateverTheCurrentCulture()
+    {
+        var savedCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = new CultureInfo("th-TH");
+            var title = ComposeSectionTitle();
+
+            await Assert.That(title).IsEqualTo(NewSectionTitle);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = savedCulture;
+        }
+    }
+
+    private static string ComposeSectionTitle()
+        => ChangelogUpdater.MakeSectionTitle("1.2.3", new Uri("https://example.com/releases/tag/1.2.3"), new DateTime(2026, 1, 1));
 
     private static string PrepareForRelease(string[] lines, string? emptyChangelogSubstitute = null)
         => ChangelogUpdater.PrepareForRelease(lines, () => NewSectionTitle, emptyChangelogSubstitute);
