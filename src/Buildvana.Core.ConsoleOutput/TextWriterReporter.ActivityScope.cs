@@ -6,16 +6,16 @@ using System.Diagnostics;
 
 namespace Buildvana.Core.ConsoleOutput;
 
-public sealed partial class ConsoleReporter
+public abstract partial class TextWriterReporter
 {
     private sealed class ActivityScope : IActivityScope
     {
-        private readonly ConsoleReporter _reporter;
+        private readonly TextWriterReporter _reporter;
         private readonly long _startTimestamp;
         private bool _completed;
         private bool _disposed;
 
-        public ActivityScope(ConsoleReporter reporter, string title, int depth)
+        public ActivityScope(TextWriterReporter reporter, string title, int depth)
         {
             _reporter = reporter;
             Title = title;
