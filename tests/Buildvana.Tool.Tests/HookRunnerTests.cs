@@ -73,7 +73,7 @@ internal sealed class HookRunnerTests
         await Assert.That(release.GetProperty("isPrerelease").GetBoolean()).IsTrue();
         await Assert.That(release.GetProperty("isPublicRelease").GetBoolean()).IsTrue();
         await Assert.That(root.GetProperty("producedPackages").GetProperty("Buildvana.Sdk").GetString()).IsEqualTo("1.2.3-preview");
-        await Assert.That(root.GetProperty("dogfooded").GetBoolean()).IsFalse();
+        await Assert.That(root.GetProperty("dogfooding").GetBoolean()).IsFalse();
     }
 
     [Test]
@@ -205,7 +205,7 @@ internal sealed class HookRunnerTests
             IsPublicRelease = true,
         },
         ProducedPackages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "1.2.3-preview" },
-        Dogfooded = false,
+        Dogfooding = false,
     };
 
     private static string WriteHookFile(TempHome home, string context, string @event)

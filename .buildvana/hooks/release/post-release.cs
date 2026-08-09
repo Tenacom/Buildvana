@@ -11,7 +11,7 @@ using Buildvana.Runtime;
 // of the version being released. The guard mirrors the built-in self-reference rewrites: the
 // $schema URL is itself a self-reference, so it moves only when dogfooding moves the rest.
 var args = PostReleaseHookArgs.Load();
-if (!args.Dogfooded)
+if (!args.Dogfooding)
 {
     return;
 }

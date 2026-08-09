@@ -40,7 +40,7 @@ internal sealed class PostReleaseHookArgsTests
             await Assert.That(loaded.RuntimeInfo).IsEqualTo(written.RuntimeInfo);
             await Assert.That(loaded.Release).IsEqualTo(written.Release);
             await Assert.That(loaded.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("1.2.3-preview");
-            await Assert.That(loaded.Dogfooded).IsEqualTo(written.Dogfooded);
+            await Assert.That(loaded.Dogfooding).IsEqualTo(written.Dogfooding);
         }
         finally
         {
@@ -109,7 +109,7 @@ internal sealed class PostReleaseHookArgsTests
             IsPublicRelease = true,
         },
         ProducedPackages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "1.2.3-preview" },
-        Dogfooded = true,
+        Dogfooding = true,
     };
 
     private static string NewDir()

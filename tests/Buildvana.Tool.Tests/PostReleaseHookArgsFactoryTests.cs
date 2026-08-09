@@ -134,16 +134,16 @@ internal sealed class PostReleaseHookArgsFactoryTests
     }
 
     [Test]
-    public async Task Create_PassesProducedPackagesAndDogfoodedThrough()
+    public async Task Create_PassesProducedPackagesAndDogfoodingThrough()
     {
         using var home = new TempHome();
         var packages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "2.3.4" };
 
-        var args = Create(home.Provider, producedPackages: packages, dogfooded: true);
+        var args = Create(home.Provider, producedPackages: packages, dogfooding: true);
 
         await Assert.That(args.ProducedPackages.Count).IsEqualTo(1);
         await Assert.That(args.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("2.3.4");
-        await Assert.That(args.Dogfooded).IsTrue();
+        await Assert.That(args.Dogfooding).IsTrue();
     }
 
     private static PostReleaseHookArgs Create(
@@ -155,7 +155,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         bool isPrerelease = true,
         bool isPublicRelease = false,
         IReadOnlyDictionary<string, string>? producedPackages = null,
-        bool dogfooded = false)
+        bool dogfooding = false)
         => new PostReleaseHookArgsFactory(home).Create(
             artifactsPath ?? Path.Combine("artifacts", "Release"),
             simpleVersion,
@@ -164,5 +164,5 @@ internal sealed class PostReleaseHookArgsFactoryTests
             isPrerelease,
             isPublicRelease,
             producedPackages ?? new Dictionary<string, string>(),
-            dogfooded);
+            dogfooding);
 }

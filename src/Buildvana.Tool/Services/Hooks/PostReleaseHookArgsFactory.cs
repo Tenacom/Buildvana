@@ -28,7 +28,7 @@ internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home) : 
     /// <param name="isPrerelease">Whether the version being released is a prerelease.</param>
     /// <param name="isPublicRelease">Whether the release is a public release.</param>
     /// <param name="producedPackages">The packages produced by the release, as a map from package ID to version.</param>
-    /// <param name="dogfooded">Whether the built-in self-reference rewrites ran in this release.</param>
+    /// <param name="dogfooding">Whether the built-in self-reference rewrites will run in this release.</param>
     /// <returns>A newly-created <see cref="PostReleaseHookArgs"/> instance.</returns>
     public PostReleaseHookArgs Create(
         string artifactsPath,
@@ -38,7 +38,7 @@ internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home) : 
         bool isPrerelease,
         bool isPublicRelease,
         IReadOnlyDictionary<string, string> producedPackages,
-        bool dogfooded)
+        bool dogfooding)
     {
         Guard.IsNotNullOrEmpty(simpleVersion);
         Guard.IsNotNullOrEmpty(semVer);
@@ -55,7 +55,7 @@ internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home) : 
                 IsPublicRelease = isPublicRelease,
             },
             ProducedPackages = producedPackages,
-            Dogfooded = dogfooded,
+            Dogfooding = dogfooding,
         };
     }
 }

@@ -109,8 +109,8 @@ Buildvana.Runtime.NuGetFeedsConfig.Prerelease.init -> void
 Buildvana.Runtime.NuGetFeedsConfig.Release.get -> Buildvana.Runtime.NuGetFeedConfig?
 Buildvana.Runtime.NuGetFeedsConfig.Release.init -> void
 Buildvana.Runtime.PostReleaseHookArgs
-Buildvana.Runtime.PostReleaseHookArgs.Dogfooded.get -> bool
-Buildvana.Runtime.PostReleaseHookArgs.Dogfooded.init -> void
+Buildvana.Runtime.PostReleaseHookArgs.Dogfooding.get -> bool
+Buildvana.Runtime.PostReleaseHookArgs.Dogfooding.init -> void
 Buildvana.Runtime.PostReleaseHookArgs.Equals(Buildvana.Runtime.PostReleaseHookArgs? other) -> bool
 Buildvana.Runtime.PostReleaseHookArgs.PostReleaseHookArgs() -> void
 Buildvana.Runtime.PostReleaseHookArgs.ProducedPackages.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!

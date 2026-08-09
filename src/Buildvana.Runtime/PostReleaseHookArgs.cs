@@ -41,9 +41,14 @@ public sealed record PostReleaseHookArgs : HookArgs, IHookEvent
     public required IReadOnlyDictionary<string, string> ProducedPackages { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the built-in self-reference rewrites ran in this release.
+    /// Gets a value indicating whether the built-in self-reference rewrites will run in this release.
     /// </summary>
-    public required bool Dogfooded { get; init; }
+    /// <remarks>
+    /// <para>The resolved outcome of the <c>release.dogfood</c> option, which the <c>--dogfood</c> command-line
+    /// option may have overridden away from the configured value. The rewrites run right after the hook, so this
+    /// is what is about to happen, not what has already happened.</para>
+    /// </remarks>
+    public required bool Dogfooding { get; init; }
 
     /// <summary>
     /// Loads the args of the current hook run from the hook's args file.

@@ -55,7 +55,7 @@ using System.Text.RegularExpressions;
 using Buildvana.Runtime;
 
 var args = PostReleaseHookArgs.Load();
-if (!args.Dogfooded)
+if (!args.Dogfooding)
 {
     return;
 }
@@ -86,7 +86,7 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 | `Release.IsPrerelease`           | boolean        | Whether the version being released is a prerelease.                                                                                                                                  |
 | `Release.IsPublicRelease`        | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                                      |
 | `ProducedPackages`               | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                                 |
-| `Dogfooded`                      | boolean        | Whether the built-in self-reference rewrites ran in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value.              |
+| `Dogfooding`                     | boolean        | Whether the built-in self-reference rewrites will run in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value.         |
 
 In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim.
 
