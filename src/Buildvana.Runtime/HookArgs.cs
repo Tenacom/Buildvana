@@ -54,9 +54,7 @@ public abstract record HookArgs
         var path = Path.Combine(homeDirectory, relativePath);
         if (!File.Exists(path))
         {
-            throw new BuildvanaRuntimeException(
-                $"The hook args file '{path}' does not exist. "
-                + "Run this program from the home directory of a repository where bv has run this hook at least once.");
+            throw new BuildvanaRuntimeException($"The hook args file '{path}' does not exist.");
         }
 
         string json;
