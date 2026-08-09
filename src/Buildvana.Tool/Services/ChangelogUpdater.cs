@@ -72,7 +72,10 @@ internal static partial class ChangelogUpdater
     /// verbatim (producing a title-only section).</param>
     /// <returns>The rewritten changelog, with lines separated by <c>"\n"</c>.</returns>
     /// <exception cref="BuildFailedException">The changelog contains no sections.</exception>
-    public static string PrepareForRelease(IReadOnlyList<string> lines, Func<string> makeSectionTitle, string? emptyChangelogSubstitute)
+    public static string PrepareForRelease(
+        IReadOnlyList<string> lines,
+        Func<string> makeSectionTitle,
+        string? emptyChangelogSubstitute)
     {
         Guard.IsNotNull(lines);
         Guard.IsNotNull(makeSectionTitle);
@@ -281,9 +284,28 @@ internal static partial class ChangelogUpdater
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Composes the title of the changelog section for a release.
+    /// </summary>
+    /// <param name="version">The version being released.</param>
+    /// <param name="releaseUrl">The URL of the release.</param>
+    /// <param name="date">The date of the release.</param>
+    /// <returns>The section title, without the leading <c>"## "</c>.</returns>
+    /// <remarks>
+    /// <para>The date ends up in the changelog's contents, so it is formatted with the invariant culture: it must
+    /// come out the same on every machine, whatever calendar and date format the current culture prescribes.</para>
+    /// </remarks>
+    public static string MakeSectionTitle(string version, Uri releaseUrl, DateTime date)
+    {
+        Guard.IsNotNull(version);
+        Guard.IsNotNull(releaseUrl);
+        return string.Create(CultureInfo.InvariantCulture, $"[{version}]({releaseUrl}) ({date:yyyy-MM-dd})");
+    }
+
     // Reading past the last line yields null, just as TextReader.ReadLine does at end of file:
     // the state machines above pivot on it to recognize the end of the changelog.
-    private static string? GetLineOrNull(IReadOnlyList<string> lines, int index) => index < lines.Count ? lines[index] : null;
+    private static string? GetLineOrNull(IReadOnlyList<string> lines, int index)
+        => index < lines.Count ? lines[index] : null;
 
     [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex GetSectionHeadingRegex();

@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using Buildvana.Core.ConsoleOutput;
@@ -14,7 +13,8 @@ using CommunityToolkit.Diagnostics;
 namespace Buildvana.Tool.Services;
 
 /// <summary>
-/// Manages the repository's changelog in Markdown format, according to the <see href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</see> specification.
+/// Manages the repository's changelog in Markdown format, according to the
+/// <see href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</see> specification.
 /// </summary>
 /// <remarks>
 /// <para>The changelog is always read in a single guarded call, so that an I/O failure at any point of the read —
@@ -30,7 +30,10 @@ internal sealed class ChangelogService
 
     // The changelog is written without a BOM, and invalid UTF-8 is an error rather than something
     // to paper over with replacement characters: a changelog that cannot be read faithfully cannot
-    // be rewritten faithfully either.
+    // be rewritten faithfully either. The strict decoding is best-effort on reads, though: the file
+    // APIs detect byte order marks, and a detected BOM replaces this encoding with a stock one whose
+    // fallback substitutes U+FFFD. A changelog that carries a BOM and invalid bytes is therefore read
+    // and rewritten with replacement characters, as it was before this encoding was introduced.
     private static readonly Encoding FileEncoding = new UTF8Encoding(false, true);
 
     private readonly IReporter _reporter;
@@ -99,10 +102,6 @@ internal sealed class ChangelogService
         UserFile.WriteAllText(FileName, text, FileEncoding);
     }
 
-    // The release date is part of a section title, i.e. of the changelog's contents: it must come out
-    // the same on every machine, whatever calendar and date format the current culture prescribes.
     private string MakeSectionTitle()
-        => string.Create(
-            CultureInfo.InvariantCulture,
-            $"[{_version.CurrentStr}]({_server.GetReleaseUrl(_version.CurrentStr)}) ({DateTime.Now:yyyy-MM-dd})");
+        => ChangelogUpdater.MakeSectionTitle(_version.CurrentStr, _server.GetReleaseUrl(_version.CurrentStr), DateTime.Now);
 }

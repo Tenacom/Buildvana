@@ -153,7 +153,8 @@ internal sealed class ReleaseSettings
     /// against the configured <c>release.generateDocsFrom</c> regular expressions (default <c>main</c>/<c>master</c>).
     /// </summary>
     /// <param name="branch">The short name of the branch the release is created from.</param>
-    /// <returns><see langword="true"/> if <paramref name="branch"/> matches at least one pattern; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if <paramref name="branch"/> matches at least one pattern;
+    /// otherwise, <see langword="false"/>.</returns>
     /// <exception cref="BuildFailedException">A configured pattern is not a valid regular expression, or matching timed out.</exception>
     /// <remarks>
     /// Patterns are implicitly anchored (wrapped in <c>^(?:</c>&#8230;<c>)$</c>): a pattern must match the whole
@@ -191,7 +192,8 @@ internal sealed class ReleaseSettings
         }
         catch (RegexMatchTimeoutException)
         {
-            throw new BuildFailedException($"Regular expression '{pattern}' in release.generateDocsFrom timed out matching branch '{branch}'.");
+            throw new BuildFailedException(
+                $"Regular expression '{pattern}' in release.generateDocsFrom timed out matching branch '{branch}'.");
         }
     }
 
