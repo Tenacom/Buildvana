@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure.Delegation;
@@ -10,9 +11,11 @@ using NuGet.Versioning;
 
 internal sealed class PostReleaseHookArgsFactoryTests
 {
+    // The args are the same wherever bv was invoked from: the factory resolves every path against the home
+    // directory, never against the process's current directory (which bv anchors to home anyway).
     [Test]
     [NotInParallel]
-    public async Task Create_AnchorsRelativeArtifactsPathToCurrentDirectory()
+    public async Task Create_ResolvesRelativeArtifactsPathAgainstHomeDirectory()
     {
         using var home = new TempHome();
         var previousCurrentDirectory = Directory.GetCurrentDirectory();
@@ -20,12 +23,11 @@ internal sealed class PostReleaseHookArgsFactoryTests
         try
         {
             Directory.SetCurrentDirectory(temporaryDirectory.FullName);
-            var currentDirectory = Directory.GetCurrentDirectory();
 
-            var args = Create(home, artifactsPath: Path.Combine("artifacts", "Release"));
+            var args = Create(home.Provider, artifactsPath: Path.Combine("artifacts", "Release"));
 
             await Assert.That(args.RuntimeInfo.ArtifactsDirectory)
-                .IsEqualTo(Path.Combine(currentDirectory, "artifacts", "Release"));
+                .IsEqualTo(Path.Combine(home.RootPath, "artifacts", "Release"));
         }
         finally
         {
@@ -40,7 +42,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
         var absolutePath = Path.Combine(home.RootPath, "artifacts", "Release");
 
-        var args = Create(home, artifactsPath: absolutePath);
+        var args = Create(home.Provider, artifactsPath: absolutePath);
 
         await Assert.That(args.RuntimeInfo.ArtifactsDirectory).IsEqualTo(absolutePath);
     }
@@ -50,11 +52,23 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home);
+        var args = Create(home.Provider);
 
         await Assert.That(args.RuntimeInfo.HomeDirectory).IsEqualTo(home.RootPath);
         await Assert.That(args.RuntimeInfo.ScratchDirectory)
             .IsEqualTo(Path.Combine(home.RootPath, WellKnownPaths.ScratchDirectory));
+    }
+
+    // Home directories carry a trailing separator by contract; the hook-facing path does not, so that a hook
+    // can compare it with the working directory it runs in.
+    [Test]
+    public async Task Create_ReportsHomeDirectoryWithoutTrailingSeparator()
+    {
+        using var home = new TempHome();
+
+        var args = Create(new FixedHomeDirectoryProvider(home.RootPath + Path.DirectorySeparatorChar));
+
+        await Assert.That(args.RuntimeInfo.HomeDirectory).IsEqualTo(home.RootPath);
     }
 
     [Test]
@@ -62,7 +76,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home);
+        var args = Create(home.Provider);
 
         await Assert.That(args.RuntimeInfo.Version).IsEqualTo(OwnVersion.Value.ToNormalizedString());
     }
@@ -76,11 +90,11 @@ internal sealed class PostReleaseHookArgsFactoryTests
         try
         {
             Environment.SetEnvironmentVariable(DelegationService.DelegatedEnvVar, "9.9.9");
-            var args = Create(home);
+            var args = Create(home.Provider);
             await Assert.That(args.RuntimeInfo.DelegatingVersion).IsEqualTo("9.9.9");
 
             Environment.SetEnvironmentVariable(DelegationService.DelegatedEnvVar, null);
-            args = Create(home);
+            args = Create(home.Provider);
             await Assert.That(args.RuntimeInfo.DelegatingVersion).IsNull();
         }
         finally
@@ -95,7 +109,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
 
         var args = Create(
-            home,
+            home.Provider,
             simpleVersion: "2.3.4",
             semVer: "2.3.4-rc.1",
             latest: SemanticVersion.Parse("2.3.3"),
@@ -114,7 +128,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home, latest: null);
+        var args = Create(home.Provider, latest: null);
 
         await Assert.That(args.Release.PreviousVersion).IsNull();
     }
@@ -125,7 +139,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
         var packages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "2.3.4" };
 
-        var args = Create(home, producedPackages: packages, dogfooded: true);
+        var args = Create(home.Provider, producedPackages: packages, dogfooded: true);
 
         await Assert.That(args.ProducedPackages.Count).IsEqualTo(1);
         await Assert.That(args.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("2.3.4");
@@ -133,7 +147,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     }
 
     private static PostReleaseHookArgs Create(
-        TempHome home,
+        IHomeDirectoryProvider home,
         string? artifactsPath = null,
         string simpleVersion = "1.2.3",
         string semVer = "1.2.3-preview",
@@ -142,7 +156,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         bool isPublicRelease = false,
         IReadOnlyDictionary<string, string>? producedPackages = null,
         bool dogfooded = false)
-        => new PostReleaseHookArgsFactory(home.Provider).Create(
+        => new PostReleaseHookArgsFactory(home).Create(
             artifactsPath ?? Path.Combine("artifacts", "Release"),
             simpleVersion,
             semVer,

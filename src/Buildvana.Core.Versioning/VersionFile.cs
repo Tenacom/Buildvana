@@ -52,7 +52,7 @@ public sealed class VersionFile
     public static VersionFile Load(IHomeDirectoryProvider home)
     {
         Guard.IsNotNull(home);
-        var path = System.IO.Path.Combine(home.HomeDirectory, FileName);
+        var path = home.GetFullPath(FileName);
         return new(path, ReadSpec(path));
     }
 

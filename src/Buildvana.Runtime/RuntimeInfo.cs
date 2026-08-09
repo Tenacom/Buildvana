@@ -24,7 +24,8 @@ public sealed record RuntimeInfo
     public string? DelegatingVersion { get; init; }
 
     /// <summary>
-    /// Gets the absolute path of the home directory. This is also the working directory of hooks.
+    /// Gets the absolute path of the home directory, without a trailing directory separator.
+    /// This is also the working directory of hooks.
     /// </summary>
     public required string HomeDirectory { get; init; }
 

@@ -28,19 +28,25 @@ internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home)
     /// absolute paths of the run's well-known directories.
     /// </summary>
     /// <param name="artifactsPath">The path of the directory containing the build artifacts,
-    /// either absolute or relative to the current directory.</param>
+    /// either absolute or relative to the home directory.</param>
     /// <returns>A newly-created <see cref="Buildvana.Runtime.RuntimeInfo"/> instance.</returns>
+    /// <remarks>
+    /// <para>Every path is resolved against the home directory, so that the assembled args do not depend on
+    /// the process's current directory.</para>
+    /// </remarks>
     protected RuntimeInfo CreateRuntimeInfo(string artifactsPath)
     {
         Guard.IsNotNullOrEmpty(artifactsPath);
-        var homeDirectory = home.HomeDirectory;
         return new()
         {
             Version = OwnVersion.Value.ToNormalizedString(),
             DelegatingVersion = Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar),
-            HomeDirectory = homeDirectory,
-            ArtifactsDirectory = Path.GetFullPath(artifactsPath),
-            ScratchDirectory = Path.GetFullPath(CommonPaths.Scratch, homeDirectory),
+
+            // The provider's value carries a trailing separator; hooks get the same form as every other
+            // path in the args, and the same form Directory.GetCurrentDirectory() reports to them.
+            HomeDirectory = Path.TrimEndingDirectorySeparator(home.HomeDirectory),
+            ArtifactsDirectory = home.GetFullPath(artifactsPath),
+            ScratchDirectory = home.GetFullPath(CommonPaths.Scratch),
         };
     }
 }

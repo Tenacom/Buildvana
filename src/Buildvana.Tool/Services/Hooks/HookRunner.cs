@@ -67,7 +67,7 @@ internal sealed class HookRunner
     /// <param name="cancellationToken">A token that, when signalled, stops the operation before the next deletion.</param>
     public void CleanBuildCaches(CancellationToken cancellationToken = default)
     {
-        var hooksPath = Path.GetFullPath(WellKnownPaths.HooksDirectory, _home.HomeDirectory);
+        var hooksPath = _home.GetFullPath(WellKnownPaths.HooksDirectory);
         if (!UserDirectory.Exists(hooksPath))
         {
             _reporter.Detail($"Hook build cache cleaning skipped: no {WellKnownPaths.HooksDirectory} directory.");
@@ -95,7 +95,7 @@ internal sealed class HookRunner
     {
         var hookName = $"{context}/{@event}";
         var relativePath = WellKnownPaths.GetHookFile(context, @event);
-        var path = Path.GetFullPath(relativePath, _home.HomeDirectory);
+        var path = _home.GetFullPath(relativePath);
         if (!File.Exists(path))
         {
             _reporter.Info($"Hook {hookName}: skipped: no {relativePath} file.");
@@ -104,7 +104,7 @@ internal sealed class HookRunner
 
         var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
         _reporter.Detail($"Hook {hookName}: args: {json}");
-        var argsPath = Path.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event), _home.HomeDirectory);
+        var argsPath = _home.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event));
         _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
         await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
         _reporter.Info($"Hook {hookName}: running {relativePath}...");
