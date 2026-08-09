@@ -99,7 +99,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public static void SetActionsStepOutput(string name, string value)
     {
         var outputFile = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
-        BuildFailedException.ThrowIfNot(!string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
+        BuildFailedException.ThrowIf(string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
         UserFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
     }
 

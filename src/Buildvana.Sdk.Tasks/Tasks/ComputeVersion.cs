@@ -48,8 +48,8 @@ public sealed partial class ComputeVersion : BuildvanaSdkTask
 
     protected override Undefined Run()
     {
-        BuildFailedException.ThrowIfNot(
-            !string.IsNullOrEmpty(HomeDirectory),
+        BuildFailedException.ThrowIf(
+            string.IsNullOrEmpty(HomeDirectory),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(HomeDirectory)));
 
         var version = GetOrComputeVersion(HomeDirectory, Reporter);

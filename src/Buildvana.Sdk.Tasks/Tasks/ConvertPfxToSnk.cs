@@ -26,11 +26,11 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
 
     protected override Undefined Run()
     {
-        BuildFailedException.ThrowIfNot(
-            !string.IsNullOrEmpty(PfxPath),
+        BuildFailedException.ThrowIf(
+            string.IsNullOrEmpty(PfxPath),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(PfxPath)));
-        BuildFailedException.ThrowIfNot(
-            !string.IsNullOrEmpty(OutputPath),
+        BuildFailedException.ThrowIf(
+            string.IsNullOrEmpty(OutputPath),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(OutputPath)));
 
         using var cert = LoadCertificate(PfxPath, PfxPassword);

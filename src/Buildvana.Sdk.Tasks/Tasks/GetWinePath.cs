@@ -23,8 +23,8 @@ public sealed class GetWinePath : BuildvanaSdkTask
 
     protected override Undefined Run()
     {
-        BuildFailedException.ThrowIfNot(
-            !string.IsNullOrEmpty(HostPath),
+        BuildFailedException.ThrowIf(
+            string.IsNullOrEmpty(HostPath),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(HostPath)));
 
         WinePath = WinePathUtility.ConvertToWinePath(HostPath, BasePath);
