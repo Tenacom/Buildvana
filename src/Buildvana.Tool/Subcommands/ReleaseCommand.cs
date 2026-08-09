@@ -212,7 +212,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // Discover the packages produced by the pack step; both the post-release hook args and
             // the self-reference update consume the map.
             var producedPackages = ArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
-            var dogfooded = settings.ResolveDogfood();
+            var dogfooding = settings.ResolveDogfood();
 
             // Run the repo-owned post-release hook, if present. It runs whether or not dogfooding is
             // enabled; the files it changes are detected by snapshotting the working tree around it
@@ -230,7 +230,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 isPrerelease: version.IsPrerelease,
                 isPublicRelease: version.IsPublicRelease,
                 producedPackages: producedPackages,
-                dogfooded: dogfooded);
+                dogfooding: dogfooding);
             var (hookRan, hookUpdates) = await git.TrackChangesAsync(
                 () => hookRunner.RunHookAsync(hookArgs, cancellationToken)).ConfigureAwait(false);
             if (hookRan)
@@ -256,7 +256,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             // state (which still references the previously-published versions); the post-release commit is
             // marked [skip ci] because the new packages aren't in the feed yet at push time.
             IReadOnlyList<string> selfReferenceUpdates = [];
-            if (dogfooded)
+            if (dogfooding)
             {
                 selfReferenceUpdates = selfReferenceUpdater.UpdateReferences(producedPackages);
                 switch (selfReferenceUpdates.Count)
