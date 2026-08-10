@@ -215,7 +215,14 @@ internal sealed class GitService : IDisposable
         }).ToArray();
 
         _reporter.Detail(string.Create(CultureInfo.InvariantCulture, $"Staging {pathsInRepo.Length} file(s)..."));
-        Commands.Stage(_repository, pathsInRepo, new StageOptions { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
+        Commands.Stage(
+            _repository,
+            pathsInRepo,
+            new StageOptions
+            {
+                IncludeIgnored = false,
+                ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true },
+            });
     }
 
     /// <summary>
