@@ -75,7 +75,7 @@ public static class JsonSchemaGenerator
             root.Insert(1, "title", title);
         }
 
-        return schema;
+        return root;
     }
 
     private static JsonNode TransformSchemaNode(
