@@ -14,3 +14,9 @@ Coverage reports are produced by `bv test` (Microsoft.Testing.Extensions.CodeCov
 
 - Test framework is TUnit on Microsoft.Testing.Platform; use TUnit's built-in assertions (`await Assert.That(...)`), never FluentAssertions.
 - Tests that swap process-global state (console writers, current directory) must be marked `[NotInParallel]`.
+
+## Microsoft.Testing.Platform only
+
+Test orchestration targets MTP exclusively. `bv test`, `DotNetService.TestSolution`, and `global.json`'s `"test": { "runner": "Microsoft.Testing.Platform" }` all assume it, and TUnit is MTP-only by design.
+
+Do not propose VSTest fallbacks, dual-runner support, or "let the project decide" abstractions. When something in the test path needs fixing, the fix has to be MTP-shaped — e.g. passing the solution via `--solution`, or iterating test projects and invoking `dotnet test` once per project. Coverage likewise goes through MTP's `--coverage` (Microsoft.Testing.Extensions.CodeCoverage), not `--collect "XPlat Code Coverage"`.

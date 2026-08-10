@@ -69,6 +69,16 @@ XML comments for the class should be in the main file, and omitted from other fi
 
 If a class can be clearly split into two or more separate files (for example, if it has three methods, each with a dozen overloads), the main class block may be empty.
 
+## Member ordering
+
+StyleCop's SA1204 and its siblings already bucket members by access and staticness. Within a single bucket, order by the call graph: a method that calls another goes _above_ the methods it calls.
+
+The point is top-down readability — a reader meets the high-level method first and drills down into its callees, instead of assembling the picture bottom-up. No analyzer enforces this; apply it when adding methods and when reorganizing existing ones.
+
+- The rule applies only _within_ a bucket. SA1204 still wins across buckets: private static members stay before private instance ones, and so on.
+- When adding a helper, put it below its caller, never above.
+- For peer methods — both called by the same parent, neither calling the other — follow the order the parent calls them in. That is secondary to caller-before-callee.
+
 ## Extension blocks
 
 Extension blocks need some warning suppression because of bugs in Roslyn analyzers. Always use this template, adjusting names and access modifier as needed:
@@ -192,6 +202,14 @@ result = foo is not null ? ComputeSomething(firstParam, secondParam, foo)
     : someOtherCondition ? ComputeSomething(firstParam, secondParam, 2)
     : ComputeSomethingElse();
 ```
+
+## Culture and formatting
+
+This project is single-culture. Its diagnostics are English-only and must read identically on a developer machine and on a CI runner.
+
+- Never give an API an `IFormatProvider` / `CultureInfo` parameter. Bake `CultureInfo.InvariantCulture` into the implementation instead.
+- In particular, do not mirror `string.Format`'s shape with a nullable provider parameter: passing `null` there resolves to `CurrentCulture`, so the parameter's only real function is to produce locale-dependent output by accident.
+- Do not propose a provider-taking overload "for flexibility". That flexibility will never be used, and the parameter only invites mistakes.
 
 ## Line length
 
