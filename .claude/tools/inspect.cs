@@ -12,8 +12,10 @@
  *   `dotnet run .claude/tools/inspect.cs`         VS Code task: builds with `bv build`, which is all inspection
  *                                                 needs, inspects at SUGGESTION severity and above (hints are
  *                                                 excluded: the Problems panel cannot tell them from
- *                                                 suggestions anyway), and always exits zero, so that the task
- *                                                 is not reported as failed for merely having found something.
+ *                                                 suggestions anyway), and exits zero whatever it finds, so that
+ *                                                 the task is not reported as failed for merely having found
+ *                                                 something. A build or inspectcode *failure* still exits 2:
+ *                                                 nothing was analyzed then, so a clean panel would be a lie.
  *   `dotnet run .claude/tools/inspect.cs --all`   as the above, but down to HINT severity, so that the Problems
  *                                                 panel lists hints too. Rejected together with --gate rather
  *                                                 than ignored, because a switch that silently does nothing is
@@ -148,7 +150,13 @@ if (!buildIsClean)
         }
     }
 
-    return gate ? 1 : 0;
+    // A build that merely reported something is a finding, and the non-gate modes deliberately do not fail for
+    // findings. A build that *failed* is not a finding: nothing was analyzed, so the result is not "clean", and
+    // saying so takes an exit code — the diagnostics alone may carry no file position, in which case the Problems
+    // panel stays empty and a zero exit reads as success. Same reasoning as the inspectcode failure below.
+    return gate ? 1
+        : build.ExitCode == 0 ? 0
+        : 2;
 }
 
 // --all has to name the lowest severity rather than leave the option out: inspectcode's own default is
