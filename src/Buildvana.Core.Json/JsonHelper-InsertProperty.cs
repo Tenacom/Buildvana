@@ -329,13 +329,11 @@ public sealed partial class JsonHelper
         var lineStart = -1;
         for (var i = contentIndex - 1; i >= afterBrace; i--)
         {
-            if (bytes[i] != (byte)'\n')
+            if (bytes[i] == (byte)'\n')
             {
-                continue;
+                lineStart = i + 1;
+                break;
             }
-
-            lineStart = i + 1;
-            break;
         }
 
         return lineStart < 0 ? null : LeadingWhitespace(bytes, lineStart, contentIndex);
