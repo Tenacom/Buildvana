@@ -38,7 +38,9 @@ internal sealed class GitService : IDisposable
         var homeDirectory = home.HomeDirectory;
         BuildFailedException.ThrowIfNot(Repository.IsValid(homeDirectory), $"There is no Git repository at {homeDirectory}");
         _repository = new Repository(homeDirectory);
-        BuildFailedException.ThrowIfNot(TryGetOriginInfo(out var origin, out var originUrl), "No origin remote found in the Git repository.");
+        BuildFailedException.ThrowIfNot(
+            TryGetOriginInfo(out var origin, out var originUrl),
+            "No origin remote found in the Git repository.");
         Origin = origin;
         OriginUrl = new(originUrl);
         var headName = _repository.Head.CanonicalName;
@@ -85,8 +87,8 @@ internal sealed class GitService : IDisposable
     /// Gets or sets the credentials used for pushing to the Git repository if ambient credentials are not sufficient.
     /// </summary>
     /// <remarks>
-    /// <para>Set this property when ambient mechanisms (`http.extraheader` written by CI checkout actions, URL-embedded credentials, OS credential helpers)
-    /// are absent or insufficient.</para>
+    /// <para>Set this property when ambient mechanisms (`http.extraheader` written by CI checkout actions,
+    /// URL-embedded credentials, OS credential helpers) are absent or insufficient.</para>
     /// <para>The provided credentials are tried only after the server returns a 401 challenge to the initial push request.</para>
     /// </remarks>
     public GitCredentials? PushCredentialsFallback { get; set; }
@@ -117,12 +119,15 @@ internal sealed class GitService : IDisposable
     /// <returns>A tuple of the latest version and the latest stable version.</returns>
     /// <remarks>
     /// <para>If no version tag is found in commit history, this method returns a tuple of two <see langword="null"/>s.</para>
-    /// <para>If no stable version tag is found in commit history, this method returns a tuple of the latest version and <see langword="null"/>.</para>
+    /// <para>If no stable version tag is found in commit history, this method returns a tuple of the latest
+    /// version and <see langword="null"/>.</para>
     /// </remarks>
     public (SemanticVersion? Latest, SemanticVersion? LatestStable) GetLatestVersions()
     {
         var versions = _repository.Tags
-            .Select(x => SemanticVersion.TryParse(x.FriendlyName, out var version) ? (x.Target.Sha, Version: version) : (Sha: null!, Version: null!))
+            .Select(x => SemanticVersion.TryParse(x.FriendlyName, out var version)
+                ? (x.Target.Sha, Version: version)
+                : (Sha: null!, Version: null!))
             .Where(x => x.Sha is not null)
             .ToDictionary();
 
@@ -206,7 +211,10 @@ internal sealed class GitService : IDisposable
             Guard.IsTrue(!string.IsNullOrEmpty(path), nameof(paths), "One or more paths are null or empty.");
             var absolutePath = Path.GetFullPath(path, homeDirectory);
             var pathInRepo = Path.GetRelativePath(homeDirectory, absolutePath);
-            if (Path.IsPathRooted(pathInRepo) || pathInRepo == ".." || pathInRepo.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            var isOutsideRepo = Path.IsPathRooted(pathInRepo)
+                || pathInRepo == ".."
+                || pathInRepo.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+            if (isOutsideRepo)
             {
                 throw new BuildFailedException($"Git: cannot stage '{path}' because it is not in the repository.");
             }
@@ -267,13 +275,17 @@ internal sealed class GitService : IDisposable
         var pushCredentialsFallback = PushCredentialsFallback;
         if (pushCredentialsFallback is not null)
         {
-            pushOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials { Username = pushCredentialsFallback.Username, Password = pushCredentialsFallback.Password };
+            pushOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
+            {
+                Username = pushCredentialsFallback.Username,
+                Password = pushCredentialsFallback.Password,
+            };
         }
 
         if (force)
         {
             // https://stackoverflow.com/a/47295101/5753412
-            // https://github.com/libgit2/libgit2sharp/blob/5085a0c6173cdb2a3fde205330b327a8eb0a26c4/LibGit2Sharp.Tests/PushFixture.cs#L183-L187
+            // https://github.com/libgit2/libgit2sharp/blob/5085a0c617/LibGit2Sharp.Tests/PushFixture.cs#L183-L187
             // https://github.com/libgit2/libgit2sharp/issues/104#issuecomment-1553347893
             _reporter.Info($"Force pushing changes to '{remote}'...");
             var pushRefSpec = string.Format(CultureInfo.InvariantCulture, "+{0}:{0}", _repository.Head.CanonicalName);
