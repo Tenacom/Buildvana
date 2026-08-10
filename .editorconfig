@@ -549,6 +549,9 @@ resharper_member_can_be_private_global_highlighting = none
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
 
+# ReSharper inspection severities live here and nowhere else. Buildvana.slnx.DotSettings can express them too, but a setting
+# in both places is a setting a reader cannot resolve without running the tool, so that file keeps only its UI-filter rows.
+
 # Promote selected ReSharper hints to warnings, so that the inspectcode gate (which runs with --severity=WARNING) enforces them.
 
 # Pattern matching is preferred over equivalent comparison / type-check / cast chains: see .claude/rules/csharp-style-guide.md.
@@ -572,10 +575,20 @@ resharper_can_replace_cast_with_lambda_return_type_highlighting = warning
 # Redundant syntax with no legitimate exception: parentheses around a single lambda parameter whose type is inferred.
 resharper_redundant_lambda_signature_parentheses_highlighting = warning
 
+# Migrated from Buildvana.slnx.DotSettings, preserving severity: these ask for explicit JetBrains nullability annotations,
+# which matter here because the SDK exports external-annotation files for the API surface it builds.
+resharper_annotate_can_be_null_parameter_highlighting = warning
+resharper_annotate_can_be_null_type_member_highlighting = warning
+resharper_annotate_not_null_parameter_highlighting = warning
+resharper_annotate_not_null_type_member_highlighting = warning
+
 # Suppress ReSharper hints we do not want at all. Hint is the lowest severity ReSharper offers, so silencing one means "none".
 
 # Target-typed `new()` is used freely here: whatever is being assigned already names the type, so repeating it adds nothing.
 resharper_arrange_object_creation_when_type_not_evident_highlighting = none
+
+# Primary constructors: no. Migrated from Buildvana.slnx.DotSettings; IDE0290 above is the Roslyn counterpart.
+resharper_convert_to_primary_constructor_highlighting = none
 
 # Which literal form shows a string best is a judgment call, not a rule an inspection can make: these three disagree with
 # each other by design. See "String literals" in .claude/rules/csharp-style-guide.md.
