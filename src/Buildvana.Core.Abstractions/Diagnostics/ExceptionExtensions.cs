@@ -37,7 +37,7 @@ public static partial class ExceptionExtensions
         public bool IsIORelatedException
             => @this is UnauthorizedAccessException
                 or NotSupportedException
-                or ArgumentException and not ArgumentNullException
+                or (ArgumentException and not ArgumentNullException)
                 or SecurityException
                 or IOException;
 
