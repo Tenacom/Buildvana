@@ -76,7 +76,7 @@ internal sealed class VersionAdvanceSettings
         return new VersionAdvanceSettings(config.Release)
         {
             Change = positionals.Count > 0 ? positionals[0] : null,
-            CheckPublicApi = ParseBool(reader.ReadValue("--check-public-api"), "--check-public-api"),
+            CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
             Force = reader.ReadFlag("--force"),
         };
     }
@@ -102,9 +102,4 @@ internal sealed class VersionAdvanceSettings
     /// Returns <see cref="CheckPublicApi"/> if set, otherwise <c>release.checkPublicApi</c>, otherwise <see langword="true"/>.
     /// </summary>
     public bool ResolveCheckPublicApi() => CheckPublicApi ?? _releaseConfig?.CheckPublicApi ?? true;
-
-    private static bool? ParseBool(string? raw, string optionName)
-        => raw is null ? null
-            : bool.TryParse(raw, out var value) ? value
-            : throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
 }

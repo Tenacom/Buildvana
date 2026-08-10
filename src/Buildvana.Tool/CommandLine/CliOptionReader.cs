@@ -65,6 +65,23 @@ internal sealed class CliOptionReader
     }
 
     /// <summary>
+    /// Reads a value option and interprets it as a boolean, removing every occurrence (and the consumed value
+    /// for the space-separated form) from the working set.
+    /// </summary>
+    /// <param name="longName">The long name, including the leading <c>"--"</c>.</param>
+    /// <param name="shortName">The short name, including the leading <c>'-'</c>, or <see langword="null"/>.</param>
+    /// <returns>The last value supplied for the option, or <see langword="null"/> if it was absent.</returns>
+    /// <exception cref="BuildFailedException">The option was given in space-separated form with no following
+    /// value, or its value is neither <c>true</c> nor <c>false</c>.</exception>
+    public bool? ReadBoolValue(string longName, string? shortName = null)
+    {
+        var raw = ReadValue(longName, shortName);
+        return raw is null ? null
+            : bool.TryParse(raw, out var value) ? value
+            : throw new BuildFailedException($"Invalid value '{raw}' for {longName}. Expected 'true' or 'false'.");
+    }
+
+    /// <summary>
     /// Reads a value option, removing every occurrence (and the consumed value for the space-separated form)
     /// from the working set.
     /// </summary>

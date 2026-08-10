@@ -93,8 +93,8 @@ internal sealed class ReleaseSettings
         {
             Configuration = reader.ReadValue("--configuration", "-c"),
             Bump = reader.ReadValue("--bump"),
-            CheckPublicApi = ParseBool(reader.ReadValue("--check-public-api"), "--check-public-api"),
-            Dogfood = ParseBool(reader.ReadValue("--dogfood"), "--dogfood"),
+            CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
+            Dogfood = reader.ReadBoolValue("--dogfood"),
         };
     }
 
@@ -192,9 +192,4 @@ internal sealed class ReleaseSettings
                 $"Regular expression '{pattern}' in release.generateDocsFrom timed out matching branch '{branch}'.");
         }
     }
-
-    private static bool? ParseBool(string? raw, string optionName)
-        => raw is null ? null
-            : bool.TryParse(raw, out var value) ? value
-            : throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
 }

@@ -102,6 +102,48 @@ internal sealed class CliOptionReaderTests
     }
 
     [Test]
+    public async Task ReadBoolValue_ReadsSpaceSeparatedForm()
+    {
+        var reader = new CliOptionReader(["--dogfood", "true", "build"]);
+        var value = reader.ReadBoolValue("--dogfood");
+        await Assert.That(value).IsEqualTo(true);
+        await Assert.That(Join(reader.Remaining)).IsEqualTo("build");
+    }
+
+    [Test]
+    public async Task ReadBoolValue_ReadsInlineForm()
+    {
+        var reader = new CliOptionReader(["--dogfood=false"]);
+        var value = reader.ReadBoolValue("--dogfood");
+        await Assert.That(value).IsEqualTo(false);
+        await Assert.That(reader.Remaining.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task ReadBoolValue_IsCaseInsensitiveOnValue()
+    {
+        var reader = new CliOptionReader(["--dogfood", "TRUE"]);
+        var value = reader.ReadBoolValue("--dogfood");
+        await Assert.That(value).IsEqualTo(true);
+    }
+
+    [Test]
+    public async Task ReadBoolValue_ReturnsNull_WhenAbsent()
+    {
+        var reader = new CliOptionReader(["build"]);
+        var value = reader.ReadBoolValue("--dogfood");
+        await Assert.That(value).IsNull();
+        await Assert.That(Join(reader.Remaining)).IsEqualTo("build");
+    }
+
+    [Test]
+    public async Task ReadBoolValue_Throws_WhenValueIsNotBoolean()
+    {
+        await Assert.That(() => _ = new CliOptionReader(["--dogfood", "yes"]).ReadBoolValue("--dogfood"))
+            .Throws<BuildFailedException>();
+    }
+
+    [Test]
     public async Task Remaining_PreservesOrderOfUnconsumedTokens()
     {
         var reader = new CliOptionReader(["-c", "Debug", "--nologo", "--bump", "minor"]);
