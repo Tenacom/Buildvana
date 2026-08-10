@@ -287,8 +287,8 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             ["run", path],
             environment: ChildEnvironment(environment),
             workingDirectory: workingDirectory,
-            onStdout: (x) => _reporter.ChildOutput(x, null),
-            onStderr: (x) => _reporter.ChildError(x, null),
+            onStdout: x => _reporter.ChildOutput(x, null),
+            onStderr: x => _reporter.ChildError(x, null),
             cancellationToken: cancellationToken);
     }
 
@@ -406,8 +406,8 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             DotNetMuxer.Path,
             appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
             environment: ChildEnvironment(environment),
-            onStdout: outputStreaming.Enabled ? (x) => _reporter.ChildOutput(x, outputStreaming.Verbosity) : null,
-            onStderr: outputStreaming.Enabled ? (x) => _reporter.ChildError(x, outputStreaming.Verbosity) : null,
+            onStdout: outputStreaming.Enabled ? x => _reporter.ChildOutput(x, outputStreaming.Verbosity) : null,
+            onStderr: outputStreaming.Enabled ? x => _reporter.ChildError(x, outputStreaming.Verbosity) : null,
             cancellationToken: cancellationToken);
     }
 }

@@ -66,7 +66,7 @@ internal static class JetBrainsAnnotationsExporter
         var syntaxTrees = compileFilePaths.Select(path => ParseFile(path, parseOptions)).ToList();
         var references = referencePaths
             .Where(File.Exists)
-            .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
+            .Select(MetadataReference (path) => MetadataReference.CreateFromFile(path))
             .ToList();
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, allowUnsafe: true);
         return CSharpCompilation.Create(assemblyName, syntaxTrees, references, options);

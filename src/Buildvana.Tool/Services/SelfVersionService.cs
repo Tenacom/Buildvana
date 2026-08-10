@@ -310,7 +310,7 @@ internal sealed partial class SelfVersionService
         string? schemaReference = null;
         var changed = _jsonHelper.RewriteStringValues(path, (propertyPath, value) =>
         {
-            if (propertyPath.Count != 1 || propertyPath[0] != SchemaPropertyName)
+            if (propertyPath is not [SchemaPropertyName])
             {
                 return null;
             }

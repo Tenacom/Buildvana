@@ -130,19 +130,19 @@ internal sealed class GitService : IDisposable
         SemanticVersion? latestStable = null;
         foreach (var commit in _repository.Head.Commits)
         {
-            if (versions.TryGetValue(commit.Sha, out var version))
+            if (!versions.TryGetValue(commit.Sha, out var version))
             {
-                if (latest == null)
-                {
-                    latest = version;
-                }
-
-                if (!version.IsPrerelease)
-                {
-                    latestStable = version;
-                    break;
-                }
+                continue;
             }
+
+            latest ??= version;
+            if (version.IsPrerelease)
+            {
+                continue;
+            }
+
+            latestStable = version;
+            break;
         }
 
         return (latest, latestStable);
@@ -215,7 +215,7 @@ internal sealed class GitService : IDisposable
         }).ToArray();
 
         _reporter.Detail(string.Create(CultureInfo.InvariantCulture, $"Staging {pathsInRepo.Length} file(s)..."));
-        Commands.Stage(_repository, pathsInRepo, new StageOptions() { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
+        Commands.Stage(_repository, pathsInRepo, new StageOptions { IncludeIgnored = false, ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true } });
     }
 
     /// <summary>
@@ -228,7 +228,7 @@ internal sealed class GitService : IDisposable
     {
         var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
         BuildFailedException.ThrowIf(signature is null, "Git: committer identity not set.");
-        var options = new CommitOptions() { AmendPreviousCommit = amend, AllowEmptyCommit = allowEmpty };
+        var options = new CommitOptions { AmendPreviousCommit = amend, AllowEmptyCommit = allowEmpty };
         _ = _repository.Commit(message, signature, signature, options);
     }
 

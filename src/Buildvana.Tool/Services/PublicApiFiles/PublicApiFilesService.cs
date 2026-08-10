@@ -56,7 +56,8 @@ internal sealed class PublicApiFilesService
             {
                 return ApiChangeKind.Breaking;
             }
-            else if (fileResult > result)
+
+            if (fileResult > result)
             {
                 result = fileResult;
             }
@@ -89,7 +90,6 @@ internal sealed class PublicApiFilesService
     private static ApiChangeKind GetApiChangeKind(string unshippedPath)
     {
         var unshippedLines = UserFile.ReadAllLines(unshippedPath, Encoding.UTF8);
-        static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';
         var unshippedPublicApiLines = unshippedLines.SkipWhile(IsEmptyOrStartsWithHash);
         var newApiPresent = false;
         foreach (var line in unshippedPublicApiLines)
@@ -103,6 +103,8 @@ internal sealed class PublicApiFilesService
         }
 
         return newApiPresent ? ApiChangeKind.Additive : ApiChangeKind.None;
+
+        static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';
     }
 
     private static bool TransferPublicApisToShipped(string unshippedPath, string shippedPath)

@@ -62,16 +62,17 @@ public static class JsonSchemaGenerator
             TransformSchemaNode = (context, schema) => TransformSchemaNode(context, schema, nullabilityContext),
         };
         var schema = options.GetJsonSchemaAsNode(type, exporterOptions);
+        if (schema is not JsonObject root)
+        {
+            return schema;
+        }
 
         // Declare the dialect and (optionally) a title so editors recognize and label the document.
-        if (schema is JsonObject root)
+        root.Insert(0, "$schema", Dialect);
+        title ??= type.GetCustomAttribute<JsonSchemaTitleAttribute>()?.Title;
+        if (title is not null)
         {
-            root.Insert(0, "$schema", Dialect);
-            title ??= type.GetCustomAttribute<JsonSchemaTitleAttribute>()?.Title;
-            if (title is not null)
-            {
-                root.Insert(1, "title", title);
-            }
+            root.Insert(1, "title", title);
         }
 
         return schema;

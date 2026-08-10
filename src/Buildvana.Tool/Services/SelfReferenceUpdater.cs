@@ -145,10 +145,10 @@ internal sealed class SelfReferenceUpdater
         // attributes in exactly one order, so a given match site is matched by at most one of them.
         var tagAlternation = string.Join('|', Array.ConvertAll(tagNames, Regex.Escape));
         var includeFirst = new Regex(
-            $@"(<(?:{tagAlternation})\b[^>]*?\bInclude\s*=\s*"")([^""]+)(""[^>]*?\bVersion\s*=\s*"")([^""]*)("")",
+            $"""(<(?:{tagAlternation})\b[^>]*?\bInclude\s*=\s*")([^"]+)("[^>]*?\bVersion\s*=\s*")([^"]*)(")""",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var versionFirst = new Regex(
-            $@"(<(?:{tagAlternation})\b[^>]*?\bVersion\s*=\s*"")([^""]*)(""[^>]*?\bInclude\s*=\s*"")([^""]+)("")",
+            $"""(<(?:{tagAlternation})\b[^>]*?\bVersion\s*=\s*")([^"]*)("[^>]*?\bInclude\s*=\s*")([^"]+)(")""",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         var current = original;

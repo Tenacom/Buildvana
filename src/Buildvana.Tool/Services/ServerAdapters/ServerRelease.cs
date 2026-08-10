@@ -27,7 +27,6 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
     private bool _published;
     private bool _repositoryUpdated;
-    private string _releaseCommitSha = string.Empty;
     private int _postReleaseCommits;
     private bool _updatesPushed;
 
@@ -51,7 +50,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     /// <para>Returns the empty string before <see cref="EnsureReleaseCommit"/> (or any method that calls it,
     /// such as <see cref="UpdateRepository"/>) has run.</para>
     /// </remarks>
-    protected string ReleaseCommitSha => _releaseCommitSha;
+    protected string ReleaseCommitSha { get; private set; } = string.Empty;
 
     /// <summary>
     /// Ensures that a "Prepare release" commit exists, creating an empty one if necessary.
@@ -88,7 +87,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         _reporter.Info($"Version changed to {_version.CurrentStr}");
         _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
         _repositoryUpdated = true;
-        _releaseCommitSha = _git.HeadSha;
+        ReleaseCommitSha = _git.HeadSha;
 
         OnRollback(() =>
         {
@@ -130,7 +129,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         _git.Stage(files);
         _reporter.Info("Amending release commit...");
         _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
-        _releaseCommitSha = _git.HeadSha;
+        ReleaseCommitSha = _git.HeadSha;
     }
 
     /// <summary>

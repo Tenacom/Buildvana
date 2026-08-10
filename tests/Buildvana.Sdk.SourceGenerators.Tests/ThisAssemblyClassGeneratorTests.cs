@@ -52,14 +52,15 @@ internal sealed class ThisAssemblyClassGeneratorTests
     [Test]
     public async Task Constants_OfAllTypes_GenerateExpectedFields()
     {
-        var content =
-            "ByteValue=byte%3A200\n" +
-            "ShortValue=short%3A-5\n" +
-            "IntValue=42\n" +
-            "LongValue=long%3A42\n" +
-            "BoolValue=bool%3Atrue\n" +
-            "StringValue=string%3AHello%20World\n" +
-            "NullValue=\n";
+        const string content
+            = "ByteValue=byte%3A200\n"
+            + "ShortValue=short%3A-5\n"
+            + "IntValue=42\n"
+            + "LongValue=long%3A42\n"
+            + "BoolValue=bool%3Atrue\n"
+            + "StringValue=string%3AHello%20World\n"
+            + "NullValue=\n";
+
         var result = RunGenerator(content);
         var source = GetSingleGeneratedSource(result);
         await Assert.That(source).Contains("public const byte ByteValue = 200;");
@@ -159,6 +160,6 @@ internal sealed class ThisAssemblyClassGeneratorTests
         var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator);
         return trustedAssemblies
               .Where(p => Path.GetFileName(p) is "System.Runtime.dll" or "System.Private.CoreLib.dll" or "netstandard.dll")
-              .Select(p => (MetadataReference)MetadataReference.CreateFromFile(p));
+              .Select(MetadataReference (p) => MetadataReference.CreateFromFile(p));
     }
 }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
@@ -172,15 +173,7 @@ internal sealed class ReleaseSettings
         }
 
         var patterns = _config?.GenerateDocsFrom ?? DefaultGenerateDocsFrom;
-        foreach (var pattern in patterns)
-        {
-            if (IsMatch(pattern, branch))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return patterns.Any(pattern => IsMatch(pattern, branch));
     }
 
     private static bool IsMatch(string pattern, string branch)
@@ -201,17 +194,7 @@ internal sealed class ReleaseSettings
     }
 
     private static bool? ParseBool(string? raw, string optionName)
-    {
-        if (raw is null)
-        {
-            return null;
-        }
-
-        if (bool.TryParse(raw, out var value))
-        {
-            return value;
-        }
-
-        throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
-    }
+        => raw is null ? null
+            : bool.TryParse(raw, out var value) ? value
+            : throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
 }

@@ -157,7 +157,7 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task InsertProperty_WithExistingProperty_LeavesFileUntouched()
     {
-        var content = """
+        const string content = """
             {
               "msbuild-sdks": {
                 "Buildvana.Sdk": "2.1.40-preview"

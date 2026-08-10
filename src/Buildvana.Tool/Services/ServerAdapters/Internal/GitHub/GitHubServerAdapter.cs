@@ -27,8 +27,6 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private readonly IReporter _reporter;
     private readonly VersionService _version;
     private readonly GitService _git;
-
-    private readonly string _token;
     private readonly GitHubRepositoryUrls _urls;
 
     private GitHubServerAdapter(IServiceProvider services)
@@ -46,7 +44,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var tokenEnv = services.GetRequiredService<BuildvanaConfig>().GitHub?.TokenEnv is { Length: > 0 } e
             ? e
             : "GITHUB_TOKEN";
-        _token = EnvVarHelper.Require(tokenEnv);
+        PushPassword = EnvVarHelper.Require(tokenEnv);
     }
 
     /// <inheritdoc/>
@@ -75,7 +73,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public override string PushUsername => "x-access-token";
 
     /// <inheritdoc/>
-    public override string PushPassword => _token;
+    public override string PushPassword { get; }
 
     /// <summary>
     /// Creates and returns an instance of <see cref="GitHubServerAdapter"/> if the build is running in a GitHub Actions runner.
@@ -225,7 +223,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var assetContents = UserFile.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
         {
-            var upload = new ReleaseAssetUpload()
+            var upload = new ReleaseAssetUpload
             {
                 FileName = Path.GetFileName(path),
                 ContentType = mimeType,
@@ -252,7 +250,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         var client = new GitHubClient(new ProductHeaderValue("Buildvana"))
         {
-            Credentials = new(_token),
+            Credentials = new(PushPassword),
         };
 
         return client;

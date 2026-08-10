@@ -104,17 +104,7 @@ internal sealed class VersionAdvanceSettings
     public bool ResolveCheckPublicApi() => CheckPublicApi ?? _releaseConfig?.CheckPublicApi ?? true;
 
     private static bool? ParseBool(string? raw, string optionName)
-    {
-        if (raw is null)
-        {
-            return null;
-        }
-
-        if (bool.TryParse(raw, out var value))
-        {
-            return value;
-        }
-
-        throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
-    }
+        => raw is null ? null
+            : bool.TryParse(raw, out var value) ? value
+            : throw new BuildFailedException($"Invalid value '{raw}' for {optionName}. Expected 'true' or 'false'.");
 }

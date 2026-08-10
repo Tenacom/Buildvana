@@ -99,11 +99,13 @@ public static class BuildvanaConfigLoader
         var newlines = 0;
         for (var i = 0; newlines < line && i < json.Length; i++)
         {
-            if (json[i] == (byte)'\n')
+            if (json[i] != (byte)'\n')
             {
-                newlines++;
-                lineStart = i + 1;
+                continue;
             }
+
+            newlines++;
+            lineStart = i + 1;
         }
 
         // Count characters (not bytes) from the line start to the offending position, clamping in the unlikely

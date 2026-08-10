@@ -154,7 +154,8 @@ internal sealed class SelfVersionServiceTests
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
-        var manifest = """{ "version": 1, "isRoot": true, "tools": { "BV": { "version": "2.1.40-preview", "commands": [ "bv" ] } } }""";
+        const string manifest
+            = """{ "version": 1, "isRoot": true, "tools": { "BV": { "version": "2.1.40-preview", "commands": [ "bv" ] } } }""";
         WriteRawToolManifest(home, manifest);
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
