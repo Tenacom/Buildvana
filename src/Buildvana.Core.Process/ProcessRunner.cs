@@ -39,6 +39,13 @@ public sealed class ProcessRunner : IProcessRunner
         // ReSharper disable once PossibleMultipleEnumeration
         Guard.IsNotNull(args);
 
+        // No explicit encoding on the PipeTarget factories below: CliWrap defaults them to Encoding.Default, which is
+        // UTF-8 on .NET (it meant the ANSI codepage only on .NET Framework), and every child we start is the dotnet
+        // muxer — hooks included, as they run as file-based apps under `dotnet run`. .NET writes UTF-8 to a redirected
+        // stdout whatever the console codepage is, so both ends of the pipe already agree; verified on an
+        // Italian-locale Windows with the console forced to codepage 850. Revisit when we start a non-.NET child
+        // (git.exe, an archiver, a hook in another language), and pass an explicit encoding here when we do.
+        // Decoding only: how these strings survive being written back out belongs to whoever owns the console.
         var stdoutBuffer = new StringBuilder();
         var stderrBuffer = new StringBuilder();
         var stdoutCapture = new HeadTailPipeTarget(maxHeadLines: OutputHeadLines, maxTailLines: OutputTailLines);
