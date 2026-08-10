@@ -106,7 +106,7 @@ internal sealed class CliOptionReaderTests
     {
         var reader = new CliOptionReader(["--dogfood", "true", "build"]);
         var value = reader.ReadBoolValue("--dogfood");
-        await Assert.That(value).IsEqualTo(true);
+        await Assert.That(value).IsTrue();
         await Assert.That(Join(reader.Remaining)).IsEqualTo("build");
     }
 
@@ -115,7 +115,7 @@ internal sealed class CliOptionReaderTests
     {
         var reader = new CliOptionReader(["--dogfood=false"]);
         var value = reader.ReadBoolValue("--dogfood");
-        await Assert.That(value).IsEqualTo(false);
+        await Assert.That(value).IsFalse();
         await Assert.That(reader.Remaining.Count).IsEqualTo(0);
     }
 
@@ -124,7 +124,7 @@ internal sealed class CliOptionReaderTests
     {
         var reader = new CliOptionReader(["--dogfood", "TRUE"]);
         var value = reader.ReadBoolValue("--dogfood");
-        await Assert.That(value).IsEqualTo(true);
+        await Assert.That(value).IsTrue();
     }
 
     [Test]
