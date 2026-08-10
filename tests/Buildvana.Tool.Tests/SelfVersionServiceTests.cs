@@ -187,7 +187,7 @@ internal sealed class SelfVersionServiceTests
     public async Task UpdateRepository_WithoutPinEntry_AddsPin()
     {
         using var home = new TempHome();
-        var content = """
+        const string content = """
             {
               "msbuild-sdks": {
                 "Microsoft.Build.NoTargets": "3.7.134"
@@ -218,7 +218,7 @@ internal sealed class SelfVersionServiceTests
     public async Task UpdateRepository_WithoutSdksSection_AddsSection()
     {
         using var home = new TempHome();
-        var content = """
+        const string content = """
             {
               "sdk": {
                 "version": "10.0.302"
@@ -403,7 +403,7 @@ internal sealed class SelfVersionServiceTests
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
         WriteToolManifest(home, "2.1.41-preview");
-        var content = """
+        const string content = """
             // This comment must survive the update.
             {
               /* so must this one */
@@ -441,7 +441,7 @@ internal sealed class SelfVersionServiceTests
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
         WriteToolManifest(home, "2.1.41-preview");
-        var content = """
+        const string content = """
             {
               "$schema": "https://example.com/hand-rolled.schema.json"
             }

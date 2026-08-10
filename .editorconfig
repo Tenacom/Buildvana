@@ -563,3 +563,22 @@ resharper_can_simplify_dictionary_try_get_value_with_get_value_or_default_highli
 resharper_convert_closure_to_method_group_highlighting = warning
 resharper_convert_to_local_function_highlighting = warning
 resharper_property_can_be_made_init_only_global_highlighting = warning
+
+# Declarations should state what they mean: a local that never changes is a constant, and a lambda's return type belongs
+# in its signature rather than in a cast on the returned expression.
+resharper_convert_to_constant_local_highlighting = warning
+resharper_can_replace_cast_with_lambda_return_type_highlighting = warning
+
+# Redundant syntax with no legitimate exception: parentheses around a single lambda parameter whose type is inferred.
+resharper_redundant_lambda_signature_parentheses_highlighting = warning
+
+# Suppress ReSharper hints we do not want at all. Hint is the lowest severity ReSharper offers, so silencing one means "none".
+
+# Target-typed `new()` is used freely here: whatever is being assigned already names the type, so repeating it adds nothing.
+resharper_arrange_object_creation_when_type_not_evident_highlighting = none
+
+# Which literal form shows a string best is a judgment call, not a rule an inspection can make: these three disagree with
+# each other by design. See "String literals" in .claude/rules/csharp-style-guide.md.
+resharper_use_raw_string_highlighting = none
+resharper_use_verbatim_string_highlighting = none
+resharper_raw_string_can_be_simplified_highlighting = none

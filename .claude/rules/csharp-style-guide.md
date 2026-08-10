@@ -211,6 +211,16 @@ This project is single-culture. Its diagnostics are English-only and must read i
 - In particular, do not mirror `string.Format`'s shape with a nullable provider parameter: passing `null` there resolves to `CurrentCulture`, so the parameter's only real function is to produce locale-dependent output by accident.
 - Do not propose a provider-taking overload "for flexibility". That flexibility will never be used, and the parameter only invites mistakes.
 
+## String literals
+
+Pick the form that shows the content most clearly. There is no universal winner, so ReSharper's `UseRawString`, `UseVerbatimString`, and `RawStringCanBeSimplified` are all suppressed: they disagree with each other by design, and the choice between them is a judgment call rather than a rule an inspection can make.
+
+- **Raw** (`"""..."""`) when the content itself contains quotes or backslashes. This is the big win, and it is why the regexes in `SelfReferenceUpdater` are readable: `[^""]+` collapses to `[^"]+`, and the pattern gets _shorter_ as well as clearer.
+- **Raw, multi-line** for content that is naturally several lines: JSON documents, expected output, code templates. The indentation of the closing `"""` sets the margin stripped from every line, so the literal lines up with the code around it and needs no `\n`, no concatenation, and no leading-whitespace gymnastics. Prefer this to a single-line literal stitched together with `\n` whenever the content is genuinely multi-line.
+- **Regular, with escapes**, when an escape _is_ the point. `"{\n  \"name\": 42\n}"` in a test that asserts line and column keeps its newlines explicit and independent of the file's line endings; a multi-line raw literal would make them a property of the source file instead.
+- **Verbatim** (`@"..."`) has a narrow remaining niche now that raw strings exist: content heavy in backslashes but free of quotes, such as Windows paths.
+- Prefer **consistency with adjacent literals** over shaving delimiters off one of them. Where several literals form a visual group, matching forms read better than one odd member — even if that member would compile as a plain `"..."`.
+
 ## Line length
 
 Code and comment lines are limited to 140 characters, including indentation. The limit covers C# source in full: code, ordinary comments, and XML documentation comments alike. Prose files (Markdown and the like) have no line-length limit.
