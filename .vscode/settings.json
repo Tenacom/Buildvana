@@ -53,7 +53,7 @@
   // Controls if the diff editor shows the diff side by side or inline
   "diffEditor.renderSideBySide": true,
   // Controls if the diff editor shows changes in leading or trailing whitespace as diffs
-  "diffEditor.ignoreTrimWhitespace": true,
+  "diffEditor.ignoreTrimWhitespace": false,
   // Controls if the diff editor shows +/- indicators for added/removed changes
   "diffEditor.renderIndicators": true,
   // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
