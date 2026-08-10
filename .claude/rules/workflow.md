@@ -34,13 +34,35 @@
 4. You open a branch on my fork (rdeago) for the pull request
 5. You write the code; I review before every commit. Always ensure the solution builds with zero errors and zero warnings and all tests (if any) pass.
 6. Sanity check. This gates _every_ push to the PR branch — follow-up commits (e.g., addressing review feedback) included, not just the final commit of the initial implementation:
-   a. Execute `dotnet bv pack` to build everything, run tests, and produce build artifacts. After it runs, you should find artifacts (NuGet packages, Docker images, etc.) in the `artifacts` folder. You can inspect these artifacts to verify that they are correct and ready for release.
-   b. Execute `dotnet dnx JetBrains.ReSharper.GlobalTools inspectcode --swea --severity=WARNING --output=inspect.sarif --format=Sarif --properties:Configuration=Release --no-build Buildvana.slnx --yes` to analyze the whole solution with ReSharper. Then run `dotnet run .claude/tools/inspect-sarif.cs` to summarize the report (one line per result), and address each one (with `--severity=WARNING`, every result will be at `error` or `warning` level — fix them all).
-   c. Repeat from (a) until there are zero errors and zero warnings. If you have any doubts, or an error or warning that you think is a false positive, or that just won't go away, ask me.
-   d. You can leave `inspect.sarif` in the repo, it's in `.gitignore` and won't be committed.
+   a. Execute `dotnet run .claude/tools/inspect.cs --gate`. It runs `dotnet bv pack` (build, tests, build artifacts) and, if that reported nothing, analyzes the whole solution with ReSharper at WARNING severity and above. Every diagnostic of either phase is reported as `path(line,col): severity ID: message`, and the tool exits non-zero if there was any.
+   b. Address every reported diagnostic, then repeat from (a) until it exits zero. If you have any doubts, or an error or warning that you think is a false positive, or that just won't go away, ask me.
+   c. Build artifacts (NuGet packages, Docker images, etc.) are left in the `artifacts` folder. You can inspect them to verify that they are correct and ready for release.
+   d. The full output of both phases, and the SARIF report, are left in `.buildvana-temp`, which is gitignored. Read them when a diagnostic needs more context than its one line, or when the build fails without reporting one.
 7. When you're done, you prepare the title, text, and labels for the PR, following the [org-wide PR template](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md). Issue and PR templates live in the org-wide repo `Tenacom/.github`, not in this repo.
 8. I review the PR and propose edits if necessary.
 9. When I approve, you post the PR using the GitHub MCP tool.
+
+## Reacting to reviews
+
+1. I give you the link to a review comment. We are usually on the PR branch, often in the same conversation where the PR has been created.
+2. You check that we are on the PR branch and in sync with the remote — a reviewer may have committed a suggestion through the GitHub UI — then read the review and make a plan.
+3. We review the plan together. This is usually a quick "take this one, leave this other one"; on more complicated findings, make sure we agree on the steps to take. Make sure you have all the info you need to proceed on your own: if I don't answer a question, repeat it; if you have any doubt, ask for clarification.
+
+   Once we agree, the rest is automatic: you address the findings, sanity-check, push, and reply, all without asking me for confirmation. The agreement reached here stands in for both the general "check with me before taking any action" rule and the "I review before every commit" rule of "Solving an issue". Stop and ask only if you get stuck, or if a finding turns out to need a non-trivial refactor we did not foresee.
+4. You address the review's findings as agreed in point 3. One commit per _addressed_ finding: a finding we agreed to leave alone produces no commit, only its rationale in the reply.
+5. Sanity check, same as the "Sanity check" step of "Solving an issue". When it is not green, the fixes go in further commits — no amending or rewriting of the commits from point 4.
+6. When you're done, push and reply to the review:
+   a. Every code-anchored comment gets its own reply, even if it is just "Done.", or the rationale for not addressing the finding. Resolve each conversation after replying to it.
+   b. A summary comment is needed only in two cases: to address findings that are not code-anchored, and to ask for a new review.
+   c. Replies state what you did, and why you did not do the rest. Keep them structured and to the point.
+   d. You should usually ask the reviewer (by nickname, e.g. `@claude`) for a new review. The request goes in the summary comment: at its end if it has other content, as its whole body otherwise. A new review is NOT necessary when the review stated that the PR was ready to be merged and you did no code changes (or if they were very trivial).
+
+## Small changes out of scope
+
+- Do NOT open a follow-up issue for a small change, not even when a reviewer proposes one. An issue/PR cycle costs, on average, 100x the time and effort of just making the change. The right approach is: FIX. IT. NOW!
+- "Now" means in the current PR, in its own commit, plus a line in the "Additional changes" section of the PR description. That section exists precisely to record what was not in the issue's original plan, so an out-of-scope fix stays visible to the reviewer instead of being smuggled in.
+- This applies to both flows above: something you notice while writing the code, and something a review surfaces.
+- An issue is for work that is actually big: work that needs its own plan, or that would derail the PR under review. When in doubt, ask me — but the default is to fix it now.
 
 ## Labels
 
