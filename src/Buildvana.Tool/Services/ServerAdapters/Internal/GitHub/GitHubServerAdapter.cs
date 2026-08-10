@@ -28,6 +28,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private readonly VersionService _version;
     private readonly GitService _git;
     private readonly GitHubRepositoryUrls _urls;
+    private readonly string _token;
 
     private GitHubServerAdapter(IServiceProvider services)
     {
@@ -44,7 +45,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var tokenEnv = services.GetRequiredService<BuildvanaConfig>().GitHub?.TokenEnv is { Length: > 0 } e
             ? e
             : "GITHUB_TOKEN";
-        PushPassword = EnvVarHelper.Require(tokenEnv);
+        _token = EnvVarHelper.Require(tokenEnv);
     }
 
     /// <inheritdoc/>
@@ -73,7 +74,8 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public override string PushUsername => "x-access-token";
 
     /// <inheritdoc/>
-    public override string PushPassword { get; }
+    // ReSharper disable once ConvertToAutoProperty // _token is also the REST API credential; keep it separate from the push contract
+    public override string PushPassword => _token;
 
     /// <summary>
     /// Creates and returns an instance of <see cref="GitHubServerAdapter"/> if the build is running in a GitHub Actions runner.
@@ -250,7 +252,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     {
         var client = new GitHubClient(new ProductHeaderValue("Buildvana"))
         {
-            Credentials = new(PushPassword),
+            Credentials = new(_token),
         };
 
         return client;
