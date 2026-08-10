@@ -6,6 +6,9 @@ using Microsoft.CodeAnalysis;
 
 namespace Buildvana.Sdk.SourceGenerators.Internal;
 
+/// <summary>
+/// Provides extension methods for <see cref="StringBuilder"/>.
+/// </summary>
 internal static class StringBuilderExtensions
 {
     extension(StringBuilder @this)
