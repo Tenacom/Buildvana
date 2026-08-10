@@ -70,7 +70,8 @@ internal sealed class CliOptionReader
     /// </summary>
     /// <param name="longName">The long name, including the leading <c>"--"</c>.</param>
     /// <param name="shortName">The short name, including the leading <c>'-'</c>, or <see langword="null"/>.</param>
-    /// <returns>The last value supplied for the option, or <see langword="null"/> if it was absent.</returns>
+    /// <returns>The parsed value of the last occurrence of the option, or <see langword="null"/> if it was
+    /// absent.</returns>
     /// <exception cref="BuildFailedException">The option was given in space-separated form with no following
     /// value, or its value is neither <c>true</c> nor <c>false</c>.</exception>
     public bool? ReadBoolValue(string longName, string? shortName = null)
