@@ -268,10 +268,18 @@ public sealed class TempGitRepo : IDisposable
     public void Dispose()
     {
         _repository.Dispose();
-        DeleteDirectory(RootPath);
-        foreach (var path in _remotePaths.Values)
+        try
         {
-            DeleteDirectory(path);
+            DeleteDirectory(RootPath);
+        }
+        finally
+        {
+            // Remotes live in directories of their own, so a working tree that refuses to go — a stray lock
+            // on a Git object file is the classic — must not take them with it.
+            foreach (var path in _remotePaths.Values)
+            {
+                DeleteDirectory(path);
+            }
         }
     }
 
