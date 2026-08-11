@@ -14,7 +14,6 @@ using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.ServerAdapters;
-using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
@@ -247,7 +246,10 @@ internal sealed class ReleaseHarness : IDisposable
 
     private void WriteArtifacts()
     {
-        var version = _services.GetRequiredService<VersionService>().CurrentStr;
+        // The version is computed from the repository, not read off the command that is driving this pack:
+        // a real `dotnet pack` computes it independently too, and a release that publishes a version its
+        // own artifacts do not carry is precisely the divergence these tests have to be able to see.
+        var version = ComputeVersion();
         _ = Directory.CreateDirectory(ArtifactsPath);
         foreach (var id in ProducedPackageIds)
         {
