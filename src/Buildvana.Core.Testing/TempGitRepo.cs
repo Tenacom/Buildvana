@@ -18,16 +18,16 @@ namespace Buildvana.Core.Testing;
 /// directory, so that no repository created by this class — and no code reading one — can see the machine's
 /// global, XDG, or system Git configuration. Without it, a test would observe a committer identity on a
 /// developer laptop and none on a bare CI runner, and the two would exercise different code paths.</para>
-/// <para>Every member that reads the repository's state opens a handle of its own, and none of them reads
-/// through the handle this class keeps for the operations that change it. Code under test holds a handle of
-/// its own too, so anything it commits, tags, or checks out has to be observable here no matter what either
-/// handle happens to have cached.</para>
+/// <para>Every member opens a repository handle of its own and disposes it before returning; this class keeps
+/// none. Code under test holds a handle of its own too, so anything it commits, tags, or checks out has to be
+/// observable here, and anything done here has to land on the repository as the code under test left it, no
+/// matter what either handle happens to have cached. Keeping a handle would make that true of some members
+/// and not others — a member that changes state reads the repository first, to find out what to change.</para>
 /// </remarks>
 public sealed class TempGitRepo : IDisposable
 {
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
-    private readonly Repository _repository;
     private readonly Dictionary<string, string> _remotePaths = new(StringComparer.Ordinal);
 
     // Isolates the configuration once per process. A type initializer runs before the first instance is
@@ -73,7 +73,6 @@ public sealed class TempGitRepo : IDisposable
     {
         RootPath = Directory.CreateTempSubdirectory("bv-test-repo-").FullName;
         _ = Repository.Init(RootPath);
-        _repository = new Repository(RootPath);
     }
 
     /// <summary>
@@ -134,7 +133,8 @@ public sealed class TempGitRepo : IDisposable
     public void AddRemote(string name, Uri url)
     {
         ArgumentNullException.ThrowIfNull(url);
-        _ = _repository.Network.Remotes.Add(name, url.AbsoluteUri);
+        using var repository = new Repository(RootPath);
+        _ = repository.Network.Remotes.Add(name, url.AbsoluteUri);
     }
 
     /// <summary>
@@ -153,10 +153,11 @@ public sealed class TempGitRepo : IDisposable
     {
         var path = Directory.CreateTempSubdirectory("bv-test-remote-").FullName;
         _ = Repository.Init(path, isBare: true);
-        _ = _repository.Network.Remotes.Add(name, path);
+        using var repository = new Repository(RootPath);
+        _ = repository.Network.Remotes.Add(name, path);
         _remotePaths.Add(name, path);
-        var branch = _repository.Head;
-        _ = _repository.Branches.Update(
+        var branch = repository.Head;
+        _ = repository.Branches.Update(
             branch,
             b => b.Remote = name,
             b => b.UpstreamBranch = branch.CanonicalName);
@@ -170,15 +171,20 @@ public sealed class TempGitRepo : IDisposable
     /// <param name="email">The email address of the committer.</param>
     public void SetCommitterIdentity(string name, string email)
     {
-        _repository.Config.Set("user.name", name);
-        _repository.Config.Set("user.email", email);
+        using var repository = new Repository(RootPath);
+        repository.Config.Set("user.name", name);
+        repository.Config.Set("user.email", email);
     }
 
     /// <summary>
     /// Creates a lightweight tag on the current <c>HEAD</c> commit.
     /// </summary>
     /// <param name="name">The name of the tag.</param>
-    public void CreateTag(string name) => _ = _repository.ApplyTag(name);
+    public void CreateTag(string name)
+    {
+        using var repository = new Repository(RootPath);
+        _ = repository.ApplyTag(name);
+    }
 
     /// <summary>
     /// Gets the most recent commits reachable from <c>HEAD</c>, newest first.
@@ -227,9 +233,10 @@ public sealed class TempGitRepo : IDisposable
     /// <param name="message">The commit message.</param>
     public void CommitAll(string message = "Test commit")
     {
-        Commands.Stage(_repository, "*");
+        using var repository = new Repository(RootPath);
+        Commands.Stage(repository, "*");
         var signature = new Signature("Test", "test@example.com", DateTimeOffset.Now);
-        _ = _repository.Commit(message, signature, signature, new CommitOptions { AllowEmptyCommit = true });
+        _ = repository.Commit(message, signature, signature, new CommitOptions { AllowEmptyCommit = true });
     }
 
     /// <summary>
@@ -238,20 +245,29 @@ public sealed class TempGitRepo : IDisposable
     /// <param name="name">The name of the new branch.</param>
     public void CheckoutNewBranch(string name)
     {
-        var branch = _repository.CreateBranch(name);
-        _ = Commands.Checkout(_repository, branch);
+        using var repository = new Repository(RootPath);
+        var branch = repository.CreateBranch(name);
+        _ = Commands.Checkout(repository, branch);
     }
 
     /// <summary>
     /// Checks out an existing branch.
     /// </summary>
     /// <param name="name">The name of the branch.</param>
-    public void Checkout(string name) => _ = Commands.Checkout(_repository, _repository.Branches[name]);
+    public void Checkout(string name)
+    {
+        using var repository = new Repository(RootPath);
+        _ = Commands.Checkout(repository, repository.Branches[name]);
+    }
 
     /// <summary>
     /// Checks out the current <c>HEAD</c> commit directly, detaching <c>HEAD</c> from any branch.
     /// </summary>
-    public void CheckoutDetached() => _ = Commands.Checkout(_repository, _repository.Head.Tip);
+    public void CheckoutDetached()
+    {
+        using var repository = new Repository(RootPath);
+        _ = Commands.Checkout(repository, repository.Head.Tip);
+    }
 
     /// <summary>
     /// Merges a branch into the current branch, always creating a merge commit.
@@ -259,15 +275,15 @@ public sealed class TempGitRepo : IDisposable
     /// <param name="branchName">The name of the branch to merge.</param>
     public void Merge(string branchName)
     {
+        using var repository = new Repository(RootPath);
         var signature = new Signature("Test", "test@example.com", DateTimeOffset.Now);
         var options = new MergeOptions { FastForwardStrategy = FastForwardStrategy.NoFastForward };
-        _ = _repository.Merge(_repository.Branches[branchName], signature, options);
+        _ = repository.Merge(repository.Branches[branchName], signature, options);
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        _repository.Dispose();
         try
         {
             DeleteDirectory(RootPath);
