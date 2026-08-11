@@ -66,9 +66,20 @@ internal sealed record ReleaseHarnessOptions
     public bool WithBotIdentity { get; init; } = true;
 
     /// <summary>
-    /// Gets a value indicating whether the server adapter provides fallback push credentials.
+    /// Gets the protocol username the server adapter provides for pushing, or <see langword="null"/> if it
+    /// provides none.
     /// </summary>
-    public bool WithPushCredentials { get; init; } = true;
+    public string? PushUser { get; init; } = "x-access-token";
+
+    /// <summary>
+    /// Gets the secret the server adapter provides for pushing, or <see langword="null"/> if it provides none.
+    /// </summary>
+    /// <remarks>
+    /// <para>Independent of <see cref="PushUser"/> on purpose: an adapter can provide one and not the other.
+    /// GitLab CI is that adapter today — a fixed protocol username, and no token until the configuration
+    /// file grows one.</para>
+    /// </remarks>
+    public string? PushSecret { get; init; } = "test-token";
 
     /// <summary>
     /// Gets a callback invoked while publishing the release. Throw from it to simulate a publication
