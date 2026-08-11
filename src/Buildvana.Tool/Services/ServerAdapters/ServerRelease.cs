@@ -57,15 +57,16 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     protected string ReleaseCommitSha { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Ensures that a "Prepare release" commit exists, creating an empty one if necessary.
+    /// Ensures that a "Prepare release" commit exists, creating one if necessary.
     /// </summary>
     /// <remarks>
-    /// <para>The first call creates an empty commit, refreshes version information from the new Git height,
-    /// then amends the commit with the final version-bearing message and captures its SHA into
+    /// <para>The first call commits whatever is staged - nothing at all, when no caller has staged anything -
+    /// then names the commit after the version computed from it and captures its SHA into
     /// <see cref="ReleaseCommitSha"/>. Subsequent calls are no-ops.</para>
-    /// <para><see cref="UpdateRepository"/> calls this implicitly, because it amends the release commit and
-    /// builds its own message afterwards. <see cref="AddPostReleaseCommit"/> does not: it requires a release
-    /// commit to exist already, so that the version cannot move under a message its caller has formatted.</para>
+    /// <para><see cref="UpdateRepository"/> stages before calling this, so that the files it is given are part
+    /// of the release commit from the outset. <see cref="AddPostReleaseCommit"/> does not call it at all: it
+    /// requires a release commit to exist already, so that the version cannot move under a message its caller
+    /// has formatted.</para>
     /// <para>Call this directly to settle the version before anything reads it - notably before building, so
     /// that artifacts carry the same version that will be tagged and published.</para>
     /// </remarks>
@@ -125,8 +126,15 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
         // Staging comes first, so that the files are already in the index when the release commit is
         // made: the version is computed from what the commit contains, and these files are part of it.
+        // Making the commit is therefore all there is to do when there isn't one yet; only a commit that
+        // already exists has to be amended, and named again after the version its new tree yields.
         _git.Stage(files);
-        EnsureReleaseCommit();
+        if (!_repositoryUpdated)
+        {
+            EnsureReleaseCommit();
+            return;
+        }
+
         _reporter.Info("Amending release commit...");
         _git.Commit(ProvisionalMessage, amend: true, allowEmpty: true);
         NameReleaseCommit();
