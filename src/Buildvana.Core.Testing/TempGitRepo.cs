@@ -2,7 +2,9 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using LibGit2Sharp;
 
@@ -11,11 +13,37 @@ namespace Buildvana.Core.Testing;
 /// <summary>
 /// A disposable real Git repository in a temporary directory, for tests exercising Git-dependent code.
 /// </summary>
+/// <remarks>
+/// <para>Constructing the first instance in a process points libgit2's configuration search paths at an empty
+/// directory, so that no repository created by this class — and no code reading one — can see the machine's
+/// global, XDG, or system Git configuration. Without it, a test would observe a committer identity on a
+/// developer laptop and none on a bare CI runner, and the two would exercise different code paths.</para>
+/// </remarks>
 public sealed class TempGitRepo : IDisposable
 {
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     private readonly Repository _repository;
+    private readonly Dictionary<string, string> _remotePaths = new(StringComparer.Ordinal);
+
+    // Isolates the configuration once per process. A type initializer runs before the first instance is
+    // created, and blocks every other thread until it has completed, so no thread can be inside libgit2 —
+    // which keeps the search paths in a global — while they are being changed. Doing this per instance
+    // instead would mutate that global underneath repositories other threads are already using, which
+    // libgit2 answers with a corrupted heap.
+    static TempGitRepo()
+    {
+        // The paths point at one empty directory, shared by every repository created in this process and
+        // left in place afterwards: it is only ever created, never written to. Restoring the defaults on
+        // disposal would be pointless, as the isolation must hold for as long as any test may open a
+        // repository, and would reintroduce the very race this type initializer exists to avoid.
+        var path = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "bv-test-gitconfig")).FullName;
+        ReadOnlySpan<ConfigurationLevel> levels = [ConfigurationLevel.Global, ConfigurationLevel.Xdg, ConfigurationLevel.System];
+        foreach (var level in levels)
+        {
+            GlobalSettings.SetConfigSearchPaths(level, path);
+        }
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TempGitRepo"/> class, creating and initializing
@@ -44,6 +72,18 @@ public sealed class TempGitRepo : IDisposable
     public string HeadSha => _repository.Head.Tip.Sha;
 
     /// <summary>
+    /// Gets the friendly names of the repository's tags.
+    /// </summary>
+    public IReadOnlyList<string> TagNames
+    {
+        get
+        {
+            using var repository = new Repository(RootPath);
+            return [.. repository.Tags.Select(x => x.FriendlyName).Order(StringComparer.Ordinal)];
+        }
+    }
+
+    /// <summary>
     /// Writes a file in the repository's root directory.
     /// </summary>
     /// <param name="name">The name of the file, relative to the root directory.</param>
@@ -61,6 +101,92 @@ public sealed class TempGitRepo : IDisposable
     {
         ArgumentNullException.ThrowIfNull(url);
         _ = _repository.Network.Remotes.Add(name, url.AbsoluteUri);
+    }
+
+    /// <summary>
+    /// Creates a bare Git repository in a temporary directory of its own, adds it as a remote, and makes
+    /// the current branch track its homonym on it, so that pushes from the current branch actually go
+    /// somewhere and can be inspected afterwards (see <see cref="GetRemoteTipSha"/>).
+    /// </summary>
+    /// <param name="name">The name of the remote.</param>
+    /// <returns>The full path of the bare repository.</returns>
+    /// <remarks>
+    /// <para>The repository must already have a commit, so that there is a branch to set tracking information on.</para>
+    /// <para>The bare repository lives outside <see cref="RootPath"/>, so that it does not show up as a
+    /// working-tree change; it is deleted along with this instance.</para>
+    /// </remarks>
+    public string AddBareRemote(string name = "origin")
+    {
+        var path = Directory.CreateTempSubdirectory("bv-test-remote-").FullName;
+        _ = Repository.Init(path, isBare: true);
+        _remotePaths.Add(name, path);
+        _ = _repository.Network.Remotes.Add(name, path);
+        var branch = _repository.Head;
+        _ = _repository.Branches.Update(
+            branch,
+            b => b.Remote = name,
+            b => b.UpstreamBranch = branch.CanonicalName);
+        return path;
+    }
+
+    /// <summary>
+    /// Sets the committer identity in the repository's local configuration.
+    /// </summary>
+    /// <param name="name">The display name of the committer.</param>
+    /// <param name="email">The email address of the committer.</param>
+    public void SetCommitterIdentity(string name, string email)
+    {
+        _repository.Config.Set("user.name", name);
+        _repository.Config.Set("user.email", email);
+    }
+
+    /// <summary>
+    /// Creates a lightweight tag on the current <c>HEAD</c> commit.
+    /// </summary>
+    /// <param name="name">The name of the tag.</param>
+    public void CreateTag(string name) => _ = _repository.ApplyTag(name);
+
+    /// <summary>
+    /// Gets the most recent commits reachable from <c>HEAD</c>, newest first.
+    /// </summary>
+    /// <param name="count">The maximum number of commits to return.</param>
+    /// <returns>The commits, newest first. Fewer than <paramref name="count"/> commits are returned
+    /// if the history is shorter.</returns>
+    /// <remarks>
+    /// <para>The history is read through a repository handle of its own, so that commits created by code
+    /// under test — which holds a handle of its own too — are seen as soon as they are made.</para>
+    /// <para>Commits are sorted topologically, not by time: commits made in the same second — the norm for
+    /// commits a test makes, and for those made by the code it exercises — carry the same timestamp, and
+    /// the default time-based sort puts them in an arbitrary order.</para>
+    /// </remarks>
+    public IReadOnlyList<TempGitCommit> GetCommits(int count)
+    {
+        using var repository = new Repository(RootPath);
+        var filter = new CommitFilter
+        {
+            IncludeReachableFrom = repository.Head,
+            SortBy = CommitSortStrategies.Topological,
+        };
+        var result = new List<TempGitCommit>(count);
+        foreach (var commit in repository.Commits.QueryBy(filter).Take(count))
+        {
+            result.Add(DescribeCommit(repository, commit));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets the SHA of the tip of the branch homonymous to the current one on a remote added by
+    /// <see cref="AddBareRemote"/>.
+    /// </summary>
+    /// <param name="name">The name of the remote.</param>
+    /// <returns>The SHA of the remote branch's tip, or <see langword="null"/> if the remote has no such
+    /// branch, i.e. if nothing has been pushed to it yet.</returns>
+    public string? GetRemoteTipSha(string name = "origin")
+    {
+        using var remote = new Repository(_remotePaths[name]);
+        return remote.Branches[CurrentBranchName]?.Tip?.Sha;
     }
 
     /// <summary>
@@ -111,6 +237,23 @@ public sealed class TempGitRepo : IDisposable
     {
         _repository.Dispose();
         DeleteDirectory(RootPath);
+        foreach (var path in _remotePaths.Values)
+        {
+            DeleteDirectory(path);
+        }
+    }
+
+    private static TempGitCommit DescribeCommit(Repository repository, Commit commit)
+    {
+        // A root commit has no parent to compare against; libgit2 takes a null tree to mean "the empty tree".
+        var parentTree = commit.Parents.FirstOrDefault()?.Tree;
+        var changes = repository.Diff.Compare<TreeChanges>(parentTree, commit.Tree);
+        return new(
+            commit.Sha,
+            commit.Message.TrimEnd('\n'),
+            commit.Committer.Name,
+            commit.Committer.Email,
+            [.. changes.Select(x => x.Path).Order(StringComparer.Ordinal)]);
     }
 
     private static void DeleteDirectory(string path)
