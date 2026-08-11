@@ -7,6 +7,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
+using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
@@ -141,6 +142,22 @@ internal sealed class ReleaseHarness : IDisposable
     {
         _commandOptions = options;
         return _services.GetRequiredService<ReleaseCommand>().ExecuteAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Computes the version of the repository as it now stands, the way a build of it would: this is what
+    /// the artifact pass stamps on the packages, and what a later build of the released commit produces.
+    /// </summary>
+    /// <returns>The version, in full semantic version form.</returns>
+    public string ComputeVersion()
+    {
+        var config = new BuildvanaConfig { Versioning = new VersioningConfig { PrereleaseTag = "preview" } };
+        var versioning = new VersioningService(
+            NullReporter.Instance,
+            new FixedHomeDirectoryProvider(Repo.RootPath),
+            new VersioningSettings(config),
+            new GitHeightCalculator(VersionFile.FileName));
+        return versioning.SemVer;
     }
 
     /// <summary>
