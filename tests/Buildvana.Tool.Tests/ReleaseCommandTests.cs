@@ -232,10 +232,17 @@ internal sealed class ReleaseCommandTests
 
     // Push credentials are a fallback: without them the push relies on whatever the checkout left in the
     // repository's configuration, which may well work. So this is a warning and the release goes on.
+    // Half a credential is none: a username with no secret has nothing to authenticate with, and the
+    // credential object built from it would carry a null password into libgit2. That case is not
+    // hypothetical - it is the shape GitLab CI's adapter has today - so it is exercised alongside the
+    // others, and the warning is what says the pair was required rather than either half of it.
     [Test]
-    public async Task Release_WithoutPushCredentials_WarnsAndCarriesOn()
+    [Arguments(null, null)]
+    [Arguments("x-access-token", null)]
+    [Arguments(null, "test-token")]
+    public async Task Release_WithoutCompletePushCredentials_WarnsAndCarriesOn(string? pushUser, string? pushSecret)
     {
-        using var harness = new ReleaseHarness(new() { WithPushCredentials = false });
+        using var harness = new ReleaseHarness(new() { PushUser = pushUser, PushSecret = pushSecret });
 
         var exitCode = await harness.RunAsync().ConfigureAwait(false);
 
