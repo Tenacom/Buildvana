@@ -2,6 +2,25 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using Buildvana.Core.Configuration;
+using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.Json;
+using Buildvana.Core.Process;
+using Buildvana.Core.Versioning;
+using Buildvana.Runtime;
+using Buildvana.Tool.Build;
+using Buildvana.Tool.CommandLine;
+using Buildvana.Tool.Infrastructure.Execution;
+using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Git;
+using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.PublicApiFiles;
+using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Solution;
+using Buildvana.Tool.Services.Versioning;
+using Buildvana.Tool.Subcommands;
+using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Buildvana.Tool.Infrastructure.DependencyInjection;
@@ -18,5 +37,66 @@ internal static class ServiceCollectionExtensions
         /// </summary>
         /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddLazySupport() => @this.AddTransient(typeof(Lazy<>), typeof(LazyResolver<>));
+
+        /// <summary>
+        /// Adds every service <c>bv</c> commands resolve, plus the commands themselves.
+        /// </summary>
+        /// <returns>The service collection for chaining.</returns>
+        /// <remarks>
+        /// <para>The ambient singletons a host decides for itself are deliberately not registered here:
+        /// the console, the reporter, <see cref="GlobalSettings"/>, <see cref="CommandParameters"/>, and
+        /// <see cref="IHomeDirectoryProvider"/>. Register those before calling this method.</para>
+        /// <para>A host that fakes a boundary registers its fake <em>after</em> this call: the last
+        /// registration of a service type is the one resolved.</para>
+        /// </remarks>
+        public IServiceCollection AddBvServices()
+        {
+            _ = @this
+                .AddLazySupport()
+                .AddSingleton(static sp => ReleaseSettings.Parse(
+                    sp.GetRequiredService<CommandParameters>().Options,
+                    sp.GetRequiredService<BuildvanaConfig>(),
+                    sp.GetRequiredService<DotNetSettings>()))
+                .AddSingleton(static sp => VersionAdvanceSettings.Parse(
+                    sp.GetRequiredService<CommandParameters>().Positionals,
+                    sp.GetRequiredService<CommandParameters>().Options,
+                    sp.GetRequiredService<BuildvanaConfig>()))
+                .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
+
+                // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
+                // A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or ReleaseSettings) reads it.
+                .AddSingleton(static sp => BuildvanaConfigLoader.Load(sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory))
+                .AddSingleton<DotNetSettings>()
+                .AddSingleton<IJsonHelper, JsonHelper>()
+                .AddSingleton<IProcessRunner, ProcessRunner>()
+                .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
+                .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
+                .AddSingleton<GitService>()
+                .AddSingleton<PublicApiFilesService>()
+                .AddSingleton(ServerAdapter.Create)
+                .AddSingleton<VersioningSettings>()
+                .AddSingleton<VersionService>()
+                .AddSingleton<ChangelogService>()
+                .AddSingleton<DocFxService>()
+                .AddSingleton<DotNetService>()
+                .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
+                .AddSingleton<HookRunner>()
+                .AddSingleton<PostReleaseHookArgsFactory>()
+                .AddSingleton<BuildPipeline>()
+                .AddSingleton<SelfReferenceUpdater>()
+                .AddSingleton(static sp => new SelfVersionService(
+                    sp.GetRequiredService<IReporter>(),
+                    sp.GetRequiredService<IHomeDirectoryProvider>(),
+                    sp.GetRequiredService<IJsonHelper>(),
+                    sp.GetRequiredService<IProcessRunner>(),
+                    OwnVersion.Value));
+
+            foreach (var registration in CommandRegistry.Commands)
+            {
+                _ = @this.AddSingleton(registration.CommandType);
+            }
+
+            return @this;
+        }
     }
 }
