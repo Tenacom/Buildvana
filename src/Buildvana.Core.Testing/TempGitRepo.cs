@@ -37,16 +37,32 @@ public sealed class TempGitRepo : IDisposable
     // libgit2 answers with a corrupted heap.
     static TempGitRepo()
     {
-        // The paths point at one empty directory, shared by every repository created in this process and
-        // left in place afterwards: it is only ever created, never written to. Restoring the defaults on
-        // disposal would be pointless, as the isolation must hold for as long as any test may open a
-        // repository, and would reintroduce the very race this type initializer exists to avoid.
-        var path = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "bv-test-gitconfig")).FullName;
+        // An empty directory of this process's own: libgit2 looks for configuration files in it and finds
+        // none, which is the whole of the isolation. A fixed path under the temp directory would do the same
+        // job right up to the moment anything else dropped a .gitconfig into it — the temp directory is
+        // shared between users on Linux — and the isolation would then be quietly turned into its opposite.
+        var path = Directory.CreateTempSubdirectory("bv-test-gitconfig-").FullName;
         ReadOnlySpan<ConfigurationLevel> levels = [ConfigurationLevel.Global, ConfigurationLevel.Xdg, ConfigurationLevel.System];
         foreach (var level in levels)
         {
             GlobalSettings.SetConfigSearchPaths(level, path);
         }
+
+        // The directory has to outlive every repository, because the search paths cannot be restored while
+        // the process may still open one: changing them again is the race this type initializer exists to
+        // avoid. Process exit is therefore the first moment the directory can go, and the last one at which
+        // anything of ours still runs to delete it.
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            try
+            {
+                Directory.Delete(path, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // An empty directory left behind in the temp path is not worth failing a test run over.
+            }
+        };
     }
 
     /// <summary>
