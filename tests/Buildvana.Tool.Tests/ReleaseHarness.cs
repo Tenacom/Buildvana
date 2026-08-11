@@ -217,6 +217,8 @@ internal sealed class ReleaseHarness : IDisposable
             {
                 CloudBuild = _options.CloudBuild,
                 BotIdentity = _options.WithBotIdentity ? new("Buildvana Test Bot", "bot@buildvana.invalid") : null,
+                PushUser = _options.WithPushCredentials ? "x-access-token" : null,
+                PushSecret = _options.WithPushCredentials ? "test-token" : null,
                 OnPublishing = () =>
                 {
                     Record("publish");
