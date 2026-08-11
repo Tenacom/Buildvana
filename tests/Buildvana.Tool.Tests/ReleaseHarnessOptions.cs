@@ -66,6 +66,11 @@ internal sealed record ReleaseHarnessOptions
     public bool WithBotIdentity { get; init; } = true;
 
     /// <summary>
+    /// Gets a value indicating whether the server adapter provides fallback push credentials.
+    /// </summary>
+    public bool WithPushCredentials { get; init; } = true;
+
+    /// <summary>
     /// Gets a callback invoked while publishing the release. Throw from it to simulate a publication
     /// that fails after the repository has already been updated and pushed.
     /// </summary>

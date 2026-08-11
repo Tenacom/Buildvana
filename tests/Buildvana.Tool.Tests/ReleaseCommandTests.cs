@@ -230,6 +230,21 @@ internal sealed class ReleaseCommandTests
         await Assert.That(commit.CommitterEmail).IsEqualTo("local@example.invalid");
     }
 
+    // Push credentials are a fallback: without them the push relies on whatever the checkout left in the
+    // repository's configuration, which may well work. So this is a warning and the release goes on.
+    [Test]
+    public async Task Release_WithoutPushCredentials_WarnsAndCarriesOn()
+    {
+        using var harness = new ReleaseHarness(new() { WithPushCredentials = false });
+
+        var exitCode = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+        var warnings = harness.Reporter.Messages.Where(x => x.Level == MessageLevel.Warning).Select(x => x.Message).ToArray();
+        await Assert.That(warnings.Any(x => x.Contains("No push credentials", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(harness.Repo.HeadSha);
+    }
+
     // A bump to an unstable line writes the configured prerelease tag into the version file, so that the
     // file keeps saying which tag the line carries rather than a bare "-".
     [Test]
