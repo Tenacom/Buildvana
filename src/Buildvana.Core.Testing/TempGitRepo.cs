@@ -153,8 +153,8 @@ public sealed class TempGitRepo : IDisposable
     {
         var path = Directory.CreateTempSubdirectory("bv-test-remote-").FullName;
         _ = Repository.Init(path, isBare: true);
-        _remotePaths.Add(name, path);
         _ = _repository.Network.Remotes.Add(name, path);
+        _remotePaths.Add(name, path);
         var branch = _repository.Head;
         _ = _repository.Branches.Update(
             branch,
