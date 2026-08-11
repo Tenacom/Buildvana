@@ -267,6 +267,30 @@ internal sealed class ReleaseCommandTests
         await Assert.That(harness.ComputeVersion()).IsEqualTo(expectedVersion);
     }
 
+    // What the previous test asserts as a cause has a consequence, and it is the consequence that a real
+    // release shows first. Self-references are rewritten from the packages the pack step produced, which
+    // are discovered by file name, and a name built from the wrong version matches nothing. Nothing is
+    // then rewritten, no error is reported, and the release completes — with the whole point of dogfooding
+    // quietly skipped. So the bumped version is asserted here all the way into the files.
+    [Test]
+    public async Task Release_WithBump_AndDogfooding_RewritesSelfReferencesToTheBumpedVersion()
+    {
+        const string bumpedVersion = "2.4.1-preview";
+        using var harness = new ReleaseHarness();
+
+        _ = await harness.RunAsync("--bump", "minor").ConfigureAwait(false);
+
+        var commits = harness.Repo.GetCommits(2);
+        await Assert.That(commits[1].Message).IsEqualTo($"Prepare release {bumpedVersion} [skip ci]");
+        await Assert.That(commits[0].Message).IsEqualTo($"Post-release updates for {bumpedVersion} [skip ci]");
+        await Assert.That(commits[0].ChangedFiles).IsEquivalentTo(
+            [".config/dotnet-tools.json", "Directory.Packages.props", "global.json"]);
+        foreach (var relativePath in commits[0].ChangedFiles)
+        {
+            await Assert.That(harness.ReadFile(relativePath)).Contains(bumpedVersion).And.DoesNotContain(ReleaseHarness.PreviousVersion);
+        }
+    }
+
     [Test]
     public async Task Release_WithoutBump_LeavesVersionFileAlone()
     {
