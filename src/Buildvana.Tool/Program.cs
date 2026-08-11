@@ -7,26 +7,16 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
-using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
-using Buildvana.Core.Versioning;
-using Buildvana.Runtime;
-using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
-using Buildvana.Tool.Services.Git;
-using Buildvana.Tool.Services.Hooks;
-using Buildvana.Tool.Services.PublicApiFiles;
-using Buildvana.Tool.Services.ServerAdapters;
-using Buildvana.Tool.Services.Solution;
-using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +24,8 @@ using Spectre.Console;
 
 namespace Buildvana.Tool;
 
-[ExcludeFromCodeCoverage(Justification = "Process composition root (DI wiring, Ctrl-C handling, top-level exception mapping); exercised end to end, not unit-testable.")]
+[ExcludeFromCodeCoverage(Justification =
+    "Process composition root (Ctrl-C handling, top-level exception mapping); exercised end to end, not unit-testable.")]
 internal static class Program
 {
     // 128 + SIGINT (2): the POSIX convention for a process terminated by Ctrl-C.
@@ -227,57 +218,14 @@ internal static class Program
         ParsedCommandLine parsed,
         IReadOnlyList<string> positionals)
     {
-        var services = new ServiceCollection()
-            .AddLazySupport()
+        return new ServiceCollection()
             .AddSingleton(console)
             .AddSingleton(reporter)
             .AddSingleton(globals)
             .AddSingleton(new CommandParameters(parsed.OptionTokens, positionals, parsed.Forwarded))
-            .AddSingleton(static sp => ReleaseSettings.Parse(
-                sp.GetRequiredService<CommandParameters>().Options,
-                sp.GetRequiredService<BuildvanaConfig>(),
-                sp.GetRequiredService<DotNetSettings>()))
-            .AddSingleton(static sp => VersionAdvanceSettings.Parse(
-                sp.GetRequiredService<CommandParameters>().Positionals,
-                sp.GetRequiredService<CommandParameters>().Options,
-                sp.GetRequiredService<BuildvanaConfig>()))
-            .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
             .AddSingleton<IHomeDirectoryProvider>(static _ => new AnchoringHomeDirectoryProvider(
                 new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory)))
-
-            // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
-            // A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or ReleaseSettings) reads it.
-            .AddSingleton(static sp => BuildvanaConfigLoader.Load(sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory))
-            .AddSingleton<DotNetSettings>()
-            .AddSingleton<IJsonHelper, JsonHelper>()
-            .AddSingleton<IProcessRunner, ProcessRunner>()
-            .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
-            .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
-            .AddSingleton<GitService>()
-            .AddSingleton<PublicApiFilesService>()
-            .AddSingleton(ServerAdapter.Create)
-            .AddSingleton<VersioningSettings>()
-            .AddSingleton<VersionService>()
-            .AddSingleton<ChangelogService>()
-            .AddSingleton<DocFxService>()
-            .AddSingleton<DotNetService>()
-            .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
-            .AddSingleton<HookRunner>()
-            .AddSingleton<PostReleaseHookArgsFactory>()
-            .AddSingleton<BuildPipeline>()
-            .AddSingleton<SelfReferenceUpdater>()
-            .AddSingleton(static sp => new SelfVersionService(
-                sp.GetRequiredService<IReporter>(),
-                sp.GetRequiredService<IHomeDirectoryProvider>(),
-                sp.GetRequiredService<IJsonHelper>(),
-                sp.GetRequiredService<IProcessRunner>(),
-                OwnVersion.Value));
-
-        foreach (var registration in CommandRegistry.Commands)
-        {
-            services.AddSingleton(registration.CommandType);
-        }
-
-        return services.BuildServiceProvider();
+            .AddBvServices()
+            .BuildServiceProvider();
     }
 }
