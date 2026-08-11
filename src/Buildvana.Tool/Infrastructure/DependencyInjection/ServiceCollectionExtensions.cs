@@ -47,7 +47,10 @@ internal static class ServiceCollectionExtensions
         /// the console, the reporter, <see cref="GlobalSettings"/>, <see cref="CommandParameters"/>, and
         /// <see cref="IHomeDirectoryProvider"/>. Register those before calling this method.</para>
         /// <para>A host that fakes a boundary registers its fake <em>after</em> this call: the last
-        /// registration of a service type is the one resolved.</para>
+        /// registration of a service type is the one resolved. Only the last one, though - the registration
+        /// it shadows stays in the collection, and something resolving <c>IEnumerable&lt;T&gt;</c> would get
+        /// both. Nothing does today; a boundary that ever grows more than one implementation will have to
+        /// be faked by replacing its registration rather than by adding one.</para>
         /// </remarks>
         public IServiceCollection AddBvServices()
         {
