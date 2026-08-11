@@ -70,7 +70,8 @@ internal static class Program
             // output stays clean even without --nologo.
             if (!globals.Nologo)
             {
-                await Console.Error.WriteLineAsync($"Buildvana CLI tool v{ThisAssembly.AssemblyInformationalVersion}").ConfigureAwait(false);
+                const string logo = $"Buildvana CLI tool v{ThisAssembly.AssemblyInformationalVersion}";
+                await Console.Error.WriteLineAsync(logo).ConfigureAwait(false);
                 await Console.Error.WriteLineAsync().ConfigureAwait(false);
             }
 
