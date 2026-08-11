@@ -18,6 +18,10 @@ namespace Buildvana.Core.Testing;
 /// directory, so that no repository created by this class — and no code reading one — can see the machine's
 /// global, XDG, or system Git configuration. Without it, a test would observe a committer identity on a
 /// developer laptop and none on a bare CI runner, and the two would exercise different code paths.</para>
+/// <para>Every member that reads the repository's state opens a handle of its own, and none of them reads
+/// through the handle this class keeps for the operations that change it. Code under test holds a handle of
+/// its own too, so anything it commits, tags, or checks out has to be observable here no matter what either
+/// handle happens to have cached.</para>
 /// </remarks>
 public sealed class TempGitRepo : IDisposable
 {
@@ -64,12 +68,26 @@ public sealed class TempGitRepo : IDisposable
     /// <summary>
     /// Gets the friendly name of the current branch.
     /// </summary>
-    public string CurrentBranchName => _repository.Head.FriendlyName;
+    public string CurrentBranchName
+    {
+        get
+        {
+            using var repository = new Repository(RootPath);
+            return repository.Head.FriendlyName;
+        }
+    }
 
     /// <summary>
     /// Gets the SHA of the current <c>HEAD</c> commit.
     /// </summary>
-    public string HeadSha => _repository.Head.Tip.Sha;
+    public string HeadSha
+    {
+        get
+        {
+            using var repository = new Repository(RootPath);
+            return repository.Head.Tip.Sha;
+        }
+    }
 
     /// <summary>
     /// Gets the friendly names of the repository's tags.
@@ -153,8 +171,6 @@ public sealed class TempGitRepo : IDisposable
     /// <returns>The commits, newest first. Fewer than <paramref name="count"/> commits are returned
     /// if the history is shorter.</returns>
     /// <remarks>
-    /// <para>The history is read through a repository handle of its own, so that commits created by code
-    /// under test — which holds a handle of its own too — are seen as soon as they are made.</para>
     /// <para>Commits are sorted topologically, not by time: commits made in the same second — the norm for
     /// commits a test makes, and for those made by the code it exercises — carry the same timestamp, and
     /// the default time-based sort puts them in an arbitrary order.</para>
