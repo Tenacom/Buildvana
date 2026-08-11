@@ -14,6 +14,12 @@ internal sealed record ReleaseHarnessOptions
     public string VersionSpec { get; init; } = "2.3-";
 
     /// <summary>
+    /// Gets a value indicating whether the version file is committed. When <see langword="false"/> it is
+    /// written after the initial commit and left untracked, so that no commit carries the version line.
+    /// </summary>
+    public bool CommitVersionFile { get; init; } = true;
+
+    /// <summary>
     /// Gets the content of the changelog, or <see langword="null"/> for a repository without one.
     /// </summary>
     public string? Changelog { get; init; }
