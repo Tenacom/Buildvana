@@ -41,9 +41,6 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var configuration = settings.ResolveConfiguration();
         var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 
-        // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
-        await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
-
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
         var versioningSettings = services.GetRequiredService<VersioningSettings>();
         var server = services.GetRequiredService<ServerAdapter>();
@@ -57,7 +54,11 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var hookRunner = services.GetRequiredService<HookRunner>();
         var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
 
-        // Perform some preliminary checks
+        // Perform some preliminary checks.
+        // Everything from here to the verification pass reads the environment, the current branch, the
+        // repository's version history, and the public API files — none of which building can change — so
+        // it all runs before the build: a release that cannot succeed is refused at once, instead of after
+        // a full clean, build, and test cycle whose result is then thrown away.
         BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
         BuildFailedException.ThrowIf(string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
         BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
@@ -89,6 +90,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var versionSpecChange = version.ComputeVersionSpecChange(
             requestedChange: settings.ResolveBump(),
             checkPublicApiFiles: settings.ResolveCheckPublicApi());
+
+        // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
+        await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
 
         var release = await server.CreateReleaseAsync().ConfigureAwait(false);
         await using (release.ConfigureAwait(false))

@@ -83,13 +83,13 @@ internal sealed class ReleaseCommandFailureTests
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("cloud build");
 
-        // The preliminary checks run after the verification pass, so a release that can never succeed is
-        // only refused once the solution has been built and tested.
-        await Assert.That(harness.Events.Select(x => x.Name)).IsEquivalentTo(["restore", "build"]);
+        // The preliminary checks run before the verification pass, so a release that can never succeed
+        // costs nothing: no clean, no build, no test run.
+        await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
     [Test]
-    public async Task Release_WithoutAnyCommitterIdentity_Fails()
+    public async Task Release_WithoutAnyCommitterIdentity_FailsBeforeBuilding()
     {
         using var harness = new ReleaseHarness(new() { WithBotIdentity = false });
 
@@ -98,6 +98,7 @@ internal sealed class ReleaseCommandFailureTests
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("committer identity");
+        await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
     [Test]
