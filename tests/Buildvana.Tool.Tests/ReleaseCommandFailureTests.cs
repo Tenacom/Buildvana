@@ -101,6 +101,28 @@ internal sealed class ReleaseCommandFailureTests
         await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
+    // A version line no commit carries has a Git height of 0, which is not a height at all: publishing it
+    // would tag a commit that does not reproduce the published version, since a build of that commit would
+    // count from 1 as soon as the version file reached it.
+    [Test]
+    public async Task Release_WithUncommittedVersionFile_Fails()
+    {
+        using var harness = new ReleaseHarness(new() { CommitVersionFile = false });
+        var initialSha = harness.Repo.HeadSha;
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("Git height of 0");
+        await Assert.That(exception.Message).Contains("Commit VERSION");
+
+        // It is caught before anything is packed, and the release commit is rolled back.
+        await Assert.That(harness.Events.Any(x => x.Name == "pack")).IsFalse();
+        await Assert.That(harness.Repo.GetCommits(1)[0].Sha).IsEqualTo(initialSha);
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
+    }
+
     [Test]
     public async Task Release_WhenHookFails_LeavesTheRepositoryUnchanged()
     {

@@ -81,6 +81,13 @@ internal sealed class ReleaseHarness : IDisposable
         Repo.CommitAll("Initial commit");
         Repo.CheckoutNewBranch(BranchName);
         _ = Repo.AddBareRemote();
+
+        // Written after the initial commit, so that it stays untracked and no commit carries the version line.
+        if (!_options.CommitVersionFile)
+        {
+            WriteVersionFile();
+        }
+
         _services = BuildServiceProvider();
     }
 
@@ -278,7 +285,11 @@ internal sealed class ReleaseHarness : IDisposable
     private void PopulateRepository()
     {
         Repo.WriteFile(".gitignore", "artifacts/\n" + WellKnownPaths.ScratchDirectory + "/\n");
-        Repo.WriteFile("VERSION", _options.VersionSpec + "\n");
+        if (_options.CommitVersionFile)
+        {
+            WriteVersionFile();
+        }
+
         Repo.WriteFile("Test.slnx", "<Solution />\n");
         Repo.WriteFile("buildvana.json", BuildConfiguration());
         WriteSelfReferenceTargets();
@@ -298,6 +309,8 @@ internal sealed class ReleaseHarness : IDisposable
             WriteFile(WellKnownPaths.GetHookFile("release", "post-release"), "// never executed: the app runner is faked\n");
         }
     }
+
+    private void WriteVersionFile() => Repo.WriteFile("VERSION", _options.VersionSpec + "\n");
 
     // The three files the self-reference update rewrites, each carrying a reference to one of the packages
     // this release produces, at the version released before this one.

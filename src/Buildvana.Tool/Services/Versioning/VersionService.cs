@@ -95,6 +95,13 @@ internal sealed partial class VersionService
     /// <param name="isFinalCheck"><see langword="true"/> if this is the final check before publishing;
     /// <see langword="false"/> if the current version's patch number might still be incremented,
     /// for example by updating the changelog.</param>
+    /// <remarks>
+    /// <para>The final check also rejects a Git height of 0. A height is counted from 1 at the commit that
+    /// bumps <c>MAJOR.MINOR</c>, so 0 is not a height at all: <see cref="GitHeightCalculator"/> returns it
+    /// for a version line that no commit carries. Building such a line is legitimate — that is what a
+    /// working tree looks like between a version advance and its commit — but publishing one is not, because
+    /// the tag would name a version that a build of the tagged commit does not reproduce.</para>
+    /// </remarks>
     public void EnsureConsistency(bool isFinalCheck)
     {
         BuildFailedException.ThrowIfNot(
@@ -102,6 +109,9 @@ internal sealed partial class VersionService
             $"Versioning anomaly detected: latest version ({Latest?.ToString() ?? "none"}) is lower than latest stable version ({LatestStable?.ToString() ?? "none"}).");
         if (isFinalCheck)
         {
+            BuildFailedException.ThrowIf(
+                _current.Height == 0,
+                $"Versioning anomaly detected: the version to publish ({Current}) has a Git height of 0, i.e. no commit in this branch's history carries the version line currently specified by {VersionFile.FileName}. Commit {VersionFile.FileName} and try again.");
             BuildFailedException.ThrowIfNot(
                 VersionComparer.Compare(Current, LatestStable, VersionComparison.Version) > 0,
                 $"Versioning anomaly detected: current version ({Current}) is not higher than latest stable version ({LatestStable?.ToString() ?? "none"}).");
