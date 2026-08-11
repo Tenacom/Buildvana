@@ -19,6 +19,10 @@ namespace Buildvana.Tool.Services.ServerAdapters;
 /// </summary>
 internal abstract partial class ServerRelease : IAsyncDisposable
 {
+    // The message the release commit carries between being made and being named after the version
+    // computed from it. See NameReleaseCommit.
+    private const string ProvisionalMessage = "Prepare release [skip ci]";
+
     private readonly IReporter _reporter;
     private readonly GitService _git;
     private readonly VersionService _version;
@@ -80,14 +84,9 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         }
 
         _reporter.Info("Creating release commit...");
-        _git.Commit("Prepare release [skip ci]", allowEmpty: true);
-
-        // Git height has changed
-        _version.Update();
-        _reporter.Info($"Version changed to {_version.CurrentStr}");
-        _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
+        _git.Commit(ProvisionalMessage, allowEmpty: true);
         _repositoryUpdated = true;
-        ReleaseCommitSha = _git.HeadSha;
+        NameReleaseCommit();
 
         OnRollback(() =>
         {
@@ -124,12 +123,13 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             ThrowHelper.ThrowInvalidOperationException("Internal error: cannot update the release commit after a post-release commit has been added.");
         }
 
-        EnsureReleaseCommit();
-
+        // Staging comes first, so that the files are already in the index when the release commit is
+        // made: the version is computed from what the commit contains, and these files are part of it.
         _git.Stage(files);
+        EnsureReleaseCommit();
         _reporter.Info("Amending release commit...");
-        _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
-        ReleaseCommitSha = _git.HeadSha;
+        _git.Commit(ProvisionalMessage, amend: true, allowEmpty: true);
+        NameReleaseCommit();
     }
 
     /// <summary>
@@ -274,5 +274,33 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         {
             ThrowHelper.ThrowInvalidOperationException("Internal error: release has already been published.");
         }
+    }
+
+    /// <summary>
+    /// Refreshes the version from the release commit as it now stands, then rewrites the commit's message
+    /// with it and recaptures <see cref="ReleaseCommitSha"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>The order is forced from both ends. The Git height, and with it the version, is computed from
+    /// <em>committed</em> content — the index and the working tree are invisible to it — so the version can
+    /// only be read once the commit's tree is final. The message quotes the version, so it can only be
+    /// written once the version has been read. Hence the release commit is always made first under
+    /// <see cref="ProvisionalMessage"/> and named afterwards, by this method, and every method that changes
+    /// the commit's tree ends by calling it.</para>
+    /// <para>Skipping the refresh here is what made a version-spec bump publish a version one patch below
+    /// the one its own artifacts were built with: the version file reached the commit after the height had
+    /// been computed, so the new version line looked as if it had no committed history at all.</para>
+    /// </remarks>
+    private void NameReleaseCommit()
+    {
+        var previousVersion = _version.CurrentStr;
+        _version.Update();
+        if (!string.Equals(previousVersion, _version.CurrentStr, StringComparison.Ordinal))
+        {
+            _reporter.Info($"Version changed to {_version.CurrentStr}");
+        }
+
+        _git.Commit($"Prepare release {_version.CurrentStr} [skip ci]", amend: true, allowEmpty: true);
+        ReleaseCommitSha = _git.HeadSha;
     }
 }

@@ -247,6 +247,26 @@ internal sealed class ReleaseCommandTests
         await Assert.That(commit.ChangedFiles).IsEquivalentTo(["VERSION"]);
     }
 
+    // The version bv publishes and the version a build computes come from the same Git height, so they
+    // agree only as long as the height is read from the release commit as it will finally stand. A bump
+    // is what puts that at risk: it changes the version file, which is the very input the height is
+    // computed from, and 0 is not a height at all — the calculator reserves it for a version line with
+    // no committed history, which is what a bumped line looks like until its commit exists.
+    [Test]
+    [Arguments("none", "2.3.2-preview")]
+    [Arguments("minor", "2.4.1-preview")]
+    [Arguments("major", "3.0.1-preview")]
+    [Arguments("stable", "2.3.2")]
+    public async Task Release_PublishesTheVersionItsArtifactsAreBuiltWith(string bump, string expectedVersion)
+    {
+        using var harness = new ReleaseHarness(new() { Dogfood = false });
+
+        _ = await harness.RunAsync("--bump", bump).ConfigureAwait(false);
+
+        await Assert.That(harness.Repo.GetCommits(1)[0].Message).IsEqualTo($"Prepare release {expectedVersion} [skip ci]");
+        await Assert.That(harness.ComputeVersion()).IsEqualTo(expectedVersion);
+    }
+
     [Test]
     public async Task Release_WithoutBump_LeavesVersionFileAlone()
     {
