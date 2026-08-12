@@ -2,10 +2,22 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Security;
+using System.Text;
 using Buildvana.Tool.Infrastructure;
 
 internal sealed class ConsoleEncodingScopeTests
 {
+    // What the console is set to is also what Console.OutputEncoding advertises for the rest of the run, since
+    // the setter stores a clone of it. Encoding.UTF8 — the obvious substitution, and what the .NET CLI itself
+    // passes — is the same codepage with a three-byte preamble, so it would leave every later reader of that
+    // property inheriting a BOM while changing nothing observable on the console. Hence the pin.
+    [Test]
+    public async Task Utf8NoBom_IsUtf8WithoutAPreamble()
+    {
+        await Assert.That(ConsoleEncodingScope.Utf8NoBom.CodePage).IsEqualTo(Encoding.UTF8.CodePage);
+        await Assert.That(ConsoleEncodingScope.Utf8NoBom.GetPreamble()).IsEmpty();
+    }
+
     // Pins an opt-out contract that is the .NET CLI's rather than ours: only the literal "1" leaves the console
     // alone. Deliberately unlike ConsoleReporter's NO_COLOR check, where any non-empty value counts — each
     // convention is honored on its owner's terms, so the asymmetry is the feature and must not be "fixed".
