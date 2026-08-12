@@ -12,6 +12,10 @@ The variable is not meant to be set by hand; to keep `bv` from delegating, pass 
 
 The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [hooks](Hooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed args.
 
+### `CI_SERVER_HOST`
+
+Set by GitLab CI to the hostname of the GitLab instance running the job. `bv` uses it to build the e-mail address of the CI bot identity (`gitlab-ci@noreply.<host>`), which authors the commits `bv release` creates when the repository's Git configuration names no committer of its own. Only meaningful together with `GITLAB_CI`, which is what makes `bv` use the GitLab adapter in the first place.
+
 ### `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`
 
 The .NET CLI's opt-out from having the console's encoding changed, honored by `bv` on the CLI's own terms so that a single variable governs the whole toolchain. Set it to `1` — the literal value, exactly as the CLI tests for it — and `bv` leaves the console's output and input encoding alone.
@@ -25,6 +29,28 @@ Read the way the .NET CLI itself reads it: when set, it replaces the user profil
 ### `DOTNET_HOST_PATH`
 
 Set by the `dotnet` muxer on every process it launches, with the full path of the `dotnet` executable as the value. `bv` uses it to launch its child `dotnet` invocations (builds, tool restores, delegated runs, hooks) through the exact host that launched `bv` itself, instead of relying on `dotnet` being on the `PATH`. When the variable is absent — e.g. `bv` was installed as a global tool and run through its native shim — `bv` falls back to `dotnet` from the `PATH`.
+
+### `GITHUB_ACTIONS`
+
+Set to `true` by GitHub Actions on every step. `bv` reads it to recognize that it is running on GitHub Actions and act through the corresponding server adapter: releases go to the GitHub API, step outputs are published as described under `GITHUB_OUTPUT` below, and the `github-actions[bot]` identity authors the commits `bv release` creates when the repository's Git configuration names no committer of its own. Any other value, or no value at all, means "not GitHub Actions".
+
+### `GITHUB_OUTPUT`
+
+Set by GitHub Actions to the path of the file that collects a step's outputs. `bv release` appends to that file to publish the released version as the `version` step output, so that later steps of the same job can refer to it; the release fails if the variable is unset. `bv` never sets this variable itself.
+
+### `GITLAB_CI`
+
+Set by GitLab CI on every job. Its mere presence — whatever the value — makes `bv` recognize a GitLab CI run and act through the corresponding server adapter, including the bot identity built from `CI_SERVER_HOST` above.
+
+### `NO_COLOR`
+
+The widely-adopted convention for opting out of colored output; see [no-color.org](https://no-color.org). Any non-empty value — the convention's own rule, which counts presence rather than a particular value — turns off color in `bv`'s own narration. `--color` and `--no-color` win over it either way, so `bv --color` stays colored with `NO_COLOR` set.
+
+Note that this rule deliberately differs from `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`'s, which acts only on the literal value `1`. Each convention belongs to whoever defined it and is honored on its owner's terms; making the two agree would mean obeying neither.
+
+### `TERM`
+
+Read on non-Windows platforms only, where it is the POSIX way for a terminal to declare what it understands. An unset, empty, or `dumb` value tells `bv` that ANSI escape sequences would not be interpreted, so color auto-detection turns color off; `--color` still forces it on. On Windows the equivalent question is a console mode rather than a variable, and `TERM` is not consulted.
 
 ### Secret-carrying variables named by the configuration file
 
