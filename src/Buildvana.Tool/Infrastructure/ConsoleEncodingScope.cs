@@ -44,9 +44,6 @@ namespace Buildvana.Tool.Infrastructure;
 /// </remarks>
 internal sealed class ConsoleEncodingScope : IDisposable
 {
-    // The .NET CLI's own opt-out, honored here so that a single variable governs the whole toolchain.
-    private const string UseDefaultEncodingVariable = "DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING";
-
     // Not Encoding.UTF8: what the console is set to is also what Console.OutputEncoding hands back afterwards,
     // because the setter stores a clone of it, and the BOM-emitting singleton would make every later reader of
     // that property inherit a preamble. Console.Out and Console.In are insulated either way — the console builds
@@ -55,7 +52,13 @@ internal sealed class ConsoleEncodingScope : IDisposable
     // (the .NET CLI passes Encoding.UTF8, MSBuild passes a BOM-less encoding), so there is no single toolchain
     // answer to conform to, and the choice falls to whichever leaves the smaller trap. Nothing in bv reads the
     // property today; this is about what it means when something does.
-    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+    // Internal rather than private, and pinned by a test, for the same reason as IsConsoleEncodingFailure below:
+    // reverting to Encoding.UTF8 would compile, would change nothing anyone can see on the console, and would
+    // quietly put the preamble back.
+    internal static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
+
+    // The .NET CLI's own opt-out, honored here so that a single variable governs the whole toolchain.
+    private const string UseDefaultEncodingVariable = "DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING";
 
     private readonly Encoding? _originalOutputEncoding;
     private readonly Encoding? _originalInputEncoding;
