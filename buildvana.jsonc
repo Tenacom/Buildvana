@@ -9,7 +9,7 @@
 {
   // URI of the JSON schema describing this file.
   // This should point to the same version of Buildvana declared in .config\dotnet-tools.json
-  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.70-preview/schemas/buildvana.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.205-preview/schemas/buildvana.schema.json",
 
   // Configuration for the bv release workflow.
   "release": {
