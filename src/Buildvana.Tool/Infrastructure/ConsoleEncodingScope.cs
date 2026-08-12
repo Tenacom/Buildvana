@@ -150,6 +150,10 @@ internal sealed class ConsoleEncodingScope : IDisposable
     // and therefore admits ArgumentException to account for malformed paths. No arm of the table above produces
     // one, and no path reaches this class, so an ArgumentException here could only mean it handed the console
     // something the console cannot accept — a bug, and one that must not be swallowed.
+    // ObjectDisposedException is excluded on the same grounds, and marks the one place the claim above stops:
+    // the flush leg leaves that table through WindowsConsoleStream.Flush's zero-handle guard, or through
+    // StreamWriter.Flush over a disposed writer. Nothing here disposes Console.Out, so reaching either would
+    // again mean a bug rather than a console refusing to be reconfigured.
     // Internal rather than private, and pinned by tests: the classification above is this class's one decision
     // that a reader could plausibly get wrong while leaving it compiling, and nothing else exercises it.
     internal static bool IsConsoleEncodingFailure(Exception exception)
