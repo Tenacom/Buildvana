@@ -17,7 +17,7 @@ The `.claude` directory is meant to be copied wholesale into other projects. Thi
 ### Portable — copy verbatim
 
 - `rules/workflow.md` — how Ric and I work together: issues, PRs, reviews, sanity checks, out-of-scope fixes.
-- `rules/design-principles.md` — scope, abstraction completeness, portability, LLM-automation stance.
+- `rules/design-principles.md` — scope, abstraction completeness, portability, conformance with the surrounding toolchain, LLM-automation stance.
 - `rules/csharp-style-guide.md` — C# style beyond what `.editorconfig` and `.globalconfig` can express.
 - `rules/file-formats.md` — encoding, indentation, and per-format conventions (including the BOM workflow for new `.cs` files).
 - `rules/powershell.md` — Windows PowerShell 5.1 pitfalls and shell-usage rules.
