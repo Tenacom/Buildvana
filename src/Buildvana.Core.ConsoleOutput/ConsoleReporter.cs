@@ -16,7 +16,12 @@ namespace Buildvana.Core.ConsoleOutput;
 /// rendered line looks like and when it is written at all — lives in <see cref="TextWriterReporter"/>, where it
 /// can be tested without a console. Anything added here that would deserve a test belongs there instead.</para>
 /// <para><see cref="Console.Out"/> and <see cref="Console.Error"/> are read at every write, not captured at
-/// construction, so a later <see cref="Console.SetOut"/> or <see cref="Console.SetError"/> is honored.</para>
+/// construction, so a later <see cref="Console.SetOut"/> or <see cref="Console.SetError"/> is honored. That is
+/// the obvious reason rather than the load-bearing one, which no caller in this repository makes visible from
+/// here: replacing <see cref="Console.OutputEncoding"/> also flushes and discards both cached writers, so a
+/// reporter that had captured them would go on writing to streams the console has abandoned. <c>bv</c> does
+/// exactly that twice per run — once at startup and once on the way out, the second time long after this
+/// reporter is built — so caching the two writers here would break it, silently and at a distance.</para>
 /// </remarks>
 [ExcludeFromCodeCoverage(
     Justification = "Every member reads or manipulates the process console, whose state a test runner owns and redirects.")]
