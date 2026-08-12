@@ -36,11 +36,26 @@ namespace Buildvana.Tool.Infrastructure;
 /// not. The console is shared rather than owned, so a child process that changes it in turn — every <c>dotnet</c>
 /// this one spawns does — captures and restores UTF-8, while this scope, being outermost, restores what the user
 /// had.</para>
+/// <para>Replacing the output encoding flushes and discards the console's cached <see cref="Console.Out"/> and
+/// <see cref="Console.Error"/>, and restoring it does so a second time — by which point <c>ConsoleReporter</c>
+/// has long been built. Nothing is left holding a writer over a stream that has moved on, because that reporter
+/// reads the two properties at every write instead of capturing them at construction. That is its own decision,
+/// documented on its own class; this one depends on it.</para>
 /// </remarks>
 internal sealed class ConsoleEncodingScope : IDisposable
 {
     // The .NET CLI's own opt-out, honored here so that a single variable governs the whole toolchain.
     private const string UseDefaultEncodingVariable = "DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING";
+
+    // Not Encoding.UTF8: what the console is set to is also what Console.OutputEncoding hands back afterwards,
+    // because the setter stores a clone of it, and the BOM-emitting singleton would make every later reader of
+    // that property inherit a preamble. Console.Out and Console.In are insulated either way — the console builds
+    // them with the preamble stripped and BOM detection off — but nothing insulates a caller who writes, say,
+    // `new StreamWriter(stream, Console.OutputEncoding)`. The two upstreams this class follows disagree here
+    // (the .NET CLI passes Encoding.UTF8, MSBuild passes a BOM-less encoding), so there is no single toolchain
+    // answer to conform to, and the choice falls to whichever leaves the smaller trap. Nothing in bv reads the
+    // property today; this is about what it means when something does.
+    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     private readonly Encoding? _originalOutputEncoding;
     private readonly Encoding? _originalInputEncoding;
@@ -112,7 +127,7 @@ internal sealed class ConsoleEncodingScope : IDisposable
         try
         {
             var original = get();
-            set(Encoding.UTF8);
+            set(Utf8NoBom);
             return original;
         }
         catch (Exception e) when (IsConsoleEncodingFailure(e))
