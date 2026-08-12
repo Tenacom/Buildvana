@@ -109,6 +109,36 @@ internal sealed class ConsoleEncodingScope : IDisposable
     internal static bool IsDefaultEncodingRequested(string? variableValue)
         => string.Equals(variableValue, "1", StringComparison.Ordinal);
 
+    // The exceptions that reading or replacing a console encoding raises when the console cannot be
+    // reconfigured, as opposed to when the call itself is wrong:
+    //   - IOException — no console attached, or one that cannot be reconfigured; also what ConsolePal maps most
+    //     Win32 failures to;
+    //   - UnauthorizedAccessException — what it maps ERROR_ACCESS_DENIED to, absent from the documented list of
+    //     what these setters throw, and reachable regardless;
+    //   - SecurityException — the documented failure for a caller without the permission;
+    //   - OperationCanceledException — what it maps ERROR_OPERATION_ABORTED to, and a cancellation in name only:
+    //     no token reaches this class, whose guarded calls read one property and write another, so there is
+    //     nobody whose cancellation this could be. Letting it through would be the worse outcome at either end —
+    //     the constructor runs before Program's try block and Dispose after its catch blocks, so an escape is an
+    //     unhandled crash over a cosmetic concern, and inside that try it would map to exit code 130, reporting
+    //     a Ctrl-C nobody pressed;
+    //   - NotSupportedException — a platform with no console encoding APIs at all, which throws
+    //     PlatformNotSupportedException. This single clause is the whole of the handling for those, in place of
+    //     the .NET CLI's enumeration of them: a copy of that list would be a snapshot to keep in step with an
+    //     upstream we do not track, whereas catching what they throw covers platforms added later at no cost.
+    // Deliberately narrower than Exception.IsIORelatedException, which classifies failures of an I/O operation
+    // and therefore admits ArgumentException to account for malformed paths. No path reaches this class, so an
+    // ArgumentException here could only mean it handed the console something the console cannot accept — a bug,
+    // and one that must not be swallowed.
+    // Internal rather than private, and pinned by tests: the classification above is this class's one decision
+    // that a reader could plausibly get wrong while leaving it compiling, and nothing else exercises it.
+    internal static bool IsConsoleEncodingFailure(Exception exception)
+        => exception is IOException
+            or UnauthorizedAccessException
+            or SecurityException
+            or OperationCanceledException
+            or NotSupportedException;
+
     // The build number is the .NET CLI's, from UILanguageOverride.OperatingSystemSupportsUtf8: below Windows 10
     // 1909 the console host is old enough for codepage 65001 to misbehave. No try/catch can stand in for this
     // check, because setting the encoding on those machines succeeds — the hazard is a destabilized console host,
@@ -157,32 +187,4 @@ internal sealed class ConsoleEncodingScope : IDisposable
             // useful to do about it at exit.
         }
     }
-
-    // The exceptions that reading or replacing a console encoding raises when the console cannot be
-    // reconfigured, as opposed to when the call itself is wrong:
-    //   - IOException — no console attached, or one that cannot be reconfigured; also what ConsolePal maps most
-    //     Win32 failures to;
-    //   - UnauthorizedAccessException — what it maps ERROR_ACCESS_DENIED to, absent from the documented list of
-    //     what these setters throw, and reachable regardless;
-    //   - SecurityException — the documented failure for a caller without the permission;
-    //   - OperationCanceledException — what it maps ERROR_OPERATION_ABORTED to, and a cancellation in name only:
-    //     no token reaches this class, whose guarded calls read one property and write another, so there is
-    //     nobody whose cancellation this could be. Letting it through would be the worse outcome at either end —
-    //     the constructor runs before Program's try block and Dispose after its catch blocks, so an escape is an
-    //     unhandled crash over a cosmetic concern, and inside that try it would map to exit code 130, reporting
-    //     a Ctrl-C nobody pressed;
-    //   - NotSupportedException — a platform with no console encoding APIs at all, which throws
-    //     PlatformNotSupportedException. This single clause is the whole of the handling for those, in place of
-    //     the .NET CLI's enumeration of them: a copy of that list would be a snapshot to keep in step with an
-    //     upstream we do not track, whereas catching what they throw covers platforms added later at no cost.
-    // Deliberately narrower than Exception.IsIORelatedException, which classifies failures of an I/O operation
-    // and therefore admits ArgumentException to account for malformed paths. No path reaches this class, so an
-    // ArgumentException here could only mean it handed the console something the console cannot accept — a bug,
-    // and one that must not be swallowed.
-    private static bool IsConsoleEncodingFailure(Exception exception)
-        => exception is IOException
-            or UnauthorizedAccessException
-            or SecurityException
-            or OperationCanceledException
-            or NotSupportedException;
 }
