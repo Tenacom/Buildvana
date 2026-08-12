@@ -32,7 +32,7 @@ Set by the `dotnet` muxer on every process it launches, with the full path of th
 
 ### `GITHUB_ACTIONS`
 
-Set to `true` by GitHub Actions on every step. `bv` reads it to recognize that it is running on GitHub Actions and act through the corresponding server adapter: releases go to the GitHub API, step outputs are published as described under `GITHUB_OUTPUT` below, and the `github-actions[bot]` identity authors the commits `bv release` creates when the repository's Git configuration names no committer of its own. Any other value, or no value at all, means "not GitHub Actions".
+Set to `true` by GitHub Actions on every step. `bv` reads it to recognize that it is running on GitHub Actions and act through the corresponding server adapter: releases go to the GitHub API, step outputs are published as described under `GITHUB_OUTPUT` below, and the `github-actions[bot]` identity authors the commits `bv release` creates when the repository's Git configuration names no committer of its own. The comparison is case-insensitive, so `TRUE` and `True` count as well; any other value, or no value at all, means "not GitHub Actions".
 
 ### `GITHUB_OUTPUT`
 
