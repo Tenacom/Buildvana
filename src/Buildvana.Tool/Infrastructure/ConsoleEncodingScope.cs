@@ -82,6 +82,11 @@ internal sealed class ConsoleEncodingScope : IDisposable
         // throws while the output encoding works fine, and half the job is still worth doing. A field ends up
         // non-null only if this scope actually replaced that encoding, so disposal puts back exactly what it
         // changed and nothing else.
+        // That guarantee runs one way only. A null field means no restore, which is right when the replacement
+        // never happened — but the setter changes the codepage before flushing the writers the console has
+        // cached, so a flush that threw would leave the encoding changed and the field null all the same. Program
+        // builds this scope before anything writes, so there are no cached writers and nothing to flush, which is
+        // one more reason for it to stay the first statement of Main.
         _originalOutputEncoding = ReplaceWithUtf8(
             static () => Console.OutputEncoding,
             static encoding => Console.OutputEncoding = encoding);
