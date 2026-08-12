@@ -20,6 +20,7 @@ Directory.Build.* @rdeago
 stylecop.json @rdeago
 *.DotSettings @rdeago
 NuGet.config @rdeago
+/.buildvana/ @rdeago
 VERSION @rdeago
 
 # Claude Code configuration
