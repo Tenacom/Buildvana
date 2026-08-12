@@ -36,11 +36,12 @@ namespace Buildvana.Tool.Infrastructure;
 /// not. The console is shared rather than owned, so a child process that changes it in turn — every <c>dotnet</c>
 /// this one spawns does — captures and restores UTF-8, while this scope, being outermost, restores what the user
 /// had.</para>
-/// <para>Replacing the output encoding flushes and discards the console's cached <see cref="Console.Out"/> and
-/// <see cref="Console.Error"/>, and restoring it does so a second time — by which point <c>ConsoleReporter</c>
-/// has long been built. Nothing is left holding a writer over a stream that has moved on, because that reporter
-/// reads the two properties at every write instead of capturing them at construction. That is its own decision,
-/// documented on its own class; this one depends on it.</para>
+/// <para>Replacing the output encoding flushes the console's cached <see cref="Console.Out"/> and
+/// <see cref="Console.Error"/> and drops them without closing them, and restoring it does so a second time — by
+/// which point <c>ConsoleReporter</c> has long been built. Nothing is left holding a dropped writer, which would
+/// go on encoding at the codepage it was built for, because that reporter reads the two properties at every write
+/// instead of capturing them at construction. That is its own decision, documented on its own class; this one
+/// depends on it.</para>
 /// </remarks>
 internal sealed class ConsoleEncodingScope : IDisposable
 {

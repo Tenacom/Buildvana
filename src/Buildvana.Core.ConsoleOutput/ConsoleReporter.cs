@@ -18,9 +18,10 @@ namespace Buildvana.Core.ConsoleOutput;
 /// <para><see cref="Console.Out"/> and <see cref="Console.Error"/> are read at every write, not captured at
 /// construction, so a later <see cref="Console.SetOut"/> or <see cref="Console.SetError"/> is honored. That is
 /// the obvious reason rather than the load-bearing one, which no caller in this repository makes visible from
-/// here: replacing <see cref="Console.OutputEncoding"/> also flushes and discards both cached writers, so a
-/// reporter that had captured them would go on writing to streams the console has abandoned. <c>bv</c> does
-/// exactly that twice per run — once at startup and once on the way out, the second time long after this
+/// here: replacing <see cref="Console.OutputEncoding"/> flushes both cached writers and drops them without
+/// closing them, so a reporter that had captured one would keep writing through it, at the encoding it was built
+/// for, to a console that has since moved to another one. The failure is mojibake, not an exception. <c>bv</c>
+/// replaces the encoding twice per run — once at startup and once on the way out, the second time long after this
 /// reporter is built — so caching the two writers here would break it, silently and at a distance.</para>
 /// </remarks>
 [ExcludeFromCodeCoverage(
