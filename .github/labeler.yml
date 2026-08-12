@@ -1,8 +1,19 @@
 'area:code':
  - changed-files:
     - any-glob-to-any-file:
-      - '*.sln'
       - 'src/**/*'
+      - 'tests/**/*'
+
+'area:build':
+ - changed-files:
+    - any-glob-to-any-file:
+      - '.buildvana/**/*'
+      - 'tools/**/*'
+      - '*.sln'
+      - '*.slnx'
+      - '**/*.props'
+      - '**/*.targets'
+      - VERSION
 
 'area:style':
  - changed-files:
@@ -11,12 +22,6 @@
       - '**/.globalconfig'
       - '**/stylecop.json'
       - '**/*.DotSettings'
-
-'area:build':
- - changed-files:
-    - any-glob-to-any-file:
-      - '**/*.cake'
-      - 'build/**/*'
 
 'area:repo':
  - changed-files:
@@ -30,14 +35,11 @@
  - changed-files:
     - any-glob-to-any-file:
       - '.github/workflows/**/*'
-      - 'lgtm.yml'
 
 'area:deps':
  - changed-files:
     - any-glob-to-any-file:
       - '**/Directory.Packages.props'
-      - Directory.Build.props
-      - Directory.Build.targets
       - global.json
       - .config/dotnet-tools.json
 
@@ -50,4 +52,5 @@
       - '**/LICENSE'
       - '**/NuGet-README.md'
       - '**/README.md'
-      - '**/THIRD-PARTY-NOTICES'
+      - '**/THIRD-PARTY-GRAPHICS.md'
+      - '**/THIRD-PARTY-NOTICES.md'
