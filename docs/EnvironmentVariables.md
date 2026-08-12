@@ -12,6 +12,12 @@ The variable is not meant to be set by hand; to keep `bv` from delegating, pass 
 
 The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [hooks](Hooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed args.
 
+### `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`
+
+The .NET CLI's opt-out from having the console's encoding changed, honored by `bv` on the CLI's own terms so that a single variable governs the whole toolchain. Set it to `1` — the literal value, exactly as the CLI tests for it — and `bv` leaves the console's output and input encoding alone.
+
+By default, `bv` sets both to UTF-8 for the duration of its run and restores the previous encodings on exit, as `dotnet` and MSBuild do, so that what `bv` can render depends neither on the codepage the console happened to be using nor on how `bv` was launched. Both encodings are set because that is what moves the console's active codepage: setting the output encoding alone takes effect in `cmd.exe` but not in PowerShell. The change is skipped where the console encoding APIs do not exist and, on Windows, below build 10.0.18363.
+
 ### `DOTNET_CLI_HOME`
 
 Read the way the .NET CLI itself reads it: when set, it replaces the user profile directory as the root under which the CLI keeps its per-user state. `bv` consults it to locate the SDK's tool resolver cache (`.dotnet/toolResolverCache` under that root), which [delegation](DirectoryStructure.md#configdotnet-toolsjson) probes to decide whether the pinned `bv` is already installed or a `dotnet tool restore` must run first. When the variable is absent, the platform home directory applies (`USERPROFILE` on Windows, `HOME` elsewhere), as in the CLI.

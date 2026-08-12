@@ -33,6 +33,11 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        // Before anything else, including Spectre's console: replacing the console's encoding resets Console.Out
+        // and Console.Error, and the profile Spectre builds records the encoding it finds on them. Also before
+        // the delegation check below, which prints its own lines and hands this console to an inheriting child.
+        using var encodingScope = new ConsoleEncodingScope();
+
         var console = AnsiConsole.Console;
 
         // Assigned once --verbosity and --color/--no-color are known. The outer catch falls back to a default
