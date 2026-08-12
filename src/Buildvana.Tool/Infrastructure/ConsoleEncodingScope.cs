@@ -135,12 +135,14 @@ internal sealed class ConsoleEncodingScope : IDisposable
     //     PlatformNotSupportedException. This single clause is the whole of the handling for those, in place of
     //     the .NET CLI's enumeration of them: a copy of that list would be a snapshot to keep in step with an
     //     upstream we do not track, whereas catching what they throw covers platforms added later at no cost.
-    // IOException, UnauthorizedAccessException and OperationCanceledException are total over the failure leg they
-    // come from, rather than a sample of what has been seen there: ConsolePal routes every SetConsoleCP /
-    // SetConsoleOutputCP failure it does not swallow outright through Win32Marshal.GetExceptionForWin32Error, and
-    // every arm of that table produces one of the three. It passes no path, which narrows two arms that would
-    // otherwise be path-dependent to plain IOException. The remaining two clauses cover what reaches here from
-    // outside that table; Unix has its own ConsolePal, which does not use it at all.
+    // IOException, UnauthorizedAccessException and OperationCanceledException are total over the failure legs they
+    // come from, rather than a sample of what has been seen there: ConsolePal routes what it does not swallow
+    // outright through Win32Marshal.GetExceptionForWin32Error, and every arm of that table produces one of the
+    // three. Two legs reach it from here — the SetConsoleCP / SetConsoleOutputCP calls, and the flush of the
+    // console's cached writers that the output setter performs afterwards, which enters the table by way of
+    // WindowsConsoleStream.Write. No arm's type depends on the path it is handed, so the classification holds
+    // however the table is reached. SecurityException and NotSupportedException are the clauses for what arrives
+    // from outside it; Unix has its own ConsolePal, which does not use it at all.
     // Deliberately narrower than Exception.IsIORelatedException, which classifies failures of an I/O operation
     // and therefore admits ArgumentException to account for malformed paths. No arm of the table above produces
     // one, and no path reaches this class, so an ArgumentException here could only mean it handed the console
