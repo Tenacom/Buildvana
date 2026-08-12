@@ -129,10 +129,16 @@ internal sealed class ConsoleEncodingScope : IDisposable
     //     PlatformNotSupportedException. This single clause is the whole of the handling for those, in place of
     //     the .NET CLI's enumeration of them: a copy of that list would be a snapshot to keep in step with an
     //     upstream we do not track, whereas catching what they throw covers platforms added later at no cost.
+    // IOException, UnauthorizedAccessException and OperationCanceledException are total over the failure leg they
+    // come from, rather than a sample of what has been seen there: ConsolePal routes every SetConsoleCP /
+    // SetConsoleOutputCP failure it does not swallow outright through Win32Marshal.GetExceptionForWin32Error, and
+    // every arm of that table produces one of the three. It passes no path, which narrows two arms that would
+    // otherwise be path-dependent to plain IOException. The remaining two clauses cover what reaches here from
+    // outside that table; Unix has its own ConsolePal, which does not use it at all.
     // Deliberately narrower than Exception.IsIORelatedException, which classifies failures of an I/O operation
-    // and therefore admits ArgumentException to account for malformed paths. No path reaches this class, so an
-    // ArgumentException here could only mean it handed the console something the console cannot accept — a bug,
-    // and one that must not be swallowed.
+    // and therefore admits ArgumentException to account for malformed paths. No arm of the table above produces
+    // one, and no path reaches this class, so an ArgumentException here could only mean it handed the console
+    // something the console cannot accept — a bug, and one that must not be swallowed.
     // Internal rather than private, and pinned by tests: the classification above is this class's one decision
     // that a reader could plausibly get wrong while leaving it compiling, and nothing else exercises it.
     internal static bool IsConsoleEncodingFailure(Exception exception)
