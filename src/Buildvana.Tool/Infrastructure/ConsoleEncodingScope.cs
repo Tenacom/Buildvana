@@ -83,10 +83,13 @@ internal sealed class ConsoleEncodingScope : IDisposable
         // non-null only if this scope actually replaced that encoding, so disposal puts back exactly what it
         // changed and nothing else.
         // That guarantee runs one way only. A null field means no restore, which is right when the replacement
-        // never happened — but the setter changes the codepage before flushing the writers the console has
-        // cached, so a flush that threw would leave the encoding changed and the field null all the same. Program
-        // builds this scope before anything writes, so there are no cached writers and nothing to flush, which is
-        // one more reason for it to stay the first statement of Main.
+        // never happened — but the output setter changes the codepage before flushing the writers the console has
+        // cached, so a flush that threw would leave the encoding changed and the field null all the same. Input is
+        // not exposed to this: its setter has no writer to flush.
+        // What keeps the crack shut is that nothing has touched Console.Out or Console.Error yet — not that
+        // nothing has printed yet. Either property builds its writer on first read, and the next statement of Main
+        // hands Console.Out to Spectre without printing a thing, so moving this scope one line down would be
+        // enough to open it. It stays the first statement of Main.
         _originalOutputEncoding = ReplaceWithUtf8(
             static () => Console.OutputEncoding,
             static encoding => Console.OutputEncoding = encoding);
