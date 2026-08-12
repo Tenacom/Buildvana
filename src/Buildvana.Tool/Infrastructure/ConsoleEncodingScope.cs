@@ -115,25 +115,11 @@ internal sealed class ConsoleEncodingScope : IDisposable
             set(Encoding.UTF8);
             return original;
         }
-        catch (IOException)
+        catch (Exception e) when (IsConsoleEncodingFailure(e))
         {
-            // No console is attached, or it cannot be reconfigured. Leave the encoding as it is.
-            return null;
-        }
-        catch (SecurityException)
-        {
-            // Likewise, for a caller without the permission to change it.
-            return null;
-        }
-        catch (NotSupportedException)
-        {
-            // A platform with no console encoding APIs at all, which throws PlatformNotSupportedException. This
-            // is the whole of the handling for those, in place of the .NET CLI's enumeration of them: a copy of
-            // that list would be a snapshot to keep in step with an upstream we do not track, whereas catching
-            // what they throw covers platforms added later at no cost, and keeps a runtime we never anticipated
-            // from turning a cosmetic concern into an unhandled exception on bv's first statement. Deliberately
-            // not mirrored in Restore: reaching that method means this one succeeded, so the platform has
-            // already demonstrated it supports the APIs.
+            // No console, no permission to reconfigure the one there is, or no console encoding APIs at all.
+            // Whichever it is, the encoding stays as it was, and the null keeps Dispose from restoring an
+            // encoding this scope never replaced.
             return null;
         }
     }
@@ -150,13 +136,29 @@ internal sealed class ConsoleEncodingScope : IDisposable
         {
             set(original);
         }
-        catch (IOException)
+        catch (Exception e) when (IsConsoleEncodingFailure(e))
         {
-            // The console this scope changed is no longer there to change back; nothing useful to do at exit.
-        }
-        catch (SecurityException)
-        {
-            // Likewise, for a caller without the permission to change it.
+            // The console this scope changed is no longer there, or no longer ours to change back. Nothing
+            // useful to do about it at exit.
         }
     }
+
+    // The exceptions that reading or replacing a console encoding raises when the console cannot be
+    // reconfigured, as opposed to when the call itself is wrong:
+    //   - IOException — no console attached, or one that cannot be reconfigured; also what ConsolePal maps most
+    //     Win32 failures to;
+    //   - UnauthorizedAccessException — what it maps ERROR_ACCESS_DENIED to, absent from the documented list of
+    //     what these setters throw, and reachable regardless;
+    //   - SecurityException — the documented failure for a caller without the permission;
+    //   - NotSupportedException — a platform with no console encoding APIs at all, which throws
+    //     PlatformNotSupportedException. This single clause is the whole of the handling for those, in place of
+    //     the .NET CLI's enumeration of them: a copy of that list would be a snapshot to keep in step with an
+    //     upstream we do not track, whereas catching what they throw covers platforms added later at no cost.
+    // Deliberately narrower than Exception.IsIORelatedException, which classifies failures of an I/O operation
+    // and therefore admits ArgumentException to account for malformed paths. No path reaches this class, so an
+    // ArgumentException here could only mean it handed the console something the console cannot accept — a bug,
+    // and one that must not be swallowed. OperationCanceledException, which ConsolePal can raise from
+    // ERROR_OPERATION_ABORTED, is left out on the same grounds: it is not this scope's cancellation to absorb.
+    private static bool IsConsoleEncodingFailure(Exception exception)
+        => exception is IOException or UnauthorizedAccessException or SecurityException or NotSupportedException;
 }
