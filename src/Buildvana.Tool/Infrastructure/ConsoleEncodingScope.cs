@@ -29,8 +29,8 @@ namespace Buildvana.Tool.Infrastructure;
 /// <para>The .NET CLI gates the pair on a non-English UI culture, because its switch exists to render localized
 /// CLI output. Buildvana is single-culture English, so that premise is absent here, while the codepage reason
 /// above is language-independent; copying the gate would leave English consoles behaving differently from every
-/// other one, which is the unevenness this type exists to remove. The platform and Windows-version guards, on the
-/// other hand, are copied verbatim.</para>
+/// other one, which is the unevenness this type exists to remove. The opt-out variable and the Windows build
+/// floor, on the other hand, are the CLI's and are honored on its terms.</para>
 /// <para>Restoration is best-effort, by the standard the CLI itself accepts: a normal exit and Ctrl-C (which
 /// <see cref="Program"/> turns into an orderly shutdown) both restore the previous encodings; a hard kill does
 /// not. The console is shared rather than owned, so a child process that changes it in turn — every <c>dotnet</c>
@@ -54,7 +54,7 @@ internal sealed class ConsoleEncodingScope : IDisposable
     public ConsoleEncodingScope()
     {
         var optOutRequested = IsDefaultEncodingRequested(Environment.GetEnvironmentVariable(UseDefaultEncodingVariable));
-        if (optOutRequested || !OperatingSystemSupportsUtf8())
+        if (optOutRequested || !IsConsoleHostSafeForUtf8())
         {
             return;
         }
@@ -94,19 +94,17 @@ internal sealed class ConsoleEncodingScope : IDisposable
     internal static bool IsDefaultEncodingRequested(string? variableValue)
         => string.Equals(variableValue, "1", StringComparison.Ordinal);
 
-    // Copied verbatim from the .NET CLI's UILanguageOverride.OperatingSystemSupportsUtf8(). The first four
-    // exclude platforms where the console encoding APIs do not exist: unreachable for a command-line tool, free
-    // at run time (the JIT folds them to constants), and kept so that this stays a copy rather than a copy minus
-    // some bits that the next resync would have to re-justify. The Windows build floor is the load-bearing one,
-    // and it cannot be traded for a try/catch: below that build, setting the encoding succeeds — the hazard it
-    // guards against is a destabilized console host, not an exception.
+    // The build number is the .NET CLI's, from UILanguageOverride.OperatingSystemSupportsUtf8: below Windows 10
+    // 1909 the console host is old enough for codepage 65001 to misbehave. No try/catch can stand in for this
+    // check, because setting the encoding on those machines succeeds — the hazard is a destabilized console host,
+    // not a failed call — and the number needs no keeping in step with future SDKs, since the build it names went
+    // out of support in 2022 and nothing below it can run this tool anyway.
+    // The CLI's guard also enumerates the platforms that have no console encoding APIs. That list is not repeated
+    // here: ReplaceWithUtf8 catches what those platforms throw, which needs no maintenance and covers any added
+    // after this was written.
     [ExcludeFromCodeCoverage(Justification = "The result is a property of the operating system the tests happen to run on.")]
-    private static bool OperatingSystemSupportsUtf8()
-        => !OperatingSystem.IsIOS()
-            && !OperatingSystem.IsAndroid()
-            && !OperatingSystem.IsTvOS()
-            && !OperatingSystem.IsBrowser()
-            && (!OperatingSystem.IsWindows() || OperatingSystem.IsWindowsVersionAtLeast(10, 0, 18363));
+    private static bool IsConsoleHostSafeForUtf8()
+        => !OperatingSystem.IsWindows() || OperatingSystem.IsWindowsVersionAtLeast(10, 0, 18363);
 
     [ExcludeFromCodeCoverage(Justification = "Reads and replaces the process console's encoding, which the test host owns and redirects.")]
     private static Encoding? ReplaceWithUtf8(Func<Encoding> get, Action<Encoding> set)
@@ -125,6 +123,17 @@ internal sealed class ConsoleEncodingScope : IDisposable
         catch (SecurityException)
         {
             // Likewise, for a caller without the permission to change it.
+            return null;
+        }
+        catch (NotSupportedException)
+        {
+            // A platform with no console encoding APIs at all, which throws PlatformNotSupportedException. This
+            // is the whole of the handling for those, in place of the .NET CLI's enumeration of them: a copy of
+            // that list would be a snapshot to keep in step with an upstream we do not track, whereas catching
+            // what they throw covers platforms added later at no cost, and keeps a runtime we never anticipated
+            // from turning a cosmetic concern into an unhandled exception on bv's first statement. Deliberately
+            // not mirrored in Restore: reaching that method means this one succeeded, so the platform has
+            // already demonstrated it supports the APIs.
             return null;
         }
     }
