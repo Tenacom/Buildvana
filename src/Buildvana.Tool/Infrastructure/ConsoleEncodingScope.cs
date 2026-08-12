@@ -165,6 +165,12 @@ internal sealed class ConsoleEncodingScope : IDisposable
     //   - UnauthorizedAccessException — what it maps ERROR_ACCESS_DENIED to, absent from the documented list of
     //     what these setters throw, and reachable regardless;
     //   - SecurityException — the documented failure for a caller without the permission;
+    //   - OperationCanceledException — what it maps ERROR_OPERATION_ABORTED to, and a cancellation in name only:
+    //     no token reaches this class, whose guarded calls read one property and write another, so there is
+    //     nobody whose cancellation this could be. Letting it through would be the worse outcome at either end —
+    //     the constructor runs before Program's try block and Dispose after its catch blocks, so an escape is an
+    //     unhandled crash over a cosmetic concern, and inside that try it would map to exit code 130, reporting
+    //     a Ctrl-C nobody pressed;
     //   - NotSupportedException — a platform with no console encoding APIs at all, which throws
     //     PlatformNotSupportedException. This single clause is the whole of the handling for those, in place of
     //     the .NET CLI's enumeration of them: a copy of that list would be a snapshot to keep in step with an
@@ -172,8 +178,11 @@ internal sealed class ConsoleEncodingScope : IDisposable
     // Deliberately narrower than Exception.IsIORelatedException, which classifies failures of an I/O operation
     // and therefore admits ArgumentException to account for malformed paths. No path reaches this class, so an
     // ArgumentException here could only mean it handed the console something the console cannot accept — a bug,
-    // and one that must not be swallowed. OperationCanceledException, which ConsolePal can raise from
-    // ERROR_OPERATION_ABORTED, is left out on the same grounds: it is not this scope's cancellation to absorb.
+    // and one that must not be swallowed.
     private static bool IsConsoleEncodingFailure(Exception exception)
-        => exception is IOException or UnauthorizedAccessException or SecurityException or NotSupportedException;
+        => exception is IOException
+            or UnauthorizedAccessException
+            or SecurityException
+            or OperationCanceledException
+            or NotSupportedException;
 }
