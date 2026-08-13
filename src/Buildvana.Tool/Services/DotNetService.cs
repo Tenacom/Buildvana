@@ -268,7 +268,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
-        _reporter.Info($"Pushed {packages.Length} packages to {target.Source}.");
+        _reporter.Notice($"Pushed {packages.Length} packages to {target.Source}.");
     }
 
     /// <inheritdoc/>

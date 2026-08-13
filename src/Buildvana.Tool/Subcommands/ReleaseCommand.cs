@@ -64,7 +64,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
 
         // Ensure that the CI bot identity is used for commits, if not already set.
         git.CommitterIdentity ??= server.CIBotIdentity ?? throw new BuildFailedException("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
-        reporter.Info($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
+        reporter.Notice($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
 
         // Set fallback Git credentials if the server adapter can provide them.
         var pushUsername = server.PushUsername;
@@ -103,20 +103,20 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 var previousVersionSpec = versionFile.Spec;
                 if (versionFile.ApplyChange(versionSpecChange))
                 {
-                    reporter.Info($"Version spec changed from {previousVersionSpec} to {versionFile.Spec}.");
+                    reporter.Notice($"Version spec changed from {previousVersionSpec} to {versionFile.Spec}.");
                     versionFile.Save(versioningSettings.PrereleaseTag);
                     release.UpdateRepository(versionFile.Path);
                 }
                 else
                 {
-                    reporter.Info("Version spec not changed.");
+                    reporter.Notice("Version spec not changed.");
                 }
             }
 
             // Update public API files only when releasing a stable version
             if (version.IsPrerelease)
             {
-                reporter.Info("Public API update skipped: not needed on prerelease.");
+                reporter.Notice("Public API update skipped: not needed on prerelease.");
             }
             else
             {
@@ -124,13 +124,13 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 switch (modified.Length)
                 {
                     case 0:
-                        reporter.Info("No public API files were modified.");
+                        reporter.Notice("No public API files were modified.");
                         break;
                     case 1:
-                        reporter.Info("1 public API file was modified.");
+                        reporter.Notice("1 public API file was modified.");
                         break;
                     default:
-                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{modified.Length} public API files were modified."));
+                        reporter.Notice(string.Create(CultureInfo.InvariantCulture, $"{modified.Length} public API files were modified."));
                         break;
                 }
 
@@ -147,14 +147,14 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 && (changelogUpdates == ChangelogUpdates.All || !version.IsPrerelease);
             if (!changelog.Exists)
             {
-                reporter.Info($"Changelog update skipped: {ChangelogService.FileName} not found.");
+                reporter.Notice($"Changelog update skipped: {ChangelogService.FileName} not found.");
             }
             else if (!shouldUpdateChangelog)
             {
                 var reason = changelogUpdates == ChangelogUpdates.None
                     ? "changelog updates are disabled (release.changelogUpdates is 'none')."
                     : "not needed on prerelease.";
-                reporter.Info($"Changelog update skipped: {reason}");
+                reporter.Notice($"Changelog update skipped: {reason}");
             }
             else
             {
@@ -172,7 +172,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         emptyChangelogSubstitute is null,
                         "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).");
 
-                    reporter.Info("Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
+                    reporter.Notice("Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
                 }
 
                 // Update the changelog and commit the change before building.
@@ -209,7 +209,7 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
             }
             else
             {
-                reporter.Info("Changelog section title update skipped: changelog has not been updated.");
+                reporter.Notice("Changelog section title update skipped: changelog has not been updated.");
             }
 
             // Discover the packages produced by the pack step; both the post-release hook args and
@@ -241,13 +241,13 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 switch (hookUpdates.Count)
                 {
                     case 0:
-                        reporter.Info("The post-release hook modified no files.");
+                        reporter.Notice("The post-release hook modified no files.");
                         break;
                     case 1:
-                        reporter.Info("The post-release hook modified 1 file.");
+                        reporter.Notice("The post-release hook modified 1 file.");
                         break;
                     default:
-                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Count} files."));
+                        reporter.Notice(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Count} files."));
                         break;
                 }
             }
@@ -265,19 +265,19 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 switch (selfReferenceUpdates.Count)
                 {
                     case 0:
-                        reporter.Info("No self-referenced files were modified.");
+                        reporter.Notice("No self-referenced files were modified.");
                         break;
                     case 1:
-                        reporter.Info("1 self-referenced file was modified.");
+                        reporter.Notice("1 self-referenced file was modified.");
                         break;
                     default:
-                        reporter.Info(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
+                        reporter.Notice(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
                         break;
                 }
             }
             else
             {
-                reporter.Info("Self-reference update skipped: option 'dogfood' is false.");
+                reporter.Notice("Self-reference update skipped: option 'dogfood' is false.");
             }
 
             // Assemble the post-release commit from the self-reference rewrites and the hook's changes.

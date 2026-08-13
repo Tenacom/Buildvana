@@ -188,7 +188,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
         if (!_repositoryUpdated)
         {
-            _reporter.Info("Repository unchanged, no commit to push.");
+            _reporter.Notice("Repository unchanged, no commit to push.");
             return;
         }
 

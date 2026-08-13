@@ -33,12 +33,12 @@ internal sealed class VersionAdvanceCommand(
         if (versionFile.ApplyChange(change))
         {
             versionFile.Save(versioningSettings.PrereleaseTag);
-            reporter.Info($"Version spec changed from {previousSpec} to {versionFile.Spec}.");
-            reporter.Info($"Review and commit the modified {VersionFile.FileName} file.");
+            reporter.Notice($"Version spec changed from {previousSpec} to {versionFile.Spec}.");
+            reporter.Notice($"Review and commit the modified {VersionFile.FileName} file.");
         }
         else
         {
-            reporter.Info("Version spec not changed.");
+            reporter.Notice("Version spec not changed.");
         }
 
         return Task.FromResult(0);

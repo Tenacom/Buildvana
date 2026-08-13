@@ -59,7 +59,7 @@ public sealed class VersioningService
         FileVersion = FormattableString.Invariant($"{SimpleVersion}.0");
         InformationalVersion = ComputeInformationalVersion(SemVer, Spec.Prerelease, IsPublicRelease, CommitId);
         var publicity = IsPublicRelease ? "public release" : "not a public release";
-        reporter.Info(FormattableString.Invariant($"Version {SemVer} (height {Height}, {publicity})"));
+        reporter.Notice(FormattableString.Invariant($"Version {SemVer} (height {Height}, {publicity})"));
     }
 
     /// <summary>
