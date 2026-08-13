@@ -24,10 +24,3 @@ _ReSharper.*/
 
 # Windows thumbnails
 Thumbs.db
-
-# DocFx
-docs/globalMetadata.json
-docs/api/.manifest
-docs/api/*.yml
-docs/obj/
-docs/_site/
