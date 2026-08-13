@@ -31,6 +31,10 @@ internal static class Program
     // 128 + SIGINT (2): the POSIX convention for a process terminated by Ctrl-C.
     private const int CancelledExitCode = 130;
 
+    // The verbosity in effect when --verbosity is not given, for every command alike. It matches the default of
+    // `dotnet restore`/`build`/`test`/`pack`, which the build pipeline commands wrap and forward it to.
+    private const Verbosity DefaultVerbosity = Verbosity.Minimal;
+
     public static async Task<int> Main(string[] args)
     {
         // Before anything else, including Spectre's console: replacing the console's encoding resets Console.Out
@@ -106,8 +110,10 @@ internal static class Program
             CommandArgumentValidator.Validate(command, parsed, positionals);
 
             // Parse --verbosity eagerly so an invalid value surfaces in the outer catch.
-            // When absent, the command's own default applies (query commands default to Minimal).
-            var verbosity = globals.Verbosity is null ? command.DefaultVerbosity : VerbosityParser.Parse(globals.Verbosity);
+            // The default is the .NET CLI's, so that a bv command's output is comparable to that of the
+            // dotnet command underneath it. It is uniform across commands: verbosity is process-wide, and a
+            // command that runs the build pipeline would restore the noisier log through the back door.
+            var verbosity = globals.Verbosity is null ? DefaultVerbosity : VerbosityParser.Parse(globals.Verbosity);
 
             // --color / --no-color win over auto-detection; neither (or both) leaves the reporter to auto-detect.
             bool? colorOverride = (globals.Color, globals.NoColor) switch
@@ -191,7 +197,7 @@ internal static class Program
             return ex.ExitCode;
         }
 
-        static IReporter CreateDefaultReporter() => new ConsoleReporter(Verbosity.Normal, colorOverride: null);
+        static IReporter CreateDefaultReporter() => new ConsoleReporter(DefaultVerbosity, colorOverride: null);
     }
 
     private static Task<int?> TryDelegateAsync(string[] args, ParsedCommandLine parsed, GlobalSettings globals)

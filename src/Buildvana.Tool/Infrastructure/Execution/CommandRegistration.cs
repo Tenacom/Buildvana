@@ -3,20 +3,18 @@
 
 using System;
 using System.Collections.Generic;
-using Buildvana.Core.ConsoleOutput;
 
 namespace Buildvana.Tool.Infrastructure.Execution;
 
 /// <summary>
 /// A discovered <c>bv</c> command: the paths it is registered under, the class that implements it, whether
-/// it forwards all of its arguments verbatim, its settings type (if any), and its default verbosity. Produced by
+/// it forwards all of its arguments verbatim, and its settings type (if any). Produced by
 /// <see cref="CommandRegistry"/> from <see cref="ImplementsCommandAttribute"/>.
 /// </summary>
 /// <param name="AliasPaths">The paths the command is invoked under, each as a list of segments. The first path is canonical.</param>
 /// <param name="CommandType">The class implementing the command.</param>
 /// <param name="ConsumesAllArguments">Whether the command forwards all of its arguments verbatim.</param>
 /// <param name="SettingsType">The command's <c>*Settings</c> type, or <see langword="null"/> if it has none.</param>
-/// <param name="DefaultVerbosity">The verbosity in effect when <c>--verbosity</c> is not given.</param>
 /// <param name="UsesSdk">Whether the command uses the repository's pinned Buildvana SDK and must therefore
 /// pass the SDK version check before running.</param>
 internal sealed record CommandRegistration(
@@ -24,7 +22,6 @@ internal sealed record CommandRegistration(
     Type CommandType,
     bool ConsumesAllArguments,
     Type? SettingsType,
-    Verbosity DefaultVerbosity = Verbosity.Normal,
     bool UsesSdk = false)
 {
     /// <summary>
