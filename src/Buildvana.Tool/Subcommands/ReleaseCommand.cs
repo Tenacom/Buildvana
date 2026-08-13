@@ -49,7 +49,6 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         var git = services.GetRequiredService<GitService>();
         var changelog = services.GetRequiredService<ChangelogService>();
         var publicApiFiles = services.GetRequiredService<PublicApiFilesService>();
-        var docfx = services.GetRequiredService<DocFxService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
         var hookRunner = services.GetRequiredService<HookRunner>();
         var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
@@ -327,26 +326,6 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 if (File.Exists(snupkgPath))
                 {
                     release.AddAsset(snupkgPath);
-                }
-            }
-
-            // Generate documentation
-            if (docfx.IsEnabled)
-            {
-                if (version.IsPrerelease)
-                {
-                    reporter.Info("Documentation generation skipped: not needed on prerelease.");
-                }
-                else if (!settings.MatchesDocsBranch(git.CurrentBranch))
-                {
-                    reporter.Info($"Documentation generation skipped: branch '{git.CurrentBranch}' does not match release.generateDocsFrom.");
-                }
-                else
-                {
-                    reporter.Info("Generating documentation web pages...");
-                    await docfx.GenerateSiteAsync().ConfigureAwait(false);
-                    reporter.Info("Generating documentation PDF files...");
-                    await docfx.GeneratePdfsAsync().ConfigureAwait(false);
                 }
             }
 

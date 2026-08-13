@@ -80,7 +80,6 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<VersioningSettings>()
                 .AddSingleton<VersionService>()
                 .AddSingleton<ChangelogService>()
-                .AddSingleton<DocFxService>()
                 .AddSingleton<DotNetService>()
                 .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
                 .AddSingleton<HookRunner>()
