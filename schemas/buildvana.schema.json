@@ -18,13 +18,6 @@
             "type": "string"
           }
         },
-        "generateDocsFrom": {
-          "description": "Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that documentation is generated from.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "configuration": {
           "description": "Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.",
           "type": "string"

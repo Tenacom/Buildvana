@@ -132,8 +132,6 @@ Buildvana.Runtime.ReleaseConfig.Dogfood.init -> void
 Buildvana.Runtime.ReleaseConfig.EmptyChangelog.get -> string?
 Buildvana.Runtime.ReleaseConfig.EmptyChangelog.init -> void
 Buildvana.Runtime.ReleaseConfig.Equals(Buildvana.Runtime.ReleaseConfig? other) -> bool
-Buildvana.Runtime.ReleaseConfig.GenerateDocsFrom.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Buildvana.Runtime.ReleaseConfig.GenerateDocsFrom.init -> void
 Buildvana.Runtime.ReleaseConfig.ReleaseConfig() -> void
 Buildvana.Runtime.ReleaseInfo
 Buildvana.Runtime.ReleaseInfo.<Clone>$() -> Buildvana.Runtime.ReleaseInfo!

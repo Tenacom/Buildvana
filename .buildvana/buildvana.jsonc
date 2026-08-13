@@ -18,11 +18,6 @@
     // that produce public releases.
     "branches": ["^main$", "^v\\d+\\.\\d+$"],
 
-    // Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches
-    // that documentation is generated from. Defaults to ["^main$", "^master$"].
-    // Not set: documentation generation is skipped altogether while there is no docs/docfx.json.
-    // "generateDocsFrom": ["^main$"],
-
     // Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.
     // Not set: releases are built with the default configuration set under "dotnet" below.
     // "configuration": "Release",

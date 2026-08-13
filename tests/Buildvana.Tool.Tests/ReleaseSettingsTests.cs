@@ -88,47 +88,6 @@ internal sealed class ReleaseSettingsTests
     }
 
     [Test]
-    public async Task MatchesDocsBranch_DefaultsToMainAndMaster()
-    {
-        var settings = Parse([]);
-        await Assert.That(settings.MatchesDocsBranch("main")).IsTrue();
-        await Assert.That(settings.MatchesDocsBranch("master")).IsTrue();
-        await Assert.That(settings.MatchesDocsBranch("develop")).IsFalse();
-        await Assert.That(settings.MatchesDocsBranch(string.Empty)).IsFalse();
-    }
-
-    [Test]
-    public async Task MatchesDocsBranch_UsesConfiguredPatterns()
-    {
-        var config = new BuildvanaConfig { Release = new() { GenerateDocsFrom = ["^release/.+$"] } };
-        var settings = Parse([], config);
-        await Assert.That(settings.MatchesDocsBranch("release/2.0")).IsTrue();
-        await Assert.That(settings.MatchesDocsBranch("main")).IsFalse();
-    }
-
-    [Test]
-    public async Task MatchesDocsBranch_ImplicitlyAnchorsPatterns()
-    {
-        var config = new BuildvanaConfig { Release = new() { GenerateDocsFrom = ["main|master", @"release/\d+\.\d+"] } };
-        var settings = Parse([], config);
-        await Assert.That(settings.MatchesDocsBranch("main")).IsTrue();
-        await Assert.That(settings.MatchesDocsBranch("master")).IsTrue();
-        await Assert.That(settings.MatchesDocsBranch("domain")).IsFalse();
-        await Assert.That(settings.MatchesDocsBranch("main2")).IsFalse();
-        await Assert.That(settings.MatchesDocsBranch("release/2.0")).IsTrue();
-        await Assert.That(settings.MatchesDocsBranch("prerelease/2.0")).IsFalse();
-        await Assert.That(settings.MatchesDocsBranch("release/2.0.1")).IsFalse();
-    }
-
-    [Test]
-    public async Task MatchesDocsBranch_Throws_OnInvalidPattern()
-    {
-        var config = new BuildvanaConfig { Release = new() { GenerateDocsFrom = ["["] } };
-        var settings = Parse([], config);
-        await Assert.That(() => settings.MatchesDocsBranch("main")).Throws<BuildFailedException>();
-    }
-
-    [Test]
     public async Task Parse_ReadsBumpEnum()
     {
         await Assert.That(Parse(["--bump", "minor"]).ResolveBump()).IsEqualTo(VersionSpecChange.Minor);

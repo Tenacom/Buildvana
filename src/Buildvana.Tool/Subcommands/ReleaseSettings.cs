@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text.RegularExpressions;
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
@@ -23,9 +21,6 @@ namespace Buildvana.Tool.Subcommands;
 /// </summary>
 internal sealed class ReleaseSettings
 {
-    private static readonly IReadOnlyList<string> DefaultGenerateDocsFrom = ["main", "master"];
-    private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(1);
-
     private readonly ReleaseConfig? _config;
     private readonly DotNetSettings _dotNetSettings;
 
@@ -151,45 +146,4 @@ internal sealed class ReleaseSettings
     /// Returns <see cref="Dogfood"/> if set, otherwise <c>release.dogfood</c>, otherwise <see langword="true"/>.
     /// </summary>
     public bool ResolveDogfood() => Dogfood ?? _config?.Dogfood ?? true;
-
-    /// <summary>
-    /// Determines whether documentation is generated when releasing from <paramref name="branch"/>, by matching it
-    /// against the configured <c>release.generateDocsFrom</c> regular expressions (default <c>main</c>/<c>master</c>).
-    /// </summary>
-    /// <param name="branch">The short name of the branch the release is created from.</param>
-    /// <returns><see langword="true"/> if <paramref name="branch"/> matches at least one pattern;
-    /// otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="BuildFailedException">A configured pattern is not a valid regular expression, or matching timed out.</exception>
-    /// <remarks>
-    /// Patterns are implicitly anchored (wrapped in <c>^(?:</c>&#8230;<c>)$</c>): a pattern must match the whole
-    /// branch name, so <c>main</c> matches neither <c>domain</c> nor <c>main2</c>.
-    /// </remarks>
-    public bool MatchesDocsBranch(string branch)
-    {
-        Guard.IsNotNull(branch);
-        if (branch.Length == 0)
-        {
-            return false;
-        }
-
-        var patterns = _config?.GenerateDocsFrom ?? DefaultGenerateDocsFrom;
-        return patterns.Any(pattern => IsMatch(pattern, branch));
-    }
-
-    private static bool IsMatch(string pattern, string branch)
-    {
-        try
-        {
-            return Regex.IsMatch(branch, $"^(?:{pattern})$", RegexOptions.CultureInvariant, RegexMatchTimeout);
-        }
-        catch (ArgumentException ex)
-        {
-            throw new BuildFailedException($"Invalid regular expression '{pattern}' in release.generateDocsFrom: {ex.Message}");
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            throw new BuildFailedException(
-                $"Regular expression '{pattern}' in release.generateDocsFrom timed out matching branch '{branch}'.");
-        }
-    }
 }

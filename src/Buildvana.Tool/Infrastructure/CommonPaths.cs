@@ -26,9 +26,4 @@ internal static class CommonPaths
     /// The path of the directory where test results and coverage reports are stored.
     /// </summary>
     public const string TestResults = "TestResults";
-
-    /// <summary>
-    /// The path of the directory where documentation is stored.
-    /// </summary>
-    public const string Docs = "docs";
 }
