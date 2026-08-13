@@ -15,7 +15,6 @@
   <PropertyGroup>
     <NoWarn>$(NoWarn);CA1515</NoWarn> <!-- Consider making public types internal - False positive (no public classes in project) with no location, must disable globally - Re-enable upon updating Roslyn analyzers -->
     <NoWarn>$(NoWarn);CA1812</NoWarn> <!-- Avoid uninstantiated internal classes - commands are resolved via IServiceProvider.GetRequiredService(Type), which the analyzer cannot trace -->
-    <NoWarn>$(NoWarn);NU1608</NoWarn> <!--  Detected package version outside of dependency contraint - Transitive dependency hell, mainly caused by Docfx.App - Re-enable this warning before releases to check for _real_ problems -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,10 +35,8 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Diagnostics" />
-    <PackageReference Include="Docfx.App" />
     <PackageReference Include="LibGit2Sharp" />
     <PackageReference Include="Louis" />
-    <PackageReference Include="Microsoft.CodeAnalysis" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.VisualStudio.SolutionPersistence" />
@@ -52,17 +49,5 @@
   <!-- TODO: Items in this group should be TransitivePackageOverride items in Directory.Packages.props. -->
   <ItemGroup>
   </ItemGroup>
-
-  <!--
-    Playwright (transitive via Docfx.App) ships browser-management PS1 scripts as publish outputs.
-    NuGet rejects them as unrecognized tool scripts (NU5111), so strip them before packing.
-  -->
-  <Target Name="RemovePlaywrightScripts" AfterTargets="ComputeFilesToPublish">
-    <ItemGroup>
-      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
-          Condition="$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').Contains('.playwright'))
-                  or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'playwright.ps1'" />
-    </ItemGroup>
-  </Target>
 
 </Project>
