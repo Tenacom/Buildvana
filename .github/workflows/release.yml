@@ -26,8 +26,10 @@ on:
         description: 'Buildvana verbosity'
         required: true
         type: choice
-        default: 'normal'
+        default: 'minimal'
         options:
+        - quiet
+        - minimal
         - normal
         - detailed
         - diagnostic
@@ -81,7 +83,6 @@ jobs:
       id: build
       shell: bash
       run: |
-        if [ -z "$BV_VERBOSITY" ]; then BV_VERBOSITY=normal; fi
         if [ "$RUNNER_DEBUG" = "1" ]; then BV_VERBOSITY=diagnostic; fi
         dotnet bv release --verbosity "$BV_VERBOSITY" --bump "$BV_BUMP"
     - name: Upload coverage to Codecov
