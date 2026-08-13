@@ -29,6 +29,10 @@ public static class ReporterExtensions
         /// <param name="message">The message text.</param>
         public void Warning(string message) => @this.Report(MessageLevel.Warning, message);
 
+        /// <summary>Reports a <see cref="MessageLevel.Notice"/> message.</summary>
+        /// <param name="message">The message text.</param>
+        public void Notice(string message) => @this.Report(MessageLevel.Notice, message);
+
         /// <summary>Reports an <see cref="MessageLevel.Info"/> message.</summary>
         /// <param name="message">The message text.</param>
         public void Info(string message) => @this.Report(MessageLevel.Info, message);
@@ -52,6 +56,12 @@ public static class ReporterExtensions
         /// <param name="args">The arguments to format.</param>
         public void Warning(CompositeFormat format, params ReadOnlySpan<object?> args)
             => @this.Report(MessageLevel.Warning, format, args);
+
+        /// <summary>Formats and reports a <see cref="MessageLevel.Notice"/> message.</summary>
+        /// <param name="format">The composite format string.</param>
+        /// <param name="args">The arguments to format.</param>
+        public void Notice(CompositeFormat format, params ReadOnlySpan<object?> args)
+            => @this.Report(MessageLevel.Notice, format, args);
 
         /// <summary>Formats and reports an <see cref="MessageLevel.Info"/> message.</summary>
         /// <param name="format">The composite format string.</param>
@@ -95,7 +105,8 @@ public static class ReporterExtensions
         /// </summary>
         /// <param name="level">The level to test.</param>
         /// <returns><see langword="true"/> if the level is enabled; otherwise, <see langword="false"/>.</returns>
-        public bool IsEnabled(MessageLevel level) => (int)level <= (int)@this.Verbosity;
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="level"/> is not a known <see cref="MessageLevel"/>.</exception>
+        public bool IsEnabled(MessageLevel level) => @this.IsVerbosityAtLeast(level.MinimumVerbosity());
 
         /// <summary>
         /// Determines whether the reporter's <see cref="IReporter.Verbosity"/> is at least the given

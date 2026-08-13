@@ -44,8 +44,9 @@ internal sealed class TaskLoggingHelperReporterTests
     }
 
     [Test]
-    [Arguments(MessageLevel.Info, MessageImportance.High)]
-    [Arguments(MessageLevel.Detail, MessageImportance.Normal)]
+    [Arguments(MessageLevel.Notice, MessageImportance.High)]
+    [Arguments(MessageLevel.Info, MessageImportance.Normal)]
+    [Arguments(MessageLevel.Detail, MessageImportance.Low)]
     [Arguments(MessageLevel.Trace, MessageImportance.Low)]
     public async Task Report_MessageLevel_LogsMessageWithExpectedImportance(
         MessageLevel level,
@@ -81,10 +82,13 @@ internal sealed class TaskLoggingHelperReporterTests
         await Assert.That(reporter.Verbosity).IsEqualTo(Verbosity.Diagnostic);
     }
 
+    // Both ends of this table over-claim on purpose: Low answers Diagnostic rather than Detailed so that
+    // formatted Trace messages are not short-circuited away under -v:diag, and an engine that logs nothing
+    // floors at Minimal rather than Quiet so that formatted warnings survive MSBuild's own quiet verbosity.
     [Test]
     [Arguments(MessageImportance.Low, Verbosity.Diagnostic)]
-    [Arguments(MessageImportance.Normal, Verbosity.Detailed)]
-    [Arguments(MessageImportance.High, Verbosity.Normal)]
+    [Arguments(MessageImportance.Normal, Verbosity.Normal)]
+    [Arguments(MessageImportance.High, Verbosity.Minimal)]
     [Arguments(null, Verbosity.Minimal)]
     public async Task Verbosity_WithEngineServices_TracksImportanceFiltering(
         MessageImportance? minimumImportance,
@@ -193,7 +197,7 @@ internal sealed class TaskLoggingHelperReporterTests
     [Test]
     public async Task ChildLines_WhenEngineDiscardsLowImportance_AreNotForwarded()
     {
-        // Dropped twice over: the reporter's minimumVerbosity gate (verbosity here is Normal) and
+        // Dropped twice over: the reporter's minimumVerbosity gate (verbosity here is Minimal) and
         // TaskLoggingHelper's own importance filtering both consult the same EngineServices.
         var (reporter, engine) = CreateReporter(MessageImportance.High);
         reporter.ChildOutput("out", null);

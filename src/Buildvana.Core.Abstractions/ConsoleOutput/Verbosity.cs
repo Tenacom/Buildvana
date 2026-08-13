@@ -5,22 +5,23 @@ namespace Buildvana.Core.ConsoleOutput;
 
 /// <summary>
 /// Controls how much of a reporter's output reaches the user. Each level enables all the
-/// <see cref="MessageLevel"/>s enabled by the levels below it (see <see cref="MessageLevel"/> for the mapping).
+/// <see cref="MessageLevel"/>s enabled by the levels below it.
 /// </summary>
 /// <remarks>
-/// The members mirror <c>bv</c>'s <c>--verbosity</c> command-line vocabulary and are ordered from least to most
-/// verbose, so a message at a given <see cref="MessageLevel"/> is shown when
-/// <c>(int)level &lt;= (int)verbosity</c>.
+/// <para>The members mirror <c>bv</c>'s <c>--verbosity</c> command-line vocabulary and are ordered from least to
+/// most verbose. Which levels each one enables is stated by
+/// <see cref="MessageLevelExtensions.MinimumVerbosity"/>: a message is shown when its level's minimum verbosity
+/// is at most the one in effect.</para>
 /// </remarks>
 public enum Verbosity
 {
     /// <summary>Only errors are shown.</summary>
     Quiet,
 
-    /// <summary>Errors and warnings are shown.</summary>
+    /// <summary>Errors, warnings, and notices are shown.</summary>
     Minimal,
 
-    /// <summary>Errors, warnings, and informational messages are shown. This is the default.</summary>
+    /// <summary>Everything <see cref="Minimal"/> shows, plus informational messages.</summary>
     Normal,
 
     /// <summary>Everything <see cref="Normal"/> shows, plus detail messages.</summary>
