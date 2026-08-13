@@ -16,18 +16,36 @@ namespace Buildvana.Sdk;
 /// human-facing output through the build's own loggers.
 /// </summary>
 /// <remarks>
-/// <para>Message levels map to MSBuild severities as follows: <see cref="MessageLevel.Error"/> and
-/// <see cref="MessageLevel.Warning"/> become build errors and warnings; <see cref="MessageLevel.Info"/>,
-/// <see cref="MessageLevel.Detail"/>, and <see cref="MessageLevel.Trace"/> become messages of
-/// <see cref="MessageImportance.High"/>, <see cref="MessageImportance.Normal"/>, and
-/// <see cref="MessageImportance.Low"/> importance respectively.</para>
+/// <para>Message levels map to MSBuild severities so that each level becomes visible at the verbosity named by
+/// <see cref="MessageLevelExtensions.MinimumVerbosity"/>, the same one at which <c>bv</c>'s console shows it:
+/// <see cref="MessageLevel.Error"/> and <see cref="MessageLevel.Warning"/> become build errors and warnings;
+/// <see cref="MessageLevel.Notice"/> becomes a message of <see cref="MessageImportance.High"/> importance, which
+/// MSBuild shows from minimal verbosity up; <see cref="MessageLevel.Info"/> becomes
+/// <see cref="MessageImportance.Normal"/>, shown from normal verbosity up; and both
+/// <see cref="MessageLevel.Detail"/> and <see cref="MessageLevel.Trace"/> become
+/// <see cref="MessageImportance.Low"/>, shown from detailed verbosity up.</para>
+/// <para>The last two share a rung because MSBuild's ladder has three and ends there. A task cannot do better:
+/// <see cref="EngineServices"/> exposes no verbosity to read, and its
+/// <see cref="EngineServices.LogsMessagesOfImportance"/> is a union query across every registered logger, each
+/// with a verbosity of its own — so detailed and diagnostic are indistinguishable from in here, and
+/// <see cref="MessageLevel.Trace"/> surfaces one rung earlier than it would on the console.</para>
 /// <para>Messages are always forwarded, regardless of <see cref="Verbosity"/>: visibility is governed by
 /// MSBuild's own verbosity and importance filtering, exactly like any other message logged by a task.
 /// <see cref="Verbosity"/> is derived from <see cref="IBuildEngine10.EngineServices"/> when available
 /// (falling back to fully permissive otherwise), so that callers checking it — such as the formatting
 /// helpers in <see cref="ReporterExtensions"/> — skip work whose output MSBuild would discard anyway.</para>
+/// <para>That derivation over-claims at both ends of the ladder, deliberately, because its only consumers are
+/// short-circuit checks and the cost of guessing low is a dropped message. When low-importance messages are
+/// logged it reports <see cref="Verbosity.Diagnostic"/> rather than <see cref="Verbosity.Detailed"/>: the honest
+/// answer would make <c>Report(Trace, format, args)</c> short-circuit and drop every formatted
+/// <see cref="MessageLevel.Trace"/> message even under <c>-v:diag</c>. When nothing at all is logged it floors at
+/// <see cref="Verbosity.Minimal"/> rather than <see cref="Verbosity.Quiet"/>: the honest answer would make
+/// <c>Warning(format, args)</c> short-circuit and drop warnings that MSBuild's own quiet verbosity still
+/// prints.</para>
 /// <para>Activity start and outcome lines are logged at <see cref="MessageImportance.Normal"/> importance,
-/// so they are hidden at MSBuild's default (minimal) verbosity and visible from normal verbosity up.</para>
+/// so they are hidden at MSBuild's default (minimal) verbosity and visible from normal verbosity up. That is the
+/// importance <see cref="MessageLevel.Info"/> maps to, and the console side gates the same lines on
+/// <see cref="MessageLevel.Info"/> too, so the two agree on when an activity is narrated.</para>
 /// <para>Child-process output and error lines are both forwarded as low-importance messages: MSBuild has no
 /// neutral standard-error channel, and logging a build error or warning would misrepresent — and, given how
 /// task success is determined, potentially fail the build over — stderr lines that many tools use for
@@ -48,9 +66,10 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
         _engineServices = (engine as IBuildEngine10)?.EngineServices;
     }
 
+    // The two remaining rungs of MSBuild's ladder, minimal and quiet, both answer Minimal here: see the
+    // over-claim paragraph in this class's remarks for why quiet does not answer Quiet.
     public Verbosity Verbosity => LogsMessagesOfImportance(MessageImportance.Low) ? Verbosity.Diagnostic
-        : LogsMessagesOfImportance(MessageImportance.Normal) ? Verbosity.Detailed
-        : LogsMessagesOfImportance(MessageImportance.High) ? Verbosity.Normal
+        : LogsMessagesOfImportance(MessageImportance.Normal) ? Verbosity.Normal
         : Verbosity.Minimal;
 
     public void Report(MessageLevel level, string message)
@@ -66,12 +85,13 @@ internal sealed partial class TaskLoggingHelperReporter : IReporter
                 case MessageLevel.Warning:
                     _log.LogWarning("{0}", message);
                     break;
-                case MessageLevel.Info:
+                case MessageLevel.Notice:
                     _log.LogMessage(MessageImportance.High, "{0}", message);
                     break;
-                case MessageLevel.Detail:
+                case MessageLevel.Info:
                     _log.LogMessage(MessageImportance.Normal, "{0}", message);
                     break;
+                case MessageLevel.Detail:
                 case MessageLevel.Trace:
                     _log.LogMessage(MessageImportance.Low, "{0}", message);
                     break;

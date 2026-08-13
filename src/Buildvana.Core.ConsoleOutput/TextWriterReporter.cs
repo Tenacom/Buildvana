@@ -133,6 +133,7 @@ public abstract partial class TextWriterReporter(Verbosity verbosity, bool useCo
     {
         MessageLevel.Error => (ConsoleColor.Red, "error"),
         MessageLevel.Warning => (ConsoleColor.Yellow, "warning"),
+        MessageLevel.Notice => (null, "notice"),
         MessageLevel.Info => (null, "info"),
         MessageLevel.Detail => (null, "detail"),
         MessageLevel.Trace => (null, "trace"),

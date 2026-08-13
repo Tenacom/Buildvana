@@ -9,6 +9,7 @@ internal sealed class TextWriterReporterTests
     [Test]
     [Arguments(MessageLevel.Error, "error")]
     [Arguments(MessageLevel.Warning, "warning")]
+    [Arguments(MessageLevel.Notice, "notice")]
     [Arguments(MessageLevel.Info, "info")]
     [Arguments(MessageLevel.Detail, "detail")]
     [Arguments(MessageLevel.Trace, "trace")]
@@ -22,6 +23,7 @@ internal sealed class TextWriterReporterTests
 
     [Test]
     [Arguments(Verbosity.Quiet, MessageLevel.Warning)]
+    [Arguments(Verbosity.Quiet, MessageLevel.Notice)]
     [Arguments(Verbosity.Minimal, MessageLevel.Info)]
     [Arguments(Verbosity.Normal, MessageLevel.Detail)]
     [Arguments(Verbosity.Detailed, MessageLevel.Trace)]
@@ -30,6 +32,21 @@ internal sealed class TextWriterReporterTests
         using var reporter = new StringWriterReporter(verbosity);
         reporter.Report(level, "something happened");
         await Assert.That(reporter.ErrorText).IsEmpty();
+        await Assert.That(reporter.OutputText).IsEmpty();
+    }
+
+    [Test]
+    [Arguments(MessageLevel.Error, Verbosity.Quiet)]
+    [Arguments(MessageLevel.Warning, Verbosity.Minimal)]
+    [Arguments(MessageLevel.Notice, Verbosity.Minimal)]
+    [Arguments(MessageLevel.Info, Verbosity.Normal)]
+    [Arguments(MessageLevel.Detail, Verbosity.Detailed)]
+    [Arguments(MessageLevel.Trace, Verbosity.Diagnostic)]
+    public async Task Report_AtLevelMinimumVerbosity_Writes(MessageLevel level, Verbosity verbosity)
+    {
+        using var reporter = new StringWriterReporter(verbosity);
+        reporter.Report(level, "something happened");
+        await Assert.That(reporter.ErrorText).EndsWith($"something happened{Environment.NewLine}");
         await Assert.That(reporter.OutputText).IsEmpty();
     }
 
