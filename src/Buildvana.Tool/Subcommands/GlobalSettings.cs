@@ -22,7 +22,7 @@ namespace Buildvana.Tool.Subcommands;
 /// <remarks>The constructor parameter order is also the order in which these options appear in <c>bv</c>'s help.</remarks>
 internal sealed record GlobalSettings(
     [property: BvOption("-v|--verbosity <LEVEL>")]
-    [property: Description("Logging verbosity. One of: quiet, minimal, normal, detailed, diagnostic. Defaults to normal.")]
+    [property: Description("Logging verbosity. One of: quiet, minimal, normal, detailed, diagnostic. Defaults to minimal.")]
     string? Verbosity,
     [property: BvOption("--color")]
     [property: Description("Force ANSI color output even when not connected to a TTY.")]

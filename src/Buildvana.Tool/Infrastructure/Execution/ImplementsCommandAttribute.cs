@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Buildvana.Core.ConsoleOutput;
 
 namespace Buildvana.Tool.Infrastructure.Execution;
 
@@ -41,11 +40,6 @@ internal sealed class ImplementsCommandAttribute : Attribute
     /// <see cref="Buildvana.Tool.CommandLine.BvArgumentAttribute"/>-decorated properties the help renderer
     /// enumerates; <see langword="null"/> for commands with no options or arguments of their own.
     /// </param>
-    /// <param name="defaultVerbosity">
-    /// The verbosity in effect when <c>--verbosity</c> is not given. Commands whose deliverable is their console
-    /// output (query commands) use <see cref="Verbosity.Minimal"/> so that only their result, warnings, and
-    /// errors are shown by default.
-    /// </param>
     /// <param name="usesSdk">
     /// <see langword="true"/> if the command uses the repository's pinned Buildvana SDK — by running MSBuild
     /// targets on solution projects, or anything else whose outcome depends on the <c>global.json</c> pin —
@@ -57,7 +51,6 @@ internal sealed class ImplementsCommandAttribute : Attribute
         string aliases,
         bool consumesAllArguments = false,
         Type? settingsType = null,
-        Verbosity defaultVerbosity = Verbosity.Normal,
         bool usesSdk = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(aliases);
@@ -77,7 +70,6 @@ internal sealed class ImplementsCommandAttribute : Attribute
         AliasPaths = paths;
         ConsumesAllArguments = consumesAllArguments;
         SettingsType = settingsType;
-        DefaultVerbosity = defaultVerbosity;
         UsesSdk = usesSdk;
     }
 
@@ -100,11 +92,6 @@ internal sealed class ImplementsCommandAttribute : Attribute
     /// Gets the command's <c>*Settings</c> type, or <see langword="null"/> if it has no options or arguments of its own.
     /// </summary>
     public Type? SettingsType { get; }
-
-    /// <summary>
-    /// Gets the verbosity in effect when <c>--verbosity</c> is not given.
-    /// </summary>
-    public Verbosity DefaultVerbosity { get; }
 
     /// <summary>
     /// Gets a value indicating whether the command uses the repository's pinned Buildvana SDK and must

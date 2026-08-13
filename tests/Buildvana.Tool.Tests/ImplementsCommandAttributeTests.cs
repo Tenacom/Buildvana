@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Infrastructure.Execution;
 
 internal sealed class ImplementsCommandAttributeTests
@@ -21,13 +20,6 @@ internal sealed class ImplementsCommandAttributeTests
     {
         var attribute = new ImplementsCommandAttribute("Version  SHOW");
         await Assert.That(string.Join(' ', attribute.AliasPaths[0])).IsEqualTo("version show");
-    }
-
-    [Test]
-    public async Task DefaultVerbosity_DefaultsToNormal()
-    {
-        var attribute = new ImplementsCommandAttribute("foo");
-        await Assert.That(attribute.DefaultVerbosity).IsEqualTo(Verbosity.Normal);
     }
 
     [Test]

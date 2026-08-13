@@ -4,7 +4,6 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
@@ -12,7 +11,7 @@ using Spectre.Console;
 
 namespace Buildvana.Tool.Subcommands;
 
-[ImplementsCommand("version show | version", defaultVerbosity: Verbosity.Minimal)]
+[ImplementsCommand("version show | version")]
 [Description("Show current and published version information.")]
 internal sealed class VersionShowCommand(VersionService version, GitService git, IAnsiConsole console) : IBvCommand
 {

@@ -18,7 +18,7 @@ public enum Verbosity
     /// <summary>Only errors are shown.</summary>
     Quiet,
 
-    /// <summary>Errors, warnings, and notices are shown.</summary>
+    /// <summary>Errors, warnings, and notices are shown. This is <c>bv</c>'s default, as it is the .NET CLI's.</summary>
     Minimal,
 
     /// <summary>Everything <see cref="Minimal"/> shows, plus informational messages.</summary>
