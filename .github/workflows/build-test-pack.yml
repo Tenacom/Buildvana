@@ -48,9 +48,11 @@ jobs:
     - name: Build, test, and pack with Buildvana
       shell: bash
       run: |
-        if [ -z "$BV_VERBOSITY" ]; then BV_VERBOSITY=Normal; fi
-        if [ "$RUNNER_DEBUG" = "1" ]; then BV_VERBOSITY=Diagnostic; fi
-        dotnet bv pack --verbosity "$BV_VERBOSITY"
+        if [ "$RUNNER_DEBUG" = "1" ]; then
+          dotnet bv pack --verbosity diagnostic
+        else
+          dotnet bv pack
+        fi
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
       uses: codecov/codecov-action@v7
