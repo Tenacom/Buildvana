@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
@@ -223,6 +224,13 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         EnsurePending();
 
         await DoPublishAsync(_assets).ConfigureAwait(false);
+        _reporter.Notice(_assets.Count switch
+        {
+            0 => $"Published release {_version.CurrentStr} with no assets.",
+            1 => $"Published release {_version.CurrentStr} with 1 asset.",
+            var count => string.Create(CultureInfo.InvariantCulture, $"Published release {_version.CurrentStr} with {count} assets."),
+        });
+
         OnRollback(async () => await UndoPublishAsync().ConfigureAwait(false));
         await OnPublishedAsync().ConfigureAwait(false);
         _published = true;
