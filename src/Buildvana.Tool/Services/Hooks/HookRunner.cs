@@ -103,7 +103,7 @@ internal sealed class HookRunner
         }
 
         var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
-        _reporter.Detail($"Hook {hookName}: args: {json}");
+        _reporter.Trace($"Hook {hookName}: args: {json}");
         var argsPath = _home.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event));
         _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
         await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
