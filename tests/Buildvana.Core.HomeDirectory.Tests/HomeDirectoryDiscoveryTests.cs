@@ -66,6 +66,27 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
     }
 
+    // A configuration file marks the directory it sits in, and only that one. This is the rule that used to have
+    // an exception for .buildvana/, and the exception is what made every hook's own directory a home directory.
+    [Test]
+    public async Task TryDiscover_ConfigFileInBuildvanaSubdirectory_DoesNotMarkTheParent()
+    {
+        var root = NewDir();
+        try
+        {
+            WriteFile(root, ".git/HEAD");
+            var nested = Path.Combine(root, "nested");
+            WriteFile(nested, ".buildvana/buildvana.jsonc");
+            var found = HomeDirectoryDiscovery.TryDiscover(nested, out var home);
+            await Assert.That(found).IsTrue();
+            await Assert.That(home).IsEqualTo(WithTrailingSeparator(root));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Test]
     public async Task TryDiscover_MultipleMarkers_NearestWins()
     {

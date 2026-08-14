@@ -155,6 +155,23 @@ internal sealed class BuildvanaConfigLoadTests
         }
     }
 
+    // The .buildvana subdirectory was a candidate location until it turned every hook's directory into a home
+    // directory of its own. A file left there is not the repository's configuration, and is not found.
+    [Test]
+    public async Task FindFile_FileInBuildvanaSubdirectory_ReturnsNull()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, ".buildvana/buildvana.jsonc", "{}");
+            await Assert.That(BuildvanaConfig.FindFile(dir)).IsNull();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     private static string NewDir()
     {
         var dir = Path.Combine(Path.GetTempPath(), "bvtest_" + Guid.NewGuid().ToString("N"));
