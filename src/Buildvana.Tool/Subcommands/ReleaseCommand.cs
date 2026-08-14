@@ -128,18 +128,14 @@ internal sealed class ReleaseCommand(
             else
             {
                 var modified = publicApiFiles.TransferAllPublicApisToShipped().ToArray();
-                switch (modified.Length)
+
+                // Never one: the transfer yields both files of every pair it modifies, so there is no
+                // singular case to report.
+                reporter.Notice(modified.Length switch
                 {
-                    case 0:
-                        reporter.Notice("No public API files were modified.");
-                        break;
-                    case 1:
-                        reporter.Notice("1 public API file was modified.");
-                        break;
-                    default:
-                        reporter.Notice(string.Create(CultureInfo.InvariantCulture, $"{modified.Length} public API files were modified."));
-                        break;
-                }
+                    0 => "No public API files were modified.",
+                    var count => string.Create(CultureInfo.InvariantCulture, $"{count} public API files were modified."),
+                });
 
                 if (modified.Length > 0)
                 {
