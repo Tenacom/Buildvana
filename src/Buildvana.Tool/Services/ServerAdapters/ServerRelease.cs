@@ -224,17 +224,20 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         EnsurePending();
 
         await DoPublishAsync(_assets).ConfigureAwait(false);
+        OnRollback(async () => await UndoPublishAsync().ConfigureAwait(false));
+        await OnPublishedAsync().ConfigureAwait(false);
+        _published = true;
+        _rollbackActions.Clear();
+
+        // The record of the publication comes last, once nothing can undo it any more: OnPublishedAsync
+        // is the final step that can still fail, and its failure rolls the whole release back - deleting
+        // the release and the tag that a notice printed any earlier would already have claimed.
         _reporter.Notice(_assets.Count switch
         {
             0 => $"Published release {_version.CurrentStr} with no assets.",
             1 => $"Published release {_version.CurrentStr} with 1 asset.",
             var count => string.Create(CultureInfo.InvariantCulture, $"Published release {_version.CurrentStr} with {count} assets."),
         });
-
-        OnRollback(async () => await UndoPublishAsync().ConfigureAwait(false));
-        await OnPublishedAsync().ConfigureAwait(false);
-        _published = true;
-        _rollbackActions.Clear();
     }
 
     public async ValueTask DisposeAsync()
