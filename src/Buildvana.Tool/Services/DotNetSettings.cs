@@ -30,7 +30,10 @@ internal sealed class DotNetSettings
         _nuget = config.NuGet;
     }
 
-    /// <summary>Gets the default build configuration (<c>dotnet.configuration</c>, or <c>"Release"</c>).</summary>
+    /// <summary>
+    /// Gets the default build configuration (<c>dotnet.configuration</c>, or
+    /// <see cref="DotNetConfig.DefaultConfiguration"/> when unset).
+    /// </summary>
     public string Configuration { get; }
 
     /// <summary>Gets the per-command <c>dotnet</c> invocation settings (the <c>dotnet</c> section).</summary>
