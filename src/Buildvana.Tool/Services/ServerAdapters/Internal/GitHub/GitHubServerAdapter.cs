@@ -36,7 +36,9 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         _reporter = services.GetRequiredService<IReporter>();
         _version = services.GetRequiredService<VersionService>();
         _git = services.GetRequiredService<GitService>();
-        BuildFailedException.ThrowIfNot(GitUrlInfo.TryCreate(_git.OriginUrl, out var originInfo), $"Couldn't get information from origin URL '{_git.OriginUrl}'.");
+        BuildFailedException.ThrowIfNot(
+            GitUrlInfo.TryCreate(_git.OriginUrl, out var originInfo),
+            $"Couldn't get information from origin URL '{_git.OriginUrl}'.");
         BuildFailedException.ThrowIfNot(originInfo.PathSegments.Count == 2, $"'{originInfo.Url}' is not a valid GitHub repository URL.");
         HostName = originInfo.Host;
         RepositoryOwner = originInfo.PathSegments[0];
@@ -68,7 +70,9 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public override bool IsCloudBuild => true;
 
     /// <inheritdoc/>
-    public override GitIdentity? CIBotIdentity { get; } = new("github-actions[bot]", "41898282+github-actions[bot]@users.noreply.github.com");
+    public override GitIdentity? CIBotIdentity { get; } = new(
+        "github-actions[bot]",
+        "41898282+github-actions[bot]@users.noreply.github.com");
 
     /// <inheritdoc/>
     public override string PushUsername => "x-access-token";
@@ -163,7 +167,10 @@ internal sealed class GitHubServerAdapter : ServerAdapter
             TargetCommitish = targetCommitish,
         };
 
-        var generateNotesResponse = await client.Repository.Release.GenerateReleaseNotes(RepositoryOwner, RepositoryName, releaseNotesRequest).ConfigureAwait(false);
+        var generateNotesResponse = await client.Repository.Release.GenerateReleaseNotes(
+            RepositoryOwner,
+            RepositoryName,
+            releaseNotesRequest).ConfigureAwait(false);
         var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.CurrentBranch)}).\n\n---\n\n"
                 + generateNotesResponse.Body;
 
