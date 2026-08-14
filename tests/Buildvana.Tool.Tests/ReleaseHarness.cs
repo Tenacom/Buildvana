@@ -118,6 +118,13 @@ internal sealed class ReleaseHarness : IDisposable
     public FakeFileBasedAppRunner AppRunner { get; } = new();
 
     /// <summary>
+    /// Gets the messages the release recorded at <see cref="MessageLevel.Notice"/> level, in order: the
+    /// record of what the release did, which is what a run at the default verbosity shows.
+    /// </summary>
+    public IEnumerable<string> Notices
+        => Reporter.Messages.Where(x => x.Level == MessageLevel.Notice).Select(x => x.Message);
+
+    /// <summary>
     /// Gets the observable steps of the release, in order.
     /// </summary>
     public IReadOnlyList<ReleaseEvent> Events => _events;
@@ -317,14 +324,25 @@ internal sealed class ReleaseHarness : IDisposable
     private void WriteVersionFile() => Repo.WriteFile("VERSION", _options.VersionSpec + "\n");
 
     // The three files the self-reference update rewrites, each carrying a reference to one of the packages
-    // this release produces, at the version released before this one.
+    // this release produces, at the version released before this one. Only the first
+    // ReleaseHarnessOptions.SelfReferenceTargets of them are written, so that a test can have the update
+    // find any number of them, none included.
     private void WriteSelfReferenceTargets()
     {
+        if (_options.SelfReferenceTargets < 1)
+        {
+            return;
+        }
+
         var globalJson = new JsonObject
         {
             ["msbuild-sdks"] = new JsonObject { [ProducedPackageIds[0]] = PreviousVersion },
         };
         WriteFile("global.json", globalJson.ToJsonString(IndentedJson));
+        if (_options.SelfReferenceTargets < 2)
+        {
+            return;
+        }
 
         var toolManifest = new JsonObject
         {
@@ -340,6 +358,10 @@ internal sealed class ReleaseHarness : IDisposable
             },
         };
         WriteFile(".config/dotnet-tools.json", toolManifest.ToJsonString(IndentedJson));
+        if (_options.SelfReferenceTargets < 3)
+        {
+            return;
+        }
 
         var packageVersions = $"""
             <Project>
