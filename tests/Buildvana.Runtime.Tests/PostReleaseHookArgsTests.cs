@@ -22,13 +22,18 @@ internal sealed class PostReleaseHookArgsTests
 
     // Serializes the way bv does (same serializer context, resolved by runtime type) and loads the result
     // back, proving the two sides of the hook contract agree.
+    // Both configuration-file cases run because ConfigFile is required and nullable: a repository with no
+    // configuration file round-trips only as long as the serializer writes the null, and a default ignore
+    // condition on the context would take that away. Here that costs a failing test, not a failing release.
     [Test]
-    public async Task Load_RoundTripsWhatBvWrites()
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task Load_RoundTripsWhatBvWrites(bool withConfigFile)
     {
         var dir = NewDir();
         try
         {
-            var written = SampleArgs(dir);
+            var written = SampleArgs(dir, withConfigFile);
             var relativePath = WellKnownPaths.GetHookArgsFile(PostReleaseHookArgs.Context, PostReleaseHookArgs.Event);
             var path = Path.Combine(dir, relativePath);
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -146,9 +151,7 @@ internal sealed class PostReleaseHookArgsTests
         var dir = NewDir();
         try
         {
-            var args = SampleArgs(dir);
-            args = args with { RuntimeInfo = args.RuntimeInfo with { ConfigFile = null } };
-            await Assert.That(args.LoadConfig().Release).IsNull();
+            await Assert.That(SampleArgs(dir, withConfigFile: false).LoadConfig().Release).IsNull();
         }
         finally
         {
@@ -156,7 +159,7 @@ internal sealed class PostReleaseHookArgsTests
         }
     }
 
-    private static PostReleaseHookArgs SampleArgs(string home) => new()
+    private static PostReleaseHookArgs SampleArgs(string home, bool withConfigFile = true) => new()
     {
         RuntimeInfo = new()
         {
@@ -165,7 +168,7 @@ internal sealed class PostReleaseHookArgsTests
             HomeDirectory = home,
             ArtifactsDirectory = Path.Combine(home, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home, WellKnownPaths.ScratchDirectory),
-            ConfigFile = Path.Combine(home, BuildvanaConfig.JsoncFileName),
+            ConfigFile = withConfigFile ? Path.Combine(home, BuildvanaConfig.JsoncFileName) : null,
         },
         Release = new()
         {
