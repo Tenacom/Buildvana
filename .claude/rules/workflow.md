@@ -63,9 +63,19 @@
 ## Small changes out of scope
 
 - Do NOT open a follow-up issue for a small change, not even when a reviewer proposes one. An issue/PR cycle costs, on average, 100x the time and effort of just making the change. The right approach is: FIX. IT. NOW!
-- "Now" means in the current PR, in its own commit, plus a line in the "Additional changes" section of the PR description. That section exists precisely to record what was not in the issue's original plan, so an out-of-scope fix stays visible to the reviewer instead of being smuggled in.
+- "Now" means in the current PR, in its own commit, plus a line in the "Additional changes" section of the PR description. That section exists precisely to record what was not in the issue's original plan, so an out-of-scope fix stays visible to the reviewer instead of being smuggled in. See "The Additional changes section" below for what goes in it.
 - This applies to both flows above: something you notice while writing the code, and something a review surfaces.
 - An issue is for work that is actually big: work that needs its own plan, or that would derail the PR under review. When in doubt, ask me — but the default is to fix it now.
+
+## The "Additional changes" section
+
+The PR description is presentation, not narration: it tells a reviewer who is about to read the diff "here is what I did". "Additional changes" is the part of that presentation covering what the issue did not ask for, so that an out-of-scope change reads as intentional rather than smuggled in.
+
+- Its entire scope is **changes beyond the issue's plan that are present in the final diff**, one bullet each, with the rationale.
+- **Rewrite it; never append to it.** When a later commit revises or supersedes an out-of-scope change, its bullet changes in place, and two bullets that turn out to describe one change become one. The section describes the branch as it stands, not the order in which it got there.
+- **No round headings, no commit-by-commit log, no numbers that were true at some point.** "From the second review", "From Codecov", commit numbers, and the coverage percentage that was red on Tuesday are all history. Git holds it, and so do the review replies.
+- **Fixes to code the PR itself introduced are not additional changes.** They never reached `main`, so there is nothing for a reviewer of the final diff to reconcile — however much work they were.
+- **A decision to leave something alone is not a change.** Its rationale belongs in the review reply that raised it, or in a comment next to the thing left alone, where whoever asks the question next will actually be. The rare exception is a known limitation of what the PR _does_ change, which the reviewer needs in order to judge it.
 
 ## Labels
 
