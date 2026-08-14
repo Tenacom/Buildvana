@@ -10,8 +10,6 @@ internal sealed class SdkPropsTests
     [Test]
     [Arguments("buildvana.json")]
     [Arguments("buildvana.jsonc")]
-    [Arguments(".buildvana/buildvana.json")]
-    [Arguments(".buildvana/buildvana.jsonc")]
     [Arguments(".git")]
     [Arguments(".git/HEAD")]
     public async Task Evaluate_MarkerInRepoRoot_SetsHomeDirectory(string marker)
@@ -23,15 +21,15 @@ internal sealed class SdkPropsTests
         await Assert.That(result.Errors).IsEmpty();
     }
 
+    // Hooks are projects living under .buildvana/, so the SDK evaluates from there on every hook build.
+    // Nothing inside that directory is a marker, which is what keeps a hook's home directory the repository's own.
     [Test]
-    public async Task Evaluate_ConfigInSubdirectory_HomeIsContainingDirectory()
+    public async Task Evaluate_ProjectUnderBuildvanaDirectory_HomeIsRepositoryRoot()
     {
         using var fixture = new SdkPropsFixture();
-        fixture.WriteFile(".git/HEAD");
-        fixture.WriteFile("nested/.buildvana/buildvana.jsonc");
-        var result = fixture.Evaluate("nested/src/Test");
-        var expected = Path.Combine(fixture.RepoDirectory, "nested") + Path.DirectorySeparatorChar;
-        await Assert.That(result.HomeDirectory).IsEqualTo(expected);
+        fixture.WriteFile("buildvana.jsonc");
+        var result = fixture.Evaluate(".buildvana/hooks/release");
+        await Assert.That(result.HomeDirectory).IsEqualTo(fixture.RepoDirectory + Path.DirectorySeparatorChar);
         await Assert.That(result.Errors).IsEmpty();
     }
 
@@ -45,26 +43,5 @@ internal sealed class SdkPropsTests
         var error = result.Errors.Single(static e => e.Code == "BVSDK1005");
         await Assert.That(error.Text).Contains("buildvana.json");
         await Assert.That(error.Text).Contains("buildvana.jsonc");
-    }
-
-    [Test]
-    public async Task Evaluate_ConfigInRootAndSubdirectory_ReportsBVSDK1005NamingAllOffenders()
-    {
-        using var fixture = new SdkPropsFixture();
-        fixture.WriteFile("buildvana.jsonc");
-        fixture.WriteFile(".buildvana/buildvana.json");
-        var result = fixture.Evaluate();
-        var error = result.Errors.Single(static e => e.Code == "BVSDK1005");
-        await Assert.That(error.Text).Contains("buildvana.jsonc");
-        await Assert.That(error.Text).Contains(".buildvana");
-    }
-
-    [Test]
-    public async Task Evaluate_SingleConfigFile_ReportsNoError()
-    {
-        using var fixture = new SdkPropsFixture();
-        fixture.WriteFile(".buildvana/buildvana.jsonc");
-        var result = fixture.Evaluate();
-        await Assert.That(result.Errors).IsEmpty();
     }
 }

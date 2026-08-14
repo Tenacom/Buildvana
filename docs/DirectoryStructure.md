@@ -37,8 +37,6 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |    |    +--- release\
 |    |         |
 |    |         +--- post-release.cs
-|    |
-|    +--- buildvana.jsonc      <<< Buildvana configuration file, if not in the home directory root
 |
 +--- .buildvana-temp\          <<< bv's scratch directory (machine-generated; add to .gitignore)
 |
@@ -63,7 +61,7 @@ We will follow the MSBuild convention of a backslash (`\`) as a path separator. 
 |    +--- Common.props         <<< Portions of MSBuild code common to all projects in tests\
 |    +--- Common.targets
 |
-+--- buildvana.jsonc           <<< Buildvana configuration file (or buildvana.json), if not in .buildvana\
++--- buildvana.jsonc           <<< Buildvana configuration file (or buildvana.json)
 |
 +--- Common.props              <<< Common parts of MSBuild projects
 +--- Common.targets
@@ -108,11 +106,11 @@ The full path of the home directory, including a trailing path separator, is sto
 
 Buildvana SDK determines the location of the home directory by walking up the directory hierarchy, starting from the project's directory (included), and stopping at the nearest directory that contains any of these home markers:
 
-- a Buildvana configuration file (`buildvana.json` or `buildvana.jsonc`), either directly in the directory or in a `.buildvana` subdirectory (a `.buildvana` directory without a configuration file is _not_ a marker);
+- a Buildvana configuration file (`buildvana.json` or `buildvana.jsonc`);
 - a Git worktree or submodule (a file named `.git`);
 - a regular Git repository (a file named `HEAD` in a `.git` subdirectory).
 
-The directory containing the marker becomes the home directory, and its full path becomes the value of `HomeDirectory`. Note that a configuration file inside `.buildvana` marks the directory containing `.buildvana`, not `.buildvana` itself. A configuration file does not have to actually configure anything: an empty JSON object (`{}`) is valid content, making the file usable as a pure home-directory marker.
+The directory containing the marker becomes the home directory, and its full path becomes the value of `HomeDirectory`. Every marker sits in the directory it marks, so nothing under a subdirectory — the `.buildvana` directory included — takes part in discovery: hooks are projects living under `.buildvana\`, and a marker recognized in there would make each of them discover `.buildvana\` as its own home directory. A configuration file does not have to actually configure anything: an empty JSON object (`{}`) is valid content, making the file usable as a pure home-directory marker.
 
 If no marker is found, the build (or project loading in Visual Studio) stops with error [BVSDK1003](SdkDiagnostics.md#buildvana-sdk-core-1000-1049).
 

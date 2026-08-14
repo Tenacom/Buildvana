@@ -32,5 +32,5 @@ public sealed class DiscoveredHomeDirectoryProvider : HomeDirectoryProvider
     protected override string Resolve()
         => HomeDirectoryDiscovery.TryDiscover(_startDirectory, out var homeDirectory)
             ? homeDirectory
-            : throw new BuildFailedException($"Home directory not defined (no buildvana.json[c], .buildvana/buildvana.json[c], .git, or .git/HEAD found at or above '{_startDirectory}').");
+            : throw new BuildFailedException($"Home directory not defined (no buildvana.json[c], .git, or .git/HEAD found at or above '{_startDirectory}').");
 }

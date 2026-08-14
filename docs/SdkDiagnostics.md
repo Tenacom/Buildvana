@@ -36,7 +36,7 @@ Each module is assigned a contiguous range of 100 diagnostics, as listed below. 
 | BVSDK1002 |  Error   | Sdk.props and Sdk.targets are in different directories. | `Sdk.props` and `Sdk.targets` were imported from two different versions of Buildvana SDK; look for stray `Version` attributes in the `<Import>` directives.    |
 | BVSDK1003 |  Error   | Home directory not defined.                             | No suitable value for the `HomeDirectory` property has been found.                                                                                             |
 | BVSDK1004 |  Error   | Buildvana SDK requires at least MSBuild v...            | You are trying to use Buildvana SDK with an unsupported version of MSBuild. See [the README](../README.md#toolchain) for a list of supported MSBuild versions. |
-| BVSDK1005 |  Error   | Multiple Buildvana configuration files found.           | A home directory contains more than one configuration file (in the root and/or the .buildvana subdirectory); keep only one.                                    |
+| BVSDK1005 |  Error   | Multiple Buildvana configuration files found.           | A home directory contains both `buildvana.json` and `buildvana.jsonc`; keep only one.                                                                          |
 
 ## Buildvana SDK tasks (1050-1099)
 
