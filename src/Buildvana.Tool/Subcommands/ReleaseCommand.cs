@@ -172,7 +172,8 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         emptyChangelogSubstitute is null,
                         "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).");
 
-                    reporter.Notice("Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
+                    reporter.Notice(
+                        "Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
                 }
 
                 // Update the changelog and commit the change before building.
@@ -247,7 +248,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         reporter.Notice("The post-release hook modified 1 file.");
                         break;
                     default:
-                        reporter.Notice(string.Create(CultureInfo.InvariantCulture, $"The post-release hook modified {hookUpdates.Count} files."));
+                        reporter.Notice(string.Create(
+                            CultureInfo.InvariantCulture,
+                            $"The post-release hook modified {hookUpdates.Count} files."));
                         break;
                 }
             }
@@ -271,7 +274,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                         reporter.Notice("1 self-referenced file was modified.");
                         break;
                     default:
-                        reporter.Notice(string.Create(CultureInfo.InvariantCulture, $"{selfReferenceUpdates.Count} self-referenced files were modified."));
+                        reporter.Notice(string.Create(
+                            CultureInfo.InvariantCulture,
+                            $"{selfReferenceUpdates.Count} self-referenced files were modified."));
                         break;
                 }
             }
