@@ -1,11 +1,13 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.IO;
 using Buildvana.Core.JsonSchema;
 using Buildvana.Runtime;
@@ -14,15 +16,19 @@ using CommunityToolkit.Diagnostics;
 namespace Buildvana.Core.Configuration;
 
 /// <summary>
-/// Loads and validates the Buildvana configuration file found in a home directory.
+/// Provides the Buildvana configuration of a home directory: which file holds it, and what it says.
 /// </summary>
 /// <remarks>
 /// <para>Unlike the lean loader shipped with <c>Buildvana.Runtime</c> (<see cref="BuildvanaConfig.Load"/>), this
-/// loader validates the file against the configuration schema and reports each problem as a diagnostic with its
-/// source location. It is the loader used by <c>bv</c> and by Buildvana SDK tasks; hooks, which read a file
-/// <c>bv</c> has already validated, use the lean loader instead.</para>
+/// one validates the file against the configuration schema and reports each problem as a diagnostic with its
+/// source location. It is used by <c>bv</c> and by Buildvana SDK tasks; hooks, which read a file <c>bv</c> has
+/// already validated, use the lean loader instead.</para>
+/// <para><see cref="Path"/> and <see cref="Config"/> are each resolved on first read and cached — result and
+/// exception alike — for the lifetime of the instance, as <c>HomeDirectoryProvider</c> does for the home
+/// directory. Finding the file is this class's business alone, so the path a run reports and the file it parses
+/// are the same by construction rather than by agreement between callers.</para>
 /// </remarks>
-public static class BuildvanaConfigLoader
+public sealed class BuildvanaConfigProvider
 {
     private static readonly JsonDocumentOptions DocumentOptions = new()
     {
@@ -30,31 +36,59 @@ public static class BuildvanaConfigLoader
         AllowTrailingCommas = true,
     };
 
+    private readonly Lazy<string?> _lazyPath;
+    private readonly Lazy<BuildvanaConfig> _lazyConfig;
+
     /// <summary>
-    /// Loads the configuration file found in <paramref name="homeDirectory"/>.
+    /// Initializes a new instance of the <see cref="BuildvanaConfigProvider"/> class.
     /// </summary>
-    /// <param name="homeDirectory">The home directory to search for a configuration file.</param>
-    /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> if no file is present.</returns>
+    /// <param name="home">The provider of the home directory the configuration file is looked for in.</param>
+    public BuildvanaConfigProvider(IHomeDirectoryProvider home)
+    {
+        Guard.IsNotNull(home);
+        _lazyPath = new Lazy<string?>(() => FindFile(home));
+
+        // Reads the path through its own Lazy, so that a run holding both facts has probed exactly once.
+        _lazyConfig = new Lazy<BuildvanaConfig>(() => LoadFile(_lazyPath.Value));
+    }
+
+    /// <summary>
+    /// Gets the absolute path of the configuration file, or <see langword="null"/> when the home directory
+    /// holds none.
+    /// </summary>
+    /// <exception cref="BuildFailedException">
+    /// Both configuration files (<c>buildvana.json</c> and <c>buildvana.jsonc</c>) are present.
+    /// </exception>
+    public string? Path => _lazyPath.Value;
+
+    /// <summary>
+    /// Gets the parsed configuration, or an empty <see cref="BuildvanaConfig"/> when the home directory holds
+    /// no configuration file.
+    /// </summary>
     /// <exception cref="BuildFailedException">
     /// <para>Both configuration files (<c>buildvana.json</c> and <c>buildvana.jsonc</c>) are present,
     /// or the file cannot be read.</para>
     /// <para>The file is present but not valid JSON, or does not conform to the schema; in that case
     /// <see cref="BuildFailedException.Diagnostics"/> lists each problem with its source location.</para>
     /// </exception>
-    public static BuildvanaConfig Load(string homeDirectory)
+    public BuildvanaConfig Config => _lazyConfig.Value;
+
+    /// <summary>
+    /// Loads the configuration file at an already-known path, bypassing both the search and the cache.
+    /// </summary>
+    /// <param name="path">The path of the configuration file, or <see langword="null"/> for none.</param>
+    /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> if <paramref name="path"/>
+    /// is <see langword="null"/>.</returns>
+    /// <exception cref="BuildFailedException">
+    /// <para>The file cannot be read, is not valid JSON, or does not conform to the schema; in the latter cases
+    /// <see cref="BuildFailedException.Diagnostics"/> lists each problem with its source location.</para>
+    /// </exception>
+    /// <remarks>
+    /// <para>For the caller that must re-read a file it has just rewritten, and therefore wants the parse this
+    /// instance has cached to be bypassed rather than reused. Everything else reads <see cref="Config"/>.</para>
+    /// </remarks>
+    public static BuildvanaConfig LoadFile(string? path)
     {
-        Guard.IsNotNullOrEmpty(homeDirectory);
-
-        string? path;
-        try
-        {
-            path = BuildvanaConfig.FindFile(homeDirectory);
-        }
-        catch (BuildvanaRuntimeException e)
-        {
-            throw new BuildFailedException(e.Message, e);
-        }
-
         if (path is null)
         {
             return new BuildvanaConfig();
@@ -66,6 +100,20 @@ public static class BuildvanaConfigLoader
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
         return node!.Deserialize(BuildvanaJsonContext.Default.BuildvanaConfig) ?? new BuildvanaConfig();
+    }
+
+    // The one probe for the configuration file: nothing outside this class asks which file a home directory
+    // holds, so no two callers can answer differently.
+    private static string? FindFile(IHomeDirectoryProvider home)
+    {
+        try
+        {
+            return BuildvanaConfig.FindFile(home.HomeDirectory);
+        }
+        catch (BuildvanaRuntimeException e)
+        {
+            throw new BuildFailedException(e.Message, e);
+        }
     }
 
     // Removes a leading UTF-8 byte order mark, if present, so the reader sees only JSON and positions start at 1.

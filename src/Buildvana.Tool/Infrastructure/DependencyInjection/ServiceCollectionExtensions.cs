@@ -66,9 +66,12 @@ internal static class ServiceCollectionExtensions
                     sp.GetRequiredService<BuildvanaConfig>()))
                 .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
 
-                // Lazy by design: this factory (and thus discovery, parsing, and validation) runs on first resolve.
-                // A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or ReleaseSettings) reads it.
-                .AddSingleton(static sp => BuildvanaConfigLoader.Load(sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory))
+                // Lazy by design: the provider finds, parses, and validates the file on first read of what is asked
+                // of it. A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or
+                // ReleaseSettings) reads the configuration. Registering the parsed configuration separately keeps
+                // those consumers depending on the data alone, while the provider answers whoever needs the path.
+                .AddSingleton<BuildvanaConfigProvider>()
+                .AddSingleton(static sp => sp.GetRequiredService<BuildvanaConfigProvider>().Config)
                 .AddSingleton<DotNetSettings>()
                 .AddSingleton<IJsonHelper, JsonHelper>()
                 .AddSingleton<IProcessRunner, ProcessRunner>()
@@ -89,6 +92,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton(static sp => new SelfVersionService(
                     sp.GetRequiredService<IReporter>(),
                     sp.GetRequiredService<IHomeDirectoryProvider>(),
+                    sp.GetRequiredService<BuildvanaConfigProvider>(),
                     sp.GetRequiredService<IJsonHelper>(),
                     sp.GetRequiredService<IProcessRunner>(),
                     OwnVersion.Value));

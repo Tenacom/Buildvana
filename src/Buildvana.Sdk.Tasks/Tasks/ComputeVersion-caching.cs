@@ -38,10 +38,11 @@ partial class ComputeVersion
 
     private static CachedVersion ComputeCore(string homeDirectory, IReporter reporter, string? fingerprint)
     {
+        var home = new FixedHomeDirectoryProvider(homeDirectory);
         var service = new VersioningService(
             reporter,
-            new FixedHomeDirectoryProvider(homeDirectory),
-            new VersioningSettings(BuildvanaConfigLoader.Load(homeDirectory)),
+            home,
+            new VersioningSettings(new BuildvanaConfigProvider(home).Config),
             new GitHeightCalculator(VersionFile.FileName));
         return new CachedVersion(
             fingerprint,
