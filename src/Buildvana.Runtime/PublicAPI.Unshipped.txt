@@ -181,11 +181,11 @@ Buildvana.Runtime.VersioningConfigExtensions.extension(Buildvana.Runtime.Version
 Buildvana.Runtime.WellKnownPaths
 abstract Buildvana.Runtime.HookArgs.<Clone>$() -> Buildvana.Runtime.HookArgs!
 const Buildvana.Runtime.BuildvanaConfig.JsonFileName = "buildvana.json" -> string!
-const Buildvana.Runtime.DotNetConfig.DefaultConfiguration = "Release" -> string!
-const Buildvana.Runtime.VersioningConfig.DefaultAssemblyVersionPrecision = Buildvana.Runtime.AssemblyVersionPrecision.Major -> Buildvana.Runtime.AssemblyVersionPrecision
 const Buildvana.Runtime.BuildvanaConfig.JsoncFileName = "buildvana.jsonc" -> string!
+const Buildvana.Runtime.DotNetConfig.DefaultConfiguration = "Release" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Context = "release" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Event = "post-release" -> string!
+const Buildvana.Runtime.VersioningConfig.DefaultAssemblyVersionPrecision = Buildvana.Runtime.AssemblyVersionPrecision.Major -> Buildvana.Runtime.AssemblyVersionPrecision
 const Buildvana.Runtime.WellKnownPaths.BuildvanaDirectory = ".buildvana" -> string!
 const Buildvana.Runtime.WellKnownPaths.HookArgsDirectory = ".buildvana-temp/hook-args" -> string!
 const Buildvana.Runtime.WellKnownPaths.HooksDirectory = ".buildvana/hooks" -> string!
@@ -241,12 +241,12 @@ override sealed Buildvana.Runtime.PostReleaseHookArgs.Equals(Buildvana.Runtime.H
 static Buildvana.Runtime.BuildvanaConfig.FindFile(string? homeDirectory = null) -> string?
 static Buildvana.Runtime.BuildvanaConfig.Load(string? homeDirectory = null) -> Buildvana.Runtime.BuildvanaConfig!
 static Buildvana.Runtime.BuildvanaConfig.LoadFile(string? path) -> Buildvana.Runtime.BuildvanaConfig!
-static Buildvana.Runtime.DotNetConfigExtensions.get_EffectiveConfiguration(Buildvana.Runtime.DotNetConfig? this) -> string!
 static Buildvana.Runtime.BuildvanaConfig.operator !=(Buildvana.Runtime.BuildvanaConfig? left, Buildvana.Runtime.BuildvanaConfig? right) -> bool
 static Buildvana.Runtime.BuildvanaConfig.operator ==(Buildvana.Runtime.BuildvanaConfig? left, Buildvana.Runtime.BuildvanaConfig? right) -> bool
 static Buildvana.Runtime.BuildvanaJsonContext.Default.get -> Buildvana.Runtime.BuildvanaJsonContext!
 static Buildvana.Runtime.DotNetConfig.operator !=(Buildvana.Runtime.DotNetConfig? left, Buildvana.Runtime.DotNetConfig? right) -> bool
 static Buildvana.Runtime.DotNetConfig.operator ==(Buildvana.Runtime.DotNetConfig? left, Buildvana.Runtime.DotNetConfig? right) -> bool
+static Buildvana.Runtime.DotNetConfigExtensions.get_EffectiveConfiguration(Buildvana.Runtime.DotNetConfig? this) -> string!
 static Buildvana.Runtime.DotNetInvocationConfig.operator !=(Buildvana.Runtime.DotNetInvocationConfig? left, Buildvana.Runtime.DotNetInvocationConfig? right) -> bool
 static Buildvana.Runtime.DotNetInvocationConfig.operator ==(Buildvana.Runtime.DotNetInvocationConfig? left, Buildvana.Runtime.DotNetInvocationConfig? right) -> bool
 static Buildvana.Runtime.GitConfig.operator !=(Buildvana.Runtime.GitConfig? left, Buildvana.Runtime.GitConfig? right) -> bool
