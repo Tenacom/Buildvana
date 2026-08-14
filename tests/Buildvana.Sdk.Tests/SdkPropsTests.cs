@@ -33,6 +33,19 @@ internal sealed class SdkPropsTests
         await Assert.That(result.Errors).IsEmpty();
     }
 
+    // The same rule HomeDirectoryDiscoveryTests pins for the C# implementation: a configuration file marks the
+    // directory it sits in, and .buildvana/ is not an exception. Nothing but this test checks the two agree.
+    [Test]
+    public async Task Evaluate_ConfigFileInBuildvanaSubdirectory_DoesNotMarkTheParent()
+    {
+        using var fixture = new SdkPropsFixture();
+        fixture.WriteFile(".git/HEAD");
+        fixture.WriteFile("nested/.buildvana/buildvana.jsonc");
+        var result = fixture.Evaluate("nested");
+        await Assert.That(result.HomeDirectory).IsEqualTo(fixture.RepoDirectory + Path.DirectorySeparatorChar);
+        await Assert.That(result.Errors).IsEmpty();
+    }
+
     [Test]
     public async Task Evaluate_BothVariantsInHomeDirectory_ReportsBVSDK1005()
     {
