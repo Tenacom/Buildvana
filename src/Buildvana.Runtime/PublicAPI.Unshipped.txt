@@ -81,6 +81,7 @@ Buildvana.Runtime.GitIdentityConfig.Name.init -> void
 Buildvana.Runtime.HookArgs
 Buildvana.Runtime.HookArgs.HookArgs() -> void
 Buildvana.Runtime.HookArgs.HookArgs(Buildvana.Runtime.HookArgs! original) -> void
+Buildvana.Runtime.HookArgs.LoadConfig() -> Buildvana.Runtime.BuildvanaConfig!
 Buildvana.Runtime.HookArgs.RuntimeInfo.get -> Buildvana.Runtime.RuntimeInfo!
 Buildvana.Runtime.HookArgs.RuntimeInfo.init -> void
 Buildvana.Runtime.IHookEvent
@@ -151,6 +152,8 @@ Buildvana.Runtime.RuntimeInfo
 Buildvana.Runtime.RuntimeInfo.<Clone>$() -> Buildvana.Runtime.RuntimeInfo!
 Buildvana.Runtime.RuntimeInfo.ArtifactsDirectory.get -> string!
 Buildvana.Runtime.RuntimeInfo.ArtifactsDirectory.init -> void
+Buildvana.Runtime.RuntimeInfo.ConfigFile.get -> string?
+Buildvana.Runtime.RuntimeInfo.ConfigFile.init -> void
 Buildvana.Runtime.RuntimeInfo.DelegatingVersion.get -> string?
 Buildvana.Runtime.RuntimeInfo.DelegatingVersion.init -> void
 Buildvana.Runtime.RuntimeInfo.Equals(Buildvana.Runtime.RuntimeInfo? other) -> bool
@@ -229,6 +232,7 @@ override Buildvana.Runtime.VersioningConfig.ToString() -> string!
 override sealed Buildvana.Runtime.PostReleaseHookArgs.Equals(Buildvana.Runtime.HookArgs? other) -> bool
 static Buildvana.Runtime.BuildvanaConfig.FindFile(string? homeDirectory = null) -> string?
 static Buildvana.Runtime.BuildvanaConfig.Load(string? homeDirectory = null) -> Buildvana.Runtime.BuildvanaConfig!
+static Buildvana.Runtime.BuildvanaConfig.LoadFile(string? path) -> Buildvana.Runtime.BuildvanaConfig!
 static Buildvana.Runtime.BuildvanaConfig.operator !=(Buildvana.Runtime.BuildvanaConfig? left, Buildvana.Runtime.BuildvanaConfig? right) -> bool
 static Buildvana.Runtime.BuildvanaConfig.operator ==(Buildvana.Runtime.BuildvanaConfig? left, Buildvana.Runtime.BuildvanaConfig? right) -> bool
 static Buildvana.Runtime.BuildvanaJsonContext.Default.get -> Buildvana.Runtime.BuildvanaJsonContext!

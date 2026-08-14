@@ -80,6 +80,7 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 | `RuntimeInfo.HomeDirectory`      | string         | Absolute path of the home directory, without a trailing separator (also the hook's working directory).                                                                               |
 | `RuntimeInfo.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                                       |
 | `RuntimeInfo.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                                 |
+| `RuntimeInfo.ConfigFile`         | string or null | Absolute path of the configuration file this run read, or `null` when the repository has none. See [Loading the repository configuration](#loading-the-repository-configuration).    |
 | `Release.Version`                | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                                          |
 | `Release.SemVer`                 | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                                     |
 | `Release.PreviousVersion`        | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                                           |
@@ -94,14 +95,26 @@ In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `rele
 
 ## Loading the repository configuration
 
-The args carry the facts of the run; for any standing repository setting, load the configuration file instead: `BuildvanaConfig.Load()` probes the two well-known candidates (`buildvana.json` and `buildvana.jsonc`), applies the usual exactly-one rule, tolerates comments and trailing commas, and returns the typed configuration (an empty instance when no configuration file exists):
+The args carry the facts of the run; for any standing repository setting, load the configuration instead. `hookArgs.LoadConfig()` reads the file `bv` itself read for this run, and returns the typed configuration (an empty instance when the repository has no configuration file):
 
 ```csharp
-var config = BuildvanaConfig.Load();
+var config = hookArgs.LoadConfig();
 var branches = config.Release?.Branches;
 ```
 
-The loader is strict — an unknown member fails the load — but does not re-validate what `bv` has already validated with schema-based diagnostics before running any hook.
+Which file to read comes from the args, so a hook never searches for one; what it says is read at the moment of the call, so the hook sees the file as it stands even if an earlier hook in the same run rewrote it. The loader tolerates comments and trailing commas, and is strict about content — an unknown member fails the load — but it does not re-validate what `bv` has already validated with schema-based diagnostics before running any hook.
+
+`BuildvanaConfig.Load()`, which searches a directory for a configuration file, remains available for code that has no hook args to hand.
+
+A hook that works on the configuration file _itself_ — rewriting a value in it, say — needs the path rather than the settings, and must act on the file `bv` actually read. That path is in the args, as `runtimeInfo.configFile` (`null` when the repository has no configuration file); do not hardcode a file name, and do not search for one:
+
+```csharp
+var configFile = hookArgs.RuntimeInfo.ConfigFile;
+if (configFile is not null)
+{
+    File.WriteAllText(configFile, Rewrite(File.ReadAllText(configFile)));
+}
+```
 
 ## Dependencies
 
@@ -124,4 +137,6 @@ Local file-based-app caching may not notice implicit-build-file changes; CI is a
 
 ## Contract evolution
 
-The args file is written by the installed `bv` and read through the `Buildvana.Runtime` version pinned by the repository's Buildvana SDK; `bv` and the SDK are released in lockstep and designed as a matched pair. The contract is nevertheless additive-only: new members may be added, but existing ones are never removed or repurposed, and additions ship as optional members with default values — so an args file written before an update stays loadable after it.
+The args file is written by the installed `bv` and read through the `Buildvana.Runtime` version pinned by the repository's Buildvana SDK — the version of the SDK in use, which `bv` refuses to run against unless it matches its own. The hook is compiled from source at every run, and its args file is rewritten immediately before it. Writer and reader are therefore the same version by construction, and the JSON never has to survive a version boundary.
+
+What must stay stable is the _source_ surface a hook compiles against: members are never removed or repurposed, so that a hook written today still compiles after an update. Additions may be required members — every run then states every fact the args carry, and none can be left unset by mistake. (An args file left over from a run that predates such an addition no longer loads; re-run the command that raises the hook, and it is rewritten.)

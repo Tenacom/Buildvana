@@ -21,6 +21,29 @@ internal sealed class BuildvanaConfigLoadTests
     }
 
     [Test]
+    public async Task LoadFile_NullPath_ReturnsEmptyConfig()
+        => await Assert.That(BuildvanaConfig.LoadFile(null).Release).IsNull();
+
+    // Loading a known path skips the search, so the exactly-one rule does not apply to it: a caller holding
+    // a path (a hook, from its args) reads that file, whatever else sits next to it.
+    [Test]
+    public async Task LoadFile_KnownPath_LoadsItRegardlessOfSiblings()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.json", """{ "release": { "branches": ["main"] } }""");
+            Write(dir, "buildvana.jsonc", "{}");
+            var config = BuildvanaConfig.LoadFile(Path.Combine(dir, "buildvana.json"));
+            await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
     public async Task Load_ValidJsoncFile_LoadsTypedConfig()
     {
         var dir = NewDir();

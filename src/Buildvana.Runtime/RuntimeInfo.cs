@@ -7,7 +7,8 @@ namespace Buildvana.Runtime;
 
 /// <summary>
 /// Run-time information about the <c>bv</c> run a hook belongs to: the running version, how the run was
-/// launched, and the absolute paths of the run's well-known directories. Shared by every hook's args.
+/// launched, and the absolute paths of the run's well-known directories and configuration file.
+/// Shared by every hook's args.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record RuntimeInfo
@@ -39,4 +40,18 @@ public sealed record RuntimeInfo
     /// where hooks can write temporary files without affecting working-tree change detection.
     /// </summary>
     public required string ScratchDirectory { get; init; }
+
+    /// <summary>
+    /// Gets the absolute path of the configuration file this run read (<see cref="BuildvanaConfig.JsonFileName"/>
+    /// or <see cref="BuildvanaConfig.JsoncFileName"/>), or <see langword="null"/> when the repository has none.
+    /// </summary>
+    /// <remarks>
+    /// <para>A hook that reads settings has no use for this: <see cref="BuildvanaConfig.Load"/> finds the file
+    /// on its own. This is for a hook that works on the file itself — rewriting a value, checking it into the
+    /// post-release commit — and must act on the very file <c>bv</c> read rather than guess which one it was.</para>
+    /// <para>Required of whoever writes the args, so that a run always states which file it read; the value is
+    /// nonetheless <see langword="null"/> when the repository has no configuration file, which a repository
+    /// whose home directory is marked by Git alone legitimately does not.</para>
+    /// </remarks>
+    public required string? ConfigFile { get; init; }
 }

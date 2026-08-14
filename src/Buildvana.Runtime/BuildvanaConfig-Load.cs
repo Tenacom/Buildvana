@@ -59,9 +59,23 @@ public partial record BuildvanaConfig
     /// <para>This loader does not validate the file beyond deserialization: <c>bv</c> has already validated it,
     /// with schema-based diagnostics, before any hook runs.</para>
     /// </remarks>
-    public static BuildvanaConfig Load(string? homeDirectory = null)
+    public static BuildvanaConfig Load(string? homeDirectory = null) => LoadFile(FindFile(homeDirectory));
+
+    /// <summary>
+    /// Loads the configuration file at an already-known path.
+    /// </summary>
+    /// <param name="path">The path of the configuration file, or <see langword="null"/> for none.</param>
+    /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> when <paramref name="path"/>
+    /// is <see langword="null"/>.</returns>
+    /// <exception cref="BuildvanaRuntimeException">
+    /// The file cannot be read, or its contents are invalid.
+    /// </exception>
+    /// <remarks>
+    /// <para>A hook reaches this through <see cref="HookArgs.LoadConfig"/>, which passes the path <c>bv</c>
+    /// itself read; call it directly only when the path comes from somewhere else.</para>
+    /// </remarks>
+    public static BuildvanaConfig LoadFile(string? path)
     {
-        var path = FindFile(homeDirectory);
         if (path is null)
         {
             return new BuildvanaConfig();
