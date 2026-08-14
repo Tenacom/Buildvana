@@ -195,6 +195,7 @@ internal sealed class HookRunnerTests
             HomeDirectory = home.RootPath,
             ArtifactsDirectory = Path.Combine(home.RootPath, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home.RootPath, WellKnownPaths.ScratchDirectory),
+            ConfigFile = null,
         },
         Release = new()
         {

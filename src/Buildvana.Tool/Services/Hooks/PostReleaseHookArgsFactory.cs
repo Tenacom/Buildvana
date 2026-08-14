@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Runtime;
 using CommunityToolkit.Diagnostics;
@@ -14,7 +15,9 @@ namespace Buildvana.Tool.Services.Hooks;
 /// (see <see cref="PostReleaseHookArgs"/>).
 /// </summary>
 /// <param name="home">The home directory provider.</param>
-internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home) : HookArgsFactory<PostReleaseHookArgs>(home)
+/// <param name="config">The provider of the configuration file this run reads.</param>
+internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home, BuildvanaConfigProvider config)
+    : HookArgsFactory<PostReleaseHookArgs>(home, config)
 {
     /// <summary>
     /// Creates the args for a <c>release/post-release</c> hook run.

@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure;
@@ -19,13 +20,14 @@ namespace Buildvana.Tool.Services.Hooks;
 /// </summary>
 /// <typeparam name="TArgs">The type of the hook args the factory creates.</typeparam>
 /// <param name="home">The home directory provider.</param>
-internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home)
+/// <param name="config">The provider of the configuration file this run reads.</param>
+internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home, BuildvanaConfigProvider config)
     where TArgs : HookArgs, IHookEvent
 {
     /// <summary>
     /// Creates the <see cref="Buildvana.Runtime.RuntimeInfo"/> section shared by every hook's args:
     /// the running bv's version, the delegating bv's version when the run was delegated, and the
-    /// absolute paths of the run's well-known directories.
+    /// absolute paths of the run's well-known directories and configuration file.
     /// </summary>
     /// <param name="artifactsPath">The path of the directory containing the build artifacts,
     /// either absolute or relative to the home directory.</param>
@@ -47,6 +49,10 @@ internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home)
             HomeDirectory = Path.TrimEndingDirectorySeparator(home.HomeDirectory),
             ArtifactsDirectory = home.GetFullPath(artifactsPath),
             ScratchDirectory = home.GetFullPath(CommonPaths.Scratch),
+
+            // Already absolute, and already the file this run read: hooks are told which one it is instead of
+            // running their own search and possibly landing on a different answer.
+            ConfigFile = config.Path,
         };
     }
 }

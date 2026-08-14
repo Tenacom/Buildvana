@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
@@ -69,6 +70,31 @@ internal sealed class PostReleaseHookArgsFactoryTests
         var args = Create(new FixedHomeDirectoryProvider(home.RootPath + Path.DirectorySeparatorChar));
 
         await Assert.That(args.RuntimeInfo.HomeDirectory).IsEqualTo(home.RootPath);
+    }
+
+    // A hook rewriting the configuration file must act on the file bv read, so the args name it outright
+    // rather than leaving the hook to search for it.
+    [Test]
+    [Arguments("buildvana.json")]
+    [Arguments("buildvana.jsonc")]
+    public async Task Create_ReportsTheConfigurationFileTheRunRead(string fileName)
+    {
+        using var home = new TempHome();
+        home.WriteFile(fileName, "{}\n");
+
+        var args = Create(home.Provider);
+
+        await Assert.That(args.RuntimeInfo.ConfigFile).IsEqualTo(Path.Combine(home.RootPath, fileName));
+    }
+
+    [Test]
+    public async Task Create_LeavesConfigFileNull_WhenRepositoryHasNone()
+    {
+        using var home = new TempHome();
+
+        var args = Create(home.Provider);
+
+        await Assert.That(args.RuntimeInfo.ConfigFile).IsNull();
     }
 
     [Test]
@@ -156,7 +182,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         bool isPublicRelease = false,
         IReadOnlyDictionary<string, string>? producedPackages = null,
         bool dogfooding = false)
-        => new PostReleaseHookArgsFactory(home).Create(
+        => new PostReleaseHookArgsFactory(home, new BuildvanaConfigProvider(home)).Create(
             artifactsPath ?? Path.Combine("artifacts", "Release"),
             simpleVersion,
             semVer,
