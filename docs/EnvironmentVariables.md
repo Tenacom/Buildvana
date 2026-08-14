@@ -36,7 +36,7 @@ Set to `true` by GitHub Actions on every step. `bv` reads it to recognize that i
 
 ### `GITHUB_OUTPUT`
 
-Set by GitHub Actions to the path of the file that collects a step's outputs. `bv release` appends to that file to publish the released version as the `version` step output, so that later steps of the same job can refer to it; the release fails if the variable is unset. `bv` never sets this variable itself.
+Set by GitHub Actions to the path of the file that collects a step's outputs. `bv release` appends to that file to publish the released version as the `version` step output, so that later steps of the same job can refer to it; the release fails if the variable is unset, and fails up front, before creating anything, rather than at the moment the output is written. `bv` never sets this variable itself.
 
 ### `GITLAB_CI`
 

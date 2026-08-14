@@ -8,6 +8,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Services.Versioning;
+using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Octokit;
@@ -23,10 +24,15 @@ internal sealed class GitHubServerRelease : ServerRelease
     private readonly IReporter _reporter;
     private readonly VersionService _version;
     private readonly Release _gitHubRelease;
+    private readonly string _actionsStepOutputFile;
 
     private bool _gitHubReleaseDeleted;
 
-    private GitHubServerRelease(GitHubServerAdapter server, IServiceProvider services, Release gitHubRelease)
+    private GitHubServerRelease(
+        GitHubServerAdapter server,
+        IServiceProvider services,
+        Release gitHubRelease,
+        string actionsStepOutputFile)
         : base(services)
     {
         Guard.IsNotNull(server);
@@ -37,6 +43,7 @@ internal sealed class GitHubServerRelease : ServerRelease
         _reporter = services.GetRequiredService<IReporter>();
         _version = services.GetRequiredService<VersionService>();
         _gitHubRelease = gitHubRelease;
+        _actionsStepOutputFile = actionsStepOutputFile;
 
         OnRollback(async () =>
         {
@@ -48,14 +55,22 @@ internal sealed class GitHubServerRelease : ServerRelease
         });
     }
 
-    public static async Task<GitHubServerRelease> CreateAsync(GitHubServerAdapter server, IServiceProvider services, Func<Task<Release>> createGitHubReleaseAsync)
+    public static async Task<GitHubServerRelease> CreateAsync(
+        GitHubServerAdapter server,
+        IServiceProvider services,
+        Func<Task<Release>> createGitHubReleaseAsync)
     {
         Guard.IsNotNull(server);
         Guard.IsNotNull(services);
         Guard.IsNotNull(createGitHubReleaseAsync);
 
+        // GITHUB_OUTPUT is read here, before the draft release exists, and remembered for the whole
+        // life of the release. Reading it where it is used - after publication, to write the step
+        // output - would let a variable that was never set fail a release that had otherwise
+        // succeeded, and roll back everything it had just done.
+        var actionsStepOutputFile = EnvVarHelper.Require("GITHUB_OUTPUT");
         var gitHubRelease = await createGitHubReleaseAsync().ConfigureAwait(false);
-        return new(server, services, gitHubRelease);
+        return new(server, services, gitHubRelease, actionsStepOutputFile);
     }
 
     protected override async Task DoPublishAsync(IReadOnlyList<AssetData> assets)
@@ -92,7 +107,7 @@ internal sealed class GitHubServerRelease : ServerRelease
 
     protected override Task OnPublishedAsync()
     {
-        GitHubServerAdapter.SetActionsStepOutput("version", _version.CurrentStr);
+        GitHubServerAdapter.SetActionsStepOutput(_actionsStepOutputFile, "version", _version.CurrentStr);
         return Task.CompletedTask;
     }
 }
