@@ -107,12 +107,12 @@ internal sealed class HookRunner
         var argsPath = _home.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event));
         _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
         await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
-        _reporter.Info($"Hook {hookName}: running {relativePath}...");
+        _reporter.Info($"Running hook {hookName}...");
         _ = await _appRunner.RunFileBasedAppAsync(
             path,
             workingDirectory: _home.HomeDirectory,
             cancellationToken: cancellationToken).ConfigureAwait(false);
-        _reporter.Notice($"Hook {hookName}: ran {relativePath}.");
+        _reporter.Notice($"Hook {hookName} ran.");
         return true;
     }
 }
