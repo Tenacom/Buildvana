@@ -28,14 +28,23 @@ public static class MessageLevelExtensions
         /// than there are thresholds, so no ordering of the members makes such a comparison give the right
         /// answer for all of them.</para>
         /// </remarks>
-        public Verbosity MinimumVerbosity() => @this switch
+        public Verbosity MinimumVerbosity()
         {
-            MessageLevel.Error => Verbosity.Quiet,
-            MessageLevel.Warning or MessageLevel.Notice => Verbosity.Minimal,
-            MessageLevel.Info => Verbosity.Normal,
-            MessageLevel.Detail => Verbosity.Detailed,
-            MessageLevel.Trace => Verbosity.Diagnostic,
-            _ => throw new ArgumentOutOfRangeException(nameof(@this), @this, "Unknown message level."),
-        };
+            return @this switch
+            {
+                MessageLevel.Error => Verbosity.Quiet,
+                MessageLevel.Warning or MessageLevel.Notice => Verbosity.Minimal,
+                MessageLevel.Info => Verbosity.Normal,
+                MessageLevel.Detail => Verbosity.Detailed,
+                MessageLevel.Trace => Verbosity.Diagnostic,
+                _ => ThrowUnknownLevel(@this),
+            };
+
+            // The exception names the offending value "level", as every caller of this method does. The name
+            // cannot come from the receiver: nameof(@this) yields "this", which names the parameter the
+            // compiler emits rather than anything a caller can see.
+            static Verbosity ThrowUnknownLevel(MessageLevel level)
+                => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown message level.");
+        }
     }
 }

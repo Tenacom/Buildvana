@@ -33,6 +33,7 @@ internal sealed class MessageLevelExtensionsTests
     [Arguments(42)]
     public async Task MinimumVerbosity_UnknownLevel_Throws(int level)
     {
-        await Assert.That(() => ((MessageLevel)level).MinimumVerbosity()).Throws<ArgumentOutOfRangeException>();
+        var exception = await Assert.That(() => ((MessageLevel)level).MinimumVerbosity()).Throws<ArgumentOutOfRangeException>();
+        await Assert.That(exception?.ParamName).IsEqualTo("level");
     }
 }
