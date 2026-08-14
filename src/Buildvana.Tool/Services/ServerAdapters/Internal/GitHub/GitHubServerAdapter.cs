@@ -94,14 +94,17 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <summary>
     /// Sets a GitHub Actions step output.
     /// </summary>
+    /// <param name="outputFile">The path of the file that collects the step's outputs, i.e. the value of
+    /// the <c>GITHUB_OUTPUT</c> environment variable.</param>
     /// <param name="name">The output name.</param>
     /// <param name="value">The output value.</param>
-    public static void SetActionsStepOutput(string name, string value)
-    {
-        var outputFile = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
-        BuildFailedException.ThrowIf(string.IsNullOrEmpty(outputFile), "Cannot set Actions step output: GITHUB_OUTPUT not set.");
-        UserFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
-    }
+    /// <remarks>
+    /// <para>The caller provides the path, instead of this method reading the environment variable itself,
+    /// so that a missing variable is discovered while there is still nothing to undo. See
+    /// <see cref="GitHubServerRelease.CreateAsync"/>.</para>
+    /// </remarks>
+    public static void SetActionsStepOutput(string outputFile, string name, string value)
+        => UserFile.AppendAllLines(outputFile, [$"{name}={value}"], Encoding.UTF8);
 
     /// <inheritdoc/>
     public override async Task<bool> IsPrivateRepositoryAsync()
