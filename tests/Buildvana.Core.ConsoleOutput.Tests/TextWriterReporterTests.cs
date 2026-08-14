@@ -79,7 +79,10 @@ internal sealed class TextWriterReporterTests
         using var reporter = new StringWriterReporter(Verbosity.Diagnostic);
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        await Assert.That(() => reporter.Report((MessageLevel)(-1), "something happened")).Throws<ArgumentOutOfRangeException>();
+        var exception = await Assert.That(() => reporter.Report((MessageLevel)(-1), "something happened"))
+            .Throws<ArgumentOutOfRangeException>();
+
+        await Assert.That(exception?.ParamName).IsEqualTo("level");
     }
 
     [Test]
