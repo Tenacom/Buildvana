@@ -106,7 +106,7 @@ Which file to read comes from the args, so a hook never searches for one; what i
 
 `BuildvanaConfig.Load()`, which searches a directory for a configuration file, remains available for code that has no hook args to hand.
 
-A hook that works on the configuration file _itself_ — rewriting a value in it, say — needs the path rather than the settings, and must act on the file `bv` actually read. That path is in the args, as `runtimeInfo.configFile` (`null` when the repository has no configuration file); do not hardcode a file name, and do not search for one:
+A hook that works on the configuration file _itself_ — rewriting a value in it, say — needs the path rather than the settings, and must act on the file `bv` actually read. That path is in the args, as `RuntimeInfo.ConfigFile` (`null` when the repository has no configuration file); do not hardcode a file name, and do not search for one:
 
 ```csharp
 var configFile = hookArgs.RuntimeInfo.ConfigFile;
