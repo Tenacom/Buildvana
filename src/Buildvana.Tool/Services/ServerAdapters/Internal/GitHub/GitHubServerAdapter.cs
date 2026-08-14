@@ -188,6 +188,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         _reporter.Info("Deleting the previously created release...");
         var client = CreateGitHubClient();
         await client.Repository.Release.Delete(RepositoryOwner, RepositoryName, release.Id).ConfigureAwait(false);
+        _reporter.Notice("Deleted the previously created release.");
         if (string.IsNullOrEmpty(tagName))
         {
             return;
@@ -207,6 +208,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 
         _reporter.Info($"Deleting reference '{reference}' in GitHub repository...");
         await client.Git.Reference.Delete(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
+        _reporter.Notice($"Deleted tag {tagName}.");
     }
 
     /// <summary>
