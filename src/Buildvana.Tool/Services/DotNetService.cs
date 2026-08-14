@@ -159,7 +159,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
 
         if (!hasTestProjects)
         {
-            _reporter.Info("No test projects found, skipping tests.");
+            _reporter.Notice("No test projects found, skipping tests.");
             return;
         }
 
