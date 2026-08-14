@@ -16,15 +16,15 @@ if (!hookArgs.Dogfooding)
     return;
 }
 
-// AFTER THE NEXT RELEASE: replace these four lines with
+// AFTER THE NEXT RELEASE: replace the search below with
 //     var configFile = hookArgs.RuntimeInfo.ConfigFile;
 // keeping the null check. That member names the file bv itself read, which is what a hook rewriting the
 // configuration file should act on, and what Hooks.md tells hooks to use instead of searching for one.
 // It cannot be used yet: the SDK pins Buildvana.Runtime to its own version, so this hook compiles against
 // the last published release, and RuntimeInfo.ConfigFile ships with the next one. Searching is correct in
-// the meantime — hooks run from the home directory, and this is the same search bv performs — it just
+// the meantime — it is the same search bv performs, over the directory bv reports as home — the hook just
 // answers on its own rather than being told.
-var configFile = BuildvanaConfig.FindFile();
+var configFile = BuildvanaConfig.FindFile(hookArgs.RuntimeInfo.HomeDirectory);
 if (configFile is null)
 {
     return;
