@@ -77,7 +77,8 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
         if (_updatesPushed)
         {
-            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot create the release commit when updates have already been pushed.");
+            ThrowHelper.ThrowInvalidOperationException(
+                "Internal error: cannot create the release commit when updates have already been pushed.");
         }
 
         if (_repositoryUpdated)
@@ -122,7 +123,8 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
         if (_postReleaseCommits > 0)
         {
-            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot update the release commit after a post-release commit has been added.");
+            ThrowHelper.ThrowInvalidOperationException(
+                "Internal error: cannot update the release commit after a post-release commit has been added.");
         }
 
         // Staging comes first, so that the files are already in the index when the release commit is
@@ -165,12 +167,14 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
         if (_updatesPushed)
         {
-            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot add a post-release commit when updates have already been pushed.");
+            ThrowHelper.ThrowInvalidOperationException(
+                "Internal error: cannot add a post-release commit when updates have already been pushed.");
         }
 
         if (!_repositoryUpdated)
         {
-            ThrowHelper.ThrowInvalidOperationException("Internal error: cannot add a post-release commit before the release commit has been created.");
+            ThrowHelper.ThrowInvalidOperationException(
+                "Internal error: cannot add a post-release commit before the release commit has been created.");
         }
 
         _git.Stage(files);
