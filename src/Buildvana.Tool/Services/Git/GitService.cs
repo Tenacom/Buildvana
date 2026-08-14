@@ -290,11 +290,13 @@ internal sealed class GitService : IDisposable
             _reporter.Info($"Force pushing changes to '{remote}'...");
             var pushRefSpec = string.Format(CultureInfo.InvariantCulture, "+{0}:{0}", _repository.Head.CanonicalName);
             _repository.Network.Push(_repository.Network.Remotes[remote], pushRefSpec, pushOptions);
+            _reporter.Notice($"Force-pushed '{head.FriendlyName}' to '{remote}'.");
         }
         else
         {
             _reporter.Info($"Pushing changes to '{remote}'...");
             _repository.Network.Push(head, pushOptions);
+            _reporter.Notice($"Pushed '{head.FriendlyName}' to '{remote}'.");
         }
     }
 
