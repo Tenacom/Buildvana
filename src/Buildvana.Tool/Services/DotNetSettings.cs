@@ -16,11 +16,6 @@ namespace Buildvana.Tool.Services;
 /// </summary>
 internal sealed class DotNetSettings
 {
-    /// <summary>
-    /// The build configuration used when neither the configuration chain nor the command line specifies one.
-    /// </summary>
-    public const string DefaultConfiguration = "Release";
-
     private readonly NuGetConfig? _nuget;
 
     /// <summary>
@@ -30,7 +25,7 @@ internal sealed class DotNetSettings
     public DotNetSettings(BuildvanaConfig config)
     {
         Guard.IsNotNull(config);
-        Configuration = config.DotNet?.Configuration ?? DefaultConfiguration;
+        Configuration = config.DotNet.EffectiveConfiguration;
         Invocations = new DotNetInvocationsSettings(config.DotNet);
         _nuget = config.NuGet;
     }
