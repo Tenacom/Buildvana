@@ -112,6 +112,7 @@ internal sealed class HookRunner
             path,
             workingDirectory: _home.HomeDirectory,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+        _reporter.Notice($"Hook {hookName}: ran {relativePath}.");
         return true;
     }
 }
