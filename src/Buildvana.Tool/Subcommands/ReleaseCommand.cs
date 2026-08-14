@@ -31,7 +31,10 @@ namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("release", settingsType: typeof(ReleaseSettings), usesSdk: true)]
 [Description("Publish a new public release (CI only).")]
-internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings settings, BuildPipeline pipeline) : IBvCommand
+internal sealed class ReleaseCommand(
+    IServiceProvider services,
+    ReleaseSettings settings,
+    BuildPipeline pipeline) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -63,7 +66,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
 
         // Ensure that the CI bot identity is used for commits, if not already set.
-        git.CommitterIdentity ??= server.CIBotIdentity ?? throw new BuildFailedException("Cannot determine a committer identity for release commits. Configure git config user.name/user.email before running this task.");
+        git.CommitterIdentity ??= server.CIBotIdentity ?? throw new BuildFailedException(
+            "Cannot determine a committer identity for release commits. "
+            + "Configure git config user.name/user.email before running this task.");
         reporter.Notice($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
 
         // Set fallback Git credentials if the server adapter can provide them.
@@ -76,7 +81,9 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
         }
         else
         {
-            reporter.Warning("No push credentials provided by the server adapter. Push operations may fail if the repository is not already authenticated.");
+            reporter.Warning(
+                "No push credentials provided by the server adapter. "
+                + "Push operations may fail if the repository is not already authenticated.");
         }
 
         // Perform an initial versioning consistency check.
@@ -167,10 +174,11 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                 }
                 else
                 {
+                    const string failureMessage = "Changelog check failed: the \"Unreleased changes\" section is empty "
+                        + "or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).";
+
                     emptyChangelogSubstitute = settings.ResolveEmptyChangelog();
-                    BuildFailedException.ThrowIf(
-                        emptyChangelogSubstitute is null,
-                        "Changelog check failed: the \"Unreleased changes\" section is empty or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).");
+                    BuildFailedException.ThrowIf(emptyChangelogSubstitute is null, failureMessage);
 
                     reporter.Notice(
                         "Changelog \"Unreleased changes\" section is empty; substituting the configured release.emptyChangelog text.");
@@ -309,13 +317,17 @@ internal sealed class ReleaseCommand(IServiceProvider services, ReleaseSettings 
                     var parts = line.Split('\t');
                     if (parts.Length != 3)
                     {
-                        reporter.Warning(string.Create(CultureInfo.InvariantCulture, $"Release asset list {path}, line #{i}: invalid line '{line}'"));
+                        reporter.Warning(string.Create(
+                            CultureInfo.InvariantCulture,
+                            $"Release asset list {path}, line #{i}: invalid line '{line}'"));
                         continue;
                     }
 
                     if (!File.Exists(parts[0]))
                     {
-                        reporter.Warning(string.Create(CultureInfo.InvariantCulture, $"Release asset list {path}, line #{i}: asset not found '{parts[0]}'"));
+                        reporter.Warning(string.Create(
+                            CultureInfo.InvariantCulture,
+                            $"Release asset list {path}, line #{i}: asset not found '{parts[0]}'"));
                         continue;
                     }
 
