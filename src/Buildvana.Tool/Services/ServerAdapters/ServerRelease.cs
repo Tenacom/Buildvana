@@ -101,6 +101,15 @@ internal abstract partial class ServerRelease : IAsyncDisposable
                 _git.UndoLastCommit();
             }
 
+            // The whole set of commits is one undoing, recorded once: a notice per commit would read
+            // as a repeated line rather than as the several commits it actually walks back.
+            _reporter.Notice(_postReleaseCommits switch
+            {
+                0 => "Undid the release commit.",
+                1 => "Undid the release commit and 1 post-release commit.",
+                var count => string.Create(CultureInfo.InvariantCulture, $"Undid the release commit and {count} post-release commits."),
+            });
+
             // If updates have already been pushed...
             if (_updatesPushed)
             {
