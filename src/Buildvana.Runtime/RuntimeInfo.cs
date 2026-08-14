@@ -46,9 +46,10 @@ public sealed record RuntimeInfo
     /// or <see cref="BuildvanaConfig.JsoncFileName"/>), or <see langword="null"/> when the repository has none.
     /// </summary>
     /// <remarks>
-    /// <para>A hook that reads settings has no use for this: <see cref="BuildvanaConfig.Load"/> finds the file
-    /// on its own. This is for a hook that works on the file itself — rewriting a value, checking it into the
-    /// post-release commit — and must act on the very file <c>bv</c> read rather than guess which one it was.</para>
+    /// <para>A hook that reads settings gets there through <see cref="HookArgs.LoadConfig"/>, which reads the
+    /// file named here and hands back the typed configuration. This member is for a hook that works on the file
+    /// itself — rewriting a value, checking it into the post-release commit — and must act on the very file
+    /// <c>bv</c> read rather than guess which one it was.</para>
     /// <para>Required of whoever writes the args, so that a run always states which file it read; the value is
     /// nonetheless <see langword="null"/> when the repository has no configuration file, which a repository
     /// whose home directory is marked by Git alone legitimately does not.</para>
