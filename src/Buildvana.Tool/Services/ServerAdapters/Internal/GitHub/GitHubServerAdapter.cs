@@ -192,17 +192,25 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <param name="release">An object representing the release.</param>
     /// <param name="tagName">The tag name, or <see langword="null"/> to not delete a tag.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
+    /// <remarks>
+    /// <para>A deleted release is named after <paramref name="tagName"/>, never after
+    /// <see cref="Release.TagName"/>: the draft is created before the release commit exists, and that commit
+    /// always moves the version, so the tag name the draft carries is never the one the release is published
+    /// under. A draft, having no tag of its own, is reported as the draft it is.</para>
+    /// </remarks>
     public async Task DeleteReleaseAsync(Release release, string? tagName)
     {
         Guard.IsNotNull(release);
         _reporter.Info("Deleting the previously created release...");
         var client = CreateGitHubClient();
         await client.Repository.Release.Delete(RepositoryOwner, RepositoryName, release.Id).ConfigureAwait(false);
-        _reporter.Notice("Deleted the previously created release.");
         if (string.IsNullOrEmpty(tagName))
         {
+            _reporter.Notice("Deleted the provisional draft release.");
             return;
         }
+
+        _reporter.Notice($"Deleted release {tagName}.");
 
         var reference = "refs/tags/" + tagName;
         _reporter.Info($"Looking for reference '{reference}' in GitHub repository...");
