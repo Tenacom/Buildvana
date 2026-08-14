@@ -15,7 +15,6 @@ using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.IO;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
-using Buildvana.Runtime;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
@@ -45,6 +44,7 @@ internal sealed partial class SelfVersionService
 
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
+    private readonly BuildvanaConfigProvider _config;
     private readonly IJsonHelper _jsonHelper;
     private readonly IProcessRunner _processRunner;
     private readonly NuGetVersion _ownVersion;
@@ -54,23 +54,27 @@ internal sealed partial class SelfVersionService
     /// </summary>
     /// <param name="reporter">The reporter to log to.</param>
     /// <param name="home">The provider of the home directory, where <c>global.json</c> and the tool manifest live.</param>
+    /// <param name="config">The provider of the configuration file whose schema reference is rewritten.</param>
     /// <param name="jsonHelper">The JSON helper used to read and rewrite pins.</param>
     /// <param name="processRunner">The process runner used to invoke <c>dotnet tool update</c>.</param>
     /// <param name="ownVersion">The version of the running bv.</param>
     public SelfVersionService(
         IReporter reporter,
         IHomeDirectoryProvider home,
+        BuildvanaConfigProvider config,
         IJsonHelper jsonHelper,
         IProcessRunner processRunner,
         NuGetVersion ownVersion)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(home);
+        Guard.IsNotNull(config);
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(ownVersion);
         _reporter = reporter;
         _home = home;
+        _config = config;
         _jsonHelper = jsonHelper;
         _processRunner = processRunner;
         _ownVersion = ownVersion;
@@ -287,20 +291,11 @@ internal sealed partial class SelfVersionService
     }
 
     // Rewrites the version segment of the configuration file's $schema URL in place, when the URL has the
-    // well-known shape; a hand-rolled or absent reference is reported, not touched. Runs on whichever of the
-    // four candidate locations holds the configuration file; no file at all means nothing to update or validate.
+    // well-known shape; a hand-rolled or absent reference is reported, not touched. Runs on whichever candidate
+    // the home directory holds; no file at all means nothing to update or validate.
     private string? UpdateConfigSchemaReference()
     {
-        string? path;
-        try
-        {
-            path = BuildvanaConfig.FindFile(_home.HomeDirectory);
-        }
-        catch (BuildvanaRuntimeException e)
-        {
-            throw new BuildFailedException(e.Message, e);
-        }
-
+        var path = _config.Path;
         if (path is null)
         {
             return null;
@@ -324,18 +319,20 @@ internal sealed partial class SelfVersionService
             : changed ? $"{fileName}: schema reference updated"
             : SchemaUrlRegex.IsMatch(schemaReference) ? $"{fileName}: schema reference unchanged"
             : $"{fileName}: schema reference not recognized, left unchanged";
-        ReportConfigValidationProblems(fileName);
+        ReportConfigValidationProblems(path, fileName);
         return line;
     }
 
     // The configuration file's content may predate this bv's model; loading it with this version's validating
     // loader turns the drift into actionable diagnostics. Problems are warnings, not errors: the file keeps
     // working for the commands that do not read it, and the user decides how to migrate it.
-    private void ReportConfigValidationProblems(string fileName)
+    // The file has just been rewritten, so this reads it afresh rather than through the provider, whose parse
+    // (if a command in this run asked for one) predates the rewrite.
+    private void ReportConfigValidationProblems(string path, string fileName)
     {
         try
         {
-            _ = BuildvanaConfigLoader.Load(_home.HomeDirectory);
+            _ = BuildvanaConfigProvider.LoadFile(path);
         }
         catch (BuildFailedException e)
         {

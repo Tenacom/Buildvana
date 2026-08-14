@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
@@ -528,6 +529,7 @@ internal sealed class SelfVersionServiceTests
         => new(
             reporter ?? NullReporter.Instance,
             home.Provider,
+            new BuildvanaConfigProvider(home.Provider),
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
             NuGetVersion.Parse(ownVersion));

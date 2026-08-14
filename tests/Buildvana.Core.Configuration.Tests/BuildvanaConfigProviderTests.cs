@@ -4,16 +4,17 @@
 using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
+using Buildvana.Core.HomeDirectory;
 
-internal sealed class BuildvanaConfigLoaderTests
+internal sealed class BuildvanaConfigProviderTests
 {
     [Test]
-    public async Task Load_NoFile_ReturnsEmptyConfig()
+    public async Task Config_NoFile_IsEmptyConfig()
     {
         var dir = NewDir();
         try
         {
-            var config = BuildvanaConfigLoader.Load(dir);
+            var config = NewProvider(dir).Config;
             await Assert.That(config.Release).IsNull();
         }
         finally
@@ -23,13 +24,13 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_ValidConfig_Loads()
+    public async Task Config_ValidConfig_Loads()
     {
         var dir = NewDir();
         try
         {
             Write(dir, "buildvana.jsonc", """{ "release": { "branches": ["main"] } }""");
-            var config = BuildvanaConfigLoader.Load(dir);
+            var config = NewProvider(dir).Config;
             await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
         }
         finally
@@ -41,13 +42,13 @@ internal sealed class BuildvanaConfigLoaderTests
     // An empty JSON object is a valid configuration; it makes a configuration file usable
     // as a pure home-directory marker (the replacement for the retired .buildvana-home file).
     [Test]
-    public async Task Load_EmptyObject_Loads()
+    public async Task Config_EmptyObject_Loads()
     {
         var dir = NewDir();
         try
         {
             Write(dir, "buildvana.json", "{}");
-            var config = BuildvanaConfigLoader.Load(dir);
+            var config = NewProvider(dir).Config;
             await Assert.That(config.Release).IsNull();
         }
         finally
@@ -57,7 +58,100 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_BothFilesPresent_ThrowsNamingBothWithoutDiagnostics()
+    public async Task Path_NoFile_IsNull()
+    {
+        var dir = NewDir();
+        try
+        {
+            await Assert.That(NewProvider(dir).Path).IsNull();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    [Arguments("buildvana.json")]
+    [Arguments("buildvana.jsonc")]
+    public async Task Path_OneFile_IsItsPath(string fileName)
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, fileName, "{}");
+            await Assert.That(NewProvider(dir).Path).IsEqualTo(Path.Combine(dir, fileName));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // Deleting the file between the two reads is what proves the answer is cached rather than recomputed:
+    // one run gets one answer, whichever of the provider's two facts is asked for first.
+    [Test]
+    public async Task PathAndConfig_ReadAfterFileRemoval_KeepTheFirstAnswer()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "release": { "branches": ["main"] } }""");
+            var provider = NewProvider(dir);
+            var path = provider.Path;
+            var config = provider.Config;
+
+            File.Delete(Path.Combine(dir, "buildvana.jsonc"));
+
+            await Assert.That(provider.Path).IsEqualTo(path);
+            await Assert.That(provider.Config).IsSameReferenceAs(config);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // Reading the configuration without having read the path first must find the file just the same:
+    // the two are resolved independently on demand, from a single probe.
+    [Test]
+    public async Task Config_ReadBeforePath_FindsTheFile()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "release": { "branches": ["main"] } }""");
+            var provider = NewProvider(dir);
+
+            await Assert.That(provider.Config.Release!.Branches!.Count).IsEqualTo(1);
+            await Assert.That(provider.Path).IsEqualTo(Path.Combine(dir, "buildvana.jsonc"));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task Path_BothFilesPresent_Throws()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.json", "{}");
+            Write(dir, "buildvana.jsonc", "{}");
+            var provider = NewProvider(dir);
+
+            _ = await Assert.That(() => provider.Path).Throws<BuildFailedException>();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task Config_BothFilesPresent_ThrowsNamingBothWithoutDiagnostics()
     {
         var dir = NewDir();
         try
@@ -77,7 +171,7 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_InvalidJson_ReportsBV1100()
+    public async Task Config_InvalidJson_ReportsBV1100()
     {
         var dir = NewDir();
         try
@@ -95,7 +189,7 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_SchemaViolation_ReportsCodeAndPosition()
+    public async Task Config_SchemaViolation_ReportsCodeAndPosition()
     {
         var dir = NewDir();
         try
@@ -114,7 +208,7 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_UnknownProperty_ReportsBV1103()
+    public async Task Config_UnknownProperty_ReportsBV1103()
     {
         var dir = NewDir();
         try
@@ -131,7 +225,7 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_BomPrefixedFile_DoesNotOffsetPositions()
+    public async Task Config_BomPrefixedFile_DoesNotOffsetPositions()
     {
         var dir = NewDir();
         try
@@ -146,6 +240,8 @@ internal sealed class BuildvanaConfigLoaderTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    private static BuildvanaConfigProvider NewProvider(string dir) => new(new FixedHomeDirectoryProvider(dir));
 
     private static string NewDir()
     {
@@ -165,7 +261,7 @@ internal sealed class BuildvanaConfigLoaderTests
     {
         try
         {
-            _ = BuildvanaConfigLoader.Load(dir);
+            _ = NewProvider(dir).Config;
             return null;
         }
         catch (BuildFailedException exception)
