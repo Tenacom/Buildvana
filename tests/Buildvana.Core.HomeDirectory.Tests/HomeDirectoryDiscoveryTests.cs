@@ -8,8 +8,6 @@ internal sealed class HomeDirectoryDiscoveryTests
     [Test]
     [Arguments("buildvana.json")]
     [Arguments("buildvana.jsonc")]
-    [Arguments(".buildvana/buildvana.json")]
-    [Arguments(".buildvana/buildvana.jsonc")]
     [Arguments(".git")]
     [Arguments(".git/HEAD")]
     public async Task TryDiscover_MarkerInStartDirectory_MarksIt(string marker)
@@ -28,14 +26,16 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
     }
 
+    // Hooks are projects living under .buildvana/, so discovery runs from there on every hook build.
+    // Nothing inside that directory is a marker, which is what keeps a hook's home directory the repository's own.
     [Test]
-    public async Task TryDiscover_ConfigInSubdirectory_MarksContainingDirectory()
+    public async Task TryDiscover_StartingUnderBuildvanaDirectory_FindsHomeDirectory()
     {
         var root = NewDir();
         try
         {
-            WriteFile(root, ".buildvana/buildvana.jsonc");
-            var start = Path.Combine(root, "src", "MyProject");
+            WriteFile(root, "buildvana.jsonc");
+            var start = Path.Combine(root, ".buildvana", "hooks", "release");
             _ = Directory.CreateDirectory(start);
             var found = HomeDirectoryDiscovery.TryDiscover(start, out var home);
             await Assert.That(found).IsTrue();
@@ -48,14 +48,14 @@ internal sealed class HomeDirectoryDiscoveryTests
     }
 
     [Test]
-    public async Task TryDiscover_BareSubdirectory_IsNotMarker()
+    public async Task TryDiscover_BuildvanaDirectory_IsNotMarker()
     {
         var root = NewDir();
         try
         {
             WriteFile(root, ".git/HEAD");
             var child = Path.Combine(root, "child");
-            _ = Directory.CreateDirectory(Path.Combine(child, ".buildvana"));
+            WriteFile(child, ".buildvana/hooks/release/post-release.cs");
             var found = HomeDirectoryDiscovery.TryDiscover(child, out var home);
             await Assert.That(found).IsTrue();
             await Assert.That(home).IsEqualTo(WithTrailingSeparator(root));
@@ -74,7 +74,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         {
             WriteFile(root, ".git/HEAD");
             var nested = Path.Combine(root, "nested");
-            WriteFile(nested, ".buildvana/buildvana.json");
+            WriteFile(nested, "buildvana.json");
             var start = Path.Combine(nested, "src");
             _ = Directory.CreateDirectory(start);
             var found = HomeDirectoryDiscovery.TryDiscover(start, out var home);

@@ -47,22 +47,6 @@ internal sealed class BuildvanaConfigLoadTests
     }
 
     [Test]
-    public async Task Load_ConfigInSubdirectory_Loads()
-    {
-        var dir = NewDir();
-        try
-        {
-            Write(dir, Path.Combine(".buildvana", "buildvana.json"), """{ "release": { "checkPublicApi": true } }""");
-            var config = BuildvanaConfig.Load(dir);
-            await Assert.That(config.Release!.CheckPublicApi).IsTrue();
-        }
-        finally
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-    }
-
-    [Test]
     public async Task Load_MultipleFiles_Throws()
     {
         var dir = NewDir();

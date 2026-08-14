@@ -57,23 +57,7 @@ internal sealed class BuildvanaConfigLoaderTests
     }
 
     [Test]
-    public async Task Load_ConfigInSubdirectory_Loads()
-    {
-        var dir = NewDir();
-        try
-        {
-            Write(dir, Path.Combine(".buildvana", "buildvana.jsonc"), """{ "release": { "branches": ["main"] } }""");
-            var config = BuildvanaConfigLoader.Load(dir);
-            await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
-        }
-        finally
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-    }
-
-    [Test]
-    public async Task Load_BothFilesPresent_ThrowsWithoutDiagnostics()
+    public async Task Load_BothFilesPresent_ThrowsNamingBothWithoutDiagnostics()
     {
         var dir = NewDir();
         try
@@ -82,43 +66,9 @@ internal sealed class BuildvanaConfigLoaderTests
             Write(dir, "buildvana.jsonc", "{}");
             var exception = Catch(dir);
             await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(0);
-        }
-        finally
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-    }
-
-    [Test]
-    public async Task Load_FilesInRootAndSubdirectory_ThrowsNamingAllOffenders()
-    {
-        var dir = NewDir();
-        try
-        {
-            Write(dir, "buildvana.jsonc", "{}");
-            Write(dir, Path.Combine(".buildvana", "buildvana.json"), "{}");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Message).Contains(Path.Combine(dir, "buildvana.jsonc"));
-            await Assert.That(exception.Message).Contains(Path.Combine(dir, ".buildvana", "buildvana.json"));
-        }
-        finally
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-    }
-
-    [Test]
-    public async Task Load_BothFilesInSubdirectory_Throws()
-    {
-        var dir = NewDir();
-        try
-        {
-            Write(dir, Path.Combine(".buildvana", "buildvana.json"), "{}");
-            Write(dir, Path.Combine(".buildvana", "buildvana.jsonc"), "{}");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Message).Contains(Path.Combine(dir, "buildvana.json"));
+            await Assert.That(exception.Message).Contains(Path.Combine(dir, "buildvana.jsonc"));
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(0);
         }
         finally
         {

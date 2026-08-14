@@ -20,12 +20,14 @@
     Rules for HomeDirectory:
       Walking upward from the project's directory (the project's directory included), find the NEAREST directory
       containing any of these home markers, and use it as the home directory:
-        * a Buildvana configuration file (buildvana.json or buildvana.jsonc), either directly in the directory
-          or in a .buildvana subdirectory (a .buildvana directory without a configuration file is NOT a marker);
+        * a Buildvana configuration file (buildvana.json or buildvana.jsonc);
         * a Git worktree or submodule (a file named .git);
         * a regular Git repository (a file named HEAD in a .git subdirectory).
       "Nearest" means the deepest candidate: since every candidate is the project's directory or an ancestor of it,
       the candidate with the longest path is the closest one.
+      Every marker sits in the directory it marks, so nothing under a subdirectory — the .buildvana directory
+      included — takes part in discovery. That directory holds hooks, which are projects themselves: were a marker
+      to be recognized inside it, every hook would discover .buildvana as its own home directory.
 
       The configuration file is only a marker for the purpose of locating the home directory; the SDK does not parse
       it here. Whether a configuration file is actually present at the home directory is the loader's concern.
@@ -38,15 +40,10 @@
     NOTE: Check for ".git/HEAD", not ".git\HEAD", because the latter only works on Windows.
           MSBuild doesn't convert directory separators on the second argument to GetDirectoryNameOfFileAbove,
           probably due to https://github.com/microsoft/msbuild/issues/1024
-          The same applies to the ".buildvana/buildvana.json" and ".buildvana/buildvana.jsonc" probes.
-          For subdirectory probes, GetDirectoryNameOfFileAbove returns the directory CONTAINING the subdirectory,
-          i.e. the probe result itself is the home directory.
   -->
   <PropertyGroup>
     <_HomeDir_ByConfigJson>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','buildvana.json'))</_HomeDir_ByConfigJson>
     <_HomeDir_ByConfigJsonc>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','buildvana.jsonc'))</_HomeDir_ByConfigJsonc>
-    <_HomeDir_BySubdirConfigJson>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana/buildvana.json'))</_HomeDir_BySubdirConfigJson>
-    <_HomeDir_BySubdirConfigJsonc>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.buildvana/buildvana.jsonc'))</_HomeDir_BySubdirConfigJsonc>
     <_HomeDir_ByGitFile>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git'))</_HomeDir_ByGitFile>
     <_HomeDir_ByGitHead>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)','.git/HEAD'))</_HomeDir_ByGitHead>
   </PropertyGroup>
@@ -56,8 +53,6 @@
     <HomeDirectory></HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_ByConfigJson.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByConfigJson)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_ByConfigJsonc.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByConfigJsonc)</HomeDirectory>
-    <HomeDirectory Condition="$(_HomeDir_BySubdirConfigJson.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_BySubdirConfigJson)</HomeDirectory>
-    <HomeDirectory Condition="$(_HomeDir_BySubdirConfigJsonc.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_BySubdirConfigJsonc)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_ByGitFile.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByGitFile)</HomeDirectory>
     <HomeDirectory Condition="$(_HomeDir_ByGitHead.Length) &gt; $(HomeDirectory.Length)">$(_HomeDir_ByGitHead)</HomeDirectory>
   </PropertyGroup>
@@ -74,12 +69,10 @@
                      Text="Home directory not defined." />
   </ItemGroup>
 
-  <!-- A home directory must not contain more than one configuration file among the four candidate locations. -->
+  <!-- A home directory must not contain both configuration files. -->
   <ItemGroup Condition="'$(HomeDirectory)' != ''">
     <_BV_FoundConfigFile Condition="Exists('$(HomeDirectory)buildvana.json')" Include="$(HomeDirectory)buildvana.json" />
     <_BV_FoundConfigFile Condition="Exists('$(HomeDirectory)buildvana.jsonc')" Include="$(HomeDirectory)buildvana.jsonc" />
-    <_BV_FoundConfigFile Condition="Exists('$(HomeDirectory).buildvana/buildvana.json')" Include="$(HomeDirectory).buildvana/buildvana.json" />
-    <_BV_FoundConfigFile Condition="Exists('$(HomeDirectory).buildvana/buildvana.jsonc')" Include="$(HomeDirectory).buildvana/buildvana.jsonc" />
   </ItemGroup>
   <ItemGroup Condition="@(_BV_FoundConfigFile->Count()) &gt; 1">
     <EvaluationError Include="BVSDK1005"

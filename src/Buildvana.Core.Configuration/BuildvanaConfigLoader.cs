@@ -36,8 +36,8 @@ public static class BuildvanaConfigLoader
     /// <param name="homeDirectory">The home directory to search for a configuration file.</param>
     /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> if no file is present.</returns>
     /// <exception cref="BuildFailedException">
-    /// <para>More than one configuration file is present (among <c>buildvana.json</c>, <c>buildvana.jsonc</c>,
-    /// <c>.buildvana/buildvana.json</c>, and <c>.buildvana/buildvana.jsonc</c>), or the file cannot be read.</para>
+    /// <para>Both configuration files (<c>buildvana.json</c> and <c>buildvana.jsonc</c>) are present,
+    /// or the file cannot be read.</para>
     /// <para>The file is present but not valid JSON, or does not conform to the schema; in that case
     /// <see cref="BuildFailedException.Diagnostics"/> lists each problem with its source location.</para>
     /// </exception>

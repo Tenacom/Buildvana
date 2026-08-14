@@ -94,7 +94,7 @@ In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `rele
 
 ## Loading the repository configuration
 
-The args carry the facts of the run; for any standing repository setting, load the configuration file instead: `BuildvanaConfig.Load()` probes the four well-known candidates (`buildvana.json`, `buildvana.jsonc`, and the same names under `.buildvana/`), applies the usual exactly-one rule, tolerates comments and trailing commas, and returns the typed configuration (an empty instance when no configuration file exists):
+The args carry the facts of the run; for any standing repository setting, load the configuration file instead: `BuildvanaConfig.Load()` probes the two well-known candidates (`buildvana.json` and `buildvana.jsonc`), applies the usual exactly-one rule, tolerates comments and trailing commas, and returns the typed configuration (an empty instance when no configuration file exists):
 
 ```csharp
 var config = BuildvanaConfig.Load();

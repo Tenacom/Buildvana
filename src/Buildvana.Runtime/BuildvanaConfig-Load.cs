@@ -10,20 +10,20 @@ namespace Buildvana.Runtime;
 public partial record BuildvanaConfig
 {
     /// <summary>
-    /// The name of the configuration file in plain JSON form. The file may live directly in the
-    /// home directory or in its <see cref="WellKnownPaths.BuildvanaDirectory"/> subdirectory.
+    /// The name of the configuration file in plain JSON form. The file lives in the home directory itself:
+    /// a configuration file elsewhere, <see cref="WellKnownPaths.BuildvanaDirectory"/> included, is not one.
     /// </summary>
     public const string JsonFileName = "buildvana.json";
 
     /// <summary>
     /// The name of the configuration file in JSON-with-comments form, subject to the same
-    /// two candidate locations as <see cref="JsonFileName"/>.
+    /// single candidate location as <see cref="JsonFileName"/>.
     /// </summary>
     public const string JsoncFileName = "buildvana.jsonc";
 
     /// <summary>
-    /// Finds the configuration file in a home directory, probing the four well-known candidates
-    /// (<c>buildvana.json</c>, <c>buildvana.jsonc</c>, and the same names under <c>.buildvana/</c>).
+    /// Finds the configuration file in a home directory, probing the two well-known candidates
+    /// (<c>buildvana.json</c> and <c>buildvana.jsonc</c>).
     /// </summary>
     /// <param name="homeDirectory">The home directory to probe; the current directory when omitted.</param>
     /// <returns>The path of the configuration file, or <see langword="null"/> when none exists.</returns>
@@ -35,8 +35,6 @@ public partial record BuildvanaConfig
         [
             Path.Combine(baseDirectory, JsonFileName),
             Path.Combine(baseDirectory, JsoncFileName),
-            Path.Combine(baseDirectory, WellKnownPaths.BuildvanaDirectory, JsonFileName),
-            Path.Combine(baseDirectory, WellKnownPaths.BuildvanaDirectory, JsoncFileName),
         ];
         var existingPaths = Array.FindAll(candidatePaths, File.Exists);
         if (existingPaths.Length > 1)
