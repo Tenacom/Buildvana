@@ -261,6 +261,7 @@ internal sealed class GitService : IDisposable
         var previousCommit = _repository.Head.Tip.Parents.FirstOrDefault();
         BuildFailedException.ThrowIf(previousCommit is null, "Git: cannot reset, there is no commit to go back to.");
         _repository.Reset(ResetMode.Hard, previousCommit);
+        _reporter.Notice("Undid the last commit.");
     }
 
     /// <summary>
