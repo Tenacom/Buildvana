@@ -89,11 +89,7 @@ internal sealed class ReleaseCommandReportingTests
         using var harness = new ReleaseHarness(new() { WithHook = true, Dogfood = false });
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
-        harness.HookBehavior = () =>
-        {
-            harness.WriteFile("docs/release-notes.md", "Released.\n");
-            harness.WriteFile("docs/announcement.md", "Announcing the release.\n");
-        };
+        harness.HookBehavior = () => WriteTwoFiles(harness);
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
@@ -131,5 +127,13 @@ internal sealed class ReleaseCommandReportingTests
         _ = await harness.RunAsync().ConfigureAwait(false);
 
         await Assert.That(harness.Notices).Contains("3 self-referenced files were modified.");
+    }
+
+    // A method rather than a two-statement lambda: what the hook writes is captured from the harness, and
+    // a parameter keeps it out of a closure whose target is disposed by the time the analyzer looks at it.
+    private static void WriteTwoFiles(ReleaseHarness harness)
+    {
+        harness.WriteFile("docs/release-notes.md", "Released.\n");
+        harness.WriteFile("docs/announcement.md", "Announcing the release.\n");
     }
 }
