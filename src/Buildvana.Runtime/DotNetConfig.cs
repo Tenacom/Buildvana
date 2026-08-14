@@ -13,6 +13,12 @@ namespace Buildvana.Runtime;
 public sealed record DotNetConfig
 {
     /// <summary>
+    /// The build configuration used when <see cref="Configuration"/> is not set. Read it through
+    /// <c>EffectiveConfiguration</c>, which applies it whether the setting or the whole section is absent.
+    /// </summary>
+    public const string DefaultConfiguration = "Release";
+
+    /// <summary>
     /// Gets the default build configuration passed to <c>dotnet</c>.
     /// </summary>
     [Description("Default build configuration (e.g. Debug, Release).")]

@@ -27,7 +27,7 @@ public sealed class VersioningSettings
         Guard.IsNotNull(config);
         PublicReleaseBranchPatterns = config.Release?.Branches ?? [];
         PrereleaseTag = config.Versioning?.PrereleaseTag;
-        AssemblyVersionPrecision = config.Versioning?.AssemblyVersionPrecision ?? AssemblyVersionPrecision.Major;
+        AssemblyVersionPrecision = config.Versioning.EffectiveAssemblyVersionPrecision;
     }
 
     /// <summary>

@@ -50,6 +50,9 @@ Buildvana.Runtime.DotNetConfig.Restore.get -> Buildvana.Runtime.DotNetInvocation
 Buildvana.Runtime.DotNetConfig.Restore.init -> void
 Buildvana.Runtime.DotNetConfig.Test.get -> Buildvana.Runtime.DotNetInvocationConfig?
 Buildvana.Runtime.DotNetConfig.Test.init -> void
+Buildvana.Runtime.DotNetConfigExtensions
+Buildvana.Runtime.DotNetConfigExtensions.extension(Buildvana.Runtime.DotNetConfig?)
+Buildvana.Runtime.DotNetConfigExtensions.extension(Buildvana.Runtime.DotNetConfig?).EffectiveConfiguration.get -> string!
 Buildvana.Runtime.DotNetInvocationConfig
 Buildvana.Runtime.DotNetInvocationConfig.<Clone>$() -> Buildvana.Runtime.DotNetInvocationConfig!
 Buildvana.Runtime.DotNetInvocationConfig.Args.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -172,9 +175,14 @@ Buildvana.Runtime.VersioningConfig.Equals(Buildvana.Runtime.VersioningConfig? ot
 Buildvana.Runtime.VersioningConfig.PrereleaseTag.get -> string?
 Buildvana.Runtime.VersioningConfig.PrereleaseTag.init -> void
 Buildvana.Runtime.VersioningConfig.VersioningConfig() -> void
+Buildvana.Runtime.VersioningConfigExtensions
+Buildvana.Runtime.VersioningConfigExtensions.extension(Buildvana.Runtime.VersioningConfig?)
+Buildvana.Runtime.VersioningConfigExtensions.extension(Buildvana.Runtime.VersioningConfig?).EffectiveAssemblyVersionPrecision.get -> Buildvana.Runtime.AssemblyVersionPrecision
 Buildvana.Runtime.WellKnownPaths
 abstract Buildvana.Runtime.HookArgs.<Clone>$() -> Buildvana.Runtime.HookArgs!
 const Buildvana.Runtime.BuildvanaConfig.JsonFileName = "buildvana.json" -> string!
+const Buildvana.Runtime.DotNetConfig.DefaultConfiguration = "Release" -> string!
+const Buildvana.Runtime.VersioningConfig.DefaultAssemblyVersionPrecision = Buildvana.Runtime.AssemblyVersionPrecision.Major -> Buildvana.Runtime.AssemblyVersionPrecision
 const Buildvana.Runtime.BuildvanaConfig.JsoncFileName = "buildvana.jsonc" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Context = "release" -> string!
 const Buildvana.Runtime.PostReleaseHookArgs.Event = "post-release" -> string!
@@ -233,6 +241,7 @@ override sealed Buildvana.Runtime.PostReleaseHookArgs.Equals(Buildvana.Runtime.H
 static Buildvana.Runtime.BuildvanaConfig.FindFile(string? homeDirectory = null) -> string?
 static Buildvana.Runtime.BuildvanaConfig.Load(string? homeDirectory = null) -> Buildvana.Runtime.BuildvanaConfig!
 static Buildvana.Runtime.BuildvanaConfig.LoadFile(string? path) -> Buildvana.Runtime.BuildvanaConfig!
+static Buildvana.Runtime.DotNetConfigExtensions.get_EffectiveConfiguration(Buildvana.Runtime.DotNetConfig? this) -> string!
 static Buildvana.Runtime.BuildvanaConfig.operator !=(Buildvana.Runtime.BuildvanaConfig? left, Buildvana.Runtime.BuildvanaConfig? right) -> bool
 static Buildvana.Runtime.BuildvanaConfig.operator ==(Buildvana.Runtime.BuildvanaConfig? left, Buildvana.Runtime.BuildvanaConfig? right) -> bool
 static Buildvana.Runtime.BuildvanaJsonContext.Default.get -> Buildvana.Runtime.BuildvanaJsonContext!
@@ -266,6 +275,7 @@ static Buildvana.Runtime.RuntimeInfo.operator !=(Buildvana.Runtime.RuntimeInfo? 
 static Buildvana.Runtime.RuntimeInfo.operator ==(Buildvana.Runtime.RuntimeInfo? left, Buildvana.Runtime.RuntimeInfo? right) -> bool
 static Buildvana.Runtime.VersioningConfig.operator !=(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
 static Buildvana.Runtime.VersioningConfig.operator ==(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
+static Buildvana.Runtime.VersioningConfigExtensions.get_EffectiveAssemblyVersionPrecision(Buildvana.Runtime.VersioningConfig? this) -> Buildvana.Runtime.AssemblyVersionPrecision
 static Buildvana.Runtime.WellKnownPaths.GetHookArgsFile(string! context, string! event) -> string!
 static Buildvana.Runtime.WellKnownPaths.GetHookFile(string! context, string! event) -> string!
 virtual Buildvana.Runtime.HookArgs.EqualityContract.get -> System.Type!
