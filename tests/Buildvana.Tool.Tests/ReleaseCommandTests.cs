@@ -217,10 +217,43 @@ internal sealed class ReleaseCommandTests
         await Assert.That(commit.CommitterEmail).IsEqualTo("bot@buildvana.invalid");
     }
 
+    // Whatever identity a CI checkout happens to leave in the repository's Git config, the bot identity
+    // outranks it: release commits are attributed deterministically, not to whatever the runner left behind.
     [Test]
-    public async Task Release_KeepsConfiguredIdentity_WhenTheRepositoryHasOne()
+    public async Task Release_UsesCIBotIdentity_EvenWhenTheRepositoryHasOne()
     {
         using var harness = new ReleaseHarness();
+        harness.Repo.SetCommitterIdentity("Local Committer", "local@example.invalid");
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        var commit = harness.Repo.GetCommits(1)[0];
+        await Assert.That(commit.CommitterName).IsEqualTo("Buildvana Test Bot");
+        await Assert.That(commit.CommitterEmail).IsEqualTo("bot@buildvana.invalid");
+    }
+
+    [Test]
+    public async Task Release_UsesConfiguredIdentity_OverBotAndRepositoryIdentities()
+    {
+        using var harness = new ReleaseHarness(new()
+        {
+            ConfiguredIdentity = new("Configured Bot", "configured@example.invalid"),
+        });
+        harness.Repo.SetCommitterIdentity("Local Committer", "local@example.invalid");
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        var commit = harness.Repo.GetCommits(1)[0];
+        await Assert.That(commit.CommitterName).IsEqualTo("Configured Bot");
+        await Assert.That(commit.CommitterEmail).IsEqualTo("configured@example.invalid");
+    }
+
+    // The repository's own Git config is the last rung of the identity chain: it carries the release only
+    // when neither a configured identity nor a CI bot identity exists.
+    [Test]
+    public async Task Release_UsesRepositoryIdentity_WhenNothingOutranksIt()
+    {
+        using var harness = new ReleaseHarness(new() { WithBotIdentity = false });
         harness.Repo.SetCommitterIdentity("Local Committer", "local@example.invalid");
 
         _ = await harness.RunAsync().ConfigureAwait(false);

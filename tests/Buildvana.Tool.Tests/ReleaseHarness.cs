@@ -392,12 +392,21 @@ internal sealed class ReleaseHarness : IDisposable
             ["source"] = "https://nuget.example.invalid/v3/index.json",
             ["apiKeyEnv"] = ApiKeyEnvVar,
         };
-        return new JsonObject
+        var root = new JsonObject
         {
             ["release"] = release,
             ["versioning"] = new JsonObject { ["prereleaseTag"] = "preview" },
             ["dotnet"] = new JsonObject { ["configuration"] = Configuration },
             ["nuget"] = new JsonObject { ["feeds"] = new JsonObject { ["release"] = feed } },
-        }.ToJsonString(IndentedJson);
+        };
+        if (_options.ConfiguredIdentity is { } identity)
+        {
+            root["git"] = new JsonObject
+            {
+                ["identity"] = new JsonObject { ["name"] = identity.Name, ["email"] = identity.Email },
+            };
+        }
+
+        return root.ToJsonString(IndentedJson);
     }
 }
