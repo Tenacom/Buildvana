@@ -26,6 +26,7 @@ internal sealed class ReleaseCommandReportingTests
 
         await Assert.That(exitCode).IsEqualTo(0);
         await Assert.That(harness.Notices).Contains($"Releasing version {harness.ComputeVersion()}.");
+        await Assert.That(harness.Notices.Count(x => x.StartsWith("Releasing version", StringComparison.Ordinal))).IsEqualTo(1);
     }
 
     // Asking for a prerelease line that is already a prerelease line changes nothing, which is a decision
