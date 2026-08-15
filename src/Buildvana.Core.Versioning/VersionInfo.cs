@@ -33,7 +33,7 @@ public sealed class VersionInfo
     /// <param name="prereleaseTag">The prerelease tag to apply, or <see langword="null"/> if the version
     /// is not a prerelease.</param>
     /// <param name="assemblyVersionPrecision">The precision to compute <see cref="AssemblyVersion"/> at.</param>
-    public VersionInfo(
+    internal VersionInfo(
         VersionSpec spec,
         int height,
         string? commitId,
