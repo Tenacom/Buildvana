@@ -34,6 +34,20 @@ internal sealed class ComputeVersionTests
         await Assert.That(task.Height).IsEqualTo(1);
     }
 
+    // A repository with no commits has no HEAD to name, and MSBuild properties have no null: the task hands
+    // the build an empty string rather than letting the missing commit ID through as one.
+    [Test]
+    public async Task Execute_WithoutCommits_ReportsAnEmptyCommitId()
+    {
+        using var repo = new TempGitRepo();
+        repo.WriteFile("VERSION", "1.2\n");
+        var task = RunTask(repo);
+        await Assert.That(task.CommitId).IsEqualTo(string.Empty);
+        await Assert.That(task.Height).IsEqualTo(0);
+        await Assert.That(task.SemVer).IsEqualTo("1.2.0");
+        await Assert.That(task.InformationalVersion).IsEqualTo("1.2.0");
+    }
+
     [Test]
     public async Task Execute_WithConfigurationFile_HonorsVersioningSettings()
     {
