@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure.Execution;
 
@@ -11,11 +12,11 @@ namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("restore", consumesAllArguments: true, usesSdk: true)]
 [Description("Clean and restore dependencies.")]
-internal sealed class RestoreCommand(BuildPipeline pipeline) : IBvCommand
+internal sealed class RestoreCommand(BuildPipeline pipeline, BuildvanaConfig config) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await pipeline.RunThroughAsync(BuildStep.Restore, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await pipeline.RunThroughAsync(BuildStep.Restore, config.DotNet.Configuration, cancellationToken).ConfigureAwait(false);
         return 0;
     }
 }

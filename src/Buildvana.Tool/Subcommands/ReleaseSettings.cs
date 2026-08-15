@@ -6,30 +6,21 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
-using Buildvana.Runtime;
 using Buildvana.Tool.CommandLine;
-using Buildvana.Tool.Services;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
-/// Options for the <c>release</c> command. The flag values are parsed from the command-line option tokens by
-/// <see cref="Parse"/>; each <c>Resolve*</c> method then merges the flag with the <c>release</c> configuration
-/// section and a hardcoded default (flag → config → default).
-/// Decorated with <see cref="BvOptionAttribute"/>/<see cref="DescriptionAttribute"/> for the help renderer.
+/// Options for the <c>release</c> command, parsed from the command-line option tokens by <see cref="Parse"/>.
+/// Decorated with <see cref="BvOptionAttribute"/>/<see cref="DescriptionAttribute"/> for the help renderer and
+/// the argument validator. The configuration-overriding flags (<c>--configuration</c>, <c>--check-public-api</c>,
+/// <c>--dogfood</c>) reach resolution through <c>CommandLineOverridesParser</c> and the configuration factory,
+/// so commands read their effective values from the resolved <c>BuildvanaConfig</c>; only <see cref="Bump"/>,
+/// which is not configuration, is consumed from here.
 /// </summary>
 internal sealed class ReleaseSettings
 {
-    private readonly ReleaseConfig? _config;
-    private readonly DotNetSettings _dotNetSettings;
-
-    private ReleaseSettings(ReleaseConfig? config, DotNetSettings dotNetSettings)
-    {
-        _config = config;
-        _dotNetSettings = dotNetSettings;
-    }
-
     /// <summary>
     /// Gets the MSBuild configuration to build.
     /// </summary>
@@ -66,25 +57,17 @@ internal sealed class ReleaseSettings
     public bool? Dogfood { get; init; }
 
     /// <summary>
-    /// Parses the command's option tokens into a <see cref="ReleaseSettings"/> and binds the configuration
-    /// sources consulted by the <c>Resolve*</c> methods. Unknown options have already been rejected by
-    /// <c>CommandArgumentValidator</c>, so every option token is one the command declares.
+    /// Parses the command's option tokens into a <see cref="ReleaseSettings"/>. Unknown options have already
+    /// been rejected by <c>CommandArgumentValidator</c>, so every option token is one the command declares.
     /// </summary>
     /// <param name="options">The option tokens for the <c>release</c> command (from <c>CommandParameters.Options</c>).</param>
-    /// <param name="config">The Buildvana configuration whose <c>release</c> section layers between the flags and the defaults.</param>
-    /// <param name="dotNetSettings">The resolved <c>dotnet</c> settings, providing the fallback build configuration.</param>
     /// <returns>The parsed settings.</returns>
     /// <exception cref="BuildFailedException">An option value is invalid.</exception>
-    public static ReleaseSettings Parse(
-        IReadOnlyList<string> options,
-        BuildvanaConfig config,
-        DotNetSettings dotNetSettings)
+    public static ReleaseSettings Parse(IReadOnlyList<string> options)
     {
         Guard.IsNotNull(options);
-        Guard.IsNotNull(config);
-        Guard.IsNotNull(dotNetSettings);
         var reader = new CliOptionReader(options);
-        return new ReleaseSettings(config.Release, dotNetSettings)
+        return new ReleaseSettings
         {
             Configuration = reader.ReadValue("--configuration", "-c"),
             Bump = reader.ReadValue("--bump"),
@@ -109,41 +92,4 @@ internal sealed class ReleaseSettings
             ? value
             : throw new BuildFailedException($"Invalid value '{Bump}' for --bump. Valid values: none, unstable, stable, minor, major.");
     }
-
-    /// <summary>
-    /// Gets the resolved MSBuild configuration: <see cref="Configuration"/> (the <c>--configuration</c> flag) if set,
-    /// otherwise <c>release.configuration</c>, otherwise the configured <c>dotnet</c> default.
-    /// </summary>
-    public string ResolveConfiguration() => Configuration ?? _config?.Configuration ?? _dotNetSettings.Configuration;
-
-    /// <summary>
-    /// Returns <see cref="CheckPublicApi"/> if set, otherwise <c>release.checkPublicApi</c>, otherwise <see langword="true"/>.
-    /// </summary>
-    public bool ResolveCheckPublicApi() => CheckPublicApi ?? _config?.CheckPublicApi ?? true;
-
-    /// <summary>
-    /// Returns the configured changelog-update policy (<c>release.changelogUpdates</c>), or
-    /// <see cref="ChangelogUpdates.Stable"/> when unset.
-    /// </summary>
-    public ChangelogUpdates ResolveChangelogUpdates() => _config?.ChangelogUpdates ?? ChangelogUpdates.Stable;
-
-    /// <summary>
-    /// Returns the text substituted for an empty changelog (<c>release.emptyChangelog</c>), or <see langword="null"/>
-    /// when unset or all whitespace (in which case an empty changelog fails the release).
-    /// </summary>
-    /// <remarks>
-    /// <para>Text that is all whitespace would substitute nothing for nothing, so it counts as no substitute at all:
-    /// the release fails with the same actionable message as when <c>release.emptyChangelog</c> is missing, instead
-    /// of silently producing a release section with no body.</para>
-    /// </remarks>
-    public string? ResolveEmptyChangelog()
-    {
-        var configured = _config?.EmptyChangelog;
-        return string.IsNullOrWhiteSpace(configured) ? null : configured;
-    }
-
-    /// <summary>
-    /// Returns <see cref="Dogfood"/> if set, otherwise <c>release.dogfood</c>, otherwise <see langword="true"/>.
-    /// </summary>
-    public bool ResolveDogfood() => Dogfood ?? _config?.Dogfood ?? true;
 }

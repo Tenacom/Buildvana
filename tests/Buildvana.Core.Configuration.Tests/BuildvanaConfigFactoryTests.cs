@@ -127,7 +127,7 @@ internal sealed class BuildvanaConfigFactoryTests
     }
 
     [Test]
-    public async Task Create_DotNetInvocations_MapPerCommand()
+    public async Task Create_DotNetInvocations_FoldCommonTierIntoEachCommand()
     {
         var json = new BuildvanaJsonConfig
         {
@@ -140,12 +140,60 @@ internal sealed class BuildvanaConfigFactoryTests
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
-        await Assert.That(config.DotNet.All.Args[0]).IsEqualTo("-common");
+        // The common tier stays available as written...
+        await Assert.That(string.Join('|', config.DotNet.All.Args)).IsEqualTo("-common");
         await Assert.That(config.DotNet.All.Env["A"]).IsEqualTo("1");
-        await Assert.That(config.DotNet.Test.Args[0]).IsEqualTo("--coverage");
+
+        // ...and is already folded into every per-command invocation, a null env value staying a removal.
+        await Assert.That(string.Join('|', config.DotNet.Test.Args)).IsEqualTo("-common|--coverage");
+        await Assert.That(config.DotNet.Test.Env["A"]).IsEqualTo("1");
         await Assert.That(config.DotNet.Test.Env["B"]).IsNull();
-        await Assert.That(config.DotNet.Pack.Args.Count).IsEqualTo(0);
-        await Assert.That(config.DotNet.Pack.Env.Count).IsEqualTo(0);
+        await Assert.That(string.Join('|', config.DotNet.Pack.Args)).IsEqualTo("-common");
+        await Assert.That(config.DotNet.Pack.Env["A"]).IsEqualTo("1");
+    }
+
+    [Test]
+    public async Task Create_DotNetEnv_PerCommandOverridesCommonKey()
+    {
+        var json = new BuildvanaJsonConfig
+        {
+            DotNet = new()
+            {
+                All = new() { Env = new Dictionary<string, string?> { ["KEY"] = "from-all", ["ONLY_ALL"] = "kept" } },
+                Build = new() { Env = new Dictionary<string, string?> { ["KEY"] = "from-build" } },
+            },
+        };
+
+        var config = BuildvanaConfigFactory.Create(json, null);
+
+        await Assert.That(config.DotNet.Build.Env["KEY"]).IsEqualTo("from-build");
+        await Assert.That(config.DotNet.Build.Env["ONLY_ALL"]).IsEqualTo("kept");
+        await Assert.That(config.DotNet.All.Env["KEY"]).IsEqualTo("from-all");
+    }
+
+    // Forwarded arguments are a last tier: they must win over configured ones, so they cannot simply be
+    // part of dotnet.all, which composes first. They reach the pipeline commands only.
+    [Test]
+    public async Task Create_ForwardedArgs_AppendToPipelineCommandsOnly()
+    {
+        var json = new BuildvanaJsonConfig
+        {
+            DotNet = new()
+            {
+                All = new() { Args = ["-common"] },
+                Pack = new() { Args = ["--pack-arg"] },
+            },
+        };
+        var commandLine = new CommandLineOverrides { ForwardedArgs = ["-c", "Debug"] };
+
+        var config = BuildvanaConfigFactory.Create(json, commandLine);
+
+        await Assert.That(string.Join('|', config.DotNet.Restore.Args)).IsEqualTo("-common|-c|Debug");
+        await Assert.That(string.Join('|', config.DotNet.Build.Args)).IsEqualTo("-common|-c|Debug");
+        await Assert.That(string.Join('|', config.DotNet.Test.Args)).IsEqualTo("-common|-c|Debug");
+        await Assert.That(string.Join('|', config.DotNet.Pack.Args)).IsEqualTo("-common|--pack-arg|-c|Debug");
+        await Assert.That(string.Join('|', config.DotNet.NugetPush.Args)).IsEqualTo("-common");
+        await Assert.That(string.Join('|', config.DotNet.All.Args)).IsEqualTo("-common");
     }
 
     [Test]

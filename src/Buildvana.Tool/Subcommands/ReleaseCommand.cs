@@ -41,7 +41,8 @@ internal sealed class ReleaseCommand(
         var reporter = services.GetRequiredService<IReporter>();
         using var activity = reporter.BeginActivity("Release");
 
-        var configuration = settings.ResolveConfiguration();
+        var config = services.GetRequiredService<BuildvanaConfig>();
+        var configuration = config.Release.Configuration;
         var artifactsPath = Path.Combine(CommonPaths.AllArtifacts, configuration);
 
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
@@ -95,7 +96,7 @@ internal sealed class ReleaseCommand(
         // This implies more checks and possibly throws, so do it as early as possible.
         var versionSpecChange = version.ComputeVersionSpecChange(
             requestedChange: settings.ResolveBump(),
-            checkPublicApiFiles: settings.ResolveCheckPublicApi());
+            checkPublicApiFiles: config.Release.CheckPublicApi);
 
         // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
         await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
@@ -145,7 +146,7 @@ internal sealed class ReleaseCommand(
 
             // Update changelog according to the configured policy (none | stable | all).
             var changelogUpdated = false;
-            var changelogUpdates = settings.ResolveChangelogUpdates();
+            var changelogUpdates = config.Release.ChangelogUpdates;
             var shouldUpdateChangelog = changelogUpdates != ChangelogUpdates.None
                 && (changelogUpdates == ChangelogUpdates.All || !version.IsPrerelease);
             if (!changelog.Exists)
@@ -173,7 +174,7 @@ internal sealed class ReleaseCommand(
                     const string failureMessage = "Changelog check failed: the \"Unreleased changes\" section is empty "
                         + "or only contains sub-section headings, and no substitute text is configured (release.emptyChangelog).";
 
-                    emptyChangelogSubstitute = settings.ResolveEmptyChangelog();
+                    emptyChangelogSubstitute = config.Release.EmptyChangelog;
                     BuildFailedException.ThrowIf(emptyChangelogSubstitute is null, failureMessage);
 
                     reporter.Notice(
@@ -226,7 +227,7 @@ internal sealed class ReleaseCommand(
             // Discover the packages produced by the pack step; both the post-release hook args and
             // the self-reference update consume the map.
             var producedPackages = ArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
-            var dogfooding = settings.ResolveDogfood();
+            var dogfooding = config.Release.Dogfood;
 
             // Run the repo-owned post-release hook, if present. It runs whether or not dogfooding is
             // enabled; the files it changes are detected by snapshotting the working tree around it

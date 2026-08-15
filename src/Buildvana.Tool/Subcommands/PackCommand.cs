@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure.Execution;
 
@@ -11,11 +12,11 @@ namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("pack", consumesAllArguments: true, usesSdk: true)]
 [Description("Clean, restore, build all projects, run tests, and prepare build artifacts.")]
-internal sealed class PackCommand(BuildPipeline pipeline) : IBvCommand
+internal sealed class PackCommand(BuildPipeline pipeline, BuildvanaConfig config) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await pipeline.RunThroughAsync(BuildStep.Pack, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await pipeline.RunThroughAsync(BuildStep.Pack, config.DotNet.Configuration, cancellationToken).ConfigureAwait(false);
         return 0;
     }
 }

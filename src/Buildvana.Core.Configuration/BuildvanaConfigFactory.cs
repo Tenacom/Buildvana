@@ -1,6 +1,9 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Buildvana.Runtime;
 
 namespace Buildvana.Core.Configuration;
@@ -38,29 +41,57 @@ public static class BuildvanaConfigFactory
         };
     }
 
+    // Per-command invocations come out fully resolved: the common tier (dotnet.all) folds in first, then the
+    // command's own configuration, then — for the pipeline commands — the arguments forwarded after `--`,
+    // which must win over configured ones and therefore cannot simply be part of dotnet.all, which composes
+    // first. `dotnet nuget push` gets no forwarded arguments: `bv release` rejects the `--` separator, and
+    // the push's argument surface is not the pipeline's. The All member itself stays as written, for
+    // consumers that want the common tier alone.
     private static DotNetConfig ComposeDotNet(DotNetJsonConfig? json, CommandLineOverrides? commandLine)
     {
         var defaults = new DotNetConfig();
+        var all = ComposeInvocation(json?.All, common: null, forwardedArgs: null);
+        var forwardedArgs = commandLine?.ForwardedArgs;
         return new DotNetConfig
         {
             Configuration = commandLine?.Configuration ?? json?.Configuration ?? defaults.Configuration,
-            All = ComposeInvocation(json?.All),
-            Restore = ComposeInvocation(json?.Restore),
-            Build = ComposeInvocation(json?.Build),
-            Test = ComposeInvocation(json?.Test),
-            Pack = ComposeInvocation(json?.Pack),
-            NugetPush = ComposeInvocation(json?.NugetPush),
+            All = all,
+            Restore = ComposeInvocation(json?.Restore, all, forwardedArgs),
+            Build = ComposeInvocation(json?.Build, all, forwardedArgs),
+            Test = ComposeInvocation(json?.Test, all, forwardedArgs),
+            Pack = ComposeInvocation(json?.Pack, all, forwardedArgs),
+            NugetPush = ComposeInvocation(json?.NugetPush, all, forwardedArgs: null),
         };
     }
 
-    private static DotNetInvocationConfig ComposeInvocation(DotNetInvocationJsonConfig? json)
-    {
-        var defaults = new DotNetInvocationConfig();
-        return new DotNetInvocationConfig
+    private static DotNetInvocationConfig ComposeInvocation(
+        DotNetInvocationJsonConfig? json,
+        DotNetInvocationConfig? common,
+        IReadOnlyList<string>? forwardedArgs)
+        => new()
         {
-            Args = json?.Args ?? defaults.Args,
-            Env = json?.Env ?? defaults.Env,
+            Args = [.. common?.Args ?? [], .. json?.Args ?? [], .. forwardedArgs ?? []],
+            Env = ComposeEnv(common?.Env, json?.Env),
         };
+
+    // Later entries override earlier ones by key; a null value is preserved, meaning "remove the variable
+    // from the child environment".
+    private static Dictionary<string, string?> ComposeEnv(
+        IReadOnlyDictionary<string, string?>? common,
+        IReadOnlyDictionary<string, string?>? overlay)
+    {
+        var result = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var (key, value) in common ?? ReadOnlyDictionary<string, string?>.Empty)
+        {
+            result[key] = value;
+        }
+
+        foreach (var (key, value) in overlay ?? ReadOnlyDictionary<string, string?>.Empty)
+        {
+            result[key] = value;
+        }
+
+        return result;
     }
 
     // release.configuration falls back to the resolved dotnet.configuration, so a release builds with the

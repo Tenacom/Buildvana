@@ -8,7 +8,6 @@ using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Core.Versioning;
-using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure.Execution;
@@ -56,26 +55,21 @@ internal static class ServiceCollectionExtensions
         {
             _ = @this
                 .AddLazySupport()
-                .AddSingleton(static sp => ReleaseSettings.Parse(
-                    sp.GetRequiredService<CommandParameters>().Options,
-                    sp.GetRequiredService<BuildvanaConfig>(),
-                    sp.GetRequiredService<DotNetSettings>()))
+                .AddSingleton(static sp => ReleaseSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => VersionAdvanceSettings.Parse(
                     sp.GetRequiredService<CommandParameters>().Positionals,
-                    sp.GetRequiredService<CommandParameters>().Options,
-                    sp.GetRequiredService<BuildvanaConfig>()))
+                    sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
 
                 // Lazy by design: the provider finds, parses, and validates the file on first read of what is asked
-                // of it. A malformed buildvana.json stays inert until a consumer (e.g. DotNetSettings or
-                // ReleaseSettings) reads the configuration. Registering the resolved configuration separately keeps
-                // those consumers depending on the data alone, while the provider answers whoever needs the path.
+                // of it. A malformed buildvana.json stays inert until a consumer - typically the BuildvanaConfig
+                // registration below - reads the configuration. Registering the resolved configuration separately
+                // keeps consumers depending on the data alone, while the provider answers whoever needs the path.
                 .AddSingleton<BuildvanaJsonConfigProvider>()
                 .AddSingleton(static sp => CommandLineOverridesParser.Parse(sp.GetRequiredService<CommandParameters>()))
                 .AddSingleton(static sp => BuildvanaConfigFactory.Create(
                     sp.GetRequiredService<BuildvanaJsonConfigProvider>().Config,
                     sp.GetRequiredService<CommandLineOverrides>()))
-                .AddSingleton<DotNetSettings>()
                 .AddSingleton<IJsonHelper, JsonHelper>()
                 .AddSingleton<IProcessRunner, ProcessRunner>()
                 .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
