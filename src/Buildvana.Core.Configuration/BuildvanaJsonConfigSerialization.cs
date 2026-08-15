@@ -12,16 +12,16 @@ namespace Buildvana.Core.Configuration;
 /// configuration files.
 /// </summary>
 /// <remarks>
-/// <para>Deserialization goes through the source-generated <c>Buildvana.Runtime</c> serializer context instead;
+/// <para>Deserialization goes through the source-generated <see cref="BuildvanaJsonConfigContext"/> instead;
 /// these reflection-based options exist because <see cref="System.Text.Json.Schema.JsonSchemaExporter"/> needs a
 /// reflection-based resolver. They must mirror the context's options, so the committed schema always reflects
 /// exactly what the deserializer accepts.</para>
 /// </remarks>
-public static class BuildvanaConfigSerialization
+public static class BuildvanaJsonConfigSerialization
 {
     /// <summary>
     /// Gets the <see cref="JsonSerializerOptions"/> used to generate schemas for
-    /// <see cref="Buildvana.Runtime.BuildvanaConfig"/>.
+    /// <see cref="BuildvanaJsonConfig"/>.
     /// </summary>
     public static JsonSerializerOptions Options { get; } = CreateOptions();
 

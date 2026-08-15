@@ -3,31 +3,27 @@
 
 using System.Text.Json;
 using Buildvana.Core.JsonSchema;
-using Buildvana.Runtime;
 
 namespace Buildvana.Core.Configuration;
 
 /// <summary>
-/// Generates the JSON schema describing the Buildvana configuration file from the <see cref="BuildvanaConfig"/> model.
+/// Generates the JSON schema describing the Buildvana configuration file from the
+/// <see cref="BuildvanaJsonConfig"/> wire model.
 /// </summary>
-public static class BuildvanaConfigSchema
+public static class BuildvanaJsonConfigSchema
 {
-    // The model, being packaged, cannot carry [JsonSchemaTitle] (see the comment on BuildvanaConfig),
-    // so the title is supplied here.
-    private const string Title = "Buildvana configuration";
-
     /// <summary>
-    /// Generates the JSON schema for <see cref="BuildvanaConfig"/>.
+    /// Generates the JSON schema for <see cref="BuildvanaJsonConfig"/>.
     /// </summary>
     /// <returns>The schema as an indented JSON string, using LF line endings and a trailing newline.</returns>
     /// <remarks>
-    /// <para>The schema is shaped from attributes on the model (<c>[Description]</c> and the
-    /// <c>System.Text.Json</c> attributes) by <see cref="JsonSchemaGenerator"/>, driven by
-    /// <see cref="BuildvanaConfigSerialization.Options"/>.</para>
+    /// <para>The schema is shaped from attributes on the wire model (<c>[Description]</c>,
+    /// <c>[JsonSchemaTitle]</c>, and the <c>System.Text.Json</c> attributes) by
+    /// <see cref="JsonSchemaGenerator"/>, driven by <see cref="BuildvanaJsonConfigSerialization.Options"/>.</para>
     /// </remarks>
     public static string Generate()
     {
-        var schema = JsonSchemaGenerator.Generate<BuildvanaConfig>(BuildvanaConfigSerialization.Options, Title);
+        var schema = JsonSchemaGenerator.Generate<BuildvanaJsonConfig>(BuildvanaJsonConfigSerialization.Options);
         var json = schema.ToJsonString(new JsonSerializerOptions
         {
             WriteIndented = true,

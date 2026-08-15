@@ -3,7 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using Buildvana.Runtime;
+using Buildvana.Core.Configuration;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.HomeDirectory;
@@ -18,7 +18,7 @@ namespace Buildvana.Core.HomeDirectory;
 /// <para>The search stops at the first directory (the start directory included) that contains any marker;
 /// every marker sits in the directory it marks, so nothing under a subdirectory — the <c>.buildvana</c>
 /// directory included — takes part in discovery. Whether a configuration file is actually present at the
-/// discovered directory — and which one — is determined separately by <c>BuildvanaConfigProvider</c>.</para>
+/// discovered directory — and which one — is determined separately by <c>BuildvanaJsonConfigProvider</c>.</para>
 /// <para>This algorithm mirrors the discovery performed by the Buildvana SDK in
 /// <c>src/Buildvana.Sdk/Sdk/Sdk.props</c>. Any change made here MUST be applied to that file as well.</para>
 /// </remarks>
@@ -55,8 +55,8 @@ public static class HomeDirectoryDiscovery
 
     private static bool DirectoryContainsMarker(string directory)
     {
-        var hasConfigFile = File.Exists(Path.Combine(directory, BuildvanaConfig.JsonFileName))
-            || File.Exists(Path.Combine(directory, BuildvanaConfig.JsoncFileName));
+        var hasConfigFile = File.Exists(Path.Combine(directory, BuildvanaJsonConfig.JsonFileName))
+            || File.Exists(Path.Combine(directory, BuildvanaJsonConfig.JsoncFileName));
 
         // A regular repository has a .git directory containing HEAD; a worktree or submodule has a .git file.
         var hasGitMarker = File.Exists(Path.Combine(directory, ".git", "HEAD"))

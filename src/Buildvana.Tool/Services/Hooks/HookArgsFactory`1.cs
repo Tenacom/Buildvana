@@ -21,7 +21,7 @@ namespace Buildvana.Tool.Services.Hooks;
 /// <typeparam name="TArgs">The type of the hook args the factory creates.</typeparam>
 /// <param name="home">The home directory provider.</param>
 /// <param name="config">The provider of the configuration file this run reads.</param>
-internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home, BuildvanaConfigProvider config)
+internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home, BuildvanaJsonConfigProvider config)
     where TArgs : HookArgs, IHookEvent
 {
     /// <summary>

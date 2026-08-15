@@ -1,62 +1,52 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.ComponentModel;
 using JetBrains.Annotations;
 
 namespace Buildvana.Runtime;
 
 /// <summary>
-/// Configures invocations of the <c>dotnet</c> CLI.
+/// The resolved configuration for invocations of the <c>dotnet</c> CLI.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record DotNetConfig
 {
-    /// <summary>
-    /// The build configuration used when <see cref="Configuration"/> is not set. Read it through
-    /// <c>EffectiveConfiguration</c>, which applies it whether the setting or the whole section is absent.
-    /// </summary>
-    public const string DefaultConfiguration = "Release";
+    // The single source of the built-in build configuration: ReleaseConfig.Configuration initializes from it
+    // too, so the two defaults cannot drift apart.
+    internal const string DefaultConfiguration = "Release";
 
     /// <summary>
     /// Gets the default build configuration passed to <c>dotnet</c>.
     /// </summary>
-    [Description("Default build configuration (e.g. Debug, Release).")]
-    public string? Configuration { get; init; }
+    public string Configuration { get; init; } = DefaultConfiguration;
 
     /// <summary>
-    /// Gets invocation configuration common to all <c>dotnet</c> commands.
+    /// Gets the resolved invocation configuration common to all <c>dotnet</c> commands.
     /// </summary>
-    [Description("Invocation configuration common to all `dotnet` commands.")]
-    public DotNetInvocationConfig? All { get; init; }
+    public DotNetInvocationConfig All { get; init; } = new();
 
     /// <summary>
-    /// Gets invocation configuration for the <c>dotnet restore</c> command.
+    /// Gets the resolved invocation configuration for the <c>dotnet restore</c> command.
     /// </summary>
-    [Description("Invocation configuration for the `dotnet restore` command.")]
-    public DotNetInvocationConfig? Restore { get; init; }
+    public DotNetInvocationConfig Restore { get; init; } = new();
 
     /// <summary>
-    /// Gets invocation configuration for the <c>dotnet build</c> command.
+    /// Gets the resolved invocation configuration for the <c>dotnet build</c> command.
     /// </summary>
-    [Description("Invocation configuration for the `dotnet build` command.")]
-    public DotNetInvocationConfig? Build { get; init; }
+    public DotNetInvocationConfig Build { get; init; } = new();
 
     /// <summary>
-    /// Gets invocation configuration for the <c>dotnet test</c> command.
+    /// Gets the resolved invocation configuration for the <c>dotnet test</c> command.
     /// </summary>
-    [Description("Invocation configuration for the `dotnet test` command.")]
-    public DotNetInvocationConfig? Test { get; init; }
+    public DotNetInvocationConfig Test { get; init; } = new();
 
     /// <summary>
-    /// Gets invocation configuration for the <c>dotnet pack</c> command.
+    /// Gets the resolved invocation configuration for the <c>dotnet pack</c> command.
     /// </summary>
-    [Description("Invocation configuration for the `dotnet pack` command.")]
-    public DotNetInvocationConfig? Pack { get; init; }
+    public DotNetInvocationConfig Pack { get; init; } = new();
 
     /// <summary>
-    /// Gets invocation configuration for the <c>dotnet nuget push</c> command.
+    /// Gets the resolved invocation configuration for the <c>dotnet nuget push</c> command.
     /// </summary>
-    [Description("Invocation configuration for the `dotnet nuget push` command.")]
-    public DotNetInvocationConfig? NugetPush { get; init; }
+    public DotNetInvocationConfig NugetPush { get; init; } = new();
 }

@@ -9,7 +9,6 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Diagnostics;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Versioning;
-using Buildvana.Runtime;
 
 namespace Buildvana.Sdk.Tasks;
 
@@ -47,7 +46,7 @@ partial class ComputeVersion
         var home = new FixedHomeDirectoryProvider(homeDirectory);
         var calculator = new VersionCalculator(
             home,
-            new VersioningSettings(new BuildvanaConfigProvider(home).Config),
+            new VersioningSettings(BuildvanaConfigFactory.Create(new BuildvanaJsonConfigProvider(home).Config, null)),
             new GitHeightCalculator(VersionFile.FileName));
         var version = calculator.Calculate();
         var publicity = version.IsPublicRelease ? "public release" : "not a public release";
@@ -78,8 +77,8 @@ partial class ComputeVersion
             [
                 repositoryStateToken,
                 File.ReadAllText(versionPath),
-                ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaConfig.JsonFileName)),
-                ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaConfig.JsoncFileName)),
+                ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaJsonConfig.JsonFileName)),
+                ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaJsonConfig.JsoncFileName)),
             ];
             return string.Join('\0', parts);
         }

@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using Buildvana.Core.JsonSchema;
+using Buildvana.Runtime;
 using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
@@ -20,6 +21,18 @@ namespace Buildvana.Core.Configuration;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record BuildvanaJsonConfig
 {
+    /// <summary>
+    /// The name of the configuration file in plain JSON form. The file lives in the home directory itself:
+    /// a configuration file elsewhere, <see cref="WellKnownPaths.BuildvanaDirectory"/> included, is not one.
+    /// </summary>
+    public const string JsonFileName = "buildvana.json";
+
+    /// <summary>
+    /// The name of the configuration file in JSON-with-comments form, subject to the same
+    /// single candidate location as <see cref="JsonFileName"/>.
+    /// </summary>
+    public const string JsoncFileName = "buildvana.jsonc";
+
     /// <summary>Gets the URI of the JSON schema describing this file.</summary>
     /// <remarks>
     /// <para>This member exists only so that a <c>$schema</c> reference does not trip unmapped-member rejection;

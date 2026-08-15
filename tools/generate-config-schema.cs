@@ -54,7 +54,7 @@ foreach (var arg in args)
 
 var fullPath = Path.GetFullPath(path ?? DefaultSchemaPath);
 
-var generated = BuildvanaConfigSchema.Generate();
+var generated = BuildvanaJsonConfigSchema.Generate();
 
 if (update)
 {

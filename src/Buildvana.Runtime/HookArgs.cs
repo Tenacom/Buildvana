@@ -33,20 +33,6 @@ public abstract record HookArgs
     public required RuntimeInfo RuntimeInfo { get; init; }
 
     /// <summary>
-    /// Loads the Buildvana configuration from the file <c>bv</c> read for this run
-    /// (<see cref="RuntimeInfo.ConfigFile"/>).
-    /// </summary>
-    /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> when the repository has
-    /// no configuration file.</returns>
-    /// <exception cref="BuildvanaRuntimeException">The file cannot be read, or its contents are invalid.</exception>
-    /// <remarks>
-    /// <para>Which file to read comes from the args, so a hook never has to search for one; what the file says
-    /// is read from disk at the moment of the call, so a hook sees the file as it stands even after an earlier
-    /// hook in the same run has rewritten it.</para>
-    /// </remarks>
-    public BuildvanaConfig LoadConfig() => BuildvanaConfig.LoadFile(RuntimeInfo.ConfigFile);
-
-    /// <summary>
     /// Loads the args of the current run of the hook identified by <typeparamref name="TArgs"/>
     /// from the hook's args file.
     /// </summary>

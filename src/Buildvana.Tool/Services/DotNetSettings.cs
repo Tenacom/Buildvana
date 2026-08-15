@@ -25,14 +25,13 @@ internal sealed class DotNetSettings
     public DotNetSettings(BuildvanaConfig config)
     {
         Guard.IsNotNull(config);
-        Configuration = config.DotNet.EffectiveConfiguration;
+        Configuration = config.DotNet.Configuration;
         Invocations = new DotNetInvocationsSettings(config.DotNet);
         _nuget = config.NuGet;
     }
 
     /// <summary>
-    /// Gets the default build configuration (<c>dotnet.configuration</c>, or
-    /// <see cref="DotNetConfig.DefaultConfiguration"/> when unset).
+    /// Gets the resolved default build configuration (<c>dotnet.configuration</c>).
     /// </summary>
     public string Configuration { get; }
 
