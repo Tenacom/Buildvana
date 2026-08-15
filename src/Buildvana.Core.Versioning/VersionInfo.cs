@@ -50,7 +50,7 @@ public sealed class VersionInfo
         SemVer = prereleaseTag is null ? SimpleVersion : $"{SimpleVersion}-{prereleaseTag}";
         AssemblyVersion = ComputeAssemblyVersion(spec, height, assemblyVersionPrecision);
         FileVersion = FormattableString.Invariant($"{SimpleVersion}.0");
-        InformationalVersion = ComputeInformationalVersion(SemVer, spec.Prerelease, isPublicRelease, commitId);
+        InformationalVersion = ComputeInformationalVersion(SemVer, prereleaseTag is not null, isPublicRelease, commitId);
     }
 
     /// <summary>
@@ -116,14 +116,22 @@ public sealed class VersionInfo
         return FormattableString.Invariant($"{spec.Major}.{minor}.{build}.0");
     }
 
-    private static string ComputeInformationalVersion(string semVer, bool prerelease, bool isPublicRelease, string? commitId)
+    // Which separator to use is decided by the string being appended to, not by the version spec: a semantic
+    // version that already carries a prerelease part takes the commit ID as a further dot-separated identifier,
+    // while one that carries none takes it as the prerelease part itself. The prerelease tag is what puts that
+    // part there, so reading the answer off the tag keeps the two in step whatever else it is paired with.
+    private static string ComputeInformationalVersion(
+        string semVer,
+        bool hasPrereleaseTag,
+        bool isPublicRelease,
+        string? commitId)
     {
         if (isPublicRelease || commitId is null)
         {
             return semVer;
         }
 
-        var separator = prerelease ? '.' : '-';
+        var separator = hasPrereleaseTag ? '.' : '-';
         return FormattableString.Invariant($"{semVer}{separator}g{commitId[..ShortCommitIdLength]}");
     }
 }
