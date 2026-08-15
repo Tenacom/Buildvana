@@ -1,6 +1,8 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Tool.Services.Git;
+
 /// <summary>
 /// The knobs of a <see cref="ReleaseHarness"/>: what the repository contains and how the configuration file,
 /// the server adapter, and the hook are set up. Every one of them has the value a plain prerelease release
@@ -67,6 +69,12 @@ internal sealed record ReleaseHarnessOptions
     /// Gets a value indicating whether the build is a cloud build.
     /// </summary>
     public bool CloudBuild { get; init; } = true;
+
+    /// <summary>
+    /// Gets the identity stated as <c>git.identity</c> in the configuration file, or <see langword="null"/>
+    /// to leave the section out.
+    /// </summary>
+    public GitIdentity? ConfiguredIdentity { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the server adapter provides a CI bot identity.
