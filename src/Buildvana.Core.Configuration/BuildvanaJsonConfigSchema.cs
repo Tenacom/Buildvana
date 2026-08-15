@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using Buildvana.Core.JsonSchema;
+using Buildvana.Runtime;
 
 namespace Buildvana.Core.Configuration;
 
@@ -20,10 +21,15 @@ public static class BuildvanaJsonConfigSchema
     /// <para>The schema is shaped from attributes on the wire model (<c>[Description]</c>,
     /// <c>[JsonSchemaTitle]</c>, and the <c>System.Text.Json</c> attributes) by
     /// <see cref="JsonSchemaGenerator"/>, driven by <see cref="BuildvanaJsonConfigSerialization.Options"/>.</para>
+    /// <para>Default annotations come from a fresh <see cref="BuildvanaConfig"/>: every built-in default lives
+    /// on the domain model as a property initializer, so the schema documents exactly what an omitted setting
+    /// resolves to.</para>
     /// </remarks>
     public static string Generate()
     {
-        var schema = JsonSchemaGenerator.Generate<BuildvanaJsonConfig>(BuildvanaJsonConfigSerialization.Options);
+        var schema = JsonSchemaGenerator.Generate<BuildvanaJsonConfig>(
+            BuildvanaJsonConfigSerialization.Options,
+            defaults: new BuildvanaConfig());
         var json = schema.ToJsonString(new JsonSerializerOptions
         {
             WriteIndented = true,

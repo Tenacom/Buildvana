@@ -13,7 +13,9 @@ public sealed record NuGetFeedsConfig
 {
     /// <summary>
     /// Gets the feed that prerelease versions are pushed to, or <see langword="null"/> when no feed is
-    /// configured for them.
+    /// configured for prereleases at all: a configuration that states only a release feed resolves this
+    /// to that feed, the fallback being applied when the configuration is composed rather than left to
+    /// consumers.
     /// </summary>
     public NuGetFeedConfig? Prerelease { get; init; }
 

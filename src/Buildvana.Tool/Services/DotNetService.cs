@@ -11,7 +11,6 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
 using Buildvana.Core.Process;
 using Buildvana.Runtime;
-using Buildvana.Tool.Configuration;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Services.ServerAdapters;
@@ -230,10 +229,20 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             return;
         }
 
-        var target = ResolvePushTarget(_config.NuGet.Feeds, _version.IsPrerelease);
+        var feed = ResolvePushFeed(_config.NuGet.Feeds, _version.IsPrerelease);
+        string apiKey;
+        try
+        {
+            apiKey = feed.GetApiKey();
+        }
+        catch (BuildvanaRuntimeException e)
+        {
+            throw new BuildFailedException(e.Message, e);
+        }
+
         foreach (var path in packages)
         {
-            _reporter.Detail($"Pushing {path} to {target.Source}...");
+            _reporter.Detail($"Pushing {path} to {feed.Source}...");
             string[] args = [
 
                 // `dotnet nuget` has no verbosity option; use the global diagnostics flag when diagnostic output is enabled.
@@ -242,9 +251,9 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
                 "push",
                 path,
                 "--source",
-                target.Source,
+                feed.Source,
                 "--api-key",
-                target.ApiKey,
+                apiKey,
                 "--skip-duplicate",
             ];
             await RunDotNetAsync(
@@ -256,7 +265,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
-        _reporter.Notice($"Pushed {packages.Length} packages to {target.Source}.");
+        _reporter.Notice($"Pushed {packages.Length} packages to {feed.Source}.");
     }
 
     /// <inheritdoc/>
@@ -281,45 +290,21 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     }
 
     /// <summary>
-    /// Resolves the NuGet push target from the resolved <c>nuget.feeds</c> section: the <c>prerelease</c>
-    /// channel for prerelease versions (falling back to <c>release</c> when absent), or the <c>release</c>
-    /// channel otherwise. The API key is read from the environment variable named by the feed's
-    /// <c>apiKeyEnv</c> at the moment of resolution.
+    /// Picks the NuGet push feed for a version from the resolved <c>nuget.feeds</c> section: the
+    /// <c>prerelease</c> channel for prerelease versions, the <c>release</c> channel otherwise. The
+    /// configuration factory has already folded a missing prerelease feed onto the release feed, so a
+    /// <see langword="null"/> channel means no feed is configured at all.
     /// </summary>
     /// <param name="feeds">The resolved push feeds.</param>
     /// <param name="isPrerelease">Whether the version being pushed is a prerelease.</param>
-    /// <returns>The resolved push target.</returns>
-    /// <exception cref="BuildFailedException">No applicable feed is configured, the feed lacks a <c>source</c> or
-    /// <c>apiKeyEnv</c>, or the environment variable named by <c>apiKeyEnv</c> is missing or empty.</exception>
-    internal static NuGetPushTarget ResolvePushTarget(NuGetFeedsConfig feeds, bool isPrerelease)
+    /// <returns>The feed to push to.</returns>
+    /// <exception cref="BuildFailedException">No applicable feed is configured.</exception>
+    internal static NuGetFeedConfig ResolvePushFeed(NuGetFeedsConfig feeds, bool isPrerelease)
     {
         Guard.IsNotNull(feeds);
-        string channel;
-        NuGetFeedConfig? feed;
-        if (isPrerelease && feeds.Prerelease is { } prerelease)
-        {
-            channel = "prerelease";
-            feed = prerelease;
-        }
-        else
-        {
-            channel = "release";
-            feed = feeds.Release;
-        }
-
-        if (feed is null)
-        {
-            throw new BuildFailedException(
+        return (isPrerelease ? feeds.Prerelease : feeds.Release)
+            ?? throw new BuildFailedException(
                 "No NuGet feed is configured. Set 'nuget.feeds.release' (and optionally 'nuget.feeds.prerelease') in the configuration file.");
-        }
-
-        var source = feed.Source is { Length: > 0 } s
-            ? s
-            : throw new BuildFailedException($"NuGet feed 'nuget.feeds.{channel}' has no source. Set its 'source' in the configuration file.");
-        var apiKeyEnv = feed.ApiKeyEnv is { Length: > 0 } k
-            ? k
-            : throw new BuildFailedException($"NuGet feed 'nuget.feeds.{channel}' has no apiKeyEnv. Set its 'apiKeyEnv' in the configuration file.");
-        return new NuGetPushTarget(source, EnvVarHelper.Require(apiKeyEnv));
     }
 
     /// <summary>

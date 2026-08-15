@@ -6,14 +6,15 @@ using JetBrains.Annotations;
 namespace Buildvana.Runtime;
 
 /// <summary>
-/// The resolved Git author/committer identity used by automated commits.
+/// The resolved Git author/committer identity used by automated commits. The configuration schema requires
+/// both members whenever <c>git.identity</c> is stated, so a resolved identity always carries them.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record GitIdentityConfig
 {
     /// <summary>Gets the display name of the Git identity.</summary>
-    public string? Name { get; init; }
+    public required string Name { get; init; }
 
     /// <summary>Gets the email address of the Git identity.</summary>
-    public string? Email { get; init; }
+    public required string Email { get; init; }
 }

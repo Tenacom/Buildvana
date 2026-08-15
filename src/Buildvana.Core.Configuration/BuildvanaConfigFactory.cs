@@ -127,23 +127,30 @@ public static class BuildvanaConfigFactory
         };
     }
 
+    // A prerelease with no feed of its own pushes to the release feed: the fallback is resolved here, so
+    // consumers read the channel they need instead of re-implementing the chain.
     private static NuGetConfig ComposeNuGet(NuGetJsonConfig? json)
-        => new()
+    {
+        var release = ComposeFeed(json?.Feeds?.Release);
+        return new NuGetConfig
         {
             Feeds = new NuGetFeedsConfig
             {
-                Prerelease = ComposeFeed(json?.Feeds?.Prerelease),
-                Release = ComposeFeed(json?.Feeds?.Release),
+                Prerelease = ComposeFeed(json?.Feeds?.Prerelease) ?? release,
+                Release = release,
             },
         };
+    }
 
+    // The schema requires source and apiKeyEnv whenever a feed is stated, so a wire feed that reaches the
+    // factory carries both.
     private static NuGetFeedConfig? ComposeFeed(NuGetFeedJsonConfig? json)
         => json is null
             ? null
             : new NuGetFeedConfig
             {
-                Source = json.Source,
-                ApiKeyEnv = json.ApiKeyEnv,
+                Source = json.Source!,
+                ApiKeyEnv = json.ApiKeyEnv!,
             };
 
     // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
@@ -156,11 +163,13 @@ public static class BuildvanaConfigFactory
         };
     }
 
+    // The schema requires name and email whenever git.identity is stated, so a wire identity that reaches
+    // the factory carries both.
     private static GitConfig ComposeGit(GitJsonConfig? json)
         => new()
         {
             Identity = json?.Identity is { } identity
-                ? new GitIdentityConfig { Name = identity.Name, Email = identity.Email }
+                ? new GitIdentityConfig { Name = identity.Name!, Email = identity.Email! }
                 : null,
         };
 }
