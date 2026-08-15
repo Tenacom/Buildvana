@@ -104,8 +104,9 @@ public sealed class VersionInfo
     public string FileVersion { get; }
 
     /// <summary>
-    /// Gets the informational version: <see cref="SemVer"/>, plus a <c>g</c>-prefixed short commit ID
-    /// appended to the prerelease part when the build is not a public release.
+    /// Gets the informational version: <see cref="SemVer"/>, plus a <c>g</c>-prefixed short commit ID that
+    /// joins the prerelease part, or becomes it when the version has none. The commit ID is left out of a
+    /// public release, and where the repository has no commit to name.
     /// </summary>
     public string InformationalVersion { get; }
 
