@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,17 +10,28 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Schema;
+using System.Text.Json.Serialization;
 
 namespace Buildvana.Core.JsonSchema;
 
 /// <summary>
 /// Generates a JSON Schema (draft 2020-12) document from a .NET type, shaping the output from attributes the
 /// model carries: <see cref="DescriptionAttribute"/>, <see cref="JsonNullableAttribute"/>,
-/// <see cref="JsonAllowedKeysAttribute"/>, and <see cref="JsonSchemaTitleAttribute"/>.
+/// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonSchemaNoDefaultAttribute"/>, and
+/// <see cref="JsonSchemaTitleAttribute"/>. C# <c>required</c> members surface as the schema's
+/// <c>required</c> keyword, courtesy of the underlying exporter.
 /// </summary>
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
 /// schema always describes exactly what the deserializer accepts.</para>
+/// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
+/// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
+/// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
+/// different model than the one described — a resolved domain model carrying the defaults of a wire model,
+/// say. Object-valued properties recurse; collections and null values state no default; and a property
+/// carrying <see cref="JsonSchemaNoDefaultAttribute"/> is skipped, for defaults too dynamic to state
+/// statically. The <c>default</c> keyword is an annotation for editors and documentation; validation never
+/// fills it in.</para>
 /// <para><see cref="System.Text.Json"/> marks every reference-type dictionary value and collection element
 /// nullable regardless of how the model annotates it, so the generator reconciles that against the declared
 /// nullability read from the owning property or field via <see cref="NullabilityInfoContext"/>. This requires
@@ -39,9 +51,12 @@ public static class JsonSchemaGenerator
     /// <param name="options">The serializer options that govern property naming, enum formatting, and so on.</param>
     /// <param name="title">The schema title; when omitted, the type's <see cref="JsonSchemaTitleAttribute"/>
     /// (if any) supplies it. Useful when the type cannot carry the attribute.</param>
+    /// <param name="defaults">An instance whose property values become <c>default</c> annotations in the
+    /// schema, or <see langword="null"/> to emit none. Matched to schema properties by JSON name, so it does
+    /// not have to be of the described type; see the remarks.</param>
     /// <returns>The schema as a <see cref="JsonNode"/>.</returns>
-    public static JsonNode Generate<T>(JsonSerializerOptions options, string? title = null)
-        => Generate(typeof(T), options, title);
+    public static JsonNode Generate<T>(JsonSerializerOptions options, string? title = null, object? defaults = null)
+        => Generate(typeof(T), options, title, defaults);
 
     /// <summary>
     /// Generates the JSON schema describing <paramref name="type"/>.
@@ -50,8 +65,11 @@ public static class JsonSchemaGenerator
     /// <param name="options">The serializer options that govern property naming, enum formatting, and so on.</param>
     /// <param name="title">The schema title; when omitted, the type's <see cref="JsonSchemaTitleAttribute"/>
     /// (if any) supplies it. Useful when the type cannot carry the attribute.</param>
+    /// <param name="defaults">An instance whose property values become <c>default</c> annotations in the
+    /// schema, or <see langword="null"/> to emit none. Matched to schema properties by JSON name, so it does
+    /// not have to be of the described type; see the remarks.</param>
     /// <returns>The schema as a <see cref="JsonNode"/>.</returns>
-    public static JsonNode Generate(Type type, JsonSerializerOptions options, string? title = null)
+    public static JsonNode Generate(Type type, JsonSerializerOptions options, string? title = null, object? defaults = null)
     {
         ArgumentNullException.ThrowIfNull(type);
         ArgumentNullException.ThrowIfNull(options);
@@ -73,6 +91,11 @@ public static class JsonSchemaGenerator
         if (title is not null)
         {
             root.Insert(1, "title", title);
+        }
+
+        if (defaults is not null)
+        {
+            ApplyDefaults(root, type, defaults, options);
         }
 
         return root;
@@ -285,5 +308,64 @@ public static class JsonSchemaGenerator
                 enumArray.RemoveAt(i);
             }
         }
+    }
+
+    // Annotates the schema's property subschemas with "default" keywords read from a defaults instance,
+    // matching members by resolved JSON name on both sides. A [JsonAllowedKeys] dictionary also carries
+    // "properties", but its keys name no member of the schema type, so its entries fall through harmlessly.
+    private static void ApplyDefaults(JsonObject schema, Type schemaType, object defaults, JsonSerializerOptions options)
+    {
+        if (schema["properties"] is not JsonObject properties)
+        {
+            return;
+        }
+
+        foreach (var (jsonName, propertyNode) in properties)
+        {
+            if (propertyNode is not JsonObject propertySchema)
+            {
+                continue;
+            }
+
+            var schemaProperty = FindPropertyByJsonName(schemaType, jsonName, options);
+            var noDefault = schemaProperty?.IsDefined(typeof(JsonSchemaNoDefaultAttribute), inherit: true) ?? false;
+            if (schemaProperty is null || noDefault)
+            {
+                continue;
+            }
+
+            var value = FindPropertyByJsonName(defaults.GetType(), jsonName, options)?.GetValue(defaults);
+            if (value is null)
+            {
+                continue;
+            }
+
+            if (IsLeafValue(value))
+            {
+                propertySchema["default"] = JsonSerializer.SerializeToNode(value, value.GetType(), options);
+            }
+            else if (value is not IEnumerable)
+            {
+                ApplyDefaults(propertySchema, schemaProperty.PropertyType, value, options);
+            }
+        }
+    }
+
+    private static PropertyInfo? FindPropertyByJsonName(Type type, string jsonName, JsonSerializerOptions options)
+        => type
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(property => GetJsonName(property, options) == jsonName);
+
+    private static string GetJsonName(PropertyInfo property, JsonSerializerOptions options)
+        => property.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
+            ?? options.PropertyNamingPolicy?.ConvertName(property.Name)
+            ?? property.Name;
+
+    // A leaf renders as a single JSON value: the "default" keyword states it outright. Everything else is
+    // either an object (recursed into) or a collection (no default).
+    private static bool IsLeafValue(object value)
+    {
+        var type = value.GetType();
+        return type == typeof(string) || type.IsPrimitive || type.IsEnum || type == typeof(decimal);
     }
 }
