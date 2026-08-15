@@ -8,7 +8,7 @@
 - [The `release/post-release` hook](#the-releasepost-release-hook)
 - [Writing a hook](#writing-a-hook)
 - [The hook args](#the-hook-args)
-- [Loading the repository configuration](#loading-the-repository-configuration)
+- [The repository configuration](#the-repository-configuration)
 - [Dependencies](#dependencies)
 - [The build environment](#the-build-environment)
 - [Cleaning hook build caches](#cleaning-hook-build-caches)
@@ -71,7 +71,7 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 
 ## The hook args
 
-`bv` serializes the args of the run to a per-hook file, `.buildvana-temp/hook-args/<context>/<event>.json` in the home directory — `.buildvana-temp/hook-args/release/post-release.json` for this hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at `Detail` verbosity. `PostReleaseHookArgs.Load()` reads and deserializes it; the members are:
+`bv` serializes the args of the run to a per-hook file, `.buildvana-temp/hook-args/<context>/<event>.json` in the home directory — `.buildvana-temp/hook-args/release/post-release.json` for this hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at trace level, visible at `diagnostic` verbosity. `PostReleaseHookArgs.Load()` reads and deserializes it; the members are:
 
 | Member                           | Type           | Content                                                                                                                                                                              |
 | -------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -80,7 +80,8 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 | `RuntimeInfo.HomeDirectory`      | string         | Absolute path of the home directory, without a trailing separator (also the hook's working directory).                                                                               |
 | `RuntimeInfo.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                                       |
 | `RuntimeInfo.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                                 |
-| `RuntimeInfo.ConfigFile`         | string or null | Absolute path of the configuration file this run read, or `null` when the repository has none. See [Loading the repository configuration](#loading-the-repository-configuration).    |
+| `RuntimeInfo.ConfigFile`         | string or null | Absolute path of the configuration file this run read, or `null` when the repository has none. See [The repository configuration](#the-repository-configuration).                    |
+| `RuntimeInfo.Configuration`      | object         | The resolved configuration of the run: every setting at its effective value. See [The repository configuration](#the-repository-configuration).                                      |
 | `Release.Version`                | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                                          |
 | `Release.SemVer`                 | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                                     |
 | `Release.PreviousVersion`        | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                                           |
@@ -93,18 +94,15 @@ In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `rele
 
 `.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the args files as untracked.
 
-## Loading the repository configuration
+## The repository configuration
 
-The args carry the facts of the run; for any standing repository setting, load the configuration instead. `hookArgs.LoadConfig()` reads the file `bv` itself read for this run, and returns the typed configuration (an empty instance when the repository has no configuration file):
+The args carry the facts of the run; for any standing repository setting, read the resolved configuration embedded in the args. `RuntimeInfo.Configuration` holds every setting at its effective value, with the configuration file, the command line, and the built-in defaults already composed (a repository with no configuration file resolves to all defaults), so a hook reads a setting by property access instead of spelling out its own fallback:
 
 ```csharp
-var config = hookArgs.LoadConfig();
-var branches = config.Release?.Branches;
+var branches = hookArgs.RuntimeInfo.Configuration.Release.Branches;
 ```
 
-Which file to read comes from the args, so a hook never searches for one; what it says is read at the moment of the call, so the hook sees the file as it stands even if an earlier hook in the same run rewrote it. The loader tolerates comments and trailing commas, and is strict about content — an unknown member fails the load — but it does not re-validate what `bv` has already validated with schema-based diagnostics before running any hook.
-
-`BuildvanaConfig.Load()`, which searches a directory for a configuration file, remains available for code that has no hook args to hand.
+The embedded configuration is a snapshot, taken when the args were written: a hook sees the effective settings of the very run its args belong to — replaying an args file by hand replays its settings too — not whatever the configuration file happens to say by the time the hook runs.
 
 A hook that works on the configuration file _itself_ — rewriting a value in it, say — needs the path rather than the settings, and must act on the file `bv` actually read. That path is in the args, as `RuntimeInfo.ConfigFile` (`null` when the repository has no configuration file); do not hardcode a file name, and do not search for one:
 

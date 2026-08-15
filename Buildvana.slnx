@@ -24,7 +24,7 @@
     <File Path="THIRD-PARTY-NOTICES" />
   </Folder>
   <Folder Name="/- Documentation/docs/">
-    <File Path="docs/ConfigurationFiles.md" />
+    <File Path="docs/SdkConfigurationFiles.md" />
     <File Path="docs/Diagnostics.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/modules/">

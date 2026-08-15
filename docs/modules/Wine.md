@@ -22,7 +22,7 @@ This module provides support for running Windows-only tools using [Wine](https:/
 
 ## Configuration
 
-The following property can be defined in a [configuration file](../ConfigurationFiles.md).
+The following property can be defined in a [configuration file](../SdkConfigurationFiles.md).
 
 ### `WineCommand` property
 

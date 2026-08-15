@@ -54,7 +54,7 @@ Read on non-Windows platforms only, where it is the POSIX way for a terminal to 
 
 ### Secret-carrying variables named by the configuration file
 
-`bv` never stores secrets; the [configuration file](ConfigurationFiles.md) names the environment variable that carries each one, and `bv` reads the value at the point of use:
+`bv` never stores secrets; the [configuration file](BuildvanaToolConfiguration.md) names the environment variable that carries each one, and `bv` reads the value at the point of use:
 
 - `github.tokenEnv` names the variable holding the GitHub token used by release operations; the default name is `GITHUB_TOKEN`.
 - `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys for the NuGet push feeds.

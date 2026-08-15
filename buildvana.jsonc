@@ -30,7 +30,8 @@
     // version section only when a stable version is released.
     "changelogUpdates": "stable",
 
-    // Text substituted when a release has no changelog entries. When omitted, an empty changelog fails the release.
+    // Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the
+    // release.
     // Not set on purpose: a stable release with nothing to say in the changelog should stop us, not ship quietly.
     // "emptyChangelog": "This release contains no user-visible changes.",
 
@@ -84,10 +85,10 @@
   // Configuration for NuGet package publishing.
   "nuget": {
 
-    // Push feeds, keyed by channel name (prerelease, release).
+    // Push feeds, one per channel.
     "feeds": {
 
-      // Prerelease versions are pushed here; omit this channel to send them to the release feed instead.
+      // Feed that prerelease versions are pushed to. When omitted, prerelease versions are pushed to the release feed.
       "prerelease": {
 
         // Source URL of the NuGet feed.
@@ -97,7 +98,7 @@
         "apiKeyEnv": "FEEDZ_IO_PRIVATE_TOKEN"
       },
 
-      // Stable versions are pushed here.
+      // Feed that stable versions are pushed to.
       "release": {
 
         // Source URL of the NuGet feed.
@@ -119,8 +120,7 @@
   }
 
   // Configuration for Git-related behavior.
-  // Not set: automated commits use the CI bot identity supplied by the server adapter. This section is validated
-  // and exposed as of Buildvana 2.0.255-preview, but not yet wired to release commits.
+  // Not set: automated commits use the CI bot identity supplied by the server adapter.
   // "git": {
   //
   //   // Git identity used by automated commits.
