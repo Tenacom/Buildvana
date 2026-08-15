@@ -119,6 +119,22 @@ internal sealed class ComputeVersionTests
         await Assert.That(second.Height).IsEqualTo(0);
     }
 
+    // The configuration edit stays uncommitted on purpose: the repository state is unchanged, so only the
+    // configuration file's own contents can be what invalidates the cached version.
+    [Test]
+    public async Task Execute_AfterConfigurationFileChange_RecomputesVersion()
+    {
+        using var repo = new TempGitRepo();
+        repo.WriteFile("VERSION", "1.2-x\n");
+        repo.WriteFile("buildvana.json", """{ "versioning": { "prereleaseTag": "alpha" } }""");
+        repo.CommitAll();
+        var first = RunTask(repo);
+        await Assert.That(first.SemVer).IsEqualTo("1.2.1-alpha");
+        repo.WriteFile("buildvana.json", """{ "versioning": { "prereleaseTag": "beta" } }""");
+        var second = RunTask(repo);
+        await Assert.That(second.SemVer).IsEqualTo("1.2.1-beta");
+    }
+
     private static ComputeVersion RunTask(TempGitRepo repo, RecordingBuildEngine? engine = null)
     {
         var task = new ComputeVersion
