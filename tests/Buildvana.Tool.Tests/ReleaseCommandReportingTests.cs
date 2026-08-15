@@ -15,6 +15,19 @@
 [NotInParallel]
 internal sealed class ReleaseCommandReportingTests
 {
+    // The version is the one thing a release run is about, and it is stated once, after everything that
+    // could still move it has happened: the version the line names is the version that gets published.
+    [Test]
+    public async Task Release_RecordsTheVersionItPublishes()
+    {
+        using var harness = new ReleaseHarness(new() { Dogfood = false });
+
+        var exitCode = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+        await Assert.That(harness.Notices).Contains($"Releasing version {harness.ComputeVersion()}.");
+    }
+
     // Asking for a prerelease line that is already a prerelease line changes nothing, which is a decision
     // worth recording: the release goes on, and the version file it leaves behind is the one it found.
     [Test]
