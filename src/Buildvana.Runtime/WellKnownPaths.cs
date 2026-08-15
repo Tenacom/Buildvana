@@ -18,7 +18,9 @@ public static class WellKnownPaths
 
     /// <summary>
     /// The path of the optional grouping directory for Buildvana files: the hooks directory
-    /// (<see cref="HooksDirectory"/>) always lives here, and the configuration file may.
+    /// (<see cref="HooksDirectory"/>) lives here. The configuration file does not — it sits in the home
+    /// directory itself, because a home marker recognized under this directory would make every hook,
+    /// each of which is a project living here, discover this directory as its own home.
     /// The scratch directory (<see cref="ScratchDirectory"/>) is deliberately a sibling, not a child:
     /// this directory is checked in, while the scratch directory is gitignored.
     /// </summary>
