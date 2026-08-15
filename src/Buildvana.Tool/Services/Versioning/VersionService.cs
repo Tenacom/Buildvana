@@ -13,19 +13,17 @@ using NuGet.Versioning;
 namespace Buildvana.Tool.Services.Versioning;
 
 /// <summary>
-/// Exposes the version being built, computed by <see cref="VersioningService"/>, alongside
+/// Exposes the version being built, computed by a <see cref="VersionCalculator"/>, alongside
 /// release-flow version policy: consistency checks against published versions and computation
 /// of the version specification change to apply upon release.
 /// </summary>
 internal sealed partial class VersionService
 {
     private readonly IReporter _reporter;
-    private readonly IHomeDirectoryProvider _home;
-    private readonly VersioningSettings _settings;
-    private readonly GitHeightCalculator _heightCalculator;
+    private readonly VersionCalculator _calculator;
     private readonly PublicApiFilesService _publicApiFiles;
 
-    private VersioningService _current;
+    private VersionInfo _current;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VersionService"/> class.
@@ -43,11 +41,9 @@ internal sealed partial class VersionService
         Guard.IsNotNull(git);
         Guard.IsNotNull(publicApiFiles);
         _reporter = reporter;
-        _home = home;
-        _settings = settings;
         _publicApiFiles = publicApiFiles;
-        _heightCalculator = new(VersionFile.FileName);
-        _current = new(reporter, home, settings, _heightCalculator);
+        _calculator = new(home, settings, new GitHeightCalculator(VersionFile.FileName));
+        _current = _calculator.Calculate();
         Current = SemanticVersion.Parse(_current.SemVer);
         (Latest, LatestStable) = git.GetLatestVersions();
     }
@@ -205,7 +201,7 @@ internal sealed partial class VersionService
     /// </summary>
     public void Update()
     {
-        _current = new(_reporter, _home, _settings, _heightCalculator);
+        _current = _calculator.Calculate();
         Current = SemanticVersion.Parse(_current.SemVer);
     }
 }

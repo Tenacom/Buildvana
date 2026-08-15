@@ -36,30 +36,28 @@ partial class ComputeVersion
         return computed;
     }
 
+    // The computed version is reported at detail level, so it stays out of the way at the verbosities a
+    // build is normally run at. There is nothing here for a user to act upon: the version reaches them
+    // through the artifacts it stamps, and this line is emitted once per cache miss, i.e. once per process
+    // taking part in the build - a count that reflects MSBuild's node topology rather than anything about
+    // the repository. What it is good for is following a build closely enough to see when, and how often,
+    // the version is actually computed.
     private static CachedVersion ComputeCore(string homeDirectory, IReporter reporter, string? fingerprint)
     {
         var home = new FixedHomeDirectoryProvider(homeDirectory);
-        var service = new VersioningService(
-            reporter,
+        var calculator = new VersionCalculator(
             home,
             new VersioningSettings(new BuildvanaConfigProvider(home).Config),
             new GitHeightCalculator(VersionFile.FileName));
-        return new CachedVersion(
-            fingerprint,
-            service.SimpleVersion,
-            service.SemVer,
-            service.AssemblyVersion,
-            service.FileVersion,
-            service.InformationalVersion,
-            service.IsPublicRelease,
-            service.IsPrerelease,
-            service.CommitId ?? string.Empty,
-            service.Height);
+        var version = calculator.Calculate();
+        var publicity = version.IsPublicRelease ? "public release" : "not a public release";
+        reporter.Detail(FormattableString.Invariant($"Computed version {version.SemVer} (height {version.Height}, {publicity})."));
+        return new CachedVersion(fingerprint, version);
     }
 
     // The fingerprint captures everything the computed version depends on: the working-tree VERSION file,
     // the configuration file, and the repository state (the height walk only sees commits reachable from HEAD).
-    // A null fingerprint disables caching, letting VersioningService surface the proper error.
+    // A null fingerprint disables caching, letting VersionCalculator surface the proper error.
     private static string? ComputeFingerprint(string homeDirectory)
     {
         try
