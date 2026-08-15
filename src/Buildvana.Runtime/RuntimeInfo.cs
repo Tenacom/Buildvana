@@ -7,8 +7,8 @@ namespace Buildvana.Runtime;
 
 /// <summary>
 /// Run-time information about the <c>bv</c> run a hook belongs to: the running version, how the run was
-/// launched, and the absolute paths of the run's well-known directories and configuration file.
-/// Shared by every hook's args.
+/// launched, the absolute paths of the run's well-known directories and configuration file, and the
+/// resolved configuration itself. Shared by every hook's args.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record RuntimeInfo
@@ -48,10 +48,21 @@ public sealed record RuntimeInfo
     /// <remarks>
     /// <para>This member names the source file, for a hook that works on the file itself — rewriting a value,
     /// checking it into the post-release commit — and must act on the very file <c>bv</c> read rather than
-    /// guess which one it was.</para>
+    /// guess which one it was. A hook that reads settings uses <see cref="Configuration"/> instead.</para>
     /// <para>Required of whoever writes the args, so that a run always states which file it read; the value is
     /// nonetheless <see langword="null"/> when the repository has no configuration file, which a repository
     /// whose home directory is marked by Git alone legitimately does not.</para>
     /// </remarks>
     public required string? ConfigFile { get; init; }
+
+    /// <summary>
+    /// Gets the resolved configuration of the run: every setting at its effective value, with the
+    /// configuration file, the command line, and the built-in defaults already composed.
+    /// </summary>
+    /// <remarks>
+    /// <para>This is a snapshot, taken when the args are written and embedded in every args file
+    /// deliberately: args files can be re-run by hand after the fact, and a hook must see the settings of
+    /// the run its args belong to, not whatever the configuration file happens to say by then.</para>
+    /// </remarks>
+    public required BuildvanaConfig Configuration { get; init; }
 }

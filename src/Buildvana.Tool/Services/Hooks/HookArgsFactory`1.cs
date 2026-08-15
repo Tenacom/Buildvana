@@ -20,8 +20,12 @@ namespace Buildvana.Tool.Services.Hooks;
 /// </summary>
 /// <typeparam name="TArgs">The type of the hook args the factory creates.</typeparam>
 /// <param name="home">The home directory provider.</param>
-/// <param name="config">The provider of the configuration file this run reads.</param>
-internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home, BuildvanaJsonConfigProvider config)
+/// <param name="configProvider">The provider of the configuration file this run reads.</param>
+/// <param name="configuration">The resolved configuration of the run.</param>
+internal abstract class HookArgsFactory<TArgs>(
+    IHomeDirectoryProvider home,
+    BuildvanaJsonConfigProvider configProvider,
+    BuildvanaConfig configuration)
     where TArgs : HookArgs, IHookEvent
 {
     /// <summary>
@@ -52,7 +56,12 @@ internal abstract class HookArgsFactory<TArgs>(IHomeDirectoryProvider home, Buil
 
             // Already absolute, and already the file this run read: hooks are told which one it is instead of
             // running their own search and possibly landing on a different answer.
-            ConfigFile = config.Path,
+            ConfigFile = configProvider.Path,
+
+            // A snapshot of the run's resolved settings, not a pointer to the file: an args file re-run by
+            // hand must show the hook the configuration of the run it belongs to, however the file has
+            // changed since.
+            Configuration = configuration,
         };
     }
 }

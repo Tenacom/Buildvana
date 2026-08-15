@@ -15,9 +15,13 @@ namespace Buildvana.Tool.Services.Hooks;
 /// (see <see cref="PostReleaseHookArgs"/>).
 /// </summary>
 /// <param name="home">The home directory provider.</param>
-/// <param name="config">The provider of the configuration file this run reads.</param>
-internal sealed class PostReleaseHookArgsFactory(IHomeDirectoryProvider home, BuildvanaJsonConfigProvider config)
-    : HookArgsFactory<PostReleaseHookArgs>(home, config)
+/// <param name="configProvider">The provider of the configuration file this run reads.</param>
+/// <param name="configuration">The resolved configuration of the run.</param>
+internal sealed class PostReleaseHookArgsFactory(
+    IHomeDirectoryProvider home,
+    BuildvanaJsonConfigProvider configProvider,
+    BuildvanaConfig configuration)
+    : HookArgsFactory<PostReleaseHookArgs>(home, configProvider, configuration)
 {
     /// <summary>
     /// Creates the args for a <c>release/post-release</c> hook run.

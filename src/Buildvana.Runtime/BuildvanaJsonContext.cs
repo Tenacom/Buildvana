@@ -8,8 +8,8 @@ namespace Buildvana.Runtime;
 
 /// <summary>
 /// The source-generated serializer context for the JSON documents exchanged between <c>bv</c> and
-/// repository-owned hooks: hook args files, and the resolved configuration model
-/// (<see cref="BuildvanaConfig"/>).
+/// repository-owned hooks: hook args files, and the resolved configuration
+/// (<see cref="BuildvanaConfig"/>) they carry.
 /// </summary>
 /// <remarks>
 /// <para>Being source-generated, the context works in every host, including file-based apps, which run with

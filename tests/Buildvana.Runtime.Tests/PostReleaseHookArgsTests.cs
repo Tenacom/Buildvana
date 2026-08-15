@@ -38,11 +38,21 @@ internal sealed class PostReleaseHookArgsTests
             var path = Path.Combine(dir, relativePath);
             _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             object boxed = written;
-            await File.WriteAllTextAsync(path, JsonSerializer.Serialize(boxed, boxed.GetType(), BuildvanaJsonContext.Default)).ConfigureAwait(false);
+            var json = JsonSerializer.Serialize(boxed, boxed.GetType(), BuildvanaJsonContext.Default);
+            await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
 
             var loaded = PostReleaseHookArgs.Load(dir);
 
-            await Assert.That(loaded.RuntimeInfo).IsEqualTo(written.RuntimeInfo);
+            // RuntimeInfo embeds the resolved configuration, whose collection-typed members compare by
+            // reference, so record equality cannot vouch for the round trip. Re-serializing what was loaded
+            // and comparing documents does, for every member at once.
+            object reboxed = loaded;
+            var rewritten = JsonSerializer.Serialize(reboxed, reboxed.GetType(), BuildvanaJsonContext.Default);
+            await Assert.That(rewritten).IsEqualTo(json);
+            await Assert.That(loaded.RuntimeInfo.ConfigFile).IsEqualTo(written.RuntimeInfo.ConfigFile);
+            await Assert.That(loaded.RuntimeInfo.Configuration.Release.Branches[0]).IsEqualTo("^main$");
+            await Assert.That(loaded.RuntimeInfo.Configuration.DotNet.Test.Args[0]).IsEqualTo("--coverage");
+            await Assert.That(loaded.RuntimeInfo.Configuration.DotNet.Test.Env["RUNNER"]).IsNull();
             await Assert.That(loaded.Release).IsEqualTo(written.Release);
             await Assert.That(loaded.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("1.2.3-preview");
             await Assert.That(loaded.Dogfooding).IsEqualTo(written.Dogfooding);
@@ -135,6 +145,18 @@ internal sealed class PostReleaseHookArgsTests
             ArtifactsDirectory = Path.Combine(home, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home, WellKnownPaths.ScratchDirectory),
             ConfigFile = withConfigFile ? Path.Combine(home, "buildvana.jsonc") : null,
+            Configuration = new()
+            {
+                Release = new() { Branches = ["^main$"] },
+                DotNet = new()
+                {
+                    Test = new()
+                    {
+                        Args = ["--coverage"],
+                        Env = new Dictionary<string, string?> { ["RUNNER"] = null },
+                    },
+                },
+            },
         },
         Release = new()
         {

@@ -154,6 +154,8 @@ Buildvana.Runtime.RuntimeInfo.ArtifactsDirectory.get -> string!
 Buildvana.Runtime.RuntimeInfo.ArtifactsDirectory.init -> void
 Buildvana.Runtime.RuntimeInfo.ConfigFile.get -> string?
 Buildvana.Runtime.RuntimeInfo.ConfigFile.init -> void
+Buildvana.Runtime.RuntimeInfo.Configuration.get -> Buildvana.Runtime.BuildvanaConfig!
+Buildvana.Runtime.RuntimeInfo.Configuration.init -> void
 Buildvana.Runtime.RuntimeInfo.DelegatingVersion.get -> string?
 Buildvana.Runtime.RuntimeInfo.DelegatingVersion.init -> void
 Buildvana.Runtime.RuntimeInfo.Equals(Buildvana.Runtime.RuntimeInfo? other) -> bool
