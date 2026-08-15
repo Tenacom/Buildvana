@@ -182,7 +182,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         bool isPublicRelease = false,
         IReadOnlyDictionary<string, string>? producedPackages = null,
         bool dogfooding = false)
-        => new PostReleaseHookArgsFactory(home, new BuildvanaConfigProvider(home)).Create(
+        => new PostReleaseHookArgsFactory(home, new BuildvanaJsonConfigProvider(home)).Create(
             artifactsPath ?? Path.Combine("artifacts", "Release"),
             simpleVersion,
             semVer,

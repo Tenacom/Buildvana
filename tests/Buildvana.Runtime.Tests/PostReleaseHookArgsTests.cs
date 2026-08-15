@@ -125,40 +125,6 @@ internal sealed class PostReleaseHookArgsTests
         }
     }
 
-    // A hook is told which file to read and reads it then and there, so it sees the file as it stands
-    // rather than a copy taken when the args were written.
-    [Test]
-    public async Task LoadConfig_ReadsTheFileNamedInTheArgs()
-    {
-        var dir = NewDir();
-        try
-        {
-            await File.WriteAllTextAsync(
-                Path.Combine(dir, BuildvanaConfig.JsoncFileName),
-                """{ "release": { "branches": ["main"] } }""").ConfigureAwait(false);
-            var config = SampleArgs(dir).LoadConfig();
-            await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
-        }
-        finally
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-    }
-
-    [Test]
-    public async Task LoadConfig_WithoutConfigFile_ReturnsEmptyConfig()
-    {
-        var dir = NewDir();
-        try
-        {
-            await Assert.That(SampleArgs(dir, withConfigFile: false).LoadConfig().Release).IsNull();
-        }
-        finally
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-    }
-
     private static PostReleaseHookArgs SampleArgs(string home, bool withConfigFile = true) => new()
     {
         RuntimeInfo = new()
@@ -168,7 +134,7 @@ internal sealed class PostReleaseHookArgsTests
             HomeDirectory = home,
             ArtifactsDirectory = Path.Combine(home, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home, WellKnownPaths.ScratchDirectory),
-            ConfigFile = withConfigFile ? Path.Combine(home, BuildvanaConfig.JsoncFileName) : null,
+            ConfigFile = withConfigFile ? Path.Combine(home, "buildvana.jsonc") : null,
         },
         Release = new()
         {

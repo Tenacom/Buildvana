@@ -11,7 +11,6 @@ using Buildvana.Core.IO;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Versioning;
-using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Octokit;
@@ -44,10 +43,14 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         RepositoryOwner = originInfo.PathSegments[0];
         RepositoryName = originInfo.PathSegments[1];
         _urls = new GitHubRepositoryUrls(HostName, RepositoryOwner, RepositoryName);
-        var tokenEnv = services.GetRequiredService<BuildvanaConfig>().GitHub?.TokenEnv is { Length: > 0 } e
-            ? e
-            : "GITHUB_TOKEN";
-        _token = EnvVarHelper.Require(tokenEnv);
+        try
+        {
+            _token = services.GetRequiredService<BuildvanaConfig>().GitHub.GetToken();
+        }
+        catch (BuildvanaRuntimeException e)
+        {
+            throw new BuildFailedException(e.Message, e);
+        }
     }
 
     /// <inheritdoc/>

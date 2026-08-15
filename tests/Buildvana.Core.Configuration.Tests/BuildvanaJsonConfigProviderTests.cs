@@ -5,8 +5,9 @@ using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Runtime;
 
-internal sealed class BuildvanaConfigProviderTests
+internal sealed class BuildvanaJsonConfigProviderTests
 {
     [Test]
     public async Task Config_NoFile_IsEmptyConfig()
@@ -224,6 +225,91 @@ internal sealed class BuildvanaConfigProviderTests
         }
     }
 
+    // A configuration file under a subdirectory — the .buildvana directory included — is not the
+    // configuration file: the file lives in the home directory itself.
+    [Test]
+    public async Task Path_FileInBuildvanaDirectory_IsNotFound()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, Path.Combine(".buildvana", "buildvana.json"), "{}");
+            await Assert.That(NewProvider(dir).Path).IsNull();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task LoadFile_NullPath_IsEmptyConfig()
+    {
+        await Assert.That(BuildvanaJsonConfigProvider.LoadFile(null).Release).IsNull();
+    }
+
+    // Loading by explicit path ignores sibling candidates: the exactly-one rule belongs to the search,
+    // not to the loader.
+    [Test]
+    public async Task LoadFile_KnownPath_LoadsItRegardlessOfSiblings()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.json", """{ "release": { "branches": ["main"] } }""");
+            Write(dir, "buildvana.jsonc", "{}");
+            var config = BuildvanaJsonConfigProvider.LoadFile(Path.Combine(dir, "buildvana.json"));
+            await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task Config_TypedContent_LoadsEnumsAndNestedSections()
+    {
+        var dir = NewDir();
+        try
+        {
+            const string content = """
+                {
+                  // A comment and a trailing comma prove that jsonc niceties are accepted.
+                  "versioning": { "assemblyVersionPrecision": "minor" },
+                  "nuget": { "feeds": { "release": { "source": "https://nuget.example/v3/index.json", "apiKeyEnv": "KEY" } } },
+                }
+                """;
+            Write(dir, "buildvana.jsonc", content);
+            var config = NewProvider(dir).Config;
+            await Assert.That(config.Versioning!.AssemblyVersionPrecision).IsEqualTo(AssemblyVersionPrecision.Minor);
+            await Assert.That(config.NuGet!.Feeds!.Release!.ApiKeyEnv).IsEqualTo("KEY");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // An exclusively-locked file is the portable trigger for the read-failure branch: File.Exists stays true
+    // (it checks attributes, not access), while reading fails on every platform.
+    [Test]
+    public async Task Config_UnreadableFile_Throws()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", "{}");
+            var path = Path.Combine(dir, "buildvana.jsonc");
+            await using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None).ConfigureAwait(false);
+            _ = await Assert.That(() => NewProvider(dir).Config).Throws<BuildFailedException>();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     [Test]
     public async Task Config_BomPrefixedFile_DoesNotOffsetPositions()
     {
@@ -241,7 +327,7 @@ internal sealed class BuildvanaConfigProviderTests
         }
     }
 
-    private static BuildvanaConfigProvider NewProvider(string dir) => new(new FixedHomeDirectoryProvider(dir));
+    private static BuildvanaJsonConfigProvider NewProvider(string dir) => new(new FixedHomeDirectoryProvider(dir));
 
     private static string NewDir()
     {

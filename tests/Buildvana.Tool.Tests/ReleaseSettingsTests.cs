@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services;
@@ -28,14 +29,18 @@ internal sealed class ReleaseSettingsTests
         await Assert.That(Parse(["--configuration=Debug"]).ResolveConfiguration()).IsEqualTo("Debug");
     }
 
+    // Hand-building a domain config would bypass the factory's release-to-dotnet configuration fallback,
+    // so the configs come from the factory, the way production composes them.
     [Test]
     public async Task ResolveConfiguration_FollowsFlagOverReleaseOverDotNetChain()
     {
-        var config = new BuildvanaConfig
-        {
-            DotNet = new() { Configuration = "DotNetConfig" },
-            Release = new() { Configuration = "ReleaseConfig" },
-        };
+        var config = BuildvanaConfigFactory.Create(
+            new BuildvanaJsonConfig
+            {
+                DotNet = new() { Configuration = "DotNetConfig" },
+                Release = new() { Configuration = "ReleaseConfig" },
+            },
+            null);
 
         // Flag wins over both config sections.
         await Assert.That(Parse(["-c", "FlagConfig"], config).ResolveConfiguration()).IsEqualTo("FlagConfig");
@@ -44,7 +49,9 @@ internal sealed class ReleaseSettingsTests
         await Assert.That(Parse([], config).ResolveConfiguration()).IsEqualTo("ReleaseConfig");
 
         // With neither flag nor release.configuration, dotnet.configuration is used.
-        var dotNetOnly = new BuildvanaConfig { DotNet = new() { Configuration = "DotNetConfig" } };
+        var dotNetOnly = BuildvanaConfigFactory.Create(
+            new BuildvanaJsonConfig { DotNet = new() { Configuration = "DotNetConfig" } },
+            null);
         await Assert.That(Parse([], dotNetOnly).ResolveConfiguration()).IsEqualTo("DotNetConfig");
     }
 

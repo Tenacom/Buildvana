@@ -67,7 +67,7 @@ internal sealed class UpdateCommandTests
         => new(
             NullReporter.Instance,
             home.Provider,
-            new BuildvanaConfigProvider(home.Provider),
+            new BuildvanaJsonConfigProvider(home.Provider),
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
             NuGetVersion.Parse(OwnVersion));

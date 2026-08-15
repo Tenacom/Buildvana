@@ -44,7 +44,7 @@ internal sealed partial class SelfVersionService
 
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
-    private readonly BuildvanaConfigProvider _config;
+    private readonly BuildvanaJsonConfigProvider _config;
     private readonly IJsonHelper _jsonHelper;
     private readonly IProcessRunner _processRunner;
     private readonly NuGetVersion _ownVersion;
@@ -61,7 +61,7 @@ internal sealed partial class SelfVersionService
     public SelfVersionService(
         IReporter reporter,
         IHomeDirectoryProvider home,
-        BuildvanaConfigProvider config,
+        BuildvanaJsonConfigProvider config,
         IJsonHelper jsonHelper,
         IProcessRunner processRunner,
         NuGetVersion ownVersion)
@@ -332,7 +332,7 @@ internal sealed partial class SelfVersionService
     {
         try
         {
-            _ = BuildvanaConfigProvider.LoadFile(path);
+            _ = BuildvanaJsonConfigProvider.LoadFile(path);
         }
         catch (BuildFailedException e)
         {

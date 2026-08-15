@@ -10,25 +10,24 @@ using System.Text.Json.Nodes;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.IO;
 using Buildvana.Core.JsonSchema;
-using Buildvana.Runtime;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Configuration;
 
 /// <summary>
-/// Provides the Buildvana configuration of a home directory: which file holds it, and what it says.
+/// Provides the Buildvana configuration file of a home directory: which file it is, and the wire model of
+/// what it says.
 /// </summary>
 /// <remarks>
-/// <para>Unlike the lean loader shipped with <c>Buildvana.Runtime</c> (<see cref="BuildvanaConfig.Load"/>), this
-/// one validates the file against the configuration schema and reports each problem as a diagnostic with its
-/// source location. It is used by <c>bv</c> and by Buildvana SDK tasks; hooks, which read a file <c>bv</c> has
-/// already validated, use the lean loader instead.</para>
+/// <para>The file is validated against the configuration schema, and each problem is reported as a
+/// diagnostic with its source location. Composition of the wire model into the resolved domain model happens
+/// above this provider, through <see cref="BuildvanaConfigFactory"/>.</para>
 /// <para><see cref="Path"/> and <see cref="Config"/> are each resolved on first read and cached — result and
 /// exception alike — for the lifetime of the instance, as <c>HomeDirectoryProvider</c> does for the home
 /// directory. Finding the file is this class's business alone, so the path a run reports and the file it parses
 /// are the same by construction rather than by agreement between callers.</para>
 /// </remarks>
-public sealed class BuildvanaConfigProvider
+public sealed class BuildvanaJsonConfigProvider
 {
     private static readonly JsonDocumentOptions DocumentOptions = new()
     {
@@ -37,19 +36,19 @@ public sealed class BuildvanaConfigProvider
     };
 
     private readonly Lazy<string?> _lazyPath;
-    private readonly Lazy<BuildvanaConfig> _lazyConfig;
+    private readonly Lazy<BuildvanaJsonConfig> _lazyConfig;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BuildvanaConfigProvider"/> class.
+    /// Initializes a new instance of the <see cref="BuildvanaJsonConfigProvider"/> class.
     /// </summary>
     /// <param name="home">The provider of the home directory the configuration file is looked for in.</param>
-    public BuildvanaConfigProvider(IHomeDirectoryProvider home)
+    public BuildvanaJsonConfigProvider(IHomeDirectoryProvider home)
     {
         Guard.IsNotNull(home);
         _lazyPath = new Lazy<string?>(() => FindFile(home));
 
         // Reads the path through its own Lazy, so that a run holding both facts has probed exactly once.
-        _lazyConfig = new Lazy<BuildvanaConfig>(() => LoadFile(_lazyPath.Value));
+        _lazyConfig = new Lazy<BuildvanaJsonConfig>(() => LoadFile(_lazyPath.Value));
     }
 
     /// <summary>
@@ -62,7 +61,7 @@ public sealed class BuildvanaConfigProvider
     public string? Path => _lazyPath.Value;
 
     /// <summary>
-    /// Gets the parsed configuration, or an empty <see cref="BuildvanaConfig"/> when the home directory holds
+    /// Gets the parsed wire model, or an empty <see cref="BuildvanaJsonConfig"/> when the home directory holds
     /// no configuration file.
     /// </summary>
     /// <exception cref="BuildFailedException">
@@ -71,13 +70,13 @@ public sealed class BuildvanaConfigProvider
     /// <para>The file is present but not valid JSON, or does not conform to the schema; in that case
     /// <see cref="BuildFailedException.Diagnostics"/> lists each problem with its source location.</para>
     /// </exception>
-    public BuildvanaConfig Config => _lazyConfig.Value;
+    public BuildvanaJsonConfig Config => _lazyConfig.Value;
 
     /// <summary>
     /// Loads the configuration file at an already-known path, bypassing both the search and the cache.
     /// </summary>
     /// <param name="path">The path of the configuration file, or <see langword="null"/> for none.</param>
-    /// <returns>The parsed configuration, or an empty <see cref="BuildvanaConfig"/> if <paramref name="path"/>
+    /// <returns>The parsed wire model, or an empty <see cref="BuildvanaJsonConfig"/> if <paramref name="path"/>
     /// is <see langword="null"/>.</returns>
     /// <exception cref="BuildFailedException">
     /// <para>The file cannot be read, is not valid JSON, or does not conform to the schema; in the latter cases
@@ -87,11 +86,11 @@ public sealed class BuildvanaConfigProvider
     /// <para>For the caller that must re-read a file it has just rewritten, and therefore wants the parse this
     /// instance has cached to be bypassed rather than reused. Everything else reads <see cref="Config"/>.</para>
     /// </remarks>
-    public static BuildvanaConfig LoadFile(string? path)
+    public static BuildvanaJsonConfig LoadFile(string? path)
     {
         if (path is null)
         {
-            return new BuildvanaConfig();
+            return new BuildvanaJsonConfig();
         }
 
         var json = StripBom(UserFile.ReadAllBytes(path));
@@ -99,21 +98,26 @@ public sealed class BuildvanaConfigProvider
         Validate(node, json, path);
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
-        return node!.Deserialize(BuildvanaJsonContext.Default.BuildvanaConfig) ?? new BuildvanaConfig();
+        return node!.Deserialize(BuildvanaJsonConfigContext.Default.BuildvanaJsonConfig) ?? new BuildvanaJsonConfig();
     }
 
     // The one probe for the configuration file: nothing outside this class asks which file a home directory
     // holds, so no two callers can answer differently.
     private static string? FindFile(IHomeDirectoryProvider home)
     {
-        try
+        string[] candidatePaths =
+        [
+            System.IO.Path.Combine(home.HomeDirectory, BuildvanaJsonConfig.JsonFileName),
+            System.IO.Path.Combine(home.HomeDirectory, BuildvanaJsonConfig.JsoncFileName),
+        ];
+        var existingPaths = Array.FindAll(candidatePaths, System.IO.File.Exists);
+        if (existingPaths.Length > 1)
         {
-            return BuildvanaConfig.FindFile(home.HomeDirectory);
+            throw new BuildFailedException(
+                $"Multiple Buildvana configuration files found: {string.Join(", ", existingPaths)}. Keep only one.");
         }
-        catch (BuildvanaRuntimeException e)
-        {
-            throw new BuildFailedException(e.Message, e);
-        }
+
+        return existingPaths.Length == 1 ? existingPaths[0] : null;
     }
 
     // Removes a leading UTF-8 byte order mark, if present, so the reader sees only JSON and positions start at 1.
@@ -164,7 +168,7 @@ public sealed class BuildvanaConfigProvider
 
     private static void Validate(JsonNode? node, byte[] json, string path)
     {
-        var errors = JsonSchemaValidator.Validate<BuildvanaConfig>(node, json, BuildvanaConfigSerialization.Options);
+        var errors = JsonSchemaValidator.Validate<BuildvanaJsonConfig>(node, json, BuildvanaJsonConfigSerialization.Options);
         if (errors.Count == 0)
         {
             return;

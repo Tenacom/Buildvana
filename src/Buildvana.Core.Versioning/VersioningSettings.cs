@@ -25,9 +25,9 @@ public sealed class VersioningSettings
     public VersioningSettings(BuildvanaConfig config)
     {
         Guard.IsNotNull(config);
-        PublicReleaseBranchPatterns = config.Release?.Branches ?? [];
-        PrereleaseTag = config.Versioning?.PrereleaseTag;
-        AssemblyVersionPrecision = config.Versioning.EffectiveAssemblyVersionPrecision;
+        PublicReleaseBranchPatterns = config.Release.Branches;
+        PrereleaseTag = config.Versioning.PrereleaseTag;
+        AssemblyVersionPrecision = config.Versioning.AssemblyVersionPrecision;
     }
 
     /// <summary>
@@ -38,13 +38,12 @@ public sealed class VersioningSettings
 
     /// <summary>
     /// Gets the prerelease tag applied to prerelease versions (<c>versioning.prereleaseTag</c>), or
-    /// <see langword="null"/> when unset, in which case prerelease versions are not allowed.
+    /// <see langword="null"/> when prerelease versions are not allowed.
     /// </summary>
     public string? PrereleaseTag { get; }
 
     /// <summary>
-    /// Gets the assembly-version precision (<c>versioning.assemblyVersionPrecision</c>, or
-    /// <see cref="VersioningConfig.DefaultAssemblyVersionPrecision"/> when unset).
+    /// Gets the resolved assembly-version precision (<c>versioning.assemblyVersionPrecision</c>).
     /// </summary>
     public AssemblyVersionPrecision AssemblyVersionPrecision { get; }
 
