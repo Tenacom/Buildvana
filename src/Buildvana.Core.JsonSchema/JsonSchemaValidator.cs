@@ -13,8 +13,9 @@ namespace Buildvana.Core.JsonSchema;
 /// <summary>
 /// Validates a <see cref="JsonNode"/> against the subset of JSON Schema (draft 2020-12) keywords that
 /// <c>JsonSchemaGenerator</c> emits: <c>type</c>, <c>enum</c>, <c>properties</c>, <c>required</c>,
-/// <c>additionalProperties</c>, and <c>items</c>. Meta keywords such as <c>$schema</c>, <c>title</c>, and
-/// <c>description</c> are ignored.
+/// <c>additionalProperties</c>, and <c>items</c>. Meta and annotation keywords such as <c>$schema</c>,
+/// <c>title</c>, <c>description</c>, and <c>default</c> are ignored: in particular, <c>default</c>
+/// documents a value for editors, and the validator never fills it in.
 /// </summary>
 public static class JsonSchemaValidator
 {
@@ -32,8 +33,8 @@ public static class JsonSchemaValidator
     /// </returns>
     /// <remarks>
     /// <para>The schema is generated on every call. To validate many documents against one schema, call
-    /// <see cref="JsonSchemaGenerator.Generate{T}(JsonSerializerOptions, string)"/> once and pass the result to
-    /// <see cref="Validate(JsonNode?, JsonNode, ReadOnlySpan{byte})"/>.</para>
+    /// <see cref="JsonSchemaGenerator.Generate{T}(JsonSerializerOptions, string, object)"/> once and pass the
+    /// result to <see cref="Validate(JsonNode?, JsonNode, ReadOnlySpan{byte})"/>.</para>
     /// </remarks>
     public static IReadOnlyList<JsonSchemaValidationError> Validate<T>(
         JsonNode? instance,
