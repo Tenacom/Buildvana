@@ -198,15 +198,16 @@ internal sealed class ReleaseCommand(
             // Time for a final consistency check.
             version.EnsureConsistency(true);
 
-            // The version is now final: everything that could still move it (the version spec change, the
-            // changelog update, the release commit) has happened, and the artifacts are built from here on.
-            // This is the one place where stating it is a record of a decision rather than a guess.
-            reporter.Notice($"Releasing version {version.CurrentStr}.");
-
             // Ensure that the release tag doesn't already exist.
             // This assumes that full repo history has been checked out;
             // however, that is already a prerequisite for computing the Git height.
             BuildFailedException.ThrowIf(git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
+
+            // The version is now final: everything that could still move it (the version spec change, the
+            // changelog update, the release commit) has happened, the tag check above is the last thing that
+            // can refuse this particular version, and the artifacts are built from here on. This is the one
+            // place where stating the version is a record of a decision rather than a guess.
+            reporter.Notice($"Releasing version {version.CurrentStr}.");
 
             // Artifact pass (Restore→Pack, no Clean): rebuild against the resolved version and make artifacts.
             await pipeline.RunRangeAsync(BuildStep.Restore, BuildStep.Pack, configuration, cancellationToken).ConfigureAwait(false);
