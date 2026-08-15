@@ -52,7 +52,7 @@ public sealed partial class ComputeVersion : BuildvanaSdkTask
             string.IsNullOrEmpty(HomeDirectory),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(HomeDirectory)));
 
-        var version = GetOrComputeVersion(HomeDirectory, Reporter).Version;
+        var version = GetOrComputeVersion(HomeDirectory, Reporter);
         SimpleVersion = version.SimpleVersion;
         SemVer = version.SemVer;
         AssemblyVersion = version.AssemblyVersion;

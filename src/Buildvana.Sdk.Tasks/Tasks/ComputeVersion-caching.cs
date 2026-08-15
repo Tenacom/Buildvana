@@ -17,23 +17,23 @@ partial class ComputeVersion
 {
     private static readonly ConcurrentDictionary<string, CachedVersion> Cache = new(StringComparer.Ordinal);
 
-    private static CachedVersion GetOrComputeVersion(string homeDirectory, IReporter reporter)
+    private static VersionInfo GetOrComputeVersion(string homeDirectory, IReporter reporter)
     {
         homeDirectory = Path.GetFullPath(homeDirectory);
         var fingerprint = ComputeFingerprint(homeDirectory);
         if (fingerprint is null)
         {
-            return ComputeCore(homeDirectory, reporter, null);
+            return ComputeCore(homeDirectory, reporter, null).Version;
         }
 
         if (Cache.TryGetValue(homeDirectory, out var cached) && cached.Fingerprint == fingerprint)
         {
-            return cached;
+            return cached.Version;
         }
 
         var computed = ComputeCore(homeDirectory, reporter, fingerprint);
         Cache[homeDirectory] = computed;
-        return computed;
+        return computed.Version;
     }
 
     // The computed version is reported at detail level, so it stays out of the way at the verbosities a
