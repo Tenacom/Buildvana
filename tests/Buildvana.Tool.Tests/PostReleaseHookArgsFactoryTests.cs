@@ -97,6 +97,19 @@ internal sealed class PostReleaseHookArgsFactoryTests
         await Assert.That(args.RuntimeInfo.ConfigFile).IsNull();
     }
 
+    // The factory embeds the resolved configuration as-is — a snapshot of the very settings the run
+    // composed, not a re-read of the file.
+    [Test]
+    public async Task Create_EmbedsTheResolvedConfiguration()
+    {
+        using var home = new TempHome();
+        var configuration = new BuildvanaConfig { Release = new() { Configuration = "Custom" } };
+
+        var args = Create(home.Provider, configuration: configuration);
+
+        await Assert.That(args.RuntimeInfo.Configuration).IsSameReferenceAs(configuration);
+    }
+
     [Test]
     public async Task Create_SetsOwnVersionAsRuntimeVersion()
     {
@@ -181,8 +194,9 @@ internal sealed class PostReleaseHookArgsFactoryTests
         bool isPrerelease = true,
         bool isPublicRelease = false,
         IReadOnlyDictionary<string, string>? producedPackages = null,
-        bool dogfooding = false)
-        => new PostReleaseHookArgsFactory(home, new BuildvanaJsonConfigProvider(home)).Create(
+        bool dogfooding = false,
+        BuildvanaConfig? configuration = null)
+        => new PostReleaseHookArgsFactory(home, new BuildvanaJsonConfigProvider(home), configuration ?? new()).Create(
             artifactsPath ?? Path.Combine("artifacts", "Release"),
             simpleVersion,
             semVer,

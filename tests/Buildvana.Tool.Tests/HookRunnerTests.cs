@@ -66,6 +66,7 @@ internal sealed class HookRunnerTests
         await Assert.That(runtimeInfo.GetProperty("homeDirectory").GetString()).IsEqualTo(home.RootPath);
         await Assert.That(runtimeInfo.GetProperty("artifactsDirectory").GetString()).IsEqualTo(args.RuntimeInfo.ArtifactsDirectory);
         await Assert.That(runtimeInfo.GetProperty("scratchDirectory").GetString()).IsEqualTo(args.RuntimeInfo.ScratchDirectory);
+        await Assert.That(runtimeInfo.GetProperty("configuration").ValueKind).IsEqualTo(JsonValueKind.Object);
         var release = root.GetProperty("release");
         await Assert.That(release.GetProperty("version").GetString()).IsEqualTo("1.2.3");
         await Assert.That(release.GetProperty("semVer").GetString()).IsEqualTo("1.2.3-preview");
@@ -196,6 +197,7 @@ internal sealed class HookRunnerTests
             ArtifactsDirectory = Path.Combine(home.RootPath, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home.RootPath, WellKnownPaths.ScratchDirectory),
             ConfigFile = null,
+            Configuration = new(),
         },
         Release = new()
         {
