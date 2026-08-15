@@ -165,12 +165,11 @@ internal sealed class ReleaseHarness : IDisposable
     public string ComputeVersion()
     {
         var config = new BuildvanaConfig { Versioning = new VersioningConfig { PrereleaseTag = "preview" } };
-        var versioning = new VersioningService(
-            NullReporter.Instance,
+        var calculator = new VersionCalculator(
             new FixedHomeDirectoryProvider(Repo.RootPath),
             new VersioningSettings(config),
             new GitHeightCalculator(VersionFile.FileName));
-        return versioning.SemVer;
+        return calculator.Calculate().SemVer;
     }
 
     /// <summary>

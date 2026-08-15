@@ -52,7 +52,7 @@ public sealed partial class ComputeVersion : BuildvanaSdkTask
             string.IsNullOrEmpty(HomeDirectory),
             string.Format(CultureInfo.InvariantCulture, Strings.MissingParameterFmt, nameof(HomeDirectory)));
 
-        var version = GetOrComputeVersion(HomeDirectory, Reporter);
+        var version = GetOrComputeVersion(HomeDirectory, Reporter).Version;
         SimpleVersion = version.SimpleVersion;
         SemVer = version.SemVer;
         AssemblyVersion = version.AssemblyVersion;
@@ -60,7 +60,7 @@ public sealed partial class ComputeVersion : BuildvanaSdkTask
         InformationalVersion = version.InformationalVersion;
         IsPublicRelease = version.IsPublicRelease;
         IsPrerelease = version.IsPrerelease;
-        CommitId = version.CommitId;
+        CommitId = version.CommitId ?? string.Empty;
         Height = version.Height;
         return Undefined.Value;
     }

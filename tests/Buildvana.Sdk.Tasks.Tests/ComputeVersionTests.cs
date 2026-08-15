@@ -63,9 +63,9 @@ internal sealed class ComputeVersionTests
         var secondEngine = new RecordingBuildEngine();
         var second = RunTask(repo, secondEngine);
 
-        // The versioning service logs the computed version; a cache hit computes nothing and stays silent.
-        await Assert.That(firstEngine.Messages.Count(m => m.Message!.Contains("Version 1.2.1", StringComparison.Ordinal))).IsEqualTo(1);
-        await Assert.That(secondEngine.Messages.Count(m => m.Message!.Contains("Version 1.2.1", StringComparison.Ordinal))).IsEqualTo(0);
+        // Computing the version reports it; a cache hit computes nothing and stays silent.
+        await Assert.That(firstEngine.Messages.Count(m => m.Message!.Contains("Computed version 1.2.1", StringComparison.Ordinal))).IsEqualTo(1);
+        await Assert.That(secondEngine.Messages.Count(m => m.Message!.Contains("Computed version 1.2.1", StringComparison.Ordinal))).IsEqualTo(0);
         await Assert.That(second.SemVer).IsEqualTo("1.2.1");
         await Assert.That(second.Height).IsEqualTo(1);
     }
@@ -83,7 +83,7 @@ internal sealed class ComputeVersionTests
         var second = RunTask(repo, engine);
         await Assert.That(second.Height).IsEqualTo(2);
         await Assert.That(second.SemVer).IsEqualTo("1.2.2");
-        await Assert.That(engine.Messages.Count(m => m.Message!.Contains("Version 1.2.2", StringComparison.Ordinal))).IsEqualTo(1);
+        await Assert.That(engine.Messages.Count(m => m.Message!.Contains("Computed version 1.2.2", StringComparison.Ordinal))).IsEqualTo(1);
     }
 
     [Test]
