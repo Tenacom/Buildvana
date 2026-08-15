@@ -198,6 +198,11 @@ internal sealed class ReleaseCommand(
             // Time for a final consistency check.
             version.EnsureConsistency(true);
 
+            // The version is now final: everything that could still move it (the version spec change, the
+            // changelog update, the release commit) has happened, and the artifacts are built from here on.
+            // This is the one place where stating it is a record of a decision rather than a guess.
+            reporter.Notice($"Releasing version {version.CurrentStr}.");
+
             // Ensure that the release tag doesn't already exist.
             // This assumes that full repo history has been checked out;
             // however, that is already a prerequisite for computing the Git height.
