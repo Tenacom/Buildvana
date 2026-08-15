@@ -24,7 +24,8 @@
         },
         "checkPublicApi": {
           "description": "Whether public API files are checked before a release.",
-          "type": "boolean"
+          "type": "boolean",
+          "default": true
         },
         "changelogUpdates": {
           "description": "Which releases require a changelog update.",
@@ -32,7 +33,8 @@
             "none",
             "stable",
             "all"
-          ]
+          ],
+          "default": "stable"
         },
         "emptyChangelog": {
           "description": "Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the release.",
@@ -40,7 +42,8 @@
         },
         "dogfood": {
           "description": "Whether self-references are updated (dogfooding) during a release.",
-          "type": "boolean"
+          "type": "boolean",
+          "default": true
         }
       },
       "additionalProperties": false
@@ -59,7 +62,8 @@
             "major",
             "minor",
             "build"
-          ]
+          ],
+          "default": "major"
         }
       },
       "additionalProperties": false
@@ -70,7 +74,8 @@
       "properties": {
         "configuration": {
           "description": "Default build configuration (e.g. Debug, Release).",
-          "type": "string"
+          "type": "string",
+          "default": "Release"
         },
         "all": {
           "description": "Invocation configuration common to all \u0060dotnet\u0060 commands.",
@@ -195,6 +200,10 @@
                   "type": "string"
                 }
               },
+              "required": [
+                "source",
+                "apiKeyEnv"
+              ],
               "additionalProperties": false
             },
             "release": {
@@ -210,6 +219,10 @@
                   "type": "string"
                 }
               },
+              "required": [
+                "source",
+                "apiKeyEnv"
+              ],
               "additionalProperties": false
             }
           },
@@ -224,7 +237,8 @@
       "properties": {
         "tokenEnv": {
           "description": "Name of the environment variable that holds the GitHub access token.",
-          "type": "string"
+          "type": "string",
+          "default": "GITHUB_TOKEN"
         }
       },
       "additionalProperties": false
@@ -246,6 +260,10 @@
               "type": "string"
             }
           },
+          "required": [
+            "name",
+            "email"
+          ],
           "additionalProperties": false
         }
       },

@@ -9,14 +9,18 @@ namespace Buildvana.Core.Configuration;
 /// <summary>
 /// Models a single NuGet push feed, as stated in a Buildvana configuration file.
 /// </summary>
+/// <remarks>
+/// <para><c>required</c> puts both members in the schema's <c>required</c> list: a feed that is stated at all
+/// must state them. The member types stay nullable per the wire convention (see <see cref="BuildvanaJsonConfig"/>).</para>
+/// </remarks>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record NuGetFeedJsonConfig
 {
     /// <summary>Gets the source URL of the NuGet feed.</summary>
     [Description("Source URL of the NuGet feed.")]
-    public string? Source { get; init; }
+    public required string? Source { get; init; }
 
     /// <summary>Gets the name of the environment variable holding the feed API key.</summary>
     [Description("Name of the environment variable that holds the feed API key.")]
-    public string? ApiKeyEnv { get; init; }
+    public required string? ApiKeyEnv { get; init; }
 }

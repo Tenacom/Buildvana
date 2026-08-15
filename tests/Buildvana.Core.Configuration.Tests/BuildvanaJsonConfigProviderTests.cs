@@ -225,6 +225,44 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
     }
 
+    // The schema requires source and apiKeyEnv whenever a feed is stated, so a half-written feed fails at
+    // configuration load rather than at push time.
+    [Test]
+    public async Task Config_FeedWithoutApiKeyEnv_ReportsBV1104()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "nuget": { "feeds": { "release": { "source": "https://nuget.example" } } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1104");
+            await Assert.That(exception.Diagnostics[0].Message).Contains("apiKeyEnv");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task Config_IdentityWithoutEmail_ReportsBV1104()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "git": { "identity": { "name": "Buildvana Bot" } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1104");
+            await Assert.That(exception.Diagnostics[0].Message).Contains("email");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     // A configuration file under a subdirectory — the .buildvana directory included — is not the
     // configuration file: the file lives in the home directory itself.
     [Test]

@@ -205,6 +205,7 @@ internal sealed class BuildvanaConfigFactoryTests
             {
                 Feeds = new()
                 {
+                    Prerelease = new() { Source = "https://prerelease.example/v3/index.json", ApiKeyEnv = "PRE_KEY" },
                     Release = new() { Source = "https://nuget.example/v3/index.json", ApiKeyEnv = "KEY" },
                 },
             },
@@ -212,9 +213,32 @@ internal sealed class BuildvanaConfigFactoryTests
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
+        await Assert.That(config.NuGet.Feeds.Prerelease!.Source).IsEqualTo("https://prerelease.example/v3/index.json");
+        await Assert.That(config.NuGet.Feeds.Prerelease.ApiKeyEnv).IsEqualTo("PRE_KEY");
         await Assert.That(config.NuGet.Feeds.Release!.Source).IsEqualTo("https://nuget.example/v3/index.json");
         await Assert.That(config.NuGet.Feeds.Release.ApiKeyEnv).IsEqualTo("KEY");
-        await Assert.That(config.NuGet.Feeds.Prerelease).IsNull();
+    }
+
+    // A prerelease with no feed of its own pushes to the release feed: the factory resolves the fallback,
+    // so consumers read the channel they need instead of re-implementing the chain.
+    [Test]
+    public async Task Create_Feeds_PrereleaseFallsBackToReleaseFeed()
+    {
+        var json = new BuildvanaJsonConfig
+        {
+            NuGet = new()
+            {
+                Feeds = new()
+                {
+                    Release = new() { Source = "https://nuget.example/v3/index.json", ApiKeyEnv = "KEY" },
+                },
+            },
+        };
+
+        var config = BuildvanaConfigFactory.Create(json, null);
+
+        await Assert.That(config.NuGet.Feeds.Prerelease).IsSameReferenceAs(config.NuGet.Feeds.Release!);
+        await Assert.That(config.NuGet.Feeds.Release!.Source).IsEqualTo("https://nuget.example/v3/index.json");
     }
 
     [Test]

@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using Buildvana.Core.JsonSchema;
 using Buildvana.Runtime;
 using JetBrains.Annotations;
 
@@ -22,6 +23,7 @@ public sealed record ReleaseJsonConfig
 
     /// <summary>Gets the build configuration used to produce release artifacts.</summary>
     [Description("Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.")]
+    [JsonSchemaNoDefault] // The default is dynamic — the resolved dotnet.configuration — which no static value can state.
     public string? Configuration { get; init; }
 
     /// <summary>Gets a value indicating whether public API files are checked before a release.</summary>
