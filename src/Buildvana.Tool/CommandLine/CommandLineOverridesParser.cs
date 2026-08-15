@@ -28,11 +28,17 @@ internal static class CommandLineOverridesParser
     {
         Guard.IsNotNull(parameters);
         var reader = new CliOptionReader(parameters.Options);
+
+        // A configuration stated among the forwarded arguments decides the actual build, so bv's own view
+        // must agree with it: `bv pack -- -c Debug` resolves bv's configuration to Debug. The reader works
+        // on a copy of the tokens, so the forwarded arguments themselves still reach `dotnet` verbatim.
+        var forwardedReader = new CliOptionReader(parameters.Forwarded);
         return new CommandLineOverrides
         {
-            Configuration = reader.ReadValue("--configuration", "-c"),
+            Configuration = reader.ReadValue("--configuration", "-c") ?? forwardedReader.ReadValue("--configuration", "-c"),
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
             Dogfood = reader.ReadBoolValue("--dogfood"),
+            ForwardedArgs = parameters.Forwarded.Count > 0 ? parameters.Forwarded : null,
         };
     }
 }

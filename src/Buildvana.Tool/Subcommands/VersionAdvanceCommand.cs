@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Versioning;
+using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services.Versioning;
 
@@ -16,6 +17,7 @@ namespace Buildvana.Tool.Subcommands;
 [Description("Advance the version spec in the VERSION file, leaving the change uncommitted for review.")]
 internal sealed class VersionAdvanceCommand(
     VersionAdvanceSettings settings,
+    BuildvanaConfig config,
     VersionService version,
     VersioningSettings versioningSettings,
     IHomeDirectoryProvider home,
@@ -26,7 +28,7 @@ internal sealed class VersionAdvanceCommand(
         var requestedChange = settings.ResolveChange();
         var change = settings.Force
             ? requestedChange
-            : version.ComputeVersionSpecChange(requestedChange, settings.ResolveCheckPublicApi());
+            : version.ComputeVersionSpecChange(requestedChange, config.Release.CheckPublicApi);
 
         var versionFile = VersionFile.Load(home);
         var previousSpec = versionFile.Spec;

@@ -6,28 +6,21 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
-using Buildvana.Runtime;
 using Buildvana.Tool.CommandLine;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
-/// Options for the <c>version advance</c> command. The argument and flag values are parsed from the command's
-/// positional and option tokens by <see cref="Parse"/>; each <c>Resolve*</c> method then merges the parsed value
-/// with the relevant configuration and a hardcoded default (flag → config → default).
+/// Options for the <c>version advance</c> command, parsed from the command's positional and option tokens by
+/// <see cref="Parse"/>.
 /// Decorated with <see cref="BvArgumentAttribute"/>/<see cref="BvOptionAttribute"/>/<see cref="DescriptionAttribute"/>
-/// for the help renderer.
+/// for the help renderer and the argument validator. The <c>--check-public-api</c> flag reaches resolution
+/// through <c>CommandLineOverridesParser</c> and the configuration factory, so the command reads its effective
+/// value from the resolved <c>BuildvanaConfig</c>.
 /// </summary>
 internal sealed class VersionAdvanceSettings
 {
-    private readonly ReleaseConfig? _releaseConfig;
-
-    private VersionAdvanceSettings(ReleaseConfig? releaseConfig)
-    {
-        _releaseConfig = releaseConfig;
-    }
-
     /// <summary>
     /// Gets the requested version-spec change.
     /// </summary>
@@ -57,23 +50,20 @@ internal sealed class VersionAdvanceSettings
     public bool Force { get; init; }
 
     /// <summary>
-    /// Parses the command's positional and option tokens into a <see cref="VersionAdvanceSettings"/> and binds
-    /// the configuration sources consulted by the <c>Resolve*</c> methods. Excess positionals and unknown options
-    /// have already been rejected by <c>CommandArgumentValidator</c>, so at most one positional is present and
-    /// every option token is one the command declares.
+    /// Parses the command's positional and option tokens into a <see cref="VersionAdvanceSettings"/>. Excess
+    /// positionals and unknown options have already been rejected by <c>CommandArgumentValidator</c>, so at
+    /// most one positional is present and every option token is one the command declares.
     /// </summary>
     /// <param name="positionals">The positional tokens for the <c>version advance</c> command (from <c>CommandParameters.Positionals</c>).</param>
     /// <param name="options">The option tokens for the <c>version advance</c> command (from <c>CommandParameters.Options</c>).</param>
-    /// <param name="config">The Buildvana configuration whose <c>release</c> section layers between the flags and the defaults.</param>
     /// <returns>The parsed settings.</returns>
     /// <exception cref="BuildFailedException">An option value is invalid.</exception>
-    public static VersionAdvanceSettings Parse(IReadOnlyList<string> positionals, IReadOnlyList<string> options, BuildvanaConfig config)
+    public static VersionAdvanceSettings Parse(IReadOnlyList<string> positionals, IReadOnlyList<string> options)
     {
         Guard.IsNotNull(positionals);
         Guard.IsNotNull(options);
-        Guard.IsNotNull(config);
         var reader = new CliOptionReader(options);
-        return new VersionAdvanceSettings(config.Release)
+        return new VersionAdvanceSettings
         {
             Change = positionals.Count > 0 ? positionals[0] : null,
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
@@ -97,9 +87,4 @@ internal sealed class VersionAdvanceSettings
             ? value
             : throw new BuildFailedException($"Invalid value '{Change}' for CHANGE. Valid values: none, unstable, stable, minor, major.");
     }
-
-    /// <summary>
-    /// Returns <see cref="CheckPublicApi"/> if set, otherwise <c>release.checkPublicApi</c>, otherwise <see langword="true"/>.
-    /// </summary>
-    public bool ResolveCheckPublicApi() => CheckPublicApi ?? _releaseConfig?.CheckPublicApi ?? true;
 }

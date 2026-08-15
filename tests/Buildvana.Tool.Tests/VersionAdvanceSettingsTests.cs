@@ -3,7 +3,6 @@
 
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
-using Buildvana.Runtime;
 using Buildvana.Tool.Subcommands;
 
 internal sealed class VersionAdvanceSettingsTests
@@ -13,7 +12,7 @@ internal sealed class VersionAdvanceSettingsTests
     {
         var settings = Parse([], []);
         await Assert.That(settings.ResolveChange()).IsEqualTo(VersionSpecChange.None);
-        await Assert.That(settings.ResolveCheckPublicApi()).IsTrue();
+        await Assert.That(settings.CheckPublicApi).IsNull();
         await Assert.That(settings.Force).IsFalse();
     }
 
@@ -34,8 +33,8 @@ internal sealed class VersionAdvanceSettingsTests
     [Test]
     public async Task Parse_ReadsCheckPublicApi_SpaceAndInlineForms()
     {
-        await Assert.That(Parse([], ["--check-public-api", "false"]).ResolveCheckPublicApi()).IsFalse();
-        await Assert.That(Parse([], ["--check-public-api=false"]).ResolveCheckPublicApi()).IsFalse();
+        await Assert.That(Parse([], ["--check-public-api", "false"]).CheckPublicApi).IsFalse();
+        await Assert.That(Parse([], ["--check-public-api=false"]).CheckPublicApi).IsFalse();
     }
 
     [Test]
@@ -45,25 +44,11 @@ internal sealed class VersionAdvanceSettingsTests
     }
 
     [Test]
-    public async Task ResolveCheckPublicApi_ReadsReleaseConfig_WhenFlagAbsent()
-    {
-        var config = new BuildvanaConfig { Release = new() { CheckPublicApi = false } };
-        await Assert.That(Parse([], [], config).ResolveCheckPublicApi()).IsFalse();
-    }
-
-    [Test]
-    public async Task ResolveCheckPublicApi_FlagWins_OverReleaseConfig()
-    {
-        var config = new BuildvanaConfig { Release = new() { CheckPublicApi = false } };
-        await Assert.That(Parse([], ["--check-public-api", "true"], config).ResolveCheckPublicApi()).IsTrue();
-    }
-
-    [Test]
     public async Task Parse_Throws_OnInvalidBool()
     {
         await Assert.That(() => Parse([], ["--check-public-api", "maybe"])).Throws<BuildFailedException>();
     }
 
-    private static VersionAdvanceSettings Parse(string[] positionals, string[] options, BuildvanaConfig? config = null)
-        => VersionAdvanceSettings.Parse(positionals, options, config ?? new BuildvanaConfig());
+    private static VersionAdvanceSettings Parse(string[] positionals, string[] options)
+        => VersionAdvanceSettings.Parse(positionals, options);
 }

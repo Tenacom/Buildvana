@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
@@ -28,4 +29,11 @@ public sealed record CommandLineOverrides
 
     /// <summary>Gets the dogfooding override (<c>--dogfood</c>).</summary>
     public bool? Dogfood { get; init; }
+
+    /// <summary>
+    /// Gets the arguments forwarded after the <c>--</c> separator, or <see langword="null"/> when none were.
+    /// The factory appends them to the resolved arguments of the pipeline commands (<c>restore</c>,
+    /// <c>build</c>, <c>test</c>, <c>pack</c>), never to <c>dotnet nuget push</c>.
+    /// </summary>
+    public IReadOnlyList<string>? ForwardedArgs { get; init; }
 }
