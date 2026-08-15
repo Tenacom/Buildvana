@@ -51,11 +51,16 @@ internal sealed class ComputeVersionTests
     [Test]
     public async Task Execute_WithConfigurationFile_HonorsVersioningSettings()
     {
+        const string config = """
+            {
+              "release": { "branches": ["^rel$"] },
+              "versioning": { "prereleaseTag": "preview", "assemblyVersionPrecision": "minor" }
+            }
+            """;
+
         using var repo = new TempGitRepo();
         repo.WriteFile("VERSION", "1.2-x\n");
-        repo.WriteFile(
-            "buildvana.json",
-            """{ "release": { "branches": ["^rel$"] }, "versioning": { "prereleaseTag": "preview", "assemblyVersionPrecision": "minor" } }""");
+        repo.WriteFile("buildvana.json", config);
         repo.CommitAll();
         repo.CheckoutNewBranch("rel");
         var task = RunTask(repo);
@@ -78,8 +83,8 @@ internal sealed class ComputeVersionTests
         var second = RunTask(repo, secondEngine);
 
         // Computing the version reports it; a cache hit computes nothing and stays silent.
-        await Assert.That(firstEngine.Messages.Count(m => m.Message!.Contains("Computed version 1.2.1", StringComparison.Ordinal))).IsEqualTo(1);
-        await Assert.That(secondEngine.Messages.Count(m => m.Message!.Contains("Computed version 1.2.1", StringComparison.Ordinal))).IsEqualTo(0);
+        await Assert.That(CountVersionMessages(firstEngine, "1.2.1")).IsEqualTo(1);
+        await Assert.That(CountVersionMessages(secondEngine, "1.2.1")).IsEqualTo(0);
         await Assert.That(second.SemVer).IsEqualTo("1.2.1");
         await Assert.That(second.Height).IsEqualTo(1);
     }
@@ -97,7 +102,7 @@ internal sealed class ComputeVersionTests
         var second = RunTask(repo, engine);
         await Assert.That(second.Height).IsEqualTo(2);
         await Assert.That(second.SemVer).IsEqualTo("1.2.2");
-        await Assert.That(engine.Messages.Count(m => m.Message!.Contains("Computed version 1.2.2", StringComparison.Ordinal))).IsEqualTo(1);
+        await Assert.That(CountVersionMessages(engine, "1.2.2")).IsEqualTo(1);
     }
 
     [Test]
@@ -124,4 +129,7 @@ internal sealed class ComputeVersionTests
         _ = task.Execute();
         return task;
     }
+
+    private static int CountVersionMessages(RecordingBuildEngine engine, string semVer)
+        => engine.Messages.Count(m => m.Message!.Contains($"Computed version {semVer}", StringComparison.Ordinal));
 }
