@@ -172,7 +172,8 @@ internal sealed class BuildvanaConfigFactoryTests
     }
 
     // Forwarded arguments are a last tier: they must win over configured ones, so they cannot simply be
-    // part of dotnet.all, which composes first. They reach the pipeline commands only.
+    // part of dotnet.all, which composes first. They reach the pipeline commands only, and arrive with the
+    // tokens bv owns (`-c`/`--configuration`) already promoted and stripped by the parser.
     [Test]
     public async Task Create_ForwardedArgs_AppendToPipelineCommandsOnly()
     {
@@ -184,14 +185,14 @@ internal sealed class BuildvanaConfigFactoryTests
                 Pack = new() { Args = ["--pack-arg"] },
             },
         };
-        var commandLine = new CommandLineOverrides { ForwardedArgs = ["-c", "Debug"] };
+        var commandLine = new CommandLineOverrides { ForwardedArgs = ["-m:8"] };
 
         var config = BuildvanaConfigFactory.Create(json, commandLine);
 
-        await Assert.That(string.Join('|', config.DotNet.Restore.Args)).IsEqualTo("-common|-c|Debug");
-        await Assert.That(string.Join('|', config.DotNet.Build.Args)).IsEqualTo("-common|-c|Debug");
-        await Assert.That(string.Join('|', config.DotNet.Test.Args)).IsEqualTo("-common|-c|Debug");
-        await Assert.That(string.Join('|', config.DotNet.Pack.Args)).IsEqualTo("-common|--pack-arg|-c|Debug");
+        await Assert.That(string.Join('|', config.DotNet.Restore.Args)).IsEqualTo("-common|-m:8");
+        await Assert.That(string.Join('|', config.DotNet.Build.Args)).IsEqualTo("-common|-m:8");
+        await Assert.That(string.Join('|', config.DotNet.Test.Args)).IsEqualTo("-common|-m:8");
+        await Assert.That(string.Join('|', config.DotNet.Pack.Args)).IsEqualTo("-common|--pack-arg|-m:8");
         await Assert.That(string.Join('|', config.DotNet.NugetPush.Args)).IsEqualTo("-common");
         await Assert.That(string.Join('|', config.DotNet.All.Args)).IsEqualTo("-common");
     }

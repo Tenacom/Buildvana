@@ -39,6 +39,7 @@ internal sealed class CommandLineOverridesParserTests
         await Assert.That(overrides.Configuration).IsEqualTo("Debug");
     }
 
+    // Both spellings are bv's own, so both are consumed: nothing is left to forward.
     [Test]
     public async Task Parse_LastForwardedConfigurationWins()
     {
@@ -46,10 +47,12 @@ internal sealed class CommandLineOverridesParserTests
             Parameters(forwarded: ["-c", "A", "--configuration=B"]));
 
         await Assert.That(overrides.Configuration).IsEqualTo("B");
+        await Assert.That(overrides.ForwardedArgs).IsNull();
     }
 
     // The two sources cannot coexist in a real invocation (release rejects `--`, pipeline commands reject
-    // `-c` before it), but the precedence is pinned anyway: bv's own surface wins.
+    // `-c` before it), but the precedence is pinned anyway: bv's own surface wins. The forwarded occurrence
+    // is consumed regardless, so the stream never carries the option onward.
     [Test]
     public async Task Parse_OptionConfiguration_WinsOverForwarded()
     {
@@ -57,17 +60,40 @@ internal sealed class CommandLineOverridesParserTests
             Parameters(options: ["-c", "FromOptions"], forwarded: ["-c", "FromForwarded"]));
 
         await Assert.That(overrides.Configuration).IsEqualTo("FromOptions");
+        await Assert.That(overrides.ForwardedArgs).IsNull();
     }
 
-    // Reading the configuration must not consume it: the forwarded arguments reach `dotnet` verbatim.
+    // bv owns `-c`/`--configuration` in the forwarded stream: the recognized tokens are promoted and
+    // stripped, and only the remainder reaches `dotnet` (`dotnet restore` would reject `-c`).
     [Test]
-    public async Task Parse_CapturesForwardedArgsVerbatim()
+    public async Task Parse_StripsConfigurationTokens_FromForwardedArgs()
     {
         var overrides = CommandLineOverridesParser.Parse(
             Parameters(forwarded: ["-c", "Debug", "--no-incremental"]));
 
+        await Assert.That(overrides.Configuration).IsEqualTo("Debug");
         await Assert.That(overrides.ForwardedArgs).IsNotNull();
-        await Assert.That(string.Join('|', overrides.ForwardedArgs!)).IsEqualTo("-c|Debug|--no-incremental");
+        await Assert.That(string.Join('|', overrides.ForwardedArgs!)).IsEqualTo("--no-incremental");
+    }
+
+    [Test]
+    public async Task Parse_KeepsOtherForwardedArgsVerbatim()
+    {
+        var overrides = CommandLineOverridesParser.Parse(
+            Parameters(forwarded: ["-m:8", "-v:minimal"]));
+
+        await Assert.That(overrides.Configuration).IsNull();
+        await Assert.That(overrides.ForwardedArgs).IsNotNull();
+        await Assert.That(string.Join('|', overrides.ForwardedArgs!)).IsEqualTo("-m:8|-v:minimal");
+    }
+
+    // The cost of ownership: a trailing `-c` that was meant as another forwarded option's value is read
+    // as bv's own option with its value missing.
+    [Test]
+    public async Task Parse_Throws_OnTrailingForwardedConfiguration()
+    {
+        await Assert.That(() => CommandLineOverridesParser.Parse(Parameters(forwarded: ["--treenode-filter", "-c"])))
+            .Throws<BuildFailedException>();
     }
 
     [Test]
