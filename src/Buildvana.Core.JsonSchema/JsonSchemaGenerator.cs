@@ -30,9 +30,10 @@ namespace Buildvana.Core.JsonSchema;
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
 /// different model than the one described — a resolved domain model carrying the defaults of a wire model,
 /// say. Object-valued properties recurse; collections and null values state no default; and a property
-/// carrying <see cref="JsonSchemaNoDefaultAttribute"/> is skipped, for defaults too dynamic to state
-/// statically. The <c>default</c> keyword is an annotation for editors and documentation; validation never
-/// fills it in.</para>
+/// carrying <see cref="JsonSchemaNoDefaultAttribute"/> is skipped — for defaults too dynamic to state
+/// statically, or wire-only members with no domain counterpart. A schema property the defaults instance has
+/// no matching property for is an error, never a silent skip. The <c>default</c> keyword is an annotation
+/// for editors and documentation; validation never fills it in.</para>
 /// <para><see cref="System.Text.Json"/> marks every reference-type dictionary value and collection element
 /// nullable regardless of how the model annotates it, so the generator reconciles that against the declared
 /// nullability read from the owning property or field via <see cref="NullabilityInfoContext"/>. This requires
@@ -343,6 +344,9 @@ public static class JsonSchemaGenerator
     // Annotates the schema's property subschemas with "default" keywords read from a defaults instance,
     // matching members by resolved JSON name on both sides. A [JsonAllowedKeys] dictionary also carries
     // "properties", but its keys name no member of the schema type, so its entries fall through harmlessly.
+    // A schema member the defaults instance cannot answer for, though, is an error, not a skip: matching is
+    // by name alone, so silently dropping the miss is how a rename on either side of a model pair would cost
+    // a whole section its defaults without any signal.
     private static void ApplyDefaults(JsonObject schema, Type schemaType, object defaults, JsonSerializerOptions options)
     {
         if (schema["properties"] is not JsonObject properties)
@@ -364,7 +368,11 @@ public static class JsonSchemaGenerator
                 continue;
             }
 
-            var value = FindPropertyByJsonName(defaults.GetType(), jsonName, options)?.GetValue(defaults);
+            var defaultsProperty = FindPropertyByJsonName(defaults.GetType(), jsonName, options)
+                ?? throw new InvalidOperationException(
+                    $"The defaults type '{defaults.GetType()}' has no property whose JSON name is '{jsonName}'. "
+                    + "Annotate the schema property with [JsonSchemaNoDefault] if it deliberately has no default.");
+            var value = defaultsProperty.GetValue(defaults);
             if (value is null)
             {
                 continue;

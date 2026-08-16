@@ -36,9 +36,11 @@ public sealed record BuildvanaJsonConfig
     /// <summary>Gets the URI of the JSON schema describing this file.</summary>
     /// <remarks>
     /// <para>This member exists only so that a <c>$schema</c> reference does not trip unmapped-member rejection;
-    /// it carries no configuration meaning.</para>
+    /// it carries no configuration meaning and — being wire-only — has no domain counterpart, so it opts out
+    /// of default annotation.</para>
     /// </remarks>
     [JsonPropertyName("$schema")]
+    [JsonSchemaNoDefault]
     [Description("URI of the JSON schema describing this file.")]
     public string? Schema { get; init; }
 

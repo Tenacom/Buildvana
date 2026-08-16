@@ -129,6 +129,16 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(dynamic["default"]).IsNull();
     }
 
+    // A defaults instance that cannot answer for a schema member is a modeling error: matching is by JSON
+    // name alone, so skipping the miss is how a rename on either side of a model pair would silently cost a
+    // whole section its defaults.
+    [Test]
+    public async Task Generate_WithDefaults_ThrowsOnUnmatchedSchemaProperty()
+    {
+        await Assert.That(() => JsonSchemaGenerator.Generate<RequiredSample>(Options, defaults: new DefaultsValuesSample()))
+            .Throws<InvalidOperationException>();
+    }
+
     [Test]
     public async Task Generate_WithDefaults_StatesNoDefaultForCollections()
     {
