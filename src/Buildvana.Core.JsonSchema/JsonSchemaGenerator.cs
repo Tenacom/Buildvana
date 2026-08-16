@@ -71,7 +71,11 @@ public static class JsonSchemaGenerator
     /// schema, or <see langword="null"/> to emit none. Matched to schema properties by JSON name, so it does
     /// not have to be of the described type; see the remarks.</param>
     /// <returns>The schema as a <see cref="JsonNode"/>.</returns>
-    public static JsonNode Generate(Type type, JsonSerializerOptions options, string? title = null, object? defaults = null)
+    public static JsonNode Generate(
+        Type type,
+        JsonSerializerOptions options,
+        string? title = null,
+        object? defaults = null)
     {
         ArgumentNullException.ThrowIfNull(type);
         ArgumentNullException.ThrowIfNull(options);
@@ -347,7 +351,11 @@ public static class JsonSchemaGenerator
     // A schema member the defaults instance cannot answer for, though, is an error, not a skip: matching is
     // by name alone, so silently dropping the miss is how a rename on either side of a model pair would cost
     // a whole section its defaults without any signal.
-    private static void ApplyDefaults(JsonObject schema, Type schemaType, object defaults, JsonSerializerOptions options)
+    private static void ApplyDefaults(
+        JsonObject schema,
+        Type schemaType,
+        object defaults,
+        JsonSerializerOptions options)
     {
         if (schema["properties"] is not JsonObject properties)
         {
