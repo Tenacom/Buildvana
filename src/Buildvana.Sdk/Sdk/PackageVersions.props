@@ -11,7 +11,7 @@
     <BV_PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <BV_PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <BV_PackageVersion Include="Tools.InnoDownloadPlugin" Version="1.5.1" />
-    <BV_PackageVersion Include="Tools.InnoSetup" Version="7.0.2" />
+    <BV_PackageVersion Include="Tools.InnoSetup" Version="7.1.0" />
   </ItemGroup>
 
 </Project>
