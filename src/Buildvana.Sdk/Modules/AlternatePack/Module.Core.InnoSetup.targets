@@ -13,10 +13,6 @@
                          IncludeAssets="build"
                          ExcludeAssets="runtime"
                          PrivateAssets="all" />
-    <BV_PackageReference Include="Tools.InnoDownloadPlugin"
-                         IncludeAssets="build"
-                         ExcludeAssets="runtime"
-                         PrivateAssets="all" />
   </ItemGroup>
 
   <!-- Call UseInnoSetup target as part of alternate pack.-->
