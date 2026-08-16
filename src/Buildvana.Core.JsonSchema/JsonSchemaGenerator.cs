@@ -19,7 +19,8 @@ namespace Buildvana.Core.JsonSchema;
 /// model carries: <see cref="DescriptionAttribute"/>, <see cref="JsonNullableAttribute"/>,
 /// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonSchemaNoDefaultAttribute"/>, and
 /// <see cref="JsonSchemaTitleAttribute"/>. C# <c>required</c> members surface as the schema's
-/// <c>required</c> keyword, courtesy of the underlying exporter.
+/// <c>required</c> keyword, courtesy of the underlying exporter; required string members additionally gain
+/// <c>minLength</c> and <c>pattern</c> constraints demanding a non-blank value.
 /// </summary>
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
@@ -125,6 +126,14 @@ public static class JsonSchemaGenerator
             RemoveNullFromEnum(ownSchema);
         }
 
+        // A required string member must state an actual value: an empty or all-whitespace string satisfies
+        // the `required` keyword (which only checks presence) while carrying no value, so required strings
+        // are additionally constrained to at least one non-whitespace character.
+        if (context.PropertyInfo is { IsRequired: true } && schema is JsonObject requiredSchema)
+        {
+            RequireNonBlankString(requiredSchema);
+        }
+
         // Reconcile the nullability the exporter put on this property's values and elements with what the
         // model actually declares (string vs string?), recursing through nested generics. This runs before
         // ConstrainKeys so the keys it clones inherit the corrected value schema.
@@ -145,6 +154,27 @@ public static class JsonSchemaGenerator
 
         return schema;
     }
+
+    // minLength catches the empty string with a clear message; pattern catches all-whitespace values, which
+    // minLength alone would accept. Schemas that do not describe a string are left untouched.
+    private static void RequireNonBlankString(JsonObject schema)
+    {
+        if (!SchemaTypeIncludesString(schema))
+        {
+            return;
+        }
+
+        schema["minLength"] = 1;
+        schema["pattern"] = @"\S";
+    }
+
+    private static bool SchemaTypeIncludesString(JsonObject schema)
+        => schema["type"] switch
+        {
+            JsonValue value => value.GetValue<string>() == "string",
+            JsonArray array => array.Any(static t => t?.GetValue<string>() == "string"),
+            _ => false,
+        };
 
     private static NullabilityInfo? CreateNullabilityInfo(NullabilityInfoContext context, MemberInfo member)
         => member switch

@@ -263,6 +263,45 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
     }
 
+    // `required` alone checks presence, so a stated-but-blank member would satisfy it while carrying no
+    // value: the schema also constrains required strings to non-blank, and a blank one fails at
+    // configuration load instead of surfacing downstream (at push time, or inside .git/config).
+    [Test]
+    public async Task Config_EmptyFeedSource_ReportsBV1106()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "nuget": { "feeds": { "release": { "source": "", "apiKeyEnv": "KEY" } } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1106");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task Config_WhitespaceIdentityName_ReportsBV1107()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "git": { "identity": { "name": " ", "email": "bot@buildvana.invalid" } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1107");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     // A configuration file under a subdirectory — the .buildvana directory included — is not the
     // configuration file: the file lives in the home directory itself.
     [Test]

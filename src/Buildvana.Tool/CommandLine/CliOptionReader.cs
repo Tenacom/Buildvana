@@ -17,7 +17,8 @@ namespace Buildvana.Tool.CommandLine;
 /// <remarks>
 /// <para>Matching is case-insensitive across long and short names. Value options accept both the inline
 /// <c>--name=value</c> form and the space-separated <c>--name value</c> form. When a name appears more than once
-/// the last value wins, mirroring the pre-existing global-option behavior.</para>
+/// the last value wins, mirroring the pre-existing global-option behavior. A blank or all-whitespace value is
+/// not a value: supplying one fails exactly like supplying none.</para>
 /// </remarks>
 internal sealed class CliOptionReader
 {
@@ -73,7 +74,7 @@ internal sealed class CliOptionReader
     /// <returns>The parsed value of the last occurrence of the option, or <see langword="null"/> if it was
     /// absent.</returns>
     /// <exception cref="BuildFailedException">The option was given in space-separated form with no following
-    /// value, or its value is neither <c>true</c> nor <c>false</c>.</exception>
+    /// value, or its value is blank, or its value is neither <c>true</c> nor <c>false</c>.</exception>
     public bool? ReadBoolValue(string longName, string? shortName = null)
     {
         var raw = ReadValue(longName, shortName);
@@ -89,7 +90,8 @@ internal sealed class CliOptionReader
     /// <param name="longName">The long name, including the leading <c>"--"</c>.</param>
     /// <param name="shortName">The short name, including the leading <c>'-'</c>, or <see langword="null"/>.</param>
     /// <returns>The last value supplied for the option, or <see langword="null"/> if it was absent.</returns>
-    /// <exception cref="BuildFailedException">The option was given in space-separated form with no following value.</exception>
+    /// <exception cref="BuildFailedException">The option was given in space-separated form with no following
+    /// value, or its value is blank.</exception>
     public string? ReadValue(string longName, string? shortName = null)
     {
         Guard.IsNotNullOrEmpty(longName);
@@ -105,14 +107,14 @@ internal sealed class CliOptionReader
                     throw new BuildFailedException($"Option '{token}' requires a value.");
                 }
 
-                result = _tokens[i + 1];
+                result = ReadTokenValue(token, _tokens[i + 1]);
                 _tokens.RemoveRange(i, 2);
                 continue;
             }
 
             if (TryMatchInline(token, longName, shortName, out var inlineValue))
             {
-                result = inlineValue;
+                result = ReadTokenValue(token, inlineValue);
                 _tokens.RemoveAt(i);
                 continue;
             }
@@ -128,6 +130,20 @@ internal sealed class CliOptionReader
         var isLong = string.Equals(token, longName, StringComparison.OrdinalIgnoreCase);
         var isShort = shortName is not null && string.Equals(token, shortName, StringComparison.OrdinalIgnoreCase);
         return isLong || isShort;
+    }
+
+    // A blank value is not a value: `-c=` and `-c ""` fail exactly like a trailing `-c` with nothing after
+    // it. The message names the option alone, stripping the inline form's `=value` part off the token.
+    private static string ReadTokenValue(string token, string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        var separatorIndex = token.IndexOf('=', StringComparison.Ordinal);
+        var name = separatorIndex < 0 ? token : token[..separatorIndex];
+        throw new BuildFailedException($"Option '{name}' requires a value.");
     }
 
     private static bool TryMatchInline(string token, string longName, string? shortName, out string value)

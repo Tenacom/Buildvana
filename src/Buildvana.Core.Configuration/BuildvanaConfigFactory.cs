@@ -54,7 +54,9 @@ public static class BuildvanaConfigFactory
         var forwardedArgs = commandLine?.ForwardedArgs;
         return new DotNetConfig
         {
-            Configuration = commandLine?.Configuration ?? json?.Configuration ?? defaults.Configuration,
+            Configuration = NormalizeBlankToNull(commandLine?.Configuration)
+                ?? NormalizeBlankToNull(json?.Configuration)
+                ?? defaults.Configuration,
             All = all,
             Restore = ComposeInvocation(json?.Restore, all, forwardedArgs),
             Build = ComposeInvocation(json?.Build, all, forwardedArgs),
@@ -105,24 +107,27 @@ public static class BuildvanaConfigFactory
         return new ReleaseConfig
         {
             Branches = json?.Branches ?? defaults.Branches,
-            Configuration = commandLine?.Configuration ?? json?.Configuration ?? dotNet.Configuration,
+            Configuration = NormalizeBlankToNull(commandLine?.Configuration)
+                ?? NormalizeBlankToNull(json?.Configuration)
+                ?? dotNet.Configuration,
             CheckPublicApi = commandLine?.CheckPublicApi ?? json?.CheckPublicApi ?? defaults.CheckPublicApi,
             ChangelogUpdates = json?.ChangelogUpdates ?? defaults.ChangelogUpdates,
+
+            // Blank substitute text would substitute nothing for nothing: normalized away, it fails the
+            // release with the same actionable message as a missing release.emptyChangelog.
             EmptyChangelog = NormalizeBlankToNull(json?.EmptyChangelog),
             Dogfood = commandLine?.Dogfood ?? json?.Dogfood ?? defaults.Dogfood,
         };
     }
-
-    // Text that is all whitespace would substitute nothing for nothing, so it counts as no substitute at all:
-    // the release fails with the same actionable message as when release.emptyChangelog is missing.
-    private static string? NormalizeBlankToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     private static VersioningConfig ComposeVersioning(VersioningJsonConfig? json)
     {
         var defaults = new VersioningConfig();
         return new VersioningConfig
         {
-            PrereleaseTag = json?.PrereleaseTag,
+            // A blank tag could never appear in a version, so it counts as not stated: prereleases are
+            // not allowed.
+            PrereleaseTag = NormalizeBlankToNull(json?.PrereleaseTag),
             AssemblyVersionPrecision = json?.AssemblyVersionPrecision ?? defaults.AssemblyVersionPrecision,
         };
     }
@@ -142,8 +147,8 @@ public static class BuildvanaConfigFactory
         };
     }
 
-    // The schema requires source and apiKeyEnv whenever a feed is stated, so a wire feed that reaches the
-    // factory carries both.
+    // The schema requires source and apiKeyEnv whenever a feed is stated, and forbids blank values for
+    // them, so a wire feed that reaches the factory carries both.
     private static NuGetFeedConfig? ComposeFeed(NuGetFeedJsonConfig? json)
         => json is null
             ? null
@@ -159,12 +164,12 @@ public static class BuildvanaConfigFactory
         var defaults = new GitHubConfig();
         return new GitHubConfig
         {
-            TokenEnv = json?.TokenEnv is { Length: > 0 } name ? name : defaults.TokenEnv,
+            TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
         };
     }
 
-    // The schema requires name and email whenever git.identity is stated, so a wire identity that reaches
-    // the factory carries both.
+    // The schema requires name and email whenever git.identity is stated, and forbids blank values for
+    // them, so a wire identity that reaches the factory carries both.
     private static GitConfig ComposeGit(GitJsonConfig? json)
         => new()
         {
@@ -172,4 +177,8 @@ public static class BuildvanaConfigFactory
                 ? new GitIdentityConfig { Name = identity.Name!, Email = identity.Email! }
                 : null,
         };
+
+    // Composition has one definition of "blank": text that is null, empty, or all whitespace is not a value.
+    // A blank optional member counts as not stated at all, so the next precedence tier applies.
+    private static string? NormalizeBlankToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 }

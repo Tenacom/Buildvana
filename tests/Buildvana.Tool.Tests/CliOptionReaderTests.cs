@@ -101,6 +101,21 @@ internal sealed class CliOptionReaderTests
             .Throws<BuildFailedException>();
     }
 
+    // A blank value is not a value: it fails exactly like a missing one.
+    [Test]
+    public async Task ReadValue_Throws_WhenInlineValueIsBlank()
+    {
+        await Assert.That(() => _ = new CliOptionReader(["-v="]).ReadValue("--verbosity", "-v"))
+            .Throws<BuildFailedException>();
+    }
+
+    [Test]
+    public async Task ReadValue_Throws_WhenSpaceFormValueIsWhitespace()
+    {
+        await Assert.That(() => _ = new CliOptionReader(["--verbosity", "   "]).ReadValue("--verbosity", "-v"))
+            .Throws<BuildFailedException>();
+    }
+
     [Test]
     public async Task ReadBoolValue_ReadsSpaceSeparatedForm()
     {

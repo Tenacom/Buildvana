@@ -23,4 +23,10 @@ public enum JsonSchemaErrorKind
 
     /// <summary>A value appeared where the schema allows none (a <c>false</c> schema).</summary>
     ValueNotAllowed,
+
+    /// <summary>A string value was shorter than the schema's <c>minLength</c>.</summary>
+    TooShort,
+
+    /// <summary>A string value did not match the schema's <c>pattern</c>.</summary>
+    PatternMismatch,
 }

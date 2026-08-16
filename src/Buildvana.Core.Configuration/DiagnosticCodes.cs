@@ -13,4 +13,6 @@ internal static class DiagnosticCodes
     public const string UnknownProperty = "BV1103";
     public const string MissingProperty = "BV1104";
     public const string ValueNotAllowed = "BV1105";
+    public const string TooShort = "BV1106";
+    public const string PatternMismatch = "BV1107";
 }

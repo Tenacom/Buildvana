@@ -197,6 +197,8 @@ public sealed class BuildvanaJsonConfigProvider
             JsonSchemaErrorKind.UnknownProperty => DiagnosticCodes.UnknownProperty,
             JsonSchemaErrorKind.MissingProperty => DiagnosticCodes.MissingProperty,
             JsonSchemaErrorKind.ValueNotAllowed => DiagnosticCodes.ValueNotAllowed,
+            JsonSchemaErrorKind.TooShort => DiagnosticCodes.TooShort,
+            JsonSchemaErrorKind.PatternMismatch => DiagnosticCodes.PatternMismatch,
             _ => throw new UnreachableException(),
         };
 }
