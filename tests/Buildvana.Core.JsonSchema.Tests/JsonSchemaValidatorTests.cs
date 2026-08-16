@@ -67,6 +67,48 @@ internal sealed class JsonSchemaValidatorTests
     }
 
     [Test]
+    public async Task Validate_EmptyStringUnderMinLength_ReportsTooShort()
+    {
+        var errors = Validate(
+            """{"type":"object","properties":{"name":{"type":"string","minLength":1,"pattern":"\\S"}}}""",
+            """{"name":""}""");
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.TooShort);
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/name");
+    }
+
+    [Test]
+    public async Task Validate_WhitespaceAgainstNonBlankPattern_ReportsPatternMismatch()
+    {
+        var errors = Validate(
+            """{"type":"object","properties":{"name":{"type":"string","minLength":1,"pattern":"\\S"}}}""",
+            """{"name":" "}""");
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.PatternMismatch);
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/name");
+    }
+
+    [Test]
+    public async Task Validate_NonBlankString_SatisfiesMinLengthAndPattern()
+    {
+        var errors = Validate(
+            """{"type":"object","properties":{"name":{"type":"string","minLength":1,"pattern":"\\S"}}}""",
+            """{"name":"x"}""");
+        await Assert.That(errors.Count).IsEqualTo(0);
+    }
+
+    // String keywords never fire on a value of another kind: that failure belongs to the type keyword.
+    [Test]
+    public async Task Validate_StringKeywords_IgnoreNonStrings()
+    {
+        var errors = Validate(
+            """{"type":"object","properties":{"name":{"type":"string","minLength":1,"pattern":"\\S"}}}""",
+            """{"name":42}""");
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.TypeMismatch);
+    }
+
+    [Test]
     public async Task Validate_ArrayItems_ReportPerElementPointers()
     {
         var errors = Validate(

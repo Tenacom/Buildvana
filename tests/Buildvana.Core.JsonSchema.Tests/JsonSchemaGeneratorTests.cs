@@ -149,8 +149,35 @@ internal sealed class JsonSchemaGeneratorTests
     {
         var schema = JsonSchemaGenerator.Generate<RequiredSample>(Options);
         var required = (JsonArray)schema["required"]!;
-        await Assert.That(required.Count).IsEqualTo(1);
+        await Assert.That(required.Count).IsEqualTo(2);
         await Assert.That(required[0]!.GetValue<string>()).IsEqualTo("must");
+        await Assert.That(required[1]!.GetValue<string>()).IsEqualTo("mustFlag");
+    }
+
+    // `required` only checks presence, so required strings are additionally constrained to non-blank
+    // values: minLength rejects the empty string, pattern rejects all-whitespace ones.
+    [Test]
+    public async Task Generate_ConstrainsRequiredStringsToNonBlank()
+    {
+        var must = JsonSchemaGenerator.Generate<RequiredSample>(Options)["properties"]!["must"]!;
+        await Assert.That(must["minLength"]!.GetValue<int>()).IsEqualTo(1);
+        await Assert.That(must["pattern"]!.GetValue<string>()).IsEqualTo(@"\S");
+    }
+
+    [Test]
+    public async Task Generate_LeavesOptionalStringsUnconstrained()
+    {
+        var may = JsonSchemaGenerator.Generate<RequiredSample>(Options)["properties"]!["may"]!;
+        await Assert.That(may["minLength"]).IsNull();
+        await Assert.That(may["pattern"]).IsNull();
+    }
+
+    [Test]
+    public async Task Generate_LeavesRequiredNonStringsUnconstrained()
+    {
+        var mustFlag = JsonSchemaGenerator.Generate<RequiredSample>(Options)["properties"]!["mustFlag"]!;
+        await Assert.That(mustFlag["minLength"]).IsNull();
+        await Assert.That(mustFlag["pattern"]).IsNull();
     }
 
     private static JsonNode Generate() => JsonSchemaGenerator.Generate<GeneratorSample>(Options);

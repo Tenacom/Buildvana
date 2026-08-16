@@ -193,11 +193,15 @@
               "properties": {
                 "source": {
                   "description": "Source URL of the NuGet feed.",
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "apiKeyEnv": {
                   "description": "Name of the environment variable that holds the feed API key.",
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 }
               },
               "required": [
@@ -212,11 +216,15 @@
               "properties": {
                 "source": {
                   "description": "Source URL of the NuGet feed.",
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "apiKeyEnv": {
                   "description": "Name of the environment variable that holds the feed API key.",
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 }
               },
               "required": [
@@ -253,11 +261,15 @@
           "properties": {
             "name": {
               "description": "Display name used as the Git author/committer.",
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
             },
             "email": {
               "description": "Email address used as the Git author/committer.",
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
             }
           },
           "required": [

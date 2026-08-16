@@ -7,18 +7,24 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace Buildvana.Core.JsonSchema;
 
 /// <summary>
 /// Validates a <see cref="JsonNode"/> against the subset of JSON Schema (draft 2020-12) keywords that
-/// <c>JsonSchemaGenerator</c> emits: <c>type</c>, <c>enum</c>, <c>properties</c>, <c>required</c>,
-/// <c>additionalProperties</c>, and <c>items</c>. Meta and annotation keywords such as <c>$schema</c>,
+/// <c>JsonSchemaGenerator</c> emits: <c>type</c>, <c>enum</c>, <c>minLength</c>, <c>pattern</c>,
+/// <c>properties</c>, <c>required</c>, <c>additionalProperties</c>, and <c>items</c>. Meta and annotation
+/// keywords such as <c>$schema</c>,
 /// <c>title</c>, <c>description</c>, and <c>default</c> are ignored: in particular, <c>default</c>
 /// documents a value for editors, and the validator never fills it in.
 /// </summary>
 public static class JsonSchemaValidator
 {
+    // Guards a pattern evaluation against catastrophic backtracking: schemas are usually repo-owned, but the
+    // validator is not entitled to assume so.
+    private static readonly TimeSpan PatternMatchTimeout = TimeSpan.FromSeconds(1);
+
     /// <summary>
     /// Generates the schema for <typeparamref name="T"/>, validates <paramref name="instance"/> against it, and
     /// resolves each error's source position from <paramref name="utf8Json"/> — so a caller supplies only the
@@ -49,7 +55,8 @@ public static class JsonSchemaValidator
     /// <param name="schema">The schema to validate against.</param>
     /// <returns>The validation errors found, or an empty list when <paramref name="instance"/> is valid.</returns>
     /// <exception cref="ArgumentException">
-    /// <paramref name="schema"/> is malformed: it contains an unresolvable or circular <c>$ref</c>.
+    /// <paramref name="schema"/> is malformed: it contains an unresolvable or circular <c>$ref</c>, or an
+    /// invalid <c>pattern</c> regular expression.
     /// </exception>
     public static IReadOnlyList<JsonSchemaValidationError> Validate(JsonNode? instance, JsonNode schema)
     {
@@ -73,7 +80,8 @@ public static class JsonSchemaValidator
     /// <see cref="JsonSchemaValidationError.Column"/>; an empty list when <paramref name="instance"/> is valid.
     /// </returns>
     /// <exception cref="ArgumentException">
-    /// <paramref name="schema"/> is malformed: it contains an unresolvable or circular <c>$ref</c>.
+    /// <paramref name="schema"/> is malformed: it contains an unresolvable or circular <c>$ref</c>, or an
+    /// invalid <c>pattern</c> regular expression.
     /// </exception>
     public static IReadOnlyList<JsonSchemaValidationError> Validate(
         JsonNode? instance,
@@ -135,6 +143,7 @@ public static class JsonSchemaValidator
 
         ValidateType(instance, schema, pointer, displayPath, errors);
         ValidateEnum(instance, schema, pointer, displayPath, errors);
+        ValidateString(instance, schema, pointer, displayPath, errors);
         ValidateObject(instance, schema, pointer, displayPath, root, errors);
         ValidateArray(instance, schema, pointer, displayPath, root, errors);
     }
@@ -236,6 +245,54 @@ public static class JsonSchemaValidator
             displayPath,
             $"{RenderValue(instance)} is not one of the allowed values: {rendered}."));
     }
+
+    // String keywords apply only to string values: a value of any other kind is the type keyword's failure
+    // to report, per JSON Schema semantics.
+    private static void ValidateString(
+        JsonNode? instance,
+        JsonObject schema,
+        string pointer,
+        string displayPath,
+        List<JsonSchemaValidationError> errors)
+    {
+        if (instance?.GetValueKind() is not JsonValueKind.String)
+        {
+            return;
+        }
+
+        var value = instance.GetValue<string>();
+        if (schema["minLength"] is JsonValue minLengthValue)
+        {
+            var minLength = minLengthValue.GetValue<int>();
+            if (CountCodePoints(value) < minLength)
+            {
+                var message = minLength == 1
+                    ? "The value must not be empty."
+                    : string.Create(CultureInfo.InvariantCulture, $"The value must be at least {minLength} characters long.");
+                errors.Add(new JsonSchemaValidationError(JsonSchemaErrorKind.TooShort, pointer, displayPath, message));
+
+                // At most one string error per value: an empty string violates a non-blank pattern too, and
+                // reporting both would state one mistake twice.
+                return;
+            }
+        }
+
+        if (schema["pattern"] is JsonValue patternValue)
+        {
+            var pattern = patternValue.GetValue<string>();
+            if (!Regex.IsMatch(value, pattern, RegexOptions.CultureInvariant, PatternMatchTimeout))
+            {
+                errors.Add(new JsonSchemaValidationError(
+                    JsonSchemaErrorKind.PatternMismatch,
+                    pointer,
+                    displayPath,
+                    $"{RenderValue(instance)} does not match the pattern '{pattern}'."));
+            }
+        }
+    }
+
+    // JSON Schema counts string length in Unicode code points, not in UTF-16 code units.
+    private static int CountCodePoints(string value) => value.EnumerateRunes().Count();
 
     private static void ValidateObject(
         JsonNode? instance,

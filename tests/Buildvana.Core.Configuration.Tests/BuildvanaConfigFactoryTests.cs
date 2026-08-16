@@ -118,12 +118,36 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(BuildvanaConfigFactory.Create(json, null).Release.EmptyChangelog).IsNull();
     }
 
+    // Blank text is never a value: a blank optional member counts as not stated, whichever source stated
+    // it, so the next precedence tier applies.
+    [Test]
+    public async Task Create_Configuration_BlankCountsAsNotStated()
+    {
+        var blankFile = new BuildvanaJsonConfig { DotNet = new() { Configuration = " " } };
+        await Assert.That(BuildvanaConfigFactory.Create(blankFile, null).DotNet.Configuration).IsEqualTo("Release");
+
+        var commandLine = new CommandLineOverrides { Configuration = string.Empty };
+        var file = new BuildvanaJsonConfig { DotNet = new() { Configuration = "Debug" } };
+        await Assert.That(BuildvanaConfigFactory.Create(file, commandLine).DotNet.Configuration).IsEqualTo("Debug");
+    }
+
+    // A blank tag could never appear in a version, so it counts as not stated: prereleases are not allowed.
+    [Test]
+    public async Task Create_PrereleaseTag_BlankCountsAsNotStated()
+    {
+        var json = new BuildvanaJsonConfig { Versioning = new() { PrereleaseTag = "  " } };
+        await Assert.That(BuildvanaConfigFactory.Create(json, null).Versioning.PrereleaseTag).IsNull();
+    }
+
     // A blank tokenEnv cannot name a variable, so the factory treats it as not stated.
     [Test]
     public async Task Create_TokenEnv_BlankFallsBackToDefault()
     {
-        var json = new BuildvanaJsonConfig { GitHub = new() { TokenEnv = string.Empty } };
-        await Assert.That(BuildvanaConfigFactory.Create(json, null).GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+        var empty = new BuildvanaJsonConfig { GitHub = new() { TokenEnv = string.Empty } };
+        await Assert.That(BuildvanaConfigFactory.Create(empty, null).GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+
+        var whitespace = new BuildvanaJsonConfig { GitHub = new() { TokenEnv = " \t " } };
+        await Assert.That(BuildvanaConfigFactory.Create(whitespace, null).GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
     }
 
     [Test]
