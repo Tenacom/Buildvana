@@ -35,5 +35,10 @@ public sealed record CommandLineOverrides
     /// The factory appends them to the resolved arguments of the pipeline commands (<c>restore</c>,
     /// <c>build</c>, <c>test</c>, <c>pack</c>), never to <c>dotnet nuget push</c>.
     /// </summary>
+    /// <remarks>
+    /// <para>The list carries no <c>-c</c>/<c>--configuration</c> tokens: whoever composes the overrides
+    /// promotes them into <see cref="Configuration"/> and strips them, because the remainder reaches every
+    /// pipeline command verbatim — <c>dotnet restore</c> included, which rejects the option.</para>
+    /// </remarks>
     public IReadOnlyList<string>? ForwardedArgs { get; init; }
 }
