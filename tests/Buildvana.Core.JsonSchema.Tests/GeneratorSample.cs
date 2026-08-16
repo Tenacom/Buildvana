@@ -7,7 +7,10 @@ using Buildvana.Core.JsonSchema;
 
 // A model that exercises every shaping attribute in one schema, for JsonSchemaGeneratorTests.
 [JsonSchemaTitle("Sample Title")]
-[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Reflected over by the schema generator under test; never instantiated.")]
+[SuppressMessage(
+    "Performance",
+    "CA1812:Avoid uninstantiated internal classes",
+    Justification = "Reflected over by the schema generator under test; never instantiated.")]
 internal sealed record GeneratorSample
 {
     // Nullable, no opt-in: the schema should drop "null" from the type.

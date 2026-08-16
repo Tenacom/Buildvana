@@ -4,7 +4,10 @@
 using System.Diagnostics.CodeAnalysis;
 
 // A nested section of DefaultsSchemaSample, proving that defaults emission recurses into objects.
-[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Reflected over by the schema generator under test; never instantiated.")]
+[SuppressMessage(
+    "Performance",
+    "CA1812:Avoid uninstantiated internal classes",
+    Justification = "Reflected over by the schema generator under test; never instantiated.")]
 internal sealed record DefaultsSchemaSection
 {
     public string? Inner { get; init; }

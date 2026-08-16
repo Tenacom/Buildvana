@@ -7,7 +7,10 @@ using Buildvana.Core.JsonSchema;
 // The type the schema is generated FROM in the defaults-emission tests: all-nullable, wire-model style.
 // Its defaults deliberately live on a different type (DefaultsValuesSample), so the tests prove that
 // matching is by JSON name, not by type identity.
-[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Reflected over by the schema generator under test; never instantiated.")]
+[SuppressMessage(
+    "Performance",
+    "CA1812:Avoid uninstantiated internal classes",
+    Justification = "Reflected over by the schema generator under test; never instantiated.")]
 internal sealed record DefaultsSchemaSample
 {
     public string? Text { get; init; }
