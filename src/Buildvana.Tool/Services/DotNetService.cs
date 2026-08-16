@@ -88,7 +88,11 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     /// <param name="restore"><see langword="true"/> to restore NuGet packages before building, <see langword="false"/> otherwise.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task BuildSolutionAsync(SolutionContext solution, string configuration, bool restore, CancellationToken cancellationToken = default)
+    public Task BuildSolutionAsync(
+        SolutionContext solution,
+        string configuration,
+        bool restore,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
@@ -119,7 +123,12 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     /// <param name="build"><see langword="true"/> to build the solution before testing, <see langword="false"/> otherwise.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task TestSolutionAsync(SolutionContext solution, string configuration, bool restore, bool build, CancellationToken cancellationToken = default)
+    public async Task TestSolutionAsync(
+        SolutionContext solution,
+        string configuration,
+        bool restore,
+        bool build,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
@@ -182,7 +191,8 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     }
 
     /// <summary>
-    /// Asynchronously runs the Pack target on the solution. This usually produces NuGet packages, but Buildvana SDK may hijack the target to produce, for example, setup executables.
+    /// Asynchronously runs the Pack target on the solution. This usually produces NuGet packages, but
+    /// Buildvana SDK may hijack the target to produce, for example, setup executables.
     /// </summary>
     /// <param name="solution">The solution to pack.</param>
     /// <param name="configuration">The MSBuild configuration to build.</param>
@@ -190,7 +200,12 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     /// <param name="build"><see langword="true"/> to build the solution before packing, <see langword="false"/> otherwise.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task PackSolutionAsync(SolutionContext solution, string configuration, bool restore, bool build, CancellationToken cancellationToken = default)
+    public Task PackSolutionAsync(
+        SolutionContext solution,
+        string configuration,
+        bool restore,
+        bool build,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
         Guard.IsNotNullOrEmpty(configuration);
@@ -296,7 +311,8 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         Guard.IsNotNull(feeds);
         return (isPrerelease ? feeds.Prerelease : feeds.Release)
             ?? throw new BuildFailedException(
-                "No NuGet feed is configured. Set 'nuget.feeds.release' (and optionally 'nuget.feeds.prerelease') in the configuration file.");
+                "No NuGet feed is configured. "
+                + "Set 'nuget.feeds.release' (and optionally 'nuget.feeds.prerelease') in the configuration file.");
     }
 
     /// <summary>
@@ -371,7 +387,8 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
     /// or already carry it.</param>
     /// <param name="outputStreaming">The output streaming configuration for the <c>dotnet</c> invocation.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned <c>dotnet</c> child process.</param>
-    /// <returns>A <see cref="Task{ProcessResult}"/> representing the ongoing operation, with a result describing child process outcome.</returns>
+    /// <returns>A <see cref="Task{ProcessResult}"/> representing the ongoing operation, with a result
+    /// describing child process outcome.</returns>
     private Task<ProcessResult> RunDotNetAsync(
         IReadOnlyList<string> args,
         DotNetInvocationConfig invocation,
