@@ -24,9 +24,9 @@ These packages and their versions are listed in `src/Buildvana.Sdk/Sdk/PackageVe
 
 Declared as MSBuild properties:
 
-- `Common.props` / `BV_MinRoslynVersion` — minimum Roslyn version (`major.minor`)
-- `Common.props` / `BV_MinRoslynVersionHint` — minimum Roslyn + VS version as diagnostic text
-- `Common.props` / `BV_SourceGeneratorsPackageFolder` — source generators package folder, derived from min Roslyn version
+- `Directory.Packages.props` / `BV_MinRoslynVersion` — minimum Roslyn version (`major.minor`)
+- `Directory.Packages.props` / `BV_MinRoslynVersionHint` — minimum Roslyn + VS version as diagnostic text
+- `Directory.Packages.props` / `BV_SourceGeneratorsPackageFolder` — source generators package folder, derived from min Roslyn version
 - `src/Buildvana.Sdk/Sdk/Sdk.props` / `BV_MinMSBuildVersion` — minimum MSBuild version (`major.minor`)
 
 ## Other dependencies
@@ -36,8 +36,10 @@ Declared as MSBuild properties:
 
 ## How to update dependencies
 
-- Update to the latest stable .NET SDK version in `global.json` if needed.
-- Use `dotnet tool update --local --all` to update .NET CLI tools.
-- Use `dotnet package list --outdated --format json` to check for outdated packages.
-  - If a dependent package is currently at a non-stable (preview) version, check if a stable version has been released before updating. If not, update to the latest preview version.
-- `BV_PackageVersion` items in `src/Buildvana.Sdk/Sdk/PackageVersions.props` must be checked one by one, using the procedure described in `nuget-version-lookup.md`. The .props file must be updated to reflect the new versions.
+Run `dotnet run tools/update-dependencies.cs` from the repository root. In one pass it updates the .NET SDK version in `global.json`, the local dotnet tools, the `PackageVersion` and `BV_PackageVersion` pins, and the three Roslyn floor properties; `dotnet run tools/update-dependencies.cs -- --check` reports what it would do without modifying anything. Package targets are resolved with the procedure described in `nuget-version-lookup.md`, which remains the manual procedure for one-off lookups.
+
+Rules the tool encodes, which hold for manual updates too:
+
+- A pin currently at a non-stable (preview) version tracks the latest prerelease of its own `major.minor` line; when that line goes quiet — no prerelease ahead of the pin — the latest stable takes over. A pin is never downgraded.
+- Do not update tools with `dotnet tool update --local --all`: for a tool pinned to a prerelease line (usually `bv` itself) it insists on the latest _stable_ — a downgrade — and fails the whole run refusing to do it. Update each tool with `dotnet tool update <id> --local --version <version>` instead.
+- The Roslyn floor properties derive from the `Microsoft.CodeAnalysis.Common` pin: `BV_MinRoslynVersion` is its `major.minor`, `BV_SourceGeneratorsPackageFolder` follows, and `BV_MinRoslynVersionHint` names the lowest released SDK feature band (and its paired Visual Studio version) shipping a compiler at least that new. To deliberately lower the floor, downgrade the `Microsoft.CodeAnalysis.*` pins first and re-run the tool.
