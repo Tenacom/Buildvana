@@ -230,15 +230,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         }
 
         var feed = ResolvePushFeed(_config.NuGet.Feeds, _version.IsPrerelease);
-        string apiKey;
-        try
-        {
-            apiKey = feed.GetApiKey();
-        }
-        catch (BuildvanaRuntimeException e)
-        {
-            throw new BuildFailedException(e.Message, e);
-        }
+        var apiKey = RuntimeAccess.Translate(feed.GetApiKey);
 
         foreach (var path in packages)
         {
