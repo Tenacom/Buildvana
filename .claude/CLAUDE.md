@@ -6,9 +6,7 @@ See `.claude/rules/` for project instructions.
 ## Repository
 
 - Upstream: `Tenacom/Buildvana` — issues, PRs, and releases live here. Default target for `gh` and `mcp__github__*` calls.
-- Fork (`origin`): `rdeago/Buildvana` — PR branches are pushed here.
-
-No need to run `git remote -v` to rediscover this.
+- PR branches are pushed to the contributor's own fork, which is the `origin` remote. Run `git remote -v` once per session if you need its name; do not assume it.
 
 ## Rules index
 

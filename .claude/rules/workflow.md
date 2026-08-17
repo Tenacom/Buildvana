@@ -34,7 +34,7 @@
 1. I tell you which issue must be solved
 2. You read the issue and make a plan
 3. We review the plan together
-4. You open a branch on my fork (rdeago) for the pull request
+4. You open a branch on my fork (the `origin` remote) for the pull request
 5. You write the code; I review before every commit. Always ensure the solution builds with zero errors and zero warnings and all tests (if any) pass.
 6. Sanity check. This gates _every_ push to the PR branch — follow-up commits (e.g., addressing review feedback) included, not just the final commit of the initial implementation:
    a. Execute `dotnet run .claude/tools/inspect.cs --gate`. It runs `dotnet bv pack` (build, tests, build artifacts) and, if that reported nothing, analyzes the whole solution with ReSharper at WARNING severity and above. Every diagnostic of either phase is reported as `path(line,col): severity ID: message`, and the tool exits non-zero if there was any.
