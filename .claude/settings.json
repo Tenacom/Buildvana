@@ -1,5 +1,6 @@
 {
- "enabledMcpjsonServers": [
+  "outputStyle": "simple-tech",
+  "enabledMcpjsonServers": [
     "github"
   ],
   "enableAllProjectMcpServers": true,
