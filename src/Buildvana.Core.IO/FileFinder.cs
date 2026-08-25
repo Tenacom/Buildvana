@@ -22,7 +22,10 @@ namespace Buildvana.Core.IO;
 /// deeper directory overrides its ancestors, and an ignored directory is pruned outright — which is also
 /// why a negation cannot re-include anything beneath one. No repository detection is involved:
 /// <c>.gitignore</c> files take effect wherever they are found, and the walk is the same inside and
-/// outside a Git repository. Beyond per-directory files, Git also reads patterns from
+/// outside a Git repository. The one name treated specially is <c>.git</c>: like Git itself
+/// (<c>dir.c</c>'s <c>treat_path</c>), the finder skips any entry so named — file or directory, at every
+/// level — before consulting any pattern, which is why no <c>.gitignore</c> ever needs to list it.
+/// Beyond per-directory files, Git also reads patterns from
 /// <c>$GIT_DIR/info/exclude</c> and <c>core.excludesFile</c>; both belong to one user's setup rather than
 /// to the repository's content, and the finder deliberately ignores them.</para>
 /// <para>Exclusion patterns passed to the constructor use the same syntax, anchored at the base directory,
@@ -117,6 +120,11 @@ public sealed class FileFinder
 
         foreach (var entry in GetEntries(directory))
         {
+            if (IsGitEntry(entry.Name))
+            {
+                continue;
+            }
+
             var isDirectory = entry is DirectoryInfo;
             components.Add(entry.Name);
             if (IsIncluded(components, gitignoreStack, isDirectory))
@@ -138,6 +146,16 @@ public sealed class FileFinder
         {
             gitignoreStack.RemoveAt(gitignoreStack.Count - 1);
         }
+    }
+
+    // Git never descends into ".git": dir.c's treat_path drops any entry so named, at every level, before
+    // consulting any pattern. The comparison honors the finder's case mode, as Git's fspathcmp honors
+    // core.ignoreCase. Matching by name rather than by kind also covers submodule and worktree gitlinks,
+    // where ".git" is a file.
+    private bool IsGitEntry(string name)
+    {
+        var comparison = _ignoresCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        return string.Equals(name, ".git", comparison);
     }
 
     private bool IsIncluded(
