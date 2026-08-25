@@ -317,6 +317,13 @@ internal sealed class JsonSchemaGeneratorTests
         => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedRecursiveSample>>(Options))
             .Throws<InvalidOperationException>();
 
+    // A polymorphic member renders as an "anyOf" the exporter emits on its own; a recursive branch inside it
+    // carries a "$ref" the guard must catch.
+    [Test]
+    public async Task Generate_ThrowsOnRecursivePolymorphicMember()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedPolymorphicSample>>(Options))
+            .Throws<InvalidOperationException>();
+
     // The generator refuses the models the converter refuses, through the shared resolve-and-validate step.
     [Test]
     public async Task Generate_ThrowsOnNonStringKeyProperty()
