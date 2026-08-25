@@ -239,7 +239,8 @@ partial class JsonKeyedObjectConverter
 
                 _keyJsonName = keyProperty.Name;
                 _valueJsonName = valuePropertyName is null ? null : GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
-                if (_valueJsonName is not null && _valueJsonName == _keyJsonName)
+                // A null _valueJsonName never equals _keyJsonName, which is non-null by this point.
+                if (_valueJsonName == _keyJsonName)
                 {
                     throw new InvalidOperationException(
                         $"{nameof(JsonKeyedObjectAttribute)} on type '{typeof(T)}' resolves its key and value properties "
