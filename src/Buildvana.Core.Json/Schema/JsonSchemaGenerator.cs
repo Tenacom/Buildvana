@@ -27,18 +27,17 @@ namespace Buildvana.Core.Json.Schema;
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
 /// schema always describes exactly what the deserializer accepts.</para>
-/// <para>An <see cref="IReadOnlyList{T}"/> whose element type carries <see cref="JsonKeyedObjectAttribute"/>
-/// renders as <c>type: object</c>, with <c>additionalProperties</c> describing the values: the value
-/// property's schema when the attribute names one, the object schema of the remaining members otherwise. In
-/// the latter shape the key property is forbidden inside the value object, because
-/// <see cref="JsonKeyedObjectConverter"/> refuses an element value that restates it. Such a list is
-/// dictionary-valued in JSON, so <see cref="JsonAllowedKeysAttribute"/> closes its key set the same way it
-/// closes a dictionary's. This rendering applies
-/// only when <see cref="JsonKeyedObjectConverter"/> is registered in the options: without it the list
-/// deserializes as a plain JSON array, which the schema then describes. A keyed-object list is
-/// still a collection: it states no <c>default</c>. An element type whose schema carries a <c>$ref</c>
-/// pointer is not supported — recursion, or the exporter's deduplication of a member type that occurs
-/// twice.</para>
+/// <para>When <see cref="JsonKeyedObjectConverter"/> is registered in the options, an
+/// <see cref="IReadOnlyList{T}"/> whose element type carries <see cref="JsonKeyedObjectAttribute"/> renders
+/// as <c>type: object</c>, with <c>additionalProperties</c> describing the values: the value property's
+/// schema when the attribute names one, the object schema of the remaining members otherwise. Without the
+/// converter the list deserializes as a plain JSON array, which the schema then describes. In the
+/// remaining-members shape the key property is forbidden inside the value object, because the converter
+/// refuses an element value that restates it. Such a list is dictionary-valued in JSON, so
+/// <see cref="JsonAllowedKeysAttribute"/> closes its key set the same way it closes a dictionary's. A
+/// keyed-object list is still a collection: it states no <c>default</c>. An element type whose schema
+/// carries a <c>$ref</c> pointer is not supported — recursion, or the exporter's deduplication of a member
+/// type that occurs twice.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
