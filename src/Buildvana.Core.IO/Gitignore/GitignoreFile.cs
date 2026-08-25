@@ -56,15 +56,16 @@ public sealed class GitignoreFile
     /// when no pattern matches.</returns>
     public GitignoreDecision Evaluate(ReadOnlySpan<string> pathComponents, bool isDirectory, bool ignoreCase)
     {
-        var decision = GitignoreDecision.None;
-        foreach (var pattern in _patterns)
+        // The last matching pattern decides, so scanning backwards can stop at the first match.
+        for (var i = _patterns.Length - 1; i >= 0; i--)
         {
+            var pattern = _patterns[i];
             if (pattern.Matches(pathComponents, isDirectory, ignoreCase))
             {
-                decision = pattern.IsNegated ? GitignoreDecision.Include : GitignoreDecision.Ignore;
+                return pattern.IsNegated ? GitignoreDecision.Include : GitignoreDecision.Ignore;
             }
         }
 
-        return decision;
+        return GitignoreDecision.None;
     }
 }
