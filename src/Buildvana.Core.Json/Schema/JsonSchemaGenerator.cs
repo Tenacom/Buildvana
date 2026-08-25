@@ -17,7 +17,8 @@ namespace Buildvana.Core.Json.Schema;
 /// <summary>
 /// Generates a JSON Schema (draft 2020-12) document from a .NET type, shaping the output from attributes the
 /// model carries: <see cref="DescriptionAttribute"/>, <see cref="JsonNullableAttribute"/>,
-/// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonSchemaNoDefaultAttribute"/>, and
+/// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonKeyedObjectAttribute"/>,
+/// <see cref="JsonSchemaNoDefaultAttribute"/>, and
 /// <see cref="JsonSchemaTitleAttribute"/>. C# <c>required</c> members surface as the schema's
 /// <c>required</c> keyword, courtesy of the underlying exporter; required string members additionally gain
 /// <c>minLength</c> and <c>pattern</c> constraints demanding a non-blank value.
@@ -25,6 +26,12 @@ namespace Buildvana.Core.Json.Schema;
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
 /// schema always describes exactly what the deserializer accepts.</para>
+/// <para>An <see cref="IReadOnlyList{T}"/> whose element type carries <see cref="JsonKeyedObjectAttribute"/>
+/// renders as <c>type: object</c>, with <c>additionalProperties</c> describing the values: the value
+/// property's schema when the attribute names one, the object schema of the remaining members otherwise. In
+/// the latter shape the key property is forbidden inside the value object, because
+/// <see cref="JsonKeyedObjectConverter"/> refuses an element value that restates it. A keyed-object list is
+/// still a collection: it states no <c>default</c>. Recursive element types are not supported.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
@@ -42,7 +49,7 @@ namespace Buildvana.Core.Json.Schema;
 /// recovered and the nullability emitted by the exporter is kept as-is. Wrap such a type in a containing
 /// object property to control the nullability of its values or elements.</para>
 /// </remarks>
-public static class JsonSchemaGenerator
+public static partial class JsonSchemaGenerator
 {
     private const string Dialect = "https://json-schema.org/draft/2020-12/schema";
 
@@ -80,12 +87,7 @@ public static class JsonSchemaGenerator
         ArgumentNullException.ThrowIfNull(type);
         ArgumentNullException.ThrowIfNull(options);
 
-        var nullabilityContext = new NullabilityInfoContext();
-        var exporterOptions = new JsonSchemaExporterOptions
-        {
-            TransformSchemaNode = (context, schema) => TransformSchemaNode(context, schema, nullabilityContext),
-        };
-        var schema = options.GetJsonSchemaAsNode(type, exporterOptions);
+        var schema = ExportSchema(type, options, new NullabilityInfoContext(), []);
         if (schema is not JsonObject root)
         {
             return schema;
@@ -107,14 +109,50 @@ public static class JsonSchemaGenerator
         return root;
     }
 
+    // One exporter invocation with this generator's transform attached. Also called per keyed-object element
+    // type, so nullability metadata and the in-progress cycle guard flow through every nesting level.
+    private static JsonNode ExportSchema(
+        Type type,
+        JsonSerializerOptions options,
+        NullabilityInfoContext nullabilityContext,
+        HashSet<Type> keyedTypesInProgress)
+    {
+        var exporterOptions = new JsonSchemaExporterOptions
+        {
+            TransformSchemaNode = (context, schema)
+                => TransformSchemaNode(context, schema, nullabilityContext, keyedTypesInProgress),
+        };
+        return options.GetJsonSchemaAsNode(type, exporterOptions);
+    }
+
     private static JsonNode TransformSchemaNode(
         JsonSchemaExporterContext context,
         JsonNode schema,
-        NullabilityInfoContext nullabilityContext)
+        NullabilityInfoContext nullabilityContext,
+        HashSet<Type> keyedTypesInProgress)
     {
         var attributeProvider = context.PropertyInfo is not null
             ? context.PropertyInfo.AttributeProvider
             : context.TypeInfo.Type;
+        var keepNull = attributeProvider?.IsDefined(typeof(JsonNullableAttribute), inherit: true) ?? false;
+
+        // A keyed-object list renders as an object, not an array. The exporter cannot see through the list's
+        // custom converter and emits an unconstrained node, so the node is replaced wholesale with a schema
+        // synthesized from the element type; the steps below shape what the exporter emitted and do not apply.
+        if (JsonKeyedObjectConverter.TryGetKeyedElementType(context.TypeInfo.Type) is { } keyedElementType)
+        {
+            var keyedSchema = CreateKeyedObjectSchema(
+                keyedElementType,
+                context.TypeInfo.Options,
+                nullabilityContext,
+                keyedTypesInProgress);
+            if (keepNull)
+            {
+                keyedSchema["type"] = new JsonArray("object", "null");
+            }
+
+            return ApplyDescription(attributeProvider, keyedSchema);
+        }
 
         schema = ApplyDescription(attributeProvider, schema);
 
@@ -124,7 +162,6 @@ public static class JsonSchemaGenerator
         // by the owning property below, because the exporter marks every reference-type value or element
         // nullable regardless of how the model actually declares it.
         var isValueOrElement = context.PropertyInfo is null && !context.Path.IsEmpty;
-        var keepNull = attributeProvider?.IsDefined(typeof(JsonNullableAttribute), inherit: true) ?? false;
         if (!isValueOrElement && !keepNull && schema is JsonObject ownSchema)
         {
             RemoveNullFromType(ownSchema);

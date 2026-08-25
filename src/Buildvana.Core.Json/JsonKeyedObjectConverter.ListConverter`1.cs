@@ -5,7 +5,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -122,21 +121,6 @@ partial class JsonKeyedObjectConverter
             writer.WriteEndObject();
         }
 
-        private static JsonPropertyInfo GetNamedProperty(JsonTypeInfo<T> typeInfo, string clrName, string role)
-        {
-            foreach (var property in typeInfo.Properties)
-            {
-                if (property.AttributeProvider is MemberInfo { Name: var name } && name == clrName)
-                {
-                    return property;
-                }
-            }
-
-            throw new InvalidOperationException(
-                $"Type '{typeof(T)}' has no serializable property '{clrName}', "
-                + $"which {nameof(JsonKeyedObjectAttribute)} names as its {role} property.");
-        }
-
         private void WriteElementJson(Utf8JsonWriter writer, string key, JsonElement value)
         {
             writer.WriteStartObject();
@@ -221,9 +205,7 @@ partial class JsonKeyedObjectConverter
             }
         }
 
-        // Also resolves the attribute's CLR property names against the type info's own properties: their Name
-        // is the JSON name the serializer will actually use, whatever naming policy, TypeInfoResolver
-        // (source-generated contexts included), or contract modifier produced it.
+        // Also resolves the attribute's CLR property names to JSON names, through the shared GetNamedProperty.
         private JsonTypeInfo<T> GetElementTypeInfo(JsonSerializerOptions options)
         {
             if (_elementTypeInfo is null)

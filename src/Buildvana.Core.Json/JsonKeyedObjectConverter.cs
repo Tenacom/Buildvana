@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Buildvana.Core.Json;
 
@@ -26,8 +27,7 @@ public sealed partial class JsonKeyedObjectConverter : JsonConverterFactory
 {
     /// <inheritdoc/>
     public override bool CanConvert(Type typeToConvert)
-        => TryGetElementType(typeToConvert) is { } elementType
-            && elementType.IsDefined(typeof(JsonKeyedObjectAttribute), inherit: false);
+        => TryGetKeyedElementType(typeToConvert) is not null;
 
     /// <inheritdoc/>
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
@@ -41,6 +41,32 @@ public sealed partial class JsonKeyedObjectConverter : JsonConverterFactory
         // reflection would silently disagree the moment a contract modifier renames a property.
         var converterType = typeof(ListConverter<>).MakeGenericType(elementType);
         return (JsonConverter)Activator.CreateInstance(converterType, attribute.KeyPropertyName, attribute.ValuePropertyName)!;
+    }
+
+    // Also serves JsonSchemaGenerator, which renders a keyed list from the same detection this factory
+    // converts it by, so the parser and the schema cannot drift apart.
+    internal static Type? TryGetKeyedElementType(Type type)
+        => TryGetElementType(type) is { } elementType && elementType.IsDefined(typeof(JsonKeyedObjectAttribute), inherit: false)
+            ? elementType
+            : null;
+
+    // Resolves one of the attribute's CLR property names against a type info's own properties: their Name is
+    // the JSON name the serializer will actually use, whatever naming policy, TypeInfoResolver
+    // (source-generated contexts included), or contract modifier produced it. Shared between ListConverter
+    // and JsonSchemaGenerator so both sides resolve names from one source.
+    internal static JsonPropertyInfo GetNamedProperty(JsonTypeInfo typeInfo, string clrName, string role)
+    {
+        foreach (var property in typeInfo.Properties)
+        {
+            if (property.AttributeProvider is MemberInfo { Name: var name } && name == clrName)
+            {
+                return property;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Type '{typeInfo.Type}' has no serializable property '{clrName}', "
+            + $"which {nameof(JsonKeyedObjectAttribute)} names as its {role} property.");
     }
 
     private static Type? TryGetElementType(Type type)

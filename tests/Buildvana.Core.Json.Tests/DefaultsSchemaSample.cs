@@ -30,5 +30,8 @@ internal sealed record DefaultsSchemaSample
     // Collections carry no default.
     public IReadOnlyList<string>? Tags { get; init; }
 
+    // Object-shaped in the schema, but still a collection: no default, and no recursion into it.
+    public IReadOnlyList<KeyedValueSample>? Policies { get; init; }
+
     public DefaultsSchemaSection? Section { get; init; }
 }
