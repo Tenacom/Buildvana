@@ -90,6 +90,9 @@ internal sealed class GitignorePatternMatchTests
     [Arguments("[[:foo]x", ":x", true)] // No ":]" closes the class: "[" becomes a literal member, ":foo" follow.
     [Arguments("[[:foo]x", "fx", true)]
     [Arguments("[[:foo]x", "bx", false)]
+    [Arguments("x[[:]y", "x[y", true)] // Empty class name: same fallback, members "[" and ":".
+    [Arguments("x[[:]y", "x:y", true)]
+    [Arguments("x[[:]y", "xay", false)]
     [Arguments("foo\\*bar", "foo*bar", true)]
     [Arguments("foo\\*bar", "fooxbar", false)]
     [Arguments("\\a", "a", true)] // gitignore(5): "\a" matches "a" even though nothing needs escaping.
