@@ -31,7 +31,9 @@ namespace Buildvana.Core.Json.Schema;
 /// renders as <c>type: object</c>, with <c>additionalProperties</c> describing the values: the value
 /// property's schema when the attribute names one, the object schema of the remaining members otherwise. In
 /// the latter shape the key property is forbidden inside the value object, because
-/// <see cref="JsonKeyedObjectConverter"/> refuses an element value that restates it. This rendering applies
+/// <see cref="JsonKeyedObjectConverter"/> refuses an element value that restates it. Such a list is
+/// dictionary-valued in JSON, so <see cref="JsonAllowedKeysAttribute"/> closes its key set the same way it
+/// closes a dictionary's. This rendering applies
 /// only when <see cref="JsonKeyedObjectConverter"/> is registered in the options: without it the list
 /// deserializes as a plain JSON array, which the schema then describes. A keyed-object list is
 /// still a collection: it states no <c>default</c>. Recursive element types are not supported.</para>
@@ -158,6 +160,13 @@ public static partial class JsonSchemaGenerator
             if (keepNull)
             {
                 keyedSchema["type"] = new JsonArray("object", "null");
+            }
+
+            // A keyed-object list is dictionary-valued in JSON, so [JsonAllowedKeys] closes its key set the
+            // same way it closes a dictionary's.
+            if (TryGetAllowedKeys(attributeProvider, out var allowedKeys))
+            {
+                ConstrainKeys(keyedSchema, allowedKeys);
             }
 
             return ApplyDescription(attributeProvider, keyedSchema);

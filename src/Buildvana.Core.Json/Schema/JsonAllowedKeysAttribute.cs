@@ -8,7 +8,8 @@ namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Constrains a dictionary-valued property to a fixed set of keys, so the generated schema rejects any other
-/// key (and an editor flags it).
+/// key (and an editor flags it). A keyed-object list renders as a JSON object, so it counts as
+/// dictionary-valued here.
 /// </summary>
 /// <param name="keys">
 /// A comma-separated list of the keys the dictionary is allowed to contain, in schema-output order. Surrounding

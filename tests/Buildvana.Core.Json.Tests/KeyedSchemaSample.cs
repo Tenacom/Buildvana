@@ -28,4 +28,8 @@ internal sealed record KeyedSchemaSample
     // Nullable with opt-in: the schema should keep "null" beside "object".
     [JsonNullable]
     public IReadOnlyList<KeyedValueSample>? MaybePolicies { get; init; }
+
+    // Dictionary-valued in JSON, so [JsonAllowedKeys] closes its key set.
+    [JsonAllowedKeys("first, second")]
+    public IReadOnlyList<KeyedValueSample>? LimitedPolicies { get; init; }
 }
