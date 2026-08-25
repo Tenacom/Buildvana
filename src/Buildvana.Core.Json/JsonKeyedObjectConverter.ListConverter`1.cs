@@ -23,7 +23,9 @@ partial class JsonKeyedObjectConverter
         "Performance",
         "CA1812:Avoid uninstantiated internal classes",
         Justification = "Instantiated via Activator.CreateInstance on a constructed generic type, invisible to the analyzer.")]
-    private sealed class ListConverter<T>(string keyPropertyName, string? valuePropertyName) : JsonConverter<IReadOnlyList<T>>
+    private sealed class ListConverter<T>(
+        string keyPropertyName,
+        string? valuePropertyName) : JsonConverter<IReadOnlyList<T>>
     {
         // volatile: GetElementTypeInfo publishes the two name fields behind a guard on this one, and a shared
         // JsonSerializerOptions (documented as safe for concurrent use) caches this converter instance. The
@@ -32,7 +34,10 @@ partial class JsonKeyedObjectConverter
         private string? _keyJsonName;
         private string? _valueJsonName;
 
-        public override IReadOnlyList<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override IReadOnlyList<T> Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options)
         {
             var typeInfo = GetElementTypeInfo(options);
             if (reader.TokenType != JsonTokenType.StartObject)
