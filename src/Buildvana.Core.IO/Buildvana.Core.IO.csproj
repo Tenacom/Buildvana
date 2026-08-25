@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Title>Buildvana user-file I/O</Title>
-    <Description>File and directory operations on user-owned files that report environment-driven failures via BuildFailedException.</Description>
+    <Title>Buildvana file I/O</Title>
+    <Description>File and directory operations on user-owned files, plus a gitignore-aware file finder. Environment-driven failures are reported via BuildFailedException.</Description>
     <TargetFramework>$(StandardTfm)</TargetFramework>
   </PropertyGroup>
 
