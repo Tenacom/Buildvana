@@ -17,6 +17,13 @@ internal sealed class JsonSchemaGeneratorTests
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new JsonKeyedObjectConverter() },
     };
 
+    // Deliberately lacking JsonKeyedObjectConverter, to prove the keyed rendering is gated on its registration.
+    private static readonly JsonSerializerOptions KeyedConverterlessOptions = new()
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     [Test]
     public async Task Generate_EmitsDialectAndTitle()
     {
@@ -265,6 +272,17 @@ internal sealed class JsonSchemaGeneratorTests
         var schema = JsonSchemaGenerator.Generate<IReadOnlyList<KeyedValueSample>>(Options);
         await Assert.That(schema["type"]!.GetValue<string>()).IsEqualTo("object");
         await Assert.That(schema["additionalProperties"]!["type"]!.GetValue<string>()).IsEqualTo("string");
+    }
+
+    // Without JsonKeyedObjectConverter in the options, the list deserializes as a plain JSON array, and the
+    // exporter's own array schema must stand.
+    [Test]
+    public async Task Generate_WithoutKeyedConverter_RendersListAsArray()
+    {
+        var schema = JsonSchemaGenerator.Generate<KeyedSchemaSample>(KeyedConverterlessOptions);
+        var policies = schema["properties"]!["policies"]!;
+        await Assert.That(policies["type"]!.GetValue<string>()).IsEqualTo("array");
+        await Assert.That(policies["items"]!["type"]!.GetValue<string>()).IsEqualTo("object");
     }
 
     // Object-shaped in the schema, but still a collection: no default, and no recursion into it.
