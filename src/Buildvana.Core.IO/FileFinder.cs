@@ -30,9 +30,10 @@ namespace Buildvana.Core.IO;
 /// to the repository's content, and the finder deliberately ignores them. Likewise, when the base
 /// directory sits inside a repository, <c>.gitignore</c> files in directories above it are not read:
 /// the walk — and the patterns it honors — start at the base directory.</para>
-/// <para>Exclusion patterns passed to the constructor use the same syntax, anchored at the base directory,
-/// and take unconditional precedence: a <c>.gitignore</c> negation cannot re-include a path they exclude.
-/// Negations within the exclusion list itself work normally against earlier exclusion patterns.</para>
+/// <para>Exclusion patterns passed to the constructor are interpreted as if written in a
+/// <c>.gitignore</c> at the base directory, and take unconditional precedence: a <c>.gitignore</c>
+/// negation cannot re-include a path they exclude. Negations within the exclusion list itself work
+/// normally against earlier exclusion patterns.</para>
 /// <para>Directories that are reparse points (symbolic links, junctions) are neither descended nor
 /// listed, so the walk cannot cycle. Files that are symbolic links are listed like any other file. Git
 /// instead records a directory symbolic link as an entry; a consumer of this finder wants readable files,
@@ -50,8 +51,8 @@ public sealed class FileFinder
     /// <param name="basePath">The directory to enumerate. May be relative; resolved against the process
     /// working directory.</param>
     /// <param name="exclusionPatterns">Gitignore-syntax patterns excluded on top of what
-    /// <c>.gitignore</c> files dictate, anchored at <paramref name="basePath"/>; see the class remarks
-    /// for their precedence.</param>
+    /// <c>.gitignore</c> files dictate, interpreted as if written in a <c>.gitignore</c> at
+    /// <paramref name="basePath"/>; see the class remarks for their precedence.</param>
     /// <param name="caseSensitivity">How pattern matching treats letter case.</param>
     public FileFinder(
         string basePath,
