@@ -27,7 +27,9 @@ namespace Buildvana.Core.IO;
 /// level — before consulting any pattern, which is why no <c>.gitignore</c> ever needs to list it.
 /// Beyond per-directory files, Git also reads patterns from
 /// <c>$GIT_DIR/info/exclude</c> and <c>core.excludesFile</c>; both belong to one user's setup rather than
-/// to the repository's content, and the finder deliberately ignores them.</para>
+/// to the repository's content, and the finder deliberately ignores them. Likewise, when the base
+/// directory sits inside a repository, <c>.gitignore</c> files in directories above it are not read:
+/// the walk — and the patterns it honors — start at the base directory.</para>
 /// <para>Exclusion patterns passed to the constructor use the same syntax, anchored at the base directory,
 /// and take unconditional precedence: a <c>.gitignore</c> negation cannot re-include a path they exclude.
 /// Negations within the exclusion list itself work normally against earlier exclusion patterns.</para>
