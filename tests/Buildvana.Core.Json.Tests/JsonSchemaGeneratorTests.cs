@@ -234,10 +234,11 @@ internal sealed class JsonSchemaGeneratorTests
     [Test]
     public async Task Generate_PrunesKeyFromRequiredAndKeepsTheRest()
     {
-        var groups = GenerateKeyed()["properties"]!["groups"]!["additionalProperties"]!;
+        var schema = GenerateKeyed();
+        var groups = schema["properties"]!["groups"]!["additionalProperties"]!;
         await Assert.That(groups["required"]).IsNull();
 
-        var requiredGroups = GenerateKeyed()["properties"]!["requiredGroups"]!["additionalProperties"]!;
+        var requiredGroups = schema["properties"]!["requiredGroups"]!["additionalProperties"]!;
         var required = (JsonArray)requiredGroups["required"]!;
         await Assert.That(required.Count).IsEqualTo(1);
         await Assert.That(required[0]!.GetValue<string>()).IsEqualTo("files");
@@ -263,7 +264,10 @@ internal sealed class JsonSchemaGeneratorTests
     {
         var type = GenerateKeyed()["properties"]!["maybePolicies"]!["type"];
         await Assert.That(type is JsonArray).IsTrue();
-        await Assert.That(((JsonArray)type!).Count).IsEqualTo(2);
+        var typeArray = (JsonArray)type!;
+        await Assert.That(typeArray.Count).IsEqualTo(2);
+        await Assert.That(typeArray[0]!.GetValue<string>()).IsEqualTo("object");
+        await Assert.That(typeArray[1]!.GetValue<string>()).IsEqualTo("null");
     }
 
     // A keyed-object list is dictionary-valued in JSON: [JsonAllowedKeys] closes its key set the same way it
