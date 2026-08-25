@@ -20,6 +20,10 @@ namespace Buildvana.Core.IO.Gitignore;
 /// match. A trailing <c>**</c> becomes an any-depth segment followed by a match-one-component segment,
 /// encoding gitignore(5)'s "everything inside", which requires at least one component below the pattern;
 /// the any-depth segment itself then uniformly matches zero or more components everywhere.</para>
+/// <para>One knowing deviation from Git: the pattern is split on <c>/</c> before tokenizing, so a
+/// <c>/</c> inside a bracket expression makes the whole pattern never match, where Git reads the bracket
+/// across the slash — its <c>a[b/c]d</c> matches <c>abd</c>. The failure direction is safe (the pattern
+/// goes inert; nothing is wrongly ignored), and even Git cannot match a <c>/</c> from inside a class.</para>
 /// </remarks>
 public sealed partial class GitignorePattern
 {
