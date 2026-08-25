@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Diagnostics.CodeAnalysis;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 
 // The type the schema is generated FROM in the defaults-emission tests: all-nullable, wire-model style.
 // Its defaults deliberately live on a different type (DefaultsValuesSample), so the tests prove that

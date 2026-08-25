@@ -1,7 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 // ReSharper disable once ClassCannotBeInstantiated -- false positive: ReSharper analyzes this partial part
 // in isolation, missing the instantiation in JsonSourceMap.cs (the class has a private constructor and is

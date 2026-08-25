@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 
 internal sealed class JsonSchemaGeneratorTests
 {

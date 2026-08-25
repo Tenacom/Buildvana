@@ -7,7 +7,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Maps RFC 6901 JSON Pointers to 1-based line and column positions within a UTF-8 JSON document, so that

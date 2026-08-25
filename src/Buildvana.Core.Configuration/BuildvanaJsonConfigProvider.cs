@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.IO;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Configuration;

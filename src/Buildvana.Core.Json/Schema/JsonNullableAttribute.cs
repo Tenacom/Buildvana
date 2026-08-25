@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Marks a property whose JSON <see langword="null"/> is a meaningful value, so the schema generator keeps

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 using Buildvana.Runtime;
 using JetBrains.Annotations;
 

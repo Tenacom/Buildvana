@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <Title>Buildvana JSON schema</Title>
-    <Description>Generic JSON schema generation and validation, independent of any specific model.</Description>
-    <TargetFramework>$(StandardTfm)</TargetFramework>
-  </PropertyGroup>
-
-</Project>
