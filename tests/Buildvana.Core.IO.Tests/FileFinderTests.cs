@@ -192,6 +192,67 @@ internal sealed class FileFinderTests
     }
 
     [Test]
+    public async Task GetFiles_SkipsGitDirectories()
+    {
+        var root = CreateTempTree();
+        try
+        {
+            WriteFile(root, ".git/config");
+            WriteFile(root, ".git/refs/heads/main");
+            WriteFile(root, "src/a.cs");
+            WriteFile(root, "sub/.git/HEAD");
+
+            var files = new FileFinder(root).GetFiles();
+
+            await Assert.That(string.Join(";", files)).IsEqualTo("src/a.cs");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task GetFiles_SkipsGitLinkFiles()
+    {
+        var root = CreateTempTree();
+        try
+        {
+            // In a submodule or linked worktree, ".git" is a file pointing at the real repository.
+            WriteFile(root, "modules/lib/.git", "gitdir: ../../.git/modules/lib\n");
+            WriteFile(root, "modules/lib/a.cs");
+
+            var files = new FileFinder(root).GetFiles();
+
+            await Assert.That(string.Join(";", files)).IsEqualTo("modules/lib/a.cs");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task GetFiles_GitNameComparisonFollowsCaseMode()
+    {
+        var root = CreateTempTree();
+        try
+        {
+            WriteFile(root, ".GIT/config");
+
+            var sensitive = new FileFinder(root, caseSensitivity: CaseSensitivityMode.CaseSensitive).GetFiles();
+            var insensitive = new FileFinder(root, caseSensitivity: CaseSensitivityMode.CaseInsensitive).GetFiles();
+
+            await Assert.That(string.Join(";", sensitive)).IsEqualTo(".GIT/config");
+            await Assert.That(string.Join(";", insensitive)).IsEqualTo(string.Empty);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Test]
     public async Task GetFiles_WithMissingBaseDirectory_ReturnsEmpty()
     {
         var root = Path.Combine(Path.GetTempPath(), $"bv-test-{Guid.NewGuid():N}");
