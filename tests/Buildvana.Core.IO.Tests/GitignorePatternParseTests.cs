@@ -30,6 +30,7 @@ internal sealed class GitignorePatternParseTests
     [Arguments("a//b")] // Empty segment: no real path has one.
     [Arguments("foo\\")] // Trailing backslash never matches.
     [Arguments("[abc")] // Unclosed bracket expression.
+    [Arguments("[a\\")] // Trailing backslash inside a bracket expression.
     [Arguments("[]")] // "]" is a literal first member, leaving the expression unclosed.
     [Arguments("[[:bogus:]]")] // Unknown POSIX class name.
     [Arguments("x[[:digit:]")] // Named class consumed, expression never closed.
