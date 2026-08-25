@@ -54,6 +54,42 @@ internal sealed class GitignorePatternMatchTests
     [Arguments("[[:digit:]]*", "7up", true)]
     [Arguments("[[:digit:]]*", "up", false)]
     [Arguments("[[:upper:]]oo", "Foo", true)]
+    [Arguments("[[:alnum:]]x", "ax", true)]
+    [Arguments("[[:alnum:]]x", "7x", true)]
+    [Arguments("[[:alnum:]]x", "-x", false)]
+    [Arguments("[[:alpha:]]x", "ax", true)]
+    [Arguments("[[:alpha:]]x", "7x", false)]
+    [Arguments("[[:blank:]]x", " x", true)]
+    [Arguments("[[:blank:]]x", "\tx", true)]
+    [Arguments("[[:blank:]]x", "\nx", false)]
+    [Arguments("[[:cntrl:]]x", "\u0001x", true)]
+    [Arguments("[[:cntrl:]]x", "\u007fx", true)]
+    [Arguments("[[:cntrl:]]x", "ax", false)]
+    [Arguments("[[:graph:]]x", "!x", true)]
+    [Arguments("[[:graph:]]x", " x", false)] // Space is printable but not graphic.
+    [Arguments("[[:graph:]]x", "\u007fx", false)]
+    [Arguments("[[:lower:]]x", "ax", true)]
+    [Arguments("[[:lower:]]x", "Ax", false)]
+    [Arguments("[[:print:]]x", " x", true)] // Space is printable.
+    [Arguments("[[:print:]]x", "\u007fx", false)]
+    [Arguments("[[:punct:]]x", ",x", true)]
+    [Arguments("[[:punct:]]x", "ax", false)]
+    [Arguments("[[:punct:]]x", " x", false)]
+    [Arguments("[[:space:]]x", " x", true)]
+    [Arguments("[[:space:]]x", "\rx", true)]
+    [Arguments("[[:space:]]x", "ax", false)]
+    [Arguments("[[:xdigit:]]x", "fx", true)]
+    [Arguments("[[:xdigit:]]x", "Fx", true)]
+    [Arguments("[[:xdigit:]]x", "gx", false)]
+    [Arguments("[^a-z]oo", "Foo", true)] // wildmatch.c accepts "^" as a negation marker beside "!".
+    [Arguments("[^a-z]oo", "foo", false)]
+    [Arguments("[\\]]x", "]x", true)] // Escaped member.
+    [Arguments("[\\]]x", "ax", false)]
+    [Arguments("[a-\\z]x", "mx", true)] // Escaped range endpoint.
+    [Arguments("[a-\\z]x", "Ax", false)]
+    [Arguments("[[:foo]x", ":x", true)] // No ":]" closes the class: "[" becomes a literal member, ":foo" follow.
+    [Arguments("[[:foo]x", "fx", true)]
+    [Arguments("[[:foo]x", "bx", false)]
     [Arguments("foo\\*bar", "foo*bar", true)]
     [Arguments("foo\\*bar", "fooxbar", false)]
     [Arguments("\\a", "a", true)] // gitignore(5): "\a" matches "a" even though nothing needs escaping.
