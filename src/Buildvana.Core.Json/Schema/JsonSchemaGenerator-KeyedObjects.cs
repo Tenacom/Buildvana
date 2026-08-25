@@ -104,7 +104,8 @@ partial class JsonSchemaGenerator
     // The exporter renders recursion inside the element schema as a root-relative "$ref" pointer. Embedded
     // under additionalProperties, such a pointer would resolve against the containing document instead of the
     // element schema it was minted for, so the schema is refused rather than emitted subtly wrong. The walk
-    // descends only into the keywords this generator emits subschemas under.
+    // descends into the keywords this generator emits subschemas under, plus "anyOf", which the exporter
+    // emits on its own for polymorphic hierarchies.
     private static void ThrowIfContainsReference(Type elementType, JsonNode? schemaNode)
     {
         if (schemaNode is not JsonObject schema)
@@ -124,6 +125,14 @@ partial class JsonSchemaGenerator
             foreach (var (_, propertySchema) in properties)
             {
                 ThrowIfContainsReference(elementType, propertySchema);
+            }
+        }
+
+        if (schema["anyOf"] is JsonArray branches)
+        {
+            foreach (var branch in branches)
+            {
+                ThrowIfContainsReference(elementType, branch);
             }
         }
 
