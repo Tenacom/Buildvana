@@ -177,7 +177,7 @@ public sealed class GitIgnorePattern
 
         var prefix = isAnchored ? "^" : "^(?:.*/)?";
         var options = RegexOptions.Compiled | RegexOptions.CultureInvariant;
-        if (IsCaseInsensitive(matchCasing))
+        if (matchCasing.IsCaseInsensitive())
         {
             options |= RegexOptions.IgnoreCase;
         }
@@ -265,14 +265,6 @@ public sealed class GitIgnorePattern
 
         return result.ToString();
     }
-
-    private static bool IsCaseInsensitive(MatchCasing matchCasing) => matchCasing switch
-    {
-        MatchCasing.CaseSensitive => false,
-        MatchCasing.CaseInsensitive => true,
-        MatchCasing.PlatformDefault => OperatingSystem.IsWindows() || OperatingSystem.IsMacOS(),
-        _ => throw new ArgumentOutOfRangeException(nameof(matchCasing)),
-    };
 
     private static void AppendLiteral(StringBuilder result, char c)
         => result.Append(Regex.Escape(c.ToString()));

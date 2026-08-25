@@ -2,9 +2,11 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.IO;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.IO;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Core.Versioning;
@@ -74,6 +76,14 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<IProcessRunner, ProcessRunner>()
                 .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
                 .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
+
+                // Case-insensitive uniformly, on every platform: which files bv sees must not depend on
+                // where it runs. Root-anchored exclusions and any-depth exclusion names per the bv-deps spec.
+                .AddSingleton(static sp => new FileFinder(
+                    sp.GetRequiredService<IHomeDirectoryProvider>().HomeDirectory,
+                    [CommonPaths.AllArtifacts, CommonPaths.Scratch],
+                    [".git", "bin", "obj", "node_modules"],
+                    MatchCasing.CaseInsensitive))
                 .AddSingleton<GitService>()
                 .AddSingleton<PublicApiFilesService>()
                 .AddSingleton(ServerAdapter.Create)
