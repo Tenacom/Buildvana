@@ -45,8 +45,12 @@ public sealed class FileFinder
         MatchCasing matchCasing = MatchCasing.CaseSensitive)
     {
         Guard.IsNotNullOrEmpty(rootPath);
-        Guard.IsNotNull(excludedRootPaths);
-        Guard.IsNotNull(excludedNames);
+
+        // ThrowIfNull rather than Guard.IsNotNull: Guard's generic parameter makes the call read as a
+        // potential enumeration, tripping PossibleMultipleEnumeration on the single actual use below;
+        // ThrowIfNull takes object, which does not.
+        ArgumentNullException.ThrowIfNull(excludedRootPaths);
+        ArgumentNullException.ThrowIfNull(excludedNames);
         _rootPath = Path.GetFullPath(rootPath);
         _matchCasing = matchCasing;
         _comparison = matchCasing.IsCaseInsensitive() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;

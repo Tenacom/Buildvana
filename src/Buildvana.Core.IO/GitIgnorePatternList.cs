@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using CommunityToolkit.Diagnostics;
@@ -22,7 +23,10 @@ public sealed class GitIgnorePatternList
     /// <param name="patterns">The patterns, in source order.</param>
     public GitIgnorePatternList(IEnumerable<GitIgnorePattern> patterns)
     {
-        Guard.IsNotNull(patterns);
+        // ThrowIfNull rather than Guard.IsNotNull: Guard's generic parameter makes the call read as a
+        // potential enumeration, tripping PossibleMultipleEnumeration on the single actual use below;
+        // ThrowIfNull takes object, which does not.
+        ArgumentNullException.ThrowIfNull(patterns);
         Patterns = [.. patterns];
     }
 
@@ -42,7 +46,8 @@ public sealed class GitIgnorePatternList
         IEnumerable<string> lines,
         MatchCasing matchCasing = MatchCasing.CaseSensitive)
     {
-        Guard.IsNotNull(lines);
+        // ThrowIfNull rather than Guard.IsNotNull; see the constructor.
+        ArgumentNullException.ThrowIfNull(lines);
         List<GitIgnorePattern> patterns = [];
         foreach (var line in lines)
         {
