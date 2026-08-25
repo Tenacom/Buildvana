@@ -205,31 +205,13 @@ partial class JsonKeyedObjectConverter
             }
         }
 
-        // Also resolves the attribute's CLR property names to JSON names, through the shared GetNamedProperty.
+        // Also resolves the attribute's CLR property names to JSON names, through the shared ResolveKeyedNames.
         private JsonTypeInfo<T> GetElementTypeInfo(JsonSerializerOptions options)
         {
             if (_elementTypeInfo is null)
             {
                 var typeInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
-                var keyProperty = GetNamedProperty(typeInfo, keyPropertyName, "key");
-                if (keyProperty.PropertyType != typeof(string))
-                {
-                    throw new InvalidOperationException(
-                        $"Property '{keyPropertyName}' of type '{typeof(T)}' is named as its key property "
-                        + $"by {nameof(JsonKeyedObjectAttribute)}, so it must be of type string, not '{keyProperty.PropertyType}'.");
-                }
-
-                _keyJsonName = keyProperty.Name;
-                _valueJsonName = valuePropertyName is null ? null : GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
-
-                // A null _valueJsonName never equals _keyJsonName, which is non-null by this point.
-                if (_valueJsonName == _keyJsonName)
-                {
-                    throw new InvalidOperationException(
-                        $"{nameof(JsonKeyedObjectAttribute)} on type '{typeof(T)}' resolves its key and value properties "
-                        + $"to the same JSON name '{_keyJsonName}'.");
-                }
-
+                (_keyJsonName, _valueJsonName) = ResolveKeyedNames(typeInfo, keyPropertyName, valuePropertyName);
                 _elementTypeInfo = typeInfo;
             }
 
