@@ -77,6 +77,18 @@ internal sealed class JsonKeyedObjectConverterTests
     }
 
     [Test]
+    public async Task ReadWrite_KeyedListInsideKeyedElement_RoundTrips()
+    {
+        // The inner list's converter runs against the synthesized element document, not the caller's reader.
+        const string json = """{"outer":{"policies":{"a":"one","b":"two"}}}""";
+        var list = Deserialize<KeyedNestedSample>(json);
+        await Assert.That(list[0].Caption).IsEqualTo("outer");
+        await Assert.That(list[0].Policies!.Count).IsEqualTo(2);
+        await Assert.That(list[0].Policies![1]).IsEqualTo(new KeyedValueSample { Pattern = "b", Policy = "two" });
+        await Assert.That(Serialize(list)).IsEqualTo(json);
+    }
+
+    [Test]
     public async Task Read_EmptyObject_ReturnsEmptyList()
     {
         var list = Deserialize<KeyedValueSample>("{}");
