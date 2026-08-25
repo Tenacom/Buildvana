@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Buildvana.Core.Json;
 using Buildvana.Core.Json.Schema;
 
 internal sealed class JsonSchemaGeneratorTests
@@ -13,7 +14,7 @@ internal sealed class JsonSchemaGeneratorTests
     {
         TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new JsonKeyedObjectConverter() },
     };
 
     [Test]
@@ -190,8 +191,105 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(mustFlag["pattern"]).IsNull();
     }
 
+    [Test]
+    public async Task Generate_RendersValueShapeKeyedListAsObject()
+    {
+        var policies = GenerateKeyed()["properties"]!["policies"]!;
+        await Assert.That(policies["type"]!.GetValue<string>()).IsEqualTo("object");
+
+        // The value property's schema, required-string constraints included, becomes additionalProperties.
+        var values = policies["additionalProperties"]!;
+        await Assert.That(values["type"]!.GetValue<string>()).IsEqualTo("string");
+        await Assert.That(values["minLength"]!.GetValue<int>()).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Generate_RendersRemainingMembersKeyedListAsObject()
+    {
+        var groups = GenerateKeyed()["properties"]!["groups"]!;
+        await Assert.That(groups["type"]!.GetValue<string>()).IsEqualTo("object");
+
+        var element = groups["additionalProperties"]!;
+        await Assert.That(element["type"]!.GetValue<string>()).IsEqualTo("object");
+        await Assert.That(element["properties"]!["files"]).IsNotNull();
+        await Assert.That(element["properties"]!["retries"]).IsNotNull();
+    }
+
+    // The key travels as the JSON property name: the converter refuses an element value that restates it,
+    // so the schema forbids it with a Boolean 'false' subschema.
+    [Test]
+    public async Task Generate_ForbidsKeyInsideRemainingMembers()
+    {
+        var element = GenerateKeyed()["properties"]!["groups"]!["additionalProperties"]!;
+        await Assert.That(element["properties"]!["caption"]!.GetValue<bool>()).IsFalse();
+    }
+
+    [Test]
+    public async Task Generate_PrunesKeyFromRequiredAndKeepsTheRest()
+    {
+        var groups = GenerateKeyed()["properties"]!["groups"]!["additionalProperties"]!;
+        await Assert.That(groups["required"]).IsNull();
+
+        var requiredGroups = GenerateKeyed()["properties"]!["requiredGroups"]!["additionalProperties"]!;
+        var required = (JsonArray)requiredGroups["required"]!;
+        await Assert.That(required.Count).IsEqualTo(1);
+        await Assert.That(required[0]!.GetValue<string>()).IsEqualTo("files");
+    }
+
+    [Test]
+    public async Task Generate_RendersNestedKeyedList()
+    {
+        var policies = GenerateKeyed()["properties"]!["nested"]!["additionalProperties"]!["properties"]!["policies"]!;
+        await Assert.That(policies["type"]!.GetValue<string>()).IsEqualTo("object");
+        await Assert.That(policies["additionalProperties"]!["type"]!.GetValue<string>()).IsEqualTo("string");
+    }
+
+    [Test]
+    public async Task Generate_KeepsDescriptionOnKeyedList()
+    {
+        var description = GenerateKeyed()["properties"]!["policies"]!["description"];
+        await Assert.That(description!.GetValue<string>()).IsEqualTo("the policies");
+    }
+
+    [Test]
+    public async Task Generate_KeepsNullOnJsonNullableKeyedList()
+    {
+        var type = GenerateKeyed()["properties"]!["maybePolicies"]!["type"];
+        await Assert.That(type is JsonArray).IsTrue();
+        await Assert.That(((JsonArray)type!).Count).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Generate_RendersKeyedListAtRoot()
+    {
+        var schema = JsonSchemaGenerator.Generate<IReadOnlyList<KeyedValueSample>>(Options);
+        await Assert.That(schema["type"]!.GetValue<string>()).IsEqualTo("object");
+        await Assert.That(schema["additionalProperties"]!["type"]!.GetValue<string>()).IsEqualTo("string");
+    }
+
+    // Object-shaped in the schema, but still a collection: no default, and no recursion into it.
+    [Test]
+    public async Task Generate_WithDefaults_StatesNoDefaultForKeyedObjectLists()
+    {
+        var policies = GenerateWithDefaults()["properties"]!["policies"]!;
+        await Assert.That(policies["default"]).IsNull();
+        await Assert.That(policies["additionalProperties"]!["default"]).IsNull();
+    }
+
+    [Test]
+    public async Task Generate_ThrowsOnKeyedListCycle()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedCycleSample>>(Options))
+            .Throws<InvalidOperationException>();
+
+    [Test]
+    public async Task Generate_ThrowsOnRecursiveKeyedElement()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedRecursiveSample>>(Options))
+            .Throws<InvalidOperationException>();
+
     private static JsonNode Generate() => JsonSchemaGenerator.Generate<GeneratorSample>(Options);
 
     private static JsonNode GenerateWithDefaults()
         => JsonSchemaGenerator.Generate<DefaultsSchemaSample>(Options, defaults: new DefaultsValuesSample());
+
+    private static JsonNode GenerateKeyed() => JsonSchemaGenerator.Generate<KeyedSchemaSample>(Options);
 }

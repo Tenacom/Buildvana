@@ -18,5 +18,7 @@ internal sealed record DefaultsValuesSample
 
     public IReadOnlyList<string> Tags { get; init; } = ["a"];
 
+    public IReadOnlyList<KeyedValueSample> Policies { get; init; } = [new() { Pattern = "*", Policy = "latest" }];
+
     public DefaultsValuesSection Section { get; init; } = new();
 }

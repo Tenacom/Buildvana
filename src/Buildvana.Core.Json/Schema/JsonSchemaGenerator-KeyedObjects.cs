@@ -1,0 +1,134 @@
+﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// See the LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
+
+namespace Buildvana.Core.Json.Schema;
+
+partial class JsonSchemaGenerator
+{
+    // Renders IReadOnlyList<T>, where T carries [JsonKeyedObject], as the object shape
+    // JsonKeyedObjectConverter reads and writes: one JSON property per element, with additionalProperties
+    // describing the values. The exporter cannot see through the list's custom converter, so the whole node
+    // is synthesized here from the element type's own schema.
+    private static JsonObject CreateKeyedObjectSchema(
+        Type elementType,
+        JsonSerializerOptions options,
+        NullabilityInfoContext nullabilityContext,
+        HashSet<Type> keyedTypesInProgress)
+    {
+        // The exporter's own recursion handling ($ref) never sees a keyed list — the converter hides it — so
+        // an element type that reaches a keyed list of itself would recurse through here forever.
+        if (!keyedTypesInProgress.Add(elementType))
+        {
+            throw new InvalidOperationException(
+                $"Keyed-object schema generation entered a cycle: element type '{elementType}' contains "
+                + "a keyed-object list of its own type.");
+        }
+
+        try
+        {
+            var attribute = elementType.GetCustomAttribute<JsonKeyedObjectAttribute>(inherit: false)!;
+            var typeInfo = options.GetTypeInfo(elementType);
+            var elementSchema = ExportSchema(elementType, options, nullabilityContext, keyedTypesInProgress) as JsonObject;
+            if (elementSchema?["properties"] is not JsonObject elementProperties)
+            {
+                throw new InvalidOperationException(
+                    $"The keyed-object element type '{elementType}' does not render as an object schema.");
+            }
+
+            var valuesSchema = attribute.ValuePropertyName is { } valuePropertyName
+                ? LiftValueSchema(elementProperties, typeInfo, valuePropertyName)
+                : PruneKeyProperty(elementSchema, elementProperties, typeInfo, attribute.KeyPropertyName);
+            ThrowIfContainsReference(elementType, valuesSchema);
+            return new JsonObject
+            {
+                ["type"] = "object",
+                ["additionalProperties"] = valuesSchema,
+            };
+        }
+        finally
+        {
+            _ = keyedTypesInProgress.Remove(elementType);
+        }
+    }
+
+    // The value property's schema arrives with the property-level transforms (required-string constraints,
+    // declared nullability, description) already applied by the element's own generation pass.
+    private static JsonNode LiftValueSchema(JsonObject elementProperties, JsonTypeInfo typeInfo, string valuePropertyName)
+    {
+        var valueJsonName = JsonKeyedObjectConverter.GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
+        var valueSchema = elementProperties[valueJsonName]
+            ?? throw new InvalidOperationException(
+                $"The schema of keyed-object element type '{typeInfo.Type}' has no property '{valueJsonName}'.");
+
+        // A node cannot be attached to the result while it still hangs off the discarded element schema.
+        _ = elementProperties.Remove(valueJsonName);
+        return valueSchema;
+    }
+
+    // The key travels as the JSON property name, so inside the value object it is pruned from "required" and
+    // forbidden outright (a Boolean 'false' schema), because the converter refuses an element value that
+    // restates it.
+    private static JsonObject PruneKeyProperty(
+        JsonObject elementSchema,
+        JsonObject elementProperties,
+        JsonTypeInfo typeInfo,
+        string keyPropertyName)
+    {
+        var keyJsonName = JsonKeyedObjectConverter.GetNamedProperty(typeInfo, keyPropertyName, "key").Name;
+        elementProperties[keyJsonName] = false;
+        if (elementSchema["required"] is JsonArray required)
+        {
+            for (var i = required.Count - 1; i >= 0; i--)
+            {
+                if (required[i]?.GetValue<string>() == keyJsonName)
+                {
+                    required.RemoveAt(i);
+                }
+            }
+
+            if (required.Count == 0)
+            {
+                _ = elementSchema.Remove("required");
+            }
+        }
+
+        return elementSchema;
+    }
+
+    // The exporter renders recursion inside the element schema as a root-relative "$ref" pointer. Embedded
+    // under additionalProperties, such a pointer would resolve against the containing document instead of the
+    // element schema it was minted for, so the schema is refused rather than emitted subtly wrong. The walk
+    // descends only into the keywords this generator emits subschemas under.
+    private static void ThrowIfContainsReference(Type elementType, JsonNode? schemaNode)
+    {
+        if (schemaNode is not JsonObject schema)
+        {
+            return;
+        }
+
+        if (schema.ContainsKey("$ref"))
+        {
+            throw new InvalidOperationException(
+                $"The keyed-object element type '{elementType}' is recursive: its schema contains a '$ref' "
+                + "pointer that cannot be embedded as a subschema.");
+        }
+
+        if (schema["properties"] is JsonObject properties)
+        {
+            foreach (var (_, propertySchema) in properties)
+            {
+                ThrowIfContainsReference(elementType, propertySchema);
+            }
+        }
+
+        ThrowIfContainsReference(elementType, schema["additionalProperties"]);
+        ThrowIfContainsReference(elementType, schema["items"]);
+    }
+}

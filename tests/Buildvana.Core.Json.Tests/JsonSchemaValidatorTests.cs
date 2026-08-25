@@ -1,11 +1,21 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
+using Buildvana.Core.Json;
 using Buildvana.Core.Json.Schema;
 
 internal sealed class JsonSchemaValidatorTests
 {
+    private static readonly JsonSerializerOptions KeyedOptions = new()
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonKeyedObjectConverter() },
+    };
+
     [Test]
     public async Task Validate_ValidInstance_ReturnsNoErrors()
     {
@@ -170,7 +180,40 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[1].DisplayPath).IsEqualTo("arr[1]");
     }
 
+    // End-to-end against a generated schema: the validator must validate what the keyed-object transform of
+    // JsonSchemaGenerator emits.
+    [Test]
+    public async Task Validate_KeyedObjectList_AcceptsValidDocument()
+    {
+        var instance = JsonNode.Parse("""{"policies":{"*.txt":"latest"},"groups":{"g1":{"files":"*.cs","retries":2}}}""");
+        var errors = JsonSchemaValidator.Validate(instance, KeyedSchema());
+        await Assert.That(errors.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Validate_KeyedObjectList_ReportsWrongValueType()
+    {
+        var instance = JsonNode.Parse("""{"policies":{"*.txt":42}}""");
+        var errors = JsonSchemaValidator.Validate(instance, KeyedSchema());
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.TypeMismatch);
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/policies/*.txt");
+    }
+
+    // Restating the key inside a value object hits the Boolean 'false' subschema the generator plants there.
+    [Test]
+    public async Task Validate_KeyedObjectList_ReportsRestatedKey()
+    {
+        var instance = JsonNode.Parse("""{"groups":{"g1":{"caption":"g1"}}}""");
+        var errors = JsonSchemaValidator.Validate(instance, KeyedSchema());
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.ValueNotAllowed);
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/groups/g1/caption");
+    }
+
     private static JsonNode Schema(string json) => JsonNode.Parse(json)!;
+
+    private static JsonNode KeyedSchema() => JsonSchemaGenerator.Generate<KeyedSchemaSample>(KeyedOptions);
 
     private static IReadOnlyList<JsonSchemaValidationError> Validate(string schema, string instance)
         => JsonSchemaValidator.Validate(JsonNode.Parse(instance), Schema(schema));
