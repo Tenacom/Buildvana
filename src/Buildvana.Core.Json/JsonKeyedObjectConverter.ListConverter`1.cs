@@ -25,7 +25,10 @@ partial class JsonKeyedObjectConverter
         Justification = "Instantiated via Activator.CreateInstance on a constructed generic type, invisible to the analyzer.")]
     private sealed class ListConverter<T>(string keyPropertyName, string? valuePropertyName) : JsonConverter<IReadOnlyList<T>>
     {
-        private JsonTypeInfo<T>? _elementTypeInfo;
+        // volatile: GetElementTypeInfo publishes the two name fields behind a guard on this one, and a shared
+        // JsonSerializerOptions (documented as safe for concurrent use) caches this converter instance. The
+        // release store orders the name writes before publication; the acquire load keeps reads below it.
+        private volatile JsonTypeInfo<T>? _elementTypeInfo;
         private string? _keyJsonName;
         private string? _valueJsonName;
 
