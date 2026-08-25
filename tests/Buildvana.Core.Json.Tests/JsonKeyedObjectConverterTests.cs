@@ -56,6 +56,27 @@ internal sealed class JsonKeyedObjectConverterTests
     }
 
     [Test]
+    public async Task ReadWrite_AsProperty_RoundTrips()
+    {
+        // A member after the keyed list proves the converter leaves the reader on the list's EndObject,
+        // where the enclosing parse expects it.
+        const string json = """{"policies":{"a":"one","b":"two"},"name":"n"}""";
+        var options = CreateOptions();
+        var holder = JsonSerializer.Deserialize<KeyedHolderSample>(json, options);
+        await Assert.That(holder!.Name).IsEqualTo("n");
+        await Assert.That(holder.Policies!.Count).IsEqualTo(2);
+        await Assert.That(holder.Policies[0]).IsEqualTo(new KeyedValueSample { Pattern = "a", Policy = "one" });
+        await Assert.That(JsonSerializer.Serialize(holder, options)).IsEqualTo(json);
+    }
+
+    [Test]
+    public async Task ReadWrite_MembersShape_RoundTrips()
+    {
+        const string json = """{"G1":{"files":"x","retries":2,"tags":["a"]},"G2":{"files":null,"retries":0,"tags":null}}""";
+        await Assert.That(Serialize(Deserialize<KeyedGroupSample>(json))).IsEqualTo(json);
+    }
+
+    [Test]
     public async Task Read_EmptyObject_ReturnsEmptyList()
     {
         var list = Deserialize<KeyedValueSample>("{}");
