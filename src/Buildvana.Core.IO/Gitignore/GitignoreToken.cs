@@ -55,6 +55,6 @@ public readonly record struct GitignoreToken
     /// </summary>
     /// <param name="charClass">The bracket expression.</param>
     /// <returns>The character class token.</returns>
-    public static GitignoreToken ForCharClass(GitignoreCharClass charClass)
+    internal static GitignoreToken ForCharClass(GitignoreCharClass charClass)
         => new(GitignoreTokenKind.CharClass, default, charClass);
 }
