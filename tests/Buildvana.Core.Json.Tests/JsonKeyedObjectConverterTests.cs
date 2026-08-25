@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Buildvana.Core.Json;
 
 internal sealed class JsonKeyedObjectConverterTests
@@ -187,12 +188,67 @@ internal sealed class JsonKeyedObjectConverterTests
     }
 
     [Test]
+    public async Task ReadWrite_SourceGeneratedContext_ResolvesGeneratedNames()
+    {
+        // Default.Options is read-only, so the copy constructor is how a converter joins a generated context.
+        // The copy carries the context's naming policy and unmapped-member handling; the resolver is the context,
+        // so elements go through generated metadata, not reflection.
+        var options = new JsonSerializerOptions(KeyedSampleJsonContext.Default.Options)
+        {
+            Converters = { new JsonKeyedObjectConverter() },
+        };
+
+        var list = JsonSerializer.Deserialize<IReadOnlyList<KeyedGroupSample>>("""{"G1":{"files":"x"}}""", options);
+        await Assert.That(list!.Count).IsEqualTo(1);
+        await Assert.That(list[0].Caption).IsEqualTo("G1");
+        await Assert.That(list[0].Files).IsEqualTo("x");
+
+        var json = JsonSerializer.Serialize(list, options);
+        await Assert.That(json).IsEqualTo("""{"G1":{"files":"x","retries":0,"tags":null}}""");
+    }
+
+    [Test]
+    public async Task ReadWrite_CustomizedContract_FollowsTypeInfoNames()
+    {
+        // A contract modifier renames the key property's JSON name. The serializer's metadata is then the only
+        // source that knows the effective name; recomputing it from the naming policy would synthesize a document
+        // the element deserializer rejects.
+        var resolver = new DefaultJsonTypeInfoResolver();
+        resolver.Modifiers.Add(static typeInfo =>
+        {
+            if (typeInfo.Type == typeof(KeyedGroupSample))
+            {
+                foreach (var property in typeInfo.Properties)
+                {
+                    if (property.Name == "caption")
+                    {
+                        property.Name = "header";
+                    }
+                }
+            }
+        });
+        var options = new JsonSerializerOptions
+        {
+            TypeInfoResolver = resolver,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonKeyedObjectConverter() },
+        };
+
+        var list = JsonSerializer.Deserialize<IReadOnlyList<KeyedGroupSample>>("""{"G1":{"files":"x"}}""", options);
+        await Assert.That(list![0].Caption).IsEqualTo("G1");
+        await Assert.That(list[0].Files).IsEqualTo("x");
+
+        var json = JsonSerializer.Serialize(list, options);
+        await Assert.That(json).IsEqualTo("""{"G1":{"files":"x","retries":0,"tags":null}}""");
+    }
+
+    [Test]
     public async Task Read_MissingKeyProperty_Throws()
     {
         static object Act() => Deserialize<MissingKeySample>("{}");
 
         var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-        await Assert.That(exception!.Message).Contains("no public instance property 'Nope'");
+        await Assert.That(exception!.Message).Contains("no serializable property 'Nope'");
     }
 
     [Test]
@@ -201,7 +257,7 @@ internal sealed class JsonKeyedObjectConverterTests
         static object Act() => Deserialize<MissingValueSample>("{}");
 
         var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-        await Assert.That(exception!.Message).Contains("no public instance property 'Nope'");
+        await Assert.That(exception!.Message).Contains("no serializable property 'Nope'");
     }
 
     [Test]

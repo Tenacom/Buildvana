@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Json;
 
@@ -33,41 +32,19 @@ public sealed partial class JsonKeyedObjectConverter : JsonConverterFactory
     /// <inheritdoc/>
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        Guard.IsNotNull(options);
-
         var elementType = TryGetElementType(typeToConvert)!;
         var attribute = elementType.GetCustomAttribute<JsonKeyedObjectAttribute>(inherit: false)!;
 
-        var keyProperty = GetNamedProperty(elementType, attribute.KeyPropertyName, "key");
-        if (keyProperty.PropertyType != typeof(string))
-        {
-            throw new InvalidOperationException(
-                $"Property '{attribute.KeyPropertyName}' of type '{elementType}' is named as its key property "
-                + $"by {nameof(JsonKeyedObjectAttribute)}, so it must be of type string, not '{keyProperty.PropertyType}'.");
-        }
-
-        var keyJsonName = GetJsonName(keyProperty, options);
-        var valueJsonName = attribute.ValuePropertyName is null
-            ? null
-            : GetJsonName(GetNamedProperty(elementType, attribute.ValuePropertyName, "value"), options);
+        // The attribute's CLR property names are resolved to JSON names by the converter itself, at first use,
+        // from the element's JsonTypeInfo: the serializer's own metadata is right by construction under any
+        // naming policy, TypeInfoResolver, or contract customization. Recomputing the names here from
+        // reflection would silently disagree the moment a contract modifier renames a property.
         var converterType = typeof(ListConverter<>).MakeGenericType(elementType);
-        return (JsonConverter)Activator.CreateInstance(converterType, keyJsonName, valueJsonName)!;
+        return (JsonConverter)Activator.CreateInstance(converterType, attribute.KeyPropertyName, attribute.ValuePropertyName)!;
     }
 
     private static Type? TryGetElementType(Type type)
         => type is { IsGenericType: true } && type.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)
             ? type.GetGenericArguments()[0]
             : null;
-
-    private static PropertyInfo GetNamedProperty(Type elementType, string clrName, string role)
-        => elementType.GetProperty(clrName, BindingFlags.Public | BindingFlags.Instance)
-            ?? throw new InvalidOperationException(
-                $"Type '{elementType}' has no public instance property '{clrName}', "
-                + $"which {nameof(JsonKeyedObjectAttribute)} names as its {role} property.");
-
-    // Mirrors the serializer's own naming rule, like JsonSchemaGenerator.GetJsonName does for schema generation.
-    private static string GetJsonName(PropertyInfo property, JsonSerializerOptions options)
-        => property.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name
-            ?? options.PropertyNamingPolicy?.ConvertName(property.Name)
-            ?? property.Name;
 }
