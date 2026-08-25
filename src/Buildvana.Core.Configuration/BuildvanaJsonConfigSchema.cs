@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text.Json;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 using Buildvana.Runtime;
 
 namespace Buildvana.Core.Configuration;

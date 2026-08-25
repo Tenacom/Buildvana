@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Constrains a dictionary-valued property to a fixed set of keys, so the generated schema rejects any other

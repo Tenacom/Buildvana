@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Validates a <see cref="JsonNode"/> against the subset of JSON Schema (draft 2020-12) keywords that

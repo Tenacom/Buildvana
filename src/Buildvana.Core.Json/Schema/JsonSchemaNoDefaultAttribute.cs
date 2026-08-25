@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Excludes a property from <c>default</c> emission when its schema is generated with a defaults instance

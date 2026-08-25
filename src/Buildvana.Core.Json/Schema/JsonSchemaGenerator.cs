@@ -12,7 +12,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Generates a JSON Schema (draft 2020-12) document from a .NET type, shaping the output from attributes the

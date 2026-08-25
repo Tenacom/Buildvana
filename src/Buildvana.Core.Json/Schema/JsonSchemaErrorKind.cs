@@ -1,7 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Identifies the kind of a <see cref="JsonSchemaValidationError"/>, so callers can map a failure to their own

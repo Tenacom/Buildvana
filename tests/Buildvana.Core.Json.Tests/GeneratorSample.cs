@@ -3,7 +3,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 
 // A model that exercises every shaping attribute in one schema, for JsonSchemaGeneratorTests.
 [JsonSchemaTitle("Sample Title")]

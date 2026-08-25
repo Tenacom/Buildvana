@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text;
-using Buildvana.Core.JsonSchema;
+using Buildvana.Core.Json.Schema;
 
 internal sealed class JsonSourceMapTests
 {

@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Buildvana.Core.JsonSchema;
+namespace Buildvana.Core.Json.Schema;
 
 /// <summary>
 /// Specifies the <c>title</c> keyword for the schema generated from the annotated type.
