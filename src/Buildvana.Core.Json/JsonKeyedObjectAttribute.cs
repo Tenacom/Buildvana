@@ -25,7 +25,7 @@ namespace Buildvana.Core.Json;
 /// The CLR name of the element property that holds the JSON property value, or <see langword="null"/> for the
 /// remaining-members shape. Use <c>nameof</c> to keep the reference refactor-safe.
 /// </param>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
 public sealed class JsonKeyedObjectAttribute(string keyPropertyName, string? valuePropertyName = null) : Attribute
 {
     /// <summary>
