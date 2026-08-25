@@ -29,7 +29,7 @@ namespace Buildvana.Core.IO;
 /// <c>$GIT_DIR/info/exclude</c> and <c>core.excludesFile</c>; both belong to one user's setup rather than
 /// to the repository's content, and the finder deliberately ignores them. Likewise, when the base
 /// directory sits inside a repository, <c>.gitignore</c> files in directories above it are not read:
-/// the walk — and the patterns it honors — start at the base directory.</para>
+/// the walk — and the patterns it honors — starts at the base directory.</para>
 /// <para>Exclusion patterns passed to the constructor are interpreted as if written in a
 /// <c>.gitignore</c> at the base directory, and take unconditional precedence: a <c>.gitignore</c>
 /// negation cannot re-include a path they exclude. Negations within the exclusion list itself work
