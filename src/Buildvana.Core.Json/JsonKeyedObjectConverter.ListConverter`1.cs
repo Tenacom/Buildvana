@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -22,12 +23,15 @@ partial class JsonKeyedObjectConverter
         "Performance",
         "CA1812:Avoid uninstantiated internal classes",
         Justification = "Instantiated via Activator.CreateInstance on a constructed generic type, invisible to the analyzer.")]
-    private sealed class ListConverter<T>(string keyJsonName, string? valueJsonName) : JsonConverter<IReadOnlyList<T>>
+    private sealed class ListConverter<T>(string keyPropertyName, string? valuePropertyName) : JsonConverter<IReadOnlyList<T>>
     {
         private JsonTypeInfo<T>? _elementTypeInfo;
+        private string? _keyJsonName;
+        private string? _valueJsonName;
 
         public override IReadOnlyList<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
+            var typeInfo = GetElementTypeInfo(options);
             if (reader.TokenType != JsonTokenType.StartObject)
             {
                 throw new JsonException($"Expected a JSON object, found {reader.TokenType}.");
@@ -62,7 +66,6 @@ partial class JsonKeyedObjectConverter
                     }
                 }
 
-                var typeInfo = GetElementTypeInfo(options);
                 var buffer = new ArrayBufferWriter<byte>();
                 var result = new List<T>(entries.Count);
                 foreach (var (key, value) in entries)
@@ -101,14 +104,29 @@ partial class JsonKeyedObjectConverter
             writer.WriteEndObject();
         }
 
+        private static JsonPropertyInfo GetNamedProperty(JsonTypeInfo<T> typeInfo, string clrName, string role)
+        {
+            foreach (var property in typeInfo.Properties)
+            {
+                if (property.AttributeProvider is MemberInfo { Name: var name } && name == clrName)
+                {
+                    return property;
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Type '{typeof(T)}' has no serializable property '{clrName}', "
+                + $"which {nameof(JsonKeyedObjectAttribute)} names as its {role} property.");
+        }
+
         private void WriteElementJson(ArrayBufferWriter<byte> buffer, string key, JsonElement value)
         {
             using var writer = new Utf8JsonWriter(buffer);
             writer.WriteStartObject();
-            writer.WriteString(keyJsonName, key);
-            if (valueJsonName is not null)
+            writer.WriteString(_keyJsonName!, key);
+            if (valuePropertyName is not null)
             {
-                writer.WritePropertyName(valueJsonName);
+                writer.WritePropertyName(_valueJsonName!);
                 value.WriteTo(writer);
             }
             else
@@ -120,9 +138,9 @@ partial class JsonKeyedObjectConverter
 
                 foreach (var member in value.EnumerateObject())
                 {
-                    if (member.NameEquals(keyJsonName))
+                    if (member.NameEquals(_keyJsonName))
                     {
-                        throw new JsonException($"The value of '{key}' must not state the key property '{keyJsonName}'.");
+                        throw new JsonException($"The value of '{key}' must not state the key property '{_keyJsonName}'.");
                     }
 
                     member.WriteTo(writer);
@@ -134,13 +152,13 @@ partial class JsonKeyedObjectConverter
 
         private void WriteElement(Utf8JsonWriter writer, JsonElement element)
         {
-            if (!element.TryGetProperty(keyJsonName, out var keyElement) || keyElement.ValueKind != JsonValueKind.String)
+            if (!element.TryGetProperty(_keyJsonName!, out var keyElement) || keyElement.ValueKind != JsonValueKind.String)
             {
-                throw new JsonException($"The key property '{keyJsonName}' must serialize as a non-null string.");
+                throw new JsonException($"The key property '{_keyJsonName}' must serialize as a non-null string.");
             }
 
             writer.WritePropertyName(keyElement.GetString()!);
-            if (valueJsonName is not null)
+            if (valuePropertyName is not null)
             {
                 WriteValueProperty(writer, element);
             }
@@ -149,7 +167,7 @@ partial class JsonKeyedObjectConverter
                 writer.WriteStartObject();
                 foreach (var member in element.EnumerateObject())
                 {
-                    if (!member.NameEquals(keyJsonName))
+                    if (!member.NameEquals(_keyJsonName))
                     {
                         member.WriteTo(writer);
                     }
@@ -161,7 +179,7 @@ partial class JsonKeyedObjectConverter
 
         private void WriteValueProperty(Utf8JsonWriter writer, JsonElement element)
         {
-            if (element.TryGetProperty(valueJsonName!, out var valueElement))
+            if (element.TryGetProperty(_valueJsonName!, out var valueElement))
             {
                 valueElement.WriteTo(writer);
             }
@@ -173,7 +191,28 @@ partial class JsonKeyedObjectConverter
             }
         }
 
+        // Also resolves the attribute's CLR property names against the type info's own properties: their Name
+        // is the JSON name the serializer will actually use, whatever naming policy, TypeInfoResolver
+        // (source-generated contexts included), or contract modifier produced it.
         private JsonTypeInfo<T> GetElementTypeInfo(JsonSerializerOptions options)
-            => _elementTypeInfo ??= (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+        {
+            if (_elementTypeInfo is null)
+            {
+                var typeInfo = (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
+                var keyProperty = GetNamedProperty(typeInfo, keyPropertyName, "key");
+                if (keyProperty.PropertyType != typeof(string))
+                {
+                    throw new InvalidOperationException(
+                        $"Property '{keyPropertyName}' of type '{typeof(T)}' is named as its key property "
+                        + $"by {nameof(JsonKeyedObjectAttribute)}, so it must be of type string, not '{keyProperty.PropertyType}'.");
+                }
+
+                _keyJsonName = keyProperty.Name;
+                _valueJsonName = valuePropertyName is null ? null : GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
+                _elementTypeInfo = typeInfo;
+            }
+
+            return _elementTypeInfo;
+        }
     }
 }
