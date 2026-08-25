@@ -36,7 +36,9 @@ namespace Buildvana.Core.Json.Schema;
 /// closes a dictionary's. This rendering applies
 /// only when <see cref="JsonKeyedObjectConverter"/> is registered in the options: without it the list
 /// deserializes as a plain JSON array, which the schema then describes. A keyed-object list is
-/// still a collection: it states no <c>default</c>. Recursive element types are not supported.</para>
+/// still a collection: it states no <c>default</c>. An element type whose schema carries a <c>$ref</c>
+/// pointer is not supported — recursion, or the exporter's deduplication of a member type that occurs
+/// twice.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a

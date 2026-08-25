@@ -328,6 +328,13 @@ internal sealed class JsonSchemaGeneratorTests
         => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedPolymorphicSample>>(Options))
             .Throws<InvalidOperationException>();
 
+    // Not recursion: the exporter deduplicates the repeated inner member into a "$ref" pointer, which cannot
+    // be embedded as a subschema any more than a recursive one.
+    [Test]
+    public async Task Generate_ThrowsOnRepeatedComplexMember()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedRepeatedSample>>(Options))
+            .Throws<InvalidOperationException>();
+
     // The generator refuses the models the converter refuses, through the shared resolve-and-validate step.
     [Test]
     public async Task Generate_ThrowsOnNonStringKeyProperty()

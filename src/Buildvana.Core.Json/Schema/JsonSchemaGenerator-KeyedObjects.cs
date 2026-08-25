@@ -101,11 +101,12 @@ partial class JsonSchemaGenerator
         return elementSchema;
     }
 
-    // The exporter renders recursion inside the element schema as a root-relative "$ref" pointer. Embedded
-    // under additionalProperties, such a pointer would resolve against the containing document instead of the
-    // element schema it was minted for, so the schema is refused rather than emitted subtly wrong. The walk
-    // descends into the keywords this generator emits subschemas under, plus "anyOf", which the exporter
-    // emits on its own for polymorphic hierarchies.
+    // The exporter emits a root-relative "$ref" pointer for recursion, and also to deduplicate a repeated
+    // (type, property) occurrence within one document. Embedded under additionalProperties, such a pointer
+    // would resolve against the containing document instead of the element schema it was minted for, so the
+    // schema is refused rather than emitted subtly wrong. The walk descends into the keywords this generator
+    // emits subschemas under, plus "anyOf" — per the exporter's source, the only combinator it ever emits
+    // (for polymorphic hierarchies).
     private static void ThrowIfContainsReference(Type elementType, JsonNode? schemaNode)
     {
         if (schemaNode is not JsonObject schema)
@@ -116,8 +117,8 @@ partial class JsonSchemaGenerator
         if (schema.ContainsKey("$ref"))
         {
             throw new InvalidOperationException(
-                $"The keyed-object element type '{elementType}' is recursive: its schema contains a '$ref' "
-                + "pointer that cannot be embedded as a subschema.");
+                $"The schema of keyed-object element type '{elementType}' contains a '$ref' pointer, "
+                + "which cannot be embedded as a subschema.");
         }
 
         if (schema["properties"] is JsonObject properties)
