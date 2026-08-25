@@ -280,6 +280,15 @@ internal sealed class JsonKeyedObjectConverterTests
         await Assert.That(exception!.Message).Contains("must be of type string");
     }
 
+    [Test]
+    public async Task Read_SameKeyAndValueProperty_Throws()
+    {
+        static object Act() => Deserialize<SameKeyValueSample>("{}");
+
+        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
+        await Assert.That(exception!.Message).Contains("to the same JSON name 'name'");
+    }
+
     private static JsonSerializerOptions CreateOptions(bool allowDuplicateProperties = true)
         => new()
         {
