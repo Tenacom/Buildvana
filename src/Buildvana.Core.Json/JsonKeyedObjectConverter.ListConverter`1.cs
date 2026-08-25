@@ -201,8 +201,9 @@ partial class JsonKeyedObjectConverter
             }
             else
             {
-                // An absent value property (e.g. ignored when null) writes as JSON null, so that reading it back
-                // restores the same absence.
+                // An absent value property (e.g. ignored when null) writes as JSON null. Reading that back
+                // restores the absence only where reading null is legal: options that respect nullable
+                // annotations, or a value-typed value property, reject it.
                 writer.WriteNullValue();
             }
         }
