@@ -90,6 +90,7 @@ partial class JsonKeyedObjectConverter
         {
             var typeInfo = GetElementTypeInfo(options);
             writer.WriteStartObject();
+            var writtenKeys = new HashSet<string>(StringComparer.Ordinal);
             foreach (var element in value)
             {
                 var elementJson = JsonSerializer.SerializeToElement(element, typeInfo);
@@ -98,7 +99,7 @@ partial class JsonKeyedObjectConverter
                     throw new JsonException($"A list element serialized as {elementJson.ValueKind}, not as a JSON object.");
                 }
 
-                WriteElement(writer, elementJson);
+                WriteElement(writer, elementJson, writtenKeys);
             }
 
             writer.WriteEndObject();
@@ -150,14 +151,22 @@ partial class JsonKeyedObjectConverter
             writer.WriteEndObject();
         }
 
-        private void WriteElement(Utf8JsonWriter writer, JsonElement element)
+        private void WriteElement(Utf8JsonWriter writer, JsonElement element, HashSet<string> writtenKeys)
         {
             if (!element.TryGetProperty(_keyJsonName!, out var keyElement) || keyElement.ValueKind != JsonValueKind.String)
             {
                 throw new JsonException($"The key property '{_keyJsonName}' must serialize as a non-null string.");
             }
 
-            writer.WritePropertyName(keyElement.GetString()!);
+            // Utf8JsonWriter validates structure only, so without this check two elements sharing a key would
+            // produce a document this converter's own Read refuses or silently collapses.
+            var key = keyElement.GetString()!;
+            if (!writtenKeys.Add(key))
+            {
+                throw new JsonException($"Duplicate key '{key}'.");
+            }
+
+            writer.WritePropertyName(key);
             if (valuePropertyName is not null)
             {
                 WriteValueProperty(writer, element);

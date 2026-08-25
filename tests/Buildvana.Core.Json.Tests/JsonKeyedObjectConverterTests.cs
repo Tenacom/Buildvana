@@ -105,6 +105,17 @@ internal sealed class JsonKeyedObjectConverterTests
     }
 
     [Test]
+    public async Task Write_DuplicateKey_Throws()
+    {
+        static string Act() => Serialize<KeyedValueSample>([
+            new() { Pattern = "a", Policy = "one" },
+            new() { Pattern = "a", Policy = "two" }]);
+
+        var exception = await Assert.That(Act).Throws<JsonException>();
+        await Assert.That(exception!.Message).Contains("Duplicate key 'a'");
+    }
+
+    [Test]
     public async Task Read_MembersShape_DuplicateInnerMember_TakesLastValue()
     {
         var list = Deserialize<KeyedGroupSample>("""{"G1":{"retries":1,"retries":2}}""");
