@@ -266,6 +266,19 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(((JsonArray)type!).Count).IsEqualTo(2);
     }
 
+    // A keyed-object list is dictionary-valued in JSON: [JsonAllowedKeys] closes its key set the same way it
+    // closes a dictionary's.
+    [Test]
+    public async Task Generate_ConstrainsKeyedListToAllowedKeys()
+    {
+        var limited = GenerateKeyed()["properties"]!["limitedPolicies"]!;
+        await Assert.That(limited["additionalProperties"]!.GetValue<bool>()).IsFalse();
+        var properties = (JsonObject)limited["properties"]!;
+        await Assert.That(properties.Count).IsEqualTo(2);
+        await Assert.That(properties["first"]!["type"]!.GetValue<string>()).IsEqualTo("string");
+        await Assert.That(properties["second"]!["type"]!.GetValue<string>()).IsEqualTo("string");
+    }
+
     [Test]
     public async Task Generate_RendersKeyedListAtRoot()
     {
