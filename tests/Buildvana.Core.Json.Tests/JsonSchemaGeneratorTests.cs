@@ -317,6 +317,17 @@ internal sealed class JsonSchemaGeneratorTests
         => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<KeyedRecursiveSample>>(Options))
             .Throws<InvalidOperationException>();
 
+    // The generator refuses the models the converter refuses, through the shared resolve-and-validate step.
+    [Test]
+    public async Task Generate_ThrowsOnNonStringKeyProperty()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<NonStringKeySample>>(Options))
+            .Throws<InvalidOperationException>();
+
+    [Test]
+    public async Task Generate_ThrowsOnSameKeyAndValueJsonName()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<IReadOnlyList<SameKeyValueSample>>(Options))
+            .Throws<InvalidOperationException>();
+
     private static JsonNode Generate() => JsonSchemaGenerator.Generate<GeneratorSample>(Options);
 
     private static JsonNode GenerateWithDefaults()

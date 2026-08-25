@@ -9,7 +9,7 @@ using Buildvana.Core.Json;
 [SuppressMessage(
     "Performance",
     "CA1812:Avoid uninstantiated internal classes",
-    Justification = "Only fed to the converter under test, whose configuration check rejects it before instantiation.")]
+    Justification = "Only fed to the converter and schema generator under test, whose shared configuration check rejects it.")]
 internal sealed record SameKeyValueSample
 {
     public string? Name { get; init; }

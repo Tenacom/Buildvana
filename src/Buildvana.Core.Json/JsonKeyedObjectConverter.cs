@@ -50,11 +50,46 @@ public sealed partial class JsonKeyedObjectConverter : JsonConverterFactory
             ? elementType
             : null;
 
+    // Resolves the attribute's CLR property names to the JSON names the serializer will actually use, and
+    // refuses the models the converter cannot read: a non-string key property, and key and value resolving to
+    // the same JSON name. Shared between ListConverter and JsonSchemaGenerator, so the schema generator
+    // refuses exactly the models the converter refuses.
+    internal static (string KeyJsonName, string? ValueJsonName) ResolveKeyedNames(
+        JsonTypeInfo typeInfo,
+        string keyPropertyName,
+        string? valuePropertyName)
+    {
+        var keyProperty = GetNamedProperty(typeInfo, keyPropertyName, "key");
+        if (keyProperty.PropertyType != typeof(string))
+        {
+            throw new InvalidOperationException(
+                $"Property '{keyPropertyName}' of type '{typeInfo.Type}' is named as its key property "
+                + $"by {nameof(JsonKeyedObjectAttribute)}, so it must be of type string, not '{keyProperty.PropertyType}'.");
+        }
+
+        var keyJsonName = keyProperty.Name;
+        var valueJsonName = valuePropertyName is null ? null : GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
+
+        // A null valueJsonName never equals keyJsonName, which is non-null by this point.
+        if (valueJsonName == keyJsonName)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(JsonKeyedObjectAttribute)} on type '{typeInfo.Type}' resolves its key and value properties "
+                + $"to the same JSON name '{keyJsonName}'.");
+        }
+
+        return (keyJsonName, valueJsonName);
+    }
+
+    private static Type? TryGetElementType(Type type)
+        => type is { IsGenericType: true } && type.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)
+            ? type.GetGenericArguments()[0]
+            : null;
+
     // Resolves one of the attribute's CLR property names against a type info's own properties: their Name is
     // the JSON name the serializer will actually use, whatever naming policy, TypeInfoResolver
-    // (source-generated contexts included), or contract modifier produced it. Shared between ListConverter
-    // and JsonSchemaGenerator so both sides resolve names from one source.
-    internal static JsonPropertyInfo GetNamedProperty(JsonTypeInfo typeInfo, string clrName, string role)
+    // (source-generated contexts included), or contract modifier produced it.
+    private static JsonPropertyInfo GetNamedProperty(JsonTypeInfo typeInfo, string clrName, string role)
     {
         foreach (var property in typeInfo.Properties)
         {
@@ -68,9 +103,4 @@ public sealed partial class JsonKeyedObjectConverter : JsonConverterFactory
             $"Type '{typeInfo.Type}' has no serializable property '{clrName}', "
             + $"which {nameof(JsonKeyedObjectAttribute)} names as its {role} property.");
     }
-
-    private static Type? TryGetElementType(Type type)
-        => type is { IsGenericType: true } && type.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)
-            ? type.GetGenericArguments()[0]
-            : null;
 }

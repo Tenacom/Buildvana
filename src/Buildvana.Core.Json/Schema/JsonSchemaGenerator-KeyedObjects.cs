@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Buildvana.Core.Json.Schema;
 
@@ -34,7 +33,10 @@ partial class JsonSchemaGenerator
         try
         {
             var attribute = elementType.GetCustomAttribute<JsonKeyedObjectAttribute>(inherit: false)!;
-            var typeInfo = options.GetTypeInfo(elementType);
+            var (keyJsonName, valueJsonName) = JsonKeyedObjectConverter.ResolveKeyedNames(
+                options.GetTypeInfo(elementType),
+                attribute.KeyPropertyName,
+                attribute.ValuePropertyName);
             var elementSchema = ExportSchema(elementType, options, nullabilityContext, keyedTypesInProgress) as JsonObject;
             if (elementSchema?["properties"] is not JsonObject elementProperties)
             {
@@ -42,9 +44,9 @@ partial class JsonSchemaGenerator
                     $"The keyed-object element type '{elementType}' does not render as an object schema.");
             }
 
-            var valuesSchema = attribute.ValuePropertyName is { } valuePropertyName
-                ? LiftValueSchema(elementProperties, typeInfo, valuePropertyName)
-                : PruneKeyProperty(elementSchema, elementProperties, typeInfo, attribute.KeyPropertyName);
+            var valuesSchema = valueJsonName is not null
+                ? LiftValueSchema(elementProperties, elementType, valueJsonName)
+                : PruneKeyProperty(elementSchema, elementProperties, keyJsonName);
             ThrowIfContainsReference(elementType, valuesSchema);
             return new JsonObject
             {
@@ -60,12 +62,11 @@ partial class JsonSchemaGenerator
 
     // The value property's schema arrives with the property-level transforms (required-string constraints,
     // declared nullability, description) already applied by the element's own generation pass.
-    private static JsonNode LiftValueSchema(JsonObject elementProperties, JsonTypeInfo typeInfo, string valuePropertyName)
+    private static JsonNode LiftValueSchema(JsonObject elementProperties, Type elementType, string valueJsonName)
     {
-        var valueJsonName = JsonKeyedObjectConverter.GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
         var valueSchema = elementProperties[valueJsonName]
             ?? throw new InvalidOperationException(
-                $"The schema of keyed-object element type '{typeInfo.Type}' has no property '{valueJsonName}'.");
+                $"The schema of keyed-object element type '{elementType}' has no property '{valueJsonName}'.");
 
         // A node cannot be attached to the result while it still hangs off the discarded element schema.
         _ = elementProperties.Remove(valueJsonName);
@@ -78,10 +79,8 @@ partial class JsonSchemaGenerator
     private static JsonObject PruneKeyProperty(
         JsonObject elementSchema,
         JsonObject elementProperties,
-        JsonTypeInfo typeInfo,
-        string keyPropertyName)
+        string keyJsonName)
     {
-        var keyJsonName = JsonKeyedObjectConverter.GetNamedProperty(typeInfo, keyPropertyName, "key").Name;
         elementProperties[keyJsonName] = false;
         if (elementSchema["required"] is JsonArray required)
         {
