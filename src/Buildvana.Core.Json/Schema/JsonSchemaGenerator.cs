@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Buildvana.Core.Json.Schema;
 
@@ -30,7 +31,9 @@ namespace Buildvana.Core.Json.Schema;
 /// renders as <c>type: object</c>, with <c>additionalProperties</c> describing the values: the value
 /// property's schema when the attribute names one, the object schema of the remaining members otherwise. In
 /// the latter shape the key property is forbidden inside the value object, because
-/// <see cref="JsonKeyedObjectConverter"/> refuses an element value that restates it. A keyed-object list is
+/// <see cref="JsonKeyedObjectConverter"/> refuses an element value that restates it. This rendering applies
+/// only when <see cref="JsonKeyedObjectConverter"/> is registered in the options: without it the list
+/// deserializes as a plain JSON array, which the schema then describes. A keyed-object list is
 /// still a collection: it states no <c>default</c>. Recursive element types are not supported.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
@@ -139,7 +142,13 @@ public static partial class JsonSchemaGenerator
         // A keyed-object list renders as an object, not an array. The exporter cannot see through the list's
         // custom converter and emits an unconstrained node, so the node is replaced wholesale with a schema
         // synthesized from the element type; the steps below shape what the exporter emitted and do not apply.
-        if (JsonKeyedObjectConverter.TryGetKeyedElementType(context.TypeInfo.Type) is { } keyedElementType)
+        // The kind gate checks that a custom converter actually serves the type here (JsonTypeInfoKind.None):
+        // without JsonKeyedObjectConverter in the options, the list deserializes as a plain JSON array, and
+        // the exporter's own array schema stands.
+        var keyedElementType = context.TypeInfo.Kind is JsonTypeInfoKind.None
+            ? JsonKeyedObjectConverter.TryGetKeyedElementType(context.TypeInfo.Type)
+            : null;
+        if (keyedElementType is not null)
         {
             var keyedSchema = CreateKeyedObjectSchema(
                 keyedElementType,
