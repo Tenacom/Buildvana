@@ -211,6 +211,18 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[0].JsonPointer).IsEqualTo("/groups/g1/caption");
     }
 
+    // A key outside the [JsonAllowedKeys] set of a constrained keyed list hits the closed key set the
+    // generator plants: explicit properties plus additionalProperties: false.
+    [Test]
+    public async Task Validate_ConstrainedKeyedList_ReportsDisallowedKey()
+    {
+        var instance = JsonNode.Parse("""{"limitedPolicies":{"third":"latest"}}""");
+        var errors = JsonSchemaValidator.Validate(instance, KeyedSchema());
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.UnknownProperty);
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/limitedPolicies/third");
+    }
+
     private static JsonNode Schema(string json) => JsonNode.Parse(json)!;
 
     private static JsonNode KeyedSchema() => JsonSchemaGenerator.Generate<KeyedSchemaSample>(KeyedOptions);
