@@ -15,5 +15,6 @@ internal sealed record KeyedNestedSample
 {
     public required string Caption { get; init; }
 
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global // set only by the deserializer in the round-trip test
     public IReadOnlyList<KeyedValueSample>? Policies { get; init; }
 }
