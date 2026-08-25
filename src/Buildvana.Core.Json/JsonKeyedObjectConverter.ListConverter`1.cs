@@ -225,6 +225,13 @@ partial class JsonKeyedObjectConverter
 
                 _keyJsonName = keyProperty.Name;
                 _valueJsonName = valuePropertyName is null ? null : GetNamedProperty(typeInfo, valuePropertyName, "value").Name;
+                if (_valueJsonName is not null && _valueJsonName == _keyJsonName)
+                {
+                    throw new InvalidOperationException(
+                        $"{nameof(JsonKeyedObjectAttribute)} on type '{typeof(T)}' resolves its key and value properties "
+                        + $"to the same JSON name '{_keyJsonName}'.");
+                }
+
                 _elementTypeInfo = typeInfo;
             }
 
