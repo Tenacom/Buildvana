@@ -74,11 +74,13 @@ partial class JsonKeyedObjectConverter
                 }
 
                 var buffer = new ArrayBufferWriter<byte>();
+                using var elementWriter = new Utf8JsonWriter(buffer);
                 var result = new List<T>(entries.Count);
                 foreach (var (key, value) in entries)
                 {
                     buffer.ResetWrittenCount();
-                    WriteElementJson(buffer, key, value);
+                    elementWriter.Reset(buffer);
+                    WriteElementJson(elementWriter, key, value);
                     result.Add(JsonSerializer.Deserialize(buffer.WrittenSpan, typeInfo)!);
                 }
 
@@ -127,9 +129,8 @@ partial class JsonKeyedObjectConverter
                 + $"which {nameof(JsonKeyedObjectAttribute)} names as its {role} property.");
         }
 
-        private void WriteElementJson(ArrayBufferWriter<byte> buffer, string key, JsonElement value)
+        private void WriteElementJson(Utf8JsonWriter writer, string key, JsonElement value)
         {
-            using var writer = new Utf8JsonWriter(buffer);
             writer.WriteStartObject();
             writer.WriteString(_keyJsonName!, key);
             if (valuePropertyName is not null)
@@ -156,6 +157,10 @@ partial class JsonKeyedObjectConverter
             }
 
             writer.WriteEndObject();
+
+            // The writer is reused across elements and disposed only after the last one, so the flush that
+            // disposal used to provide has to be explicit before the caller reads the buffer.
+            writer.Flush();
         }
 
         private void WriteElement(Utf8JsonWriter writer, JsonElement element, HashSet<string> writtenKeys)
