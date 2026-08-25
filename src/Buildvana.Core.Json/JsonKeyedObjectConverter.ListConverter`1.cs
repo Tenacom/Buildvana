@@ -66,6 +66,13 @@ partial class JsonKeyedObjectConverter
                     }
                 }
 
+                // Unreachable through JsonSerializer, whose read-ahead hands converters complete values; without
+                // the guard, truncated input would return a partial list instead of failing.
+                if (reader.TokenType != JsonTokenType.EndObject)
+                {
+                    throw new JsonException("Expected the end of a JSON object.");
+                }
+
                 var buffer = new ArrayBufferWriter<byte>();
                 var result = new List<T>(entries.Count);
                 foreach (var (key, value) in entries)
