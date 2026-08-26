@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
@@ -61,6 +62,42 @@ internal sealed class SelfUpdateCommandTests
 
         await Assert.That(exitCode).IsEqualTo(0);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
+    }
+
+    // The stamped version appearing in the summary is the observable proof that --to reached the service.
+    [Test]
+    public async Task ExecuteAsync_ForwardsToVersionToTheUpdate()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, OwnVersion);
+        WriteToolManifest(home, OwnVersion);
+        var console = new TestConsole();
+        var settings = new SelfUpdateSettings { To = "2.1.43-preview" };
+        var command = new SelfUpdateCommand(CreateService(home, new FakeProcessRunner()), settings, console);
+
+        var exitCode = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+        await Assert.That(console.Output).Contains("bv: 2.1.41-preview -> 2.1.43-preview (tool manifest)");
+        await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.41-preview -> 2.1.43-preview (global.json)");
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WithInvalidToVersion_FailsBeforeChangingAnything()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, OwnVersion);
+        WriteToolManifest(home, OwnVersion);
+        var runner = new FakeProcessRunner();
+        var settings = new SelfUpdateSettings { To = "not-a-version" };
+        var command = new SelfUpdateCommand(CreateService(home, runner), settings, new TestConsole());
+
+        var exception = await Assert
+            .That(async () => _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("--to");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
 
     private static SelfVersionService CreateService(TempHome home, FakeProcessRunner? processRunner = null)

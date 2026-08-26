@@ -128,7 +128,8 @@ internal sealed partial class SelfVersionService
 
     /// <summary>
     /// Updates the repository's Buildvana pins — the bv entry in the tool manifest, the Buildvana SDK entry in
-    /// <c>global.json</c>, and the configuration file's schema reference — to this bv's version.
+    /// <c>global.json</c>, and the configuration file's schema reference — to the target version: this bv's
+    /// own, or the one <paramref name="toVersion"/> names.
     /// </summary>
     /// <remarks>
     /// <para>The tool manifest is updated through <c>dotnet tool update</c> (or <c>dotnet tool install
@@ -136,20 +137,28 @@ internal sealed partial class SelfVersionService
     /// next <c>dotnet bv</c> invocation can run it. The <c>global.json</c> pin is rewritten in place, creating
     /// the file or the <c>msbuild-sdks</c> section as needed. The configuration file's schema reference is
     /// rewritten only when it matches the well-known <c>Tenacom/Buildvana/&lt;version&gt;/schemas/</c> URL shape;
-    /// afterwards the configuration file is loaded against this version's model, and any problems are reported
+    /// afterwards the configuration file is loaded against this bv's model, and any problems are reported
     /// as warnings — the file keeps working for the commands that do not read it, and the user decides how to
     /// migrate it.</para>
-    /// <para>When an existing pin is newer than this bv, the update would be a downgrade and fails unless
-    /// <paramref name="force"/> is <see langword="true"/>.</para>
+    /// <para>No source is consulted about <paramref name="toVersion"/>: the <c>dotnet tool update</c> step is
+    /// the existence check. It runs before any file is written, so a version no configured source knows fails
+    /// the update with the repository untouched.</para>
+    /// <para>When an existing pin is newer than the target version, the update would be a downgrade and fails
+    /// unless <paramref name="force"/> is <see langword="true"/>.</para>
     /// </remarks>
-    /// <param name="force">Whether to update even when an existing pin is newer than this bv.</param>
+    /// <param name="toVersion">The version to stamp, or <see langword="null"/> to stamp this bv's own version.</param>
+    /// <param name="force">Whether to update even when an existing pin is newer than the target version.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing operation.</param>
     /// <returns>The per-target summary of what changed, for the command to print.</returns>
     /// <exception cref="BuildFailedException">The update failed — e.g. a file could not be read or written,
-    /// <c>dotnet tool update</c> failed, or an existing pin is newer than this bv and <paramref name="force"/>
-    /// is <see langword="false"/>; the message names the failure.</exception>
-    public async Task<SelfUpdateSummary> UpdateRepositoryAsync(bool force, CancellationToken cancellationToken = default)
+    /// <c>dotnet tool update</c> failed, or an existing pin is newer than the target version and
+    /// <paramref name="force"/> is <see langword="false"/>; the message names the failure.</exception>
+    public async Task<SelfUpdateSummary> UpdateRepositoryAsync(
+        NuGetVersion? toVersion,
+        bool force,
+        CancellationToken cancellationToken = default)
     {
+        var target = toVersion ?? _ownVersion;
         var manifestPin = ToolManifest.ReadBvPin(_jsonHelper, _home.HomeDirectory);
         EnsureUsableManifestEntry(manifestPin);
         var (sdkPinText, _) = ReadPin();
@@ -159,14 +168,14 @@ internal sealed partial class SelfVersionService
             sdkPin = parsedSdkPin;
         }
 
-        EnsureNoUnforcedDowngrade(manifestPin.Version, sdkPin, force);
+        EnsureNoUnforcedDowngrade(manifestPin.Version, sdkPin, target, targetIsExplicit: toVersion is not null, force);
 
         // Manifest first: pinning it spawns the dotnet CLI, the one step with an external actor, so a failure
         // there leaves the repository untouched. A failed file write after it leaves the manifest already
         // pinned — a state a rerun reads as "unchanged" before retrying the writes, so the window self-heals.
-        var toolManifestLine = await PinToolManifestAsync(manifestPin, cancellationToken).ConfigureAwait(false);
-        var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin);
-        var configFileLine = UpdateConfigSchemaReference();
+        var toolManifestLine = await PinToolManifestAsync(manifestPin, target, cancellationToken).ConfigureAwait(false);
+        var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin, target);
+        var configFileLine = UpdateConfigSchemaReference(target);
         return new SelfUpdateSummary(toolManifestLine, globalJsonLine, configFileLine);
     }
 
@@ -210,23 +219,30 @@ internal sealed partial class SelfVersionService
     // The update never downgrades silently: an old bv run by habit in a newer repository must not roll the
     // repository back. `dotnet bv self-update` runs the repository's own pinned bv (the self-update command is
     // exempt from delegation, so a plain `bv self-update` runs the invoked binary), and --force covers the deliberate
-    // downgrade (e.g. bisecting a regression). The guard deliberately covers the two version pins only: the
-    // $schema reference is cosmetic metadata, and when either pin is newer the update throws right here,
-    // before the schema reference is ever touched.
-    private void EnsureNoUnforcedDowngrade(NuGetVersion? manifestPin, NuGetVersion? sdkPin, bool force)
+    // downgrade (e.g. bisecting a regression). Pins are compared to the target version — this bv's own, or the
+    // one --to names, in which case the message says so. The guard deliberately covers the two version pins
+    // only: the $schema reference is cosmetic metadata, and when either pin is newer the update throws right
+    // here, before the schema reference is ever touched.
+    private static void EnsureNoUnforcedDowngrade(
+        NuGetVersion? manifestPin,
+        NuGetVersion? sdkPin,
+        NuGetVersion target,
+        bool targetIsExplicit,
+        bool force)
     {
         if (force)
         {
             return;
         }
 
+        var targetText = target.ToNormalizedString();
         var newerPins = new List<string>();
-        if (manifestPin is not null && VersionComparer.VersionRelease.Compare(manifestPin, _ownVersion) > 0)
+        if (manifestPin is not null && VersionComparer.VersionRelease.Compare(manifestPin, target) > 0)
         {
             newerPins.Add($"the tool manifest pins {ToolPackageId} {manifestPin.ToNormalizedString()}");
         }
 
-        if (sdkPin is not null && VersionComparer.VersionRelease.Compare(sdkPin, _ownVersion) > 0)
+        if (sdkPin is not null && VersionComparer.VersionRelease.Compare(sdkPin, target) > 0)
         {
             newerPins.Add($"{GlobalJsonFileName} pins {SdkPackageId} {sdkPin.ToNormalizedString()}");
         }
@@ -236,23 +252,30 @@ internal sealed partial class SelfVersionService
             return;
         }
 
+        var targetPhrase = targetIsExplicit
+            ? $"The version given with --to is {targetText}"
+            : $"This bv is version {targetText}";
         throw new BuildFailedException(
-            $"This bv is version {OwnVersionText}, but {string.Join(" and ", newerPins)}: updating would be a downgrade. "
+            $"{targetPhrase}, but {string.Join(" and ", newerPins)}: updating would be a downgrade. "
             + $"Run 'dotnet {ToolPackageId} self-update' to update the repository to its own pinned {ToolPackageId}, "
-            + $"or pass --force to downgrade to {OwnVersionText}.");
+            + $"or pass --force to downgrade to {targetText}.");
     }
 
-    // Pins bv's own version in the tool manifest through the dotnet CLI, which rewrites the manifest and
+    // Pins the target version in the tool manifest through the dotnet CLI, which rewrites the manifest and
     // downloads the version in one go — hand-editing the manifest would leave the pin unrestored. The choice
     // between update and install is keyed on entry presence, mirroring the CLI's own contract: update rewrites
     // an existing entry, and install creates the manifest itself when the repository has none. (An entry with
     // an unusable version never reaches this point; EnsureUsableManifestEntry rejects it up front.)
-    private async Task<string> PinToolManifestAsync(BvManifestPin manifestPin, CancellationToken cancellationToken)
+    private async Task<string> PinToolManifestAsync(
+        BvManifestPin manifestPin,
+        NuGetVersion target,
+        CancellationToken cancellationToken)
     {
+        var targetText = target.ToNormalizedString();
         var currentPin = manifestPin.Version;
-        if (currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, _ownVersion))
+        if (currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, target))
         {
-            return $"{ToolPackageId}: {OwnVersionText} (tool manifest, unchanged)";
+            return $"{ToolPackageId}: {targetText} (tool manifest, unchanged)";
         }
 
         var hasEntry = manifestPin.HasEntry;
@@ -261,10 +284,10 @@ internal sealed partial class SelfVersionService
         // version unless --allow-downgrade is passed. A downgrade only reaches this point forced (see
         // EnsureNoUnforcedDowngrade), so pass the flag exactly when bv has itself authorized the downgrade,
         // leaving the CLI's guard armed on every other path.
-        var isDowngrade = currentPin is not null && VersionComparer.VersionRelease.Compare(currentPin, _ownVersion) > 0;
-        string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", OwnVersionText, "--allow-downgrade"]
-            : hasEntry ? ["tool", "update", ToolPackageId, "--version", OwnVersionText]
-            : ["tool", "install", ToolPackageId, "--version", OwnVersionText, "--create-manifest-if-needed"];
+        var isDowngrade = currentPin is not null && VersionComparer.VersionRelease.Compare(currentPin, target) > 0;
+        string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", targetText, "--allow-downgrade"]
+            : hasEntry ? ["tool", "update", ToolPackageId, "--version", targetText]
+            : ["tool", "install", ToolPackageId, "--version", targetText, "--create-manifest-if-needed"];
         _ = await _processRunner.RunAsync(
             DotNetMuxer.Path,
             args,
@@ -273,27 +296,28 @@ internal sealed partial class SelfVersionService
             onStderr: line => _reporter.ChildError(line, null),
             cancellationToken: cancellationToken).ConfigureAwait(false);
         return hasEntry
-            ? $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {OwnVersionText} (tool manifest)"
-            : $"{ToolPackageId}: {OwnVersionText} (tool manifest, added)";
+            ? $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)"
+            : $"{ToolPackageId}: {targetText} (tool manifest, added)";
     }
 
-    private string UpdateGlobalJson(string? currentPinText, NuGetVersion? currentPin)
+    private string UpdateGlobalJson(string? currentPinText, NuGetVersion? currentPin, NuGetVersion target)
     {
-        if (currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, _ownVersion))
+        var targetText = target.ToNormalizedString();
+        if (currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, target))
         {
-            return $"{SdkPackageId}: {OwnVersionText} ({GlobalJsonFileName}, unchanged)";
+            return $"{SdkPackageId}: {targetText} ({GlobalJsonFileName}, unchanged)";
         }
 
-        WritePin(OwnVersionText);
+        WritePin(targetText);
         return currentPinText is not null
-            ? $"{SdkPackageId}: {currentPinText} -> {OwnVersionText} ({GlobalJsonFileName})"
-            : $"{SdkPackageId}: {OwnVersionText} ({GlobalJsonFileName}, added)";
+            ? $"{SdkPackageId}: {currentPinText} -> {targetText} ({GlobalJsonFileName})"
+            : $"{SdkPackageId}: {targetText} ({GlobalJsonFileName}, added)";
     }
 
     // Rewrites the version segment of the configuration file's $schema URL in place, when the URL has the
     // well-known shape; a hand-rolled or absent reference is reported, not touched. Runs on whichever candidate
     // the home directory holds; no file at all means nothing to update or validate.
-    private string? UpdateConfigSchemaReference()
+    private string? UpdateConfigSchemaReference(NuGetVersion target)
     {
         var path = _config.Path;
         if (path is null)
@@ -301,6 +325,7 @@ internal sealed partial class SelfVersionService
             return null;
         }
 
+        var targetText = target.ToNormalizedString();
         var fileName = Path.GetFileName(path);
         string? schemaReference = null;
         var changed = _jsonHelper.RewriteStringValues(path, (propertyPath, value) =>
@@ -311,7 +336,7 @@ internal sealed partial class SelfVersionService
             }
 
             schemaReference = value;
-            var rewritten = SchemaUrlRegex.Replace(value, m => m.Groups[1].Value + OwnVersionText + m.Groups[2].Value);
+            var rewritten = SchemaUrlRegex.Replace(value, m => m.Groups[1].Value + targetText + m.Groups[2].Value);
             return string.Equals(rewritten, value, StringComparison.Ordinal) ? null : rewritten;
         });
 

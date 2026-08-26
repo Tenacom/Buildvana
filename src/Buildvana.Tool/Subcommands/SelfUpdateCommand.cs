@@ -17,7 +17,7 @@ internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpda
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var summary = await selfVersion.UpdateRepositoryAsync(settings.Force, cancellationToken).ConfigureAwait(false);
+        var summary = await selfVersion.UpdateRepositoryAsync(settings.ResolveTo(), settings.Force, cancellationToken).ConfigureAwait(false);
 
         // The summary is the command's deliverable, not narration: it goes to the console unconditionally,
         // regardless of verbosity, like the report of `bv version show`.
