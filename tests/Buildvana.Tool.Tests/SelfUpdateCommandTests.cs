@@ -10,7 +10,7 @@ using Buildvana.Tool.Subcommands;
 using NuGet.Versioning;
 using Spectre.Console.Testing;
 
-internal sealed class UpdateCommandTests
+internal sealed class SelfUpdateCommandTests
 {
     private const string OwnVersion = "2.1.41-preview";
 
@@ -22,7 +22,7 @@ internal sealed class UpdateCommandTests
         WriteToolManifest(home, OwnVersion);
         WriteConfigFile(home, OwnVersion);
         var console = new TestConsole();
-        var command = new UpdateCommand(CreateService(home), new UpdateSettings(), console);
+        var command = new SelfUpdateCommand(CreateService(home), new SelfUpdateSettings(), console);
 
         var exitCode = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -39,7 +39,7 @@ internal sealed class UpdateCommandTests
         WriteGlobalJson(home, OwnVersion);
         WriteToolManifest(home, OwnVersion);
         var console = new TestConsole();
-        var command = new UpdateCommand(CreateService(home), new UpdateSettings(), console);
+        var command = new SelfUpdateCommand(CreateService(home), new SelfUpdateSettings(), console);
 
         _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -55,7 +55,7 @@ internal sealed class UpdateCommandTests
         WriteGlobalJson(home, "2.1.42-preview");
         WriteToolManifest(home, "2.1.42-preview");
         var runner = new FakeProcessRunner();
-        var command = new UpdateCommand(CreateService(home, runner), new UpdateSettings { Force = true }, new TestConsole());
+        var command = new SelfUpdateCommand(CreateService(home, runner), new SelfUpdateSettings { Force = true }, new TestConsole());
 
         var exitCode = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 

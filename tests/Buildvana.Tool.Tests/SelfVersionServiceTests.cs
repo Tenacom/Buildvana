@@ -39,7 +39,7 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(exception!.Message).Contains(pin);
         await Assert.That(exception.Message).Contains("2.1.41-preview");
-        await Assert.That(exception.Message).Contains("bv update");
+        await Assert.That(exception.Message).Contains("bv self-update");
     }
 
     [Test]
@@ -51,7 +51,7 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("global.json");
-        await Assert.That(exception.Message).Contains("bv update");
+        await Assert.That(exception.Message).Contains("bv self-update");
     }
 
     [Test]

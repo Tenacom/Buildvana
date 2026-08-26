@@ -11,7 +11,7 @@ namespace Buildvana.Tool.Services;
 /// <remarks>
 /// The three states the members encode — no entry, an entry without a usable version, and a usable pin — matter
 /// to consumers in different ways: delegation treats anything without a usable <see cref="Version"/> as "no pin",
-/// while <c>bv update</c> must distinguish a missing entry (which <c>dotnet tool install</c> creates) from an
+/// while <c>bv self-update</c> must distinguish a missing entry (which <c>dotnet tool install</c> creates) from an
 /// unusable one (which no dotnet CLI verb can rewrite, since the CLI cannot parse the manifest either).
 /// </remarks>
 /// <param name="HasEntry">Whether the manifest has a bv entry at all, usable or not.</param>

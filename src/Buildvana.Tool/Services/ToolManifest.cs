@@ -36,9 +36,9 @@ internal static class ToolManifest
     /// <para>Only the given home directory's own manifest is read — deliberately narrower than the dotnet CLI,
     /// which walks up from the working directory merging manifests until one is marked <c>isRoot</c>. An
     /// ancestor manifest's bv entry therefore pins bv for the CLI but not for bv itself: the repository's own
-    /// manifest is the pin bv manages, and both delegation and <c>bv update</c> key their decisions on it
+    /// manifest is the pin bv manages, and both delegation and <c>bv self-update</c> key their decisions on it
     /// alone. The dotnet CLI they spawn follows its own manifest-location rules from the home directory —
-    /// which lands on this same manifest whenever it has a bv entry, though <c>bv update</c>'s no-entry
+    /// which lands on this same manifest whenever it has a bv entry, though <c>bv self-update</c>'s no-entry
     /// install can reach an ancestor's.</para>
     /// <para>Version parseability is judged with <see cref="NuGetVersion.TryParse(string?, out NuGetVersion)"/> — the
     /// same call the dotnet CLI makes when it reads the manifest (see <c>ToolManifestEditor</c> in the

@@ -10,9 +10,10 @@ using Spectre.Console;
 
 namespace Buildvana.Tool.Subcommands;
 
-[ImplementsCommand("update", settingsType: typeof(UpdateSettings))]
-[Description("Update the repository's Buildvana pins (tool manifest, global.json, configuration schema reference) to this bv's version.")]
-internal sealed class UpdateCommand(SelfVersionService selfVersion, UpdateSettings settings, IAnsiConsole console) : IBvCommand
+[ImplementsCommand("self-update", settingsType: typeof(SelfUpdateSettings))]
+[Description("Update the repository's Buildvana pins (tool manifest, global.json, configuration schema reference) to this bv's version. "
+    + "Unlike a canonical self-update, it changes the repository, never this binary.")]
+internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpdateSettings settings, IAnsiConsole console) : IBvCommand
 {
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

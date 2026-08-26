@@ -3,12 +3,12 @@
 
 using Buildvana.Tool.Subcommands;
 
-internal sealed class UpdateSettingsTests
+internal sealed class SelfUpdateSettingsTests
 {
     [Test]
     public async Task Parse_WithoutOptions_LeavesForceOff()
     {
-        var settings = UpdateSettings.Parse([]);
+        var settings = SelfUpdateSettings.Parse([]);
 
         await Assert.That(settings.Force).IsFalse();
     }
@@ -16,7 +16,7 @@ internal sealed class UpdateSettingsTests
     [Test]
     public async Task Parse_WithForce_SetsForce()
     {
-        var settings = UpdateSettings.Parse(["--force"]);
+        var settings = SelfUpdateSettings.Parse(["--force"]);
 
         await Assert.That(settings.Force).IsTrue();
     }

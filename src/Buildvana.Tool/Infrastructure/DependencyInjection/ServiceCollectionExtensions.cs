@@ -59,7 +59,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton(static sp => VersionAdvanceSettings.Parse(
                     sp.GetRequiredService<CommandParameters>().Positionals,
                     sp.GetRequiredService<CommandParameters>().Options))
-                .AddSingleton(static sp => UpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
+                .AddSingleton(static sp => SelfUpdateSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
 
                 // Lazy by design: the provider finds, parses, and validates the file on first read of what is asked
                 // of it. A malformed buildvana.json stays inert until a consumer - typically the BuildvanaConfig
