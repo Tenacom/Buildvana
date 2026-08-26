@@ -6,8 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.IO;
+using Buildvana.Core.IO.Gitignore;
+using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
@@ -29,10 +32,17 @@ namespace Buildvana.Tool.Services;
 /// <para>MSBuild items are read from files whose extension is <c>.props</c>, <c>.targets</c>, or any
 /// <c>proj</c>-suffixed form (<c>.csproj</c>, <c>.esproj</c>, ...), for the item types
 /// <c>PackageVersion</c>, <c>GlobalPackageReference</c>, and <c>PackageReference</c>; a
-/// <c>VersionOverride</c> is never read or stamped. Directives are read from every <c>.cs</c> file; a
-/// versionless directive is a reference to a pin declared elsewhere, not a pin, and is not seen.</para>
+/// <c>VersionOverride</c> is never read or stamped. Directives are read from <c>.cs</c> files within the
+/// file-based-app scope (<see cref="BuildvanaConfig.FileBasedApps"/>): reading every <c>.cs</c> file would
+/// make discovery cost scale with the whole source tree, and the declared scope keeps the summary an honest
+/// coverage check — a directive outside it is out of scope by the user's own statement. A versionless
+/// directive is a reference to a pin declared elsewhere, not a pin, and is not seen.</para>
+/// <para>The scope is read from the resolved configuration leniently: when the configuration cannot be
+/// read, discovery falls back to the built-in hooks scope with a warning instead of failing — self-update
+/// is the tool that repairs a half-updated repository, so it must run on one whose configuration file
+/// predates it.</para>
 /// </remarks>
-internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home)
+internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<BuildvanaConfig> config, IReporter reporter)
 {
     // Exclusions on top of what .gitignore files dictate: bv's own outputs, anchored at the home directory,
     // plus the conventional build and dependency directories at any depth. The finder skips `.git` on its own.
@@ -54,6 +64,8 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home)
     /// <exception cref="BuildFailedException">A directory or file could not be read.</exception>
     public IReadOnlyList<FamilyPin> DiscoverPins()
     {
+        var scope = ResolveScope();
+        var ignoresCase = CaseSensitivityMode.SystemDefault.IgnoresCase();
         var pins = new List<FamilyPin>();
         foreach (var relativePath in new FileFinder(home.HomeDirectory, ExclusionPatterns).GetFiles())
         {
@@ -68,7 +80,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home)
                     }
                 }
             }
-            else if (IsFileBasedApp(relativePath))
+            else if (IsFileBasedApp(scope, relativePath, ignoresCase))
             {
                 foreach (var directive in AppDirectiveEditor.ReadDirectives(path))
                 {
@@ -127,8 +139,29 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home)
         return isSharedFile || extension.EndsWith("proj", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsFileBasedApp(string relativePath)
-        => string.Equals(Path.GetExtension(relativePath), ".cs", StringComparison.OrdinalIgnoreCase);
+    // A file-based app is a .cs file within the declared scope: the extension picks the language, the scope
+    // says which .cs files are apps rather than project sources.
+    private static bool IsFileBasedApp(GitignoreFile scope, string relativePath, bool ignoresCase)
+    {
+        if (!string.Equals(Path.GetExtension(relativePath), ".cs", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Mirror of the gitignore walk with "select" in place of "ignore": a matched directory selects its
+        // whole subtree, and a file needs a pattern of its own only when no ancestor directory matched.
+        var components = relativePath.Split('/');
+        for (var count = 1; count <= components.Length; count++)
+        {
+            var isDirectory = count < components.Length;
+            if (scope.Evaluate(components.AsSpan(0, count), isDirectory, ignoresCase) == GitignoreDecision.Ignore)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // The version parses only when its trimmed text is a literal version: surrounding whitespace, allowed in
     // a Version child element, is not part of the version.
@@ -176,5 +209,27 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home)
         return VersionComparer.VersionRelease.Equals(pin.Version, target)
             ? $"{pin.Id}: {targetText} ({pin.RelativePath}, unchanged)"
             : $"{pin.Id}: {pin.Version.ToNormalizedString()} -> {targetText} ({pin.RelativePath})";
+    }
+
+    // The scope comes from the resolved configuration, read leniently: a configuration file this bv cannot
+    // read degrades discovery to the built-in hooks scope instead of killing the update, since self-update
+    // is the tool that repairs the repository. The configuration problems themselves are reported by the
+    // post-update validation, so the warning here only names the degradation.
+    private GitignoreFile ResolveScope()
+    {
+        IReadOnlyList<string> patterns;
+        try
+        {
+            patterns = config.Value.FileBasedApps;
+        }
+        catch (BuildFailedException)
+        {
+            patterns = new BuildvanaConfig().FileBasedApps;
+            reporter.Warning(
+                "The configuration file could not be read; file-based apps are searched only under "
+                + $"{WellKnownPaths.HooksDirectory}.");
+        }
+
+        return GitignoreFile.Parse(patterns);
     }
 }

@@ -9,6 +9,8 @@ Buildvana.Runtime.BuildvanaConfig.BuildvanaConfig() -> void
 Buildvana.Runtime.BuildvanaConfig.DotNet.get -> Buildvana.Runtime.DotNetConfig!
 Buildvana.Runtime.BuildvanaConfig.DotNet.init -> void
 Buildvana.Runtime.BuildvanaConfig.Equals(Buildvana.Runtime.BuildvanaConfig? other) -> bool
+Buildvana.Runtime.BuildvanaConfig.FileBasedApps.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Buildvana.Runtime.BuildvanaConfig.FileBasedApps.init -> void
 Buildvana.Runtime.BuildvanaConfig.Git.get -> Buildvana.Runtime.GitConfig!
 Buildvana.Runtime.BuildvanaConfig.Git.init -> void
 Buildvana.Runtime.BuildvanaConfig.GitHub.get -> Buildvana.Runtime.GitHubConfig!

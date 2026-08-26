@@ -38,6 +38,7 @@ public static class BuildvanaConfigFactory
             NuGet = ComposeNuGet(json?.NuGet),
             GitHub = ComposeGitHub(json?.GitHub),
             Git = ComposeGit(json?.Git),
+            FileBasedApps = ComposeFileBasedApps(json?.FileBasedApps),
         };
     }
 
@@ -177,6 +178,14 @@ public static class BuildvanaConfigFactory
                 ? new GitIdentityConfig { Name = identity.Name!, Email = identity.Email! }
                 : null,
         };
+
+    // Configured patterns extend the built-in scope rather than replace it: hooks are file-based apps by
+    // definition, so no configuration can move them out of scope.
+    private static IReadOnlyList<string> ComposeFileBasedApps(IReadOnlyList<string>? json)
+    {
+        var defaults = new BuildvanaConfig();
+        return json is null ? defaults.FileBasedApps : [.. defaults.FileBasedApps, .. json];
+    }
 
     // Composition has one definition of "blank": text that is null, empty, or all whitespace is not a value.
     // A blank optional member counts as not stated at all, so the next precedence tier applies.

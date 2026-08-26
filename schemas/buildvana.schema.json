@@ -280,6 +280,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "fileBasedApps": {
+      "description": "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "additionalProperties": false

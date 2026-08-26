@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using Buildvana.Core.Json.Schema;
@@ -70,4 +71,12 @@ public sealed record BuildvanaJsonConfig
     /// <summary>Gets the <c>git</c> section.</summary>
     [Description("Configuration for Git-related behavior.")]
     public GitJsonConfig? Git { get; init; }
+
+    /// <summary>Gets the <c>fileBasedApps</c> patterns.</summary>
+    [Description(
+        "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, "
+        + "added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives "
+        + "read only .cs files within this scope.")]
+    [JsonSchemaNoDefault] // The stated patterns add to the built-in scope; a default would read as replacing it.
+    public IReadOnlyList<string>? FileBasedApps { get; init; }
 }
