@@ -150,8 +150,10 @@ internal sealed partial class SelfVersionService
     /// loaded against this bv's model, and any problems are reported as warnings — the file keeps working for
     /// the commands that do not read it, and the user decides how to migrate it.</para>
     /// <para>No source is consulted about <paramref name="toVersion"/>: the <c>dotnet tool update</c> step is
-    /// the existence check. It runs before any file is written, so a version no configured source knows fails
-    /// the update with the repository untouched.</para>
+    /// the existence check. That step always runs, even when the manifest already pins the target — a matching
+    /// pin proves neither that the version is obtainable nor that it is downloaded — and it runs before any
+    /// file is written, so a version no configured source knows fails the update with the repository
+    /// untouched.</para>
     /// <para>When an existing pin is newer than the target version, the update would be a downgrade and fails
     /// unless <paramref name="force"/> is <see langword="true"/>.</para>
     /// </remarks>
@@ -188,7 +190,7 @@ internal sealed partial class SelfVersionService
 
         // Manifest first: pinning it spawns the dotnet CLI, the one step with an external actor, so a failure
         // there leaves the repository untouched. A failed file write after it leaves the manifest already
-        // pinned — a state a rerun reads as "unchanged" before retrying the writes, so the window self-heals.
+        // pinned — a state a rerun reports as "unchanged" while retrying the writes, so the window self-heals.
         var toolManifestLine = await PinToolManifestAsync(manifestPin, target, cancellationToken).ConfigureAwait(false);
         var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin, target);
         var familyPinLines = _familyPins.StampPins(familyPins, target);
@@ -293,6 +295,9 @@ internal sealed partial class SelfVersionService
     // between update and install is keyed on entry presence, mirroring the CLI's own contract: update rewrites
     // an existing entry, and install creates the manifest itself when the repository has none. (An entry with
     // an unusable version never reaches this point; EnsureUsableManifestEntry rejects it up front.)
+    // The CLI runs even when the manifest already pins the target: self-update is delegation-exempt, so the
+    // pinned version need not be the one running, or even be present on the machine — and with --to this run
+    // is the promised existence check. The dotnet CLI takes an already-pinned version in stride.
     private async Task<string> PinToolManifestAsync(
         BvManifestPin manifestPin,
         NuGetVersion target,
@@ -300,12 +305,8 @@ internal sealed partial class SelfVersionService
     {
         var targetText = target.ToNormalizedString();
         var currentPin = manifestPin.Version;
-        if (currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, target))
-        {
-            return $"{ToolPackageId}: {targetText} (tool manifest, unchanged)";
-        }
-
         var hasEntry = manifestPin.HasEntry;
+        var isUnchanged = currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, target);
 
         // The dotnet CLI has a downgrade guard of its own: `tool update` refuses to move a tool to a lower
         // version unless --allow-downgrade is passed. A downgrade only reaches this point forced (see
@@ -322,9 +323,9 @@ internal sealed partial class SelfVersionService
             onStdout: line => _reporter.ChildOutput(line, null),
             onStderr: line => _reporter.ChildError(line, null),
             cancellationToken: cancellationToken).ConfigureAwait(false);
-        return hasEntry
-            ? $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)"
-            : $"{ToolPackageId}: {targetText} (tool manifest, added)";
+        return !hasEntry ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
+            : isUnchanged ? $"{ToolPackageId}: {targetText} (tool manifest, unchanged)"
+            : $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)";
     }
 
     private string UpdateGlobalJson(string? currentPinText, NuGetVersion? currentPin, NuGetVersion target)

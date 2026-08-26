@@ -90,11 +90,13 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(exception!.Message).Contains("not-a-version");
     }
 
+    // No file changes, but the dotnet CLI still runs: a matching manifest pin proves neither that the
+    // version is obtainable nor that it is downloaded, and the tool update step is what proves both.
     [Test]
     [Arguments("2.1.41-preview", "2.1.41-preview")]
     [Arguments("2.1.41-preview+g0123abc", "2.1.41-preview")]
     [Arguments("2.1.41-preview", "2.1.41-preview+g0123abc")]
-    public async Task UpdateRepository_WhenEverythingCurrent_ChangesNothing(string ownVersion, string pin)
+    public async Task UpdateRepository_WhenEverythingCurrent_RunsToolUpdateButChangesNoFile(string ownVersion, string pin)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, pin);
@@ -106,10 +108,32 @@ internal sealed class SelfVersionServiceTests
         var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
-        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
         await Assert.That(summary.ToolManifestLine).Contains("tool manifest, unchanged");
         await Assert.That(summary.GlobalJsonLine).Contains("global.json, unchanged");
         await Assert.That(summary.ConfigFileLine).IsNull();
+    }
+
+    // A half-updated repository can have the manifest already at the --to version while the rest lags;
+    // the existence check must still happen before the lagging files are written.
+    [Test]
+    public async Task UpdateRepository_WithToVersionMatchingManifestPin_StillRunsToolUpdate()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.43-preview");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service
+            .UpdateRepositoryAsync(NuGetVersion.Parse("2.1.43-preview"), force: false)
+            .ConfigureAwait(false);
+
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.43-preview"]);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.43-preview (tool manifest, unchanged)");
+        await Assert.That(summary.GlobalJsonLine).IsEqualTo("Buildvana.Sdk: 2.1.41-preview -> 2.1.43-preview (global.json)");
     }
 
     [Test]
