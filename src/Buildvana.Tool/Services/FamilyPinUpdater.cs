@@ -32,7 +32,10 @@ namespace Buildvana.Tool.Services;
 /// <para>MSBuild items are read from files whose extension is <c>.props</c>, <c>.targets</c>, or any
 /// <c>proj</c>-suffixed form (<c>.csproj</c>, <c>.esproj</c>, ...), for the item types
 /// <c>PackageVersion</c>, <c>GlobalPackageReference</c>, and <c>PackageReference</c>; a
-/// <c>VersionOverride</c> is never read or stamped. Directives are read from <c>.cs</c> files within the
+/// <c>VersionOverride</c> is never read or stamped, family ids included — an override overrules a
+/// dependency update, and self-update is one, so whoever writes an override owns the version and its
+/// consequences, drift out of lockstep included. The summary does not mention what is not ours to move.
+/// Directives are read from <c>.cs</c> files within the
 /// file-based-app scope (<see cref="BuildvanaConfig.FileBasedApps"/>): reading every <c>.cs</c> file would
 /// make discovery cost scale with the whole source tree, and the declared scope keeps the summary an honest
 /// coverage check — a directive outside it is out of scope by the user's own statement. A versionless
