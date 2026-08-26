@@ -3,8 +3,10 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using Buildvana.Core;
 using Buildvana.Tool.CommandLine;
 using CommunityToolkit.Diagnostics;
+using NuGet.Versioning;
 
 namespace Buildvana.Tool.Subcommands;
 
@@ -15,11 +17,18 @@ namespace Buildvana.Tool.Subcommands;
 internal sealed class SelfUpdateSettings
 {
     /// <summary>
-    /// Gets a value indicating whether the update may downgrade pins that are newer than the running bv.
+    /// Gets a value indicating whether the update may downgrade pins that are newer than the target version.
     /// </summary>
     [BvOption("--force")]
-    [Description("Update the repository's pins even when they are newer than this bv (downgrade).")]
+    [Description("Update the repository's pins even when they are newer than the target version (downgrade).")]
     public bool Force { get; init; }
+
+    /// <summary>
+    /// Gets the version to stamp instead of this bv's own, or <see langword="null"/> to stamp this bv's own version.
+    /// </summary>
+    [BvOption("--to <VERSION>")]
+    [Description("Version to stamp into the repository's pins. Defaults to this bv's own version.")]
+    public string? To { get; init; }
 
     /// <summary>
     /// Parses the command's option tokens into a <see cref="SelfUpdateSettings"/>. Unknown options have already
@@ -31,6 +40,28 @@ internal sealed class SelfUpdateSettings
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new SelfUpdateSettings { Force = reader.ReadFlag("--force") };
+        return new SelfUpdateSettings
+        {
+            Force = reader.ReadFlag("--force"),
+            To = reader.ReadValue("--to"),
+        };
+    }
+
+    /// <summary>
+    /// Parses <see cref="To"/> into a <see cref="NuGetVersion"/>; <see langword="null"/> when the option was
+    /// not given.
+    /// </summary>
+    /// <returns>The parsed version, or <see langword="null"/>.</returns>
+    /// <exception cref="BuildFailedException">The value of <see cref="To"/> is not a valid version.</exception>
+    public NuGetVersion? ResolveTo()
+    {
+        if (To is null)
+        {
+            return null;
+        }
+
+        return NuGetVersion.TryParse(To, out var version)
+            ? version
+            : throw new BuildFailedException($"Invalid value '{To}' for --to. Expected a version, e.g. 2.1.0 or 2.1.0-preview.");
     }
 }
