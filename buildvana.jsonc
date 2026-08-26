@@ -136,7 +136,7 @@
 
   // Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in
   // .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.
-  // Not set (yet): the pinned Buildvana version rejects settings it does not know, so this line stays a comment
-  // until a version carrying the setting is pinned here. It will then read: "fileBasedApps": ["/tools/"]
-  // "fileBasedApps": ["/tools/"]
+  // Not set (yet): the pinned Buildvana version rejects settings it does not know, so the line below stays a
+  // comment until a version carrying the setting is pinned here.
+  // "fileBasedApps": ["/tools/", "/.claude/tools/"]
 }
