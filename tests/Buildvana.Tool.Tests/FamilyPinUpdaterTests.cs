@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
@@ -266,8 +267,8 @@ internal sealed class FamilyPinUpdaterTests
     }
 
     // The factory emits the built-in patterns after the configured ones, and in gitignore syntax the last
-    // matching pattern wins — so a configured negation of the hooks scope is inert. The list here is the
-    // shape the factory produces from a configuration stating only the negation.
+    // matching pattern wins — so a configured negation of the hooks scope is inert. The factory composes
+    // the scope here, so the test covers the whole path from stated configuration to discovery.
     [Test]
     public async Task DiscoverPins_WithConfiguredNegationOfHooksScope_StillReadsHooks()
     {
@@ -278,8 +279,8 @@ internal sealed class FamilyPinUpdaterTests
             Console.WriteLine();
             """;
         WriteHook(home, "hook.cs", app);
-        var config = new BuildvanaConfig { FileBasedApps = ["!.buildvana/hooks/", ".buildvana/hooks/"] };
-        var updater = CreateUpdater(home, config);
+        var json = new BuildvanaJsonConfig { FileBasedApps = ["!.buildvana/hooks/"] };
+        var updater = CreateUpdater(home, BuildvanaConfigFactory.Create(json, null));
 
         var pins = updater.DiscoverPins();
 
