@@ -24,7 +24,7 @@ partial class AppDirectiveEditor
                 lineEnd--;
             }
 
-            if (!ProcessLine(text, lineStart, lineEnd, isFirstLine, ref inBlockComment, matches))
+            if (!ProcessLine(text, lineStart, lineEnd, isFirstLine, directivesAllowed: true, ref inBlockComment, matches))
             {
                 break;
             }
@@ -38,12 +38,15 @@ partial class AppDirectiveEditor
 
     // Handles one line (or, on recursion, the rest of a line after a closed block comment). Returns false
     // when the line ends the directive block: the first line that is neither blank, nor a comment, nor a
-    // "#:" directive, nor the file-opening shebang.
+    // "#:" directive, nor the file-opening shebang. After a closed block comment only blank text or
+    // another comment continues the block: C# wants a directive first on its line (CS1040), so the SDK
+    // reads no directive there either, and to it the line is code.
     private static bool ProcessLine(
         string text,
         int start,
         int end,
         bool isFirstLine,
+        bool directivesAllowed,
         ref bool inBlockComment,
         List<DirectiveMatch> matches)
     {
@@ -68,7 +71,7 @@ partial class AppDirectiveEditor
             }
 
             inBlockComment = false;
-            return ProcessLine(text, close + 2, e, isFirstLine: false, ref inBlockComment, matches);
+            return ProcessLine(text, close + 2, e, isFirstLine: false, directivesAllowed: false, ref inBlockComment, matches);
         }
 
         if (s == e)
@@ -95,11 +98,16 @@ partial class AppDirectiveEditor
                 return true;
             }
 
-            return ProcessLine(text, close + 2, e, isFirstLine: false, ref inBlockComment, matches);
+            return ProcessLine(text, close + 2, e, isFirstLine: false, directivesAllowed: false, ref inBlockComment, matches);
         }
 
         if (HasAt(text, s, "#:"))
         {
+            if (!directivesAllowed)
+            {
+                return false;
+            }
+
             ParseDirective(text, s + 2, e, matches);
             return true;
         }
