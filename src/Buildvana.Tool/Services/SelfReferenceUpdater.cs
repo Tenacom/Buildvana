@@ -132,18 +132,14 @@ internal sealed class SelfReferenceUpdater
                 return null;
             }
 
-            return IsRewritable(pin.VersionText, pin.Id, newVersion) ? newVersion : null;
+            // Don't rewrite property references like $(SomeVersion) — they'd silently lose their indirection.
+            if (pin.VersionText.Contains("$(", StringComparison.Ordinal))
+            {
+                _reporter.Detail(
+                    $"Self-reference update: leaving property-reference version '{pin.VersionText}' on package '{pin.Id}' unchanged.");
+                return null;
+            }
+
+            return newVersion;
         });
-
-    private bool IsRewritable(string existing, string id, string newVersion)
-    {
-        // Don't rewrite property references like $(SomeVersion) — they'd silently lose their indirection.
-        if (existing.Contains("$(", StringComparison.Ordinal))
-        {
-            _reporter.Detail($"Self-reference update: leaving property-reference version '{existing}' on package '{id}' unchanged.");
-            return false;
-        }
-
-        return !string.Equals(existing, newVersion, StringComparison.Ordinal);
-    }
 }
