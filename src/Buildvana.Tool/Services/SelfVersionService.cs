@@ -104,14 +104,14 @@ internal sealed partial class SelfVersionService
         {
             throw new BuildFailedException(
                 $"SDK version check failed: {missingReason}. This bv is version {OwnVersionText}. "
-                + $"Run 'bv update' to pin {SdkPackageId} {OwnVersionText}, or pass --skip-sdk-check to skip this check.");
+                + $"Run 'bv self-update' to pin {SdkPackageId} {OwnVersionText}, or pass --skip-sdk-check to skip this check.");
         }
 
         if (!NuGetVersion.TryParse(pin, out var pinnedVersion))
         {
             throw new BuildFailedException(
                 $"SDK version check failed: the {SdkPackageId} version pinned in {GlobalJsonFileName} ('{pin}') is not a valid version. "
-                + $"This bv is version {OwnVersionText}. Run 'bv update' to repin {SdkPackageId} {OwnVersionText}, "
+                + $"This bv is version {OwnVersionText}. Run 'bv self-update' to repin {SdkPackageId} {OwnVersionText}, "
                 + "or pass --skip-sdk-check to skip this check.");
         }
 
@@ -119,7 +119,7 @@ internal sealed partial class SelfVersionService
         {
             throw new BuildFailedException(
                 $"SDK version check failed: {GlobalJsonFileName} pins {SdkPackageId} {pinnedVersion.ToNormalizedString()}, "
-                + $"but this bv is version {OwnVersionText}. Run 'bv update' to update this repository's pins "
+                + $"but this bv is version {OwnVersionText}. Run 'bv self-update' to update this repository's pins "
                 + "to a single version, or pass --skip-sdk-check to skip this check.");
         }
 
@@ -148,7 +148,7 @@ internal sealed partial class SelfVersionService
     /// <exception cref="BuildFailedException">The update failed — e.g. a file could not be read or written,
     /// <c>dotnet tool update</c> failed, or an existing pin is newer than this bv and <paramref name="force"/>
     /// is <see langword="false"/>; the message names the failure.</exception>
-    public async Task<UpdateSummary> UpdateRepositoryAsync(bool force, CancellationToken cancellationToken = default)
+    public async Task<SelfUpdateSummary> UpdateRepositoryAsync(bool force, CancellationToken cancellationToken = default)
     {
         var manifestPin = ToolManifest.ReadBvPin(_jsonHelper, _home.HomeDirectory);
         EnsureUsableManifestEntry(manifestPin);
@@ -167,7 +167,7 @@ internal sealed partial class SelfVersionService
         var toolManifestLine = await PinToolManifestAsync(manifestPin, cancellationToken).ConfigureAwait(false);
         var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin);
         var configFileLine = UpdateConfigSchemaReference();
-        return new UpdateSummary(toolManifestLine, globalJsonLine, configFileLine);
+        return new SelfUpdateSummary(toolManifestLine, globalJsonLine, configFileLine);
     }
 
     // The dotnet CLI reads the manifest with the same version parser bv uses, so an entry whose version bv
@@ -186,7 +186,7 @@ internal sealed partial class SelfVersionService
             : $"pins version '{manifestPin.VersionText}', which is not a valid version";
         throw new BuildFailedException(
             $"Cannot update this repository: the {ToolPackageId} entry in {ToolManifest.RelativePath} {problem}. "
-            + $"Fix or remove the entry, then run '{ToolPackageId} update' again.");
+            + $"Fix or remove the entry, then run '{ToolPackageId} self-update' again.");
     }
 
     private static void CreateGlobalJson(string path, string version)
@@ -208,8 +208,8 @@ internal sealed partial class SelfVersionService
         => propertyPath is [MsbuildSdksPropertyName, SdkPackageId];
 
     // The update never downgrades silently: an old bv run by habit in a newer repository must not roll the
-    // repository back. `dotnet bv update` runs the repository's own pinned bv (the update command is exempt
-    // from delegation, so a plain `bv update` runs the invoked binary), and --force covers the deliberate
+    // repository back. `dotnet bv self-update` runs the repository's own pinned bv (the self-update command is
+    // exempt from delegation, so a plain `bv self-update` runs the invoked binary), and --force covers the deliberate
     // downgrade (e.g. bisecting a regression). The guard deliberately covers the two version pins only: the
     // $schema reference is cosmetic metadata, and when either pin is newer the update throws right here,
     // before the schema reference is ever touched.
@@ -238,7 +238,7 @@ internal sealed partial class SelfVersionService
 
         throw new BuildFailedException(
             $"This bv is version {OwnVersionText}, but {string.Join(" and ", newerPins)}: updating would be a downgrade. "
-            + $"Run 'dotnet {ToolPackageId} update' to update the repository to its own pinned {ToolPackageId}, "
+            + $"Run 'dotnet {ToolPackageId} self-update' to update the repository to its own pinned {ToolPackageId}, "
             + $"or pass --force to downgrade to {OwnVersionText}.");
     }
 

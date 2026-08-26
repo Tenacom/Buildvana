@@ -40,9 +40,9 @@ internal sealed class DelegationServiceTests
     }
 
     [Test]
-    [Arguments("update")]
-    [Arguments("UPDATE")]
-    public async Task TryDelegate_WithUpdateSubcommand_RunsInPlace(string subcommand)
+    [Arguments("self-update")]
+    [Arguments("SELF-UPDATE")]
+    public async Task TryDelegate_WithSelfUpdateSubcommand_RunsInPlace(string subcommand)
     {
         using var home = CreateDelegatableHome("2.1.40-preview");
         var runner = new FakeProcessRunner();

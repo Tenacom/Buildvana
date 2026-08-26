@@ -54,9 +54,9 @@ internal sealed class DelegationService(
     /// </summary>
     public const string DelegatedEnvVar = "BV_DELEGATED";
 
-    // Subcommands that always run on the invoked bv. `update` re-pins the repository to the running bv's own
+    // Subcommands that always run on the invoked bv. `self-update` re-pins the repository to the running bv's own
     // version ("bring this repository to me"); delegating it to the version already pinned would make it a no-op.
-    private const string UpdateCommandName = "update";
+    private const string SelfUpdateCommandName = "self-update";
 
     /// <summary>
     /// Delegates the invocation described by <paramref name="context"/> to the bv version pinned in the
@@ -72,7 +72,7 @@ internal sealed class DelegationService(
     {
         var runInPlace = context.DelegationMarkerPresent
             || context.SkipDelegation
-            || string.Equals(context.Subcommand, UpdateCommandName, StringComparison.OrdinalIgnoreCase);
+            || string.Equals(context.Subcommand, SelfUpdateCommandName, StringComparison.OrdinalIgnoreCase);
         if (runInPlace)
         {
             return null;
