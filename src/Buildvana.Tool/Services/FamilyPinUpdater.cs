@@ -84,12 +84,14 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home)
     }
 
     /// <summary>
-    /// Stamps the target version into the given pins and describes each one.
+    /// Stamps the target version into the repository's family pins and describes each given pin.
     /// </summary>
-    /// <param name="pins">The pins to stamp, from <see cref="DiscoverPins"/>.</param>
+    /// <param name="pins">The pins discovered by <see cref="DiscoverPins"/>. They select the files to edit
+    /// and shape the summary; the rewrite itself re-reads each file and stamps every family pin found in it,
+    /// so a subset of a file's pins cannot be stamped alone.</param>
     /// <param name="target">The version to stamp.</param>
-    /// <returns>One display line per pin, in the order given: what changed, what was already at the target
-    /// version, and what was left alone because its version is not a literal.</returns>
+    /// <returns>One display line per given pin, in the order given: what changed, what was already at the
+    /// target version, and what was left alone because its version is not a literal.</returns>
     /// <exception cref="BuildFailedException">A file could not be read or written.</exception>
     public IReadOnlyList<string> StampPins(IReadOnlyList<FamilyPin> pins, NuGetVersion target)
     {
