@@ -38,7 +38,7 @@ internal sealed partial class SelfVersionService
 {
     private const string GlobalJsonFileName = "global.json";
     private const string MsbuildSdksPropertyName = "msbuild-sdks";
-    private const string SdkPackageId = "Buildvana.Sdk";
+    private const string SdkPackageId = BuildvanaFamily.SdkPackageId;
     private const string ToolPackageId = ToolManifest.BvPackageId;
     private const string SchemaPropertyName = "$schema";
 
@@ -47,6 +47,7 @@ internal sealed partial class SelfVersionService
     private readonly BuildvanaJsonConfigProvider _config;
     private readonly IJsonHelper _jsonHelper;
     private readonly IProcessRunner _processRunner;
+    private readonly FamilyPinUpdater _familyPins;
     private readonly NuGetVersion _ownVersion;
 
     /// <summary>
@@ -57,6 +58,7 @@ internal sealed partial class SelfVersionService
     /// <param name="config">The provider of the configuration file whose schema reference is rewritten.</param>
     /// <param name="jsonHelper">The JSON helper used to read and rewrite pins.</param>
     /// <param name="processRunner">The process runner used to invoke <c>dotnet tool update</c>.</param>
+    /// <param name="familyPins">The finder and stamper of the family pins declared in the repository's own files.</param>
     /// <param name="ownVersion">The version of the running bv.</param>
     public SelfVersionService(
         IReporter reporter,
@@ -64,6 +66,7 @@ internal sealed partial class SelfVersionService
         BuildvanaJsonConfigProvider config,
         IJsonHelper jsonHelper,
         IProcessRunner processRunner,
+        FamilyPinUpdater familyPins,
         NuGetVersion ownVersion)
     {
         Guard.IsNotNull(reporter);
@@ -71,12 +74,14 @@ internal sealed partial class SelfVersionService
         Guard.IsNotNull(config);
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(processRunner);
+        Guard.IsNotNull(familyPins);
         Guard.IsNotNull(ownVersion);
         _reporter = reporter;
         _home = home;
         _config = config;
         _jsonHelper = jsonHelper;
         _processRunner = processRunner;
+        _familyPins = familyPins;
         _ownVersion = ownVersion;
     }
 
@@ -128,18 +133,22 @@ internal sealed partial class SelfVersionService
 
     /// <summary>
     /// Updates the repository's Buildvana pins — the bv entry in the tool manifest, the Buildvana SDK entry in
-    /// <c>global.json</c>, and the configuration file's schema reference — to the target version: this bv's
-    /// own, or the one <paramref name="toVersion"/> names.
+    /// <c>global.json</c>, the family pins declared in the repository's own files, and the configuration
+    /// file's schema reference — to the target version: this bv's own, or the one
+    /// <paramref name="toVersion"/> names.
     /// </summary>
     /// <remarks>
     /// <para>The tool manifest is updated through <c>dotnet tool update</c> (or <c>dotnet tool install
     /// --create-manifest-if-needed</c> when there is no bv entry yet), which also downloads the version so the
     /// next <c>dotnet bv</c> invocation can run it. The <c>global.json</c> pin is rewritten in place, creating
-    /// the file or the <c>msbuild-sdks</c> section as needed. The configuration file's schema reference is
-    /// rewritten only when it matches the well-known <c>Tenacom/Buildvana/&lt;version&gt;/schemas/</c> URL shape;
-    /// afterwards the configuration file is loaded against this bv's model, and any problems are reported
-    /// as warnings — the file keeps working for the commands that do not read it, and the user decides how to
-    /// migrate it.</para>
+    /// the file or the <c>msbuild-sdks</c> section as needed. Family pins found by
+    /// <see cref="FamilyPinUpdater"/> — package items in MSBuild-syntax files, versioned directives in
+    /// file-based apps — are spliced in place, except those whose version is not a literal (a property
+    /// reference, a range, a floating version), which are reported and left alone. The configuration file's
+    /// schema reference is rewritten only when it matches the well-known
+    /// <c>Tenacom/Buildvana/&lt;version&gt;/schemas/</c> URL shape; afterwards the configuration file is
+    /// loaded against this bv's model, and any problems are reported as warnings — the file keeps working for
+    /// the commands that do not read it, and the user decides how to migrate it.</para>
     /// <para>No source is consulted about <paramref name="toVersion"/>: the <c>dotnet tool update</c> step is
     /// the existence check. It runs before any file is written, so a version no configured source knows fails
     /// the update with the repository untouched.</para>
@@ -168,15 +177,23 @@ internal sealed partial class SelfVersionService
             sdkPin = parsedSdkPin;
         }
 
-        EnsureNoUnforcedDowngrade(manifestPin.Version, sdkPin, target, targetIsExplicit: toVersion is not null, force);
+        var familyPins = _familyPins.DiscoverPins();
+        EnsureNoUnforcedDowngrade(
+            manifestPin.Version,
+            sdkPin,
+            familyPins,
+            target,
+            targetIsExplicit: toVersion is not null,
+            force);
 
         // Manifest first: pinning it spawns the dotnet CLI, the one step with an external actor, so a failure
         // there leaves the repository untouched. A failed file write after it leaves the manifest already
         // pinned — a state a rerun reads as "unchanged" before retrying the writes, so the window self-heals.
         var toolManifestLine = await PinToolManifestAsync(manifestPin, target, cancellationToken).ConfigureAwait(false);
         var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin, target);
+        var familyPinLines = _familyPins.StampPins(familyPins, target);
         var configFileLine = UpdateConfigSchemaReference(target);
-        return new SelfUpdateSummary(toolManifestLine, globalJsonLine, configFileLine);
+        return new SelfUpdateSummary(toolManifestLine, globalJsonLine, familyPinLines, configFileLine);
     }
 
     // The dotnet CLI reads the manifest with the same version parser bv uses, so an entry whose version bv
@@ -220,12 +237,14 @@ internal sealed partial class SelfVersionService
     // repository back. `dotnet bv self-update` runs the repository's own pinned bv (the self-update command is
     // exempt from delegation, so a plain `bv self-update` runs the invoked binary), and --force covers the deliberate
     // downgrade (e.g. bisecting a regression). Pins are compared to the target version — this bv's own, or the
-    // one --to names, in which case the message says so. The guard deliberately covers the two version pins
-    // only: the $schema reference is cosmetic metadata, and when either pin is newer the update throws right
-    // here, before the schema reference is ever touched.
+    // one --to names, in which case the message says so. The guard covers every version pin the update can
+    // parse: the tool manifest, global.json, and the literal-versioned family pins. What it skips cannot
+    // trip it by construction: the $schema reference is cosmetic metadata, and a non-literal family pin is
+    // never stamped. When any covered pin is newer the update throws right here, before anything is touched.
     private static void EnsureNoUnforcedDowngrade(
         NuGetVersion? manifestPin,
         NuGetVersion? sdkPin,
+        IReadOnlyList<FamilyPin> familyPins,
         NuGetVersion target,
         bool targetIsExplicit,
         bool force)
@@ -245,6 +264,14 @@ internal sealed partial class SelfVersionService
         if (sdkPin is not null && VersionComparer.VersionRelease.Compare(sdkPin, target) > 0)
         {
             newerPins.Add($"{GlobalJsonFileName} pins {SdkPackageId} {sdkPin.ToNormalizedString()}");
+        }
+
+        foreach (var pin in familyPins)
+        {
+            if (pin.Version is not null && VersionComparer.VersionRelease.Compare(pin.Version, target) > 0)
+            {
+                newerPins.Add($"{pin.RelativePath} pins {pin.Id} {pin.Version.ToNormalizedString()}");
+            }
         }
 
         if (newerPins.Count == 0)

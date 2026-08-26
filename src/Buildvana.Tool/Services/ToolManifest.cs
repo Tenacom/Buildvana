@@ -23,7 +23,7 @@ internal static class ToolManifest
     /// <summary>
     /// The ID of bv's NuGet package, which is also its tool command name.
     /// </summary>
-    public const string BvPackageId = "bv";
+    public const string BvPackageId = BuildvanaFamily.ToolPackageId;
 
     /// <summary>
     /// Reads the bv entry in the tool manifest of the given home directory.

@@ -86,12 +86,14 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<PostReleaseHookArgsFactory>()
                 .AddSingleton<BuildPipeline>()
                 .AddSingleton<SelfReferenceUpdater>()
+                .AddSingleton<FamilyPinUpdater>()
                 .AddSingleton(static sp => new SelfVersionService(
                     sp.GetRequiredService<IReporter>(),
                     sp.GetRequiredService<IHomeDirectoryProvider>(),
                     sp.GetRequiredService<BuildvanaJsonConfigProvider>(),
                     sp.GetRequiredService<IJsonHelper>(),
                     sp.GetRequiredService<IProcessRunner>(),
+                    sp.GetRequiredService<FamilyPinUpdater>(),
                     OwnVersion.Value));
 
             foreach (var registration in CommandRegistry.Commands)

@@ -13,5 +13,5 @@ namespace Buildvana.Tool.Utilities;
 /// the directive has no separator. A versionless <c>#:package</c> resolves through central package
 /// management and is a reference to a pin, not a pin itself. The text is empty when the separator has
 /// nothing after it, and is otherwise not guaranteed to parse as a version.</param>
-// ReSharper disable once NotAccessedPositionalProperty.Global // First direct reader is the bv self-update family stamp (next PR)
+// ReSharper disable once NotAccessedPositionalProperty.Global // First direct reader is bv deps's scope classification (issue #352 stage 2)
 internal sealed record AppDirective(AppDirectiveKind Kind, string Id, string? VersionText);
