@@ -107,6 +107,27 @@ internal sealed class MsBuildPinEditorTests
         await Assert.That(pins).IsEquivalentTo([new MsBuildPin("PackageVersion", "Alpha", "1.0.0")]);
     }
 
+    // A Version child whose content is not plain text up to its end tag is unusable, and yields no pin.
+    [Test]
+    public async Task ReadPins_IgnoresAVersionChildContainingMarkup()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha">
+                  <Version>1.0.0<!-- pinned --></Version>
+                </PackageVersion>
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var pins = MsBuildPinEditor.ReadPins(path, ["PackageVersion"]);
+
+        await Assert.That(pins.Count).IsEqualTo(0);
+    }
+
     // Update-form items are invisible by design: whoever manages references through Update items manages
     // their versions too.
     [Test]
@@ -156,6 +177,44 @@ internal sealed class MsBuildPinEditorTests
             <Project>
               <ItemGroup>
                 <!-- <PackageVersion Include="Alpha" Version="1.0.0" /> -->
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var pins = MsBuildPinEditor.ReadPins(path, ["PackageVersion"]);
+
+        await Assert.That(pins).IsEquivalentTo([new MsBuildPin("PackageVersion", "Beta", "2.0.0")]);
+    }
+
+    [Test]
+    public async Task ReadPins_IgnoresItemsInsideACdataSection()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <![CDATA[ <PackageVersion Include="Alpha" Version="1.0.0" /> ]]>
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var pins = MsBuildPinEditor.ReadPins(path, ["PackageVersion"]);
+
+        await Assert.That(pins).IsEquivalentTo([new MsBuildPin("PackageVersion", "Beta", "2.0.0")]);
+    }
+
+    [Test]
+    public async Task ReadPins_IgnoresItemsInsideAProcessingInstruction()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <?pi <PackageVersion Include="Alpha" Version="1.0.0" /> ?>
                 <PackageVersion Include="Beta" Version="2.0.0" />
               </ItemGroup>
             </Project>
