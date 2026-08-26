@@ -68,6 +68,24 @@ internal sealed class AppDirectiveEditorTests
         await Assert.That(directives).IsEquivalentTo([new AppDirective(AppDirectiveKind.Package, "Alpha", "1.0.0")]);
     }
 
+    // C# wants a directive first on its line (CS1040), so the SDK reads no directive after a closed block
+    // comment; to it the line is code, and code ends the block.
+    [Test]
+    public async Task ReadDirectives_StopsAtADirectiveAfterAClosedBlockComment()
+    {
+        using var home = new TempHome();
+        const string content = """
+            /* comment */ #:package Alpha@1.0.0
+            #:package Beta@2.0.0
+            using System;
+            """;
+        var path = WriteFile(home, content);
+
+        var directives = AppDirectiveEditor.ReadDirectives(path);
+
+        await Assert.That(directives.Count).IsEqualTo(0);
+    }
+
     [Test]
     public async Task ReadDirectives_SkipsAFileOpeningShebangLine()
     {
