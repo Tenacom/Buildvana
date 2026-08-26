@@ -5,12 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
-using Buildvana.Core.IO;
 using Buildvana.Core.Json;
+using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services;
@@ -53,7 +51,7 @@ internal sealed class SelfReferenceUpdater
         [
             ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
             (".config/dotnet-tools.json", (p, produced) => UpdateJsonContainer(p, produced, container: "tools", versionPropertyName: "version")),
-            ("Directory.Packages.props", (p, produced) => UpdateMsBuildXml(p, produced, tagNames: ["PackageVersion"])),
+            ("Directory.Packages.props", (p, produced) => UpdateMsBuildXml(p, produced, itemTypes: ["PackageVersion"])),
         ];
     }
 
@@ -126,87 +124,16 @@ internal sealed class SelfReferenceUpdater
                 : null;
         });
 
-    private bool UpdateMsBuildXml(string path, IReadOnlyDictionary<string, string> produced, string[] tagNames)
-    {
-        // Read while detecting the file's encoding from any BOM, and remember it so the rewrite
-        // preserves the original encoding exactly. The fallback when no BOM is present is UTF-8
-        // without BOM; using the static Encoding.UTF8 as fallback (which has emitBOM=true) would
-        // silently add a BOM on rewrite to files that did not have one.
-        string original;
-        Encoding encoding;
-        using (var reader = UserFile.OpenText(path, new UTF8Encoding(false, true), detectEncodingFromByteOrderMarks: true))
+    private bool UpdateMsBuildXml(string path, IReadOnlyDictionary<string, string> produced, string[] itemTypes)
+        => MsBuildPinEditor.RewritePins(path, itemTypes, pin =>
         {
-            original = reader.ReadToEnd();
-            encoding = reader.CurrentEncoding;
-        }
+            if (!produced.TryGetValue(pin.Id, out var newVersion))
+            {
+                return null;
+            }
 
-        // Build a regex alternation from the supplied tag names.
-        // The two patterns are mutually exclusive: each matching start tag has Include and Version
-        // attributes in exactly one order, so a given match site is matched by at most one of them.
-        var tagAlternation = string.Join('|', Array.ConvertAll(tagNames, Regex.Escape));
-        var includeFirst = new Regex(
-            $"""(<(?:{tagAlternation})\b[^>]*?\bInclude\s*=\s*")([^"]+)("[^>]*?\bVersion\s*=\s*")([^"]*)(")""",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-        var versionFirst = new Regex(
-            $"""(<(?:{tagAlternation})\b[^>]*?\bVersion\s*=\s*")([^"]*)("[^>]*?\bInclude\s*=\s*")([^"]+)(")""",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-        var current = original;
-        current = includeFirst.Replace(current, m => RewriteIncludeFirstMatch(m, produced));
-        current = versionFirst.Replace(current, m => RewriteVersionFirstMatch(m, produced));
-
-        if (string.Equals(current, original, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        UserFile.WriteAllText(path, current, encoding);
-        return true;
-    }
-
-    private string RewriteIncludeFirstMatch(Match match, IReadOnlyDictionary<string, string> produced)
-    {
-        // Groups: 1 = head up to opening quote of Include value
-        //         2 = Include value (package id)
-        //         3 = middle up to opening quote of Version value
-        //         4 = Version value (current)
-        //         5 = closing quote of Version value
-        var id = match.Groups[2].Value;
-        if (!produced.TryGetValue(id, out var newVersion))
-        {
-            return match.Value;
-        }
-
-        var existing = match.Groups[4].Value;
-        if (!IsRewritable(existing, id, newVersion))
-        {
-            return match.Value;
-        }
-
-        return match.Groups[1].Value + match.Groups[2].Value + match.Groups[3].Value + newVersion + match.Groups[5].Value;
-    }
-
-    private string RewriteVersionFirstMatch(Match match, IReadOnlyDictionary<string, string> produced)
-    {
-        // Groups: 1 = head up to opening quote of Version value
-        //         2 = Version value (current)
-        //         3 = middle up to opening quote of Include value
-        //         4 = Include value (package id)
-        //         5 = closing quote of Include value
-        var id = match.Groups[4].Value;
-        if (!produced.TryGetValue(id, out var newVersion))
-        {
-            return match.Value;
-        }
-
-        var existing = match.Groups[2].Value;
-        if (!IsRewritable(existing, id, newVersion))
-        {
-            return match.Value;
-        }
-
-        return match.Groups[1].Value + newVersion + match.Groups[3].Value + match.Groups[4].Value + match.Groups[5].Value;
-    }
+            return IsRewritable(pin.VersionText, pin.Id, newVersion) ? newVersion : null;
+        });
 
     private bool IsRewritable(string existing, string id, string newVersion)
     {
