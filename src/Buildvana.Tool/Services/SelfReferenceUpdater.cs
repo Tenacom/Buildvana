@@ -50,7 +50,11 @@ internal sealed class SelfReferenceUpdater
         _targets =
         [
             ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
-            (".config/dotnet-tools.json", (p, produced) => UpdateJsonContainer(p, produced, container: "tools", versionPropertyName: "version")),
+            (".config/dotnet-tools.json", (p, produced) => UpdateJsonContainer(
+                p,
+                produced,
+                container: "tools",
+                versionPropertyName: "version")),
             ("Directory.Packages.props", (p, produced) => UpdateMsBuildXml(p, produced, itemTypes: ["PackageVersion"])),
         ];
     }
@@ -100,7 +104,11 @@ internal sealed class SelfReferenceUpdater
     // The expected location of each version string differs by container shape:
     //   - versionPropertyName == null → at depth 2 with path [container, packageId];
     //   - versionPropertyName != null → at depth 3 with path [container, packageId, versionPropertyName].
-    private bool UpdateJsonContainer(string path, IReadOnlyDictionary<string, string> produced, string container, string? versionPropertyName)
+    private bool UpdateJsonContainer(
+        string path,
+        IReadOnlyDictionary<string, string> produced,
+        string container,
+        string? versionPropertyName)
         => _jsonHelper.RewriteStringValues(path, (propertyPath, currentValue) =>
         {
             if (versionPropertyName is null)
