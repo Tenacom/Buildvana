@@ -281,11 +281,15 @@ internal sealed partial class SelfVersionService
             return;
         }
 
+        // Oxford-comma list from three phrases on: two read fine joined bare, five joined with "and" do not.
+        var offenders = newerPins.Count <= 2
+            ? string.Join(" and ", newerPins)
+            : $"{string.Join(", ", newerPins.GetRange(0, newerPins.Count - 1))}, and {newerPins[^1]}";
         var targetPhrase = targetIsExplicit
             ? $"The version given with --to is {targetText}"
             : $"This bv is version {targetText}";
         throw new BuildFailedException(
-            $"{targetPhrase}, but {string.Join(" and ", newerPins)}: updating would be a downgrade. "
+            $"{targetPhrase}, but {offenders}: updating would be a downgrade. "
             + $"Run 'dotnet {ToolPackageId} self-update' to update the repository to its own pinned {ToolPackageId}, "
             + $"or pass --force to downgrade to {targetText}.");
     }

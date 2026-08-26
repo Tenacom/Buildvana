@@ -326,6 +326,33 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
 
+    // Three or more newer pins are listed with commas and a final "and", so the message stays readable
+    // however many pins a repository declares.
+    [Test]
+    public async Task UpdateRepository_WithThreeNewerPins_ListsThemReadably()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.42-preview");
+        WriteToolManifest(home, "2.1.42-preview");
+        const string project = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Buildvana.Runtime" Version="2.1.42-preview" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("Directory.Packages.props", project);
+        var service = CreateService(home, "2.1.41-preview");
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains(
+            "the tool manifest pins bv 2.1.42-preview, global.json pins Buildvana.Sdk 2.1.42-preview, "
+            + "and Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview");
+    }
+
     [Test]
     public async Task UpdateRepository_WithNewerPins_AndForce_Downgrades()
     {
