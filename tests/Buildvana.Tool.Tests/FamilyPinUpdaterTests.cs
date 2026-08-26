@@ -265,6 +265,28 @@ internal sealed class FamilyPinUpdaterTests
         await Assert.That(pins[0].RelativePath).IsEqualTo("tools/tool.cs");
     }
 
+    // The factory emits the built-in patterns after the configured ones, and in gitignore syntax the last
+    // matching pattern wins — so a configured negation of the hooks scope is inert. The list here is the
+    // shape the factory produces from a configuration stating only the negation.
+    [Test]
+    public async Task DiscoverPins_WithConfiguredNegationOfHooksScope_StillReadsHooks()
+    {
+        using var home = new TempHome();
+        const string app = """
+            #:package Buildvana.Runtime@2.1.40-preview
+
+            Console.WriteLine();
+            """;
+        WriteHook(home, "hook.cs", app);
+        var config = new BuildvanaConfig { FileBasedApps = ["!.buildvana/hooks/", ".buildvana/hooks/"] };
+        var updater = CreateUpdater(home, config);
+
+        var pins = updater.DiscoverPins();
+
+        await Assert.That(pins.Count).IsEqualTo(1);
+        await Assert.That(pins[0].RelativePath).IsEqualTo(".buildvana/hooks/hook.cs");
+    }
+
     // Self-update is the tool that repairs a half-updated repository, so a configuration file this bv
     // cannot read degrades the scope to the built-in default with a warning instead of killing the update.
     [Test]

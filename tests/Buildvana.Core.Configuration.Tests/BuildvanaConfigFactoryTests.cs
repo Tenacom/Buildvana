@@ -282,14 +282,25 @@ internal sealed class BuildvanaConfigFactoryTests
     }
 
     // Configured patterns extend the built-in scope rather than replace it: hooks are file-based apps by
-    // definition, so no configuration can move them out of scope.
+    // definition, so no configuration can move them out of scope. The built-in patterns come last because
+    // in gitignore syntax the last matching pattern wins.
     [Test]
-    public async Task Create_FileBasedApps_AppendToBuiltInScope()
+    public async Task Create_FileBasedApps_ExtendTheBuiltInScope()
     {
         var json = new BuildvanaJsonConfig { FileBasedApps = ["/tools/", "scripts/"] };
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
-        await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo(".buildvana/hooks/|/tools/|scripts/");
+        await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo("/tools/|scripts/|.buildvana/hooks/");
+    }
+
+    [Test]
+    public async Task Create_FileBasedApps_CannotNegateTheBuiltInScope()
+    {
+        var json = new BuildvanaJsonConfig { FileBasedApps = ["!.buildvana/hooks/"] };
+
+        var config = BuildvanaConfigFactory.Create(json, null);
+
+        await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo("!.buildvana/hooks/|.buildvana/hooks/");
     }
 }
