@@ -6,6 +6,7 @@ using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
 using Buildvana.Core.Testing;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Subcommands;
 using NuGet.Versioning;
@@ -116,7 +117,10 @@ internal sealed class SelfUpdateCommandTests
             new BuildvanaJsonConfigProvider(home.Provider),
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
-            new FamilyPinUpdater(home.Provider),
+            new FamilyPinUpdater(
+                home.Provider,
+                new Lazy<BuildvanaConfig>(static () => new BuildvanaConfig()),
+                NullReporter.Instance),
             NuGetVersion.Parse(OwnVersion));
 
     private static void WriteGlobalJson(TempHome home, string pin)

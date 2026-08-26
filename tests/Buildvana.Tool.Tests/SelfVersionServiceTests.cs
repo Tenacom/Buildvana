@@ -7,6 +7,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services;
 using NuGet.Versioning;
 
@@ -447,18 +448,20 @@ internal sealed class SelfVersionServiceTests
 
             Console.WriteLine();
             """;
-        home.WriteFile("hook.cs", hook);
+        var hookPath = Path.Combine(".buildvana", "hooks", "hook.cs");
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".buildvana", "hooks"));
+        home.WriteFile(hookPath, hook);
         var service = CreateService(home, "2.1.41-preview");
 
         var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("App.csproj")).IsEqualTo(project.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
-        await Assert.That(home.ReadFile("hook.cs")).IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile(hookPath)).IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
         await Assert.That(summary.FamilyPinLines).IsEquivalentTo(
         [
+            "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
             "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (App.csproj)",
             "Buildvana.Sdk: $(BuildvanaVersion) (App.csproj, left alone)",
-            "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (hook.cs)",
         ]);
     }
 
@@ -684,7 +687,10 @@ internal sealed class SelfVersionServiceTests
             new BuildvanaJsonConfigProvider(home.Provider),
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
-            new FamilyPinUpdater(home.Provider),
+            new FamilyPinUpdater(
+                home.Provider,
+                new Lazy<BuildvanaConfig>(static () => new BuildvanaConfig()),
+                reporter ?? NullReporter.Instance),
             NuGetVersion.Parse(ownVersion));
 
     private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);

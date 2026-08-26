@@ -1,7 +1,10 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services;
 using NuGet.Versioning;
 
@@ -38,8 +41,8 @@ internal sealed class FamilyPinUpdaterTests
 
             Console.WriteLine();
             """;
-        home.WriteFile("hook.cs", hook);
-        var updater = new FamilyPinUpdater(home.Provider);
+        WriteHook(home, "hook.cs", hook);
+        var updater = CreateUpdater(home);
 
         var pins = updater.DiscoverPins();
 
@@ -48,10 +51,10 @@ internal sealed class FamilyPinUpdaterTests
         var rendered = pins.Select(static p => $"{p.RelativePath}|{p.Id}|{p.VersionText}|{p.Version?.ToNormalizedString()}");
         await Assert.That(rendered).IsEquivalentTo(
         [
+            ".buildvana/hooks/hook.cs|Buildvana.Sdk|2.1.40-preview|2.1.40-preview",
+            ".buildvana/hooks/hook.cs|Buildvana.Runtime|2.1.40-preview|2.1.40-preview",
             "Directory.Packages.props|Buildvana.Runtime|2.1.40-preview|2.1.40-preview",
             "Directory.Packages.props|Buildvana.Sdk|2.1.40-preview|2.1.40-preview",
-            "hook.cs|Buildvana.Sdk|2.1.40-preview|2.1.40-preview",
-            "hook.cs|Buildvana.Runtime|2.1.40-preview|2.1.40-preview",
             "src/Foo.csproj|buildvana.runtime|2.1.39-preview|2.1.39-preview",
         ]);
     }
@@ -75,7 +78,7 @@ internal sealed class FamilyPinUpdaterTests
             home.WriteFile(Path.Combine(directory, "Debris.csproj"), project);
         }
 
-        var updater = new FamilyPinUpdater(home.Provider);
+        var updater = CreateUpdater(home);
 
         var pins = updater.DiscoverPins();
 
@@ -98,7 +101,7 @@ internal sealed class FamilyPinUpdaterTests
             </Project>
             """;
         home.WriteFile("Directory.Packages.props", project);
-        var updater = new FamilyPinUpdater(home.Provider);
+        var updater = CreateUpdater(home);
 
         var pins = updater.DiscoverPins();
 
@@ -123,7 +126,7 @@ internal sealed class FamilyPinUpdaterTests
             </Project>
             """;
         home.WriteFile("App.csproj", before);
-        var updater = new FamilyPinUpdater(home.Provider);
+        var updater = CreateUpdater(home);
         var pins = updater.DiscoverPins();
 
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
@@ -150,7 +153,7 @@ internal sealed class FamilyPinUpdaterTests
             </Project>
             """;
         home.WriteFile("Directory.Packages.props", before);
-        var updater = new FamilyPinUpdater(home.Provider);
+        var updater = CreateUpdater(home);
         var pins = updater.DiscoverPins();
 
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
@@ -172,7 +175,7 @@ internal sealed class FamilyPinUpdaterTests
             </Project>
             """;
         home.WriteFile("Directory.Packages.props", before);
-        var updater = new FamilyPinUpdater(home.Provider);
+        var updater = CreateUpdater(home);
         var pins = updater.DiscoverPins();
 
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
@@ -198,8 +201,8 @@ internal sealed class FamilyPinUpdaterTests
 
             Console.WriteLine("2.1.40-preview");
             """;
-        home.WriteFile("hook.cs", before);
-        var updater = new FamilyPinUpdater(home.Provider);
+        WriteHook(home, "hook.cs", before);
+        var updater = CreateUpdater(home);
         var pins = updater.DiscoverPins();
 
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
@@ -212,11 +215,93 @@ internal sealed class FamilyPinUpdaterTests
 
             Console.WriteLine("2.1.40-preview");
             """;
-        await Assert.That(home.ReadFile("hook.cs")).IsEqualTo(after);
+        await Assert.That(home.ReadFile(Path.Combine(".buildvana", "hooks", "hook.cs"))).IsEqualTo(after);
         await Assert.That(lines).IsEquivalentTo(
         [
-            "Buildvana.Sdk: 2.1.40-preview -> 2.1.41-preview (hook.cs)",
-            "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (hook.cs)",
+            "Buildvana.Sdk: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
+            "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
         ]);
+    }
+
+    // Only .cs files within the file-based-app scope are read: a directive-bearing file elsewhere is out of
+    // scope by the user's own statement, and reading every .cs file would scale discovery with the source tree.
+    [Test]
+    public async Task DiscoverPins_ReadsOnlyCSharpFilesWithinScope()
+    {
+        using var home = new TempHome();
+        const string app = """
+            #:package Buildvana.Runtime@2.1.40-preview
+
+            Console.WriteLine();
+            """;
+        home.WriteFile("stray.cs", app);
+        WriteHook(home, "hook.cs", app);
+        var updater = CreateUpdater(home);
+
+        var pins = updater.DiscoverPins();
+
+        await Assert.That(pins.Count).IsEqualTo(1);
+        await Assert.That(pins[0].RelativePath).IsEqualTo(".buildvana/hooks/hook.cs");
+    }
+
+    // The resolved configuration states the scope; a pattern it adds brings the matching files in.
+    [Test]
+    public async Task DiscoverPins_WithConfiguredPatterns_ExtendsTheScope()
+    {
+        using var home = new TempHome();
+        const string app = """
+            #:package Buildvana.Runtime@2.1.40-preview
+
+            Console.WriteLine();
+            """;
+        home.WriteFile("stray.cs", app);
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, "tools"));
+        home.WriteFile(Path.Combine("tools", "tool.cs"), app);
+        var updater = CreateUpdater(home, new BuildvanaConfig { FileBasedApps = ["/tools/"] });
+
+        var pins = updater.DiscoverPins();
+
+        await Assert.That(pins.Count).IsEqualTo(1);
+        await Assert.That(pins[0].RelativePath).IsEqualTo("tools/tool.cs");
+    }
+
+    // Self-update is the tool that repairs a half-updated repository, so a configuration file this bv
+    // cannot read degrades the scope to the built-in default with a warning instead of killing the update.
+    [Test]
+    public async Task DiscoverPins_WhenConfigurationUnreadable_FallsBackToHooksScopeAndWarns()
+    {
+        using var home = new TempHome();
+        const string app = """
+            #:package Buildvana.Runtime@2.1.40-preview
+
+            Console.WriteLine();
+            """;
+        home.WriteFile("stray.cs", app);
+        WriteHook(home, "hook.cs", app);
+        var reporter = new CaptureReporter();
+        var updater = new FamilyPinUpdater(
+            home.Provider,
+            new Lazy<BuildvanaConfig>(static () => throw new BuildFailedException("unreadable")),
+            reporter);
+
+        var pins = updater.DiscoverPins();
+
+        await Assert.That(pins.Count).IsEqualTo(1);
+        await Assert.That(pins[0].RelativePath).IsEqualTo(".buildvana/hooks/hook.cs");
+        var warnings = reporter.Messages.Where(static m => m.Level == MessageLevel.Warning).ToList();
+        await Assert.That(warnings.Count).IsEqualTo(1);
+        await Assert.That(warnings[0].Message).Contains(".buildvana/hooks");
+    }
+
+    private static FamilyPinUpdater CreateUpdater(TempHome home, BuildvanaConfig? config = null)
+        => new(
+            home.Provider,
+            new Lazy<BuildvanaConfig>(() => config ?? new BuildvanaConfig()),
+            NullReporter.Instance);
+
+    private static void WriteHook(TempHome home, string fileName, string content)
+    {
+        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".buildvana", "hooks"));
+        home.WriteFile(Path.Combine(".buildvana", "hooks", fileName), content);
     }
 }

@@ -28,6 +28,7 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(config.NuGet.Feeds.Release).IsNull();
         await Assert.That(config.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
         await Assert.That(config.Git.Identity).IsNull();
+        await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo(".buildvana/hooks/");
     }
 
     [Test]
@@ -278,5 +279,17 @@ internal sealed class BuildvanaConfigFactoryTests
 
         await Assert.That(config.Git.Identity!.Name).IsEqualTo("Buildvana Bot");
         await Assert.That(config.Git.Identity.Email).IsEqualTo("bot@buildvana.invalid");
+    }
+
+    // Configured patterns extend the built-in scope rather than replace it: hooks are file-based apps by
+    // definition, so no configuration can move them out of scope.
+    [Test]
+    public async Task Create_FileBasedApps_AppendToBuiltInScope()
+    {
+        var json = new BuildvanaJsonConfig { FileBasedApps = ["/tools/", "scripts/"] };
+
+        var config = BuildvanaConfigFactory.Create(json, null);
+
+        await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo(".buildvana/hooks/|/tools/|scripts/");
     }
 }
