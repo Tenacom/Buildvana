@@ -15,5 +15,5 @@ namespace Buildvana.Tool.Utilities;
 /// or a floating version, and deciding what to do with those forms is the caller's business. The text of
 /// a child element is taken whole: whitespace around the version, which MSBuild does not trim either,
 /// stays part of the value.</param>
-// ReSharper disable once NotAccessedPositionalProperty.Global // First direct reader is the bv self-update family stamp (next PR)
+// ReSharper disable once NotAccessedPositionalProperty.Global // First direct reader is bv deps's scope classification (issue #352 stage 2)
 internal sealed record MsBuildPin(string ItemType, string Id, string VersionText);

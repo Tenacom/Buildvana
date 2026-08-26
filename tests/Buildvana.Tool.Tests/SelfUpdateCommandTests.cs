@@ -22,6 +22,14 @@ internal sealed class SelfUpdateCommandTests
         WriteGlobalJson(home, OwnVersion);
         WriteToolManifest(home, OwnVersion);
         WriteConfigFile(home, OwnVersion);
+        const string project = """
+            <Project>
+              <ItemGroup>
+                <PackageReference Include="Buildvana.Runtime" Version="2.1.41-preview" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("App.csproj", project);
         var console = new TestConsole();
         var command = new SelfUpdateCommand(CreateService(home), new SelfUpdateSettings(), console);
 
@@ -30,6 +38,7 @@ internal sealed class SelfUpdateCommandTests
         await Assert.That(exitCode).IsEqualTo(0);
         await Assert.That(console.Output).Contains("bv: 2.1.41-preview (tool manifest, unchanged)");
         await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.41-preview (global.json, unchanged)");
+        await Assert.That(console.Output).Contains("Buildvana.Runtime: 2.1.41-preview (App.csproj, unchanged)");
         await Assert.That(console.Output).Contains("buildvana.jsonc: schema reference unchanged");
     }
 
@@ -107,6 +116,7 @@ internal sealed class SelfUpdateCommandTests
             new BuildvanaJsonConfigProvider(home.Provider),
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
+            new FamilyPinUpdater(home.Provider),
             NuGetVersion.Parse(OwnVersion));
 
     private static void WriteGlobalJson(TempHome home, string pin)

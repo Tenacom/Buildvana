@@ -401,6 +401,70 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview -> 2.1.40-preview (tool manifest)");
     }
 
+    // One line per found family pin, the left-alone one included: the summary is how the user checks that
+    // every intended pin was discovered.
+    [Test]
+    public async Task UpdateRepository_StampsFamilyPins()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, "2.1.40-preview");
+        const string project = """
+            <Project>
+              <ItemGroup>
+                <PackageReference Include="Buildvana.Runtime" Version="2.1.40-preview" />
+                <PackageVersion Include="Buildvana.Sdk" Version="$(BuildvanaVersion)" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("App.csproj", project);
+        const string hook = """
+            #:package Buildvana.Runtime@2.1.40-preview
+
+            Console.WriteLine();
+            """;
+        home.WriteFile("hook.cs", hook);
+        var service = CreateService(home, "2.1.41-preview");
+
+        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+
+        await Assert.That(home.ReadFile("App.csproj")).IsEqualTo(project.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile("hook.cs")).IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(summary.FamilyPinLines).IsEquivalentTo(
+        [
+            "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (App.csproj)",
+            "Buildvana.Sdk: $(BuildvanaVersion) (App.csproj, left alone)",
+            "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (hook.cs)",
+        ]);
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithNewerFamilyPin_FailsWithoutForce()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        const string project = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Buildvana.Runtime" Version="2.1.42-preview" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("Directory.Packages.props", project);
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview");
+        await Assert.That(exception.Message).Contains("downgrade");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(home.ReadFile("Directory.Packages.props")).IsEqualTo(project);
+    }
+
     // An entry whose version the dotnet CLI cannot parse is beyond any `dotnet tool` verb's reach — update must
     // fail up front with a message pointing at the file, before touching anything.
     [Test]
@@ -596,6 +660,7 @@ internal sealed class SelfVersionServiceTests
             new BuildvanaJsonConfigProvider(home.Provider),
             new JsonHelper(),
             processRunner ?? new FakeProcessRunner(),
+            new FamilyPinUpdater(home.Provider),
             NuGetVersion.Parse(ownVersion));
 
     private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);

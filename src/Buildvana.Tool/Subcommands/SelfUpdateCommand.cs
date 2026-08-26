@@ -11,7 +11,8 @@ using Spectre.Console;
 namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("self-update", settingsType: typeof(SelfUpdateSettings))]
-[Description("Update the repository's Buildvana pins (tool manifest, global.json, configuration schema reference) to this bv's version. "
+[Description("Update the repository's Buildvana pins (tool manifest, global.json, package pins, app directives, "
+    + "configuration schema reference) to this bv's version. "
     + "Unlike a canonical self-update, it changes the repository, never this binary.")]
 internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpdateSettings settings, IAnsiConsole console) : IBvCommand
 {
@@ -23,6 +24,11 @@ internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpda
         // regardless of verbosity, like the report of `bv version show`.
         console.WriteLine(summary.ToolManifestLine);
         console.WriteLine(summary.GlobalJsonLine);
+        foreach (var line in summary.FamilyPinLines)
+        {
+            console.WriteLine(line);
+        }
+
         if (summary.ConfigFileLine is not null)
         {
             console.WriteLine(summary.ConfigFileLine);
