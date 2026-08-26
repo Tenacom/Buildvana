@@ -59,6 +59,7 @@
    b. A summary comment is needed only in two cases: to address findings that are not code-anchored, and to ask for a new review.
    c. Replies state what you did, and why you did not do the rest. Keep them structured and to the point.
    d. You should usually ask the reviewer (by nickname, e.g. `@claude`) for a new review. The request goes in the summary comment: at its end if it has other content, as its whole body otherwise. A new review is NOT necessary when the review stated that the PR was ready to be merged and you did no code changes (or if they were very trivial).
+   e. The reviewer sees only comments that mention their nickname. An untagged reply reaches human readers only; if any part of it expects the reviewer to act, it needs the mention. The mention itself does not choose the action — the comment's content does: a tagged question gets an answer, and only a request for a (re-)review gets one.
 
 ## Small changes out of scope
 
