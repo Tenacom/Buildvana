@@ -43,8 +43,8 @@ partial class AppDirectiveEditor
     // Handles one line (or, on recursion, the rest of a line after a closed block comment). Returns false
     // when the line ends the directive block: the first line that is neither blank, nor a comment, nor a
     // "#:" directive, nor the file-opening shebang. After a closed block comment only blank text or
-    // another comment continues the block: C# wants a directive first on its line (CS1040), so the SDK
-    // reads no directive there either, and to it the line is code.
+    // another comment continues the block: C# rejects a directive that is not first on its line (CS1040),
+    // so a file with one does not build; rather than rewrite a version in it, the editor ends the block.
     private static bool ProcessLine(
         string text,
         int start,
