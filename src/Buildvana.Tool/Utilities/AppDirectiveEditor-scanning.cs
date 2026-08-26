@@ -8,7 +8,9 @@ namespace Buildvana.Tool.Utilities;
 
 partial class AppDirectiveEditor
 {
-    // Scans the leading directive block of a file-based app's text for managed directives.
+    // Scans the leading directive block of a file-based app's text for managed directives. Lines end at
+    // the line terminators of C# itself (ECMA-334 §6.3.2), which the SDK's parser inherits through Roslyn:
+    // CR, LF, CRLF as a pair, NEL (U+0085), LS (U+2028), and PS (U+2029).
     private static List<DirectiveMatch> Scan(string text)
     {
         var matches = new List<DirectiveMatch>();
@@ -17,11 +19,10 @@ partial class AppDirectiveEditor
         var lineStart = 0;
         while (lineStart < text.Length)
         {
-            var newline = text.IndexOf('\n', lineStart);
-            var lineEnd = newline < 0 ? text.Length : newline;
-            if (lineEnd > lineStart && text[lineEnd - 1] == '\r')
+            var lineEnd = lineStart;
+            while (lineEnd < text.Length && !IsLineTerminator(text[lineEnd]))
             {
-                lineEnd--;
+                lineEnd++;
             }
 
             if (!ProcessLine(text, lineStart, lineEnd, isFirstLine, directivesAllowed: true, ref inBlockComment, matches))
@@ -30,11 +31,14 @@ partial class AppDirectiveEditor
             }
 
             isFirstLine = false;
-            lineStart = newline < 0 ? text.Length : newline + 1;
+            lineStart = NextLineStart(text, lineEnd);
         }
 
         return matches;
     }
+
+    private static bool IsLineTerminator(char c)
+        => c is '\r' or '\n' or '\u0085' or '\u2028' or '\u2029';
 
     // Handles one line (or, on recursion, the rest of a line after a closed block comment). Returns false
     // when the line ends the directive block: the first line that is neither blank, nor a comment, nor a
@@ -113,6 +117,19 @@ partial class AppDirectiveEditor
         }
 
         return false;
+    }
+
+    // The start of the line following the terminator at lineEnd: past a CRLF pair as a whole, past any
+    // other terminator alone.
+    private static int NextLineStart(string text, int lineEnd)
+    {
+        if (lineEnd >= text.Length)
+        {
+            return lineEnd;
+        }
+
+        var isCrLfPair = text[lineEnd] == '\r' && lineEnd + 1 < text.Length && text[lineEnd + 1] == '\n';
+        return lineEnd + (isCrLfPair ? 2 : 1);
     }
 
     private static int FindInLine(string text, int start, int end, string value)

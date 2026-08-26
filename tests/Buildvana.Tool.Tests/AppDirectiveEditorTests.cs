@@ -102,6 +102,22 @@ internal sealed class AppDirectiveEditorTests
         await Assert.That(directives).IsEquivalentTo([new AppDirective(AppDirectiveKind.Package, "Alpha", "1.0.0")]);
     }
 
+    // C# recognizes five line terminators (ECMA-334 §6.3.2): CR, LF, CRLF, NEL, LS, and PS. The scanner
+    // must split lines on all of them, not at LF alone.
+    [Test]
+    public async Task ReadDirectives_AcceptsAllCSharpLineTerminators()
+    {
+        using var home = new TempHome();
+        const string content = "// Example hook.\u0085#:package Alpha@1.0.0\u2028#:package Beta@2.0.0\u2029using System;";
+        var path = WriteFile(home, content);
+
+        var directives = AppDirectiveEditor.ReadDirectives(path);
+
+        await Assert.That(directives).IsEquivalentTo([
+            new AppDirective(AppDirectiveKind.Package, "Alpha", "1.0.0"),
+            new AppDirective(AppDirectiveKind.Package, "Beta", "2.0.0")]);
+    }
+
     // The SDK's own parser matches directive kinds case-sensitively; so does the editor. The line is still
     // a directive, so it does not end the block.
     [Test]
@@ -224,6 +240,24 @@ internal sealed class AppDirectiveEditorTests
 
         await Assert.That(changed).IsFalse();
         await Assert.That(home.ReadFile(FileName)).IsEqualTo(content);
+    }
+
+    // A lone CR is a line terminator to C#; a scanner splitting at LF alone would read this whole file as
+    // one line, take everything after the '@' as version text, and splice the code away on rewrite.
+    [Test]
+    public async Task RewriteVersions_PreservesCrOnlyLineEndings()
+    {
+        using var home = new TempHome();
+        var path = Path.Combine(home.RootPath, FileName);
+        const string content = "#:package Alpha@1.0.0\rusing System;\r";
+        const string expected = "#:package Alpha@1.0.1\rusing System;\r";
+        await File.WriteAllTextAsync(path, content).ConfigureAwait(false);
+
+        var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.1");
+
+        await Assert.That(changed).IsTrue();
+        var rewritten = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+        await Assert.That(rewritten).IsEqualTo(expected);
     }
 
     [Test]
