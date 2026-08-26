@@ -208,6 +208,22 @@ internal sealed class AppDirectiveEditorTests
         await Assert.That(home.ReadFile(FileName)).IsEqualTo(content);
     }
 
+    [Test]
+    public async Task RewriteVersions_PreservesCrlfLineEndings()
+    {
+        using var home = new TempHome();
+        var path = Path.Combine(home.RootPath, FileName);
+        const string content = "// Example hook.\r\n#:package Alpha@1.0.0\r\nusing System;\r\n";
+        const string expected = "// Example hook.\r\n#:package Alpha@1.0.1\r\nusing System;\r\n";
+        await File.WriteAllTextAsync(path, content).ConfigureAwait(false);
+
+        var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.1");
+
+        await Assert.That(changed).IsTrue();
+        var rewritten = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+        await Assert.That(rewritten).IsEqualTo(expected);
+    }
+
     // Hook files carry a byte order mark (StyleCop insists on one for C# sources); the rewrite must not
     // strip it — nor add one to a file that has none.
     [Test]
