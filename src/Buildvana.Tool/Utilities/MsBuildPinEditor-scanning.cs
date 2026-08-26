@@ -59,10 +59,10 @@ partial class MsBuildPinEditor
                 continue;
             }
 
-            if (TryFindVersionChild(text, tag.End, out var childStart, out var childLength, out var continueAt))
+            if (FindVersionChild(text, tag.End, out var continueAt) is { } child)
             {
-                var versionText = text.Substring(childStart, childLength);
-                matches.Add(new PinMatch(new MsBuildPin(tag.Name, id, versionText), childStart));
+                var versionText = text.Substring(child.Start, child.Length);
+                matches.Add(new PinMatch(new MsBuildPin(tag.Name, id, versionText), child.Start));
             }
 
             i = continueAt;
@@ -171,7 +171,12 @@ partial class MsBuildPinEditor
     // Parses one name="value" attribute starting at i (its first character). Advances i past the closing
     // quote on success. Either quoting style is accepted; the value span is taken raw, entities and all —
     // package ids and version texts never contain any.
-    private static bool TryParseAttribute(string text, ref int i, out string name, out int valueStart, out int valueLength)
+    private static bool TryParseAttribute(
+        string text,
+        ref int i,
+        out string name,
+        out int valueStart,
+        out int valueLength)
     {
         name = string.Empty;
         valueStart = 0;
@@ -224,12 +229,10 @@ partial class MsBuildPinEditor
     }
 
     // Scans the content of an open item element for a direct <Version> child holding plain text. Returns
-    // the text's span and where the outer scan should resume. When the element closes (or the text ends)
-    // without such a child, returns false with the resume position just past whatever was consumed.
-    private static bool TryFindVersionChild(string text, int contentStart, out int versionStart, out int versionLength, out int continueAt)
+    // the text's span, or null when the element closes (or the text ends) without such a child; either
+    // way, continueAt is where the outer scan should resume, just past whatever was consumed.
+    private static VersionChild? FindVersionChild(string text, int contentStart, out int continueAt)
     {
-        versionStart = 0;
-        versionLength = 0;
         var depth = 1;
         var i = contentStart;
         while (i < text.Length)
@@ -247,7 +250,7 @@ partial class MsBuildPinEditor
                 if (depth == 0)
                 {
                     continueAt = i;
-                    return false;
+                    return null;
                 }
 
                 continue;
@@ -293,14 +296,12 @@ partial class MsBuildPinEditor
                 continue;
             }
 
-            versionStart = tag.End;
-            versionLength = valueEnd - tag.End;
             continueAt = SkipTo(text, valueEnd + 1, ">");
-            return true;
+            return new VersionChild(tag.End, valueEnd - tag.End);
         }
 
         continueAt = text.Length;
-        return false;
+        return null;
     }
 
     // Whether the '<' at the given index opens an end tag for the given name (any casing, optional
