@@ -8,7 +8,10 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// </summary>
 internal enum TargetSelectionOutcome
 {
-    /// <summary>The policy is <c>disable</c>, so nothing was resolved.</summary>
+    /// <summary>
+    /// The policy is <c>disable</c>, so no target was resolved. The latest-version members of
+    /// <see cref="TargetSelection"/> still report whatever candidates the caller supplied.
+    /// </summary>
     Disabled,
 
     /// <summary>The pin already sits at the best version its policy allows.</summary>

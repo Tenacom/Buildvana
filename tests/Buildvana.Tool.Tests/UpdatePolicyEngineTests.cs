@@ -8,9 +8,21 @@ using NuGet.Versioning;
 internal sealed class UpdatePolicyEngineTests
 {
     [Test]
-    public async Task SelectPackage_WithDisablePolicy_ResolvesNothing()
+    public async Task SelectPackage_WithDisablePolicy_ReportsLatestWithoutATarget()
     {
         var selection = SelectPackage("disable", "1.2.3", "1.3.0", "2.0.0", "3.0.0-beta");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Disabled);
+        await Assert.That(selection.Target).IsNull();
+        await Assert.That(selection.LatestStable?.ToNormalizedString()).IsEqualTo("2.0.0");
+        await Assert.That(selection.LatestPreview?.ToNormalizedString()).IsEqualTo("3.0.0-beta");
+    }
+
+    // A caller that resolves nothing for a disabled pin passes an empty candidate set.
+    [Test]
+    public async Task SelectPackage_WithDisablePolicyAndNoCandidates_ReportsNothing()
+    {
+        var selection = SelectPackage("disable", "1.2.3");
 
         await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Disabled);
         await Assert.That(selection.Target).IsNull();
@@ -174,13 +186,13 @@ internal sealed class UpdatePolicyEngineTests
     }
 
     [Test]
-    public async Task SelectNetSdk_WithDisablePolicy_ResolvesNothing()
+    public async Task SelectNetSdk_WithDisablePolicy_ReportsLatestWithoutATarget()
     {
         var selection = SelectNetSdk("disable", "10.0.402", Lts("10.0.403"));
 
         await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Disabled);
         await Assert.That(selection.Target).IsNull();
-        await Assert.That(selection.LatestStable).IsNull();
+        await Assert.That(selection.LatestStable?.ToNormalizedString()).IsEqualTo("10.0.403");
     }
 
     // The patch field encodes featureBand * 100 + patch, so 10.0.502 is another band, not another patch.
