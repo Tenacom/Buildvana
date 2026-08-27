@@ -117,7 +117,7 @@
     // The release workflow points it at a PAT that can push to a protected branch; the build workflow leaves it at
     // the automatic token, which is also available to pull requests from forks.
     "tokenEnv": "GITHUB_TOKEN"
-  }
+  },
 
   // Configuration for Git-related behavior.
   // Not set: automated commits use the CI bot identity supplied by the server adapter.
@@ -136,7 +136,5 @@
 
   // Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in
   // .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.
-  // Not set (yet): the pinned Buildvana version rejects settings it does not know, so the line below stays a
-  // comment until a version carrying the setting is pinned here.
-  // "fileBasedApps": ["/tools/", "/.claude/tools/"]
+  "fileBasedApps": ["/tools/", "/.claude/tools/"]
 }
