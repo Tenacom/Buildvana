@@ -66,14 +66,62 @@ internal sealed class UpdatePolicyEngineTests
         await Assert.That(selection.Target).IsNull();
     }
 
-    // The windows key on major, minor, and patch, so a four-field pin may still move its revision.
+    // Exact fixes all four numeric fields, so a candidate that adds a revision is out of the window.
     [Test]
-    public async Task SelectPackage_WithExactPolicy_AllowsARevisionMove()
+    public async Task SelectPackage_WithExactPolicy_RefusesARevisionMove()
     {
-        var selection = SelectPackage("exact", "1.2.3", "1.2.3.5");
+        var selection = SelectPackage("exact", "1.2.3", "1.2.3", "1.2.3.5");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.UpToDate);
+        await Assert.That(selection.Target).IsNull();
+    }
+
+    // The release counter of a four-field package is out of reach under exact, for the same reason.
+    [Test]
+    public async Task SelectPackage_WithExactPolicyAndFourFieldPin_KeepsTheRevision()
+    {
+        var selection = SelectPackage("exact", "3.7.400.55", "3.7.400.55", "3.7.400.56");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.UpToDate);
+        await Assert.That(selection.Target).IsNull();
+    }
+
+    // Stabilization moves no numeric field, so exact takes it on a four-field pin too.
+    [Test]
+    public async Task SelectPackage_WithExactPolicyAndFourFieldPin_Stabilizes()
+    {
+        var selection = SelectPackage("exact", "1.2.3.4-rc.1", "1.2.3.4-rc.1", "1.2.3.4");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
+        await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("1.2.3.4");
+    }
+
+    [Test]
+    public async Task SelectPackage_WithRevisionPolicy_StaysWithinThePatch()
+    {
+        var selection = SelectPackage("revision", "3.7.400.55", "3.7.400.56", "3.7.401.0");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
+        await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("3.7.400.56");
+    }
+
+    // A three-field pin has revision zero, so a package that starts using the fourth field is still in reach.
+    [Test]
+    public async Task SelectPackage_WithRevisionPolicyAndThreeFieldPin_TakesAFourFieldCandidate()
+    {
+        var selection = SelectPackage("revision", "1.2.3", "1.2.3.5", "1.2.4");
 
         await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
         await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("1.2.3.5");
+    }
+
+    [Test]
+    public async Task SelectPackage_WithPatchPolicy_CrossesRevisions()
+    {
+        var selection = SelectPackage("patch", "3.7.400.55", "3.7.400.56", "3.7.401.2");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
+        await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("3.7.401.2");
     }
 
     [Test]

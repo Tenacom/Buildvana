@@ -87,10 +87,13 @@ internal static class UpdatePolicyEngine
         => CreateSelection(TargetSelectionOutcome.Disabled, target: null, candidates);
 
     // Disable never reaches here: both entry points answer it before composing a window.
+    // NuGetVersion.Revision is the fourth field of x.y.z.R, and reads zero on a version that has none, so a
+    // three-field pin and a three-field candidate compare equal there.
     private static bool IsInWindow(NuGetVersion current, NuGetVersion candidate, PackageUpdatePolicyKind kind)
         => kind switch
         {
-            PackageUpdatePolicyKind.Exact => IsSameMajorMinor(current, candidate) && candidate.Patch == current.Patch,
+            PackageUpdatePolicyKind.Exact => IsSameMajorMinorPatch(current, candidate) && candidate.Revision == current.Revision,
+            PackageUpdatePolicyKind.Revision => IsSameMajorMinorPatch(current, candidate),
             PackageUpdatePolicyKind.Patch => IsSameMajorMinor(current, candidate),
             PackageUpdatePolicyKind.Minor => candidate.Major == current.Major,
             PackageUpdatePolicyKind.Major => true,
@@ -108,8 +111,9 @@ internal static class UpdatePolicyEngine
             _ => false,
         };
 
-    // The windows key on major, minor, and patch, leaving the revision free: a four-field pin such as
-    // 1.2.3.4 may still move to 1.2.3.5 under exact, which is the same major, minor, and patch.
+    private static bool IsSameMajorMinorPatch(NuGetVersion a, NuGetVersion b)
+        => IsSameMajorMinor(a, b) && a.Patch == b.Patch;
+
     private static bool IsSameMajorMinor(NuGetVersion a, NuGetVersion b) => a.Major == b.Major && a.Minor == b.Minor;
 
     // .NET SDK versions are not SemVer: their patch field encodes featureBand * 100 + patch, so that the

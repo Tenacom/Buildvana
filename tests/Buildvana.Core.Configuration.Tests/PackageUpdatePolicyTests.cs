@@ -8,6 +8,7 @@ internal sealed class PackageUpdatePolicyTests
     [Test]
     [Arguments("disable", PackageUpdatePolicyKind.Disable)]
     [Arguments("exact", PackageUpdatePolicyKind.Exact)]
+    [Arguments("revision", PackageUpdatePolicyKind.Revision)]
     [Arguments("patch", PackageUpdatePolicyKind.Patch)]
     [Arguments("minor", PackageUpdatePolicyKind.Minor)]
     [Arguments("major", PackageUpdatePolicyKind.Major)]
