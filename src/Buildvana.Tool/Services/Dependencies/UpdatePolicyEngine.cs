@@ -145,6 +145,10 @@ internal static class UpdatePolicyEngine
             LatestPreview = Highest(candidates.Where(candidate => candidate.IsPrerelease)),
         };
 
+    // Max returns null for an empty sequence of a reference type, which is exactly "no candidate".
+    private static NuGetVersion? Highest(IEnumerable<NuGetVersion> versions)
+        => versions.Max<NuGetVersion>(VersionComparer.VersionRelease);
+
     // A best version below the pin is a problem report, not a downgrade: the pin stays where it is. It
     // happens to a prerelease pin under a stable-only policy with no stable release at or above it, and to an
     // unlisted pin with no listed version above it. The caller flags both; neither is this method's business.
@@ -160,8 +164,4 @@ internal static class UpdatePolicyEngine
             : comparison == 0 ? TargetSelectionOutcome.UpToDate
             : TargetSelectionOutcome.Held;
     }
-
-    // Max returns null for an empty sequence of a reference type, which is exactly "no candidate".
-    private static NuGetVersion? Highest(IEnumerable<NuGetVersion> versions)
-        => versions.Max<NuGetVersion>(VersionComparer.VersionRelease);
 }
