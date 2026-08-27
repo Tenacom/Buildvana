@@ -73,7 +73,7 @@ internal sealed class FamilyPinUpdaterTests
             """;
         home.WriteFile("Root.csproj", project);
         home.WriteFile(".gitignore", "/ignored/\n");
-        foreach (var directory in new[] { "artifacts", ".buildvana-temp", "obj", "node_modules", "ignored", @"src\bin" })
+        foreach (var directory in new[] { "artifacts", ".buildvana-temp", "obj", "node_modules", "ignored", Path.Combine("src", "bin") })
         {
             _ = Directory.CreateDirectory(Path.Combine(home.RootPath, directory));
             home.WriteFile(Path.Combine(directory, "Debris.csproj"), project);
