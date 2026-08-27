@@ -161,6 +161,17 @@ internal sealed class UpdatePolicyEngineTests
         await Assert.That(selection.Target).IsNull();
     }
 
+    // The same scenario with the prerelease suffix. The higher prerelease was always inside the exact window;
+    // the stable-only filter is what held it back.
+    [Test]
+    public async Task SelectPackage_WithPrereleasePinAndPrereleaseAllowed_TakesTheHigherPrerelease()
+    {
+        var selection = SelectPackage("exact-", "1.2.0-preview.1", "1.2.0-preview.1", "1.2.0-preview.2");
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
+        await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("1.2.0-preview.2");
+    }
+
     // The shape of an unlisted pin: the sources know nothing at or above it, and it is not a downgrade.
     [Test]
     public async Task SelectPackage_WithNothingAtOrAboveThePin_Holds()
