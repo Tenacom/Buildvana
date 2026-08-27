@@ -212,6 +212,20 @@ internal sealed class UpdatePolicyEngineTests
         await Assert.That(selection.LatestPreview?.ToNormalizedString()).IsEqualTo("3.0.0-beta");
     }
 
+    // No parse produces an undefined kind, but a constructor or a with expression can. The policy's ToString
+    // remarks promise that a pin carrying one does not move; this is the test that keeps the promise honest.
+    [Test]
+    public async Task SelectPackage_WithUndefinedKind_Holds()
+    {
+        var selection = UpdatePolicyEngine.Select(
+            NuGetVersion.Parse("1.2.3"),
+            Versions("1.2.3", "1.3.0", "2.0.0"),
+            new((PackageUpdatePolicyKind)42, false));
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Held);
+        await Assert.That(selection.Target).IsNull();
+    }
+
     [Test]
     public async Task SelectPackage_WithNullCurrent_Throws()
     {
@@ -318,6 +332,19 @@ internal sealed class UpdatePolicyEngineTests
 
         await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
         await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("12.0.100-rc.2");
+    }
+
+    // Same for the .NET SDK overload: its policy makes the same promise, kept by the same kind of switch arm.
+    [Test]
+    public async Task SelectNetSdk_WithUndefinedKind_Holds()
+    {
+        var selection = UpdatePolicyEngine.Select(
+            NuGetVersion.Parse("10.0.402"),
+            [Lts("10.0.403"), Sts("11.0.100")],
+            new((NetSdkUpdatePolicyKind)42, false));
+
+        await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Held);
+        await Assert.That(selection.Target).IsNull();
     }
 
     [Test]
