@@ -41,6 +41,11 @@ public readonly record struct PackageUpdatePolicy(PackageUpdatePolicyKind Kind, 
     /// <summary>
     /// Returns the policy string this policy parses from, e.g. <c>minor</c> or <c>minor-</c>.
     /// </summary>
-    /// <returns>The policy string.</returns>
+    /// <returns>The policy string, when <see cref="Kind"/> is a defined <see cref="PackageUpdatePolicyKind"/> value.</returns>
+    /// <remarks>
+    /// <para>Neither the constructor nor a <c>with</c> expression validates <see cref="Kind"/>, so an
+    /// undefined value formats as its number and does not parse back. Parsing never produces one, and an
+    /// undefined kind allows no version, so a pin carrying it does not move.</para>
+    /// </remarks>
     public override string ToString() => UpdatePolicySyntax.Format(Kind, AllowPrerelease);
 }
