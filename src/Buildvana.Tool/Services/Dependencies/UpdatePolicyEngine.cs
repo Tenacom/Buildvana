@@ -19,6 +19,9 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// <para>A policy is a window anchored at the current pin, not a rule about where the pin is allowed to be:
 /// an external edit that moves the anchor is legitimate, and no selection ever lowers a pin.</para>
 /// <para>Candidates need not be sorted, and may repeat.</para>
+/// <para>The candidate set must contain the pinned version whenever the source lists it. An up-to-date pin
+/// is recognized by finding itself among the candidates, so a caller that pre-filters candidates to versions
+/// above the pin would report every up-to-date pin as held.</para>
 /// <para>Versions compare by precedence, not by text, so that <c>13.0</c> and <c>13.0.0</c> are one version
 /// and a pin whose text differs from its target's only in form comes out up to date.</para>
 /// </remarks>
