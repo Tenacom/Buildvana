@@ -45,10 +45,12 @@ internal sealed class NetSdkUpdatePolicyTests
         await Assert.That(policy.Kind).IsEqualTo(NetSdkUpdatePolicyKind.Lts);
     }
 
-    // Exact is absent from this enum: plain patch already names the RC-to-GA move.
+    // Exact is absent from this enum: plain patch already names the RC-to-GA move. Revision is absent
+    // because .NET SDK versions have three fields.
     [Test]
     [Arguments("exact")]
     [Arguments("exact-")]
+    [Arguments("revision")]
     public async Task TryParse_WithPackageOnlyKindName_Fails(string text)
     {
         await Assert.That(NetSdkUpdatePolicy.TryParse(text, out _)).IsFalse();
