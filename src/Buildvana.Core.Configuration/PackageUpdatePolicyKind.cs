@@ -22,7 +22,9 @@ public enum PackageUpdatePolicyKind
 
     /// <summary>
     /// Move no numeric field. Only a prerelease pin moves, to the stable release of the same version
-    /// (e.g. <c>1.2.0-preview.1</c> to <c>1.2.0</c>).
+    /// (e.g. <c>1.2.0-preview.1</c> to <c>1.2.0</c>). Setting
+    /// <see cref="PackageUpdatePolicy.AllowPrerelease"/> is what buys the move from one prerelease of that
+    /// version to the next (e.g. <c>1.2.0-preview.1</c> to <c>1.2.0-preview.2</c>).
     /// </summary>
     Exact,
 
