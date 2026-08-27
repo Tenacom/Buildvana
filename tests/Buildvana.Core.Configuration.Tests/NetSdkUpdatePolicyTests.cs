@@ -45,7 +45,7 @@ internal sealed class NetSdkUpdatePolicyTests
         await Assert.That(policy.Kind).IsEqualTo(NetSdkUpdatePolicyKind.Lts);
     }
 
-    // Exact is absent from this enum: patch with the suffix already names the RC-to-GA move.
+    // Exact is absent from this enum: plain patch already names the RC-to-GA move.
     [Test]
     [Arguments("exact")]
     [Arguments("exact-")]

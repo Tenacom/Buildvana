@@ -14,8 +14,9 @@ namespace Buildvana.Core.Configuration;
 /// vocabulary is borrowed from the <c>rollForward</c> setting of <c>global.json</c> and honored on its
 /// owner's terms.</para>
 /// <para>An <c>Exact</c> kind is deliberately absent. The only move it could name is an RC to the GA of the
-/// same version, and <see cref="Patch"/> with <see cref="NetSdkUpdatePolicy.AllowPrerelease"/> set already
-/// expresses that move.</para>
+/// same version, and <see cref="Patch"/> already expresses it: the GA release sits in the same feature band
+/// as its RC, outranks it by SemVer ordering, and passes a stable-only filter. Setting
+/// <see cref="NetSdkUpdatePolicy.AllowPrerelease"/> is what buys the move from one RC to the next.</para>
 /// <para>Members are ordered by how far the kind may move the pin, except for <see cref="Lts"/>, which
 /// filters the candidate set instead of narrowing the window and therefore comes last.</para>
 /// <para><see cref="Disable"/> is the zero value on purpose: a default-constructed
