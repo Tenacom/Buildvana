@@ -27,8 +27,6 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// </remarks>
 internal static class UpdatePolicyEngine
 {
-    private static readonly TargetSelection DisabledSelection = new() { Outcome = TargetSelectionOutcome.Disabled };
-
     /// <summary>
     /// Selects the version a package, .NET tool, or MSBuild project SDK pin may move to.
     /// </summary>
@@ -45,7 +43,7 @@ internal static class UpdatePolicyEngine
         Guard.IsNotNull(candidates);
         if (policy.Kind == PackageUpdatePolicyKind.Disable)
         {
-            return DisabledSelection;
+            return ComposeDisabled(candidates);
         }
 
         List<NuGetVersion> inWindow = [.. candidates.Where(candidate => IsInWindow(current, candidate, policy.Kind))];
@@ -68,7 +66,7 @@ internal static class UpdatePolicyEngine
         Guard.IsNotNull(candidates);
         if (policy.Kind == NetSdkUpdatePolicyKind.Disable)
         {
-            return DisabledSelection;
+            return ComposeDisabled([.. candidates.Select(release => release.Version)]);
         }
 
         // The lts kind removes short-term support releases from the candidate set before resolution, as if
@@ -81,6 +79,12 @@ internal static class UpdatePolicyEngine
         List<NuGetVersion> all = [.. candidates.Select(release => release.Version)];
         return Compose(current, all, inWindow, policy.AllowPrerelease);
     }
+
+    // Disable resolves no target, but the latest-version members still report whatever the caller resolved:
+    // a pin the user froze is where "what is out there" is most worth reading. A caller that resolves nothing
+    // for a disabled pin passes an empty candidate set and gets nulls back.
+    private static TargetSelection ComposeDisabled(IReadOnlyCollection<NuGetVersion> candidates)
+        => CreateSelection(TargetSelectionOutcome.Disabled, target: null, candidates);
 
     // Disable never reaches here: both entry points answer it before composing a window.
     private static bool IsInWindow(NuGetVersion current, NuGetVersion candidate, PackageUpdatePolicyKind kind)
@@ -122,14 +126,20 @@ internal static class UpdatePolicyEngine
         // SemVer ordering, and passes a stable-only filter.
         var best = Highest(inWindow.Where(candidate => allowPrerelease || !candidate.IsPrerelease));
         var outcome = Classify(current, best);
-        return new TargetSelection
+        return CreateSelection(outcome, outcome == TargetSelectionOutcome.Update ? best : null, candidates);
+    }
+
+    private static TargetSelection CreateSelection(
+        TargetSelectionOutcome outcome,
+        NuGetVersion? target,
+        IReadOnlyCollection<NuGetVersion> candidates)
+        => new()
         {
             Outcome = outcome,
-            Target = outcome == TargetSelectionOutcome.Update ? best : null,
+            Target = target,
             LatestStable = Highest(candidates.Where(candidate => !candidate.IsPrerelease)),
             LatestPreview = Highest(candidates.Where(candidate => candidate.IsPrerelease)),
         };
-    }
 
     // A best version below the pin is a problem report, not a downgrade: the pin stays where it is. It
     // happens to a prerelease pin under a stable-only policy with no stable release at or above it, and to an
