@@ -31,7 +31,9 @@ namespace Buildvana.Tool.Services;
 /// excluded on top, so build debris never contributes a pin.</para>
 /// <para>MSBuild items are read from files whose extension is <c>.props</c>, <c>.targets</c>, or any
 /// <c>proj</c>-suffixed form (<c>.csproj</c>, <c>.esproj</c>, ...), for the item types
-/// <c>PackageVersion</c>, <c>GlobalPackageReference</c>, and <c>PackageReference</c>; a
+/// <c>PackageVersion</c>, <c>GlobalPackageReference</c>, and <c>PackageReference</c>, plus the item name of
+/// every additional pin group the configuration declares — a family pin declared under a repository's own
+/// item name is a family pin like any other, and lockstep does not admit exceptions; a
 /// <c>VersionOverride</c> is never read or stamped, family ids included — an override overrules a
 /// dependency update, and self-update is one, so whoever writes an override owns the version and its
 /// consequences, drift out of lockstep included. The summary does not mention what is not ours to move.
@@ -40,10 +42,10 @@ namespace Buildvana.Tool.Services;
 /// make discovery cost scale with the whole source tree, and the declared scope keeps the summary an honest
 /// coverage check — a directive outside it is out of scope by the user's own statement. A versionless
 /// directive is a reference to a pin declared elsewhere, not a pin, and is not seen.</para>
-/// <para>The scope is read from the resolved configuration leniently: when the configuration cannot be
-/// read, discovery falls back to the built-in hooks scope with a warning instead of failing — self-update
-/// is the tool that repairs a half-updated repository, so it must run on one whose configuration file
-/// predates it.</para>
+/// <para>The scope and the item names are read from the resolved configuration leniently: when the
+/// configuration cannot be read, discovery falls back to the built-in hooks scope and the built-in item
+/// types with a warning instead of failing — self-update is the tool that repairs a half-updated
+/// repository, so it must run on one whose configuration file predates it.</para>
 /// </remarks>
 internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<BuildvanaConfig> config, IReporter reporter)
 {
@@ -58,7 +60,12 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
         "node_modules/",
     ];
 
-    private static readonly string[] MsBuildItemTypes = ["PackageVersion", "GlobalPackageReference", "PackageReference"];
+    private static readonly string[] BuiltInItemTypes = ["PackageVersion", "GlobalPackageReference", "PackageReference"];
+
+    // Both the file-based-app scope and the item names come from the configuration, and reading it can warn.
+    // Reading it once is what keeps a repository whose configuration file cannot be read from being warned
+    // about twice in the same run.
+    private readonly Lazy<BuildvanaConfig> _resolvedConfig = new(() => ResolveConfig(config, reporter));
 
     /// <summary>
     /// Walks the home directory and returns every family pin found, in walk order.
@@ -68,6 +75,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
     public IReadOnlyList<FamilyPin> DiscoverPins()
     {
         var scope = ResolveScope();
+        var itemTypes = ResolveItemTypes();
         var ignoresCase = CaseSensitivityMode.SystemDefault.IgnoresCase();
         var pins = new List<FamilyPin>();
         foreach (var relativePath in new FileFinder(home.HomeDirectory, ExclusionPatterns).GetFiles())
@@ -75,7 +83,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
             var path = home.GetFullPath(relativePath);
             if (IsMsBuildFile(relativePath))
             {
-                foreach (var pin in MsBuildPinEditor.ReadPins(path, MsBuildItemTypes))
+                foreach (var pin in MsBuildPinEditor.ReadPins(path, itemTypes))
                 {
                     if (BuildvanaFamily.Contains(pin.Id))
                     {
@@ -112,6 +120,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
     {
         Guard.IsNotNull(pins);
         Guard.IsNotNull(target);
+        var itemTypes = ResolveItemTypes();
         foreach (var group in pins.GroupBy(static p => p.RelativePath))
         {
             var path = home.GetFullPath(group.Key);
@@ -119,7 +128,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
             {
                 _ = MsBuildPinEditor.RewritePins(
                     path,
-                    MsBuildItemTypes,
+                    itemTypes,
                     pin => BuildvanaFamily.Contains(pin.Id) ? NewVersionText(pin.VersionText, target) : null);
             }
             else
@@ -214,25 +223,47 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
             : $"{pin.Id}: {pin.Version.ToNormalizedString()} -> {targetText} ({pin.RelativePath})";
     }
 
-    // The scope comes from the resolved configuration, read leniently: a configuration file this bv cannot
-    // read degrades discovery to the built-in hooks scope instead of killing the update, since self-update
-    // is the tool that repairs the repository. The configuration problems themselves are reported by the
-    // post-update validation, so the warning here only names the degradation.
-    private GitignoreFile ResolveScope()
+    // A configuration file this bv cannot read degrades discovery to the built-in scope and item types
+    // instead of killing the update, since self-update is the tool that repairs the repository. The
+    // configuration problems themselves are reported by the post-update validation, so the warning here only
+    // names the degradation.
+    private static BuildvanaConfig ResolveConfig(Lazy<BuildvanaConfig> config, IReporter reporter)
     {
-        IReadOnlyList<string> patterns;
         try
         {
-            patterns = config.Value.FileBasedApps;
+            return config.Value;
         }
         catch (BuildFailedException)
         {
-            patterns = new BuildvanaConfig().FileBasedApps;
             reporter.Warning(
                 "The configuration file could not be read; file-based apps are searched only under "
-                + $"{WellKnownPaths.HooksDirectory}.");
+                + $"{WellKnownPaths.HooksDirectory}, and package pins only under the built-in item types.");
+            return new BuildvanaConfig();
+        }
+    }
+
+    private GitignoreFile ResolveScope() => GitignoreFile.Parse(_resolvedConfig.Value.FileBasedApps);
+
+    // An additional pin group declares the item name its pins are written as, and a family pin written that
+    // way is a family pin like any other. Names are compared case-insensitively, as MSBuild compares item
+    // names, so a group that names a built-in type adds nothing.
+    private string[] ResolveItemTypes()
+    {
+        var groups = _resolvedConfig.Value.Dependencies.AdditionalPackages;
+        if (groups.Count == 0)
+        {
+            return BuiltInItemTypes;
         }
 
-        return GitignoreFile.Parse(patterns);
+        var itemTypes = new List<string>(BuiltInItemTypes);
+        foreach (var group in groups)
+        {
+            if (!itemTypes.Contains(group.Items, StringComparer.OrdinalIgnoreCase))
+            {
+                itemTypes.Add(group.Items);
+            }
+        }
+
+        return [.. itemTypes];
     }
 }

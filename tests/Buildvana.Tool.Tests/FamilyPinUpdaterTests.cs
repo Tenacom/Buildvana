@@ -316,6 +316,88 @@ internal sealed class FamilyPinUpdaterTests
         await Assert.That(warnings[0].Message).Contains(".buildvana/hooks");
     }
 
+    // A repository that pins packages under an item name of its own declares it as an additional pin group.
+    // A family pin written that way is one like any other, so discovery and stamping both reach it.
+    [Test]
+    public async Task DiscoverAndStampPins_ReachFamilyPinsUnderAConfiguredItemName()
+    {
+        using var home = new TempHome();
+        const string before = """
+            <Project>
+              <ItemGroup>
+                <BV_PackageVersion Include="Buildvana.Runtime" Version="2.1.40-preview" />
+                <BV_PackageVersion Include="Louis" Version="10.0.46" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("PackageVersions.props", before);
+        var updater = CreateUpdater(home, ConfigWithGroupItemName("BV_PackageVersion"));
+
+        var pins = updater.DiscoverPins();
+        var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
+
+        await Assert.That(home.ReadFile("PackageVersions.props"))
+            .IsEqualTo(before.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(lines).IsEquivalentTo(
+            ["Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (PackageVersions.props)"]);
+    }
+
+    // Without the group, the same file declares nothing self-update knows how to read.
+    [Test]
+    public async Task DiscoverPins_WithoutTheGroup_DoesNotSeeAConfiguredItemName()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <BV_PackageVersion Include="Buildvana.Runtime" Version="2.1.40-preview" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("PackageVersions.props", content);
+
+        var pins = CreateUpdater(home).DiscoverPins();
+
+        await Assert.That(pins.Count).IsEqualTo(0);
+    }
+
+    // MSBuild compares item names case-insensitively, so a group naming a built-in type adds nothing, and
+    // the built-in types are not scanned twice.
+    [Test]
+    public async Task DiscoverPins_WithAGroupNamingABuiltInItemType_ReportsEachPinOnce()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Buildvana.Runtime" Version="2.1.40-preview" />
+              </ItemGroup>
+            </Project>
+            """;
+        home.WriteFile("Directory.Packages.props", content);
+        var updater = CreateUpdater(home, ConfigWithGroupItemName("packageversion"));
+
+        var pins = updater.DiscoverPins();
+
+        await Assert.That(pins.Count).IsEqualTo(1);
+    }
+
+    private static BuildvanaConfig ConfigWithGroupItemName(string itemName)
+    {
+        var json = new BuildvanaJsonConfig
+        {
+            Dependencies = new()
+            {
+                AdditionalPackages =
+                [
+                    new() { Caption = "SDK-injected packages", Files = "PackageVersions.props", Items = itemName },
+                ],
+            },
+        };
+
+        return BuildvanaConfigFactory.Create(json, null);
+    }
+
     private static FamilyPinUpdater CreateUpdater(TempHome home, BuildvanaConfig? config = null)
         => new(
             home.Provider,
