@@ -16,15 +16,28 @@ namespace Buildvana.Core.Json.Schema;
 /// <remarks>
 /// <para>Columns are counted in characters (UTF-16 code units), not bytes, so positions stay correct for
 /// documents containing non-ASCII text.</para>
+/// <para>A pointer occurs twice only when an object repeats a member name, array elements being numbered and
+/// the root occurring once. The first occurrence is the one the map answers with, and every repeat is
+/// reported by <see cref="DuplicateMembers"/>, for callers that must refuse a document
+/// <see cref="System.Text.Json.Nodes.JsonObject"/> cannot represent.</para>
 /// </remarks>
 public sealed partial class JsonSourceMap
 {
     private readonly Dictionary<string, (int Line, int Column)> _positions;
 
-    private JsonSourceMap(Dictionary<string, (int Line, int Column)> positions)
+    private JsonSourceMap(
+        Dictionary<string, (int Line, int Column)> positions,
+        IReadOnlyList<JsonDuplicateMember> duplicateMembers)
     {
         _positions = positions;
+        DuplicateMembers = duplicateMembers;
     }
+
+    /// <summary>
+    /// Gets the repeats of object member names found in the document, in document order. Empty when every
+    /// object states each of its member names once.
+    /// </summary>
+    public IReadOnlyList<JsonDuplicateMember> DuplicateMembers { get; }
 
     /// <summary>
     /// Builds a source map from a UTF-8 encoded JSON document.
@@ -35,6 +48,7 @@ public sealed partial class JsonSourceMap
     public static JsonSourceMap Build(ReadOnlySpan<byte> utf8Json)
     {
         var positions = new Dictionary<string, (int Line, int Column)>(StringComparer.Ordinal);
+        var duplicates = new List<JsonDuplicateMember>();
         var lineStarts = BuildLineStarts(utf8Json);
         var reader = new Utf8JsonReader(
             utf8Json,
@@ -55,7 +69,7 @@ public sealed partial class JsonSourceMap
                 case JsonTokenType.StartObject:
                 case JsonTokenType.StartArray:
                     var containerPointer = NextPointer(frames);
-                    Record(positions, containerPointer, reader.TokenStartIndex, lineStarts, utf8Json);
+                    Record(positions, duplicates, containerPointer, reader.TokenStartIndex, lineStarts, utf8Json);
                     frames.Push(new Frame(containerPointer, reader.TokenType is JsonTokenType.StartArray));
                     break;
                 case JsonTokenType.EndObject:
@@ -67,12 +81,12 @@ public sealed partial class JsonSourceMap
                 case JsonTokenType.True:
                 case JsonTokenType.False:
                 case JsonTokenType.Null:
-                    Record(positions, NextPointer(frames), reader.TokenStartIndex, lineStarts, utf8Json);
+                    Record(positions, duplicates, NextPointer(frames), reader.TokenStartIndex, lineStarts, utf8Json);
                     break;
             }
         }
 
-        return new JsonSourceMap(positions);
+        return new JsonSourceMap(positions, duplicates);
     }
 
     /// <summary>
@@ -117,19 +131,29 @@ public sealed partial class JsonSourceMap
     private static string Escape(string token)
         => token.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
 
+    // The first occurrence is the one the map answers with. A repeat can only be a duplicate object member,
+    // since array elements are numbered and the root occurs once, so it is recorded for the caller to report.
     private static void Record(
         Dictionary<string, (int Line, int Column)> positions,
+        List<JsonDuplicateMember> duplicates,
         string pointer,
         long tokenStartIndex,
         List<int> lineStarts,
         ReadOnlySpan<byte> utf8Json)
     {
-        // The first occurrence wins; a well-formed document never repeats a pointer anyway.
-        if (!positions.ContainsKey(pointer))
+        var (line, column) = OffsetToPosition((int)tokenStartIndex, lineStarts, utf8Json);
+        if (!positions.TryAdd(pointer, (line, column)))
         {
-            positions[pointer] = OffsetToPosition((int)tokenStartIndex, lineStarts, utf8Json);
+            duplicates.Add(new JsonDuplicateMember(NameOf(pointer), pointer, line, column));
         }
     }
+
+    // The member name is the pointer's last token, with RFC 6901 escaping undone: "~1" back to "/", then
+    // "~0" back to "~", in that order, so an escaped "~1" survives the round trip.
+    private static string NameOf(string pointer)
+        => pointer[(pointer.LastIndexOf('/') + 1)..]
+            .Replace("~1", "/", StringComparison.Ordinal)
+            .Replace("~0", "~", StringComparison.Ordinal);
 
     private static List<int> BuildLineStarts(ReadOnlySpan<byte> utf8Json)
     {

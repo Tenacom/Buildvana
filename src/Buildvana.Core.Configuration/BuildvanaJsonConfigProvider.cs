@@ -95,6 +95,7 @@ public sealed class BuildvanaJsonConfigProvider
 
         var json = StripBom(UserFile.ReadAllBytes(path));
         var node = Parse(json, path);
+        ValidateNoDuplicateMembers(json, path);
         Validate(node, json, path);
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
@@ -164,6 +165,33 @@ public sealed class BuildvanaJsonConfigProvider
         var count = byteInLine < available ? byteInLine : available;
         var column = Encoding.UTF8.GetCharCount(json, lineStart, count) + 1;
         return (line + 1, column);
+    }
+
+    // A repeated member has to be refused before anything materializes the parsed document: JsonObject cannot
+    // hold one — JsonNodeOptions has no counterpart to the serializer's AllowDuplicateProperties — and would
+    // throw an ArgumentException naming the member but not where it is. Reported here instead, every repeat at
+    // once, with the position of the repeat, as every other mistake in the file is.
+    private static void ValidateNoDuplicateMembers(byte[] json, string path)
+    {
+        var duplicates = JsonSourceMap.Build(json).DuplicateMembers;
+        if (duplicates.Count == 0)
+        {
+            return;
+        }
+
+        var diagnostics = new List<BuildDiagnostic>(duplicates.Count);
+        foreach (var duplicate in duplicates)
+        {
+            diagnostics.Add(new BuildDiagnostic(
+                BuildDiagnosticSeverity.Error,
+                DiagnosticCodes.DuplicateProperty,
+                $"Duplicate property '{duplicate.Name}'.",
+                path,
+                duplicate.Line,
+                duplicate.Column));
+        }
+
+        throw new BuildFailedException($"Invalid configuration file {path}", diagnostics);
     }
 
     private static void Validate(JsonNode? node, byte[] json, string path)
