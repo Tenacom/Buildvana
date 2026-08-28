@@ -42,6 +42,9 @@ public sealed record BuildvanaConfig
     /// <summary>Gets the resolved Git configuration.</summary>
     public GitConfig Git { get; init; } = new();
 
+    /// <summary>Gets the resolved dependency-management configuration.</summary>
+    public DependenciesConfig Dependencies { get; init; } = new();
+
     /// <summary>
     /// Gets the gitignore-syntax patterns selecting the files and directories that hold file-based C# apps:
     /// the built-in hooks directory, plus the patterns the configuration file adds. Commands that scan for
