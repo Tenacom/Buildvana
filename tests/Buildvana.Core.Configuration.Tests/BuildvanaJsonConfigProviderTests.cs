@@ -404,6 +404,135 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
     }
 
+    // Both lists of the dependencies section are written as objects whose member names are data, and whose
+    // order decides which policy claims a pin, so the order the file states is the order they load in.
+    [Test]
+    public async Task Config_DependenciesSection_LoadsKeyedListsInDocumentOrder()
+    {
+        var dir = NewDir();
+        try
+        {
+            const string content = """
+                {
+                  "dependencies": {
+                    "scopes": { "netsdk": "lts", "packages": "major-" },
+                    "policies": { "Microsoft.CodeAnalysis.*": "minor", "StyleCop.Analyzers": "patch-" },
+                    "additionalPackages": {
+                      "SDK-injected packages": { "files": "src/Sdk/PackageVersions.props", "items": "BV_PackageVersion" }
+                    }
+                  }
+                }
+                """;
+
+            Write(dir, "buildvana.jsonc", content);
+            var dependencies = NewProvider(dir).Config.Dependencies!;
+
+            await Assert.That(dependencies.Scopes!.NetSdk).IsEqualTo("lts");
+            await Assert.That(dependencies.Scopes.Packages).IsEqualTo("major-");
+            await Assert.That(dependencies.Scopes.Sdks).IsNull();
+            await Assert.That(dependencies.Policies![0].Pattern).IsEqualTo("Microsoft.CodeAnalysis.*");
+            await Assert.That(dependencies.Policies[0].Policy).IsEqualTo("minor");
+            await Assert.That(dependencies.Policies[1].Pattern).IsEqualTo("StyleCop.Analyzers");
+            await Assert.That(dependencies.AdditionalPackages![0].Caption).IsEqualTo("SDK-injected packages");
+            await Assert.That(dependencies.AdditionalPackages[0].Items).IsEqualTo("BV_PackageVersion");
+            await Assert.That(dependencies.AdditionalPackages[0].Policy).IsNull();
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // Each position accepts one kind vocabulary: lts is a .NET SDK kind, and no package pin has one.
+    [Test]
+    public async Task Config_PackagePolicyWithNetSdkKind_ReportsBV1102()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "dependencies": { "policies": { "Some.Package": "lts" } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1102");
+            await Assert.That(exception.Diagnostics[0].Message).Contains("\"lts\"");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // The other direction: exact is a package kind, and the .NET SDK enum deliberately has none.
+    [Test]
+    public async Task Config_NetSdkScopeWithPackageKind_ReportsBV1102()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "dependencies": { "scopes": { "netsdk": "exact" } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1102");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Test]
+    public async Task Config_AdditionalPackageGroupWithoutItems_ReportsBV1104()
+    {
+        var dir = NewDir();
+        try
+        {
+            const string content = """
+                { "dependencies": { "additionalPackages": { "Group": { "files": "src/*.props" } } } }
+                """;
+
+            Write(dir, "buildvana.jsonc", content);
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1104");
+            await Assert.That(exception.Diagnostics[0].Message).Contains("items");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // A group restating its own caption inside the value is refused: the caption is the member name, and the
+    // reader would have two answers for one fact.
+    [Test]
+    public async Task Config_AdditionalPackageGroupRestatingItsCaption_ReportsBV1105()
+    {
+        var dir = NewDir();
+        try
+        {
+            const string content = """
+                {
+                  "dependencies": {
+                    "additionalPackages": {
+                      "Group": { "caption": "Group", "files": "src/*.props", "items": "PackageVersion" }
+                    }
+                  }
+                }
+                """;
+
+            Write(dir, "buildvana.jsonc", content);
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1105");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     private static BuildvanaJsonConfigProvider NewProvider(string dir) => new(new FixedHomeDirectoryProvider(dir));
 
     private static string NewDir()

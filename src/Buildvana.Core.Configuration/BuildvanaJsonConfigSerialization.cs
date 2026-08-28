@@ -4,6 +4,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Buildvana.Core.Json;
 
 namespace Buildvana.Core.Configuration;
 
@@ -41,6 +42,10 @@ public static class BuildvanaJsonConfigSerialization
         };
 
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+
+        // Reads the object-shaped ordered lists of the dependencies section. Registered here as well as on
+        // the context, so the schema describes the object shape the deserializer actually reads.
+        options.Converters.Add(new JsonKeyedObjectConverter());
         return options;
     }
 }

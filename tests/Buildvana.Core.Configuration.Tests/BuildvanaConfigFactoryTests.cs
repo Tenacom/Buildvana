@@ -28,6 +28,12 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(config.NuGet.Feeds.Release).IsNull();
         await Assert.That(config.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
         await Assert.That(config.Git.Identity).IsNull();
+        await Assert.That(config.Dependencies.Scopes.NetSdk).IsEqualTo("major");
+        await Assert.That(config.Dependencies.Scopes.Sdks).IsEqualTo("minor");
+        await Assert.That(config.Dependencies.Scopes.Tools).IsEqualTo("minor");
+        await Assert.That(config.Dependencies.Scopes.Packages).IsEqualTo("minor");
+        await Assert.That(config.Dependencies.Policies.Count).IsEqualTo(0);
+        await Assert.That(config.Dependencies.AdditionalPackages.Count).IsEqualTo(0);
         await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo(".buildvana/hooks/");
     }
 
@@ -302,5 +308,53 @@ internal sealed class BuildvanaConfigFactoryTests
         var config = BuildvanaConfigFactory.Create(json, null);
 
         await Assert.That(string.Join('|', config.FileBasedApps)).IsEqualTo("!.buildvana/hooks/|.buildvana/hooks/");
+    }
+
+    // The first rule whose pattern matches governs a pin, so file order is the whole ranking.
+    [Test]
+    public async Task Create_DependencyPolicies_KeepFileOrder()
+    {
+        var json = new BuildvanaJsonConfig
+        {
+            Dependencies = new()
+            {
+                Policies =
+                [
+                    new() { Pattern = "Microsoft.CodeAnalysis.*", Policy = "minor" },
+                    new() { Pattern = "*", Policy = "patch" },
+                ],
+            },
+        };
+
+        var config = BuildvanaConfigFactory.Create(json, null);
+
+        await Assert.That(config.Dependencies.Policies.Count).IsEqualTo(2);
+        await Assert.That(config.Dependencies.Policies[0].Pattern).IsEqualTo("Microsoft.CodeAnalysis.*");
+        await Assert.That(config.Dependencies.Policies[1].Pattern).IsEqualTo("*");
+    }
+
+    // A group states a policy of its own or takes the packages scope one: the resolved model never leaves a
+    // consumer to work out which.
+    [Test]
+    [Arguments(null, "major-")]
+    [Arguments("  ", "major-")]
+    [Arguments("patch", "patch")]
+    public async Task Create_AdditionalPackageGroup_ResolvesItsPolicy(string? stated, string expected)
+    {
+        var json = new BuildvanaJsonConfig
+        {
+            Dependencies = new()
+            {
+                Scopes = new() { Packages = "major-" },
+                AdditionalPackages =
+                [
+                    new() { Caption = "Group", Files = "src/*.props", Items = "BV_PackageVersion", Policy = stated },
+                ],
+            },
+        };
+
+        var config = BuildvanaConfigFactory.Create(json, null);
+
+        await Assert.That(config.Dependencies.AdditionalPackages[0].Policy).IsEqualTo(expected);
     }
 }
