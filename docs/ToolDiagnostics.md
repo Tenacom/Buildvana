@@ -30,3 +30,4 @@ There are no associated diagnostics.
 | BV1105 |  Error   | No value is allowed here.                             | A value appears at a location where the schema permits none.                                                                                 |
 | BV1106 |  Error   | The value must not be empty.                          | A string value is shorter than the schema's minimum length. For a required string this means a stated member carries no actual value.        |
 | BV1107 |  Error   | _(value)_ does not match the pattern '_(pattern)_'.   | A string value does not match the pattern the schema demands of it. For a required string this means the value is all whitespace.            |
+| BV1108 |  Error   | Duplicate property '_(name)_'.                        | An object states the same property name twice. The location points at the repeat; remove it, or merge the two into one property.             |

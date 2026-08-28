@@ -443,6 +443,59 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
     }
 
+    // A pattern written twice is a typo, not an override: JsonObject cannot hold the second one anyway, so
+    // it is refused at the repeat rather than throwing from wherever the document is first materialized.
+    [Test]
+    public async Task Config_DuplicatePolicyPattern_ReportsBV1108AtTheRepeat()
+    {
+        var dir = NewDir();
+        try
+        {
+            const string content = """
+                {
+                  "dependencies": {
+                    "policies": {
+                      "A*": "minor",
+                      "B*": "patch",
+                      "A*": "major"
+                    }
+                  }
+                }
+                """;
+
+            Write(dir, "buildvana.jsonc", content);
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1108");
+            await Assert.That(exception.Diagnostics[0].Message).Contains("A*");
+            await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(6);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // Not a new problem, and not one the dependencies section brought: every dictionary-valued setting has
+    // always been able to state a key twice.
+    [Test]
+    public async Task Config_DuplicateEnvironmentVariable_ReportsBV1108()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "dotnet": { "all": { "env": { "A": "1", "A": "2" } } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1108");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     // Each position accepts one kind vocabulary: lts is a .NET SDK kind, and no package pin has one.
     [Test]
     public async Task Config_PackagePolicyWithNetSdkKind_ReportsBV1102()
