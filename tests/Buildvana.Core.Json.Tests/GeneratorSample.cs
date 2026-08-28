@@ -26,6 +26,17 @@ internal sealed record GeneratorSample
     [JsonAllowedKeys("alpha, beta")]
     public IReadOnlyDictionary<string, string>? Map { get; init; }
 
+    // A fixed value set: the schema should enumerate it instead of leaving the string open.
+    [JsonAllowedValues("alpha, beta")]
+    public string? Choice { get; init; }
+
+    // Required and enumerated: the set already forbids a blank value, so no non-blank constraint is added.
+    [JsonAllowedValues("alpha, beta")]
+    public required string RequiredChoice { get; init; }
+
+    // Required, not enumerated: the non-blank constraints still apply.
+    public required string RequiredText { get; init; }
+
     // Nullable dictionary value: the schema should keep "null" on the value type without any opt-in.
     public IReadOnlyDictionary<string, string?>? Env { get; init; }
 

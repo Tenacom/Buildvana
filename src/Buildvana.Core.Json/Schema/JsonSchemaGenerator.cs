@@ -18,11 +18,12 @@ namespace Buildvana.Core.Json.Schema;
 /// <summary>
 /// Generates a JSON Schema (draft 2020-12) document from a .NET type, shaping the output from attributes the
 /// model carries: <see cref="DescriptionAttribute"/>, <see cref="JsonNullableAttribute"/>,
-/// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonKeyedObjectAttribute"/>,
-/// <see cref="JsonSchemaNoDefaultAttribute"/>, and
+/// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonAllowedValuesAttribute"/>,
+/// <see cref="JsonKeyedObjectAttribute"/>, <see cref="JsonSchemaNoDefaultAttribute"/>, and
 /// <see cref="JsonSchemaTitleAttribute"/>. C# <c>required</c> members surface as the schema's
 /// <c>required</c> keyword, courtesy of the underlying exporter; required string members additionally gain
-/// <c>minLength</c> and <c>pattern</c> constraints demanding a non-blank value.
+/// <c>minLength</c> and <c>pattern</c> constraints demanding a non-blank value, unless
+/// <see cref="JsonAllowedValuesAttribute"/> has already enumerated what the member may hold.
 /// </summary>
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
@@ -187,6 +188,13 @@ public static partial class JsonSchemaGenerator
             RemoveNullFromEnum(ownSchema);
         }
 
+        // Replace a string member's open value space with the set the model enumerates. This runs before the
+        // required-string constraints below, which an explicit set makes redundant.
+        if (TryGetAllowedValues(attributeProvider, out var allowedValues) && schema is JsonObject valuesSchema)
+        {
+            ConstrainValues(valuesSchema, allowedValues);
+        }
+
         // A required string member must state an actual value: an empty or all-whitespace string satisfies
         // the `required` keyword (which only checks presence) while carrying no value, so required strings
         // are additionally constrained to at least one non-whitespace character.
@@ -216,11 +224,41 @@ public static partial class JsonSchemaGenerator
         return schema;
     }
 
-    // minLength catches the empty string with a clear message; pattern catches all-whitespace values, which
-    // minLength alone would accept. Schemas that do not describe a string are left untouched.
-    private static void RequireNonBlankString(JsonObject schema)
+    private static bool TryGetAllowedValues(ICustomAttributeProvider? attributeProvider, out IReadOnlyList<string> values)
+    {
+        var attribute = attributeProvider?
+            .GetCustomAttributes(inherit: true)
+            .OfType<JsonAllowedValuesAttribute>()
+            .FirstOrDefault();
+
+        values = attribute?.AllowedValues ?? [];
+        return attribute is not null;
+    }
+
+    // Replaces a string schema's open value space with an explicit set of allowed values. Schemas that do not
+    // describe a string are left untouched, as JSON Schema's own string keywords are.
+    private static void ConstrainValues(JsonObject schema, IReadOnlyList<string> values)
     {
         if (!SchemaTypeIncludesString(schema))
+        {
+            return;
+        }
+
+        var allowed = new JsonArray();
+        foreach (var value in values)
+        {
+            allowed.Add(value);
+        }
+
+        schema["enum"] = allowed;
+    }
+
+    // minLength catches the empty string with a clear message; pattern catches all-whitespace values, which
+    // minLength alone would accept. Schemas that do not describe a string are left untouched, and so are
+    // those whose values are already enumerated: neither a blank nor any other unwanted value is in the set.
+    private static void RequireNonBlankString(JsonObject schema)
+    {
+        if (!SchemaTypeIncludesString(schema) || schema.ContainsKey("enum"))
         {
             return;
         }

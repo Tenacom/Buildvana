@@ -67,6 +67,31 @@ internal sealed class JsonSchemaGeneratorTests
     }
 
     [Test]
+    public async Task Generate_ConstrainsStringToAllowedValues()
+    {
+        var choice = Generate()["properties"]!["choice"]!;
+        await Assert.That(choice["type"]!.GetValue<string>()).IsEqualTo("string");
+        var allowed = ((JsonArray)choice["enum"]!).Select(static value => value!.GetValue<string>());
+        await Assert.That(allowed.SequenceEqual(["alpha", "beta"])).IsTrue();
+    }
+
+    // The enumerated set forbids the blank value the non-blank constraints exist to catch, so a required
+    // member carrying one states neither minLength nor pattern.
+    [Test]
+    public async Task Generate_AllowedValuesReplaceNonBlankConstraints()
+    {
+        var properties = Generate()["properties"]!;
+        var enumerated = properties["requiredChoice"]!;
+        await Assert.That(enumerated["enum"]).IsNotNull();
+        await Assert.That(enumerated["minLength"]).IsNull();
+        await Assert.That(enumerated["pattern"]).IsNull();
+
+        var open = properties["requiredText"]!;
+        await Assert.That(open["minLength"]!.GetValue<int>()).IsEqualTo(1);
+        await Assert.That(open["pattern"]!.GetValue<string>()).IsEqualTo(@"\S");
+    }
+
+    [Test]
     public async Task Generate_KeepsNullOnNullableDictionaryValue()
     {
         var type = Generate()["properties"]!["env"]!["additionalProperties"]!["type"];
