@@ -244,10 +244,13 @@ public static partial class JsonSchemaGenerator
             return;
         }
 
+        // JsonValue.Create, not the generic JsonArray.Add<T>: the latter serializes its argument through the
+        // ambient serializer options, which resolve no metadata at all in a file-based app — where the schema
+        // generator runs, reflection-based serialization being disabled there.
         var allowed = new JsonArray();
         foreach (var value in values)
         {
-            allowed.Add(value);
+            allowed.Add(JsonValue.Create(value));
         }
 
         schema["enum"] = allowed;

@@ -281,6 +281,163 @@
       },
       "additionalProperties": false
     },
+    "dependencies": {
+      "description": "Configuration for dependency management.",
+      "type": "object",
+      "properties": {
+        "scopes": {
+          "description": "Update policy governing each dependency scope.",
+          "type": "object",
+          "properties": {
+            "netsdk": {
+              "description": "How far an automatic update may move the .NET SDK version pinned in global.json. A trailing - allows prerelease versions.",
+              "type": "string",
+              "enum": [
+                "disable",
+                "disable-",
+                "patch",
+                "patch-",
+                "feature",
+                "feature-",
+                "minor",
+                "minor-",
+                "major",
+                "major-",
+                "lts",
+                "lts-"
+              ],
+              "default": "major"
+            },
+            "sdks": {
+              "description": "How far an automatic update may move an MSBuild project SDK pinned in global.json. A trailing - allows prerelease versions.",
+              "type": "string",
+              "enum": [
+                "disable",
+                "disable-",
+                "exact",
+                "exact-",
+                "revision",
+                "revision-",
+                "patch",
+                "patch-",
+                "minor",
+                "minor-",
+                "major",
+                "major-"
+              ],
+              "default": "minor"
+            },
+            "tools": {
+              "description": "How far an automatic update may move a .NET local tool pinned in the tool manifest. A trailing - allows prerelease versions.",
+              "type": "string",
+              "enum": [
+                "disable",
+                "disable-",
+                "exact",
+                "exact-",
+                "revision",
+                "revision-",
+                "patch",
+                "patch-",
+                "minor",
+                "minor-",
+                "major",
+                "major-"
+              ],
+              "default": "minor"
+            },
+            "packages": {
+              "description": "How far an automatic update may move a NuGet package pin. A trailing - allows prerelease versions.",
+              "type": "string",
+              "enum": [
+                "disable",
+                "disable-",
+                "exact",
+                "exact-",
+                "revision",
+                "revision-",
+                "patch",
+                "patch-",
+                "minor",
+                "minor-",
+                "major",
+                "major-"
+              ],
+              "default": "minor"
+            }
+          },
+          "additionalProperties": false
+        },
+        "policies": {
+          "description": "Update policy of individual packages, keyed by a pattern matched against a whole package id, with * standing for any run of characters. The first matching entry wins, so specific patterns go before general ones. Entries govern the sdks, tools, and packages scopes alike, and outrank the policy of an additional package group.",
+          "type": "object",
+          "additionalProperties": {
+            "description": "How far an automatic update may move a pin whose package id matches. A trailing - allows prerelease versions.",
+            "type": "string",
+            "enum": [
+              "disable",
+              "disable-",
+              "exact",
+              "exact-",
+              "revision",
+              "revision-",
+              "patch",
+              "patch-",
+              "minor",
+              "minor-",
+              "major",
+              "major-"
+            ]
+          }
+        },
+        "additionalPackages": {
+          "description": "Groups of package pins declared in files of their own, keyed by the caption naming the group in listings. Pins of a group are updated like any other package pin, but are never pruned and never given transitive overrides.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "caption": false,
+              "files": {
+                "description": "Glob, relative to the home directory, selecting the files that declare the group\u0027s pins.",
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "items": {
+                "description": "MSBuild item name the group\u0027s pins are declared as, e.g. BV_PackageVersion.",
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "policy": {
+                "description": "How far an automatic update may move a pin of this group. A trailing - allows prerelease versions. Defaults to the policy of the packages scope.",
+                "type": "string",
+                "enum": [
+                  "disable",
+                  "disable-",
+                  "exact",
+                  "exact-",
+                  "revision",
+                  "revision-",
+                  "patch",
+                  "patch-",
+                  "minor",
+                  "minor-",
+                  "major",
+                  "major-"
+                ]
+              }
+            },
+            "required": [
+              "files",
+              "items"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "fileBasedApps": {
       "description": "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.",
       "type": "array",

@@ -72,6 +72,10 @@ public sealed record BuildvanaJsonConfig
     [Description("Configuration for Git-related behavior.")]
     public GitJsonConfig? Git { get; init; }
 
+    /// <summary>Gets the <c>dependencies</c> section.</summary>
+    [Description("Configuration for dependency management.")]
+    public DependenciesJsonConfig? Dependencies { get; init; }
+
     /// <summary>Gets the <c>fileBasedApps</c> patterns.</summary>
     [Description(
         "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, "

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Buildvana.Runtime;
 
 namespace Buildvana.Core.Configuration;
@@ -38,6 +39,7 @@ public static class BuildvanaConfigFactory
             NuGet = ComposeNuGet(json?.NuGet),
             GitHub = ComposeGitHub(json?.GitHub),
             Git = ComposeGit(json?.Git),
+            Dependencies = ComposeDependencies(json?.Dependencies),
             FileBasedApps = ComposeFileBasedApps(json?.FileBasedApps),
         };
     }
@@ -177,6 +179,55 @@ public static class BuildvanaConfigFactory
             Identity = json?.Identity is { } identity
                 ? new GitIdentityConfig { Name = identity.Name!, Email = identity.Email! }
                 : null,
+        };
+
+    private static DependenciesConfig ComposeDependencies(DependenciesJsonConfig? json)
+    {
+        var scopes = ComposeDependencyScopes(json?.Scopes);
+        return new DependenciesConfig
+        {
+            Scopes = scopes,
+            Policies = ComposePolicies(json?.Policies),
+            AdditionalPackages = ComposeAdditionalPackages(json?.AdditionalPackages, scopes.Packages),
+        };
+    }
+
+    private static DependencyScopesConfig ComposeDependencyScopes(DependencyScopesJsonConfig? json)
+    {
+        var defaults = new DependencyScopesConfig();
+        return new DependencyScopesConfig
+        {
+            NetSdk = NormalizeBlankToNull(json?.NetSdk) ?? defaults.NetSdk,
+            Sdks = NormalizeBlankToNull(json?.Sdks) ?? defaults.Sdks,
+            Tools = NormalizeBlankToNull(json?.Tools) ?? defaults.Tools,
+            Packages = NormalizeBlankToNull(json?.Packages) ?? defaults.Packages,
+        };
+    }
+
+    // Document order is what decides which rule claims a pin, so it is carried over as written.
+    private static IReadOnlyList<UpdatePolicyRule> ComposePolicies(IReadOnlyList<UpdatePolicyRuleJsonConfig>? json)
+        => json is null
+            ? []
+            : [.. json.Select(static rule => new UpdatePolicyRule { Pattern = rule.Pattern, Policy = rule.Policy })];
+
+    private static IReadOnlyList<AdditionalPackagesConfig> ComposeAdditionalPackages(
+        IReadOnlyList<AdditionalPackagesJsonConfig>? json,
+        string packagesPolicy)
+        => json is null ? [] : [.. json.Select(group => ComposeAdditionalPackageGroup(group, packagesPolicy))];
+
+    // A group that states no policy of its own takes the packages scope policy, resolved here rather than
+    // left to consumers. It changes no outcome — a policy rule and UpdatePolicy metadata both outrank a
+    // group policy either way — and leaves the resolved model with nothing to fall back on. The schema
+    // requires files and items whenever a group is stated, so a wire group that reaches here carries both.
+    private static AdditionalPackagesConfig ComposeAdditionalPackageGroup(
+        AdditionalPackagesJsonConfig json,
+        string packagesPolicy)
+        => new()
+        {
+            Caption = json.Caption,
+            Files = json.Files,
+            Items = json.Items,
+            Policy = NormalizeBlankToNull(json.Policy) ?? packagesPolicy,
         };
 
     // Configured patterns extend the built-in scope rather than replace it: hooks are file-based apps by

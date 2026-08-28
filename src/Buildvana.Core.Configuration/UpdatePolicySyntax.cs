@@ -11,6 +11,15 @@ namespace Buildvana.Core.Configuration;
 // elsewhere in the configuration file.
 internal static class UpdatePolicySyntax
 {
+    // Every policy string of a kind enum, in enum order, each kind followed by its prerelease form. The
+    // schema needs the set as a constant, so it is spelled out rather than derived; the schema tests derive
+    // the same lists from the enums and compare, which is what keeps the two from drifting apart.
+    public const string PackagePolicyValues =
+        "disable, disable-, exact, exact-, revision, revision-, patch, patch-, minor, minor-, major, major-";
+
+    public const string NetSdkPolicyValues =
+        "disable, disable-, patch, patch-, feature, feature-, minor, minor-, major, major-, lts, lts-";
+
     private const char AllowPrereleaseSuffix = '-';
 
     // Both directions key on the enum member names, so that the wire form of a kind has one definition.
