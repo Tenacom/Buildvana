@@ -17,6 +17,11 @@ namespace Buildvana.Core.Json.Schema;
 /// object key never mistaken for an index. Intended for display only; use <see cref="JsonPointer"/> as a key.
 /// </param>
 /// <param name="Message">A human-readable description of the failure.</param>
+/// <param name="IsPropertyName">
+/// <see langword="true"/> when the offender is the name of the member at <see cref="JsonPointer"/> rather than
+/// its value, as a <c>propertyNames</c> constraint makes it. Whoever resolves source positions points such an
+/// error at the name, through <see cref="JsonSourceMap.TryGetNamePosition"/>.
+/// </param>
 /// <param name="Line">The 1-based source line of the offending value, or 0 when it has not been resolved.</param>
 /// <param name="Column">The 1-based source column of the offending value, or 0 when it has not been resolved.</param>
 public sealed record JsonSchemaValidationError(
@@ -24,6 +29,7 @@ public sealed record JsonSchemaValidationError(
     string JsonPointer,
     string DisplayPath,
     string Message,
+    bool IsPropertyName = false,
     int Line = 0,
     int Column = 0)
 {

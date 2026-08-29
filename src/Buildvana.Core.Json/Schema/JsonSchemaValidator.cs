@@ -362,11 +362,9 @@ public static class JsonSchemaValidator
         var names = schema["propertyNames"];
         foreach (var (key, value) in obj)
         {
-            // The member name is data in its own right wherever a keyed object puts it there, so it is checked
-            // as the string it is, at the member it names.
             if (names is not null)
             {
-                ValidateNode(JsonValue.Create(key), names, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
+                ValidateName(key, names, pointer, displayPath, root, errors);
             }
 
             if (properties?[key] is { } propertySchema)
@@ -386,6 +384,26 @@ public static class JsonSchemaValidator
             {
                 ValidateNode(value, additionalSchema, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
             }
+        }
+    }
+
+    // The member name is data in its own right wherever a keyed object puts it there, so it is checked as the
+    // string it is. What comes back is about the name and not about the value the name introduces, which is
+    // what tells a caller where to point; the subschema may be a $ref, so the whole batch is stamped rather
+    // than the errors of one keyword.
+    private static void ValidateName(
+        string key,
+        JsonNode names,
+        string pointer,
+        string displayPath,
+        JsonNode root,
+        List<JsonSchemaValidationError> errors)
+    {
+        var firstNameError = errors.Count;
+        ValidateNode(JsonValue.Create(key), names, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
+        for (var i = firstNameError; i < errors.Count; i++)
+        {
+            errors[i] = errors[i] with { IsPropertyName = true };
         }
     }
 
@@ -469,8 +487,9 @@ public static class JsonSchemaValidator
     private static string AppendKey(string displayPath, string key)
         => displayPath.Length == 0 ? key : $"{displayPath}.{key}";
 
-    // Stamps each error with the position its pointer resolves to. An error whose pointer the map does not
-    // know keeps (0, 0), which is how a caller says "somewhere in this file".
+    // Stamps each error with the position its pointer resolves to: the name of the member for an error about
+    // that name, the value it introduces for every other error. An error whose pointer the map does not know
+    // keeps (0, 0), which is how a caller says "somewhere in this file".
     private static List<JsonSchemaValidationError> Locate(
         IReadOnlyList<JsonSchemaValidationError> errors,
         JsonSourceMap sourceMap)
@@ -478,7 +497,17 @@ public static class JsonSchemaValidator
         var located = new List<JsonSchemaValidationError>(errors.Count);
         foreach (var error in errors)
         {
-            _ = sourceMap.TryGetPosition(error.JsonPointer, out var line, out var column);
+            int line;
+            int column;
+            if (error.IsPropertyName)
+            {
+                _ = sourceMap.TryGetNamePosition(error.JsonPointer, out line, out column);
+            }
+            else
+            {
+                _ = sourceMap.TryGetPosition(error.JsonPointer, out line, out column);
+            }
+
             located.Add(error with { Line = line, Column = column });
         }
 
