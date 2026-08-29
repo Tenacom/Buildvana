@@ -165,6 +165,23 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[0].Column).IsEqualTo(11);
     }
 
+    // propertyNames checks each member name as the string it is, so a keyed object's names obey the same
+    // constraints a property's value would.
+    [Test]
+    public async Task Validate_PropertyNames_ChecksEachMemberName()
+    {
+        var schema = Schema("""{"type":"object","propertyNames":{"minLength":1,"pattern":"\\S"}}""");
+        var errors = JsonSchemaValidator.Validate(JsonNode.Parse("""{"": 1, " ": 2, "a": 3}"""), schema);
+
+        // One error per name, as for any other string: the empty one stops at minLength, the blank one at
+        // the pattern, and the third name is fine.
+        await Assert.That(errors.Count).IsEqualTo(2);
+        await Assert.That(errors[0].Kind).IsEqualTo(JsonSchemaErrorKind.TooShort);
+        await Assert.That(errors[0].JsonPointer).IsEqualTo("/");
+        await Assert.That(errors[1].Kind).IsEqualTo(JsonSchemaErrorKind.PatternMismatch);
+        await Assert.That(errors[1].JsonPointer).IsEqualTo("/ ");
+    }
+
     [Test]
     public async Task Validate_WithSourceMap_FillsLineAndColumn()
     {

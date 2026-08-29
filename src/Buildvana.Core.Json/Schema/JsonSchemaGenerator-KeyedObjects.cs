@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -44,21 +45,42 @@ partial class JsonSchemaGenerator
                     $"The keyed-object element type '{elementType}' does not render as an object schema.");
             }
 
+            // Read before the branch below: PruneKeyProperty strips the key from "required" on its way out.
+            var keyIsRequired = IsRequired(elementSchema, keyJsonName);
             var valuesSchema = valueJsonName is not null
                 ? LiftValueSchema(elementProperties, elementType, valueJsonName)
                 : PruneKeyProperty(elementSchema, elementProperties, keyJsonName);
             ThrowIfContainsReference(elementType, valuesSchema);
-            return new JsonObject
+            var keyedSchema = new JsonObject
             {
                 ["type"] = "object",
                 ["additionalProperties"] = valuesSchema,
             };
+
+            // The key travels as the member name, where a property's own constraints cannot reach it, so a
+            // required key states through propertyNames what every other required string states about itself:
+            // that a stated member carries an actual value. minLength catches the empty name, pattern the
+            // all-whitespace one.
+            if (keyIsRequired)
+            {
+                keyedSchema["propertyNames"] = new JsonObject
+                {
+                    ["minLength"] = 1,
+                    ["pattern"] = @"\S",
+                };
+            }
+
+            return keyedSchema;
         }
         finally
         {
             _ = keyedTypesInProgress.Remove(elementType);
         }
     }
+
+    private static bool IsRequired(JsonObject elementSchema, string jsonName)
+        => elementSchema["required"] is JsonArray required
+            && required.Any(entry => entry?.GetValue<string>() == jsonName);
 
     // The value property's schema arrives with the property-level transforms (required-string constraints,
     // declared nullability, description) already applied by the element's own generation pass.

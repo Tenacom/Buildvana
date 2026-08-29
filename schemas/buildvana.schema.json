@@ -388,6 +388,10 @@
               "major",
               "major-"
             ]
+          },
+          "propertyNames": {
+            "minLength": 1,
+            "pattern": "\\S"
           }
         },
         "additionalPackages": {
@@ -433,6 +437,10 @@
               "items"
             ],
             "additionalProperties": false
+          },
+          "propertyNames": {
+            "minLength": 1,
+            "pattern": "\\S"
           }
         }
       },

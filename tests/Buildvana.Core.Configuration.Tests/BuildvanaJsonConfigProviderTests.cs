@@ -499,6 +499,54 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
     }
 
+    // A keyed object puts its data in the member name, so the name obeys the discipline every other required
+    // string obeys: an unnamed pattern matches nothing a reader meant it to match.
+    [Test]
+    public async Task Config_BlankPolicyPattern_ReportsBV1106()
+    {
+        var dir = NewDir();
+        try
+        {
+            Write(dir, "buildvana.jsonc", """{ "dependencies": { "policies": { "": "minor" } } }""");
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1106");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    // A caption of nothing but spaces is a group that prints as nothing in the listing it exists to be named in.
+    [Test]
+    public async Task Config_BlankAdditionalPackagesCaption_ReportsBV1107()
+    {
+        var dir = NewDir();
+        try
+        {
+            const string content = """
+                {
+                  "dependencies": {
+                    "additionalPackages": {
+                      "  ": { "files": "src/**/*.props", "items": "BV_PackageVersion" }
+                    }
+                  }
+                }
+                """;
+
+            Write(dir, "buildvana.jsonc", content);
+            var exception = Catch(dir);
+            await Assert.That(exception).IsNotNull();
+            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1107");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
     // Each position accepts one kind vocabulary: lts is a .NET SDK kind, and no package pin has one.
     [Test]
     public async Task Config_PackagePolicyWithNetSdkKind_ReportsBV1102()

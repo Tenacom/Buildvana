@@ -256,6 +256,27 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(element["properties"]!["caption"]!.GetValue<bool>()).IsFalse();
     }
 
+    // The key travels as the member name, where a property's own constraints cannot reach it, so a required
+    // key states the non-blank discipline through propertyNames instead.
+    [Test]
+    public async Task Generate_ConstrainsRequiredKeyThroughPropertyNames()
+    {
+        var schema = GenerateKeyed();
+
+        var valueShape = schema["properties"]!["policies"]!["propertyNames"]!;
+        await Assert.That(valueShape["minLength"]!.GetValue<int>()).IsEqualTo(1);
+        await Assert.That(valueShape["pattern"]!.GetValue<string>()).IsEqualTo(@"\S");
+
+        var remainingMembersShape = schema["properties"]!["groups"]!["propertyNames"]!;
+        await Assert.That(remainingMembersShape["minLength"]!.GetValue<int>()).IsEqualTo(1);
+        await Assert.That(remainingMembersShape["pattern"]!.GetValue<string>()).IsEqualTo(@"\S");
+    }
+
+    // A key the model does not require states nothing about its own value, member name included.
+    [Test]
+    public async Task Generate_LeavesAnOptionalKeyUnconstrained()
+        => await Assert.That(GenerateKeyed()["properties"]!["optionalKeys"]!["propertyNames"]).IsNull();
+
     [Test]
     public async Task Generate_PrunesKeyFromRequiredAndKeepsTheRest()
     {
