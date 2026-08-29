@@ -153,7 +153,11 @@ public static class JsonSchemaValidator
         {
             if (schemaNode.GetValueKind() is JsonValueKind.False)
             {
-                errors.Add(new JsonSchemaValidationError(JsonSchemaErrorKind.ValueNotAllowed, pointer, displayPath, "No value is allowed here."));
+                errors.Add(new JsonSchemaValidationError(
+                    JsonSchemaErrorKind.ValueNotAllowed,
+                    pointer,
+                    displayPath,
+                    "No value is allowed here."));
             }
 
             return;

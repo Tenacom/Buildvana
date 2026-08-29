@@ -103,7 +103,10 @@ public sealed partial class JsonSourceMap
     /// <param name="jsonPointer">An RFC 6901 JSON Pointer (an empty string for the document root).</param>
     /// <param name="line">When this method returns <see langword="true"/>, the 1-based line number.</param>
     /// <param name="column">When this method returns <see langword="true"/>, the 1-based column number.</param>
-    /// <returns><see langword="true"/> if a position was recorded for <paramref name="jsonPointer"/>; otherwise, <see langword="false"/>.</returns>
+    /// <returns>
+    /// <see langword="true"/> if a position was recorded for <paramref name="jsonPointer"/>; otherwise,
+    /// <see langword="false"/>.
+    /// </returns>
     public bool TryGetPosition(string jsonPointer, out int line, out int column)
     {
         if (_positions.TryGetValue(jsonPointer, out var position))
@@ -226,7 +229,10 @@ public sealed partial class JsonSourceMap
         return lineStarts;
     }
 
-    private static (int Line, int Column) OffsetToPosition(int offset, List<int> lineStarts, ReadOnlySpan<byte> utf8Json)
+    private static (int Line, int Column) OffsetToPosition(
+        int offset,
+        List<int> lineStarts,
+        ReadOnlySpan<byte> utf8Json)
     {
         var lineIndex = FindLineIndex(lineStarts, offset);
         var lineStart = lineStarts[lineIndex];

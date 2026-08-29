@@ -219,7 +219,15 @@ internal sealed class JsonSchemaValidatorTests
     public async Task Validate_NumericObjectKeyVersusArrayIndex_DisambiguatesDisplayPath()
     {
         var errors = Validate(
-            """{"type":"object","properties":{"obj":{"type":"object","additionalProperties":{"type":"string"}},"arr":{"type":"array","items":{"type":"string"}}}}""",
+            """
+            {
+              "type": "object",
+              "properties": {
+                "obj": { "type": "object", "additionalProperties": { "type": "string" } },
+                "arr": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+            """,
             """{"obj":{"1":true},"arr":["x",true]}""");
         await Assert.That(errors.Count).IsEqualTo(2);
 
