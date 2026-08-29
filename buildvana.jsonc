@@ -132,7 +132,7 @@
   //     // Email address used as the Git author/committer.
   //     "email": "bot@buildvana.invalid"
   //   }
-  // }
+  // },
 
   // Configuration for dependency management.
   // Commented out rather than absent: the bv version this repository pins does not know this section, and an
@@ -161,7 +161,7 @@
   //       // "policy": "minor"
   //     }
   //   }
-  // }
+  // },
 
   // Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in
   // .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.
