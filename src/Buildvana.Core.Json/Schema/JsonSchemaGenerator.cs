@@ -258,7 +258,7 @@ public static partial class JsonSchemaGenerator
         // value its own type advertises. The exporter does the same for a nullable enum property.
         if (SchemaTypeIncludesNull(schema))
         {
-            allowed.Add((JsonNode?)null);
+            allowed.Add(null);
         }
 
         schema["enum"] = allowed;
