@@ -154,6 +154,11 @@
   //
   //       // MSBuild item name the group's pins are declared as, e.g. BV_PackageVersion.
   //       "items": "BV_PackageVersion"
+  //
+  //       // How far an automatic update may move a pin of this group. A trailing - allows prerelease
+  //       // versions. Defaults to the policy of the packages scope.
+  //       // Not set: these pins are ordinary package pins and move under the packages scope policy.
+  //       // "policy": "minor"
   //     }
   //   }
   // }
