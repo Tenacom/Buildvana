@@ -166,6 +166,25 @@ internal sealed class JsonSchemaValidatorTests
     }
 
     [Test]
+    public async Task Validate_WithSourceMap_FillsLineAndColumn()
+    {
+        var schema = Schema("""{"type":"object","properties":{"name":{"type":"string"}}}""");
+        var bytes = "{\n  \"name\": 42\n}"u8;
+        var errors = JsonSchemaValidator.Validate(JsonNode.Parse(bytes), schema, JsonSourceMap.Build(bytes));
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].Line).IsEqualTo(2);
+        await Assert.That(errors[0].Column).IsEqualTo(11);
+    }
+
+    [Test]
+    public async Task Validate_WithNullSourceMap_Throws()
+        => await Assert.That(() => JsonSchemaValidator.Validate(
+                JsonNode.Parse("123"),
+                Schema("""{"type":"string"}"""),
+                (JsonSourceMap)null!))
+            .Throws<ArgumentNullException>();
+
+    [Test]
     public async Task Validate_NumericObjectKeyVersusArrayIndex_DisambiguatesDisplayPath()
     {
         var errors = Validate(

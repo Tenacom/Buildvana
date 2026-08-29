@@ -49,6 +49,24 @@ public static class JsonSchemaValidator
         => Validate(instance, JsonSchemaGenerator.Generate<T>(options), utf8Json);
 
     /// <summary>
+    /// Generates the schema for <typeparamref name="T"/>, validates <paramref name="instance"/> against it, and
+    /// resolves each error's source position from <paramref name="sourceMap"/> — for a caller that has already
+    /// built a source map of the same document and would otherwise pay for a second walk of it.
+    /// </summary>
+    /// <typeparam name="T">The type whose schema <paramref name="instance"/> must conform to.</typeparam>
+    /// <param name="instance">The JSON value to validate. <see langword="null"/> represents a JSON null.</param>
+    /// <param name="sourceMap">The source map of the document <paramref name="instance"/> was parsed from.</param>
+    /// <param name="options">The serializer options that drive schema generation.</param>
+    /// <returns>
+    /// The validation errors found, each carrying its 1-based line and column; an empty list when valid.
+    /// </returns>
+    public static IReadOnlyList<JsonSchemaValidationError> Validate<T>(
+        JsonNode? instance,
+        JsonSourceMap sourceMap,
+        JsonSerializerOptions options)
+        => Validate(instance, JsonSchemaGenerator.Generate<T>(options), sourceMap);
+
+    /// <summary>
     /// Validates <paramref name="instance"/> against <paramref name="schema"/> and returns any failures.
     /// </summary>
     /// <param name="instance">The JSON value to validate. <see langword="null"/> represents a JSON null.</param>
@@ -88,21 +106,36 @@ public static class JsonSchemaValidator
         JsonNode schema,
         ReadOnlySpan<byte> utf8Json)
     {
+        // The map is built only when there is something to locate: a valid document would pay for a full
+        // walk of itself and get nothing back.
         var errors = Validate(instance, schema);
-        if (errors.Count == 0)
-        {
-            return errors;
-        }
+        return errors.Count == 0 ? errors : Locate(errors, JsonSourceMap.Build(utf8Json));
+    }
 
-        var sourceMap = JsonSourceMap.Build(utf8Json);
-        var located = new List<JsonSchemaValidationError>(errors.Count);
-        foreach (var error in errors)
-        {
-            _ = sourceMap.TryGetPosition(error.JsonPointer, out var line, out var column);
-            located.Add(error with { Line = line, Column = column });
-        }
+    /// <summary>
+    /// Validates <paramref name="instance"/> against <paramref name="schema"/> and resolves each error's source
+    /// position from <paramref name="sourceMap"/>, for a caller that has already built one.
+    /// </summary>
+    /// <param name="instance">The JSON value to validate. <see langword="null"/> represents a JSON null.</param>
+    /// <param name="schema">The schema to validate against.</param>
+    /// <param name="sourceMap">The source map of the document <paramref name="instance"/> was parsed from.</param>
+    /// <returns>
+    /// The validation errors found, each carrying its 1-based <see cref="JsonSchemaValidationError.Line"/> and
+    /// <see cref="JsonSchemaValidationError.Column"/>; an empty list when <paramref name="instance"/> is valid.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="schema"/> is malformed: it contains an unresolvable or circular <c>$ref</c>, or an
+    /// invalid <c>pattern</c> regular expression.
+    /// </exception>
+    public static IReadOnlyList<JsonSchemaValidationError> Validate(
+        JsonNode? instance,
+        JsonNode schema,
+        JsonSourceMap sourceMap)
+    {
+        ArgumentNullException.ThrowIfNull(sourceMap);
 
-        return located;
+        var errors = Validate(instance, schema);
+        return errors.Count == 0 ? errors : Locate(errors, sourceMap);
     }
 
     private static void ValidateNode(
@@ -426,4 +459,20 @@ public static class JsonSchemaValidator
     // Appends one object-member step to a human-friendly display path: ".key", or just "key" at the root.
     private static string AppendKey(string displayPath, string key)
         => displayPath.Length == 0 ? key : $"{displayPath}.{key}";
+
+    // Stamps each error with the position its pointer resolves to. An error whose pointer the map does not
+    // know keeps (0, 0), which is how a caller says "somewhere in this file".
+    private static List<JsonSchemaValidationError> Locate(
+        IReadOnlyList<JsonSchemaValidationError> errors,
+        JsonSourceMap sourceMap)
+    {
+        var located = new List<JsonSchemaValidationError>(errors.Count);
+        foreach (var error in errors)
+        {
+            _ = sourceMap.TryGetPosition(error.JsonPointer, out var line, out var column);
+            located.Add(error with { Line = line, Column = column });
+        }
+
+        return located;
+    }
 }

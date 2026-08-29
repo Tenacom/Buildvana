@@ -94,9 +94,20 @@ public sealed class BuildvanaJsonConfigProvider
         }
 
         var json = StripBom(UserFile.ReadAllBytes(path));
+
+        // The source map reads the bytes rather than the parsed document, so building it first is what lets a
+        // repeated member be refused before anything asks a JsonObject to hold one. It then serves the schema
+        // validation below, which would otherwise walk the document a second time to locate its errors.
+        var sourceMap = TryBuildSourceMap(json);
+        if (sourceMap is not null)
+        {
+            ValidateNoDuplicateMembers(sourceMap, path);
+        }
+
         var node = Parse(json, path);
-        ValidateNoDuplicateMembers(json, path);
-        Validate(node, json, path);
+
+        // Parse throws unless the document is well-formed JSON, and well-formed JSON always makes a map.
+        Validate(node, sourceMap!, path);
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
         return node!.Deserialize(BuildvanaJsonConfigContext.Default.BuildvanaJsonConfig) ?? new BuildvanaJsonConfig();
@@ -124,6 +135,48 @@ public sealed class BuildvanaJsonConfigProvider
     // Removes a leading UTF-8 byte order mark, if present, so the reader sees only JSON and positions start at 1.
     private static byte[] StripBom(byte[] bytes)
         => bytes is [0xEF, 0xBB, 0xBF, .. var rest] ? rest : bytes;
+
+    // A document the map cannot read is not JSON at all, which Parse reports below with the reader's own
+    // reason and position, so the failure is swallowed here rather than duplicated.
+    private static JsonSourceMap? TryBuildSourceMap(byte[] json)
+    {
+        try
+        {
+            return JsonSourceMap.Build(json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    // JsonObject cannot hold a member name twice and throws an ArgumentException — naming the member, but not
+    // where it is — as soon as it is asked to. Refusing a repeat here reports every one of them at once, under
+    // a code of its own and with a position, as every other mistake in the file is reported.
+    // System.Text.Json can refuse them too, through JsonDocumentOptions.AllowDuplicateProperties, but only as
+    // a parse error carrying the first repeat: BV1108 would lose both its identity and the rest of the list.
+    private static void ValidateNoDuplicateMembers(JsonSourceMap sourceMap, string path)
+    {
+        var duplicates = sourceMap.DuplicateMembers;
+        if (duplicates.Count == 0)
+        {
+            return;
+        }
+
+        var diagnostics = new List<BuildDiagnostic>(duplicates.Count);
+        foreach (var duplicate in duplicates)
+        {
+            diagnostics.Add(new BuildDiagnostic(
+                BuildDiagnosticSeverity.Error,
+                DiagnosticCodes.DuplicateProperty,
+                $"Duplicate property '{duplicate.Name}'.",
+                path,
+                duplicate.Line,
+                duplicate.Column));
+        }
+
+        throw new BuildFailedException($"Invalid configuration file {path}", diagnostics);
+    }
 
     private static JsonNode? Parse(byte[] json, string path)
     {
@@ -167,36 +220,9 @@ public sealed class BuildvanaJsonConfigProvider
         return (line + 1, column);
     }
 
-    // A repeated member has to be refused before anything materializes the parsed document: JsonObject cannot
-    // hold one — JsonNodeOptions has no counterpart to the serializer's AllowDuplicateProperties — and would
-    // throw an ArgumentException naming the member but not where it is. Reported here instead, every repeat at
-    // once, with the position of the repeat, as every other mistake in the file is.
-    private static void ValidateNoDuplicateMembers(byte[] json, string path)
+    private static void Validate(JsonNode? node, JsonSourceMap sourceMap, string path)
     {
-        var duplicates = JsonSourceMap.Build(json).DuplicateMembers;
-        if (duplicates.Count == 0)
-        {
-            return;
-        }
-
-        var diagnostics = new List<BuildDiagnostic>(duplicates.Count);
-        foreach (var duplicate in duplicates)
-        {
-            diagnostics.Add(new BuildDiagnostic(
-                BuildDiagnosticSeverity.Error,
-                DiagnosticCodes.DuplicateProperty,
-                $"Duplicate property '{duplicate.Name}'.",
-                path,
-                duplicate.Line,
-                duplicate.Column));
-        }
-
-        throw new BuildFailedException($"Invalid configuration file {path}", diagnostics);
-    }
-
-    private static void Validate(JsonNode? node, byte[] json, string path)
-    {
-        var errors = JsonSchemaValidator.Validate<BuildvanaJsonConfig>(node, json, BuildvanaJsonConfigSerialization.Options);
+        var errors = JsonSchemaValidator.Validate<BuildvanaJsonConfig>(node, sourceMap, BuildvanaJsonConfigSerialization.Options);
         if (errors.Count == 0)
         {
             return;
