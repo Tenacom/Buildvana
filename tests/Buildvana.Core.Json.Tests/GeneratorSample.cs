@@ -30,6 +30,11 @@ internal sealed record GeneratorSample
     [JsonAllowedValues("alpha, beta")]
     public string? Choice { get; init; }
 
+    // Nullable with opt-in, and enumerated: the set has to keep the null the type still advertises.
+    [JsonNullable]
+    [JsonAllowedValues("alpha, beta")]
+    public string? MaybeChoice { get; init; }
+
     // Required and enumerated: the set already forbids a blank value, so no non-blank constraint is added.
     [JsonAllowedValues("alpha, beta")]
     public required string RequiredChoice { get; init; }

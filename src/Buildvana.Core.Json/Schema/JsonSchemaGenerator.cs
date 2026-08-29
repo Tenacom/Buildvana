@@ -253,6 +253,14 @@ public static partial class JsonSchemaGenerator
             allowed.Add(JsonValue.Create(value));
         }
 
+        // An enumerated set is the whole value space, so a member whose type still admits null — [JsonNullable]
+        // is what leaves it there — keeps null in the set too. Without this the schema would reject the very
+        // value its own type advertises. The exporter does the same for a nullable enum property.
+        if (SchemaTypeIncludesNull(schema))
+        {
+            allowed.Add((JsonNode?)null);
+        }
+
         schema["enum"] = allowed;
     }
 
@@ -270,11 +278,15 @@ public static partial class JsonSchemaGenerator
         schema["pattern"] = @"\S";
     }
 
-    private static bool SchemaTypeIncludesString(JsonObject schema)
+    private static bool SchemaTypeIncludesString(JsonObject schema) => SchemaTypeIncludes(schema, "string");
+
+    private static bool SchemaTypeIncludesNull(JsonObject schema) => SchemaTypeIncludes(schema, "null");
+
+    private static bool SchemaTypeIncludes(JsonObject schema, string typeName)
         => schema["type"] switch
         {
-            JsonValue value => value.GetValue<string>() == "string",
-            JsonArray array => array.Any(static t => t?.GetValue<string>() == "string"),
+            JsonValue value => value.GetValue<string>() == typeName,
+            JsonArray array => array.Any(t => t?.GetValue<string>() == typeName),
             _ => false,
         };
 
