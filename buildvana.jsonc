@@ -134,6 +134,30 @@
   //   }
   // }
 
+  // Configuration for dependency management.
+  // Commented out rather than absent: the bv version this repository pins does not know this section, and an
+  // unknown setting is an error, so the block below has to wait for the first release that ships it.
+  // The scopes and policies settings stay out even then: the built-in policies — major for netsdk, minor for
+  // sdks, tools, and packages — are the ones this repository wants, and no package here needs its own.
+  // "dependencies": {
+  //
+  //   // Groups of package pins declared in files of their own, keyed by the caption naming the group in
+  //   // listings. Pins of a group are updated like any other package pin, but are never pruned and never
+  //   // given transitive overrides.
+  //   "additionalPackages": {
+  //
+  //     // The packages Buildvana SDK injects into the projects it builds.
+  //     "SDK package injections": {
+  //
+  //       // Glob, relative to the home directory, selecting the files that declare the group's pins.
+  //       "files": "src/Buildvana.Sdk/Sdk/PackageVersions.props",
+  //
+  //       // MSBuild item name the group's pins are declared as, e.g. BV_PackageVersion.
+  //       "items": "BV_PackageVersion"
+  //     }
+  //   }
+  // }
+
   // Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in
   // .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.
   "fileBasedApps": ["/tools/", "/.claude/tools/"]
