@@ -18,5 +18,9 @@ partial class JsonSourceMap
         public int NextIndex { get; set; }
 
         public string? PendingKey { get; set; }
+
+        // Where the pending key's own token starts, so that a repeated member is reported at the name that
+        // repeats rather than at the value the name introduces.
+        public long PendingKeyStart { get; set; }
     }
 }

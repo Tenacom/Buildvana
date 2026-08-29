@@ -59,7 +59,8 @@ internal sealed class JsonSourceMapTests
         await Assert.That(map.DuplicateMembers.Count).IsEqualTo(0);
     }
 
-    // The map keeps answering with the first occurrence; the repeat is what gets reported.
+    // The map keeps answering with the first occurrence, at its value; the repeat is what gets reported, and
+    // it is reported at its name, which is the part a reader has to delete.
     [Test]
     public async Task DuplicateMembers_RepeatedMember_ReportsTheRepeatAndKeepsTheFirstPosition()
     {
@@ -69,12 +70,15 @@ internal sealed class JsonSourceMapTests
         await Assert.That(map.DuplicateMembers[0].Name).IsEqualTo("a");
         await Assert.That(map.DuplicateMembers[0].JsonPointer).IsEqualTo("/a");
         await Assert.That(map.DuplicateMembers[0].Line).IsEqualTo(4);
+        await Assert.That(map.DuplicateMembers[0].Column).IsEqualTo(3);
 
-        map.TryGetPosition("/a", out var line, out _);
+        map.TryGetPosition("/a", out var line, out var column);
         await Assert.That(line).IsEqualTo(2);
+        await Assert.That(column).IsEqualTo(8);
     }
 
-    // A repeated member whose value is an object or an array is caught at its opening token, like any other.
+    // A repeated member whose value is an object or an array is caught at its opening token, like any other,
+    // and reported at its name all the same.
     [Test]
     public async Task DuplicateMembers_RepeatedContainerMember_IsReported()
     {
@@ -82,6 +86,7 @@ internal sealed class JsonSourceMapTests
 
         await Assert.That(map.DuplicateMembers.Count).IsEqualTo(1);
         await Assert.That(map.DuplicateMembers[0].Name).IsEqualTo("a");
+        await Assert.That(map.DuplicateMembers[0].Column).IsEqualTo(14);
     }
 
     // Every repeat is reported, in document order, so one run can name them all.
