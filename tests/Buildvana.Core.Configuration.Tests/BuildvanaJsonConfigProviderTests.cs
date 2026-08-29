@@ -511,6 +511,10 @@ internal sealed class BuildvanaJsonConfigProviderTests
             var exception = Catch(dir);
             await Assert.That(exception).IsNotNull();
             await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1106");
+            await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(1);
+
+            // The name that is blank, not the value four characters past it.
+            await Assert.That(exception.Diagnostics[0].Column).IsEqualTo(35);
         }
         finally
         {
@@ -540,6 +544,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
             await Assert.That(exception).IsNotNull();
             await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1107");
+            await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(4);
+            await Assert.That(exception.Diagnostics[0].Column).IsEqualTo(7);
         }
         finally
         {

@@ -182,6 +182,20 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[1].JsonPointer).IsEqualTo("/ ");
     }
 
+    // The name is what is wrong, so the error is located at the name. Pointing at the value would put an
+    // "empty" diagnostic on a value that is not empty.
+    [Test]
+    public async Task Validate_PropertyNames_LocatesTheErrorAtTheName()
+    {
+        var schema = Schema("""{"type":"object","propertyNames":{"minLength":1,"pattern":"\\S"}}""");
+        var bytes = """{"a": 1, "": 2}"""u8;
+        var errors = JsonSchemaValidator.Validate(JsonNode.Parse(bytes), schema, JsonSourceMap.Build(bytes));
+        await Assert.That(errors.Count).IsEqualTo(1);
+        await Assert.That(errors[0].IsPropertyName).IsTrue();
+        await Assert.That(errors[0].Line).IsEqualTo(1);
+        await Assert.That(errors[0].Column).IsEqualTo(10);
+    }
+
     [Test]
     public async Task Validate_WithSourceMap_FillsLineAndColumn()
     {

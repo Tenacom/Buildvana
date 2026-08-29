@@ -52,6 +52,37 @@ internal sealed class JsonSourceMapTests
         await Assert.That(found).IsFalse();
     }
 
+    // A member name has a position of its own, so that a diagnostic about the name — a blank one, a repeat —
+    // lands on the name instead of on the value the name introduces.
+    [Test]
+    public async Task TryGetNamePosition_ObjectMember_PointsAtTheOpeningQuoteOfTheName()
+    {
+        var map = Map("{\"a\":{\"bb\":1}}");
+        var found = map.TryGetNamePosition("/a/bb", out var line, out var column);
+        map.TryGetPosition("/a/bb", out _, out var valueColumn);
+        await Assert.That(found).IsTrue();
+        await Assert.That(line).IsEqualTo(1);
+        await Assert.That(column).IsEqualTo(7);
+        await Assert.That(valueColumn).IsEqualTo(12);
+    }
+
+    [Test]
+    public async Task TryGetNamePosition_ArrayElement_ReturnsFalse()
+    {
+        var map = Map("[1,2]");
+        var found = map.TryGetNamePosition("/1", out _, out _);
+        await Assert.That(found).IsFalse();
+    }
+
+    // The first occurrence answers, as it does for a value position; every repeat is in DuplicateMembers.
+    [Test]
+    public async Task TryGetNamePosition_RepeatedMember_AnswersWithTheFirstOccurrence()
+    {
+        var map = Map("{\"a\":1,\"a\":2}");
+        map.TryGetNamePosition("/a", out _, out var column);
+        await Assert.That(column).IsEqualTo(2);
+    }
+
     [Test]
     public async Task DuplicateMembers_DocumentWithoutRepeats_IsEmpty()
     {

@@ -24,12 +24,15 @@ namespace Buildvana.Core.Json.Schema;
 public sealed partial class JsonSourceMap
 {
     private readonly Dictionary<string, (int Line, int Column)> _positions;
+    private readonly Dictionary<string, (int Line, int Column)> _namePositions;
 
     private JsonSourceMap(
         Dictionary<string, (int Line, int Column)> positions,
+        Dictionary<string, (int Line, int Column)> namePositions,
         IReadOnlyList<JsonDuplicateMember> duplicateMembers)
     {
         _positions = positions;
+        _namePositions = namePositions;
         DuplicateMembers = duplicateMembers;
     }
 
@@ -48,6 +51,7 @@ public sealed partial class JsonSourceMap
     public static JsonSourceMap Build(ReadOnlySpan<byte> utf8Json)
     {
         var positions = new Dictionary<string, (int Line, int Column)>(StringComparer.Ordinal);
+        var namePositions = new Dictionary<string, (int Line, int Column)>(StringComparer.Ordinal);
         var duplicates = new List<JsonDuplicateMember>();
         var lineStarts = BuildLineStarts(utf8Json);
         var reader = new Utf8JsonReader(
@@ -71,8 +75,8 @@ public sealed partial class JsonSourceMap
                     break;
                 case JsonTokenType.StartObject:
                 case JsonTokenType.StartArray:
-                    var (containerPointer, containerNameStart) = NextPointer(frames, tokenStart);
-                    Record(positions, duplicates, containerPointer, tokenStart, containerNameStart, lineStarts, utf8Json);
+                    var (containerPointer, containerNameStart) = NextPointer(frames);
+                    Record(positions, namePositions, duplicates, containerPointer, tokenStart, containerNameStart, lineStarts, utf8Json);
                     frames.Push(new Frame(containerPointer, reader.TokenType is JsonTokenType.StartArray));
                     break;
                 case JsonTokenType.EndObject:
@@ -84,13 +88,13 @@ public sealed partial class JsonSourceMap
                 case JsonTokenType.True:
                 case JsonTokenType.False:
                 case JsonTokenType.Null:
-                    var (pointer, nameStart) = NextPointer(frames, tokenStart);
-                    Record(positions, duplicates, pointer, tokenStart, nameStart, lineStarts, utf8Json);
+                    var (pointer, nameStart) = NextPointer(frames);
+                    Record(positions, namePositions, duplicates, pointer, tokenStart, nameStart, lineStarts, utf8Json);
                     break;
             }
         }
 
-        return new JsonSourceMap(positions, duplicates);
+        return new JsonSourceMap(positions, namePositions, duplicates);
     }
 
     /// <summary>
@@ -112,15 +116,42 @@ public sealed partial class JsonSourceMap
         return false;
     }
 
-    // Returns the pointer of the value the reader is on, together with the offset at which a repeat of that
-    // pointer is reported: the member's own name token, so that a duplicate diagnostic lands on the name a
-    // reader has to delete rather than on the value the name introduces. An array element and the root cannot
-    // repeat, so the value's own offset stands in for them.
-    private static (string Pointer, long NameStart) NextPointer(Stack<Frame> frames, long tokenStart)
+    /// <summary>
+    /// Gets the source position of the name of the object member at the specified JSON Pointer.
+    /// </summary>
+    /// <param name="jsonPointer">An RFC 6901 JSON Pointer naming an object member.</param>
+    /// <param name="line">When this method returns <see langword="true"/>, the 1-based line number.</param>
+    /// <param name="column">When this method returns <see langword="true"/>, the 1-based column number.</param>
+    /// <returns>
+    /// <see langword="true"/> if <paramref name="jsonPointer"/> names an object member; otherwise,
+    /// <see langword="false"/>, an array element and the root having no name of their own.
+    /// </returns>
+    /// <remarks>
+    /// <para>The position is that of the name's opening quote, which is where a diagnostic about the name
+    /// itself belongs: a blank member name is not made blank by the value it introduces.</para>
+    /// <para>A repeated member name answers with its first occurrence, as <see cref="TryGetPosition"/> does;
+    /// every repeat carries its own position in <see cref="DuplicateMembers"/>.</para>
+    /// </remarks>
+    public bool TryGetNamePosition(string jsonPointer, out int line, out int column)
+    {
+        if (_namePositions.TryGetValue(jsonPointer, out var position))
+        {
+            (line, column) = position;
+            return true;
+        }
+
+        (line, column) = (0, 0);
+        return false;
+    }
+
+    // Returns the pointer of the value the reader is on, together with the offset of the member name that
+    // introduces it: where an error about the name — a repeat, or a propertyNames failure — is reported,
+    // rather than at the value the name introduces. An array element and the root have no name of their own.
+    private static (string Pointer, long? NameStart) NextPointer(Stack<Frame> frames)
     {
         if (frames.Count == 0)
         {
-            return (string.Empty, tokenStart);
+            return (string.Empty, null);
         }
 
         var top = frames.Peek();
@@ -128,7 +159,7 @@ public sealed partial class JsonSourceMap
         {
             var childPointer = $"{top.Pointer}/{top.NextIndex.ToString(CultureInfo.InvariantCulture)}";
             top.NextIndex++;
-            return (childPointer, tokenStart);
+            return (childPointer, null);
         }
 
         var key = top.PendingKey ?? string.Empty;
@@ -140,26 +171,38 @@ public sealed partial class JsonSourceMap
     private static string Escape(string token)
         => token.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
 
-    // The first occurrence is the one the map answers with, at the position of its value, which is what a
-    // schema error is about. A repeat can only be a duplicate object member, since array elements are numbered
-    // and the root occurs once, so it is recorded for the caller to report — at its name, which is the part a
-    // reader has to delete or merge.
+    // The first occurrence is the one the map answers with: at the position of its value, which is what a
+    // schema error is about, and at the position of its name, which is what an error about the name itself is
+    // about. A repeat can only be a duplicate object member, since array elements are numbered and the root
+    // occurs once, so it is recorded for the caller to report — at its own name, which is the part a reader
+    // has to delete or merge.
     private static void Record(
         Dictionary<string, (int Line, int Column)> positions,
+        Dictionary<string, (int Line, int Column)> namePositions,
         List<JsonDuplicateMember> duplicates,
         string pointer,
         long tokenStart,
-        long nameStart,
+        long? nameStart,
         List<int> lineStarts,
         ReadOnlySpan<byte> utf8Json)
     {
-        if (positions.TryAdd(pointer, OffsetToPosition((int)tokenStart, lineStarts, utf8Json)))
+        var recorded = positions.TryAdd(pointer, OffsetToPosition((int)tokenStart, lineStarts, utf8Json));
+
+        // An array element and the root have no name of their own, and cannot repeat either.
+        if (nameStart is not { } nameOffset)
         {
             return;
         }
 
-        var (line, column) = OffsetToPosition((int)nameStart, lineStarts, utf8Json);
-        duplicates.Add(new JsonDuplicateMember(NameOf(pointer), pointer, line, column));
+        var namePosition = OffsetToPosition((int)nameOffset, lineStarts, utf8Json);
+        if (recorded)
+        {
+            namePositions.Add(pointer, namePosition);
+        }
+        else
+        {
+            duplicates.Add(new JsonDuplicateMember(NameOf(pointer), pointer, namePosition.Line, namePosition.Column));
+        }
     }
 
     // The member name is the pointer's last token, with RFC 6901 escaping undone: "~1" back to "/", then
