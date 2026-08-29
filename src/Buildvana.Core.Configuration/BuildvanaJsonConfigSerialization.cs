@@ -17,6 +17,12 @@ namespace Buildvana.Core.Configuration;
 /// these reflection-based options exist because <see cref="System.Text.Json.Schema.JsonSchemaExporter"/> needs a
 /// reflection-based resolver. They must mirror the context's options, so the committed schema always reflects
 /// exactly what the deserializer accepts.</para>
+/// <para><see cref="JsonSerializerOptions.RespectNullableAnnotations"/> is the one option not mirrored. The
+/// context sets it, so that a member declared non-nullable is enforced as the file is deserialized. The schema
+/// path reaches the same answer another way. The exporter marks every reference type nullable, and
+/// <see cref="Buildvana.Core.Json.Schema.JsonSchemaGenerator"/> strips that null unless
+/// <see cref="Buildvana.Core.Json.Schema.JsonNullableAttribute"/> keeps it. Setting the option here would leave
+/// that attribute with no null to keep on a non-nullable member.</para>
 /// </remarks>
 public static class BuildvanaJsonConfigSerialization
 {
