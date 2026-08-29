@@ -32,4 +32,7 @@ internal sealed record KeyedSchemaSample
     // Dictionary-valued in JSON, so [JsonAllowedKeys] closes its key set.
     [JsonAllowedKeys("first, second")]
     public IReadOnlyList<KeyedValueSample>? LimitedPolicies { get; init; }
+
+    // A key that is not required, so its member names carry no non-blank constraints.
+    public IReadOnlyList<KeyedOptionalKeySample>? OptionalKeys { get; init; }
 }

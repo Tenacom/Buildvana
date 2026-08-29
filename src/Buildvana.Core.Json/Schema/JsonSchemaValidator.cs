@@ -14,7 +14,8 @@ namespace Buildvana.Core.Json.Schema;
 /// <summary>
 /// Validates a <see cref="JsonNode"/> against the subset of JSON Schema (draft 2020-12) keywords that
 /// <c>JsonSchemaGenerator</c> emits: <c>type</c>, <c>enum</c>, <c>minLength</c>, <c>pattern</c>,
-/// <c>properties</c>, <c>required</c>, <c>additionalProperties</c>, and <c>items</c>. Meta and annotation
+/// <c>properties</c>, <c>required</c>, <c>additionalProperties</c>, <c>propertyNames</c>, and <c>items</c>.
+/// Meta and annotation
 /// keywords such as <c>$schema</c>,
 /// <c>title</c>, <c>description</c>, and <c>default</c> are ignored: in particular, <c>default</c>
 /// documents a value for editors, and the validator never fills it in.
@@ -358,8 +359,16 @@ public static class JsonSchemaValidator
 
         var properties = schema["properties"] as JsonObject;
         var additional = schema["additionalProperties"];
+        var names = schema["propertyNames"];
         foreach (var (key, value) in obj)
         {
+            // The member name is data in its own right wherever a keyed object puts it there, so it is checked
+            // as the string it is, at the member it names.
+            if (names is not null)
+            {
+                ValidateNode(JsonValue.Create(key), names, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
+            }
+
             if (properties?[key] is { } propertySchema)
             {
                 ValidateNode(value, propertySchema, Append(pointer, key), AppendKey(displayPath, key), root, [], errors);
