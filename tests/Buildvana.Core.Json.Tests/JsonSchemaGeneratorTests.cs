@@ -75,6 +75,20 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(allowed.SequenceEqual(["alpha", "beta"])).IsTrue();
     }
 
+    // An enumerated set is the whole value space, so a member that keeps "null" in its type has to keep null
+    // in its set: otherwise the schema rejects the value its own type advertises.
+    [Test]
+    public async Task Generate_KeepsNullInAllowedValuesOfANullableMember()
+    {
+        var choice = Generate()["properties"]!["maybeChoice"]!;
+        var type = (JsonArray)choice["type"]!;
+        await Assert.That(type.Select(static t => t!.GetValue<string>()).SequenceEqual(["string", "null"])).IsTrue();
+
+        var allowed = (JsonArray)choice["enum"]!;
+        await Assert.That(allowed.Count).IsEqualTo(3);
+        await Assert.That(allowed[2]).IsNull();
+    }
+
     // The enumerated set forbids the blank value the non-blank constraints exist to catch, so a required
     // member carrying one states neither minLength nor pattern.
     [Test]
