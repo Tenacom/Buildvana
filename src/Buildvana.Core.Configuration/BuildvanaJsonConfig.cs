@@ -17,6 +17,9 @@ namespace Buildvana.Core.Configuration;
 /// <remarks>
 /// <para>In a wire model, <see langword="null"/> has exactly one meaning: the member is not stated in the file.
 /// Wire models carry no defaults and resolve nothing; they only say what was written.</para>
+/// <para>A <c>required</c> member cannot be unstated, so <see langword="null"/> has no meaning to carry there
+/// and the member's type is not nullable. The schema rejects the file that omits such a member, and rejects
+/// the file that states it null.</para>
 /// </remarks>
 [JsonSchemaTitle("Buildvana configuration")]
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
