@@ -132,7 +132,8 @@ internal sealed class FamilyPinUpdaterTests
 
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
 
-        await Assert.That(home.ReadFile("App.csproj")).IsEqualTo(before.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile("App.csproj"))
+            .IsEqualTo(before.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
         await Assert.That(lines).IsEquivalentTo(["Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (App.csproj)"]);
     }
 
@@ -159,7 +160,8 @@ internal sealed class FamilyPinUpdaterTests
 
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
 
-        await Assert.That(home.ReadFile("Directory.Packages.props")).IsEqualTo(before.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile("Directory.Packages.props"))
+            .IsEqualTo(before.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
         await Assert.That(lines).IsEquivalentTo(["Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (Directory.Packages.props)"]);
     }
 
