@@ -137,9 +137,18 @@
   // Configuration for dependency management.
   // Commented out rather than absent: the bv version this repository pins does not know this section, and an
   // unknown setting is an error, so the block below has to wait for the first release that ships it.
-  // The scopes and policies settings stay out even then: the built-in policies — major for netsdk, minor for
-  // sdks, tools, and packages — are the ones this repository wants, and no package here needs its own.
   // "dependencies": {
+  //
+  //   // Update policy governing each dependency scope.
+  //   // Not set: the built-in defaults, shown below, are the ones this repository wants.
+  //   // "scopes": { "netsdk": "major", "sdks": "minor", "tools": "minor", "packages": "minor" },
+  //
+  //   // Update policy of individual packages, keyed by a pattern matched against a whole package id, with *
+  //   // standing for any run of characters. The first matching entry wins, so specific patterns go before
+  //   // general ones. Entries govern the sdks, tools, and packages scopes alike, and outrank the policy of an
+  //   // additional package group.
+  //   // Not set: no package here needs a policy of its own.
+  //   // "policies": { "Some.Package.*": "patch" },
   //
   //   // Groups of package pins declared in files of their own, keyed by the caption naming the group in
   //   // listings. Pins of a group are updated like any other package pin, but are never pruned and never
