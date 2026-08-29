@@ -139,7 +139,11 @@
   // unknown setting is an error, so the block below has to wait for the first release that ships it.
   // "dependencies": {
   //
-  //   // Update policy governing each dependency scope.
+  //   // Update policy governing each dependency scope. The four scopes are:
+  //   //   - netsdk: the .NET SDK version pinned in global.json;
+  //   //   - sdks: an MSBuild project SDK pinned in global.json;
+  //   //   - tools: a .NET local tool pinned in the tool manifest;
+  //   //   - packages: a NuGet package pin.
   //   // Not set: the built-in defaults, shown below, are the ones this repository wants.
   //   // "scopes": { "netsdk": "major", "sdks": "minor", "tools": "minor", "packages": "minor" },
   //
