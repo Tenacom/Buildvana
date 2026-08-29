@@ -224,7 +224,9 @@ public static partial class JsonSchemaGenerator
         return schema;
     }
 
-    private static bool TryGetAllowedValues(ICustomAttributeProvider? attributeProvider, out IReadOnlyList<string> values)
+    private static bool TryGetAllowedValues(
+        ICustomAttributeProvider? attributeProvider,
+        out IReadOnlyList<string> values)
     {
         var attribute = attributeProvider?
             .GetCustomAttributes(inherit: true)
