@@ -470,6 +470,9 @@ internal sealed class BuildvanaJsonConfigProviderTests
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1108");
             await Assert.That(exception.Diagnostics[0].Message).Contains("A*");
             await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(6);
+
+            // The name that repeats, not the value six characters past it.
+            await Assert.That(exception.Diagnostics[0].Column).IsEqualTo(7);
         }
         finally
         {

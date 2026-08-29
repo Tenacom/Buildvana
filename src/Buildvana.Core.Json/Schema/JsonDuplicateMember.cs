@@ -11,6 +11,6 @@ namespace Buildvana.Core.Json.Schema;
 /// An RFC 6901 JSON Pointer locating the member. Both occurrences share it, being the same member of the
 /// same object; <see cref="Line"/> and <see cref="Column"/> tell them apart.
 /// </param>
-/// <param name="Line">The 1-based source line of the repeat.</param>
-/// <param name="Column">The 1-based source column of the repeat.</param>
+/// <param name="Line">The 1-based source line of the repeated name.</param>
+/// <param name="Column">The 1-based source column of the repeated name, which is where its opening quote is.</param>
 public sealed record JsonDuplicateMember(string Name, string JsonPointer, int Line, int Column);

@@ -61,15 +61,18 @@ public sealed partial class JsonSourceMap
         var frames = new Stack<Frame>();
         while (reader.Read())
         {
+            var tokenStart = reader.TokenStartIndex;
             switch (reader.TokenType)
             {
                 case JsonTokenType.PropertyName:
-                    frames.Peek().PendingKey = reader.GetString();
+                    var frame = frames.Peek();
+                    frame.PendingKey = reader.GetString();
+                    frame.PendingKeyStart = tokenStart;
                     break;
                 case JsonTokenType.StartObject:
                 case JsonTokenType.StartArray:
-                    var containerPointer = NextPointer(frames);
-                    Record(positions, duplicates, containerPointer, reader.TokenStartIndex, lineStarts, utf8Json);
+                    var (containerPointer, containerNameStart) = NextPointer(frames, tokenStart);
+                    Record(positions, duplicates, containerPointer, tokenStart, containerNameStart, lineStarts, utf8Json);
                     frames.Push(new Frame(containerPointer, reader.TokenType is JsonTokenType.StartArray));
                     break;
                 case JsonTokenType.EndObject:
@@ -81,7 +84,8 @@ public sealed partial class JsonSourceMap
                 case JsonTokenType.True:
                 case JsonTokenType.False:
                 case JsonTokenType.Null:
-                    Record(positions, duplicates, NextPointer(frames), reader.TokenStartIndex, lineStarts, utf8Json);
+                    var (pointer, nameStart) = NextPointer(frames, tokenStart);
+                    Record(positions, duplicates, pointer, tokenStart, nameStart, lineStarts, utf8Json);
                     break;
             }
         }
@@ -108,11 +112,15 @@ public sealed partial class JsonSourceMap
         return false;
     }
 
-    private static string NextPointer(Stack<Frame> frames)
+    // Returns the pointer of the value the reader is on, together with the offset at which a repeat of that
+    // pointer is reported: the member's own name token, so that a duplicate diagnostic lands on the name a
+    // reader has to delete rather than on the value the name introduces. An array element and the root cannot
+    // repeat, so the value's own offset stands in for them.
+    private static (string Pointer, long NameStart) NextPointer(Stack<Frame> frames, long tokenStart)
     {
         if (frames.Count == 0)
         {
-            return string.Empty;
+            return (string.Empty, tokenStart);
         }
 
         var top = frames.Peek();
@@ -120,32 +128,38 @@ public sealed partial class JsonSourceMap
         {
             var childPointer = $"{top.Pointer}/{top.NextIndex.ToString(CultureInfo.InvariantCulture)}";
             top.NextIndex++;
-            return childPointer;
+            return (childPointer, tokenStart);
         }
 
         var key = top.PendingKey ?? string.Empty;
+        var keyStart = top.PendingKeyStart;
         top.PendingKey = null;
-        return $"{top.Pointer}/{Escape(key)}";
+        return ($"{top.Pointer}/{Escape(key)}", keyStart);
     }
 
     private static string Escape(string token)
         => token.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
 
-    // The first occurrence is the one the map answers with. A repeat can only be a duplicate object member,
-    // since array elements are numbered and the root occurs once, so it is recorded for the caller to report.
+    // The first occurrence is the one the map answers with, at the position of its value, which is what a
+    // schema error is about. A repeat can only be a duplicate object member, since array elements are numbered
+    // and the root occurs once, so it is recorded for the caller to report — at its name, which is the part a
+    // reader has to delete or merge.
     private static void Record(
         Dictionary<string, (int Line, int Column)> positions,
         List<JsonDuplicateMember> duplicates,
         string pointer,
-        long tokenStartIndex,
+        long tokenStart,
+        long nameStart,
         List<int> lineStarts,
         ReadOnlySpan<byte> utf8Json)
     {
-        var (line, column) = OffsetToPosition((int)tokenStartIndex, lineStarts, utf8Json);
-        if (!positions.TryAdd(pointer, (line, column)))
+        if (positions.TryAdd(pointer, OffsetToPosition((int)tokenStart, lineStarts, utf8Json)))
         {
-            duplicates.Add(new JsonDuplicateMember(NameOf(pointer), pointer, line, column));
+            return;
         }
+
+        var (line, column) = OffsetToPosition((int)nameStart, lineStarts, utf8Json);
+        duplicates.Add(new JsonDuplicateMember(NameOf(pointer), pointer, line, column));
     }
 
     // The member name is the pointer's last token, with RFC 6901 escaping undone: "~1" back to "/", then
