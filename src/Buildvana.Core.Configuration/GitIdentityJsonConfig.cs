@@ -11,16 +11,16 @@ namespace Buildvana.Core.Configuration;
 /// </summary>
 /// <remarks>
 /// <para><c>required</c> puts both members in the schema's <c>required</c> list: an identity that is stated at
-/// all must state them. The member types stay nullable per the wire convention (see <see cref="BuildvanaJsonConfig"/>).</para>
+/// all must state them. See <see cref="BuildvanaJsonConfig"/> for why a required member is not nullable.</para>
 /// </remarks>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record GitIdentityJsonConfig
 {
     /// <summary>Gets the display name of the Git identity.</summary>
     [Description("Display name used as the Git author/committer.")]
-    public required string? Name { get; init; }
+    public required string Name { get; init; }
 
     /// <summary>Gets the email address of the Git identity.</summary>
     [Description("Email address used as the Git author/committer.")]
-    public required string? Email { get; init; }
+    public required string Email { get; init; }
 }

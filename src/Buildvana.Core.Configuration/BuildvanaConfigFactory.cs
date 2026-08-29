@@ -157,8 +157,8 @@ public static class BuildvanaConfigFactory
             ? null
             : new NuGetFeedConfig
             {
-                Source = json.Source!,
-                ApiKeyEnv = json.ApiKeyEnv!,
+                Source = json.Source,
+                ApiKeyEnv = json.ApiKeyEnv,
             };
 
     // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
@@ -177,7 +177,7 @@ public static class BuildvanaConfigFactory
         => new()
         {
             Identity = json?.Identity is { } identity
-                ? new GitIdentityConfig { Name = identity.Name!, Email = identity.Email! }
+                ? new GitIdentityConfig { Name = identity.Name, Email = identity.Email }
                 : null,
         };
 
