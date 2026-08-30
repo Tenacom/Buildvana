@@ -65,9 +65,24 @@ public static class BuildvanaJsonConfigExample
     /// or member names of its own, or a keyed object states no example member name, or a description does
     /// not fit the comment layer.</para>
     /// </exception>
-    public static string Generate()
+    public static string Generate() => Generate((JsonObject)BuildvanaJsonConfigSchema.GenerateNode());
+
+    /// <summary>
+    /// Generates the worked example from a schema document supplied by the caller.
+    /// </summary>
+    /// <param name="root">The schema document to walk.</param>
+    /// <returns>The file text, using LF line endings and a trailing newline.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// <para>The schema states a shape the example cannot carry. See <see cref="Generate()"/>.</para>
+    /// </exception>
+    /// <remarks>
+    /// <para>Internal, because every refusal below is of a shape the model does not have: reaching one takes
+    /// a schema written for the purpose, which is what the tests supply.</para>
+    /// </remarks>
+    internal static string Generate(JsonObject root)
     {
-        var root = (JsonObject)BuildvanaJsonConfigSchema.GenerateNode();
+        ArgumentNullException.ThrowIfNull(root);
+
         var text = new StringBuilder(Header.ReplaceLineEndings("\n"));
         WriteMembers(text, CollectMembers(root), root, path: string.Empty, depth: 0);
         return text.Append('\n').ToString();
