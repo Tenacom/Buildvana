@@ -7,9 +7,11 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Buildvana.Runtime;
 
-// release/post-release hook: keeps the $schema URL in the configuration file pointing at the release
-// tag of the version being released. The guard mirrors the built-in self-reference rewrites: the
-// $schema URL is itself a self-reference, so it moves only when dogfooding moves the rest.
+// release/post-release hook: promotes buildvana.next.jsonc over the configuration file, then keeps the
+// file's $schema URL pointing at the release tag of the version being released. The guard mirrors the
+// built-in self-reference rewrites: both edits follow the tool pin, so they move only when dogfooding
+// moves the rest. A hook runs with the home directory as its working directory, so the relative name
+// below resolves against the repository root.
 var hookArgs = PostReleaseHookArgs.Load();
 if (!hookArgs.Dogfooding)
 {
@@ -20,6 +22,14 @@ var configFile = hookArgs.RuntimeInfo.ConfigFile;
 if (configFile is null)
 {
     return;
+}
+
+// Promote the next configuration file before pinning the $schema URL below: the same commit moves the
+// tool pin to the version being released, so the file and the tool that reads it arrive together.
+const string NextConfigFileName = "buildvana.next.jsonc";
+if (File.Exists(NextConfigFileName))
+{
+    File.Copy(NextConfigFileName, configFile, overwrite: true);
 }
 
 // Same expression as SelfVersionService.SchemaUrlRegex in src/Buildvana.Tool, which `bv self-update` applies to
