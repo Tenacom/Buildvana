@@ -279,8 +279,9 @@ public static class BuildvanaJsonConfigExample
             return;
         }
 
-        // A keyed object's member names are data, so the schema constrains them through propertyNames, which
-        // is also where the example of a member name lives.
+        // A keyed object's member names are data, and propertyNames is where the schema states whatever holds
+        // of them, the example of a member name included. The node is stated whether or not anything holds,
+        // so its presence is what marks the object as keyed.
         if (schema["propertyNames"] is JsonObject propertyNames)
         {
             WriteKeyedObject(text, schema, propertyNames, root, path, depth);
