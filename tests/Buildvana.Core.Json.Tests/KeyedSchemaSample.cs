@@ -35,4 +35,10 @@ internal sealed record KeyedSchemaSample
 
     // A key that is not required, so its member names carry no non-blank constraints.
     public IReadOnlyList<KeyedOptionalKeySample>? OptionalKeys { get; init; }
+
+    // Examples on both sides of the element: one describes a member name, the other a member value.
+    public IReadOnlyList<ExampleKeyedSample>? Exemplified { get; init; }
+
+    // An example on an optional key, which is reason enough for propertyNames to exist.
+    public IReadOnlyList<ExampleOptionalKeySample>? ExemplifiedOptionalKeys { get; init; }
 }

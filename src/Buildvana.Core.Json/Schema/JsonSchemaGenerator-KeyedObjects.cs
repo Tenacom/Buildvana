@@ -45,8 +45,10 @@ partial class JsonSchemaGenerator
                     $"The keyed-object element type '{elementType}' does not render as an object schema.");
             }
 
-            // Read before the branch below: PruneKeyProperty strips the key from "required" on its way out.
+            // Read before the branch below: PruneKeyProperty strips the key from "required" and replaces its
+            // subschema on its way out, and LiftValueSchema discards the element schema the key hangs off.
             var keyIsRequired = IsRequired(elementSchema, keyJsonName);
+            var keyExample = (elementProperties[keyJsonName] as JsonObject)?["examples"]?.DeepClone();
             var valuesSchema = valueJsonName is not null
                 ? LiftValueSchema(elementProperties, elementType, valueJsonName)
                 : PruneKeyProperty(elementSchema, elementProperties, keyJsonName);
@@ -57,17 +59,27 @@ partial class JsonSchemaGenerator
                 ["additionalProperties"] = valuesSchema,
             };
 
-            // The key travels as the member name, where a property's own constraints cannot reach it, so a
-            // required key states through propertyNames what every other required string states about itself:
-            // that a stated member carries an actual value. minLength catches the empty name, pattern the
-            // all-whitespace one.
-            if (keyIsRequired)
+            // The key travels as the member name, where a property's own constraints cannot reach it, so
+            // whatever it has to say goes through propertyNames. A required key states there what every other
+            // required string states about itself: that a stated member carries an actual value. minLength
+            // catches the empty name, pattern the all-whitespace one. An example on the key is an example of a
+            // member name, so it travels the same way, and brings the node into being on its own when the key
+            // is optional.
+            if (keyIsRequired || keyExample is not null)
             {
-                keyedSchema["propertyNames"] = new JsonObject
+                var propertyNames = new JsonObject();
+                if (keyExample is not null)
                 {
-                    ["minLength"] = 1,
-                    ["pattern"] = @"\S",
-                };
+                    propertyNames["examples"] = keyExample;
+                }
+
+                if (keyIsRequired)
+                {
+                    propertyNames["minLength"] = 1;
+                    propertyNames["pattern"] = @"\S";
+                }
+
+                keyedSchema["propertyNames"] = propertyNames;
             }
 
             return keyedSchema;

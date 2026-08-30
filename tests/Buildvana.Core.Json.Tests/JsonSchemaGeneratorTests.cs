@@ -57,6 +57,28 @@ internal sealed class JsonSchemaGeneratorTests
     }
 
     [Test]
+    public async Task Generate_SurfacesExample()
+    {
+        var examples = (JsonArray)Generate()["properties"]!["sampled"]!["examples"]!;
+        await Assert.That(examples.Count).IsEqualTo(1);
+        await Assert.That(examples[0]!.ToJsonString()).IsEqualTo("""["alpha","beta"]""");
+    }
+
+    // Both annotations insert at the head of the node, so the one applied last comes first.
+    [Test]
+    public async Task Generate_PutsDescriptionBeforeExample()
+    {
+        var sampled = (JsonObject)Generate()["properties"]!["sampled"]!;
+        var firstTwo = sampled.Select(static member => member.Key).Take(2);
+        await Assert.That(firstTwo.SequenceEqual(["description", "examples"])).IsTrue();
+    }
+
+    [Test]
+    public async Task Generate_ThrowsOnUnparseableExample()
+        => await Assert.That(() => JsonSchemaGenerator.Generate<BadExampleSample>(Options))
+            .Throws<InvalidOperationException>();
+
+    [Test]
     public async Task Generate_ConstrainsDictionaryToAllowedKeys()
     {
         var map = Generate()["properties"]!["map"]!;
@@ -290,6 +312,30 @@ internal sealed class JsonSchemaGeneratorTests
     [Test]
     public async Task Generate_LeavesAnOptionalKeyUnconstrained()
         => await Assert.That(GenerateKeyed()["properties"]!["optionalKeys"]!["propertyNames"]).IsNull();
+
+    // An example on the key is an example of a member name, so it lands in propertyNames; one on the value
+    // property rides the schema lifted into additionalProperties.
+    [Test]
+    public async Task Generate_RoutesKeyAndValueExamplesToTheirOwnNodes()
+    {
+        var exemplified = GenerateKeyed()["properties"]!["exemplified"]!;
+
+        var keyExamples = (JsonArray)exemplified["propertyNames"]!["examples"]!;
+        await Assert.That(keyExamples[0]!.GetValue<string>()).IsEqualTo("Some.Package.*");
+
+        var valueExamples = (JsonArray)exemplified["additionalProperties"]!["examples"]!;
+        await Assert.That(valueExamples[0]!.GetValue<string>()).IsEqualTo("patch");
+    }
+
+    // An optional key states no non-blank constraint, so its example is the whole reason propertyNames exists.
+    [Test]
+    public async Task Generate_CreatesPropertyNamesForAnOptionalKeyExample()
+    {
+        var propertyNames = GenerateKeyed()["properties"]!["exemplifiedOptionalKeys"]!["propertyNames"]!;
+        await Assert.That(((JsonArray)propertyNames["examples"]!)[0]!.GetValue<string>())
+            .IsEqualTo("SDK package injections");
+        await Assert.That(propertyNames["minLength"]).IsNull();
+    }
 
     [Test]
     public async Task Generate_PrunesKeyFromRequiredAndKeepsTheRest()

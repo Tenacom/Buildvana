@@ -19,11 +19,12 @@ namespace Buildvana.Core.Json.Schema;
 /// Generates a JSON Schema (draft 2020-12) document from a .NET type, shaping the output from attributes the
 /// model carries: <see cref="DescriptionAttribute"/>, <see cref="JsonNullableAttribute"/>,
 /// <see cref="JsonAllowedKeysAttribute"/>, <see cref="JsonAllowedValuesAttribute"/>,
-/// <see cref="JsonKeyedObjectAttribute"/>, <see cref="JsonSchemaNoDefaultAttribute"/>, and
-/// <see cref="JsonSchemaTitleAttribute"/>. C# <c>required</c> members surface as the schema's
-/// <c>required</c> keyword, courtesy of the underlying exporter; required string members additionally gain
-/// <c>minLength</c> and <c>pattern</c> constraints demanding a non-blank value, unless
-/// <see cref="JsonAllowedValuesAttribute"/> has already enumerated what the member may hold.
+/// <see cref="JsonKeyedObjectAttribute"/>, <see cref="JsonSchemaExampleAttribute"/>,
+/// <see cref="JsonSchemaNoDefaultAttribute"/>, and <see cref="JsonSchemaTitleAttribute"/>. C#
+/// <c>required</c> members surface as the schema's <c>required</c> keyword, courtesy of the underlying
+/// exporter; required string members additionally gain <c>minLength</c> and <c>pattern</c> constraints
+/// demanding a non-blank value, unless <see cref="JsonAllowedValuesAttribute"/> has already enumerated what
+/// the member may hold.
 /// </summary>
 /// <remarks>
 /// <para>The same <see cref="JsonSerializerOptions"/> should drive both generation and deserialization, so the
@@ -39,6 +40,10 @@ namespace Buildvana.Core.Json.Schema;
 /// keyed-object list is still a collection: it states no <c>default</c>. An element type whose schema
 /// carries a <c>$ref</c> pointer is not supported — recursion, or the exporter's deduplication of a member
 /// type that occurs twice.</para>
+/// <para>A property carrying <see cref="JsonSchemaExampleAttribute"/> gains an <c>examples</c> keyword holding
+/// the parsed fragment, beside its <c>description</c>. On the key property of a keyed-object element type the
+/// example describes a member name, so it lands in the keyed object's <c>propertyNames</c> instead; a keyed
+/// object whose key is optional gains that node for the example alone.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
@@ -171,10 +176,10 @@ public static partial class JsonSchemaGenerator
                 ConstrainKeys(keyedSchema, allowedKeys);
             }
 
-            return ApplyDescription(attributeProvider, keyedSchema);
+            return ApplyAnnotations(attributeProvider, keyedSchema);
         }
 
-        schema = ApplyDescription(attributeProvider, schema);
+        schema = ApplyAnnotations(attributeProvider, schema);
 
         // Strip the "null" the exporter adds to a property's own type: a nullable property means "optional"
         // (an absent key already expresses "unset"), so an explicit null is redundant unless the property
@@ -351,6 +356,11 @@ public static partial class JsonSchemaGenerator
         return args.Length == 1 ? args[0] : null;
     }
 
+    // Surfaces the annotation keywords a member carries. The example goes on first and the description on top
+    // of it, so both insert at the head and the result reads "description", "examples", then the rest.
+    private static JsonNode ApplyAnnotations(ICustomAttributeProvider? attributeProvider, JsonNode schema)
+        => ApplyDescription(attributeProvider, ApplyExample(attributeProvider, schema));
+
     // Surfaces a [Description] (on the property, or on the type) as a schema "description" keyword.
     // Adapted from the System.Text.Json schema-exporter documentation sample.
     private static JsonNode ApplyDescription(ICustomAttributeProvider? attributeProvider, JsonNode schema)
@@ -366,21 +376,58 @@ public static partial class JsonSchemaGenerator
             return schema;
         }
 
-        if (schema is not JsonObject schemaObject)
-        {
-            // A Boolean schema (true/false) cannot carry a description, so wrap it in an object first.
-            var valueKind = schema.GetValueKind();
-            schemaObject = new JsonObject();
-            if (valueKind is JsonValueKind.False)
-            {
-                schemaObject.Add("not", true);
-            }
+        var schemaObject = AsSchemaObject(schema);
+        schemaObject.Insert(0, "description", description);
+        return schemaObject;
+    }
 
-            schema = schemaObject;
+    // Surfaces a [JsonSchemaExample] as a single-member "examples" keyword. The attribute carries a JSON
+    // fragment because an attribute argument must be a constant, so the fragment is parsed here; an
+    // unparseable one fails generation rather than reaching the schema.
+    private static JsonNode ApplyExample(ICustomAttributeProvider? attributeProvider, JsonNode schema)
+    {
+        var json = attributeProvider?
+            .GetCustomAttributes(inherit: true)
+            .OfType<JsonSchemaExampleAttribute>()
+            .FirstOrDefault()?
+            .Json;
+
+        if (json is null)
+        {
+            return schema;
         }
 
-        schemaObject.Insert(0, "description", description);
-        return schema;
+        JsonNode? example;
+        try
+        {
+            example = JsonNode.Parse(json);
+        }
+        catch (JsonException e)
+        {
+            throw new InvalidOperationException($"The example fragment '{json}' is not valid JSON.", e);
+        }
+
+        var schemaObject = AsSchemaObject(schema);
+        schemaObject.Insert(0, "examples", new JsonArray(example));
+        return schemaObject;
+    }
+
+    // A Boolean schema (true/false) carries no keywords at all, so an annotated one is wrapped in the object
+    // schema that says the same thing. Only "false" needs a body: an empty object is already "true".
+    private static JsonObject AsSchemaObject(JsonNode schema)
+    {
+        if (schema is JsonObject schemaObject)
+        {
+            return schemaObject;
+        }
+
+        var wrapper = new JsonObject();
+        if (schema.GetValueKind() is JsonValueKind.False)
+        {
+            wrapper.Add("not", true);
+        }
+
+        return wrapper;
     }
 
     private static bool TryGetAllowedKeys(ICustomAttributeProvider? attributeProvider, out IReadOnlyList<string> keys)
