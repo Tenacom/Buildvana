@@ -23,6 +23,11 @@ internal sealed record GeneratorSample
     [Description("a described field")]
     public string? Described { get; init; }
 
+    // Described and exemplified: the schema should carry both keywords, the description first.
+    [Description("a sampled field")]
+    [JsonSchemaExample("""["alpha", "beta"]""")]
+    public IReadOnlyList<string>? Sampled { get; init; }
+
     [JsonAllowedKeys("alpha, beta")]
     public IReadOnlyDictionary<string, string>? Map { get; init; }
 
