@@ -45,6 +45,9 @@ public static class BuildvanaJsonConfigExample
         //
         // Nothing reads this file. Buildvana looks only for buildvana.json and
         // buildvana.jsonc, so copy the settings you want into one of those.
+        //
+        // Comments and trailing commas are accepted in either, but only the
+        // .jsonc extension advertises the fact.
 
         """;
 
