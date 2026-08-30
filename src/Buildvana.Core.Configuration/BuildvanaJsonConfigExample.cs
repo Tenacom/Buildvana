@@ -117,6 +117,37 @@ public static class BuildvanaJsonConfigExample
         return lines;
     }
 
+    /// <summary>
+    /// Follows a document-local JSON pointer to the subschema it names.
+    /// </summary>
+    /// <param name="schema">The schema node carrying the <c>$ref</c> keyword.</param>
+    /// <param name="root">The schema document the pointer is relative to.</param>
+    /// <param name="path">The setting the reference was found at, for the error message.</param>
+    /// <returns>The subschema the pointer names.</returns>
+    /// <exception cref="InvalidOperationException">The pointer does not resolve.</exception>
+    /// <remarks>
+    /// <para>A document-local pointer is the only kind the exporter emits, for a member type that occurs more
+    /// than once. Internal, because the tests navigate the same schema and must see through the same
+    /// pointers.</para>
+    /// </remarks>
+    internal static JsonObject ResolveReference(JsonObject schema, JsonObject root, string path)
+    {
+        ArgumentNullException.ThrowIfNull(schema);
+        ArgumentNullException.ThrowIfNull(root);
+
+        var pointer = schema["$ref"]!.GetValue<string>();
+        JsonNode node = root;
+        foreach (var token in pointer.Split('/').Skip(1))
+        {
+            var name = token.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
+            node = node[name]
+                ?? throw new InvalidOperationException(
+                    $"The reference '{pointer}' at '{path}' does not resolve within the schema.");
+        }
+
+        return (JsonObject)node;
+    }
+
     // Writes an object body: every member preceded by its own description, and separated from the next by a
     // blank line. The opening brace lands where the caller left the cursor; the closing one gets its own line.
     private static void WriteMembers(
@@ -246,22 +277,6 @@ public static class BuildvanaJsonConfigExample
         _ = text.Append(Indentation(depth + 1)).Append(FormatString(key)).Append(": ");
         WriteValue(text, valueSchema, root, Extend(path, key), depth + 1);
         _ = text.Append('\n').Append(Indentation(depth)).Append('}');
-    }
-
-    // Follows a document-local JSON pointer, which is the only kind the exporter emits.
-    private static JsonObject ResolveReference(JsonObject schema, JsonObject root, string path)
-    {
-        var pointer = schema["$ref"]!.GetValue<string>();
-        JsonNode node = root;
-        foreach (var token in pointer.Split('/').Skip(1))
-        {
-            var name = token.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
-            node = node[name]
-                ?? throw new InvalidOperationException(
-                    $"The reference '{pointer}' at '{path}' does not resolve within the schema.");
-        }
-
-        return (JsonObject)node;
     }
 
     // The last resort: a container with nothing to show still has a shape to show. Anything else is a setting
