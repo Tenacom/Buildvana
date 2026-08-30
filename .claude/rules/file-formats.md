@@ -55,3 +55,9 @@ Markdown files consumed by AIs (e.g., `CLAUDE.md` and files in `.claude`) are ex
 - Tab width = indentation width = 2
 - Use comments in `.jsonc` files, JSON5 features in `.json5` files.
 - Do NOT use comments or JSON5 features in `.json` files, unless instructed to do so, or if they are already used in the file. Some tools consume `.json` files but support comments and/or JSON5 features in them; do not assume this is the case, but use already-used features liberally.
+
+### Comments in JSON
+
+- A comment line holds at most 80 characters of comment text. Count neither the indentation, nor the `//`, nor the space after it. Once a comment needs a second line, every line of it holds at most 72. The two limits differ on purpose: a comment just past 72 would otherwise spill three words onto a line of their own.
+- A description takes one line. Two only when unavoidable. A description names a setting. It is not its documentation, and anything longer belongs in a document.
+- Never put JSON inside a comment. A commented-out member is parsed by nothing, so no tool can tell a stale one from a current one, and a reader cannot either. Record an omission in one line of prose instead: `// No "emptyChangelog": an empty changelog should stop us, not ship quietly.`
