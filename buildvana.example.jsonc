@@ -167,7 +167,7 @@
       "Some.Package.*": "patch",
     },
 
-    // Groups of package pins declared in their own files, keyed by caption.
+    // Groups of package pins declared in their own files.
     "additionalPackages": {
       // Caption naming the group in listings.
       "My package group": {

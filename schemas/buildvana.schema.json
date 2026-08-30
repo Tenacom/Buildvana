@@ -497,7 +497,7 @@
           }
         },
         "additionalPackages": {
-          "description": "Groups of package pins declared in their own files, keyed by caption.",
+          "description": "Groups of package pins declared in their own files.",
           "type": "object",
           "additionalProperties": {
             "type": "object",
