@@ -79,7 +79,6 @@
   // No "git": automated commits use the CI bot identity supplied by the server adapter.
 
   "dependencies": {
-
     // No "scopes": the built-in defaults are the ones this repository wants.
 
     // No "policies": no package here needs a policy of its own.
