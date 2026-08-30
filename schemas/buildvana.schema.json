@@ -28,7 +28,7 @@
           }
         },
         "configuration": {
-          "description": "Build configuration used to produce release artifacts.",
+          "description": "Build configuration for release artifacts. Defaults to dotnet.configuration.",
           "examples": [
             "Release"
           ],
@@ -49,7 +49,7 @@
           "default": "stable"
         },
         "emptyChangelog": {
-          "description": "Text substituted when a release has no changelog entries.",
+          "description": "Text for a release with no changelog entries. Omitting it fails such a release.",
           "examples": [
             "This release contains no user-visible changes."
           ],
@@ -465,7 +465,7 @@
           "additionalProperties": false
         },
         "policies": {
-          "description": "Update policy of individual packages, keyed by a package id pattern.",
+          "description": "Update policy of packages matching an id pattern. The first match wins.",
           "type": "object",
           "additionalProperties": {
             "description": "How far an automatic update may move a pin whose id matches.",

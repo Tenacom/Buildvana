@@ -22,7 +22,7 @@ public sealed record ReleaseJsonConfig
 
     /// <summary>Gets the build configuration used to produce release artifacts.</summary>
     [JsonSchemaExample("\"Release\"")]
-    [Description("Build configuration used to produce release artifacts.")]
+    [Description("Build configuration for release artifacts. Defaults to dotnet.configuration.")]
     [JsonSchemaNoDefault] // The default is dynamic — the resolved dotnet.configuration — which no static value can state.
     public string? Configuration { get; init; }
 
@@ -36,7 +36,7 @@ public sealed record ReleaseJsonConfig
 
     /// <summary>Gets the text substituted when a release has no changelog entries.</summary>
     [JsonSchemaExample("\"This release contains no user-visible changes.\"")]
-    [Description("Text substituted when a release has no changelog entries.")]
+    [Description("Text for a release with no changelog entries. Omitting it fails such a release.")]
     public string? EmptyChangelog { get; init; }
 
     /// <summary>Gets a value indicating whether self-references are updated (dogfooding) during a release.</summary>
