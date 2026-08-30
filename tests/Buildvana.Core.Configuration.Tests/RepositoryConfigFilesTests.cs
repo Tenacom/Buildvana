@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Reflection;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
 
@@ -35,28 +34,19 @@ internal sealed class RepositoryConfigFilesTests
     public async Task Next_IsAcceptedByTheLoader()
         => await Assert.That(() => BuildvanaJsonConfigProvider.LoadFile(PathOf(NextFileName))).ThrowsNothing();
 
-    // A release copies the next file over the current one with nobody reading the diff, so an edit made to
-    // one file and not the other would be reverted at the next release. This is the guard against that.
+    // A release copies the next file over the current one with nobody reading the diff, so anything the
+    // current file states and the next one does not is reverted at the next release. Comments are stated
+    // too: a header true of one file alone becomes false in the promoted copy, and so does a note beside a
+    // setting. The next file adds sections, differs on $schema, and matches line for line otherwise, so the
+    // current file's lines appear in the next file's in the same order. Header, comments, values, and
+    // ordering are guarded together by asserting that.
     [Test]
-    public async Task Next_StatesEverythingCurrentStates()
+    public async Task Next_CarriesEveryLineOfCurrent()
     {
-        var current = await ReadJsonAsync(CurrentFileName).ConfigureAwait(false);
-        var next = await ReadJsonAsync(NextFileName).ConfigureAwait(false);
+        var current = await LinesOfAsync(CurrentFileName).ConfigureAwait(false);
+        var next = await LinesOfAsync(NextFileName).ConfigureAwait(false);
 
-        var divergences = Divergences(current, next, Schema, path: string.Empty).ToList();
-
-        await Assert.That(string.Join(", ", divergences)).IsEqualTo(string.Empty);
-    }
-
-    // A release copies the next file over the current one, comments included, so a header true of only one of
-    // the two becomes false in the promoted copy. The two headers are therefore one text.
-    [Test]
-    public async Task Next_SharesTheHeaderOfCurrent()
-    {
-        var current = await HeaderOfAsync(CurrentFileName).ConfigureAwait(false);
-        var next = await HeaderOfAsync(NextFileName).ConfigureAwait(false);
-
-        await Assert.That(next).IsEqualTo(current);
+        await Assert.That(FirstLineNotCarried(current, next)).IsEqualTo(string.Empty);
     }
 
     // The committed example is a build artifact under review: it drifts the moment the model changes, and
@@ -95,72 +85,44 @@ internal sealed class RepositoryConfigFilesTests
 
     private static string PathOf(string fileName) => Path.Combine(RepositoryRoot, fileName);
 
-    private static async Task<JsonObject> ReadJsonAsync(string fileName)
+    private static async Task<List<string>> LinesOfAsync(string fileName)
     {
         var text = await File.ReadAllTextAsync(PathOf(fileName)).ConfigureAwait(false);
-        var documentOptions = new JsonDocumentOptions
-        {
-            CommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true,
-        };
 
-        return (JsonObject)JsonNode.Parse(text, documentOptions: documentOptions)!;
+        return [.. text.ReplaceLineEndings("\n").Split('\n')];
     }
 
-    // Everything a file states before its opening brace, which is the part a promotion copies verbatim.
-    private static async Task<string> HeaderOfAsync(string fileName)
+    // The first line the next file does not carry, at the position it holds in the current file, or an empty
+    // string when every line is carried. Matching each line as early as the next file allows finds an
+    // ordering wherever one exists, so an early match never produces a false report.
+    private static string FirstLineNotCarried(List<string> current, List<string> next)
     {
-        var text = await File.ReadAllTextAsync(PathOf(fileName)).ConfigureAwait(false);
-        var normalized = text.ReplaceLineEndings("\n");
-
-        return normalized[..normalized.IndexOf('{', StringComparison.Ordinal)];
-    }
-
-    // Reports every member the current file states that the next file does not match. A member the schema no
-    // longer declares is skipped: the model may have dropped it or renamed it, and the two files are then
-    // free to differ on it. A member the next file adds is not a divergence — adding is what it is for.
-    private static IEnumerable<string> Divergences(JsonObject current, JsonObject next, JsonObject schema, string path)
-    {
-        foreach (var (name, currentValue) in current)
+        var index = 0;
+        for (var i = 0; i < current.Count; i++)
         {
-            if (path.Length == 0 && name == SchemaMemberName)
+            if (IsSchemaMember(current[i]))
             {
                 continue;
             }
 
-            var memberPath = path.Length == 0 ? name : path + "." + name;
-            if (DeclaredSchema(schema, name, memberPath) is not { } memberSchema)
+            while (index < next.Count && next[index] != current[i])
             {
-                continue;
+                index++;
             }
 
-            var nextValue = next[name];
-            if (nextValue is null)
+            if (index == next.Count)
             {
-                yield return memberPath + " (unstated)";
+                return $"{CurrentFileName}({i + 1}): {current[i]}";
             }
-            else if (currentValue is JsonObject currentSection && nextValue is JsonObject nextSection)
-            {
-                foreach (var divergence in Divergences(currentSection, nextSection, memberSchema, memberPath))
-                {
-                    yield return divergence;
-                }
-            }
-            else if (!JsonNode.DeepEquals(currentValue, nextValue))
-            {
-                yield return memberPath;
-            }
+
+            index++;
         }
+
+        return string.Empty;
     }
 
-    // The subschema governing one member, or null when the schema no longer declares it. A keyed object and a
-    // dictionary declare their members through additionalProperties, their member names being data.
-    private static JsonObject? DeclaredSchema(JsonObject schema, string name, string path)
-    {
-        var resolved = schema["$ref"] is null ? schema : BuildvanaJsonConfigExample.ResolveReference(schema, Schema, path);
-        return (resolved["properties"] as JsonObject)?[name] as JsonObject
-            ?? resolved["additionalProperties"] as JsonObject;
-    }
+    private static bool IsSchemaMember(string line)
+        => line.TrimStart().StartsWith($"\"{SchemaMemberName}\"", StringComparison.Ordinal);
 
     // Every "description" keyword in a schema document, wherever it sits.
     private static IEnumerable<string> DescriptionsOf(JsonNode? node)
