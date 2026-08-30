@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Buildvana.Core.Json.Schema;
 using Buildvana.Runtime;
 
@@ -27,10 +28,7 @@ public static class BuildvanaJsonConfigSchema
     /// </remarks>
     public static string Generate()
     {
-        var schema = JsonSchemaGenerator.Generate<BuildvanaJsonConfig>(
-            BuildvanaJsonConfigSerialization.Options,
-            defaults: new BuildvanaConfig());
-        var json = schema.ToJsonString(new JsonSerializerOptions
+        var json = GenerateNode().ToJsonString(new JsonSerializerOptions
         {
             WriteIndented = true,
             IndentCharacter = ' ',
@@ -40,4 +38,12 @@ public static class BuildvanaJsonConfigSchema
         // Normalize to LF + a single trailing newline, independent of the host platform.
         return json.ReplaceLineEndings("\n") + "\n";
     }
+
+    // The same schema before it is serialized, for the caller that walks it rather than writing it out.
+    // BuildvanaJsonConfigExample is the one such caller: it reads descriptions, defaults, examples, and
+    // propertyNames straight off the nodes, so nothing in this repository parses the text back.
+    internal static JsonNode GenerateNode()
+        => JsonSchemaGenerator.Generate<BuildvanaJsonConfig>(
+            BuildvanaJsonConfigSerialization.Options,
+            defaults: new BuildvanaConfig());
 }
