@@ -29,6 +29,6 @@ public sealed record DependenciesJsonConfig
     public IReadOnlyList<UpdatePolicyRuleJsonConfig>? Policies { get; init; }
 
     /// <summary>Gets the <c>additionalPackages</c> entries, in document order.</summary>
-    [Description("Groups of package pins declared in their own files, keyed by caption.")]
+    [Description("Groups of package pins declared in their own files.")]
     public IReadOnlyList<AdditionalPackagesJsonConfig>? AdditionalPackages { get; init; }
 }
