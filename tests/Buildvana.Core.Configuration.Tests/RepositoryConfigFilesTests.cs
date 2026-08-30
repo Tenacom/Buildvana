@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
 
@@ -13,10 +14,20 @@ internal sealed class RepositoryConfigFilesTests
     private const string CurrentFileName = "buildvana.jsonc";
     private const string NextFileName = "buildvana.next.jsonc";
     private const string ExampleFileName = "buildvana.example.jsonc";
+    private const string ToolManifestFileName = ".config/dotnet-tools.json";
+    private const string ToolPackageId = "bv";
 
     // The one member the two configuration files are meant to disagree on: the current file pins a released
     // version, the next one points at main.
     private const string SchemaMemberName = "$schema";
+
+    // Comments and trailing commas are what the .jsonc extension advertises, and both configuration files use
+    // them. The tool manifest uses neither, and accepting them there costs nothing.
+    private static readonly JsonDocumentOptions ReaderOptions = new()
+    {
+        CommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+    };
 
     private static readonly string RepositoryRoot = typeof(RepositoryConfigFilesTests).Assembly
         .GetCustomAttributes<AssemblyMetadataAttribute>()
@@ -47,6 +58,21 @@ internal sealed class RepositoryConfigFilesTests
         var next = await LinesOfAsync(NextFileName).ConfigureAwait(false);
 
         await Assert.That(FirstLineNotCarried(current, next)).IsEqualTo(string.Empty);
+    }
+
+    // The line the guard above excludes, and the line the whole split rests on. The next file states settings
+    // no released bv accepts, so the schema it names is the one in main. The current file is read by the
+    // pinned bv, so the schema it names is the one that version shipped. Pin either at the other's value and
+    // every other test here still passes, while an editor validates the file against the wrong model.
+    [Test]
+    public async Task ConfigurationFiles_NameTheSchemaTheyAreReadBy()
+    {
+        var next = await SchemaReferenceOfAsync(NextFileName).ConfigureAwait(false);
+        await Assert.That(next).IsEqualTo(SchemaUrlFor("main"));
+
+        var pinnedVersion = await PinnedToolVersionAsync().ConfigureAwait(false);
+        var current = await SchemaReferenceOfAsync(CurrentFileName).ConfigureAwait(false);
+        await Assert.That(current).IsEqualTo(SchemaUrlFor(pinnedVersion));
     }
 
     // The committed example is a build artifact under review: it drifts the moment the model changes, and
@@ -123,6 +149,32 @@ internal sealed class RepositoryConfigFilesTests
 
     private static bool IsSchemaMember(string line)
         => line.TrimStart().StartsWith($"\"{SchemaMemberName}\"", StringComparison.Ordinal);
+
+    // The shape bv itself rewrites at release time: a repository URL whose version segment names a tag, or a
+    // branch. Stated once here, so that a check below reads as the header comment it enforces.
+    private static string SchemaUrlFor(string reference)
+        => $"https://raw.githubusercontent.com/Tenacom/Buildvana/{reference}/schemas/buildvana.schema.json";
+
+    private static async Task<string> SchemaReferenceOfAsync(string fileName)
+    {
+        var file = await ReadJsonAsync(fileName).ConfigureAwait(false);
+
+        return file[SchemaMemberName]!.GetValue<string>();
+    }
+
+    private static async Task<string> PinnedToolVersionAsync()
+    {
+        var manifest = await ReadJsonAsync(ToolManifestFileName).ConfigureAwait(false);
+
+        return manifest["tools"]![ToolPackageId]!["version"]!.GetValue<string>();
+    }
+
+    private static async Task<JsonObject> ReadJsonAsync(string fileName)
+    {
+        var text = await File.ReadAllTextAsync(PathOf(fileName)).ConfigureAwait(false);
+
+        return (JsonObject)JsonNode.Parse(text, documentOptions: ReaderOptions)!;
+    }
 
     // Every "description" keyword in a schema document, wherever it sits.
     private static IEnumerable<string> DescriptionsOf(JsonNode? node)
