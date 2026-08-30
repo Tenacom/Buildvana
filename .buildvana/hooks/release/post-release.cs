@@ -10,8 +10,7 @@ using Buildvana.Runtime;
 // release/post-release hook: promotes buildvana.next.jsonc over the configuration file, then keeps the
 // file's $schema URL pointing at the release tag of the version being released. The guard mirrors the
 // built-in self-reference rewrites: both edits follow the tool pin, so they move only when dogfooding
-// moves the rest. A hook runs with the home directory as its working directory, so the relative name
-// below resolves against the repository root.
+// moves the rest.
 var hookArgs = PostReleaseHookArgs.Load();
 if (!hookArgs.Dogfooding)
 {
@@ -25,12 +24,12 @@ if (configFile is null)
 }
 
 // Promote the next configuration file before pinning the $schema URL below: the same commit moves the
-// tool pin to the version being released, so the file and the tool that reads it arrive together.
-const string NextConfigFileName = "buildvana.next.jsonc";
-if (File.Exists(NextConfigFileName))
-{
-    File.Copy(NextConfigFileName, configFile, overwrite: true);
-}
+// tool pin to the version being released, so the file and the tool that reads it arrive together. The
+// next file sits beside the one it replaces, and is checked in, so a missing one is a broken tree:
+// File.Copy throws, the hook exits non-zero, and the release fails naming the path. Skipping instead
+// would revert the configuration file at the release after.
+var nextConfigFile = Path.Combine(Path.GetDirectoryName(configFile)!, "buildvana.next.jsonc");
+File.Copy(nextConfigFile, configFile, overwrite: true);
 
 // Same expression as SelfVersionService.SchemaUrlRegex in src/Buildvana.Tool, which `bv self-update` applies to
 // consumer repositories' configuration files; keep the two copies identical.
