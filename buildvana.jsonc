@@ -25,16 +25,17 @@
   "release": {
     "branches": ["^main$", "^v\\d+\\.\\d+$"],
 
-    // No "configuration": releases are built with the default set under "dotnet" below.
+    // No "configuration": releases use the default set under "dotnet" below.
 
     "checkPublicApi": true,
 
-    // "stable" lets "Unreleased changes" accumulate across the whole preview line, folding it
-    // into a version section only when a stable version is released.
+    // "stable" lets "Unreleased changes" accumulate across the whole preview
+    // line, folding it into a version section only when a stable version is
+    // released.
     "changelogUpdates": "stable",
 
-    // No "emptyChangelog": a stable release with nothing to say should stop us, not ship
-    // quietly.
+    // No "emptyChangelog": a stable release with nothing to say should stop
+    // us, not ship quietly.
 
     "dogfood": true
   },
@@ -47,8 +48,8 @@
   "dotnet": {
     "configuration": "Release",
 
-    // No "all", "restore", "build", "pack" or "nugetPush": nothing but the test run needs
-    // extra arguments or environment variables.
+    // No "all", "restore", "build", "pack" or "nugetPush": nothing but the
+    // test run needs extra arguments or environment variables.
 
     "test": {
       "args": ["--coverage", "--coverage-output-format", "cobertura"],
@@ -70,13 +71,14 @@
   },
 
   "github": {
-    // Also the default. The release workflow points it at a PAT that can push to a protected
-    // branch; the build workflow leaves it at the automatic token, which pull requests from
-    // forks also get.
+    // Also the default. The release workflow points it at a PAT that can push
+    // to a protected branch; the build workflow leaves it at the automatic
+    // token, which pull requests from forks also get.
     "tokenEnv": "GITHUB_TOKEN"
   },
 
-  // No "git": automated commits use the CI bot identity supplied by the server adapter.
+  // No "git": automated commits use the CI bot identity supplied by the
+  // server adapter.
 
   "fileBasedApps": ["/tools/", "/.claude/tools/"]
 }
