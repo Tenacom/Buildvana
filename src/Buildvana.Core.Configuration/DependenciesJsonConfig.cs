@@ -25,7 +25,7 @@ public sealed record DependenciesJsonConfig
     public DependencyScopesJsonConfig? Scopes { get; init; }
 
     /// <summary>Gets the <c>policies</c> entries, in document order.</summary>
-    [Description("Update policy of individual packages, keyed by a package id pattern.")]
+    [Description("Update policy of packages matching an id pattern. The first match wins.")]
     public IReadOnlyList<UpdatePolicyRuleJsonConfig>? Policies { get; init; }
 
     /// <summary>Gets the <c>additionalPackages</c> entries, in document order.</summary>
