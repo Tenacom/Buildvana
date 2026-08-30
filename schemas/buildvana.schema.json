@@ -266,7 +266,7 @@
           "type": "object",
           "properties": {
             "prerelease": {
-              "description": "Feed prerelease versions are pushed to. Defaults to the release feed.",
+              "description": "Feed that prerelease versions are pushed to. Defaults to the release feed.",
               "type": "object",
               "properties": {
                 "source": {

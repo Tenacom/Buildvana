@@ -103,7 +103,7 @@
   "nuget": {
     // Push feeds, one per channel.
     "feeds": {
-      // Feed prerelease versions are pushed to. Defaults to the release feed.
+      // Feed that prerelease versions are pushed to. Defaults to the release feed.
       "prerelease": {
         // Source URL of the NuGet feed.
         "source": "https://api.nuget.org/v3/index.json",
