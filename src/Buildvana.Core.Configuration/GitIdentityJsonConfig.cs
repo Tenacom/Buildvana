@@ -18,12 +18,12 @@ namespace Buildvana.Core.Configuration;
 public sealed record GitIdentityJsonConfig
 {
     /// <summary>Gets the display name of the Git identity.</summary>
-    [JsonSchemaExample("\"Buildvana Bot\"")]
+    [JsonSchemaExample("\"My Bot\"")]
     [Description("Display name used as the Git author/committer.")]
     public required string Name { get; init; }
 
     /// <summary>Gets the email address of the Git identity.</summary>
-    [JsonSchemaExample("\"bot@buildvana.invalid\"")]
+    [JsonSchemaExample("\"bot@example.invalid\"")]
     [Description("Email address used as the Git author/committer.")]
     public required string Email { get; init; }
 }

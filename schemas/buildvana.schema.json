@@ -352,7 +352,7 @@
             "name": {
               "description": "Display name used as the Git author/committer.",
               "examples": [
-                "Buildvana Bot"
+                "My Bot"
               ],
               "type": "string",
               "minLength": 1,
@@ -361,7 +361,7 @@
             "email": {
               "description": "Email address used as the Git author/committer.",
               "examples": [
-                "bot@buildvana.invalid"
+                "bot@example.invalid"
               ],
               "type": "string",
               "minLength": 1,

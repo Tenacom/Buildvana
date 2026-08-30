@@ -137,10 +137,10 @@
     // Git identity used by automated commits.
     "identity": {
       // Display name used as the Git author/committer.
-      "name": "Buildvana Bot",
+      "name": "My Bot",
 
       // Email address used as the Git author/committer.
-      "email": "bot@buildvana.invalid",
+      "email": "bot@example.invalid",
     },
   },
 
