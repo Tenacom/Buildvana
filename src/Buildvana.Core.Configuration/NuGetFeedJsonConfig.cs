@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.ComponentModel;
+using Buildvana.Core.Json.Schema;
 using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
@@ -17,10 +18,12 @@ namespace Buildvana.Core.Configuration;
 public sealed record NuGetFeedJsonConfig
 {
     /// <summary>Gets the source URL of the NuGet feed.</summary>
+    [JsonSchemaExample("\"https://api.nuget.org/v3/index.json\"")]
     [Description("Source URL of the NuGet feed.")]
     public required string Source { get; init; }
 
     /// <summary>Gets the name of the environment variable holding the feed API key.</summary>
+    [JsonSchemaExample("\"NUGET_DEPLOYMENT_KEY\"")]
     [Description("Name of the environment variable that holds the feed API key.")]
     public required string ApiKeyEnv { get; init; }
 }

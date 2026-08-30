@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.ComponentModel;
+using Buildvana.Core.Json.Schema;
 using JetBrains.Annotations;
 
 namespace Buildvana.Core.Configuration;
@@ -17,10 +18,12 @@ namespace Buildvana.Core.Configuration;
 public sealed record GitIdentityJsonConfig
 {
     /// <summary>Gets the display name of the Git identity.</summary>
+    [JsonSchemaExample("\"Buildvana Bot\"")]
     [Description("Display name used as the Git author/committer.")]
     public required string Name { get; init; }
 
     /// <summary>Gets the email address of the Git identity.</summary>
+    [JsonSchemaExample("\"bot@buildvana.invalid\"")]
     [Description("Email address used as the Git author/committer.")]
     public required string Email { get; init; }
 }

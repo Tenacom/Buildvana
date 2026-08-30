@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.ComponentModel;
+using Buildvana.Core.Json.Schema;
 using Buildvana.Runtime;
 using JetBrains.Annotations;
 
@@ -14,6 +15,7 @@ namespace Buildvana.Core.Configuration;
 public sealed record VersioningJsonConfig
 {
     /// <summary>Gets the prerelease tag applied to prerelease versions.</summary>
+    [JsonSchemaExample("\"preview\"")]
     [Description("Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.")]
     public string? PrereleaseTag { get; init; }
 

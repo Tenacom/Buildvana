@@ -16,12 +16,14 @@ namespace Buildvana.Core.Configuration;
 public sealed record ReleaseJsonConfig
 {
     /// <summary>Gets the regular expressions identifying branches that produce public releases.</summary>
+    [JsonSchemaExample("""["^main$", "^v\\d+\\.\\d+$"]""")]
     [Description(
         "Regular expressions (implicitly anchored, matched against the whole short branch name) "
         + "identifying branches that produce public releases.")]
     public IReadOnlyList<string>? Branches { get; init; }
 
     /// <summary>Gets the build configuration used to produce release artifacts.</summary>
+    [JsonSchemaExample("\"Release\"")]
     [Description("Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.")]
     [JsonSchemaNoDefault] // The default is dynamic — the resolved dotnet.configuration — which no static value can state.
     public string? Configuration { get; init; }
@@ -35,6 +37,7 @@ public sealed record ReleaseJsonConfig
     public ChangelogUpdates? ChangelogUpdates { get; init; }
 
     /// <summary>Gets the text substituted when a release has no changelog entries.</summary>
+    [JsonSchemaExample("\"This release contains no user-visible changes.\"")]
     [Description("Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the release.")]
     public string? EmptyChangelog { get; init; }
 

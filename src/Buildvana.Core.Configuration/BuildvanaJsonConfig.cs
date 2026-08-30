@@ -45,6 +45,7 @@ public sealed record BuildvanaJsonConfig
     /// </remarks>
     [JsonPropertyName("$schema")]
     [JsonSchemaNoDefault]
+    [JsonSchemaExample("\"https://raw.githubusercontent.com/Tenacom/Buildvana/main/schemas/buildvana.schema.json\"")]
     [Description("URI of the JSON schema describing this file.")]
     public string? Schema { get; init; }
 
@@ -80,6 +81,7 @@ public sealed record BuildvanaJsonConfig
     public DependenciesJsonConfig? Dependencies { get; init; }
 
     /// <summary>Gets the <c>fileBasedApps</c> patterns.</summary>
+    [JsonSchemaExample("""["/tools/"]""")]
     [Description(
         "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, "
         + "added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives "

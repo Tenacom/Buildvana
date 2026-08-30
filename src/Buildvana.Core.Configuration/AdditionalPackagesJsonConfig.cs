@@ -17,18 +17,22 @@ namespace Buildvana.Core.Configuration;
 public sealed record AdditionalPackagesJsonConfig
 {
     /// <summary>Gets the group's caption, which is the member name.</summary>
+    [JsonSchemaExample("\"SDK package injections\"")]
     public required string Caption { get; init; }
 
     /// <summary>Gets the glob selecting the files that declare the group's pins.</summary>
+    [JsonSchemaExample("\"path/to/MyPackages.props\"")]
     [Description("Glob, relative to the home directory, selecting the files that declare the group's pins.")]
     public required string Files { get; init; }
 
     /// <summary>Gets the MSBuild item name the group's pins are declared as.</summary>
+    [JsonSchemaExample("\"PackageVersion\"")]
     [Description("MSBuild item name the group's pins are declared as, e.g. BV_PackageVersion.")]
     public required string Items { get; init; }
 
     /// <summary>Gets the policy governing the group's pins, or <see langword="null"/> when unstated.</summary>
     [JsonAllowedValues(UpdatePolicySyntax.PackagePolicyValues)]
+    [JsonSchemaExample("\"minor\"")]
     [Description(
         "How far an automatic update may move a pin of this group. A trailing - allows prerelease versions. "
         + "Defaults to the policy of the packages scope.")]

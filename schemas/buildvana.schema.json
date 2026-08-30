@@ -5,6 +5,9 @@
   "properties": {
     "$schema": {
       "description": "URI of the JSON schema describing this file.",
+      "examples": [
+        "https://raw.githubusercontent.com/Tenacom/Buildvana/main/schemas/buildvana.schema.json"
+      ],
       "type": "string"
     },
     "release": {
@@ -13,6 +16,12 @@
       "properties": {
         "branches": {
           "description": "Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that produce public releases.",
+          "examples": [
+            [
+              "^main$",
+              "^v\\d\u002B\\.\\d\u002B$"
+            ]
+          ],
           "type": "array",
           "items": {
             "type": "string"
@@ -20,6 +29,9 @@
         },
         "configuration": {
           "description": "Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.",
+          "examples": [
+            "Release"
+          ],
           "type": "string"
         },
         "checkPublicApi": {
@@ -38,6 +50,9 @@
         },
         "emptyChangelog": {
           "description": "Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the release.",
+          "examples": [
+            "This release contains no user-visible changes."
+          ],
           "type": "string"
         },
         "dogfood": {
@@ -54,6 +69,9 @@
       "properties": {
         "prereleaseTag": {
           "description": "Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.",
+          "examples": [
+            "preview"
+          ],
           "type": "string"
         },
         "assemblyVersionPrecision": {
@@ -83,6 +101,11 @@
           "properties": {
             "args": {
               "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "examples": [
+                [
+                  "--nologo"
+                ]
+              ],
               "type": "array",
               "items": {
                 "type": "string"
@@ -90,6 +113,11 @@
             },
             "env": {
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "examples": [
+                {
+                  "NUGET_XMLDOC_MODE": "skip"
+                }
+              ],
               "type": "object",
               "additionalProperties": {
                 "type": [
@@ -107,10 +135,20 @@
           "properties": {
             "args": {
               "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "examples": [
+                [
+                  "--nologo"
+                ]
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
             "env": {
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "examples": [
+                {
+                  "NUGET_XMLDOC_MODE": "skip"
+                }
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/env"
             }
           },
@@ -122,10 +160,20 @@
           "properties": {
             "args": {
               "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "examples": [
+                [
+                  "--nologo"
+                ]
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
             "env": {
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "examples": [
+                {
+                  "NUGET_XMLDOC_MODE": "skip"
+                }
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/env"
             }
           },
@@ -137,10 +185,20 @@
           "properties": {
             "args": {
               "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "examples": [
+                [
+                  "--nologo"
+                ]
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
             "env": {
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "examples": [
+                {
+                  "NUGET_XMLDOC_MODE": "skip"
+                }
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/env"
             }
           },
@@ -152,10 +210,20 @@
           "properties": {
             "args": {
               "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "examples": [
+                [
+                  "--nologo"
+                ]
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
             "env": {
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "examples": [
+                {
+                  "NUGET_XMLDOC_MODE": "skip"
+                }
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/env"
             }
           },
@@ -167,10 +235,20 @@
           "properties": {
             "args": {
               "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "examples": [
+                [
+                  "--nologo"
+                ]
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/args"
             },
             "env": {
               "description": "Environment variables forwarded to \u0060dotnet\u0060, keyed by variable name.",
+              "examples": [
+                {
+                  "NUGET_XMLDOC_MODE": "skip"
+                }
+              ],
               "$ref": "#/properties/dotnet/properties/all/properties/env"
             }
           },
@@ -193,12 +271,18 @@
               "properties": {
                 "source": {
                   "description": "Source URL of the NuGet feed.",
+                  "examples": [
+                    "https://api.nuget.org/v3/index.json"
+                  ],
                   "type": "string",
                   "minLength": 1,
                   "pattern": "\\S"
                 },
                 "apiKeyEnv": {
                   "description": "Name of the environment variable that holds the feed API key.",
+                  "examples": [
+                    "NUGET_DEPLOYMENT_KEY"
+                  ],
                   "type": "string",
                   "minLength": 1,
                   "pattern": "\\S"
@@ -216,12 +300,18 @@
               "properties": {
                 "source": {
                   "description": "Source URL of the NuGet feed.",
+                  "examples": [
+                    "https://api.nuget.org/v3/index.json"
+                  ],
                   "type": "string",
                   "minLength": 1,
                   "pattern": "\\S"
                 },
                 "apiKeyEnv": {
                   "description": "Name of the environment variable that holds the feed API key.",
+                  "examples": [
+                    "NUGET_DEPLOYMENT_KEY"
+                  ],
                   "type": "string",
                   "minLength": 1,
                   "pattern": "\\S"
@@ -261,12 +351,18 @@
           "properties": {
             "name": {
               "description": "Display name used as the Git author/committer.",
+              "examples": [
+                "Buildvana Bot"
+              ],
               "type": "string",
               "minLength": 1,
               "pattern": "\\S"
             },
             "email": {
               "description": "Email address used as the Git author/committer.",
+              "examples": [
+                "bot@buildvana.invalid"
+              ],
               "type": "string",
               "minLength": 1,
               "pattern": "\\S"
@@ -373,6 +469,9 @@
           "type": "object",
           "additionalProperties": {
             "description": "How far an automatic update may move a pin whose package id matches. A trailing - allows prerelease versions.",
+            "examples": [
+              "patch"
+            ],
             "type": "string",
             "enum": [
               "disable",
@@ -390,6 +489,9 @@
             ]
           },
           "propertyNames": {
+            "examples": [
+              "Some.Package.*"
+            ],
             "minLength": 1,
             "pattern": "\\S"
           }
@@ -403,18 +505,27 @@
               "caption": false,
               "files": {
                 "description": "Glob, relative to the home directory, selecting the files that declare the group\u0027s pins.",
+                "examples": [
+                  "path/to/MyPackages.props"
+                ],
                 "type": "string",
                 "minLength": 1,
                 "pattern": "\\S"
               },
               "items": {
                 "description": "MSBuild item name the group\u0027s pins are declared as, e.g. BV_PackageVersion.",
+                "examples": [
+                  "PackageVersion"
+                ],
                 "type": "string",
                 "minLength": 1,
                 "pattern": "\\S"
               },
               "policy": {
                 "description": "How far an automatic update may move a pin of this group. A trailing - allows prerelease versions. Defaults to the policy of the packages scope.",
+                "examples": [
+                  "minor"
+                ],
                 "type": "string",
                 "enum": [
                   "disable",
@@ -439,6 +550,9 @@
             "additionalProperties": false
           },
           "propertyNames": {
+            "examples": [
+              "SDK package injections"
+            ],
             "minLength": 1,
             "pattern": "\\S"
           }
@@ -448,6 +562,11 @@
     },
     "fileBasedApps": {
       "description": "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.",
+      "examples": [
+        [
+          "/tools/"
+        ]
+      ],
       "type": "array",
       "items": {
         "type": "string"
