@@ -51,6 +51,17 @@ internal sealed class RepositoryConfigFilesTests
         await Assert.That(string.Join(", ", divergences)).IsEqualTo(string.Empty);
     }
 
+    // A release copies the next file over the current one, comments included, so a header true of only one of
+    // the two becomes false in the promoted copy. The two headers are therefore one text.
+    [Test]
+    public async Task Next_SharesTheHeaderOfCurrent()
+    {
+        var current = await HeaderOfAsync(CurrentFileName).ConfigureAwait(false);
+        var next = await HeaderOfAsync(NextFileName).ConfigureAwait(false);
+
+        await Assert.That(next).IsEqualTo(current);
+    }
+
     // The committed example is a build artifact under review: it drifts the moment the model changes, and
     // nothing else in this repository would notice.
     [Test]
@@ -92,6 +103,15 @@ internal sealed class RepositoryConfigFilesTests
         };
 
         return (JsonObject)JsonNode.Parse(text, documentOptions: documentOptions)!;
+    }
+
+    // Everything a file states before its opening brace, which is the part a promotion copies verbatim.
+    private static async Task<string> HeaderOfAsync(string fileName)
+    {
+        var text = await File.ReadAllTextAsync(PathOf(fileName)).ConfigureAwait(false);
+        var normalized = text.ReplaceLineEndings("\n");
+
+        return normalized[..normalized.IndexOf('{', StringComparison.Ordinal)];
     }
 
     // Reports every member the current file states that the next file does not match. A member the schema no
