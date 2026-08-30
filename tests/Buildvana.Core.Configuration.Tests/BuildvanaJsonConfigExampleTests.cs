@@ -101,7 +101,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var problem = await ProblemOf(root).ConfigureAwait(false);
 
         await Assert.That(problem).IsEqualTo(
-            "The setting 'section' states an example, and declares members or member names of its own. The "
+            "The setting 'section' states an example, and its value declares members or member names. The "
             + "example would replace them, and every description inside. Annotate the members instead.");
     }
 
@@ -122,7 +122,38 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var problem = await ProblemOf(root).ConfigureAwait(false);
 
         await Assert.That(problem).IsEqualTo(
-            "The setting 'groups' states an example, and declares members or member names of its own. The "
+            "The setting 'groups' states an example, and its value declares members or member names. The "
+            + "example would replace them, and every description inside. Annotate the members instead.");
+    }
+
+    // The exporter deduplicates a member type that occurs more than once, and an annotation stays beside the
+    // pointer rather than moving to the copy it points at. A section reached that way is a section still.
+    [Test]
+    public async Task Generate_ExampleOnAReferenceToASection_Throws()
+    {
+        var root = new JsonObject
+        {
+            ["$defs"] = new JsonObject
+            {
+                ["shared"] = new JsonObject
+                {
+                    ["properties"] = new JsonObject { ["member"] = new JsonObject { ["default"] = true } },
+                },
+            },
+            ["properties"] = new JsonObject
+            {
+                ["section"] = new JsonObject
+                {
+                    ["examples"] = new JsonArray { "whole section" },
+                    ["$ref"] = "#/$defs/shared",
+                },
+            },
+        };
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            "The setting 'section' states an example, and its value declares members or member names. The "
             + "example would replace them, and every description inside. Annotate the members instead.");
     }
 
