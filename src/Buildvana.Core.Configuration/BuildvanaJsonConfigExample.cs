@@ -201,7 +201,7 @@ public static class BuildvanaJsonConfigExample
     {
         // An example is chosen to illustrate, so it outranks everything below. A setting is annotated only
         // where its default is absent or unhelpful, so in practice the two never compete.
-        if (schema["examples"] is JsonArray examples && examples.Count > 0)
+        if (schema["examples"] is JsonArray { Count: > 0 } examples)
         {
             _ = text.Append(FormatValue(examples[0]));
             return;
@@ -305,7 +305,7 @@ public static class BuildvanaJsonConfigExample
     private static string FormatMember(KeyValuePair<string, JsonNode?> member)
         => FormatString(member.Key) + ": " + FormatValue(member.Value);
 
-    private static string FormatString(string value) => JsonValue.Create(value)!.ToJsonString(ValueOptions);
+    private static string FormatString(string value) => JsonValue.Create(value).ToJsonString(ValueOptions);
 
     private static string Extend(string path, string name) => path.Length == 0 ? name : path + "." + name;
 
