@@ -65,30 +65,31 @@ partial class JsonSchemaGenerator
             // whatever it has to say goes through propertyNames. A required key states there what every other
             // required string states about itself: that a stated member carries an actual value. minLength
             // catches the empty name, pattern the all-whitespace one. A description of the key describes a
-            // member name, and so does an example of it, so both travel the same way, and either brings the
-            // node into being on its own when the key is optional.
-            if (keyIsRequired || keyDescription is not null || keyExample is not null)
+            // member name, and so does an example of it, so both travel the same way.
+            //
+            // The node is emitted even when the key states none of the three. An empty schema constrains no
+            // name, so a validator loses nothing by it, and the node is the one keyword that tells a reader
+            // of the schema that member names are data here. A reader that walks the shape rather than
+            // validating against it — the example generator — would otherwise see an object with nothing to
+            // show, and print the whole section as {}.
+            var propertyNames = new JsonObject();
+            if (keyDescription is not null)
             {
-                var propertyNames = new JsonObject();
-                if (keyDescription is not null)
-                {
-                    propertyNames["description"] = keyDescription;
-                }
-
-                if (keyExample is not null)
-                {
-                    propertyNames["examples"] = keyExample;
-                }
-
-                if (keyIsRequired)
-                {
-                    propertyNames["minLength"] = 1;
-                    propertyNames["pattern"] = @"\S";
-                }
-
-                keyedSchema["propertyNames"] = propertyNames;
+                propertyNames["description"] = keyDescription;
             }
 
+            if (keyExample is not null)
+            {
+                propertyNames["examples"] = keyExample;
+            }
+
+            if (keyIsRequired)
+            {
+                propertyNames["minLength"] = 1;
+                propertyNames["pattern"] = @"\S";
+            }
+
+            keyedSchema["propertyNames"] = propertyNames;
             return keyedSchema;
         }
         finally

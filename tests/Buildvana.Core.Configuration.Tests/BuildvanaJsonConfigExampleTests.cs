@@ -198,6 +198,29 @@ internal sealed class BuildvanaJsonConfigExampleTests
             + "element type with [JsonSchemaExample].");
     }
 
+    // The shape the generator emits for a keyed object whose key states nothing: an empty propertyNames, and
+    // no keyword the walk answers before it. The empty node is what keeps the walk out of EmptyContainer,
+    // which would print the whole section as {} — value schema, member descriptions and all — and report
+    // nothing.
+    [Test]
+    public async Task Generate_KeyedObjectWithAnEmptyKeySchema_Throws()
+    {
+        var root = SchemaOf(
+            "groups",
+            new JsonObject
+            {
+                ["type"] = "object",
+                ["additionalProperties"] = new JsonObject { ["type"] = "object" },
+                ["propertyNames"] = new JsonObject(),
+            });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            "The keyed object 'groups' states no example member name. Annotate the key property of its "
+            + "element type with [JsonSchemaExample].");
+    }
+
     [Test]
     public async Task Generate_KeyedObjectWithoutAValueSchema_Throws()
     {
