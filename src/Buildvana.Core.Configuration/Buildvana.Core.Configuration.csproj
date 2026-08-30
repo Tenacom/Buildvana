@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Buildvana.Core.Configuration.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Buildvana.Core.Abstractions\Buildvana.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Buildvana.Core.IO\Buildvana.Core.IO.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Json\Buildvana.Core.Json.csproj" />

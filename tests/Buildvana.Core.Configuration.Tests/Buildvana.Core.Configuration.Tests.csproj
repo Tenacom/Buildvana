@@ -11,6 +11,11 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
+  <!-- The files under test: tests read the repository's own configuration files, and the generated example. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="RepositoryRoot" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..'))" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Buildvana.Core.Configuration\Buildvana.Core.Configuration.csproj" />
     <ProjectReference Include="..\..\src\Buildvana.Core.HomeDirectory\Buildvana.Core.HomeDirectory.csproj" />

@@ -4,6 +4,7 @@
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
     <File Path=".markdownlint-cli2.jsonc" />
+    <File Path="buildvana.example.jsonc" />
     <File Path="buildvana.jsonc" />
     <File Path="Buildvana.slnx.DotSettings" />
     <File Path="Common.props" />
@@ -46,6 +47,7 @@
     <File Path="schemas/buildvana.schema.json" />
   </Folder>
   <Folder Name="/- Tools/">
+    <File Path="tools/generate-config-example.cs" />
     <File Path="tools/generate-config-schema.cs" />
   </Folder>
   <Folder Name="/src/">
