@@ -194,7 +194,10 @@ public static class BuildvanaJsonConfigExample
             WriteDescription(text, schema, depth + 1);
             _ = text.Append(Indentation(depth + 1)).Append(FormatString(name)).Append(": ");
             WriteValue(text, schema, root, Extend(path, name), depth + 1);
-            _ = text.Append(i < members.Count - 1 ? ",\n" : "\n");
+
+            // The last member carries a comma too, so that adding one after it touches a single line. Every
+            // reader of a configuration file accepts a trailing comma, this file's own loader included.
+            _ = text.Append(",\n");
         }
 
         _ = text.Append(Indentation(depth)).Append('}');
@@ -310,7 +313,7 @@ public static class BuildvanaJsonConfigExample
         WriteDescription(text, valueSchema, depth + 1);
         _ = text.Append(Indentation(depth + 1)).Append(FormatString(key)).Append(": ");
         WriteValue(text, valueSchema, root, Extend(path, key), depth + 1);
-        _ = text.Append('\n').Append(Indentation(depth)).Append('}');
+        _ = text.Append(",\n").Append(Indentation(depth)).Append('}');
     }
 
     // The last resort: a container with nothing to show still has a shape to show. Anything else is a setting

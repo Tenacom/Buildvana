@@ -27,7 +27,7 @@
     "emptyChangelog": "This release contains no user-visible changes.",
 
     // Whether self-references are updated (dogfooding) during a release.
-    "dogfood": true
+    "dogfood": true,
   },
 
   // Configuration for version computation.
@@ -36,7 +36,7 @@
     "prereleaseTag": "preview",
 
     // How many version components are carried into the assembly version.
-    "assemblyVersionPrecision": "major"
+    "assemblyVersionPrecision": "major",
   },
 
   // Configuration for invocations of the dotnet CLI.
@@ -50,7 +50,7 @@
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
-      "env": {"NUGET_XMLDOC_MODE": "skip"}
+      "env": {"NUGET_XMLDOC_MODE": "skip"},
     },
 
     // Invocation configuration for the `dotnet restore` command.
@@ -59,7 +59,7 @@
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
-      "env": {"NUGET_XMLDOC_MODE": "skip"}
+      "env": {"NUGET_XMLDOC_MODE": "skip"},
     },
 
     // Invocation configuration for the `dotnet build` command.
@@ -68,7 +68,7 @@
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
-      "env": {"NUGET_XMLDOC_MODE": "skip"}
+      "env": {"NUGET_XMLDOC_MODE": "skip"},
     },
 
     // Invocation configuration for the `dotnet test` command.
@@ -77,7 +77,7 @@
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
-      "env": {"NUGET_XMLDOC_MODE": "skip"}
+      "env": {"NUGET_XMLDOC_MODE": "skip"},
     },
 
     // Invocation configuration for the `dotnet pack` command.
@@ -86,7 +86,7 @@
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
-      "env": {"NUGET_XMLDOC_MODE": "skip"}
+      "env": {"NUGET_XMLDOC_MODE": "skip"},
     },
 
     // Invocation configuration for the `dotnet nuget push` command.
@@ -95,8 +95,8 @@
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
-      "env": {"NUGET_XMLDOC_MODE": "skip"}
-    }
+      "env": {"NUGET_XMLDOC_MODE": "skip"},
+    },
   },
 
   // Configuration for NuGet package publishing.
@@ -109,7 +109,7 @@
         "source": "https://api.nuget.org/v3/index.json",
 
         // Name of the environment variable that holds the feed API key.
-        "apiKeyEnv": "NUGET_DEPLOYMENT_KEY"
+        "apiKeyEnv": "NUGET_DEPLOYMENT_KEY",
       },
 
       // Feed that stable versions are pushed to.
@@ -118,15 +118,15 @@
         "source": "https://api.nuget.org/v3/index.json",
 
         // Name of the environment variable that holds the feed API key.
-        "apiKeyEnv": "NUGET_DEPLOYMENT_KEY"
-      }
-    }
+        "apiKeyEnv": "NUGET_DEPLOYMENT_KEY",
+      },
+    },
   },
 
   // Configuration for GitHub integration.
   "github": {
     // Name of the environment variable that holds the GitHub access token.
-    "tokenEnv": "GITHUB_TOKEN"
+    "tokenEnv": "GITHUB_TOKEN",
   },
 
   // Configuration for Git-related behavior.
@@ -137,8 +137,8 @@
       "name": "Buildvana Bot",
 
       // Email address used as the Git author/committer.
-      "email": "bot@buildvana.invalid"
-    }
+      "email": "bot@buildvana.invalid",
+    },
   },
 
   // Configuration for dependency management.
@@ -155,13 +155,13 @@
       "tools": "minor",
 
       // How far an automatic update may move a NuGet package pin.
-      "packages": "minor"
+      "packages": "minor",
     },
 
     // Update policy of packages matching an id pattern. The first match wins.
     "policies": {
       // How far an automatic update may move a pin whose id matches.
-      "Some.Package.*": "patch"
+      "Some.Package.*": "patch",
     },
 
     // Groups of package pins declared in their own files, keyed by caption.
@@ -174,11 +174,11 @@
         "items": "PackageVersion",
 
         // How far an automatic update may move a pin of this group.
-        "policy": "minor"
-      }
-    }
+        "policy": "minor",
+      },
+    },
   },
 
   // Gitignore-syntax patterns naming the repository's file-based C# apps.
-  "fileBasedApps": ["/tools/"]
+  "fileBasedApps": ["/tools/"],
 }

@@ -17,6 +17,9 @@
 // buildvana.json and buildvana.jsonc are equivalent; keeping both in the
 // same directory is an error. Comments and trailing commas are accepted in
 // either, but only the .jsonc extension advertises the fact.
+//
+// Every member ends with a comma, the last one included. Adding a member
+// then touches one line, not two.
 {
   // In buildvana.jsonc, the version pinned in .config/dotnet-tools.json. In
   // buildvana.next.jsonc, main: the version it describes does not exist yet.
@@ -37,12 +40,12 @@
     // No "emptyChangelog": a stable release with nothing to say should stop
     // us, not ship quietly.
 
-    "dogfood": true
+    "dogfood": true,
   },
 
   "versioning": {
     "prereleaseTag": "preview",
-    "assemblyVersionPrecision": "major"
+    "assemblyVersionPrecision": "major",
   },
 
   "dotnet": {
@@ -53,32 +56,32 @@
 
     "test": {
       "args": ["--coverage", "--coverage-output-format", "cobertura"],
-      "env": {}
-    }
+      "env": {},
+    },
   },
 
   "nuget": {
     "feeds": {
       "prerelease": {
         "source": "https://f.feedz.io/tenacom/preview/nuget/index.json",
-        "apiKeyEnv": "FEEDZ_IO_PRIVATE_TOKEN"
+        "apiKeyEnv": "FEEDZ_IO_PRIVATE_TOKEN",
       },
       "release": {
         "source": "https://api.nuget.org/v3/index.json",
-        "apiKeyEnv": "NUGET_DEPLOYMENT_KEY"
-      }
-    }
+        "apiKeyEnv": "NUGET_DEPLOYMENT_KEY",
+      },
+    },
   },
 
   "github": {
     // Also the default. The release workflow points it at a PAT that can push
     // to a protected branch; the build workflow leaves it at the automatic
     // token, which pull requests from forks also get.
-    "tokenEnv": "GITHUB_TOKEN"
+    "tokenEnv": "GITHUB_TOKEN",
   },
 
   // No "git": automated commits use the CI bot identity supplied by the
   // server adapter.
 
-  "fileBasedApps": ["/tools/", "/.claude/tools/"]
+  "fileBasedApps": ["/tools/", "/.claude/tools/"],
 }
