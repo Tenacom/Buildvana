@@ -355,7 +355,7 @@ internal sealed class JsonSchemaGeneratorTests
     // An optional key states no non-blank constraint, so its example and its description are all that fills
     // propertyNames there.
     [Test]
-    public async Task Generate_CreatesPropertyNamesForAnOptionalKeyExample()
+    public async Task Generate_PutsAnOptionalKeyExampleInPropertyNames()
     {
         var propertyNames = GenerateKeyed()["properties"]!["exemplifiedOptionalKeys"]!["propertyNames"]!;
         await Assert.That(((JsonArray)propertyNames["examples"]!)[0]!.GetValue<string>())
