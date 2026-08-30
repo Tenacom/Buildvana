@@ -100,7 +100,7 @@
           "type": "object",
           "properties": {
             "args": {
-              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060. Not every command takes the same ones.",
               "examples": [
                 [
                   "--nologo"
@@ -134,7 +134,7 @@
           "type": "object",
           "properties": {
             "args": {
-              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060. Not every command takes the same ones.",
               "examples": [
                 [
                   "--nologo"
@@ -159,7 +159,7 @@
           "type": "object",
           "properties": {
             "args": {
-              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060. Not every command takes the same ones.",
               "examples": [
                 [
                   "--nologo"
@@ -184,7 +184,7 @@
           "type": "object",
           "properties": {
             "args": {
-              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060. Not every command takes the same ones.",
               "examples": [
                 [
                   "--nologo"
@@ -209,7 +209,7 @@
           "type": "object",
           "properties": {
             "args": {
-              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060. Not every command takes the same ones.",
               "examples": [
                 [
                   "--nologo"
@@ -234,7 +234,7 @@
           "type": "object",
           "properties": {
             "args": {
-              "description": "Extra arguments forwarded to \u0060dotnet\u0060.",
+              "description": "Extra arguments forwarded to \u0060dotnet\u0060. Not every command takes the same ones.",
               "examples": [
                 [
                   "--nologo"
