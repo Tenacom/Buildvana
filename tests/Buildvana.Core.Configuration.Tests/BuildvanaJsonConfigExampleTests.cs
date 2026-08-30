@@ -4,11 +4,209 @@
 using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
 
-// The pure helpers behind the generated example. None of them reports anything on the model as it stands —
-// every description fits one line, and every reference-bearing property carries its own example — so the
-// schema walk exercises none of them. They are tested here directly, on inputs of their own.
+// The generator and the helpers behind it, on schemas written for the purpose. Every refusal the generator
+// states is of a shape the model does not have, and every helper reports nothing on the model as it stands,
+// so the committed example reaches neither. Both are reached here directly.
 internal sealed class BuildvanaJsonConfigExampleTests
 {
+    // A description introduces its member, a section holds its members, and a member list ends in a comma
+    // however deep it sits.
+    [Test]
+    public async Task Generate_Schema_WalksItIntoAnObject()
+    {
+        var root = new JsonObject
+        {
+            ["properties"] = new JsonObject
+            {
+                ["flag"] = new JsonObject { ["description"] = "Whether the thing is on.", ["default"] = true },
+                ["section"] = new JsonObject
+                {
+                    ["properties"] = new JsonObject
+                    {
+                        ["name"] = new JsonObject { ["examples"] = new JsonArray { "value" } },
+                    },
+                },
+            },
+        };
+
+        await Assert.That(BodyOf(root)).IsEqualTo(
+            """
+            {
+              // Whether the thing is on.
+              "flag": true,
+
+              "section": {
+                "name": "value",
+              },
+            }
+
+            """);
+    }
+
+    // A container with nothing to show still has a shape to show.
+    [Test]
+    public async Task Generate_EmptyContainers_WriteTheirShape()
+    {
+        var root = new JsonObject
+        {
+            ["properties"] = new JsonObject
+            {
+                ["list"] = new JsonObject { ["type"] = "array" },
+                ["map"] = new JsonObject { ["type"] = "object" },
+            },
+        };
+
+        await Assert.That(BodyOf(root)).IsEqualTo(
+            """
+            {
+              "list": [],
+
+              "map": {},
+            }
+
+            """);
+    }
+
+    [Test]
+    public async Task Generate_Reference_WritesWhatItPointsAt()
+    {
+        var root = new JsonObject
+        {
+            ["$defs"] = new JsonObject { ["shared"] = new JsonObject { ["default"] = 42 } },
+            ["properties"] = new JsonObject { ["value"] = new JsonObject { ["$ref"] = "#/$defs/shared" } },
+        };
+
+        await Assert.That(BodyOf(root)).IsEqualTo(
+            """
+            {
+              "value": 42,
+            }
+
+            """);
+    }
+
+    // An example on a section would print in place of the section, taking every member and every nested
+    // description with it, and nothing downstream would notice the loss.
+    [Test]
+    public async Task Generate_ExampleBesideMembers_Throws()
+    {
+        var root = SchemaOf(
+            "section",
+            new JsonObject
+            {
+                ["examples"] = new JsonArray { "whole section" },
+                ["properties"] = new JsonObject { ["member"] = new JsonObject { ["default"] = true } },
+            });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            "The setting 'section' states an example, and declares members or member names of its own. The "
+            + "example would replace them, and every description inside. Annotate the members instead.");
+    }
+
+    // A keyed object is a section too: an example on one drops the member name it teaches, and the
+    // description of what a member holds.
+    [Test]
+    public async Task Generate_ExampleBesideMemberNames_Throws()
+    {
+        var root = SchemaOf(
+            "groups",
+            new JsonObject
+            {
+                ["examples"] = new JsonArray { "whole section" },
+                ["propertyNames"] = new JsonObject { ["examples"] = new JsonArray { "My group" } },
+                ["additionalProperties"] = new JsonObject { ["type"] = "object" },
+            });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            "The setting 'groups' states an example, and declares members or member names of its own. The "
+            + "example would replace them, and every description inside. Annotate the members instead.");
+    }
+
+    // A dictionary is the one object an example illustrates whole: its member names are data the schema
+    // constrains in no way, so the example takes nothing away.
+    [Test]
+    public async Task Generate_ExampleOnADictionary_WritesTheExample()
+    {
+        var root = SchemaOf(
+            "env",
+            new JsonObject
+            {
+                ["type"] = "object",
+                ["examples"] = new JsonArray { new JsonObject { ["KEY"] = "value" } },
+                ["additionalProperties"] = new JsonObject { ["type"] = "string" },
+            });
+
+        await Assert.That(BodyOf(root)).IsEqualTo(
+            """
+            {
+              "env": {"KEY": "value"},
+            }
+
+            """);
+    }
+
+    [Test]
+    public async Task Generate_KeyedObjectWithoutAKeyExample_Throws()
+    {
+        var root = SchemaOf(
+            "groups",
+            new JsonObject
+            {
+                ["propertyNames"] = new JsonObject { ["type"] = "string" },
+                ["additionalProperties"] = new JsonObject { ["type"] = "object" },
+            });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            "The keyed object 'groups' states no example member name. Annotate the key property of its "
+            + "element type with [JsonSchemaExample].");
+    }
+
+    [Test]
+    public async Task Generate_KeyedObjectWithoutAValueSchema_Throws()
+    {
+        var root = SchemaOf(
+            "groups",
+            new JsonObject { ["propertyNames"] = new JsonObject { ["examples"] = new JsonArray { "My group" } } });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo("The keyed object 'groups' declares no value schema.");
+    }
+
+    // A setting the schema can supply no value for is a missing annotation on the model, which is a fault
+    // of the model rather than a hole in the example.
+    [Test]
+    public async Task Generate_SettingWithNoValue_Throws()
+    {
+        var root = SchemaOf("setting", new JsonObject { ["type"] = "string" });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            "The setting 'setting' states neither an example nor a default, and is not a container. "
+            + "Annotate the model property with [JsonSchemaExample].");
+    }
+
+    [Test]
+    public async Task Generate_OverlongDescription_Throws()
+    {
+        var description = Words(35);
+        var root = SchemaOf("setting", new JsonObject { ["description"] = description, ["default"] = true });
+
+        var problem = await ProblemOf(root).ConfigureAwait(false);
+
+        await Assert.That(problem).IsEqualTo(
+            $"The description \"{description}\" needs 3 comment lines, past the 2 a description gets. A "
+            + "description names a setting; anything longer is documentation, and belongs in the reference "
+            + "document.");
+    }
+
     // The descriptions the model carries today, and the ones a reviewer would let through.
     [Test]
     public async Task DescriptionProblem_FittingDescription_ReportsNothing()
@@ -102,6 +300,28 @@ internal sealed class BuildvanaJsonConfigExampleTests
 
         await Assert.That(() => BuildvanaJsonConfigExample.ResolveReference(Reference("#/properties/nope"), root, "nope"))
             .Throws<InvalidOperationException>();
+    }
+
+    // The object a schema describes, without the fixed header above it. The header holds no brace of its own.
+    private static string BodyOf(JsonObject root)
+    {
+        var text = BuildvanaJsonConfigExample.Generate(root);
+
+        return text[text.IndexOf('{', StringComparison.Ordinal)..];
+    }
+
+    // A schema document declaring one member, which is all a refusal needs to reach.
+    private static JsonObject SchemaOf(string name, JsonObject member)
+        => new() { ["properties"] = new JsonObject { [name] = member } };
+
+    // The message the generator refuses a schema with.
+    private static async Task<string> ProblemOf(JsonObject root)
+    {
+        string Act() => BuildvanaJsonConfigExample.Generate(root);
+
+        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
+
+        return exception!.Message;
     }
 
     // Four-letter words joined by single spaces, so the text is (5 * count - 1) characters long and a greedy
