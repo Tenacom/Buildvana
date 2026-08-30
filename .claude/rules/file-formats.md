@@ -58,6 +58,8 @@ Markdown files consumed by AIs (e.g., `CLAUDE.md` and files in `.claude`) are ex
 
 ### Comments in JSON
 
+The rules below govern the comments you write and the ones you edit. Leave a comment that predates them alone unless you are changing it anyway: a configuration file nobody reads as an example is not worth rewrapping for its own sake.
+
 - A comment line holds at most 80 characters of comment text. Count neither the indentation, nor the `//`, nor the space after it. Once a comment needs a second line, every line of it holds at most 72. The two limits differ on purpose: a comment just past 72 would otherwise spill three words onto a line of their own.
 - A description takes one line. Two only when unavoidable. A description names a setting. It is not its documentation, and anything longer belongs in a document.
 - Never put JSON inside a comment. A commented-out member is parsed by nothing, so no tool can tell a stale one from a current one, and a reader cannot either. Record an omission in one line of prose instead: `// No "emptyChangelog": an empty changelog should stop us, not ship quietly.`
