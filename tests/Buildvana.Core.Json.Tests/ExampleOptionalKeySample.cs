@@ -6,8 +6,8 @@ using System.Diagnostics.CodeAnalysis;
 using Buildvana.Core.Json;
 using Buildvana.Core.Json.Schema;
 
-// A keyed element whose key is not required but carries a description and an example, so propertyNames exists
-// for those alone.
+// A keyed element whose key is not required but carries a description and an example, so propertyNames holds
+// those alone.
 [JsonKeyedObject(nameof(Caption))]
 [SuppressMessage(
     "Performance",

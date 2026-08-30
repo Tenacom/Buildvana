@@ -308,10 +308,16 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(remainingMembersShape["pattern"]!.GetValue<string>()).IsEqualTo(@"\S");
     }
 
-    // A key the model does not require states nothing about its own value, member name included.
+    // A key the model does not require states nothing about its own value, member name included. The node
+    // that would carry such a statement is emitted all the same: it is what marks the object as keyed, and
+    // an empty schema constrains no name.
     [Test]
     public async Task Generate_LeavesAnOptionalKeyUnconstrained()
-        => await Assert.That(GenerateKeyed()["properties"]!["optionalKeys"]!["propertyNames"]).IsNull();
+    {
+        var propertyNames = (JsonObject)GenerateKeyed()["properties"]!["optionalKeys"]!["propertyNames"]!;
+
+        await Assert.That(propertyNames.Count).IsEqualTo(0);
+    }
 
     // An example on the key is an example of a member name, so it lands in propertyNames; one on the value
     // property rides the schema lifted into additionalProperties.
@@ -346,7 +352,8 @@ internal sealed class JsonSchemaGeneratorTests
             .IsEqualTo("Caption naming the group.");
     }
 
-    // An optional key states no non-blank constraint, so its example is the whole reason propertyNames exists.
+    // An optional key states no non-blank constraint, so its example and its description are all that fills
+    // propertyNames there.
     [Test]
     public async Task Generate_CreatesPropertyNamesForAnOptionalKeyExample()
     {
