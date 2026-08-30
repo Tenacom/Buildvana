@@ -19,9 +19,6 @@ internal sealed class RepositoryConfigFilesTests
     // version, the next one points at main.
     private const string SchemaMemberName = "$schema";
 
-    // Above this, a description no longer fits the comment layer of a generated example.
-    private const int MaxDescriptionLines = 2;
-
     private static readonly string RepositoryRoot = typeof(RepositoryConfigFilesTests).Assembly
         .GetCustomAttributes<AssemblyMetadataAttribute>()
         .First(static attribute => attribute.Key == "RepositoryRoot")
@@ -79,16 +76,21 @@ internal sealed class RepositoryConfigFilesTests
         => await Assert.That(() => BuildvanaJsonConfigProvider.LoadFile(PathOf(ExampleFileName))).ThrowsNothing();
 
     // A description names a setting; anything longer is documentation in an editor tooltip. This reads the
-    // generated schema rather than any file's comments, so no convention of a file can break it.
+    // generated schema rather than any file's comments, so no convention of a file can break it. The
+    // offenders are collected rather than asserted one at a time, so that a failure names the text.
     [Test]
     public async Task Schema_DescriptionsFitTheCommentLayer()
     {
+        List<string> problems = [];
         foreach (var description in DescriptionsOf(Schema))
         {
-            var lines = BuildvanaJsonConfigExample.WrapDescription(description).Count;
-
-            await Assert.That(lines).IsLessThanOrEqualTo(MaxDescriptionLines);
+            if (BuildvanaJsonConfigExample.DescriptionProblem(description) is { } problem)
+            {
+                problems.Add($"\"{description}\" {problem}");
+            }
         }
+
+        await Assert.That(string.Join("; ", problems)).IsEqualTo(string.Empty);
     }
 
     private static string PathOf(string fileName) => Path.Combine(RepositoryRoot, fileName);

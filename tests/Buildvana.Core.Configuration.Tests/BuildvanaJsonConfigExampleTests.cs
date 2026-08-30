@@ -4,11 +4,34 @@
 using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
 
-// The two pure helpers behind the generated example. Neither runs on the model as it stands — every
-// description fits one line, and every reference-bearing property carries its own example — so the schema
-// walk exercises neither. They are tested here directly, on inputs of their own.
+// The pure helpers behind the generated example. None of them reports anything on the model as it stands —
+// every description fits one line, and every reference-bearing property carries its own example — so the
+// schema walk exercises none of them. They are tested here directly, on inputs of their own.
 internal sealed class BuildvanaJsonConfigExampleTests
 {
+    // The descriptions the model carries today, and the ones a reviewer would let through.
+    [Test]
+    public async Task DescriptionProblem_FittingDescription_ReportsNothing()
+        => await Assert.That(BuildvanaJsonConfigExample.DescriptionProblem(Words(16) + "s")).IsNull();
+
+    [Test]
+    public async Task DescriptionProblem_TooManyLines_NamesTheCount()
+    {
+        var problem = BuildvanaJsonConfigExample.DescriptionProblem(Words(35));
+
+        await Assert.That(problem).IsEqualTo("needs 3 comment lines, past the 2 a description gets");
+    }
+
+    // A word longer than the wrapped limit — a URL, say — produces a line the wrap cannot shorten. Counting
+    // lines would call this description fine, because it still needs only two.
+    [Test]
+    public async Task DescriptionProblem_UnbreakableWord_NamesTheOverrun()
+    {
+        var problem = BuildvanaJsonConfigExample.DescriptionProblem("prefix " + new string('x', 90));
+
+        await Assert.That(problem).IsEqualTo("holds a 90-character line, past the 72 a comment line gets");
+    }
+
     // A description at the single-line limit is carried whole, however close it comes to the wrapped limit.
     [Test]
     public async Task WrapDescription_AtTheSingleLineLimit_ReturnsOneLine()

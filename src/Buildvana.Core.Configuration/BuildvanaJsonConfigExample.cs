@@ -62,8 +62,8 @@ public static class BuildvanaJsonConfigExample
     /// <returns>The file text, using LF line endings and a trailing newline.</returns>
     /// <exception cref="InvalidOperationException">
     /// <para>A schema property states no value the example could carry, or states both an example and
-    /// members of its own, or a keyed object states no example member name, or a description is too long
-    /// to fit two comment lines.</para>
+    /// members of its own, or a keyed object states no example member name, or a description does not fit
+    /// the comment layer.</para>
     /// </exception>
     public static string Generate()
     {
@@ -71,6 +71,30 @@ public static class BuildvanaJsonConfigExample
         var text = new StringBuilder(Header.ReplaceLineEndings("\n"));
         WriteMembers(text, CollectMembers(root), root, path: string.Empty, depth: 0);
         return text.Append('\n').ToString();
+    }
+
+    /// <summary>
+    /// Reports why a description does not fit the comment layer of a generated file.
+    /// </summary>
+    /// <param name="description">The description to measure.</param>
+    /// <returns>A phrase naming the problem, or <see langword="null"/> when the description fits.</returns>
+    /// <remarks>
+    /// <para>Counting lines is not enough: a word longer than the wrapped limit — a URL, say — produces a
+    /// line the wrap cannot shorten, and the count stays at one.</para>
+    /// </remarks>
+    internal static string? DescriptionProblem(string description)
+    {
+        var lines = WrapDescription(description);
+        if (lines.Count > MaxDescriptionLines)
+        {
+            return $"needs {lines.Count} comment lines, past the {MaxDescriptionLines} a description gets";
+        }
+
+        var limit = lines.Count == 1 ? SingleLineLimit : WrappedLineLimit;
+
+        return lines.FirstOrDefault(line => line.Length > limit) is { } overrun
+            ? $"holds a {overrun.Length}-character line, past the {limit} a comment line gets"
+            : null;
     }
 
     /// <summary>
@@ -183,15 +207,14 @@ public static class BuildvanaJsonConfigExample
             return;
         }
 
-        var lines = WrapDescription(description);
-        if (lines.Count > MaxDescriptionLines)
+        if (DescriptionProblem(description) is { } problem)
         {
             throw new InvalidOperationException(
-                $"The description \"{description}\" needs {lines.Count} comment lines. A description names a "
-                + "setting; anything longer is documentation, and belongs in the reference document.");
+                $"The description \"{description}\" {problem}. A description names a setting; anything "
+                + "longer is documentation, and belongs in the reference document.");
         }
 
-        foreach (var line in lines)
+        foreach (var line in WrapDescription(description))
         {
             _ = text.Append(Indentation(depth)).Append("// ").Append(line).Append('\n');
         }
