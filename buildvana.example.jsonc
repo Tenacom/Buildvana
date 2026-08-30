@@ -6,7 +6,7 @@
 // Nothing reads this file. Buildvana looks only for buildvana.json and
 // buildvana.jsonc, so copy the settings you want into one of those.
 {
-  // URI of the JSON schema describing this file.
+  // URI of the JSON schema describing this file. Pin the bv version you use.
   "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/main/schemas/buildvana.schema.json",
 
   // Configuration for the bv release workflow.

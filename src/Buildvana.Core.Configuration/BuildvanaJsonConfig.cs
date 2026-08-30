@@ -46,7 +46,7 @@ public sealed record BuildvanaJsonConfig
     [JsonPropertyName("$schema")]
     [JsonSchemaNoDefault]
     [JsonSchemaExample("\"https://raw.githubusercontent.com/Tenacom/Buildvana/main/schemas/buildvana.schema.json\"")]
-    [Description("URI of the JSON schema describing this file.")]
+    [Description("URI of the JSON schema describing this file. Pin the bv version you use.")]
     public string? Schema { get; init; }
 
     /// <summary>Gets the <c>release</c> section.</summary>
