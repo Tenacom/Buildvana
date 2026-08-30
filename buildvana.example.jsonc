@@ -49,7 +49,7 @@
 
     // Invocation configuration common to all `dotnet` commands.
     "all": {
-      // Extra arguments forwarded to `dotnet`.
+      // Extra arguments forwarded to `dotnet`. Not every command takes the same ones.
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
@@ -58,7 +58,7 @@
 
     // Invocation configuration for the `dotnet restore` command.
     "restore": {
-      // Extra arguments forwarded to `dotnet`.
+      // Extra arguments forwarded to `dotnet`. Not every command takes the same ones.
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
@@ -67,7 +67,7 @@
 
     // Invocation configuration for the `dotnet build` command.
     "build": {
-      // Extra arguments forwarded to `dotnet`.
+      // Extra arguments forwarded to `dotnet`. Not every command takes the same ones.
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
@@ -76,7 +76,7 @@
 
     // Invocation configuration for the `dotnet test` command.
     "test": {
-      // Extra arguments forwarded to `dotnet`.
+      // Extra arguments forwarded to `dotnet`. Not every command takes the same ones.
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
@@ -85,7 +85,7 @@
 
     // Invocation configuration for the `dotnet pack` command.
     "pack": {
-      // Extra arguments forwarded to `dotnet`.
+      // Extra arguments forwarded to `dotnet`. Not every command takes the same ones.
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.
@@ -94,7 +94,7 @@
 
     // Invocation configuration for the `dotnet nuget push` command.
     "nugetPush": {
-      // Extra arguments forwarded to `dotnet`.
+      // Extra arguments forwarded to `dotnet`. Not every command takes the same ones.
       "args": ["--nologo"],
 
       // Environment variables forwarded to `dotnet`, keyed by variable name.

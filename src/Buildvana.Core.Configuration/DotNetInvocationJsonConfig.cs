@@ -19,7 +19,7 @@ public sealed record DotNetInvocationJsonConfig
     /// Gets extra arguments forwarded to <c>dotnet</c>.
     /// </summary>
     [JsonSchemaExample("""["--nologo"]""")]
-    [Description("Extra arguments forwarded to `dotnet`.")]
+    [Description("Extra arguments forwarded to `dotnet`. Not every command takes the same ones.")]
     public IReadOnlyList<string>? Args { get; init; }
 
     /// <summary>
