@@ -41,9 +41,10 @@ namespace Buildvana.Core.Json.Schema;
 /// carries a <c>$ref</c> pointer is not supported — recursion, or the exporter's deduplication of a member
 /// type that occurs twice.</para>
 /// <para>A property carrying <see cref="JsonSchemaExampleAttribute"/> gains an <c>examples</c> keyword holding
-/// the parsed fragment, beside its <c>description</c>. On the key property of a keyed-object element type the
-/// example describes a member name, so it lands in the keyed object's <c>propertyNames</c> instead; a keyed
-/// object whose key is optional gains that node for the example alone.</para>
+/// the parsed fragment, beside its <c>description</c>. On the key property of a keyed-object element type both
+/// describe a member name, so both land in the keyed object's <c>propertyNames</c> instead. Every keyed object
+/// states that node. It is empty when the key is optional and carries neither annotation: an empty schema
+/// constrains no name, and the node itself is what marks the object as keyed.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
