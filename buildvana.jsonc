@@ -1,19 +1,25 @@
 // Buildvana configuration for the Buildvana repository itself.
 //
-// This file states what this repository sets, and nothing else. For every setting Buildvana
-// understands, with its description and an example value, see buildvana.example.jsonc.
+// Two files hold it. buildvana.jsonc is what the pinned bv reads.
+// buildvana.next.jsonc is what the next one will read, so it may state a
+// setting the pinned version rejects. The release/post-release hook copies
+// buildvana.next.jsonc over buildvana.jsonc, in the same commit that moves
+// the tool pin, so the file and the tool that reads it arrive together.
 //
-// No comment here holds JSON. A commented-out member is parsed by nothing, so an omission
-// worth recording gets one line of prose instead.
+// Every edit to one file belongs in the other. A test enforces it.
 //
-// Every edit here belongs in buildvana.next.jsonc as well, which a release promotes over this
-// file. A test enforces it.
+// For every setting Buildvana understands, with its description and an
+// example value, see buildvana.example.jsonc.
 //
-// buildvana.json and buildvana.jsonc are equivalent; keeping both in the same directory is an
-// error. Comments and trailing commas are accepted in either, but only the .jsonc name
-// advertises the fact.
+// No comment here holds JSON. A commented-out member is parsed by nothing,
+// so an omission worth recording gets one line of prose instead.
+//
+// buildvana.json and buildvana.jsonc are equivalent; keeping both in the
+// same directory is an error. Comments and trailing commas are accepted in
+// either, but only the .jsonc extension advertises the fact.
 {
-  // Keep this pointing at the version pinned in .config/dotnet-tools.json.
+  // In buildvana.jsonc, the version pinned in .config/dotnet-tools.json. In
+  // buildvana.next.jsonc, main: the version it describes does not exist yet.
   "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.367-preview/schemas/buildvana.schema.json",
 
   "release": {
