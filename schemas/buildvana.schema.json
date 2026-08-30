@@ -550,6 +550,7 @@
             "additionalProperties": false
           },
           "propertyNames": {
+            "description": "Caption naming the group in listings.",
             "examples": [
               "My package group"
             ],
