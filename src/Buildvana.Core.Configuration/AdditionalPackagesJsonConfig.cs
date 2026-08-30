@@ -17,7 +17,7 @@ namespace Buildvana.Core.Configuration;
 public sealed record AdditionalPackagesJsonConfig
 {
     /// <summary>Gets the group's caption, which is the member name.</summary>
-    [JsonSchemaExample("\"SDK package injections\"")]
+    [JsonSchemaExample("\"My package group\"")]
     public required string Caption { get; init; }
 
     /// <summary>Gets the glob selecting the files that declare the group's pins.</summary>

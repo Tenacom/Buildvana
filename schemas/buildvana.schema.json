@@ -551,7 +551,7 @@
           },
           "propertyNames": {
             "examples": [
-              "SDK package injections"
+              "My package group"
             ],
             "minLength": 1,
             "pattern": "\\S"
