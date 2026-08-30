@@ -327,6 +327,25 @@ internal sealed class JsonSchemaGeneratorTests
         await Assert.That(valueExamples[0]!.GetValue<string>()).IsEqualTo("patch");
     }
 
+    // A description of the key describes a member name, so it travels where the example does. Both exits
+    // destroy the key's own subschema: the lifted-value one discards the element schema the key hangs off, the
+    // pruned-key one replaces the key with a Boolean 'false'. Both are exercised here.
+    [Test]
+    public async Task Generate_RoutesKeyAndValueDescriptionsToTheirOwnNodes()
+    {
+        var schema = GenerateKeyed();
+
+        var exemplified = schema["properties"]!["exemplified"]!;
+        await Assert.That(exemplified["propertyNames"]!["description"]!.GetValue<string>())
+            .IsEqualTo("Pattern over package ids.");
+        await Assert.That(exemplified["additionalProperties"]!["description"]!.GetValue<string>())
+            .IsEqualTo("Policy governing every matching pin.");
+
+        var optionalKeys = schema["properties"]!["exemplifiedOptionalKeys"]!;
+        await Assert.That(optionalKeys["propertyNames"]!["description"]!.GetValue<string>())
+            .IsEqualTo("Caption naming the group.");
+    }
+
     // An optional key states no non-blank constraint, so its example is the whole reason propertyNames exists.
     [Test]
     public async Task Generate_CreatesPropertyNamesForAnOptionalKeyExample()

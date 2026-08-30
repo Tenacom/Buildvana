@@ -169,6 +169,7 @@
 
     // Groups of package pins declared in their own files, keyed by caption.
     "additionalPackages": {
+      // Caption naming the group in listings.
       "My package group": {
         // Home-relative glob selecting the files that declare the group's pins.
         "files": "path/to/MyPackages.props",

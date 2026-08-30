@@ -338,7 +338,10 @@ public static class BuildvanaJsonConfigExample
         var valueSchema = schema["additionalProperties"] as JsonObject
             ?? throw new InvalidOperationException($"The keyed object '{path}' declares no value schema.");
 
+        // Both descriptions sit above the one line that carries the member: the key's first, because it names
+        // what the member name means, and the value's after it, because it names what the member holds.
         _ = text.Append("{\n");
+        WriteDescription(text, propertyNames, depth + 1);
         WriteDescription(text, valueSchema, depth + 1);
         _ = text.Append(Indentation(depth + 1)).Append(FormatString(key)).Append(": ");
         WriteValue(text, valueSchema, root, Extend(path, key), depth + 1);
