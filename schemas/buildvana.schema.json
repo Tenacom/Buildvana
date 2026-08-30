@@ -513,7 +513,7 @@
                 "pattern": "\\S"
               },
               "items": {
-                "description": "MSBuild item name the group\u0027s pins are declared as, e.g. BV_PackageVersion.",
+                "description": "MSBuild item name the group\u0027s pins are declared as.",
                 "examples": [
                   "PackageVersion"
                 ],
