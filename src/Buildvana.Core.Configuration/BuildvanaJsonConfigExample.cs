@@ -61,9 +61,9 @@ public static class BuildvanaJsonConfigExample
     /// </summary>
     /// <returns>The file text, using LF line endings and a trailing newline.</returns>
     /// <exception cref="InvalidOperationException">
-    /// <para>A schema property states no value the example could carry, or states both an example and
-    /// members of its own, or a keyed object states no example member name, or a description does not fit
-    /// the comment layer.</para>
+    /// <para>A schema property states no value the example could carry, or states an example beside members
+    /// or member names of its own, or a keyed object states no example member name, or a description does
+    /// not fit the comment layer.</para>
     /// </exception>
     public static string Generate()
     {
@@ -232,12 +232,15 @@ public static class BuildvanaJsonConfigExample
         {
             // An example on a section would stand in for the section, dropping every member and every
             // nested description with it. Nothing else would notice, and the loss would reach the
-            // committed file, so refuse the annotation here.
-            if (schema["properties"] is JsonObject)
+            // committed file, so refuse the annotation here. A keyed object is a section too: it declares
+            // member names through propertyNames, which a plain dictionary does not, and a dictionary is
+            // the one object an example does illustrate whole.
+            if (schema["properties"] is JsonObject || schema["propertyNames"] is JsonObject)
             {
                 throw new InvalidOperationException(
-                    $"The setting '{path}' states both an example and members of its own. The example "
-                    + "would replace the members and their descriptions. Annotate the members instead.");
+                    $"The setting '{path}' states an example, and declares members or member names of its "
+                    + "own. The example would replace them, and every description inside. Annotate the "
+                    + "members instead.");
             }
 
             _ = text.Append(FormatValue(examples[0]));
