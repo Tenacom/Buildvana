@@ -50,7 +50,9 @@ internal sealed class RepositoryConfigFilesTests
     // too: a header true of one file alone becomes false in the promoted copy, and so does a note beside a
     // setting. The next file adds sections, differs on $schema, and matches line for line otherwise, so the
     // current file's lines appear in the next file's in the same order. Header, comments, values, and
-    // ordering are guarded together by asserting that.
+    // ordering are guarded together by asserting that. Divergence is therefore additive only: a line the next
+    // file states differently, rather than not at all, is reported as not carried, which reads like an
+    // omission and is not one. $schema is the one such line, and it is excluded by name.
     [Test]
     public async Task Next_CarriesEveryLineOfCurrent()
     {
