@@ -36,15 +36,15 @@ namespace Buildvana.Core.Json.Schema;
 /// converter the list deserializes as a plain JSON array, which the schema then describes. In the
 /// remaining-members shape the key property is forbidden inside the value object, because the converter
 /// refuses an element value that restates it. Such a list is dictionary-valued in JSON, so
-/// <see cref="JsonAllowedKeysAttribute"/> closes its key set the same way it closes a dictionary's. A
-/// keyed-object list is still a collection: it states no <c>default</c>. An element type whose schema
-/// carries a <c>$ref</c> pointer is not supported — recursion, or the exporter's deduplication of a member
-/// type that occurs twice.</para>
+/// <see cref="JsonAllowedKeysAttribute"/> closes its key set the same way it closes a dictionary's. Every
+/// keyed object states a <c>propertyNames</c> node, holding whatever the key has to say about a member name.
+/// The node is stated even when the key has nothing to say: an empty schema constrains no name, and the node
+/// itself is what marks the object as keyed. A keyed-object list is still a collection: it states no
+/// <c>default</c>. An element type whose schema carries a <c>$ref</c> pointer is not supported — recursion,
+/// or the exporter's deduplication of a member type that occurs twice.</para>
 /// <para>A property carrying <see cref="JsonSchemaExampleAttribute"/> gains an <c>examples</c> keyword holding
 /// the parsed fragment, beside its <c>description</c>. On the key property of a keyed-object element type both
-/// describe a member name, so both land in the keyed object's <c>propertyNames</c> instead. Every keyed object
-/// states that node. It is empty when the key is optional and carries neither annotation: an empty schema
-/// constrains no name, and the node itself is what marks the object as keyed.</para>
+/// describe a member name, so both land in the keyed object's <c>propertyNames</c> instead.</para>
 /// <para>When a defaults instance is supplied, leaf properties (strings, numbers, booleans, enums) gain a
 /// <c>default</c> keyword holding the matching property value from that instance, serialized with the same
 /// options as the schema. Matching is by resolved JSON name, not by type: the instance may well be of a
