@@ -22,7 +22,7 @@ public sealed record AdditionalPackagesJsonConfig
 
     /// <summary>Gets the glob selecting the files that declare the group's pins.</summary>
     [JsonSchemaExample("\"path/to/MyPackages.props\"")]
-    [Description("Glob, relative to the home directory, selecting the files that declare the group's pins.")]
+    [Description("Home-relative glob selecting the files that declare the group's pins.")]
     public required string Files { get; init; }
 
     /// <summary>Gets the MSBuild item name the group's pins are declared as.</summary>
@@ -33,8 +33,6 @@ public sealed record AdditionalPackagesJsonConfig
     /// <summary>Gets the policy governing the group's pins, or <see langword="null"/> when unstated.</summary>
     [JsonAllowedValues(UpdatePolicySyntax.PackagePolicyValues)]
     [JsonSchemaExample("\"minor\"")]
-    [Description(
-        "How far an automatic update may move a pin of this group. A trailing - allows prerelease versions. "
-        + "Defaults to the policy of the packages scope.")]
+    [Description("How far an automatic update may move a pin of this group.")]
     public string? Policy { get; init; }
 }

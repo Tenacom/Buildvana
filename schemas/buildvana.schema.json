@@ -15,7 +15,7 @@
       "type": "object",
       "properties": {
         "branches": {
-          "description": "Regular expressions (implicitly anchored, matched against the whole short branch name) identifying branches that produce public releases.",
+          "description": "Anchored regular expressions matching public-release branches.",
           "examples": [
             [
               "^main$",
@@ -28,7 +28,7 @@
           }
         },
         "configuration": {
-          "description": "Build configuration used to produce release artifacts. Defaults to dotnet.configuration when omitted.",
+          "description": "Build configuration used to produce release artifacts.",
           "examples": [
             "Release"
           ],
@@ -49,7 +49,7 @@
           "default": "stable"
         },
         "emptyChangelog": {
-          "description": "Text substituted when a release has no changelog entries. When omitted or blank, an empty changelog fails the release.",
+          "description": "Text substituted when a release has no changelog entries.",
           "examples": [
             "This release contains no user-visible changes."
           ],
@@ -68,7 +68,7 @@
       "type": "object",
       "properties": {
         "prereleaseTag": {
-          "description": "Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.",
+          "description": "Prerelease tag. Without it, prerelease versions are not allowed.",
           "examples": [
             "preview"
           ],
@@ -266,7 +266,7 @@
           "type": "object",
           "properties": {
             "prerelease": {
-              "description": "Feed that prerelease versions are pushed to. When omitted, prerelease versions are pushed to the release feed.",
+              "description": "Feed prerelease versions are pushed to. Defaults to the release feed.",
               "type": "object",
               "properties": {
                 "source": {
@@ -386,7 +386,7 @@
           "type": "object",
           "properties": {
             "netsdk": {
-              "description": "How far an automatic update may move the .NET SDK version pinned in global.json. A trailing - allows prerelease versions.",
+              "description": "How far an automatic update may move the .NET SDK in global.json.",
               "type": "string",
               "enum": [
                 "disable",
@@ -405,7 +405,7 @@
               "default": "major"
             },
             "sdks": {
-              "description": "How far an automatic update may move an MSBuild project SDK pinned in global.json. A trailing - allows prerelease versions.",
+              "description": "How far an automatic update may move an MSBuild project SDK pin.",
               "type": "string",
               "enum": [
                 "disable",
@@ -424,7 +424,7 @@
               "default": "minor"
             },
             "tools": {
-              "description": "How far an automatic update may move a .NET local tool pinned in the tool manifest. A trailing - allows prerelease versions.",
+              "description": "How far an automatic update may move a .NET local tool pin.",
               "type": "string",
               "enum": [
                 "disable",
@@ -443,7 +443,7 @@
               "default": "minor"
             },
             "packages": {
-              "description": "How far an automatic update may move a NuGet package pin. A trailing - allows prerelease versions.",
+              "description": "How far an automatic update may move a NuGet package pin.",
               "type": "string",
               "enum": [
                 "disable",
@@ -465,10 +465,10 @@
           "additionalProperties": false
         },
         "policies": {
-          "description": "Update policy of individual packages, keyed by a pattern matched against a whole package id, with * standing for any run of characters. The first matching entry wins, so specific patterns go before general ones. Entries govern the sdks, tools, and packages scopes alike, and outrank the policy of an additional package group.",
+          "description": "Update policy of individual packages, keyed by a package id pattern.",
           "type": "object",
           "additionalProperties": {
-            "description": "How far an automatic update may move a pin whose package id matches. A trailing - allows prerelease versions.",
+            "description": "How far an automatic update may move a pin whose id matches.",
             "examples": [
               "patch"
             ],
@@ -497,14 +497,14 @@
           }
         },
         "additionalPackages": {
-          "description": "Groups of package pins declared in files of their own, keyed by the caption naming the group in listings. Pins of a group are updated like any other package pin, but are never pruned and never given transitive overrides.",
+          "description": "Groups of package pins declared in their own files, keyed by caption.",
           "type": "object",
           "additionalProperties": {
             "type": "object",
             "properties": {
               "caption": false,
               "files": {
-                "description": "Glob, relative to the home directory, selecting the files that declare the group\u0027s pins.",
+                "description": "Home-relative glob selecting the files that declare the group\u0027s pins.",
                 "examples": [
                   "path/to/MyPackages.props"
                 ],
@@ -522,7 +522,7 @@
                 "pattern": "\\S"
               },
               "policy": {
-                "description": "How far an automatic update may move a pin of this group. A trailing - allows prerelease versions. Defaults to the policy of the packages scope.",
+                "description": "How far an automatic update may move a pin of this group.",
                 "examples": [
                   "minor"
                 ],
@@ -561,7 +561,7 @@
       "additionalProperties": false
     },
     "fileBasedApps": {
-      "description": "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives read only .cs files within this scope.",
+      "description": "Gitignore-syntax patterns naming the repository\u0027s file-based C# apps.",
       "examples": [
         [
           "/tools/"

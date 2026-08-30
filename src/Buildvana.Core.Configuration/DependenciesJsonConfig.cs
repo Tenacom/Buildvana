@@ -25,17 +25,10 @@ public sealed record DependenciesJsonConfig
     public DependencyScopesJsonConfig? Scopes { get; init; }
 
     /// <summary>Gets the <c>policies</c> entries, in document order.</summary>
-    [Description(
-        "Update policy of individual packages, keyed by a pattern matched against a whole package id, "
-        + "with * standing for any run of characters. The first matching entry wins, so specific patterns "
-        + "go before general ones. Entries govern the sdks, tools, and packages scopes alike, and outrank "
-        + "the policy of an additional package group.")]
+    [Description("Update policy of individual packages, keyed by a package id pattern.")]
     public IReadOnlyList<UpdatePolicyRuleJsonConfig>? Policies { get; init; }
 
     /// <summary>Gets the <c>additionalPackages</c> entries, in document order.</summary>
-    [Description(
-        "Groups of package pins declared in files of their own, keyed by the caption naming the group in "
-        + "listings. Pins of a group are updated like any other package pin, but are never pruned and never "
-        + "given transitive overrides.")]
+    [Description("Groups of package pins declared in their own files, keyed by caption.")]
     public IReadOnlyList<AdditionalPackagesJsonConfig>? AdditionalPackages { get; init; }
 }

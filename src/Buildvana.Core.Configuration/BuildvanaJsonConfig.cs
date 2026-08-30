@@ -82,10 +82,7 @@ public sealed record BuildvanaJsonConfig
 
     /// <summary>Gets the <c>fileBasedApps</c> patterns.</summary>
     [JsonSchemaExample("""["/tools/"]""")]
-    [Description(
-        "Gitignore-syntax patterns naming files and directories that hold file-based C# apps, "
-        + "added to the built-in .buildvana/hooks/ scope. Commands that scan for #: directives "
-        + "read only .cs files within this scope.")]
+    [Description("Gitignore-syntax patterns naming the repository's file-based C# apps.")]
     [JsonSchemaNoDefault] // The stated patterns add to the built-in scope; a default would read as replacing it.
     public IReadOnlyList<string>? FileBasedApps { get; init; }
 }

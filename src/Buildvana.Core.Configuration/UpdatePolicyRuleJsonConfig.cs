@@ -23,8 +23,6 @@ public sealed record UpdatePolicyRuleJsonConfig
     /// <summary>Gets the policy, which is the member value.</summary>
     [JsonAllowedValues(UpdatePolicySyntax.PackagePolicyValues)]
     [JsonSchemaExample("\"patch\"")]
-    [Description(
-        "How far an automatic update may move a pin whose package id matches. "
-        + "A trailing - allows prerelease versions.")]
+    [Description("How far an automatic update may move a pin whose id matches.")]
     public required string Policy { get; init; }
 }
