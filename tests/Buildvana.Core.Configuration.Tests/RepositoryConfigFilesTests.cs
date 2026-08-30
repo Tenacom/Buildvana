@@ -112,7 +112,7 @@ internal sealed class RepositoryConfigFilesTests
 
             if (index == next.Count)
             {
-                return $"{CurrentFileName}({i + 1}): {current[i]}";
+                return $"{CurrentFileName}({i + 1}) not carried by {NextFileName}: {current[i]}";
             }
 
             index++;
