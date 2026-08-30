@@ -61,8 +61,9 @@ public static class BuildvanaJsonConfigExample
     /// </summary>
     /// <returns>The file text, using LF line endings and a trailing newline.</returns>
     /// <exception cref="InvalidOperationException">
-    /// <para>A schema property states no value the example could carry, or a keyed object states no example
-    /// member name, or a description is too long to fit two comment lines.</para>
+    /// <para>A schema property states no value the example could carry, or states both an example and
+    /// members of its own, or a keyed object states no example member name, or a description is too long
+    /// to fit two comment lines.</para>
     /// </exception>
     public static string Generate()
     {
@@ -203,6 +204,16 @@ public static class BuildvanaJsonConfigExample
         // where its default is absent or unhelpful, so in practice the two never compete.
         if (schema["examples"] is JsonArray { Count: > 0 } examples)
         {
+            // An example on a section would stand in for the section, dropping every member and every
+            // nested description with it. Nothing else would notice, and the loss would reach the
+            // committed file, so refuse the annotation here.
+            if (schema["properties"] is JsonObject)
+            {
+                throw new InvalidOperationException(
+                    $"The setting '{path}' states both an example and members of its own. The example "
+                    + "would replace the members and their descriptions. Annotate the members instead.");
+            }
+
             _ = text.Append(FormatValue(examples[0]));
             return;
         }
