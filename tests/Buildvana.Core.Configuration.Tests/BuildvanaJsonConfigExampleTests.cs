@@ -333,6 +333,17 @@ internal sealed class BuildvanaJsonConfigExampleTests
             .Throws<InvalidOperationException>();
     }
 
+    // A pointer may name a member that is not an object, which is not a schema either. That is the same
+    // failure as a pointer naming nothing, and it is reported the same way.
+    [Test]
+    public async Task ResolveReference_PointerToANonObject_Throws()
+    {
+        var root = SampleSchema();
+
+        await Assert.That(() => BuildvanaJsonConfigExample.ResolveReference(Reference("#/properties/args/type"), root, "args"))
+            .Throws<InvalidOperationException>();
+    }
+
     // The object a schema describes, without the fixed header above it. The header holds no brace of its own.
     private static string BodyOf(JsonObject root)
     {

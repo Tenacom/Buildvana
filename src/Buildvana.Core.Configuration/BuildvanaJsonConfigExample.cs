@@ -167,7 +167,7 @@ public static class BuildvanaJsonConfigExample
     /// <param name="root">The schema document the pointer is relative to.</param>
     /// <param name="path">The setting the reference was found at, for the error message.</param>
     /// <returns>The subschema the pointer names.</returns>
-    /// <exception cref="InvalidOperationException">The pointer does not resolve.</exception>
+    /// <exception cref="InvalidOperationException">The pointer does not name a subschema.</exception>
     /// <remarks>
     /// <para>A document-local pointer is the only kind the exporter emits, for a member type that occurs more
     /// than once. Internal, because the tests navigate the same schema and must see through the same
@@ -182,13 +182,18 @@ public static class BuildvanaJsonConfigExample
         JsonNode node = root;
         foreach (var token in pointer.Split('/').Skip(1))
         {
+            // A token missing from the document and a token indexing something that holds no members are the
+            // same failure: the pointer names nothing. Casting instead would report the second one as an
+            // InvalidCastException, naming neither the pointer nor the setting it was found at.
             var name = token.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal);
-            node = node[name]
-                ?? throw new InvalidOperationException(
-                    $"The reference '{pointer}' at '{path}' does not resolve within the schema.");
+            node = (node as JsonObject)?[name] ?? throw Unresolvable();
         }
 
-        return (JsonObject)node;
+        // A pointer may land on a string or an array, which is not a schema and has no members to write.
+        return node as JsonObject ?? throw Unresolvable();
+
+        InvalidOperationException Unresolvable()
+            => new($"The reference '{pointer}' at '{path}' does not name a subschema within the schema.");
     }
 
     // Writes an object body: every member preceded by its own description, and separated from the next by a
