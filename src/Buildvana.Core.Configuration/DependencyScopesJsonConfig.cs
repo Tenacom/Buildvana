@@ -22,28 +22,21 @@ public sealed record DependencyScopesJsonConfig
     /// <summary>Gets the policy governing the .NET SDK version.</summary>
     [JsonPropertyName("netsdk")]
     [JsonAllowedValues(UpdatePolicySyntax.NetSdkPolicyValues)]
-    [Description(
-        "How far an automatic update may move the .NET SDK version pinned in global.json. "
-        + "A trailing - allows prerelease versions.")]
+    [Description("How far an automatic update may move the .NET SDK in global.json.")]
     public string? NetSdk { get; init; }
 
     /// <summary>Gets the policy governing the MSBuild project SDKs.</summary>
     [JsonAllowedValues(UpdatePolicySyntax.PackagePolicyValues)]
-    [Description(
-        "How far an automatic update may move an MSBuild project SDK pinned in global.json. "
-        + "A trailing - allows prerelease versions.")]
+    [Description("How far an automatic update may move an MSBuild project SDK pin.")]
     public string? Sdks { get; init; }
 
     /// <summary>Gets the policy governing the .NET local tools.</summary>
     [JsonAllowedValues(UpdatePolicySyntax.PackagePolicyValues)]
-    [Description(
-        "How far an automatic update may move a .NET local tool pinned in the tool manifest. "
-        + "A trailing - allows prerelease versions.")]
+    [Description("How far an automatic update may move a .NET local tool pin.")]
     public string? Tools { get; init; }
 
     /// <summary>Gets the policy governing the NuGet package pins.</summary>
     [JsonAllowedValues(UpdatePolicySyntax.PackagePolicyValues)]
-    [Description(
-        "How far an automatic update may move a NuGet package pin. A trailing - allows prerelease versions.")]
+    [Description("How far an automatic update may move a NuGet package pin.")]
     public string? Packages { get; init; }
 }

@@ -16,7 +16,7 @@ public sealed record VersioningJsonConfig
 {
     /// <summary>Gets the prerelease tag applied to prerelease versions.</summary>
     [JsonSchemaExample("\"preview\"")]
-    [Description("Prerelease tag applied to prerelease versions. When omitted, prerelease versions are not allowed.")]
+    [Description("Prerelease tag. Without it, prerelease versions are not allowed.")]
     public string? PrereleaseTag { get; init; }
 
     /// <summary>Gets the assembly-version precision.</summary>

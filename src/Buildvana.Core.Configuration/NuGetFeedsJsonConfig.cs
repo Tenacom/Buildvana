@@ -13,7 +13,7 @@ namespace Buildvana.Core.Configuration;
 public sealed record NuGetFeedsJsonConfig
 {
     /// <summary>Gets the feed that prerelease versions are pushed to.</summary>
-    [Description("Feed that prerelease versions are pushed to. When omitted, prerelease versions are pushed to the release feed.")]
+    [Description("Feed prerelease versions are pushed to. Defaults to the release feed.")]
     public NuGetFeedJsonConfig? Prerelease { get; init; }
 
     /// <summary>Gets the feed that stable versions are pushed to.</summary>
