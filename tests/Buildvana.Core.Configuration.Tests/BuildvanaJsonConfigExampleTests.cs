@@ -101,8 +101,9 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var problem = await ProblemOf(root).ConfigureAwait(false);
 
         await Assert.That(problem).IsEqualTo(
-            "The setting 'section' states an example, and its value declares members or member names. The "
-            + "example would replace them, and every description inside. Annotate the members instead.");
+            "The setting 'section' states an example, and its value is a section: an object with members, "
+            + "or a keyed object. The example would replace the whole section, and every description "
+            + "inside. Annotate the members instead.");
     }
 
     // A keyed object is a section too: an example on one drops the member name it teaches, and the
@@ -122,8 +123,9 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var problem = await ProblemOf(root).ConfigureAwait(false);
 
         await Assert.That(problem).IsEqualTo(
-            "The setting 'groups' states an example, and its value declares members or member names. The "
-            + "example would replace them, and every description inside. Annotate the members instead.");
+            "The setting 'groups' states an example, and its value is a section: an object with members, "
+            + "or a keyed object. The example would replace the whole section, and every description "
+            + "inside. Annotate the members instead.");
     }
 
     // The exporter deduplicates a member type that occurs more than once, and an annotation stays beside the
@@ -153,8 +155,9 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var problem = await ProblemOf(root).ConfigureAwait(false);
 
         await Assert.That(problem).IsEqualTo(
-            "The setting 'section' states an example, and its value declares members or member names. The "
-            + "example would replace them, and every description inside. Annotate the members instead.");
+            "The setting 'section' states an example, and its value is a section: an object with members, "
+            + "or a keyed object. The example would replace the whole section, and every description "
+            + "inside. Annotate the members instead.");
     }
 
     // A dictionary is the one object an example illustrates whole: its member names are data the schema
