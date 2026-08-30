@@ -27,7 +27,7 @@ public sealed record AdditionalPackagesJsonConfig
 
     /// <summary>Gets the MSBuild item name the group's pins are declared as.</summary>
     [JsonSchemaExample("\"PackageVersion\"")]
-    [Description("MSBuild item name the group's pins are declared as, e.g. BV_PackageVersion.")]
+    [Description("MSBuild item name the group's pins are declared as.")]
     public required string Items { get; init; }
 
     /// <summary>Gets the policy governing the group's pins, or <see langword="null"/> when unstated.</summary>

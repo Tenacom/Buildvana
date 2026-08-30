@@ -173,7 +173,7 @@
         // Home-relative glob selecting the files that declare the group's pins.
         "files": "path/to/MyPackages.props",
 
-        // MSBuild item name the group's pins are declared as, e.g. BV_PackageVersion.
+        // MSBuild item name the group's pins are declared as.
         "items": "PackageVersion",
 
         // How far an automatic update may move a pin of this group.
