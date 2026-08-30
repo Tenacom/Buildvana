@@ -64,9 +64,9 @@ public static class BuildvanaJsonConfigExample
     /// </summary>
     /// <returns>The file text, using LF line endings and a trailing newline.</returns>
     /// <exception cref="InvalidOperationException">
-    /// <para>A schema property states no value the example could carry, or states an example beside a value
-    /// that declares members or member names, or a keyed object states no example member name, or a
-    /// description does not fit the comment layer.</para>
+    /// <para>A schema property states no value the example could carry, or states an example beside a
+    /// section, or a keyed object states no example member name, or a description does not fit the comment
+    /// layer.</para>
     /// </exception>
     public static string Generate() => Generate((JsonObject)BuildvanaJsonConfigSchema.GenerateNode());
 
@@ -255,18 +255,18 @@ public static class BuildvanaJsonConfigExample
         {
             // An example on a section would stand in for the section, dropping every member and every
             // nested description with it. Nothing else would notice, and the loss would reach the
-            // committed file, so refuse the annotation here. A keyed object is a section too: it declares
-            // member names through propertyNames, which a plain dictionary does not, and a dictionary is
-            // the one object an example does illustrate whole. What the example would replace is not
-            // always declared here: a member whose type occurs more than once carries a "$ref" to the one
-            // copy the exporter kept, and the annotation sits beside the pointer.
+            // committed file, so refuse the annotation here. A keyed object is a section too: it states
+            // propertyNames, which is what marks it as keyed and which a plain dictionary does not state,
+            // and a dictionary is the one object an example does illustrate whole. What the example would
+            // replace is not always declared here: a member whose type occurs more than once carries a
+            // "$ref" to the one copy the exporter kept, and the annotation sits beside the pointer.
             var declaring = schema["$ref"] is null ? schema : ResolveReference(schema, root, path);
             if (declaring["properties"] is JsonObject || declaring["propertyNames"] is JsonObject)
             {
                 throw new InvalidOperationException(
-                    $"The setting '{path}' states an example, and its value declares members or member "
-                    + "names. The example would replace them, and every description inside. Annotate the "
-                    + "members instead.");
+                    $"The setting '{path}' states an example, and its value is a section: an object with "
+                    + "members, or a keyed object. The example would replace the whole section, and every "
+                    + "description inside. Annotate the members instead.");
             }
 
             _ = text.Append(FormatValue(examples[0]));
