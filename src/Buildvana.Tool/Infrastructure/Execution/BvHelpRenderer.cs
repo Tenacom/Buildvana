@@ -37,16 +37,21 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
     /// a single command's help page otherwise.
     /// </summary>
     /// <param name="node">The node to describe.</param>
+    /// <remarks>
+    /// <para>A node that is an alias is described through the node it names, so that one command has one help
+    /// page under one name, whichever name was typed to reach it. The page advertises the alias.</para>
+    /// </remarks>
     public void WriteNodeHelp(CommandNode node)
     {
         Guard.IsNotNull(node);
-        if (node.HasChildren)
+        var described = node.CanonicalNode ?? node;
+        if (described.HasChildren)
         {
-            WriteGroupHelp(node);
+            WriteGroupHelp(described);
         }
         else
         {
-            WriteCommandHelp(node);
+            WriteCommandHelp(described);
         }
     }
 
@@ -120,6 +125,7 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         // When the node is also a command (one aliased onto the group's path), the subcommand is optional:
         // invoking the group bare runs that command.
         WriteUsage(node.Command is null ? $"{node.FullName} <SUBCOMMAND>" : $"{node.FullName} [SUBCOMMAND]");
+        WriteAliases(node);
         WriteSubcommands(node);
         if (node.Command?.SettingsType is { } settingsType)
         {
@@ -140,6 +146,7 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         if (command.ConsumesAllArguments)
         {
             WriteUsage($"{node.FullName} [-- <ARGS FORWARDED TO DOTNET>]");
+            WriteAliases(node);
             WriteGlobalOptions();
             WriteForwardedArguments();
         }
@@ -150,6 +157,7 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
             usageParts.AddRange(arguments.Select(static a => a.Template));
             usageParts.Add("[OPTIONS]");
             WriteUsage(string.Join(' ', usageParts));
+            WriteAliases(node);
             if (arguments.Count > 0)
             {
                 WriteOptionGrid("ARGUMENTS", arguments);
@@ -174,6 +182,20 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
         console.MarkupInterpolated($"    bv {tail}\n");
     }
 
+    private void WriteAliases(CommandNode node)
+    {
+        if (node.Aliases.Count == 0)
+        {
+            return;
+        }
+
+        console.Markup("\nALIASES:\n");
+        foreach (var alias in node.Aliases)
+        {
+            console.MarkupInterpolated($"    bv {alias.FullName}\n");
+        }
+    }
+
     private void WriteGlobalOptions()
     {
         var helpRow = (FormatNames(new BvOptionAttribute("-h|--help")), (string?)"Prints help information");
@@ -184,13 +206,16 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
     {
         console.Markup("\nCOMMANDS:\n");
         var grid = NewGrid();
-        foreach (var node in CommandRegistry.TopLevelNodes)
+
+        // An alias node names a command listed elsewhere, under the name that command's own row states
+        // beside its canonical one. Listing it again would read as a second command.
+        foreach (var node in CommandRegistry.TopLevelNodes.Where(static n => !n.IsAlias))
         {
             var description = Markup.Escape(StripTrailingPeriod(node.Description));
             var rendered = node.Command is { ConsumesAllArguments: true }
                 ? $"{description}   [grey][[forwards extra args to dotnet]][/]"
                 : description;
-            grid.AddRow(new Markup(Markup.Escape(node.Name)), new Markup(rendered));
+            grid.AddRow(new Markup(Markup.Escape(node.DisplayName)), new Markup(rendered));
         }
 
         console.Write(grid);
@@ -200,7 +225,7 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
     {
         console.Markup("\nSUBCOMMANDS:\n");
         var grid = NewGrid();
-        foreach (var child in node.Children)
+        foreach (var child in node.Children.Where(static c => !c.IsAlias))
         {
             var description = Markup.Escape(StripTrailingPeriod(child.Description));
             if (node.Command is not null && ReferenceEquals(child.Command, node.Command))
@@ -208,7 +233,7 @@ internal sealed class BvHelpRenderer(IAnsiConsole console)
                 description += "   [grey][[default]][/]";
             }
 
-            grid.AddRow(new Markup(Markup.Escape(child.Name)), new Markup(description));
+            grid.AddRow(new Markup(Markup.Escape(child.DisplayName)), new Markup(description));
         }
 
         console.Write(grid);
