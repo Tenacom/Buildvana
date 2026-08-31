@@ -61,7 +61,7 @@ internal sealed class DirectivePinReaderTests
     {
         using var home = new TempHomeDirectory();
         Write(home, "tools/report.cs", "#:package Serilog@\n");
-        await Assert.That(Read(home).Single().Form).IsEqualTo(PinVersionForm.Unrecognized);
+        await Assert.That(Read(home).Single().Management).IsEqualTo(PinManagement.UnreadableVersion);
     }
 
     [Test]

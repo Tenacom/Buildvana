@@ -18,11 +18,11 @@ internal sealed record NetSdkPin
     /// <summary>Gets the version text, exactly as <c>global.json</c> states it.</summary>
     public required string VersionText { get; init; }
 
-    /// <summary>Gets the form <see cref="VersionText"/> takes.</summary>
-    public required PinVersionForm Form { get; init; }
+    /// <summary>Gets whether <c>bv</c> manages the pin, and what stops it when it does not.</summary>
+    public required PinManagement Management { get; init; }
 
     /// <summary>
-    /// Gets the version, when <see cref="Form"/> is <see cref="PinVersionForm.Literal"/>; otherwise,
+    /// Gets the version, when <see cref="VersionText"/> states exactly one; otherwise,
     /// <see langword="null"/>.
     /// </summary>
     public NuGetVersion? Version { get; init; }
@@ -35,18 +35,18 @@ internal sealed record NetSdkPin
     public bool? AllowPrerelease { get; init; }
 
     /// <summary>
-    /// Creates a pin, reading the form and the version out of the version text.
+    /// Creates a pin, reading the version and what may be done with it out of the version text.
     /// </summary>
     /// <param name="versionText">The version text, as <c>global.json</c> states it.</param>
     /// <param name="allowPrerelease">The value of <c>sdk.allowPrerelease</c>, or <see langword="null"/>.</param>
     /// <returns>The pin.</returns>
     public static NetSdkPin Create(string versionText, bool? allowPrerelease)
     {
-        var form = PinVersion.Read(versionText, out var version);
+        var management = PinVersion.Read(versionText, out var version);
         return new NetSdkPin
         {
             VersionText = versionText,
-            Form = form,
+            Management = management,
             Version = version,
             AllowPrerelease = allowPrerelease,
         };

@@ -11,18 +11,18 @@ internal sealed class PinVersionTests
     [Arguments("1.2.3.4")]
     [Arguments("13.0")]
     [Arguments("  13.0.3  ")] // a Version child element carries the whitespace around its value
-    public async Task Read_OfAnExactVersion_IsLiteral(string text)
+    public async Task Read_OfAnExactVersion_IsManaged(string text)
     {
-        await Assert.That(PinVersion.Read(text, out var version)).IsEqualTo(PinVersionForm.Literal);
-        await Assert.That(version?.ToNormalizedString()).IsNotNull();
+        await Assert.That(PinVersion.Read(text, out var version)).IsEqualTo(PinManagement.Managed);
+        await Assert.That(version).IsNotNull();
     }
 
     [Test]
     [Arguments("[13.0.4]")]
     [Arguments("[13.0.4, 13.0.4]")]
-    public async Task Read_OfTheBracketFormOfOneVersion_IsBracketExact(string text)
+    public async Task Read_OfTheBracketFormOfOneVersion_SaysSo(string text)
     {
-        await Assert.That(PinVersion.Read(text, out var version)).IsEqualTo(PinVersionForm.BracketExact);
+        await Assert.That(PinVersion.Read(text, out var version)).IsEqualTo(PinManagement.BracketExactVersion);
         await Assert.That(version).IsNull();
     }
 
@@ -30,18 +30,18 @@ internal sealed class PinVersionTests
     [Arguments("[1.0,2.0)")]
     [Arguments("(1.0,)")]
     [Arguments("[1.0,]")]
-    public async Task Read_OfARange_IsRange(string text)
+    public async Task Read_OfARange_SaysSo(string text)
     {
-        await Assert.That(PinVersion.Read(text, out _)).IsEqualTo(PinVersionForm.Range);
+        await Assert.That(PinVersion.Read(text, out _)).IsEqualTo(PinManagement.VersionRange);
     }
 
     [Test]
     [Arguments("1.*")]
     [Arguments("*")]
     [Arguments("1.2.*-*")]
-    public async Task Read_OfAFloatingVersion_IsFloating(string text)
+    public async Task Read_OfAFloatingVersion_SaysSo(string text)
     {
-        await Assert.That(PinVersion.Read(text, out _)).IsEqualTo(PinVersionForm.Floating);
+        await Assert.That(PinVersion.Read(text, out _)).IsEqualTo(PinManagement.FloatingVersion);
     }
 
     [Test]
@@ -50,9 +50,9 @@ internal sealed class PinVersionTests
     [Arguments(null)]
     [Arguments("not a version")]
     [Arguments("$(SerilogVersion)")]
-    public async Task Read_OfAnythingElse_IsUnrecognized(string? text)
+    public async Task Read_OfAnythingElse_IsUnreadable(string? text)
     {
-        await Assert.That(PinVersion.Read(text, out var version)).IsEqualTo(PinVersionForm.Unrecognized);
+        await Assert.That(PinVersion.Read(text, out var version)).IsEqualTo(PinManagement.UnreadableVersion);
         await Assert.That(version).IsNull();
     }
 }
