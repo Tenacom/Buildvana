@@ -111,6 +111,55 @@ internal sealed class CommandRegistryTests
     }
 
     [Test]
+    public async Task BuildTree_MarksAGroupAliasAsAnAliasOfTheGroupItNames()
+    {
+        var command = new CommandRegistration([["alpha", "show"], ["al", "show"]], typeof(object), false, null);
+        var topLevelNodes = CommandRegistry.BuildTree([command]);
+        var alias = topLevelNodes.Single(n => n.Name == "al");
+        var canonical = topLevelNodes.Single(n => n.Name == "alpha");
+        await Assert.That(alias.IsAlias).IsTrue();
+        await Assert.That(alias.CanonicalNode).IsSameReferenceAs(canonical);
+        await Assert.That(canonical.Aliases.Single()).IsSameReferenceAs(alias);
+        await Assert.That(canonical.DisplayName).IsEqualTo("alpha, al");
+    }
+
+    [Test]
+    public async Task BuildTree_LinksEveryDepthOfAnAliasPath()
+    {
+        var command = new CommandRegistration([["alpha", "show"], ["al", "show"]], typeof(object), false, null);
+        var topLevelNodes = CommandRegistry.BuildTree([command]);
+        var alias = topLevelNodes.Single(n => n.Name == "al").FindChild("show")!;
+        await Assert.That(alias.CanonicalNode?.FullName).IsEqualTo("alpha show");
+    }
+
+    [Test]
+    public async Task BuildTree_LeavesAGroupAliasedOntoItsOwnSubcommandCanonical()
+    {
+        // The shape of `version show | version`: the group node is where two canonical paths pass, so it
+        // names itself and is listed as the command it is.
+        var show = new CommandRegistration([["version", "show"], ["version"]], typeof(object), false, null);
+        var advance = new CommandRegistration([["version", "advance"]], typeof(string), false, null);
+        var topLevelNodes = CommandRegistry.BuildTree([show, advance]);
+        var group = topLevelNodes.Single();
+        await Assert.That(group.IsAlias).IsFalse();
+        await Assert.That(group.DisplayName).IsEqualTo("version");
+    }
+
+    [Test]
+    public async Task BuildTree_Throws_WhenOneAliasNamesTwoCanonicalPaths()
+    {
+        var first = new CommandRegistration([["alpha", "one"], ["x", "one"]], typeof(object), false, null);
+        var second = new CommandRegistration([["beta", "two"], ["x", "two"]], typeof(string), false, null);
+        await Assert.That(() => CommandRegistry.BuildTree([first, second])).Throws<InvalidOperationException>();
+    }
+
+    [Test]
+    public async Task TopLevelNodes_AreAllCanonical_InTheRealCommandTree()
+    {
+        await Assert.That(CommandRegistry.TopLevelNodes.Any(static n => n.IsAlias)).IsFalse();
+    }
+
+    [Test]
     public async Task ValidateArgumentOrder_Accepts_RequiredArgumentsFirst()
     {
         var command = new CommandRegistration([["fake"]], typeof(object), false, typeof(FakeOrderedArgumentSettings));

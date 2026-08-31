@@ -107,32 +107,31 @@ internal static class CommandRegistry
 
     /// <summary>
     /// Builds a command tree from the given commands, failing fast on duplicate paths, and returns its top-level
-    /// nodes ordered for help display. Exposed to tests; production code uses <see cref="TopLevelNodes"/>.
+    /// nodes ordered for help display. Every node a command's alias path adds is linked to the node of the same
+    /// depth of its canonical path, which is what lets help state an alias as one.
+    /// Exposed to tests; production code uses <see cref="TopLevelNodes"/>.
     /// </summary>
     /// <param name="commands">The commands to arrange in a tree.</param>
     /// <returns>The top-level nodes of the tree.</returns>
-    /// <exception cref="InvalidOperationException">Two commands register the same path.</exception>
+    /// <exception cref="InvalidOperationException">Two commands register the same path, or one alias path
+    /// names two different canonical paths.</exception>
     internal static IReadOnlyList<CommandNode> BuildTree(IReadOnlyList<CommandRegistration> commands)
     {
         var root = new CommandNode(string.Empty, string.Empty);
+
+        // Canonical paths go in first, so that every node one of them passes through is known to carry a name
+        // of its own before any alias path reaches it.
         foreach (var command in commands)
         {
-            foreach (var path in command.AliasPaths)
+            AddPath(root, command.CanonicalPath, command, onCanonicalPath: true);
+        }
+
+        foreach (var command in commands)
+        {
+            foreach (var path in command.AliasPaths.Skip(1))
             {
-                var node = root;
-                foreach (var segment in path)
-                {
-                    node = node.GetOrAddChild(segment);
-                }
-
-                if (node.Command is not null)
-                {
-                    throw new InvalidOperationException(
-                        $"Command path '{node.FullName}' is registered by both {node.Command.CommandType.Name} "
-                        + $"and {command.CommandType.Name}.");
-                }
-
-                node.Command = command;
+                AddPath(root, path, command, onCanonicalPath: false);
+                LinkAlias(root, path, command.CanonicalPath);
             }
         }
 
@@ -253,6 +252,66 @@ internal static class CommandRegistry
         }
 
         return node;
+    }
+
+    // Adds one of a command's paths to the tree, failing fast when two commands claim the same path.
+    private static void AddPath(
+        CommandNode root,
+        IReadOnlyList<string> path,
+        CommandRegistration command,
+        bool onCanonicalPath)
+    {
+        var node = root;
+        foreach (var segment in path)
+        {
+            node = node.GetOrAddChild(segment);
+            node.IsOnCanonicalPath |= onCanonicalPath;
+        }
+
+        if (node.Command is not null)
+        {
+            throw new InvalidOperationException(
+                $"Command path '{node.FullName}' is registered by both {node.Command.CommandType.Name} "
+                + $"and {command.CommandType.Name}.");
+        }
+
+        node.Command = command;
+    }
+
+    // Marks each node of an alias path as an alias of the node at the same depth of the canonical path:
+    // `deps show` names `dependencies show`, and its parent `deps` names `dependencies`. Two kinds of node
+    // are skipped. One is a node a canonical path passes through, which carries a name of its own: `version`,
+    // the group `version show` is aliased onto, is the command tree's own example. The other is a node
+    // already aliased, which happens as soon as two commands share an alias prefix.
+    private static void LinkAlias(CommandNode root, IReadOnlyList<string> aliasPath, IReadOnlyList<string> canonicalPath)
+    {
+        var aliasNode = root;
+        var canonicalNode = root;
+        for (var depth = 0; depth < aliasPath.Count; depth++)
+        {
+            aliasNode = aliasNode.FindChild(aliasPath[depth])!;
+
+            // An alias may be shorter than the path it names, as `version` is for `version show`. Its last
+            // node then names the canonical node of the same depth, which for `version` is itself.
+            canonicalNode = canonicalNode.FindChild(canonicalPath[Math.Min(depth, canonicalPath.Count - 1)])!;
+            if (aliasNode.IsOnCanonicalPath || ReferenceEquals(aliasNode, canonicalNode))
+            {
+                continue;
+            }
+
+            if (aliasNode.CanonicalNode is { } named)
+            {
+                if (!ReferenceEquals(named, canonicalNode))
+                {
+                    throw new InvalidOperationException(
+                        $"Alias path '{aliasNode.FullName}' names both '{named.FullName}' and '{canonicalNode.FullName}'.");
+                }
+
+                continue;
+            }
+
+            canonicalNode.AddAlias(aliasNode);
+        }
     }
 
     private static void AssignDescriptions(CommandNode node)
