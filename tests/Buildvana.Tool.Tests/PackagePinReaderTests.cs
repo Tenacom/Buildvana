@@ -149,6 +149,40 @@ internal sealed class PackagePinReaderTests
         await Assert.That(Read(home, Dump(home, item)).Single().MetadataPolicy).IsEqualTo("patch-");
     }
 
+    // MSBuild has no absent metadatum, so an element a file leaves empty evaluates to its own layout. What
+    // the file states there is nothing, and the policy of the pin is the one its scope or a pattern gives it.
+    [Test]
+    public async Task Read_OfAnEmptyPolicyElement_StatesNoPolicy()
+    {
+        using var home = new TempHome();
+        Write(home, ProjectFileName, OneItemProject("PackageVersion", "Serilog", "4.0.0"));
+        var item = Item("PackageVersion", "Serilog", "4.0.0", updatePolicy: "\n      \n    ");
+        await Assert.That(Read(home, Dump(home, item)).Single().MetadataPolicy).IsNull();
+    }
+
+    // A version element a file leaves empty states no version, so the item is a reference to a pin declared
+    // elsewhere, exactly as a PackageReference under central package management is.
+    [Test]
+    public async Task Read_OfAnEmptyVersionElement_IsNoPin()
+    {
+        using var home = new TempHome();
+        Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
+        await Assert.That(Read(home, Dump(home, Item("PackageReference", "Serilog", "\n      \n    ")))).IsEmpty();
+    }
+
+    // Each metadatum is judged on its own: an empty VersionOverride element overrides nothing, and the pin is
+    // the managed one the version states.
+    [Test]
+    public async Task Read_OfAnEmptyVersionOverrideElement_IsNotAnOverride()
+    {
+        using var home = new TempHome();
+        Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
+        var item = Item("PackageReference", "Serilog", "4.0.0", versionOverride: "\n      \n    ");
+        var pin = Read(home, Dump(home, item)).Single();
+        await Assert.That(pin.Management).IsEqualTo(PinManagement.Managed);
+        await Assert.That(pin.VersionText).IsEqualTo("4.0.0");
+    }
+
     // A version applied from elsewhere through Update="..." is attributed to the file that included it,
     // where no literal version lives.
     [Test]
