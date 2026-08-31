@@ -64,7 +64,9 @@ public sealed class FakeProcessRunner : IProcessRunner
         InvokePerLine(result.StandardError, onStderr);
         if (throwOnNonZero && result.ExitCode != 0)
         {
-            throw new BuildFailedException($"Process failed with exit code {result.ExitCode}: {commandLine}");
+            throw new BuildFailedException(
+                ExitCodes.ExternalProgramFailed,
+                $"Process failed with exit code {result.ExitCode}: {commandLine}");
         }
 
         return Task.FromResult(result);

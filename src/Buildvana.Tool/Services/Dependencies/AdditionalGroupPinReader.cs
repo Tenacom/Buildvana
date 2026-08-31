@@ -12,7 +12,6 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Process;
 using Buildvana.Runtime;
-using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Utilities;
 
 namespace Buildvana.Tool.Services.Dependencies;
@@ -90,7 +89,7 @@ internal sealed class AdditionalGroupPinReader(
         }
         catch (JsonException e)
         {
-            throw new BuildFailedException(ExitCodes.StepFailed, $"Could not read the items of '{path}': {e.Message}", e);
+            throw new BuildFailedException(ExitCodes.ExternalProgramFailed, $"Could not read the items of '{path}': {e.Message}", e);
         }
 
         return root?["Items"]?[itemName] as JsonArray;
@@ -181,7 +180,7 @@ internal sealed class AdditionalGroupPinReader(
         }
 
         throw new BuildFailedException(
-            ExitCodes.StepFailed,
+            ExitCodes.ExternalProgramFailed,
             $"MSBuild could not evaluate '{relativePath}' (exit code {result.ExitCode}).");
     }
 }

@@ -153,12 +153,9 @@ The command works offline. The MSBuild evaluation it runs for the `packages` sco
 
 ## Exit codes
 
-| Code | Meaning                                                     |
-| ---- | ------------------------------------------------------------ |
-| 0    | The command completed.                                      |
-| 1    | The repository is in a state the command cannot work with, or its configuration could not be read. |
-| 2    | The command line names something `bv` does not know, or asks for something impossible. |
-| 3    | A step could not complete: MSBuild failed, or a file could not be read. Warnings say which. |
+The dependency commands return the [exit codes every `bv` command returns](ToolDiagnostics.md#exit-codes), with no meaning of their own added.
+
+Code 3 is the one a reader of a report should know about: it says that MSBuild failed, or that it answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages.
 
 ## What the SDK contributes
 

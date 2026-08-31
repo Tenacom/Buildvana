@@ -114,6 +114,21 @@ internal sealed class ProcessRunnerTests
         }
     }
 
+    // A failing child is a failing child, whatever number it chose to say so with: the exception states that
+    // an external program failed, and the child's own code stays in the message.
+    [Test]
+    public async Task Run_WhenTheChildFails_StatesThatAnExternalProgramFailed()
+    {
+        var runner = new ProcessRunner();
+        var (executable, args) = ShellCommand("exit 9", "exit 9");
+
+        var exception = await Assert.That(async () => await runner.RunAsync(executable, args).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
+        await Assert.That(exception.Message).Contains("exited with code 9");
+    }
+
     [Test]
     public async Task RunWithInheritedStdio_WithMissingExecutable_Fails()
     {
