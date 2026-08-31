@@ -260,9 +260,9 @@ internal sealed class ReleaseCommand(
                 isPublicRelease: version.IsPublicRelease,
                 producedPackages: producedPackages,
                 dogfooding: dogfooding);
-            var (hookRan, hookUpdates) = await git.TrackChangesAsync(
-                () => hookRunner.RunHookAsync(hookArgs, cancellationToken)).ConfigureAwait(false);
-            if (hookRan)
+            var (hookOutcome, hookUpdates) = await git.TrackChangesAsync(
+                () => hookRunner.RunHookAsync(hookArgs, cancellationToken: cancellationToken)).ConfigureAwait(false);
+            if (hookOutcome != HookOutcome.NoHook)
             {
                 switch (hookUpdates.Count)
                 {

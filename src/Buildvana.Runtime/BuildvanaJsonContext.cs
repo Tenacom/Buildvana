@@ -31,6 +31,7 @@ namespace Buildvana.Runtime;
     WriteIndented = true)]
 [JsonSerializable(typeof(BuildvanaConfig))]
 [JsonSerializable(typeof(PostReleaseHookArgs))]
+[JsonSerializable(typeof(PostUpdateHookArgs))]
 [SuppressMessage(
     "ApiDesign",
     "RS0041:Public members should not use oblivious types",

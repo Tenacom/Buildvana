@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Services;
 
@@ -20,18 +21,28 @@ internal sealed class FakeFileBasedAppRunner : IFileBasedAppRunner
     /// </summary>
     public Action<string, IReadOnlyDictionary<string, string?>?, string?>? OnRun { get; set; }
 
+    /// <summary>
+    /// Gets or sets the exit code the app is to answer with. The real runner throws on a non-zero exit code
+    /// unless the caller says otherwise, and so does this one.
+    /// </summary>
+    public int ExitCode { get; set; }
+
     /// <inheritdoc/>
     public Task<ProcessResult> RunFileBasedAppAsync(
         string path,
         IReadOnlyDictionary<string, string?>? environment = null,
         string? workingDirectory = null,
+        bool throwOnNonZero = true,
         CancellationToken cancellationToken = default)
     {
         Runs.Add((path, environment, workingDirectory));
         OnRun?.Invoke(path, environment, workingDirectory);
-        return Task.FromResult(Result($"dotnet run {path}"));
-    }
+        var commandLine = $"dotnet run {path}";
+        if (throwOnNonZero && ExitCode != 0)
+        {
+            throw new BuildFailedException(ExitCodes.ExternalProgramFailed, $"Process failed with exit code {ExitCode}: {commandLine}");
+        }
 
-    private static ProcessResult Result(string commandLine)
-        => new(commandLine, 0, string.Empty, string.Empty, TimeSpan.Zero);
+        return Task.FromResult(new ProcessResult(commandLine, ExitCode, string.Empty, string.Empty, TimeSpan.Zero));
+    }
 }

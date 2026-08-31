@@ -280,6 +280,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         string path,
         IReadOnlyDictionary<string, string?>? environment = null,
         string? workingDirectory = null,
+        bool throwOnNonZero = true,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNullOrEmpty(path);
@@ -291,6 +292,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             ["run", path],
             environment: ChildEnvironment(environment),
             workingDirectory: workingDirectory,
+            throwOnNonZero: throwOnNonZero,
             onStdout: x => _reporter.ChildOutput(x, null),
             onStderr: x => _reporter.ChildError(x, null),
             cancellationToken: cancellationToken);
