@@ -19,6 +19,9 @@ namespace Buildvana.Core.Json;
 /// </summary>
 public sealed partial class JsonHelper : IJsonHelper
 {
+    private static readonly byte[] TrueBytes = "true"u8.ToArray();
+    private static readonly byte[] FalseBytes = "false"u8.ToArray();
+
     /// <inheritdoc cref="IJsonHelper.ParseObject"/>
     public JsonObject ParseObject(string str, string description = "The provided string")
     {
@@ -108,7 +111,41 @@ public sealed partial class JsonHelper : IJsonHelper
     {
         Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNull(rewriter);
+        return Rewrite(path, (jsonSpan, offset) => CollectValueEdits(jsonSpan, offset, rewriter, booleanRewriter: null));
+    }
 
+    /// <inheritdoc cref="IJsonHelper.RewriteBooleanValues"/>
+    public bool RewriteBooleanValues(string path, JsonBooleanValueRewriter rewriter)
+    {
+        Guard.IsNotNullOrEmpty(path);
+        Guard.IsNotNull(rewriter);
+        return Rewrite(path, (jsonSpan, offset) => CollectValueEdits(jsonSpan, offset, stringRewriter: null, rewriter));
+    }
+
+    /// <inheritdoc cref="IJsonHelper.GetPropertyValue{T}"/>
+    public T GetPropertyValue<T>(JsonObject json, string propertyName, string objectDescription = "JSON object")
+    {
+        Guard.IsNotNull(json);
+
+        BuildFailedException.ThrowIfNot(json.TryGetPropertyValue(propertyName, out var property), $"Json property {propertyName} not found in {objectDescription}.");
+        switch (property)
+        {
+            case null:
+                throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is null.");
+            case JsonValue value:
+                BuildFailedException.ThrowIfNot(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
+                return result;
+            default:
+                throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
+        }
+    }
+
+    private static bool HasUtf8Bom(ReadOnlySpan<byte> bytes)
+        => bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+
+    // The splice itself is the same whatever kind of value a walker collected edits for.
+    private static bool Rewrite(string path, EditCollector collect)
+    {
         var originalBytes = UserFile.ReadAllBytes(path);
 
         // Utf8JsonReader rejects a leading UTF-8 BOM; skip it for parsing but preserve it on rewrite.
@@ -117,7 +154,7 @@ public sealed partial class JsonHelper : IJsonHelper
         List<JsonValueEdit> edits;
         try
         {
-            edits = CollectJsonStringEdits(originalBytes.AsSpan(bomLength), bomLength, rewriter);
+            edits = collect(originalBytes.AsSpan(bomLength), bomLength);
         }
         catch (JsonException e)
         {
@@ -152,28 +189,13 @@ public sealed partial class JsonHelper : IJsonHelper
         return true;
     }
 
-    /// <inheritdoc cref="IJsonHelper.GetPropertyValue{T}"/>
-    public T GetPropertyValue<T>(JsonObject json, string propertyName, string objectDescription = "JSON object")
-    {
-        Guard.IsNotNull(json);
-
-        BuildFailedException.ThrowIfNot(json.TryGetPropertyValue(propertyName, out var property), $"Json property {propertyName} not found in {objectDescription}.");
-        switch (property)
-        {
-            case null:
-                throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is null.");
-            case JsonValue value:
-                BuildFailedException.ThrowIfNot(value.TryGetValue<T>(out var result), $"Json property {propertyName} in {objectDescription} cannot be converted to a {typeof(T).Name}.");
-                return result;
-            default:
-                throw new BuildFailedException($"Json property {propertyName} in {objectDescription} is a {property.GetType().Name}, not a {nameof(JsonValue)}.");
-        }
-    }
-
-    private static bool HasUtf8Bom(ReadOnlySpan<byte> bytes)
-        => bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
-
-    private static List<JsonValueEdit> CollectJsonStringEdits(ReadOnlySpan<byte> jsonSpan, int offsetInFile, JsonStringValueRewriter rewriter)
+    // One walk serves both kinds of value: the bookkeeping that keeps the property path honest is all of the
+    // work, and none of it depends on what a value holds.
+    private static List<JsonValueEdit> CollectValueEdits(
+        ReadOnlySpan<byte> jsonSpan,
+        int offsetInFile,
+        JsonStringValueRewriter? stringRewriter,
+        JsonBooleanValueRewriter? booleanRewriter)
     {
         var reader = new Utf8JsonReader(
             jsonSpan,
@@ -227,16 +249,26 @@ public sealed partial class JsonHelper : IJsonHelper
                 case JsonTokenType.String:
                     // Only invoke the rewriter for string values that are direct properties of an object;
                     // string elements of arrays have no pending property name and are skipped on purpose.
-                    if (pendingProperty is not null)
+                    if (pendingProperty is not null && stringRewriter is not null)
                     {
-                        TryRecordStringEdit(ref reader, offsetInFile, rewriter, pathSegments, pendingProperty, edits);
-                        pendingProperty = null;
+                        TryRecordStringEdit(ref reader, offsetInFile, stringRewriter, pathSegments, pendingProperty, edits);
                     }
 
+                    pendingProperty = null;
+                    break;
+
+                case JsonTokenType.True:
+                case JsonTokenType.False:
+                    if (pendingProperty is not null && booleanRewriter is not null)
+                    {
+                        TryRecordBooleanEdit(ref reader, offsetInFile, booleanRewriter, pathSegments, pendingProperty, edits);
+                    }
+
+                    pendingProperty = null;
                     break;
 
                 default:
-                    // Any other primitive value (Number / True / False / Null) consumes the pending name.
+                    // Any other primitive value (Number / Null) consumes the pending name.
                     pendingProperty = null;
                     break;
             }
@@ -270,5 +302,29 @@ public sealed partial class JsonHelper : IJsonHelper
         var innerLength = reader.ValueSpan.Length;
         var encoded = JsonEncodedText.Encode(newValue.AsSpan(), JavaScriptEncoder.UnsafeRelaxedJsonEscaping).EncodedUtf8Bytes.ToArray();
         edits.Add(new JsonValueEdit(innerStart, innerLength, encoded));
+    }
+
+    private static void TryRecordBooleanEdit(
+        ref Utf8JsonReader reader,
+        int offsetInFile,
+        JsonBooleanValueRewriter rewriter,
+        List<string> pathSegments,
+        string propertyName,
+        List<JsonValueEdit> edits)
+    {
+        var currentValue = reader.GetBoolean();
+        pathSegments.Add(propertyName);
+        var newValue = rewriter(pathSegments, currentValue);
+        pathSegments.RemoveAt(pathSegments.Count - 1);
+
+        if (newValue is not { } value || value == currentValue)
+        {
+            return;
+        }
+
+        // A boolean is its own literal: TokenStartIndex points at its first byte, and ValueSpan covers it
+        // whole. Whatever surrounds it is deliberately untouched.
+        var start = (int)reader.TokenStartIndex + offsetInFile;
+        edits.Add(new JsonValueEdit(start, reader.ValueSpan.Length, value ? TrueBytes : FalseBytes));
     }
 }

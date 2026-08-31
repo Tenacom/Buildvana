@@ -53,6 +53,23 @@ public interface IJsonHelper
     bool RewriteStringValues(string path, JsonStringValueRewriter rewriter);
 
     /// <summary>
+    /// Rewrites the value of one or more JSON boolean properties in a file in place, preserving every byte
+    /// not covered by an actual replacement.
+    /// </summary>
+    /// <param name="path">The path of the file to rewrite.</param>
+    /// <param name="rewriter">A callback invoked once per boolean-valued property of an object reached during
+    /// a depth-first walk of the document. Returning <see langword="null"/> (or the unchanged value) leaves
+    /// the property alone; returning the other value queues a splice at that exact location.</param>
+    /// <returns><see langword="true"/> if at least one property was actually changed and the file was rewritten;
+    /// <see langword="false"/> if no callback returned a changed value (the file is left untouched on disk).</returns>
+    /// <remarks>
+    /// <para>What <see cref="RewriteStringValues"/> does for a string value, this does for a boolean one, and
+    /// with the same promise: the document is not reformatted, so line endings, indentation, blank lines,
+    /// comments, the trailing newline (if any) and a UTF-8 BOM (if any) are preserved exactly.</para>
+    /// </remarks>
+    bool RewriteBooleanValues(string path, JsonBooleanValueRewriter rewriter);
+
+    /// <summary>
     /// Inserts a property into an object of a JSON file in place, preserving every byte outside the
     /// insertion point.
     /// </summary>
