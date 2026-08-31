@@ -10,6 +10,9 @@
   - [`BV_IsLibraryProject`](#bv_islibraryproject)
   - [`BV_IsTestProject`](#bv_istestproject)
   - [`BV_IsNoTargetsProject`](#bv_isnotargetsproject)
+- [Dependency management](#dependency-management)
+  - [`BV_PinDumpDirectory`](#bv_pindumpdirectory)
+  - [`BV_SuppressTransitiveOverrides`](#bv_suppresstransitiveoverrides)
 
 ## Overview
 
@@ -63,3 +66,15 @@ This property is `true` if the project uses the `Microsoft.Build.NoTargets` SDK.
 By default, both standard analyzers and public API analyzers are disabled for this type of project.
 
 By default, XML documentation generation is disabled for this type of project.
+
+## Dependency management
+
+These two properties are how `bv dependencies` steers the evaluation of a project. Unlike the properties above, they are not computed by the SDK: `bv` passes them on the command line, and the SDK obeys.
+
+### `BV_PinDumpDirectory`
+
+The directory the `BV_DumpPackagePins` target writes to. The target dumps the project's evaluated package items — one file per project and target framework — and `bv` reads the files back to see the solution's package pins. The target does nothing when the property is unset, which is every build but the one `bv` asks for.
+
+### `BV_SuppressTransitiveOverrides`
+
+Set to `true`, this property tells the SDK not to import the transitive override files (`Directory.TransitiveOverrides.props` at the home directory, and `<ProjectName>.TransitiveOverrides.props` beside a project). `bv` sets it when it needs NuGet's verdict on the dependency graph as it stands without overrides, which is what it computes the next set of overrides from. Suppressing the import beats deleting the files: an interrupted run then leaves nothing to put back.

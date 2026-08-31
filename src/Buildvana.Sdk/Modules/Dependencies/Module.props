@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    Imports the transitive override files `bv dependencies` generates, when they exist.
+
+    An override lifts a package the repository does not reference directly out of a version a security
+    advisory covers. The central file holds the override versions for projects using central package
+    management; a project's own file promotes the packages that project must lift to references of its own.
+    Both files are machine-generated and bv-owned: nothing here creates, reads or judges them.
+
+    Setting BV_SuppressTransitiveOverrides tells this module to leave them out of the evaluation. bv sets it
+    to obtain NuGet's verdict on the graph as it stands without overrides, which is what it computes the
+    next set of overrides from. The property exists so that no run of bv ever has to delete the files and
+    put them back, which an interrupted run would leave undone.
+  -->
+
+  <PropertyGroup>
+    <BV_SuppressTransitiveOverrides Condition="'$(BV_SuppressTransitiveOverrides)' != 'true'">false</BV_SuppressTransitiveOverrides>
+    <_BV_CentralTransitiveOverridesFile>$(HomeDirectory)Directory.TransitiveOverrides.props</_BV_CentralTransitiveOverridesFile>
+    <_BV_ProjectTransitiveOverridesFile>$(MSBuildProjectDirectory)\$(MSBuildProjectName).TransitiveOverrides.props</_BV_ProjectTransitiveOverridesFile>
+  </PropertyGroup>
+
+  <ImportGroup Condition="!$(BV_SuppressTransitiveOverrides)">
+    <Import Project="$(_BV_CentralTransitiveOverridesFile)" Condition="Exists('$(_BV_CentralTransitiveOverridesFile)')" />
+    <Import Project="$(_BV_ProjectTransitiveOverridesFile)" Condition="Exists('$(_BV_ProjectTransitiveOverridesFile)')" />
+  </ImportGroup>
+
+</Project>

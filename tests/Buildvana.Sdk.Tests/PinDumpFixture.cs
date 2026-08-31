@@ -46,7 +46,7 @@ internal sealed class PinDumpFixture : IDisposable
                        <Project>
                          <UsingTask TaskName="WritePackagePinDump" AssemblyFile="{tasksAssembly}" />
                        {projectBody}
-                         <Import Project="{GetMetadata("RealDependenciesModulePath")}" />
+                         <Import Project="{GetMetadata("RealDependenciesModuleTargetsPath")}" />
                        </Project>
                        """;
         Run(WriteFile("Test.proj", content));
