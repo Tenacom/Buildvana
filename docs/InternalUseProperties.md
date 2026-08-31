@@ -73,7 +73,7 @@ These two properties are how `bv dependencies` steers the evaluation of a projec
 
 ### `BV_PinDumpDirectory`
 
-The directory the `BV_DumpPackagePins` target writes to. The target dumps the project's evaluated package items — one file per project and target framework — and `bv` reads the files back to see the solution's package pins. The target does nothing when the property is unset, which is every build but the one `bv` asks for.
+The directory the `BV_DumpPackagePins` target writes to. The target dumps the project's evaluated package items — one file per project and target framework — and `bv` reads the files back to see the solution's package pins. No other target depends on `BV_DumpPackagePins`, so an ordinary build never runs it. Whoever asks for it must set this property: the task that writes the dump requires an output directory, and reports [BVSDK1050](SdkDiagnostics.md#buildvana-sdk-tasks-1050-1099) without one.
 
 ### `BV_SuppressTransitiveOverrides`
 
