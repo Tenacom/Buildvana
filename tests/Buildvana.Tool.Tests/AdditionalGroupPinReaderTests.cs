@@ -26,7 +26,7 @@ internal sealed class AdditionalGroupPinReaderTests
     [Test]
     public async Task ReadAsync_StatesThePinsOfEveryGroupFile()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
         var runner = Answer(home, ("StyleCop.Analyzers", "1.2.0-beta.556", "patch-"), ("Tools.InnoSetup", "7.1.0", null));
         var pins = await ReadAsync(home, runner).ConfigureAwait(false);
@@ -42,7 +42,7 @@ internal sealed class AdditionalGroupPinReaderTests
     [Test]
     public async Task ReadAsync_AsksMsBuildForTheGroupsItemName()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
         var runner = Answer(home, ("Tools.InnoSetup", "7.1.0", null));
         _ = await ReadAsync(home, runner).ConfigureAwait(false);
@@ -55,7 +55,7 @@ internal sealed class AdditionalGroupPinReaderTests
     [Test]
     public async Task ReadAsync_WithNoGroup_EvaluatesNothing()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var runner = new FakeProcessRunner();
         var pins = await new AdditionalGroupPinReader(home.Provider, new BuildvanaConfig(), runner, NullReporter.Instance)
             .ReadAsync()
@@ -68,7 +68,7 @@ internal sealed class AdditionalGroupPinReaderTests
     [Test]
     public async Task ReadAsync_LeavesOutAnItemDeclaredOutsideTheGlob()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
         var elsewhere = home.GetFullPath("src/Other/Imported.props");
         var runner = Answer(home, [("Tools.InnoSetup", "7.1.0", null)], declaringFile: elsewhere);
@@ -78,7 +78,7 @@ internal sealed class AdditionalGroupPinReaderTests
     [Test]
     public async Task ReadAsync_LeavesTheFamilyOut()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
         var runner = Answer(home, ("Buildvana.Runtime", "2.1.0", null));
         await Assert.That(await ReadAsync(home, runner).ConfigureAwait(false)).IsEmpty();
@@ -100,7 +100,7 @@ internal sealed class AdditionalGroupPinReaderTests
                                </Project>
                                """;
 
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, GroupFile, content);
         var runner = Answer(home, ("Tools.InnoSetup", "7.1.0", null));
         var pins = await ReadAsync(home, runner).ConfigureAwait(false);
@@ -110,7 +110,7 @@ internal sealed class AdditionalGroupPinReaderTests
     [Test]
     public async Task ReadAsync_WhenEvaluationFails_ReportsAFailedStep()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
         var runner = new FakeProcessRunner
         {
@@ -123,7 +123,7 @@ internal sealed class AdditionalGroupPinReaderTests
         await Assert.That(exception!.ExitCode).IsEqualTo(3);
     }
 
-    private static Task<IReadOnlyList<DependencyPin>> ReadAsync(TempHomeDirectory home, IProcessRunner runner)
+    private static Task<IReadOnlyList<DependencyPin>> ReadAsync(TempHome home, IProcessRunner runner)
     {
         var config = new BuildvanaConfig
         {
@@ -145,11 +145,11 @@ internal sealed class AdditionalGroupPinReaderTests
         return new AdditionalGroupPinReader(home.Provider, config, runner, NullReporter.Instance).ReadAsync();
     }
 
-    private static FakeProcessRunner Answer(TempHomeDirectory home, params (string Id, string Version, string? Policy)[] items)
+    private static FakeProcessRunner Answer(TempHome home, params (string Id, string Version, string? Policy)[] items)
         => Answer(home, items, home.GetFullPath(GroupFile));
 
     private static FakeProcessRunner Answer(
-        TempHomeDirectory home,
+        TempHome home,
         IReadOnlyList<(string Id, string Version, string? Policy)> items,
         string declaringFile)
     {
@@ -174,7 +174,7 @@ internal sealed class AdditionalGroupPinReaderTests
 
     private static string JsonPath(string path) => "\"" + path.Replace(@"\", @"\\", StringComparison.Ordinal) + "\"";
 
-    private static void Write(TempHomeDirectory home, string relativePath, string content)
+    private static void Write(TempHome home, string relativePath, string content)
     {
         var path = home.GetFullPath(relativePath);
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);

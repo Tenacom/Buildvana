@@ -19,7 +19,7 @@ internal sealed class SolutionPinReaderTests
     [Test]
     public async Task ReadAsync_RunsTheDumpTargetThroughADriverProject()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var runner = new FakeProcessRunner { OnRun = WriteDumps("A", "net10.0") };
         _ = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
         var args = string.Join(" ", runner.Runs.Single().Args);
@@ -33,7 +33,7 @@ internal sealed class SolutionPinReaderTests
     [Test]
     public async Task ReadAsync_ReturnsOneDumpPerFileTheTargetWrote()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var runner = new FakeProcessRunner { OnRun = WriteDumps("A", "net9.0", "net10.0") };
         var dumps = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
         await Assert.That(dumps.Count).IsEqualTo(2);
@@ -45,7 +45,7 @@ internal sealed class SolutionPinReaderTests
     [Test]
     public async Task ReadAsync_ForgetsWhatAnEarlierRunWrote()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         WriteStaleDump(home);
         var runner = new FakeProcessRunner { OnRun = WriteDumps("A", "net10.0") };
         var dumps = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
@@ -55,7 +55,7 @@ internal sealed class SolutionPinReaderTests
     [Test]
     public async Task ReadAsync_WithNoProject_RunsNothing()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var runner = new FakeProcessRunner();
         var dumps = await CreateReader(home, runner).ReadAsync([]).ConfigureAwait(false);
         await Assert.That(dumps).IsEmpty();
@@ -65,7 +65,7 @@ internal sealed class SolutionPinReaderTests
     [Test]
     public async Task ReadAsync_WhenEvaluationFails_ReportsAFailedStep()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var runner = new FakeProcessRunner
         {
             OnRun = static (executable, _)
@@ -81,7 +81,7 @@ internal sealed class SolutionPinReaderTests
     [Test]
     public async Task ReadAsync_WithAnUnreadableDump_ReportsAFailedStep()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var runner = new FakeProcessRunner { OnRun = WriteText("broken.json", "{ not json") };
         var reader = CreateReader(home, runner);
         var exception = await Assert.That(async () => await reader.ReadAsync([ProjectPath]).ConfigureAwait(false))
@@ -89,7 +89,7 @@ internal sealed class SolutionPinReaderTests
         await Assert.That(exception!.ExitCode).IsEqualTo(3);
     }
 
-    private static SolutionPinReader CreateReader(TempHomeDirectory home, IProcessRunner runner)
+    private static SolutionPinReader CreateReader(TempHome home, IProcessRunner runner)
         => new(home.Provider, runner, NullReporter.Instance);
 
     private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDumps(string projectName, params string[] targetFrameworks)
@@ -117,7 +117,7 @@ internal sealed class SolutionPinReaderTests
             return new ProcessResult(executable, 0, string.Empty, string.Empty, TimeSpan.Zero);
         };
 
-    private static void WriteStaleDump(TempHomeDirectory home)
+    private static void WriteStaleDump(TempHome home)
     {
         var dump = new PackagePinDump { ProjectFullPath = @"C:\repo\src\Gone\Gone.csproj" };
         Write(home.GetFullPath(".buildvana-temp/pin-dump"), "gone.json", Serialize(dump));

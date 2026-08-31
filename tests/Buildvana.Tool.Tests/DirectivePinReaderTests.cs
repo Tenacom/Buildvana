@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Dependencies;
 
@@ -19,7 +20,7 @@ internal sealed class DirectivePinReaderTests
     [Test]
     public async Task Read_StatesOnePinPerVersionedDirective()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, "tools/report.cs", ToolApp);
         var pins = Read(home);
         await Assert.That(pins.Select(static pin => pin.Scope + " " + pin.Id + " " + pin.VersionText))
@@ -31,7 +32,7 @@ internal sealed class DirectivePinReaderTests
     [Test]
     public async Task Read_IgnoresAFileOutsideTheScope()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, "src/App/Program.cs", ToolApp);
         await Assert.That(Read(home)).IsEmpty();
     }
@@ -39,7 +40,7 @@ internal sealed class DirectivePinReaderTests
     [Test]
     public async Task Read_ReadsTheBuiltInHooksScope()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ".buildvana/hooks/release/post-release.cs", ToolApp);
         var pins = Read(home, new BuildvanaConfig());
         await Assert.That(pins.Select(static pin => pin.Id)).Contains("Serilog");
@@ -49,7 +50,7 @@ internal sealed class DirectivePinReaderTests
     [Test]
     public async Task Read_LeavesAFamilyDirectiveOut()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, "tools/report.cs", "#:sdk Buildvana.Sdk@2.1.0\n#:package Buildvana.Runtime@2.1.0\n");
         await Assert.That(Read(home)).IsEmpty();
     }
@@ -59,7 +60,7 @@ internal sealed class DirectivePinReaderTests
     [Test]
     public async Task Read_StatesADirectiveWithAnEmptyVersionAsUnmanaged()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, "tools/report.cs", "#:package Serilog@\n");
         await Assert.That(Read(home).Single().Management).IsEqualTo(PinManagement.UnreadableVersion);
     }
@@ -67,15 +68,15 @@ internal sealed class DirectivePinReaderTests
     [Test]
     public async Task Read_IgnoresBuildOutput()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, "tools/obj/generated.cs", ToolApp);
         await Assert.That(Read(home)).IsEmpty();
     }
 
-    private static IReadOnlyList<DependencyPin> Read(TempHomeDirectory home, BuildvanaConfig? config = null)
+    private static IReadOnlyList<DependencyPin> Read(TempHome home, BuildvanaConfig? config = null)
         => new DirectivePinReader(home.Provider, config ?? new BuildvanaConfig { FileBasedApps = ["/tools/"] }).Read();
 
-    private static void Write(TempHomeDirectory home, string relativePath, string content)
+    private static void Write(TempHome home, string relativePath, string content)
     {
         var path = home.GetFullPath(relativePath);
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);

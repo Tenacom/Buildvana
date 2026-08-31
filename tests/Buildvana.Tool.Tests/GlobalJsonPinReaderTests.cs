@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.Json;
+using Buildvana.Core.Testing;
 using Buildvana.Tool.Services.Dependencies;
 
 internal sealed class GlobalJsonPinReaderTests
@@ -9,7 +10,7 @@ internal sealed class GlobalJsonPinReaderTests
     [Test]
     public async Task Read_WithNoFile_PinsNothing()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var pins = CreateReader(home).Read();
         await Assert.That(pins.NetSdk).IsNull();
         await Assert.That(pins.Sdks).IsEmpty();
@@ -23,7 +24,7 @@ internal sealed class GlobalJsonPinReaderTests
                                  "sdk": { "version": "10.0.100", "allowPrerelease": true }
                                }
                                """;
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         var netSdk = CreateReader(home).Read().NetSdk!;
         await Assert.That(netSdk.VersionText).IsEqualTo("10.0.100");
@@ -36,7 +37,7 @@ internal sealed class GlobalJsonPinReaderTests
     [Test]
     public async Task Read_WithNoPrereleaseSetting_LeavesItUnstated()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, """{ "sdk": { "version": "10.0.100" } }""");
         await Assert.That(CreateReader(home).Read().NetSdk!.AllowPrerelease).IsNull();
     }
@@ -47,7 +48,7 @@ internal sealed class GlobalJsonPinReaderTests
     [Arguments("""{ "sdk": { "rollForward": "latestFeature" } }""")]
     public async Task Read_WithNoBaseline_PinsNoNetSdk(string content)
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         await Assert.That(CreateReader(home).Read().NetSdk).IsNull();
     }
@@ -63,7 +64,7 @@ internal sealed class GlobalJsonPinReaderTests
                                  }
                                }
                                """;
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         var sdks = CreateReader(home).Read().Sdks;
         await Assert.That(sdks.Select(static pin => pin.Id + " " + pin.VersionText))
@@ -84,13 +85,13 @@ internal sealed class GlobalJsonPinReaderTests
                                  }
                                }
                                """;
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         await Assert.That(CreateReader(home).Read().Sdks.Single().Id).IsEqualTo("Microsoft.Build.NoTargets");
     }
 
-    private static GlobalJsonPinReader CreateReader(TempHomeDirectory home) => new(home.Provider, new JsonHelper());
+    private static GlobalJsonPinReader CreateReader(TempHome home) => new(home.Provider, new JsonHelper());
 
-    private static void Write(TempHomeDirectory home, string content)
+    private static void Write(TempHome home, string content)
         => File.WriteAllText(home.GetFullPath("global.json"), content);
 }
