@@ -97,6 +97,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<AdditionalGroupPinReader>()
                 .AddSingleton<PackageSourceCatalog>()
                 .AddSingleton<IPackageVersionSource, NuGetPackageVersionSource>()
+                .AddSingleton<INetSdkReleaseSource>(static _ => new DotNetReleaseIndex())
                 .AddSingleton<DependencyDiscovery>()
                 .AddSingleton<DependencyReportRenderer>()
                 .AddSingleton(static sp => DependenciesSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
