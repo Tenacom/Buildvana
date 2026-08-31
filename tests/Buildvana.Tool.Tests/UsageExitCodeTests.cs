@@ -3,7 +3,6 @@
 
 using Buildvana.Core;
 using Buildvana.Tool.CommandLine;
-using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Subcommands;
 

@@ -93,7 +93,7 @@ internal sealed class SolutionPinReader(IHomeDirectoryProvider home, IProcessRun
         }
         catch (Exception e) when (e.IsIORelatedException)
         {
-            throw new BuildFailedException(ExitCodes.StepFailed, $"Could not prepare '{directory}': {e.Message}", e);
+            throw new BuildFailedException($"Could not prepare '{directory}': {e.Message}", e);
         }
     }
 
@@ -105,7 +105,7 @@ internal sealed class SolutionPinReader(IHomeDirectoryProvider home, IProcessRun
         }
         catch (Exception e) when (e.IsIORelatedException)
         {
-            throw new BuildFailedException(ExitCodes.StepFailed, $"Could not write '{path}': {e.Message}", e);
+            throw new BuildFailedException($"Could not write '{path}': {e.Message}", e);
         }
     }
 
@@ -128,15 +128,15 @@ internal sealed class SolutionPinReader(IHomeDirectoryProvider home, IProcessRun
         {
             var content = File.ReadAllText(path);
             return JsonSerializer.Deserialize(content, PackagePinDumpJsonContext.Default.PackagePinDump)
-                ?? throw new BuildFailedException(ExitCodes.StepFailed, $"The package pins in '{path}' read as nothing.");
+                ?? throw new BuildFailedException(ExitCodes.ExternalProgramFailed, $"The package pins in '{path}' read as nothing.");
         }
         catch (JsonException e)
         {
-            throw new BuildFailedException(ExitCodes.StepFailed, $"Could not read the package pins in '{path}': {e.Message}", e);
+            throw new BuildFailedException(ExitCodes.ExternalProgramFailed, $"Could not read the package pins in '{path}': {e.Message}", e);
         }
         catch (Exception e) when (e.IsIORelatedException)
         {
-            throw new BuildFailedException(ExitCodes.StepFailed, $"Could not read '{path}': {e.Message}", e);
+            throw new BuildFailedException(ExitCodes.ExternalProgramFailed, $"Could not read '{path}': {e.Message}", e);
         }
     }
 
@@ -173,7 +173,7 @@ internal sealed class SolutionPinReader(IHomeDirectoryProvider home, IProcessRun
         }
 
         throw new BuildFailedException(
-            ExitCodes.StepFailed,
+            ExitCodes.ExternalProgramFailed,
             $"MSBuild could not evaluate the solution's projects (exit code {result.ExitCode}).");
     }
 }

@@ -98,9 +98,14 @@ public sealed class ProcessRunner : IProcessRunner
             stderrBuffer.ToString(),
             commandResult.RunTime);
 
+        // The child's exit code goes in the message, not in the exception: what a program we do not own
+        // makes of its own failure is its business, and returning it as ours would collide with the meanings
+        // ExitCodes states.
         if (throwOnNonZero && result.ExitCode != 0)
         {
-            throw new BuildFailedException(result.ExitCode, BuildFailureMessage(executable, result, stdoutCapture, stderrCapture));
+            throw new BuildFailedException(
+                ExitCodes.ExternalProgramFailed,
+                BuildFailureMessage(executable, result, stdoutCapture, stderrCapture));
         }
 
         return result;

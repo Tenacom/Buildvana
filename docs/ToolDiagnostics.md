@@ -1,4 +1,4 @@
-# Diagnostics issued by `bv`
+# Diagnostics and exit codes of `bv`
 
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
@@ -7,6 +7,7 @@
 - [Overview](#overview)
 - [Main program (1000-1099)](#main-program-1000-1099)
 - [Configuration (1100-1199)](#configuration-1100-1199)
+- [Exit codes](#exit-codes)
 
 ## Overview
 
@@ -33,3 +34,27 @@ There are no associated diagnostics.
 | BV1108 |  Error   | Duplicate property '_(name)_'.                        | An object states the same property name twice. The location points at the repeated name; remove it, or merge the two into one property.      |
 
 BV1106 and BV1107 also report a property _name_ that carries data, as the members of `dependencies.policies` and `dependencies.additionalPackages` do: a name is held to the same non-blank rule as any other required string, and the location points at the name rather than at the value it introduces.
+
+## Exit codes
+
+Every command returns one of these, and each means the same thing whichever command returned it.
+
+| Code | Meaning                             |
+| ---- | ----------------------------------- |
+| 0    | The command completed.              |
+| 1    | The command ran and failed.         |
+| 2    | `bv` refused the command line.      |
+| 3    | A program `bv` invoked failed.      |
+| 130  | The run was terminated with Ctrl-C. |
+
+A command that returns 0 did what it was asked. What it found is its report's business: `bv dependencies show` returns 0 whatever the report says about the pins it lists.
+
+Code 1 covers every failure that is `bv`'s own to state: a repository in a state the command cannot work with, a configuration file that cannot be read or validated, a file that cannot be read or written.
+
+Code 2 is a refusal, not a failure: an unknown command, subcommand or option; an argument too many or too few; an option value that does not parse. Nothing the command would have done was done.
+
+Code 3 covers `dotnet`, MSBuild, hooks, and any other program `bv` starts. The program either failed, or succeeded and produced output `bv` cannot use. The message names it and reports the exit code it chose. That code is never returned as `bv`'s own: it means whatever its author decided, and it would collide with the meanings above.
+
+Code 130 is 128 + SIGINT, the POSIX convention for a process terminated by a signal.
+
+One invocation returns a code `bv` did not choose, and no program `bv` started produced it. When the repository's tool manifest pins `bv`, the command line is delegated to the pinned version, whose exit code is returned as it stands. The delegated `bv` is the one that ran the command.

@@ -4,7 +4,6 @@
 using System;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
-using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.CommandLine;
