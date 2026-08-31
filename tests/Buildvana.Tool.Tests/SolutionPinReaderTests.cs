@@ -52,6 +52,19 @@ internal sealed class SolutionPinReaderTests
         await Assert.That(dumps.Single().ProjectFullPath).Contains("A.csproj");
     }
 
+    // A project whose SDK has no dump target is skipped, so a solution of nothing but such projects reads
+    // as a repository with no package pins. It is not one, and the report must not say it is.
+    [Test]
+    public async Task ReadAsync_WhenNoProjectAnswers_SaysSo()
+    {
+        using var home = new TempHome();
+        var reporter = new CaptureReporter();
+        var reader = new SolutionPinReader(home.Provider, new FakeProcessRunner(), reporter);
+        var dumps = await reader.ReadAsync([ProjectPath]).ConfigureAwait(false);
+        await Assert.That(dumps).IsEmpty();
+        await Assert.That(reporter.Messages.Any(static message => message.Level == MessageLevel.Warning)).IsTrue();
+    }
+
     [Test]
     public async Task ReadAsync_WithNoProject_RunsNothing()
     {

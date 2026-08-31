@@ -96,6 +96,8 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<PackagePinReader>()
                 .AddSingleton<AdditionalGroupPinReader>()
                 .AddSingleton<DependencyDiscovery>()
+                .AddSingleton<DependencyReportRenderer>()
+                .AddSingleton(static sp => DependenciesSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => new EffectivePolicyResolver(sp.GetRequiredService<BuildvanaConfig>().Dependencies))
                 .AddSingleton(static sp => new SelfVersionService(
                     sp.GetRequiredService<IReporter>(),

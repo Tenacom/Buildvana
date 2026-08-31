@@ -33,6 +33,7 @@ internal static class CommandRegistry
     // subcommands would otherwise inherit that subcommand's description.
     private static readonly Dictionary<string, string> NodeDescriptions = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["dependencies"] = "Show and manage the repository's dependencies.",
         ["version"] = "Show or advance the project's version spec.",
     };
 
