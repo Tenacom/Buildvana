@@ -125,9 +125,18 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
     // are package pins, and the group is how a reader recognizes them.
     private void WritePackages(IReadOnlyList<DependencyPin> pins)
     {
+        var ungrouped = pins.Where(static pin => pin.GroupCaption is null).ToArray();
+        var groups = pins.Where(static pin => pin.GroupCaption is not null).GroupBy(static pin => pin.GroupCaption).ToArray();
         WriteHeading("NuGet packages");
-        WriteFileGroups([.. pins.Where(static pin => pin.GroupCaption is null)]);
-        foreach (var group in pins.Where(static pin => pin.GroupCaption is not null).GroupBy(static pin => pin.GroupCaption))
+
+        // "nothing pinned" is said of the scope, not of one heading: with a group's pins listed below, the
+        // scope has pins, and the heading of what belongs to no group says nothing at all.
+        if (ungrouped.Length > 0 || groups.Length == 0)
+        {
+            WriteFileGroups(ungrouped);
+        }
+
+        foreach (var group in groups)
         {
             WriteHeading($"NuGet packages: {group.Key}");
             WriteFileGroups([.. group]);
