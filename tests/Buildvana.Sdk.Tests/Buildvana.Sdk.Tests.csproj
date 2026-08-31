@@ -14,9 +14,16 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
-  <!-- The file under test: tests evaluate the real Sdk.props, copied into a stub SDK layout. -->
+  <!-- The tasks the targets under test run, and the types their output is read back as. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Buildvana.Core.Dependencies\Buildvana.Core.Dependencies.csproj" />
+    <ProjectReference Include="..\..\src\Buildvana.Sdk.Tasks\Buildvana.Sdk.Tasks.csproj" />
+  </ItemGroup>
+
+  <!-- The files under test: tests evaluate or run the real ones, in a stub layout of their own. -->
   <ItemGroup>
     <AssemblyMetadata Include="RealSdkPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.props'))" />
+    <AssemblyMetadata Include="RealDependenciesModulePath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.targets'))" />
   </ItemGroup>
 
 </Project>

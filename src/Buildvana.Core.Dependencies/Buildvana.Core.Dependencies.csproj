@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana dependency contracts</Title>
+    <Description>The types describing a repository's package pins, exchanged between Buildvana SDK and the bv tool.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+</Project>
