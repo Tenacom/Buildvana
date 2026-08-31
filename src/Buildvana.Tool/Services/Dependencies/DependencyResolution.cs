@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Buildvana.Tool.Services.Dependencies;
 
@@ -29,4 +30,13 @@ internal sealed record DependencyResolution
 
     /// <summary>Gets what the run made of the package pins, additional groups included.</summary>
     public IReadOnlyList<PinResolution> Packages { get; init; } = [];
+
+    /// <summary>
+    /// Gets whether anything in the selected scopes is not where its policy would put it: a pin with a
+    /// target, or a <c>global.json</c> whose <c>allowPrerelease</c> disagrees with the policy. This is the
+    /// verdict of a check run.
+    /// </summary>
+    public bool HasPendingWork
+        => NetSdk is { State: PinResolutionState.Updated } or { WritesAllowPrerelease: true }
+            || Sdks.Concat(Tools).Concat(Packages).Any(static pin => pin.State == PinResolutionState.Updated);
 }

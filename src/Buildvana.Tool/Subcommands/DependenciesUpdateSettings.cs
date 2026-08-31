@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using Buildvana.Core;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Services.Dependencies;
 using CommunityToolkit.Diagnostics;
@@ -10,16 +11,15 @@ using CommunityToolkit.Diagnostics;
 namespace Buildvana.Tool.Subcommands;
 
 /// <summary>
-/// Options for the <c>dependencies</c> command, parsed from the command's option tokens by
-/// <see cref="Parse"/>. Decorated with <see cref="BvOptionAttribute"/>/<see cref="DescriptionAttribute"/>
-/// for the help renderer.
+/// Options for the <c>dependencies update</c> command, parsed from the command's option tokens by
+/// <see cref="Parse"/>.
 /// </summary>
 /// <remarks>
-/// <para>Two families of options select scopes: the ones naming the scopes to manage, and the ones naming
-/// the scopes to leave out. What either family means, and why they do not mix, is
+/// <para>The scope-selecting options are those of <c>dependencies show</c>, declared again because the help
+/// renderer and the argument validator read what a settings type declares itself. What they mean is
 /// <see cref="DependencyScopeSelection"/>'s business.</para>
 /// </remarks>
-internal sealed class DependenciesSettings
+internal sealed class DependenciesUpdateSettings
 {
     /// <summary>Gets a value indicating whether the command line names the .NET SDK scope.</summary>
     [BvOption("--netsdk")]
@@ -61,6 +61,16 @@ internal sealed class DependenciesSettings
     [Description("Leave the NuGet package pins alone.")]
     public bool NoPackages { get; init; }
 
+    /// <summary>Gets a value indicating whether the run reports what it would do and changes nothing.</summary>
+    [BvOption("--check")]
+    [Description("Report what would change, change nothing, and exit 1 when anything would.")]
+    public bool Check { get; init; }
+
+    /// <summary>Gets a value indicating whether the report lists the pins that are up to date as well.</summary>
+    [BvOption("--all")]
+    [Description("List every pin in the report, not only the ones with news. Only with --check.")]
+    public bool All { get; init; }
+
     /// <summary>Gets the scopes the command line names to manage, in scope order.</summary>
     public IReadOnlyList<DependencyScope> Included => DependencyScopeFlags.Of(NetSdk, Sdks, Tools, Packages);
 
@@ -68,17 +78,18 @@ internal sealed class DependenciesSettings
     public IReadOnlyList<DependencyScope> Excluded => DependencyScopeFlags.Of(NoNetSdk, NoSdks, NoTools, NoPackages);
 
     /// <summary>
-    /// Parses the command's option tokens into a <see cref="DependenciesSettings"/>. Unknown options have
-    /// already been rejected by <c>CommandArgumentValidator</c>, so every option token is one the command
-    /// declares.
+    /// Parses the command's option tokens into a <see cref="DependenciesUpdateSettings"/>. Unknown options
+    /// have already been rejected by <c>CommandArgumentValidator</c>, so every option token is one the
+    /// command declares.
     /// </summary>
     /// <param name="options">The option tokens for the command (from <c>CommandParameters.Options</c>).</param>
     /// <returns>The parsed settings.</returns>
-    public static DependenciesSettings Parse(IReadOnlyList<string> options)
+    /// <exception cref="BuildFailedException">The options do not go together.</exception>
+    public static DependenciesUpdateSettings Parse(IReadOnlyList<string> options)
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new DependenciesSettings
+        var settings = new DependenciesUpdateSettings
         {
             NetSdk = reader.ReadFlag("--netsdk"),
             Sdks = reader.ReadFlag("--sdks"),
@@ -88,6 +99,18 @@ internal sealed class DependenciesSettings
             NoSdks = reader.ReadFlag("--no-sdks"),
             NoTools = reader.ReadFlag("--no-tools"),
             NoPackages = reader.ReadFlag("--no-packages"),
+            Check = reader.ReadFlag("--check"),
+            All = reader.ReadFlag("--all"),
         };
+
+        // An apply run lists what it changed, and what it left alone is the report of `bv dependencies show`.
+        if (settings.All && !settings.Check)
+        {
+            throw new BuildFailedException(
+                ExitCodes.Usage,
+                "--all lists what a check run would otherwise leave out, so it goes with --check.");
+        }
+
+        return settings;
     }
 }
