@@ -62,7 +62,20 @@ internal sealed class SolutionPinReader(IHomeDirectoryProvider home, IProcessRun
         PrepareDirectory(directory);
         WriteFile(driverPath, PinDumpDriverProject.Create(projectPaths));
         await RunAsync(driverPath, directory, cancellationToken).ConfigureAwait(false);
-        return ReadDumps(directory);
+        var dumps = ReadDumps(directory);
+
+        // A project whose SDK does not define the dump target is skipped rather than fatal, which is what
+        // lets a solution hold projects the Buildvana SDK never sees. When no project at all answered, the
+        // silence is worth a word: a report of no package pins would otherwise read as a repository with
+        // none.
+        if (dumps.Count == 0)
+        {
+            reporter.Warning(
+                "No project of the solution answered the package pin dump, so no package pins were read. "
+                + "The Buildvana SDK the repository pins may predate it.");
+        }
+
+        return dumps;
     }
 
     // The directory holds one file per evaluation of the last run, so it starts empty: a project removed

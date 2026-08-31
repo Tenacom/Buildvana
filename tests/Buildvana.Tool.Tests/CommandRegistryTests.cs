@@ -40,14 +40,15 @@ internal sealed class CommandRegistryTests
     public async Task PipelineCommands_AppearInExecutionOrderBeforeOthers()
     {
         var names = string.Join(",", CommandRegistry.Commands.Select(c => c.Name));
-        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,self-update,version advance,version show");
+        await Assert.That(names).IsEqualTo(
+            "clean,restore,build,test,pack,dependencies show,release,self-update,version advance,version show");
     }
 
     [Test]
     public async Task TopLevelNodes_ListEachGroupOnce()
     {
         var names = string.Join(",", CommandRegistry.TopLevelNodes.Select(n => n.Name));
-        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,release,self-update,version");
+        await Assert.That(names).IsEqualTo("clean,restore,build,test,pack,dependencies,deps,release,self-update,version");
     }
 
     [Test]
@@ -153,10 +154,16 @@ internal sealed class CommandRegistryTests
         await Assert.That(() => CommandRegistry.BuildTree([first, second])).Throws<InvalidOperationException>();
     }
 
+    // `deps` is the one top-level alias the command tree has: help lists it beside the name it aliases,
+    // never as a command of its own.
     [Test]
-    public async Task TopLevelNodes_AreAllCanonical_InTheRealCommandTree()
+    public async Task TopLevelNodes_NameTheAliasBesideWhatItAliases()
     {
-        await Assert.That(CommandRegistry.TopLevelNodes.Any(static n => n.IsAlias)).IsFalse();
+        var canonical = CommandRegistry.TopLevelNodes.Single(static n => n.Name == "dependencies");
+        var alias = CommandRegistry.TopLevelNodes.Single(static n => n.Name == "deps");
+        await Assert.That(canonical.IsAlias).IsFalse();
+        await Assert.That(alias.CanonicalNode).IsSameReferenceAs(canonical);
+        await Assert.That(canonical.DisplayName).IsEqualTo("dependencies, deps");
     }
 
     [Test]
