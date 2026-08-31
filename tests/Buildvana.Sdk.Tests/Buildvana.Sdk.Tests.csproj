@@ -23,7 +23,8 @@
   <!-- The files under test: tests evaluate or run the real ones, in a stub layout of their own. -->
   <ItemGroup>
     <AssemblyMetadata Include="RealSdkPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.props'))" />
-    <AssemblyMetadata Include="RealDependenciesModulePath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.targets'))" />
+    <AssemblyMetadata Include="RealDependenciesModulePropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.props'))" />
+    <AssemblyMetadata Include="RealDependenciesModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.targets'))" />
   </ItemGroup>
 
 </Project>
