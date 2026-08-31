@@ -41,6 +41,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.VisualStudio.SolutionPersistence" />
+    <PackageReference Include="NuGet.Common" />
+    <PackageReference Include="NuGet.Configuration" />
+    <PackageReference Include="NuGet.Credentials" />
+    <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="NuGet.Versioning" />
     <PackageReference Include="Octokit" />
     <PackageReference Include="Spectre.Console" />
