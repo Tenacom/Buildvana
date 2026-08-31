@@ -116,7 +116,7 @@ If no marker is found, the build (or project loading in Visual Studio) stops wit
 
 ## `.buildvana-temp\`
 
-bv's scratch directory: machine-generated temporary files, such as the args files for [hooks](Hooks.md#the-hook-args), live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
+bv's scratch directory: machine-generated temporary files, such as the args files for [hooks](Hooks.md#the-hook-args) and the package pins [`bv dependencies`](DependencyManagement.md) reads from MSBuild, live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
 
 ## `.config\dotnet-tools.json`
 

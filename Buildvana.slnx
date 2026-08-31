@@ -31,6 +31,7 @@
   <Folder Name="/- Documentation/docs/">
     <File Path="docs/BuildvanaToolConfiguration.md" />
     <File Path="docs/ConstantsSyntax.md" />
+    <File Path="docs/DependencyManagement.md" />
     <File Path="docs/DirectoryStructure.md" />
     <File Path="docs/EnvironmentVariables.md" />
     <File Path="docs/GettingStarted.md" />
