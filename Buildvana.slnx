@@ -55,6 +55,7 @@
     <Project Path="src/Buildvana.Core.Abstractions/Buildvana.Core.Abstractions.csproj" />
     <Project Path="src/Buildvana.Core.Configuration/Buildvana.Core.Configuration.csproj" />
     <Project Path="src/Buildvana.Core.ConsoleOutput/Buildvana.Core.ConsoleOutput.csproj" />
+    <Project Path="src/Buildvana.Core.Dependencies/Buildvana.Core.Dependencies.csproj" />
     <Project Path="src/Buildvana.Core.HomeDirectory/Buildvana.Core.HomeDirectory.csproj" />
     <Project Path="src/Buildvana.Core.IO/Buildvana.Core.IO.csproj" />
     <Project Path="src/Buildvana.Core.Json/Buildvana.Core.Json.csproj" />

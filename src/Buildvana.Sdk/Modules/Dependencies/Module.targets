@@ -1,0 +1,68 @@
+<Project>
+
+  <!--
+    Writes this project's evaluated package items to the directory named by BV_PinDumpDirectory,
+    one file per evaluation. `bv dependencies` sets the property, runs this target over the solution's
+    projects, and reads every file it finds in the directory.
+
+    The dump states what the evaluation found and judges none of it: implicitly defined references and
+    items declared outside the repository are dumped like any other, and bv decides what to do with them.
+
+    A multi-targeting project evaluates its package items once per target framework, and an item may be
+    conditioned on the framework, so the outer build dispatches the target to one inner build per framework
+    instead of dumping its own view, which has no framework and therefore no such item.
+  -->
+  <Target Name="BV_DumpPackagePins">
+
+    <PropertyGroup>
+      <_BV_IsPinDumpOuterBuild>false</_BV_IsPinDumpOuterBuild>
+      <_BV_IsPinDumpOuterBuild Condition="'$(TargetFramework)' == '' And '$(TargetFrameworks)' != ''">true</_BV_IsPinDumpOuterBuild>
+    </PropertyGroup>
+
+    <ItemGroup Condition="$(_BV_IsPinDumpOuterBuild)">
+      <_BV_PinDumpTargetFramework Include="$(TargetFrameworks)" />
+    </ItemGroup>
+
+    <MSBuild Condition="$(_BV_IsPinDumpOuterBuild)"
+             Projects="$(MSBuildProjectFullPath)"
+             Targets="BV_DumpPackagePins"
+             Properties="TargetFramework=%(_BV_PinDumpTargetFramework.Identity)" />
+
+    <!--
+      DefiningProjectFullPath is a modifier MSBuild computes, not metadata an item carries, so it is copied
+      into metadata of its own: the pin's declaring file is what bv edits, and it must survive the trip to
+      the task host as an ordinary value.
+    -->
+    <ItemGroup Condition="!$(_BV_IsPinDumpOuterBuild)">
+      <_BV_PinDumpPackageVersion Include="@(PackageVersion)">
+        <BV_DefiningProjectFullPath>%(DefiningProjectFullPath)</BV_DefiningProjectFullPath>
+      </_BV_PinDumpPackageVersion>
+      <_BV_PinDumpGlobalPackageReference Include="@(GlobalPackageReference)">
+        <BV_DefiningProjectFullPath>%(DefiningProjectFullPath)</BV_DefiningProjectFullPath>
+      </_BV_PinDumpGlobalPackageReference>
+      <_BV_PinDumpPackageReference Include="@(PackageReference)">
+        <BV_DefiningProjectFullPath>%(DefiningProjectFullPath)</BV_DefiningProjectFullPath>
+      </_BV_PinDumpPackageReference>
+    </ItemGroup>
+
+    <!--
+      ManagePackageVersionsCentrally is unset in a project that says nothing about central package
+      management, and the task takes a boolean, which an empty string is not.
+    -->
+    <PropertyGroup Condition="!$(_BV_IsPinDumpOuterBuild)">
+      <_BV_PinDumpManagesVersionsCentrally>false</_BV_PinDumpManagesVersionsCentrally>
+      <_BV_PinDumpManagesVersionsCentrally Condition="'$(ManagePackageVersionsCentrally)' == 'true'">true</_BV_PinDumpManagesVersionsCentrally>
+    </PropertyGroup>
+
+    <WritePackagePinDump Condition="!$(_BV_IsPinDumpOuterBuild)"
+                         OutputDirectory="$(BV_PinDumpDirectory)"
+                         ProjectFullPath="$(MSBuildProjectFullPath)"
+                         TargetFramework="$(TargetFramework)"
+                         ManagePackageVersionsCentrally="$(_BV_PinDumpManagesVersionsCentrally)"
+                         PackageVersions="@(_BV_PinDumpPackageVersion)"
+                         GlobalPackageReferences="@(_BV_PinDumpGlobalPackageReference)"
+                         PackageReferences="@(_BV_PinDumpPackageReference)" />
+
+  </Target>
+
+</Project>
