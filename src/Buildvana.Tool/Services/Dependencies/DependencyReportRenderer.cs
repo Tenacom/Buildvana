@@ -52,51 +52,6 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         }
     }
 
-    // What a reader must know about a pin beyond its version and its policy: that nothing will move it, and
-    // why; or that it states a prerelease under a policy that takes only stable versions, which no update
-    // undoes and no update follows any further.
-    private static string NoteOf(DependencyPin pin, PackageUpdatePolicy policy)
-    {
-        var note = UnmanagedNote(pin.Management);
-        if (note.Length > 0)
-        {
-            return note;
-        }
-
-        return pin.Version is { IsPrerelease: true } && !policy.AllowPrerelease
-            ? "a prerelease under a policy that takes only stable versions; end the policy with '-' to follow the prerelease line"
-            : string.Empty;
-    }
-
-    // The allowPrerelease setting is derived state: it must say what the policy says, and an apply run
-    // writes it. Offline, a disagreement is worth a word of its own, since nothing else here shows it.
-    private static string NetSdkNote(NetSdkPin pin, NetSdkUpdatePolicy policy)
-    {
-        var note = UnmanagedNote(pin.Management);
-        if (note.Length > 0)
-        {
-            return note;
-        }
-
-        return pin.AllowPrerelease == policy.AllowPrerelease
-            ? string.Empty
-            : $"global.json states allowPrerelease as {Stated(pin.AllowPrerelease)}, where the policy says {policy.AllowPrerelease}";
-    }
-
-    private static string UnmanagedNote(PinManagement management)
-        => management switch
-        {
-            PinManagement.Managed => string.Empty,
-            PinManagement.BracketExactVersion => "not managed: one version in brackets; write it without them to have bv move it",
-            PinManagement.VersionRange => "not managed: a version range decides what resolves",
-            PinManagement.FloatingVersion => "not managed: a floating version resolves anew at every restore",
-            PinManagement.UnreadableVersion => "not managed: NuGet reads this as neither a version nor a range",
-            PinManagement.VersionOverride => "not managed: VersionOverride departs from the central pin on purpose",
-            _ => "not managed: the file states the version through a property, not as a literal",
-        };
-
-    private static string Stated(bool? value) => value?.ToString() ?? "unstated";
-
     // Padding is stated as left, top, right and bottom: the first column is indented under the file that
     // declares its pins, and every column but the last is followed by a gap.
     private static GridColumn NewColumn(int left, int right) => new() { Padding = new Padding(left, 0, right, 0), NoWrap = true };
@@ -112,7 +67,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
 
         var policy = policies.ResolveNetSdk();
         console.MarkupLineInterpolated($"  {GlobalJsonPinReader.RelativePath}");
-        WriteRows([("(the .NET SDK)", pin.VersionText, policy.ToString(), NetSdkNote(pin, policy))]);
+        WriteRows([("(the .NET SDK)", pin.VersionText, policy.ToString(), PinNotes.ForNetSdk(pin, policy))]);
     }
 
     private void WriteScope(string heading, IReadOnlyList<DependencyPin> pins)
@@ -161,7 +116,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
     private (string Id, string Version, string Policy, string Note) RowOf(DependencyPin pin)
     {
         var policy = policies.Resolve(pin);
-        return (pin.Id, pin.VersionText, policy.ToString(), NoteOf(pin, policy));
+        return (pin.Id, pin.VersionText, policy.ToString(), PinNotes.For(pin, policy));
     }
 
     // A row is markup, and a version is data: `[13.0.4]` names one version, and Spectre would read it as a
