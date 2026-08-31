@@ -73,7 +73,9 @@ internal static class CommandRegistry
         Guard.IsNotNullOrEmpty(subcommand);
         Guard.IsNotNull(positionals);
         var node = FindTopLevel(subcommand)
-            ?? throw new BuildFailedException($"Unknown command '{subcommand}'. Run 'bv --help' for the list of commands.");
+            ?? throw new BuildFailedException(
+                ExitCodes.Usage,
+                $"Unknown command '{subcommand}'. Run 'bv --help' for the list of commands.");
 
         var index = 0;
         while (index < positionals.Count)
@@ -93,7 +95,9 @@ internal static class CommandRegistry
         if (index < positionals.Count && node.HasChildren)
         {
             var valid = string.Join(", ", node.Children.Select(static c => c.Name));
-            throw new BuildFailedException($"Unknown subcommand '{positionals[index]}' for 'bv {node.FullName}'. Valid subcommands: {valid}.");
+            throw new BuildFailedException(
+                ExitCodes.Usage,
+                $"Unknown subcommand '{positionals[index]}' for 'bv {node.FullName}'. Valid subcommands: {valid}.");
         }
 
         return (node, index == 0 ? positionals : [..positionals.Skip(index)]);

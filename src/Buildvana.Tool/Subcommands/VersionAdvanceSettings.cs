@@ -7,6 +7,7 @@ using System.ComponentModel;
 using Buildvana.Core;
 using Buildvana.Core.Versioning;
 using Buildvana.Tool.CommandLine;
+using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Subcommands;
@@ -85,6 +86,8 @@ internal sealed class VersionAdvanceSettings
         var parsed = Enum.TryParse<VersionSpecChange>(Change, ignoreCase: true, out var value) && Enum.IsDefined(value);
         return parsed
             ? value
-            : throw new BuildFailedException($"Invalid value '{Change}' for CHANGE. Valid values: none, unstable, stable, minor, major.");
+            : throw new BuildFailedException(
+                ExitCodes.Usage,
+                $"Invalid value '{Change}' for CHANGE. Valid values: none, unstable, stable, minor, major.");
     }
 }

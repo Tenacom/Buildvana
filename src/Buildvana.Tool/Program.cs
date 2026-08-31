@@ -28,9 +28,6 @@ namespace Buildvana.Tool;
     "Process composition root (Ctrl-C handling, top-level exception mapping); exercised end to end, not unit-testable.")]
 internal static class Program
 {
-    // 128 + SIGINT (2): the POSIX convention for a process terminated by Ctrl-C.
-    private const int CancelledExitCode = 130;
-
     // The verbosity in effect when --verbosity is not given, for every command alike. It matches the default of
     // `dotnet restore`/`build`/`test`/`pack`, which the build pipeline commands wrap and forward it to.
     private const Verbosity DefaultVerbosity = Verbosity.Minimal;
@@ -179,7 +176,7 @@ internal static class Program
         catch (OperationCanceledException)
         {
             (reporter ?? CreateDefaultReporter()).Error("Operation cancelled.");
-            return CancelledExitCode;
+            return ExitCodes.Cancelled;
         }
         catch (BuildFailedException ex)
         {

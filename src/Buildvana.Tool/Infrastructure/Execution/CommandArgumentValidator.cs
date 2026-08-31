@@ -38,15 +38,18 @@ internal static class CommandArgumentValidator
             if (parsed.OptionTokens.Count > 0 || positionals.Count > 0)
             {
                 var offending = parsed.OptionTokens.Count > 0 ? parsed.OptionTokens[0] : positionals[0];
-                throw new BuildFailedException(
-                    $"Unexpected argument '{offending}' for command '{command.Name}'. Forward arguments to dotnet after '--', e.g. 'bv {command.Name} -- {offending}'.");
+                var message = $"Unexpected argument '{offending}' for command '{command.Name}'. "
+                    + $"Forward arguments to dotnet after '--', e.g. 'bv {command.Name} -- {offending}'.";
+                throw new BuildFailedException(ExitCodes.Usage, message);
             }
         }
         else
         {
             if (parsed.Forwarded.Count > 0)
             {
-                throw new BuildFailedException($"Command '{command.Name}' does not forward arguments; remove the '--' separator and everything after it.");
+                throw new BuildFailedException(
+                    ExitCodes.Usage,
+                    $"Command '{command.Name}' does not forward arguments; remove the '--' separator and everything after it.");
             }
 
             // Excess positionals are checked before unknown options so that in the typical shape of a botched
@@ -54,21 +57,27 @@ internal static class CommandArgumentValidator
             var arguments = DeclaredArguments(command);
             if (positionals.Count > arguments.Count)
             {
-                throw new BuildFailedException($"Unexpected argument '{positionals[arguments.Count]}' for command '{command.Name}'.");
+                throw new BuildFailedException(
+                    ExitCodes.Usage,
+                    $"Unexpected argument '{positionals[arguments.Count]}' for command '{command.Name}'.");
             }
 
             var reader = new CliOptionReader(parsed.OptionTokens);
             ConsumeDeclaredOptions(reader, command);
             if (reader.Remaining.Count > 0)
             {
-                throw new BuildFailedException($"Unknown option '{reader.Remaining[0]}' for command '{command.Name}'.");
+                throw new BuildFailedException(
+                    ExitCodes.Usage,
+                    $"Unknown option '{reader.Remaining[0]}' for command '{command.Name}'.");
             }
 
             for (var i = positionals.Count; i < arguments.Count; i++)
             {
                 if (arguments[i].Required)
                 {
-                    throw new BuildFailedException($"Missing required argument <{arguments[i].Name}> for command '{command.Name}'.");
+                    throw new BuildFailedException(
+                        ExitCodes.Usage,
+                        $"Missing required argument <{arguments[i].Name}> for command '{command.Name}'.");
                 }
             }
         }
