@@ -141,12 +141,14 @@ internal static class CommandRegistry
     }
 
     /// <summary>
-    /// Validates that each command's settings type declares its required arguments before optional ones, as the
-    /// bind-by-declaration-order contract of <see cref="BvArgumentAttribute"/> demands, failing fast on a
-    /// violation. Exposed to tests; production code validates the discovered commands at discovery time.
+    /// Validates that each command's settings type declares its required arguments before optional ones and its
+    /// variadic argument last, as the bind-by-declaration-order contract of <see cref="BvArgumentAttribute"/>
+    /// demands, failing fast on a violation. Exposed to tests; production code validates the discovered commands
+    /// at discovery time.
     /// </summary>
     /// <param name="commands">The commands to validate.</param>
-    /// <exception cref="InvalidOperationException">A settings type declares a required argument after an optional one.</exception>
+    /// <exception cref="InvalidOperationException">A settings type declares a required argument after an optional
+    /// one, or any argument after a variadic one.</exception>
     internal static void ValidateArgumentOrder(IReadOnlyList<CommandRegistration> commands)
     {
         foreach (var command in commands)
@@ -157,6 +159,7 @@ internal static class CommandRegistry
             }
 
             var sawOptional = false;
+            BvArgumentAttribute? variadic = null;
             var properties = command.SettingsType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             foreach (var property in properties)
             {
@@ -164,6 +167,13 @@ internal static class CommandRegistry
                 if (argument is null)
                 {
                     continue;
+                }
+
+                if (variadic is not null)
+                {
+                    throw new InvalidOperationException(
+                        $"{command.SettingsType.Name}.{property.Name} declares argument {argument.Template} after "
+                        + $"variadic argument {variadic.Template}; a variadic argument must be declared last.");
                 }
 
                 if (!argument.Required)
@@ -175,6 +185,11 @@ internal static class CommandRegistry
                     throw new InvalidOperationException(
                         $"{command.SettingsType.Name}.{property.Name} declares required argument <{argument.Name}> "
                         + "after an optional argument; required arguments must be declared first.");
+                }
+
+                if (argument.Variadic)
+                {
+                    variadic = argument;
                 }
             }
         }
