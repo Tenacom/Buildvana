@@ -24,8 +24,8 @@ namespace Buildvana.Tool.Services;
 /// <remarks>
 /// <para>Discovery is textual, through the splice editors — never MSBuild evaluation, which would need the
 /// very SDK a self-update may be about to change. Files come from a gitignore-aware walk of the home
-/// directory (see <see cref="FileFinder"/>), with the conventional build-output and dependency directories
-/// excluded on top, so build debris never contributes a pin.</para>
+/// directory (see <see cref="RepositoryFiles"/>), with the conventional build-output and dependency
+/// directories excluded on top, so build debris never contributes a pin.</para>
 /// <para>MSBuild items are read from files whose extension is <c>.props</c>, <c>.targets</c>, or any
 /// <c>proj</c>-suffixed form (<c>.csproj</c>, <c>.esproj</c>, ...), for the item types
 /// <c>PackageVersion</c>, <c>GlobalPackageReference</c>, and <c>PackageReference</c>, plus the item name of

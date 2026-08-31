@@ -45,7 +45,7 @@ internal sealed class EffectivePolicyResolverTests
         };
 
         var resolver = new EffectivePolicyResolver(config);
-        await Assert.That(Resolve(resolver, Pin(DependencyScope.Packages, "Serilog"))).IsEqualTo("patch");
+        await Assert.That(Resolve(resolver, Pin(DependencyScope.Packages))).IsEqualTo("patch");
         await Assert.That(Resolve(resolver, Pin(DependencyScope.Packages, "Serilog.Sinks.Console"))).IsEqualTo("major");
     }
 

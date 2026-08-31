@@ -84,6 +84,6 @@ internal static class PinDumpDriverProject
                 : builder.Append(c);
         }
 
-        return SecurityElement.Escape(builder.ToString())!;
+        return SecurityElement.Escape(builder.ToString());
     }
 }
