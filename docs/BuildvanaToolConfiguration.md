@@ -2,6 +2,8 @@
 
 TODO: document `buildvana.json` / `buildvana.jsonc` — discovery, home-directory marking, validation, and every setting.
 
+The `dependencies` section is documented in [Dependency management](DependencyManagement.md), together with the command it configures.
+
 Until then, four files cover the ground between them.
 
 - [`schemas/buildvana.schema.json`](../schemas/buildvana.schema.json) is the JSON schema, generated from the typed model. It names every setting, with its description, its built-in default value, and an example where one helps. An editor reads it to validate the file and to complete it.
