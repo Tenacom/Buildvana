@@ -31,6 +31,8 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// </remarks>
 internal sealed partial class PackagePinReader(IHomeDirectoryProvider home, IReporter reporter)
 {
+    private readonly PinDeclarationIndex _declarations = new(home, PackageItemTypes.BuiltIn);
+
     /// <summary>
     /// Reads the pins of the <c>packages</c> scope out of what the pin dump target wrote.
     /// </summary>
@@ -108,21 +110,12 @@ internal sealed partial class PackagePinReader(IHomeDirectoryProvider home, IRep
             return pin with { Management = PinManagement.VersionOverride };
         }
 
-        if (pin.Management != PinManagement.Managed || StatesTheVersionItself(pin))
+        if (pin.Management != PinManagement.Managed
+            || _declarations.StatesVersion(pin.DeclaringFile, pin.ItemType!, pin.Id, pin.VersionText))
         {
             return pin;
         }
 
         return pin with { Management = PinManagement.IndirectVersion };
-    }
-
-    // The declaring file states the version itself when it holds an item of the same type and id whose
-    // version text, trimmed of the whitespace a Version child element may carry, is the evaluated version.
-    private bool StatesTheVersionItself(DependencyPin pin)
-    {
-        var declarations = MsBuildPinEditor.ReadPins(home.GetFullPath(pin.DeclaringFile), [pin.ItemType!]);
-        return declarations.Any(declaration
-            => string.Equals(declaration.Id, pin.Id, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(declaration.VersionText.Trim(), pin.VersionText, StringComparison.Ordinal));
     }
 }

@@ -4,14 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Buildvana.Core.IO;
-using Buildvana.Core.IO.Gitignore;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Utilities;
 
 /// <summary>
-/// The set of files a repository declares to be file-based C# apps, as gitignore-syntax patterns; see
+/// The set of files a repository declares to be file-based C# apps; see
 /// <see cref="Buildvana.Runtime.BuildvanaConfig.FileBasedApps"/>.
 /// </summary>
 /// <remarks>
@@ -22,26 +20,16 @@ namespace Buildvana.Tool.Utilities;
 /// </remarks>
 internal sealed class FileBasedAppScope
 {
-    private readonly GitignoreFile _patterns;
-    private readonly bool _ignoresCase;
+    private readonly PathPatternSet _patterns;
 
-    private FileBasedAppScope(GitignoreFile patterns, bool ignoresCase)
-    {
-        _patterns = patterns;
-        _ignoresCase = ignoresCase;
-    }
+    private FileBasedAppScope(PathPatternSet patterns) => _patterns = patterns;
 
     /// <summary>
     /// Reads a scope from its patterns.
     /// </summary>
-    /// <param name="patterns">The gitignore-syntax patterns, in the order they are stated: the last one that
-    /// matches decides, as in a <c>.gitignore</c> file.</param>
+    /// <param name="patterns">The gitignore-syntax patterns selecting the repository's file-based apps.</param>
     /// <returns>The scope.</returns>
-    public static FileBasedAppScope Parse(IReadOnlyList<string> patterns)
-    {
-        Guard.IsNotNull(patterns);
-        return new FileBasedAppScope(GitignoreFile.Parse(patterns), CaseSensitivityMode.SystemDefault.IgnoresCase());
-    }
+    public static FileBasedAppScope Parse(IReadOnlyList<string> patterns) => new(PathPatternSet.Parse(patterns));
 
     /// <summary>
     /// Determines whether a file is one of the repository's file-based apps.
@@ -51,23 +39,10 @@ internal sealed class FileBasedAppScope
     public bool Contains(string relativePath)
     {
         Guard.IsNotNull(relativePath);
-        if (!string.Equals(Path.GetExtension(relativePath), ".cs", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
 
-        // Mirror of the gitignore walk with "select" in place of "ignore": a matched directory selects its
-        // whole subtree, and a file needs a pattern of its own only when no ancestor directory matched.
-        var components = relativePath.Split('/');
-        for (var count = 1; count <= components.Length; count++)
-        {
-            var isDirectory = count < components.Length;
-            if (_patterns.Evaluate(components.AsSpan(0, count), isDirectory, _ignoresCase) == GitignoreDecision.Ignore)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        // The extension picks the language; the declared patterns say which .cs files are apps rather than
+        // project sources.
+        return string.Equals(Path.GetExtension(relativePath), ".cs", StringComparison.OrdinalIgnoreCase)
+            && _patterns.Contains(relativePath);
     }
 }
