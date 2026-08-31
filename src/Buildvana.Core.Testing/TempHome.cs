@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using Buildvana.Core.HomeDirectory;
+using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Core.Testing;
 
@@ -26,11 +27,29 @@ public sealed class TempHome : IDisposable
     public FixedHomeDirectoryProvider Provider => new(RootPath);
 
     /// <summary>
-    /// Writes a file in the home directory.
+    /// Resolves a path against the home directory.
     /// </summary>
-    /// <param name="name">The name of the file, relative to the home directory.</param>
+    /// <param name="name">The name of the file or directory, relative to the home directory. Forward
+    /// slashes separate its components, whatever the platform.</param>
+    /// <returns>The full path.</returns>
+    public string GetFullPath(string name)
+    {
+        Guard.IsNotNull(name);
+        return Path.Combine(RootPath, name.Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    /// <summary>
+    /// Writes a file in the home directory, creating the directories that lead to it.
+    /// </summary>
+    /// <param name="name">The name of the file, relative to the home directory. Forward slashes separate
+    /// its components, whatever the platform.</param>
     /// <param name="content">The content of the file.</param>
-    public void WriteFile(string name, string content) => File.WriteAllText(Path.Combine(RootPath, name), content);
+    public void WriteFile(string name, string content)
+    {
+        var path = GetFullPath(name);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, content);
+    }
 
     /// <summary>
     /// Reads a file in the home directory.

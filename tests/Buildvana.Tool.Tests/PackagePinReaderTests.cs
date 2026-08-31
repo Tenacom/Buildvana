@@ -3,6 +3,7 @@
 
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Dependencies;
+using Buildvana.Core.Testing;
 using Buildvana.Tool.Services.Dependencies;
 
 // The reader turns what MSBuild evaluated into pins, and asks each declaring file whether it states the
@@ -23,7 +24,7 @@ internal sealed class PackagePinReaderTests
                                </Project>
                                """;
 
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, project);
         var pins = Read(
             home,
@@ -45,7 +46,7 @@ internal sealed class PackagePinReaderTests
     [Test]
     public async Task Read_OfOneDeclarationEvaluatedTwice_StatesOnePin()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
         var item = Item("PackageReference", "Serilog", "4.0.0");
         await Assert.That(Read(home, Dump(home, item), Dump(home, item)).Count).IsEqualTo(1);
@@ -65,7 +66,7 @@ internal sealed class PackagePinReaderTests
                                </Project>
                                """;
 
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, project);
         var pins = Read(
             home,
@@ -78,7 +79,7 @@ internal sealed class PackagePinReaderTests
     [Test]
     public async Task Read_LeavesOutWhatIsNotTheRepositorysToMove()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
         var pins = Read(
             home,
@@ -108,7 +109,7 @@ internal sealed class PackagePinReaderTests
                                </Project>
                                """;
 
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, project);
         var pins = Read(home, Dump(home, Item("PackageReference", "Serilog", "4.0.0")));
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
@@ -127,7 +128,7 @@ internal sealed class PackagePinReaderTests
                                </Project>
                                """;
 
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, project);
         var pins = Read(home, Dump(home, Item("PackageReference", "Serilog", "4.0.0")));
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
@@ -144,7 +145,7 @@ internal sealed class PackagePinReaderTests
                                </Project>
                                """;
 
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, project);
         var item = Item("PackageReference", "Serilog", null, versionOverride: "4.1.0");
         var pin = Read(home, Dump(home, item)).Single();
@@ -155,7 +156,7 @@ internal sealed class PackagePinReaderTests
     [Test]
     public async Task Read_OfAnUnmanagedVersionForm_KeepsTheFormsReason()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, ProjectFileName, OneItemProject("PackageVersion", "Serilog", "[4.0.0]"));
         var pins = Read(home, Dump(home, Item("PackageVersion", "Serilog", "[4.0.0]")));
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.BracketExactVersion);
@@ -166,7 +167,7 @@ internal sealed class PackagePinReaderTests
     [Test]
     public async Task Read_LeavesOutAnItemDeclaredOutsideTheRepository()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         var dump = new PackagePinDump
         {
             ProjectFullPath = home.GetFullPath(ProjectFileName),
@@ -176,10 +177,10 @@ internal sealed class PackagePinReaderTests
         await Assert.That(Read(home, dump)).IsEmpty();
     }
 
-    private static IReadOnlyList<DependencyPin> Read(TempHomeDirectory home, params PackagePinDump[] dumps)
+    private static IReadOnlyList<DependencyPin> Read(TempHome home, params PackagePinDump[] dumps)
         => new PackagePinReader(home.Provider, NullReporter.Instance).Read(dumps);
 
-    private static PackagePinDump Dump(TempHomeDirectory home, params PackagePinDumpItem[] items)
+    private static PackagePinDump Dump(TempHome home, params PackagePinDumpItem[] items)
         => new()
         {
             ProjectFullPath = home.GetFullPath(ProjectFileName),
@@ -213,7 +214,7 @@ internal sealed class PackagePinReaderTests
             </Project>
             """;
 
-    private static void Write(TempHomeDirectory home, string relativePath, string content)
+    private static void Write(TempHome home, string relativePath, string content)
     {
         var path = home.GetFullPath(relativePath);
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);

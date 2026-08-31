@@ -8,10 +8,12 @@ using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Core.Versioning;
+using Buildvana.Runtime;
 using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
 using Buildvana.Tool.Services.PublicApiFiles;
@@ -87,6 +89,14 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<BuildPipeline>()
                 .AddSingleton<SelfReferenceUpdater>()
                 .AddSingleton<FamilyPinUpdater>()
+                .AddSingleton<GlobalJsonPinReader>()
+                .AddSingleton<ToolPinReader>()
+                .AddSingleton<DirectivePinReader>()
+                .AddSingleton<SolutionPinReader>()
+                .AddSingleton<PackagePinReader>()
+                .AddSingleton<AdditionalGroupPinReader>()
+                .AddSingleton<DependencyDiscovery>()
+                .AddSingleton(static sp => new EffectivePolicyResolver(sp.GetRequiredService<BuildvanaConfig>().Dependencies))
                 .AddSingleton(static sp => new SelfVersionService(
                     sp.GetRequiredService<IReporter>(),
                     sp.GetRequiredService<IHomeDirectoryProvider>(),

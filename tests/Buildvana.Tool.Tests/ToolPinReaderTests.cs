@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.Json;
+using Buildvana.Core.Testing;
 using Buildvana.Tool.Services.Dependencies;
 
 internal sealed class ToolPinReaderTests
@@ -9,7 +10,7 @@ internal sealed class ToolPinReaderTests
     [Test]
     public async Task Read_WithNoManifest_PinsNothing()
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         await Assert.That(CreateReader(home).Read()).IsEmpty();
     }
 
@@ -26,7 +27,7 @@ internal sealed class ToolPinReaderTests
                                  }
                                }
                                """;
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         var pins = CreateReader(home).Read();
         await Assert.That(pins.Select(static pin => pin.Id + " " + pin.VersionText))
@@ -47,7 +48,7 @@ internal sealed class ToolPinReaderTests
                                  }
                                }
                                """;
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         await Assert.That(CreateReader(home).Read().Single().Id).IsEqualTo("ngbv");
     }
@@ -58,14 +59,14 @@ internal sealed class ToolPinReaderTests
     [Arguments("""{ "tools": { "ngbv": { "commands": ["ngbv"] } } }""")]
     public async Task Read_WithNoUsableEntry_PinsNothing(string content)
     {
-        using var home = new TempHomeDirectory();
+        using var home = new TempHome();
         Write(home, content);
         await Assert.That(CreateReader(home).Read()).IsEmpty();
     }
 
-    private static ToolPinReader CreateReader(TempHomeDirectory home) => new(home.Provider, new JsonHelper());
+    private static ToolPinReader CreateReader(TempHome home) => new(home.Provider, new JsonHelper());
 
-    private static void Write(TempHomeDirectory home, string content)
+    private static void Write(TempHome home, string content)
     {
         var path = home.GetFullPath(".config/dotnet-tools.json");
         _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
