@@ -55,7 +55,8 @@ internal sealed class VersionAdvanceSettings
     /// positionals and unknown options have already been rejected by <c>CommandArgumentValidator</c>, so at
     /// most one positional is present and every option token is one the command declares.
     /// </summary>
-    /// <param name="positionals">The positional tokens for the <c>version advance</c> command (from <c>CommandParameters.Positionals</c>).</param>
+    /// <param name="positionals">The positional tokens for the <c>version advance</c> command
+    /// (from <c>CommandParameters.Positionals</c>).</param>
     /// <param name="options">The option tokens for the <c>version advance</c> command (from <c>CommandParameters.Options</c>).</param>
     /// <returns>The parsed settings.</returns>
     /// <exception cref="BuildFailedException">An option value is invalid.</exception>

@@ -28,7 +28,10 @@ internal static class CommandArgumentValidator
     /// <param name="parsed">The parsed command line.</param>
     /// <param name="positionals">The positional tokens left over after subcommand resolution.</param>
     /// <exception cref="BuildFailedException">An argument is not valid for the command.</exception>
-    public static void Validate(CommandRegistration command, ParsedCommandLine parsed, IReadOnlyList<string> positionals)
+    public static void Validate(
+        CommandRegistration command,
+        ParsedCommandLine parsed,
+        IReadOnlyList<string> positionals)
     {
         Guard.IsNotNull(command);
         Guard.IsNotNull(parsed);

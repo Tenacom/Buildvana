@@ -68,7 +68,9 @@ internal static class CommandRegistry
     /// <paramref name="subcommand"/> matches no top-level node, or a leftover positional follows a node that
     /// has subcommands but none matching it.
     /// </exception>
-    public static (CommandNode Node, IReadOnlyList<string> RemainingPositionals) Resolve(string subcommand, IReadOnlyList<string> positionals)
+    public static (CommandNode Node, IReadOnlyList<string> RemainingPositionals) Resolve(
+        string subcommand,
+        IReadOnlyList<string> positionals)
     {
         Guard.IsNotNullOrEmpty(subcommand);
         Guard.IsNotNull(positionals);
@@ -126,7 +128,8 @@ internal static class CommandRegistry
                 if (node.Command is not null)
                 {
                     throw new InvalidOperationException(
-                        $"Command path '{node.FullName}' is registered by both {node.Command.CommandType.Name} and {command.CommandType.Name}.");
+                        $"Command path '{node.FullName}' is registered by both {node.Command.CommandType.Name} "
+                        + $"and {command.CommandType.Name}.");
                 }
 
                 node.Command = command;
@@ -170,7 +173,8 @@ internal static class CommandRegistry
                 else if (sawOptional)
                 {
                     throw new InvalidOperationException(
-                        $"{command.SettingsType.Name}.{property.Name} declares required argument <{argument.Name}> after an optional argument; required arguments must be declared first.");
+                        $"{command.SettingsType.Name}.{property.Name} declares required argument <{argument.Name}> "
+                        + "after an optional argument; required arguments must be declared first.");
                 }
             }
         }
@@ -221,7 +225,8 @@ internal static class CommandRegistry
         {
             if (FindNodeIn(topLevelNodes, path) is null)
             {
-                throw new InvalidOperationException($"NodeDescriptions contains an entry for '{path}', which matches no command tree node.");
+                throw new InvalidOperationException(
+                    $"NodeDescriptions contains an entry for '{path}', which matches no command tree node.");
             }
         }
 
