@@ -112,14 +112,14 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
                 _ = MsBuildPinEditor.RewritePins(
                     path,
                     itemTypes,
-                    pin => BuildvanaFamily.Contains(pin.Id) ? NewVersionText(pin.VersionText, target) : null);
+                    pin => BuildvanaFamily.Contains(pin.Id) ? PinVersionText.Restate(pin.VersionText, target) : null);
             }
             else
             {
                 // The editor calls back only for directives that carry a version, so VersionText is never null here.
                 _ = AppDirectiveEditor.RewriteVersions(
                     path,
-                    directive => BuildvanaFamily.Contains(directive.Id) ? NewVersionText(directive.VersionText!, target) : null);
+                    directive => BuildvanaFamily.Contains(directive.Id) ? PinVersionText.Restate(directive.VersionText!, target) : null);
             }
         }
 
@@ -140,33 +140,6 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
     {
         var version = NuGetVersion.TryParse(versionText.Trim(), out var parsed) ? parsed : null;
         return new FamilyPin(relativePath, id, versionText, version);
-    }
-
-    // The new text for a pin's version value, or null to leave the pin alone: a non-literal version is not
-    // this command's to move, and a version already at the target (by SemVer precedence, build metadata
-    // ignored) is left byte-identical. Surrounding whitespace — part of a Version child element's raw
-    // value — is preserved around the stamped version.
-    private static string? NewVersionText(string versionText, NuGetVersion target)
-    {
-        var start = 0;
-        while (start < versionText.Length && char.IsWhiteSpace(versionText[start]))
-        {
-            start++;
-        }
-
-        var end = versionText.Length;
-        while (end > start && char.IsWhiteSpace(versionText[end - 1]))
-        {
-            end--;
-        }
-
-        var core = versionText[start..end];
-        if (!NuGetVersion.TryParse(core, out var current) || VersionComparer.VersionRelease.Equals(current, target))
-        {
-            return null;
-        }
-
-        return versionText[..start] + target.ToNormalizedString() + versionText[end..];
     }
 
     private static string LineFor(FamilyPin pin, NuGetVersion target)
