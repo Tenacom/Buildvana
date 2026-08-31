@@ -22,6 +22,14 @@ internal static class ExitCodes
     public const int Usage = 2;
 
     /// <summary>
+    /// The exit code of a run whose step could not complete: a source that cannot be reached, a child
+    /// process that failed, a file that could not be read. Warnings say which step, and nothing after it
+    /// runs. The dependency commands are the ones that tell this apart from a run that completed and found
+    /// something wrong.
+    /// </summary>
+    public const int StepFailed = 3;
+
+    /// <summary>
     /// The exit code of a run terminated with Ctrl-C: 128 + SIGINT (2), the POSIX convention for a process
     /// terminated by a signal.
     /// </summary>
