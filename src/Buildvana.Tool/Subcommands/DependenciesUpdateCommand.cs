@@ -11,6 +11,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services.Dependencies;
+using Buildvana.Tool.Services.Hooks;
 
 namespace Buildvana.Tool.Subcommands;
 
@@ -34,6 +35,8 @@ internal sealed class DependenciesUpdateCommand(
     DependencyDiscovery discovery,
     DependencyResolver resolver,
     DependencyApplier applier,
+    PostUpdateHookArgsFactory hookArgsFactory,
+    HookRunner hookRunner,
     DependencyReportRenderer renderer,
     IReporter reporter) : IBvCommand
 {
@@ -48,11 +51,23 @@ internal sealed class DependenciesUpdateCommand(
         if (!settings.Check)
         {
             await applier.ApplyPinsAsync(resolution, scopes, cancellationToken).ConfigureAwait(false);
+        }
+
+        // The hook runs before the baseline is written, so the global.json it sees still states the old .NET
+        // SDK version, and its args state the foreseen one.
+        var hookArgs = hookArgsFactory.Create(resolution, settings.Check);
+        var hookOutcome = await hookRunner
+            .RunHookAsync(hookArgs, acceptsPendingWork: settings.Check, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!settings.Check)
+        {
             applier.ApplyNetSdk(resolution, scopes);
         }
 
         renderer.WriteUpdate(resolution, scopes, settings.All, applied: !settings.Check);
-        return settings.Check && pending ? BuildFailedException.DefaultExitCode : 0;
+        var isStale = pending || hookOutcome == HookOutcome.PendingWork;
+        return settings.Check && isStale ? BuildFailedException.DefaultExitCode : 0;
     }
 
     // An argument names package ids, and the .NET SDK has none: a run that filters by id leaves the baseline

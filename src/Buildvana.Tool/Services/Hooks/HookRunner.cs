@@ -22,6 +22,10 @@ namespace Buildvana.Tool.Services.Hooks;
 /// </summary>
 internal sealed class HookRunner
 {
+    // The one non-zero exit code a hook may state as a result rather than as a failure, and only in a check
+    // run: it says that the hook would change something.
+    private const int PendingWorkExitCode = 1;
+
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
     private readonly IFileBasedAppRunner _appRunner;
@@ -48,16 +52,21 @@ internal sealed class HookRunner
     /// (<see cref="WellKnownPaths.GetHookArgsFile"/>) before running the hook. Its type must be
     /// registered in <see cref="BuildvanaJsonContext"/>. The file is left in place after the run,
     /// so the hook can be re-run by hand against the same args.</param>
+    /// <param name="acceptsPendingWork">If <see langword="true"/>, an exit code of 1 is a result rather than
+    /// a failure: the hook reports that it would change something, and the caller folds that into its own
+    /// verdict. Only a check run passes this.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the hook process.</param>
-    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is
-    /// <see langword="true"/> if the hook ran and completed successfully, or <see langword="false"/>
-    /// if there is no hook file.</returns>
-    /// <exception cref="BuildFailedException">The hook exited with a non-zero exit code.</exception>
-    public Task<bool> RunHookAsync<TArgs>(TArgs args, CancellationToken cancellationToken = default)
+    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result says what came
+    /// of the hook.</returns>
+    /// <exception cref="BuildFailedException">The hook exited with an exit code that is a failure.</exception>
+    public Task<HookOutcome> RunHookAsync<TArgs>(
+        TArgs args,
+        bool acceptsPendingWork = false,
+        CancellationToken cancellationToken = default)
         where TArgs : HookArgs, IHookEvent
     {
         Guard.IsNotNull(args);
-        return RunHookAsync(TArgs.Context, TArgs.Event, args, cancellationToken);
+        return RunHookAsync(TArgs.Context, TArgs.Event, args, acceptsPendingWork, cancellationToken);
     }
 
     /// <summary>
@@ -91,7 +100,12 @@ internal sealed class HookRunner
     }
 
     // The core of RunHookAsync<TArgs>, working on the hook's context and event names.
-    private async Task<bool> RunHookAsync(string context, string @event, object args, CancellationToken cancellationToken)
+    private async Task<HookOutcome> RunHookAsync(
+        string context,
+        string @event,
+        object args,
+        bool acceptsPendingWork,
+        CancellationToken cancellationToken)
     {
         var hookName = $"{context}/{@event}";
         var relativePath = WellKnownPaths.GetHookFile(context, @event);
@@ -99,7 +113,7 @@ internal sealed class HookRunner
         if (!File.Exists(path))
         {
             _reporter.Info($"Hook {hookName}: skipped: no {relativePath} file.");
-            return false;
+            return HookOutcome.NoHook;
         }
 
         var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
@@ -108,11 +122,22 @@ internal sealed class HookRunner
         _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
         await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
         _reporter.Info($"Running hook {hookName}...");
-        _ = await _appRunner.RunFileBasedAppAsync(
+        var result = await _appRunner.RunFileBasedAppAsync(
             path,
             workingDirectory: _home.HomeDirectory,
+            throwOnNonZero: !acceptsPendingWork,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        // With pending work accepted, only 0 and 1 have a meaning the caller gave them; anything else is the
+        // failure the runner would have reported on its own.
+        if (acceptsPendingWork && result.ExitCode is not (0 or PendingWorkExitCode))
+        {
+            throw new BuildFailedException(
+                ExitCodes.ExternalProgramFailed,
+                $"Hook {hookName} failed with exit code {result.ExitCode}.");
+        }
+
         _reporter.Notice($"Hook {hookName} ran.");
-        return true;
+        return result.ExitCode == PendingWorkExitCode ? HookOutcome.PendingWork : HookOutcome.Completed;
     }
 }

@@ -13,15 +13,15 @@ using Buildvana.Tool.Utilities;
 internal sealed class HookRunnerTests
 {
     [Test]
-    public async Task RunHookAsync_WithoutHookFile_SkipsAndReturnsFalse()
+    public async Task RunHookAsync_WithoutHookFile_SkipsAndSaysSo()
     {
         using var home = new TempHome();
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var ran = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
+        var outcome = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
 
-        await Assert.That(ran).IsFalse();
+        await Assert.That(outcome).IsEqualTo(HookOutcome.NoHook);
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
     }
 
@@ -33,9 +33,9 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var ran = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
+        var outcome = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
 
-        await Assert.That(ran).IsTrue();
+        await Assert.That(outcome).IsEqualTo(HookOutcome.Completed);
         await Assert.That(appRunner.Runs.Count).IsEqualTo(1);
         var (path, environment, workingDirectory) = appRunner.Runs[0];
         await Assert.That(path).IsEqualTo(hookPath);
@@ -123,6 +123,50 @@ internal sealed class HookRunnerTests
         await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
 
+    // A check run's hook says with exit code 1 that it would change something. Every other non-zero code is
+    // a failure, there as everywhere else.
+    [Test]
+    public async Task RunHookAsync_WhenACheckRunsHookReportsPendingWork_SaysSo()
+    {
+        using var home = new TempHome();
+        _ = WriteHookFile(home, "release", "post-release");
+        var appRunner = new FakeFileBasedAppRunner { ExitCode = 1 };
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
+
+        var outcome = await runner.RunHookAsync(SampleArgs(home), acceptsPendingWork: true).ConfigureAwait(false);
+
+        await Assert.That(outcome).IsEqualTo(HookOutcome.PendingWork);
+    }
+
+    [Test]
+    public async Task RunHookAsync_WhenACheckRunsHookFails_Fails()
+    {
+        using var home = new TempHome();
+        _ = WriteHookFile(home, "release", "post-release");
+        var appRunner = new FakeFileBasedAppRunner { ExitCode = 2 };
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
+        var args = SampleArgs(home);
+
+        Task<HookOutcome> Act() => runner.RunHookAsync(args, acceptsPendingWork: true);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
+    }
+
+    [Test]
+    public async Task RunHookAsync_WhenAnApplyRunsHookExitsNonZero_Fails()
+    {
+        using var home = new TempHome();
+        _ = WriteHookFile(home, "release", "post-release");
+        var appRunner = new FakeFileBasedAppRunner { ExitCode = 1 };
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
+        var args = SampleArgs(home);
+
+        Task<HookOutcome> Act() => runner.RunHookAsync(args);
+
+        _ = await Assert.That(Act).Throws<BuildFailedException>();
+    }
+
     [Test]
     public async Task RunHookAsync_WhenArgsFileCannotBeWritten_FailsWithCleanError()
     {
@@ -135,7 +179,7 @@ internal sealed class HookRunnerTests
         _ = Directory.CreateDirectory(ArgsPath(home));
         var args = SampleArgs(home);
 
-        Task<bool> Act() => runner.RunHookAsync(args);
+        Task<HookOutcome> Act() => runner.RunHookAsync(args);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("Could not write to");

@@ -86,6 +86,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<IFileBasedAppRunner>(static sp => sp.GetRequiredService<DotNetService>())
                 .AddSingleton<HookRunner>()
                 .AddSingleton<PostReleaseHookArgsFactory>()
+                .AddSingleton<PostUpdateHookArgsFactory>()
                 .AddSingleton<BuildPipeline>()
                 .AddSingleton<SelfReferenceUpdater>()
                 .AddSingleton<FamilyPinUpdater>()
