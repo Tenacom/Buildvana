@@ -6,8 +6,10 @@ using System;
 namespace Buildvana.Tool.CommandLine;
 
 /// <summary>
-/// Declares a <c>bv</c> positional command-line argument on a <c>*Settings</c> property: its name and whether
-/// it is required. Parsed from a template such as <c>"&lt;NAME&gt;"</c> (required) or <c>"[NAME]"</c> (optional).
+/// Declares a <c>bv</c> positional command-line argument on a <c>*Settings</c> property: its name, whether it
+/// is required, and whether it takes every remaining positional. Parsed from a template such as
+/// <c>"&lt;NAME&gt;"</c> (required) or <c>"[NAME]"</c> (optional), with a <c>"..."</c> before the closing
+/// bracket for a variadic argument.
 /// </summary>
 /// <remarks>
 /// <para>This attribute carries help and validation metadata only. It does not drive parsing: each
@@ -16,6 +18,10 @@ namespace Buildvana.Tool.CommandLine;
 /// positionals a command accepts. Multiple arguments bind in property declaration order, which must list the
 /// required ones first; <see cref="Infrastructure.Execution.CommandRegistry"/> fails fast at discovery time
 /// when a required argument follows an optional one.</para>
+/// <para>A variadic argument takes every positional the ones before it left, so a command declaring one
+/// accepts any number of them. It must be the last argument declared, and the registry fails fast at
+/// discovery time on an argument declared after it. A required variadic argument takes at least one
+/// positional, an optional one any number including none.</para>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property)]
 internal sealed class BvArgumentAttribute : Attribute
@@ -25,7 +31,8 @@ internal sealed class BvArgumentAttribute : Attribute
     /// </summary>
     /// <param name="template">
     /// The argument template: the argument name in angle brackets (<c>"&lt;NAME&gt;"</c>) for a required
-    /// argument, or in square brackets (<c>"[NAME]"</c>) for an optional one.
+    /// argument, or in square brackets (<c>"[NAME]"</c>) for an optional one. A <c>"..."</c> after the name
+    /// (<c>"[NAME...]"</c>) declares the argument variadic.
     /// </param>
     /// <exception cref="ArgumentException"><paramref name="template"/> is empty, malformed, or declares an empty name.</exception>
     public BvArgumentAttribute(string template)
@@ -36,16 +43,20 @@ internal sealed class BvArgumentAttribute : Attribute
         var trimmed = template.Trim();
         var required = trimmed.StartsWith('<') && trimmed.EndsWith('>');
         var optional = trimmed.StartsWith('[') && trimmed.EndsWith(']');
-        var name = required || optional ? trimmed[1..^1].Trim() : string.Empty;
+        var inner = required || optional ? trimmed[1..^1].Trim() : string.Empty;
+        var variadic = inner.EndsWith("...", StringComparison.Ordinal);
+        var name = (variadic ? inner[..^3] : inner).TrimEnd();
         if (name.Length == 0)
         {
             throw new ArgumentException(
-                $"Argument template '{template}' must be of the form '<NAME>' (required argument) or '[NAME]' (optional argument).",
+                $"Argument template '{template}' must be of the form '<NAME>' (required argument) or '[NAME]' (optional argument), "
+                + "with an optional '...' after the name for a variadic argument.",
                 nameof(template));
         }
 
         Name = name;
         Required = required;
+        Variadic = variadic;
     }
 
     /// <summary>
@@ -62,4 +73,9 @@ internal sealed class BvArgumentAttribute : Attribute
     /// Gets a value indicating whether the argument is required.
     /// </summary>
     public bool Required { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the argument takes every positional the arguments before it left.
+    /// </summary>
+    public bool Variadic { get; }
 }

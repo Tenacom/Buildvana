@@ -179,4 +179,18 @@ internal sealed class CommandRegistryTests
         var command = new CommandRegistration([["fake"]], typeof(object), false, typeof(FakeMisorderedArgumentSettings));
         await Assert.That(() => CommandRegistry.ValidateArgumentOrder([command])).Throws<InvalidOperationException>();
     }
+
+    [Test]
+    public async Task ValidateArgumentOrder_Accepts_VariadicArgumentLast()
+    {
+        var command = new CommandRegistration([["fake"]], typeof(object), false, typeof(FakeVariadicArgumentSettings));
+        await Assert.That(() => CommandRegistry.ValidateArgumentOrder([command])).ThrowsNothing();
+    }
+
+    [Test]
+    public async Task ValidateArgumentOrder_Throws_WhenArgumentFollowsVariadic()
+    {
+        var command = new CommandRegistration([["fake"]], typeof(object), false, typeof(FakeArgumentAfterVariadicSettings));
+        await Assert.That(() => CommandRegistry.ValidateArgumentOrder([command])).Throws<InvalidOperationException>();
+    }
 }

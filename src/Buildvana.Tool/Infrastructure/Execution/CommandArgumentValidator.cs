@@ -18,6 +18,8 @@ namespace Buildvana.Tool.Infrastructure.Execution;
 /// declares via <see cref="BvOptionAttribute"/> (a command with no settings type declares none, so it takes no
 /// options at all). The settings type's <c>Parse</c> can therefore assume every option token it receives is one
 /// the command declares.
+/// A command whose last declared argument is variadic has no upper bound: that argument takes every positional
+/// the ones before it left.
 /// </summary>
 internal static class CommandArgumentValidator
 {
@@ -58,7 +60,8 @@ internal static class CommandArgumentValidator
             // Excess positionals are checked before unknown options so that in the typical shape of a botched
             // command line (`bv clean junk --bogus`) the offending tokens are reported in command-line order.
             var arguments = DeclaredArguments(command);
-            if (positionals.Count > arguments.Count)
+            var bounded = arguments is not [.., { Variadic: true }];
+            if (bounded && positionals.Count > arguments.Count)
             {
                 throw new BuildFailedException(
                     ExitCodes.Usage,
