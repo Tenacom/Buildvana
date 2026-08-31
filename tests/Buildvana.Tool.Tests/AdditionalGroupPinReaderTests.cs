@@ -71,7 +71,7 @@ internal sealed class AdditionalGroupPinReaderTests
         using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
         var elsewhere = home.GetFullPath("src/Other/Imported.props");
-        var runner = Answer(home, [("Tools.InnoSetup", "7.1.0", null)], declaringFile: elsewhere);
+        var runner = Answer([("Tools.InnoSetup", "7.1.0", null)], declaringFile: elsewhere);
         await Assert.That(await ReadAsync(home, runner).ConfigureAwait(false)).IsEmpty();
     }
 
@@ -118,12 +118,16 @@ internal sealed class AdditionalGroupPinReaderTests
                 => new ProcessResult(executable, 1, "error MSB4025: no.", string.Empty, TimeSpan.Zero),
         };
 
-        var exception = await Assert.That(async () => await ReadAsync(home, runner).ConfigureAwait(false))
+        var reader = CreateReader(home, runner);
+        var exception = await Assert.That(async () => await reader.ReadAsync().ConfigureAwait(false))
             .Throws<BuildFailedException>();
         await Assert.That(exception!.ExitCode).IsEqualTo(3);
     }
 
     private static Task<IReadOnlyList<DependencyPin>> ReadAsync(TempHome home, IProcessRunner runner)
+        => CreateReader(home, runner).ReadAsync();
+
+    private static AdditionalGroupPinReader CreateReader(TempHome home, IProcessRunner runner)
     {
         var config = new BuildvanaConfig
         {
@@ -142,14 +146,13 @@ internal sealed class AdditionalGroupPinReaderTests
             },
         };
 
-        return new AdditionalGroupPinReader(home.Provider, config, runner, NullReporter.Instance).ReadAsync();
+        return new AdditionalGroupPinReader(home.Provider, config, runner, NullReporter.Instance);
     }
 
     private static FakeProcessRunner Answer(TempHome home, params (string Id, string Version, string? Policy)[] items)
-        => Answer(home, items, home.GetFullPath(GroupFile));
+        => Answer(items, home.GetFullPath(GroupFile));
 
     private static FakeProcessRunner Answer(
-        TempHome home,
         IReadOnlyList<(string Id, string Version, string? Policy)> items,
         string declaringFile)
     {

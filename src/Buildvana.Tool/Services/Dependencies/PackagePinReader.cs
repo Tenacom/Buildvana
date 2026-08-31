@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
@@ -29,7 +28,7 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// through <c>PackageReference Update="..."</c>. Comparing the evaluated version with what the file says
 /// tells the two apart, and needs no property evaluation of bv's own.</para>
 /// </remarks>
-internal sealed partial class PackagePinReader(IHomeDirectoryProvider home, IReporter reporter)
+internal sealed class PackagePinReader(IHomeDirectoryProvider home, IReporter reporter)
 {
     private readonly PinDeclarationIndex _declarations = new(home, PackageItemTypes.BuiltIn);
 
@@ -42,7 +41,10 @@ internal sealed partial class PackagePinReader(IHomeDirectoryProvider home, IRep
     public IReadOnlyList<DependencyPin> Read(IReadOnlyList<PackagePinDump> dumps)
     {
         Guard.IsNotNull(dumps);
-        var pins = new Dictionary<PinKey, DependencyPin>();
+
+        // What makes two evaluated items one pin: the file that declares them, the item type, the id, and
+        // the version text, which is what tells two target-framework-conditioned declarations apart.
+        var pins = new Dictionary<(string DeclaringFile, string ItemType, string Id, string VersionText), DependencyPin>();
         var outsideHome = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var item in dumps.SelectMany(static dump => dump.Items))
         {
@@ -66,7 +68,10 @@ internal sealed partial class PackagePinReader(IHomeDirectoryProvider home, IRep
         }
     }
 
-    private void AddPin(Dictionary<PinKey, DependencyPin> pins, HashSet<string> outsideHome, PackagePinDumpItem item)
+    private void AddPin(
+        Dictionary<(string DeclaringFile, string ItemType, string Id, string VersionText), DependencyPin> pins,
+        HashSet<string> outsideHome,
+        PackagePinDumpItem item)
     {
         if (item.IsImplicitlyDefined || BuildvanaFamily.Contains(item.Id))
         {
@@ -88,7 +93,7 @@ internal sealed partial class PackagePinReader(IHomeDirectoryProvider home, IRep
             return;
         }
 
-        var key = new PinKey(declaringFile, item.ItemType, item.Id, versionText);
+        var key = (declaringFile, item.ItemType, item.Id, versionText);
         if (pins.ContainsKey(key))
         {
             return;
