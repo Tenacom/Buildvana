@@ -81,7 +81,11 @@ internal sealed class PackagePinReader(IHomeDirectoryProvider home, IReporter re
         // A reference under central package management carries no version of its own, and is a reference to
         // a pin declared elsewhere rather than a pin. One carrying VersionOverride is a pin, and an
         // unmanaged one: the override is a decision about one project, where a policy is about one id.
-        var versionText = item.Version ?? item.VersionOverride;
+        //
+        // A metadatum a file states as a child element carries the element's own indentation into the
+        // evaluated value, so what reaches bv is trimmed here: the whitespace is the file's layout, and
+        // nothing downstream should have to know that.
+        var versionText = (item.Version ?? item.VersionOverride)?.Trim();
         if (versionText is null)
         {
             return;
@@ -102,7 +106,7 @@ internal sealed class PackagePinReader(IHomeDirectoryProvider home, IReporter re
         var pin = DependencyPin.Create(DependencyScope.Packages, item.Id, versionText, declaringFile) with
         {
             ItemType = item.ItemType,
-            MetadataPolicy = item.UpdatePolicy,
+            MetadataPolicy = item.UpdatePolicy?.Trim(),
         };
 
         pins.Add(key, ClassifyDeclaration(pin, item));

@@ -70,6 +70,28 @@ internal sealed class PinDumpTests
         await Assert.That(dumps[1].Items.Single().Id).IsEqualTo("Serilog");
     }
 
+    // The fact bv's readers trim for: MSBuild does not trim a metadatum a file states as a child element, so
+    // the evaluated value carries the element's own layout.
+    [Test]
+    public async Task Dump_OfAMetadatumStatedAsAChildElement_KeepsItsWhitespace()
+    {
+        using var fixture = new PinDumpFixture();
+        var dump = fixture.DumpPins(
+            """
+              <ItemGroup>
+                <PackageVersion Include="Serilog">
+                  <Version>
+                    4.0.0
+                  </Version>
+                </PackageVersion>
+              </ItemGroup>
+            """).Single();
+
+        var version = dump.Items.Single().Version;
+        await Assert.That(version).IsNotEqualTo("4.0.0");
+        await Assert.That(version?.Trim()).IsEqualTo("4.0.0");
+    }
+
     [Test]
     public async Task Dump_StatesAnImplicitlyDefinedReferenceLikeAnyOther()
     {

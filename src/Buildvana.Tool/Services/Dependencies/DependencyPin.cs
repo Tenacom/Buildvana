@@ -24,7 +24,11 @@ internal sealed record DependencyPin
     /// <summary>Gets the package id.</summary>
     public required string Id { get; init; }
 
-    /// <summary>Gets the version text, exactly as the declaring file states it.</summary>
+    /// <summary>
+    /// Gets the version text the declaring file states, with the whitespace around it removed. MSBuild
+    /// carries the layout of a <c>&lt;Version&gt;</c> child element into the value it evaluates, and that
+    /// whitespace belongs to the file rather than to the version.
+    /// </summary>
     public required string VersionText { get; init; }
 
     /// <summary>Gets whether <c>bv</c> manages the pin, and what stops it when it does not.</summary>
@@ -66,7 +70,8 @@ internal sealed record DependencyPin
     /// </summary>
     /// <param name="scope">The scope the pin belongs to.</param>
     /// <param name="id">The package id.</param>
-    /// <param name="versionText">The version text, as the declaring file states it.</param>
+    /// <param name="versionText">The version text, as the declaring file states it. Its surrounding
+    /// whitespace is removed here, once for every reader.</param>
     /// <param name="declaringFile">The path of the declaring file, relative to the home directory.</param>
     /// <returns>The pin.</returns>
     public static DependencyPin Create(DependencyScope scope, string id, string versionText, string declaringFile)
@@ -76,7 +81,7 @@ internal sealed record DependencyPin
         {
             Scope = scope,
             Id = id,
-            VersionText = versionText,
+            VersionText = versionText.Trim(),
             Management = management,
             Version = version,
             DeclaringFile = declaringFile,

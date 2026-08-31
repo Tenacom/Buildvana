@@ -96,8 +96,19 @@ internal sealed class AdditionalGroupPinReader(
         return root?["Items"]?[itemName] as JsonArray;
     }
 
+    // A metadatum a file states as a child element carries the element's own indentation into the value
+    // MSBuild evaluates. That whitespace is the file's layout, so every value read here is trimmed, and one
+    // that holds nothing else is read as absent.
     private static string? ReadMetadata(JsonNode? item, string name)
-        => item?[name] is JsonValue value && value.TryGetValue<string>(out var text) && text.Length > 0 ? text : null;
+    {
+        if (item?[name] is not JsonValue value || !value.TryGetValue<string>(out var text))
+        {
+            return null;
+        }
+
+        var trimmed = text.Trim();
+        return trimmed.Length > 0 ? trimmed : null;
+    }
 
     private async Task ReadFileAsync(
         List<DependencyPin> pins,

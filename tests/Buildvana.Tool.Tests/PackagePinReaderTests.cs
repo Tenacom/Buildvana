@@ -115,6 +115,40 @@ internal sealed class PackagePinReaderTests
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
     }
 
+    // MSBuild carries the layout of a Version child element into the value it evaluates, and the file states
+    // that same layout: a literal version written this way is as managed as one written as an attribute.
+    [Test]
+    public async Task Read_OfAVersionStatedAsAChildElement_IsManaged()
+    {
+        const string project = """
+                               <Project>
+                                 <ItemGroup>
+                                   <PackageVersion Include="Serilog">
+                                     <Version>
+                                       4.0.0
+                                     </Version>
+                                   </PackageVersion>
+                                 </ItemGroup>
+                               </Project>
+                               """;
+
+        using var home = new TempHome();
+        Write(home, ProjectFileName, project);
+        var pin = Read(home, Dump(home, Item("PackageVersion", "Serilog", "\n      4.0.0\n    "))).Single();
+        await Assert.That(pin.Management).IsEqualTo(PinManagement.Managed);
+        await Assert.That(pin.VersionText).IsEqualTo("4.0.0");
+    }
+
+    // The policy a pin states for itself reaches bv the same way, and the policy strings take no whitespace.
+    [Test]
+    public async Task Read_OfAPolicyStatedAsAChildElement_StatesThePolicyAlone()
+    {
+        using var home = new TempHome();
+        Write(home, ProjectFileName, OneItemProject("PackageVersion", "Serilog", "4.0.0"));
+        var item = Item("PackageVersion", "Serilog", "4.0.0", updatePolicy: "\n      patch-\n    ");
+        await Assert.That(Read(home, Dump(home, item)).Single().MetadataPolicy).IsEqualTo("patch-");
+    }
+
     // A version applied from elsewhere through Update="..." is attributed to the file that included it,
     // where no literal version lives.
     [Test]
