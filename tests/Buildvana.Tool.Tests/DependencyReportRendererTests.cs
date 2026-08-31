@@ -49,6 +49,15 @@ internal sealed class DependencyReportRendererTests
         await Assert.That(output).Contains("nothing pinned");
     }
 
+    // The packages scope has group sections of its own, and says it too when it has neither a group nor a
+    // pin outside one.
+    [Test]
+    public async Task Write_OfThePackagesScopeWithNoPin_SaysSo()
+    {
+        var output = Render(new DependencyInventory(), [DependencyScope.Packages]);
+        await Assert.That(output).Contains("nothing pinned");
+    }
+
     [Test]
     public async Task Write_WithNoNetSdkPin_SaysSo()
     {
@@ -93,6 +102,9 @@ internal sealed class DependencyReportRendererTests
         var output = Render(new DependencyInventory { Packages = [pin] }, [DependencyScope.Packages]);
         await Assert.That(output).Contains("NuGet packages: SDK package injections");
         await Assert.That(output).Contains("StyleCop.Analyzers");
+
+        // The scope has pins, so the heading above the group's section says nothing rather than the contrary.
+        await Assert.That(output).DoesNotContain("nothing pinned");
     }
 
     private static string Render(DependencyInventory inventory, IReadOnlyList<DependencyScope> scopes)
