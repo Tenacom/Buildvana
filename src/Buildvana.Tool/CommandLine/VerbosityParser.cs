@@ -4,6 +4,7 @@
 using System;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.CommandLine;
@@ -30,7 +31,9 @@ internal static class VerbosityParser
             "NORMAL" or "N" => Verbosity.Normal,
             "DETAILED" or "D" => Verbosity.Detailed,
             "DIAGNOSTIC" or "DIAG" => Verbosity.Diagnostic,
-            _ => throw new BuildFailedException($"Unknown verbosity level '{raw}'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic."),
+            _ => throw new BuildFailedException(
+                ExitCodes.Usage,
+                $"Unknown verbosity level '{raw}'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic."),
         };
     }
 }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Buildvana.Core;
+using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.CommandLine;
@@ -80,7 +81,7 @@ internal sealed class CliOptionReader
         var raw = ReadValue(longName, shortName);
         return raw is null ? null
             : bool.TryParse(raw, out var value) ? value
-            : throw new BuildFailedException($"Invalid value '{raw}' for {longName}. Expected 'true' or 'false'.");
+            : throw new BuildFailedException(ExitCodes.Usage, $"Invalid value '{raw}' for {longName}. Expected 'true' or 'false'.");
     }
 
     /// <summary>
@@ -104,7 +105,7 @@ internal sealed class CliOptionReader
             {
                 if (i + 1 >= _tokens.Count)
                 {
-                    throw new BuildFailedException($"Option '{token}' requires a value.");
+                    throw new BuildFailedException(ExitCodes.Usage, $"Option '{token}' requires a value.");
                 }
 
                 result = ReadTokenValue(token, _tokens[i + 1]);
@@ -143,7 +144,7 @@ internal sealed class CliOptionReader
 
         var separatorIndex = token.IndexOf('=', StringComparison.Ordinal);
         var name = separatorIndex < 0 ? token : token[..separatorIndex];
-        throw new BuildFailedException($"Option '{name}' requires a value.");
+        throw new BuildFailedException(ExitCodes.Usage, $"Option '{name}' requires a value.");
     }
 
     private static bool TryMatchInline(string token, string longName, string? shortName, out string value)

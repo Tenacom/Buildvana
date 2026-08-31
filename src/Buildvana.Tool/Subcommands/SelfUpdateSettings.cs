@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Buildvana.Core;
 using Buildvana.Tool.CommandLine;
+using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
@@ -62,6 +63,8 @@ internal sealed class SelfUpdateSettings
 
         return NuGetVersion.TryParse(To, out var version)
             ? version
-            : throw new BuildFailedException($"Invalid value '{To}' for --to. Expected a version, e.g. 2.1.0 or 2.1.0-preview.");
+            : throw new BuildFailedException(
+                ExitCodes.Usage,
+                $"Invalid value '{To}' for --to. Expected a version, e.g. 2.1.0 or 2.1.0-preview.");
     }
 }
