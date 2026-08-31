@@ -8,10 +8,7 @@ using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
-using Buildvana.Core.IO;
-using Buildvana.Core.IO.Gitignore;
 using Buildvana.Runtime;
-using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
@@ -49,17 +46,6 @@ namespace Buildvana.Tool.Services;
 /// </remarks>
 internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<BuildvanaConfig> config, IReporter reporter)
 {
-    // Exclusions on top of what .gitignore files dictate: bv's own outputs, anchored at the home directory,
-    // plus the conventional build and dependency directories at any depth. The finder skips `.git` on its own.
-    private static readonly string[] ExclusionPatterns =
-    [
-        "/" + CommonPaths.AllArtifacts + "/",
-        "/" + CommonPaths.Scratch + "/",
-        "bin/",
-        "obj/",
-        "node_modules/",
-    ];
-
     private static readonly string[] BuiltInItemTypes = ["PackageVersion", "GlobalPackageReference", "PackageReference"];
 
     // Both the file-based-app scope and the item names come from the configuration, and reading it can warn.
@@ -76,9 +62,8 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
     {
         var scope = ResolveScope();
         var itemTypes = ResolveItemTypes();
-        var ignoresCase = CaseSensitivityMode.SystemDefault.IgnoresCase();
         var pins = new List<FamilyPin>();
-        foreach (var relativePath in new FileFinder(home.HomeDirectory, ExclusionPatterns).GetFiles())
+        foreach (var relativePath in RepositoryFiles.CreateFinder(home).GetFiles())
         {
             var path = home.GetFullPath(relativePath);
             if (IsMsBuildFile(relativePath))
@@ -91,7 +76,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
                     }
                 }
             }
-            else if (IsFileBasedApp(scope, relativePath, ignoresCase))
+            else if (scope.Contains(relativePath))
             {
                 foreach (var directive in AppDirectiveEditor.ReadDirectives(path))
                 {
@@ -149,30 +134,6 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
         var isSharedFile = string.Equals(extension, ".props", StringComparison.OrdinalIgnoreCase)
             || string.Equals(extension, ".targets", StringComparison.OrdinalIgnoreCase);
         return isSharedFile || extension.EndsWith("proj", StringComparison.OrdinalIgnoreCase);
-    }
-
-    // A file-based app is a .cs file within the declared scope: the extension picks the language, the scope
-    // says which .cs files are apps rather than project sources.
-    private static bool IsFileBasedApp(GitignoreFile scope, string relativePath, bool ignoresCase)
-    {
-        if (!string.Equals(Path.GetExtension(relativePath), ".cs", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        // Mirror of the gitignore walk with "select" in place of "ignore": a matched directory selects its
-        // whole subtree, and a file needs a pattern of its own only when no ancestor directory matched.
-        var components = relativePath.Split('/');
-        for (var count = 1; count <= components.Length; count++)
-        {
-            var isDirectory = count < components.Length;
-            if (scope.Evaluate(components.AsSpan(0, count), isDirectory, ignoresCase) == GitignoreDecision.Ignore)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // The version parses only when its trimmed text is a literal version: surrounding whitespace, allowed in
@@ -242,7 +203,7 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
         }
     }
 
-    private GitignoreFile ResolveScope() => GitignoreFile.Parse(_resolvedConfig.Value.FileBasedApps);
+    private FileBasedAppScope ResolveScope() => FileBasedAppScope.Parse(_resolvedConfig.Value.FileBasedApps);
 
     // An additional pin group declares the item name its pins are written as, and a family pin written that
     // way is a family pin like any other. Names are compared case-insensitively, as MSBuild compares item
