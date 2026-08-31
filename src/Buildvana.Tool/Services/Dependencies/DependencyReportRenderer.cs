@@ -152,7 +152,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
     private (string Id, string Version, string Policy, string Note) RowOf(DependencyPin pin)
     {
         var policy = policies.Resolve(pin);
-        return (pin.Id, pin.VersionText.Trim(), policy.ToString(), NoteOf(pin, policy));
+        return (pin.Id, pin.VersionText, policy.ToString(), NoteOf(pin, policy));
     }
 
     // A row is markup, and a version is data: `[13.0.4]` names one version, and Spectre would read it as a

@@ -37,15 +37,19 @@ internal sealed class PinDeclarationIndex(IHomeDirectoryProvider home, IReadOnly
     /// <returns><see langword="true"/> if the file declares an item of that type and id whose version text
     /// is <paramref name="versionText"/>; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="BuildFailedException">The file could not be read.</exception>
+    /// <remarks>
+    /// <para>Whitespace on either side of a version is the file's layout, not the version: a
+    /// <c>&lt;Version&gt;</c> child element carries it into both the text the file states and the value
+    /// MSBuild evaluates. Both sides are trimmed here, so that a caller may pass either.</para>
+    /// </remarks>
     public bool StatesVersion(string declaringFile, string itemType, string id, string versionText)
     {
         Guard.IsNotNullOrEmpty(declaringFile);
+        var trimmed = versionText.Trim();
         return Read(declaringFile).Any(declaration
             => string.Equals(declaration.ItemType, itemType, StringComparison.OrdinalIgnoreCase)
             && string.Equals(declaration.Id, id, StringComparison.OrdinalIgnoreCase)
-
-            // A Version child element carries the whitespace around its value, which is not part of it.
-            && string.Equals(declaration.VersionText.Trim(), versionText, StringComparison.Ordinal));
+            && string.Equals(declaration.VersionText.Trim(), trimmed, StringComparison.Ordinal));
     }
 
     private IReadOnlyList<MsBuildPin> Read(string declaringFile)

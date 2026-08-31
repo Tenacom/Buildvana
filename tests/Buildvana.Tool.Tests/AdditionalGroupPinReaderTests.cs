@@ -107,6 +107,32 @@ internal sealed class AdditionalGroupPinReaderTests
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
     }
 
+    // MSBuild carries the layout of a Version child element into the value it evaluates, and the group's
+    // file states that same layout: the pin is as managed as one whose version is an attribute. The `\n` of
+    // the evaluated version are JSON escapes, since the value below is written into MSBuild's JSON answer.
+    [Test]
+    public async Task ReadAsync_OfAVersionStatedAsAChildElement_IsManaged()
+    {
+        const string content = """
+                               <Project>
+                                 <ItemGroup>
+                                   <BV_PackageVersion Include="Tools.InnoSetup">
+                                     <Version>
+                                       7.1.0
+                                     </Version>
+                                   </BV_PackageVersion>
+                                 </ItemGroup>
+                               </Project>
+                               """;
+
+        using var home = new TempHome();
+        Write(home, GroupFile, content);
+        var runner = Answer(home, ("Tools.InnoSetup", @"\n      7.1.0\n    ", null));
+        var pin = (await ReadAsync(home, runner).ConfigureAwait(false)).Single();
+        await Assert.That(pin.Management).IsEqualTo(PinManagement.Managed);
+        await Assert.That(pin.VersionText).IsEqualTo("7.1.0");
+    }
+
     [Test]
     public async Task ReadAsync_WhenEvaluationFails_ReportsAFailedStep()
     {
