@@ -21,31 +21,33 @@ internal static class PinVersion
     /// <param name="text">The version text, as the pin states it.</param>
     /// <param name="version">When this method returns, the version, if the text states exactly one;
     /// otherwise, <see langword="null"/>.</param>
-    /// <returns>The form of the text.</returns>
-    public static PinVersionForm Read(string? text, out NuGetVersion? version)
+    /// <returns>Whether the text is a version <c>bv</c> manages, and what stops it when it is not. The two
+    /// values that do not come from the text — <see cref="PinManagement.VersionOverride"/> and
+    /// <see cref="PinManagement.IndirectVersion"/> — are never returned here.</returns>
+    public static PinManagement Read(string? text, out NuGetVersion? version)
     {
         version = null;
         var trimmed = text?.Trim();
         if (string.IsNullOrEmpty(trimmed))
         {
-            return PinVersionForm.Unrecognized;
+            return PinManagement.UnreadableVersion;
         }
 
         // An exact version parses as a range too, as its own minimum, so it is tried first.
         if (NuGetVersion.TryParse(trimmed, out var parsed))
         {
             version = parsed;
-            return PinVersionForm.Literal;
+            return PinManagement.Managed;
         }
 
         if (!VersionRange.TryParse(trimmed, out var range))
         {
-            return PinVersionForm.Unrecognized;
+            return PinManagement.UnreadableVersion;
         }
 
-        return range.IsFloating ? PinVersionForm.Floating
-            : IsBracketExact(range) ? PinVersionForm.BracketExact
-            : PinVersionForm.Range;
+        return range.IsFloating ? PinManagement.FloatingVersion
+            : IsBracketExact(range) ? PinManagement.BracketExactVersion
+            : PinManagement.VersionRange;
     }
 
     // `[13.0.4]` states one version by naming it as both ends of a closed range.

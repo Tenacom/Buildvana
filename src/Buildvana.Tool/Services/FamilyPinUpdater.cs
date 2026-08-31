@@ -46,8 +46,6 @@ namespace Buildvana.Tool.Services;
 /// </remarks>
 internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<BuildvanaConfig> config, IReporter reporter)
 {
-    private static readonly string[] BuiltInItemTypes = ["PackageVersion", "GlobalPackageReference", "PackageReference"];
-
     // Both the file-based-app scope and the item names come from the configuration, and reading it can warn.
     // Reading it once is what keeps a repository whose configuration file cannot be read from being warned
     // about twice in the same run.
@@ -208,15 +206,15 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
     // An additional pin group declares the item name its pins are written as, and a family pin written that
     // way is a family pin like any other. Names are compared case-insensitively, as MSBuild compares item
     // names, so a group that names a built-in type adds nothing.
-    private string[] ResolveItemTypes()
+    private IReadOnlyList<string> ResolveItemTypes()
     {
         var groups = _resolvedConfig.Value.Dependencies.AdditionalPackages;
         if (groups.Count == 0)
         {
-            return BuiltInItemTypes;
+            return PackageItemTypes.BuiltIn;
         }
 
-        var itemTypes = new List<string>(BuiltInItemTypes);
+        var itemTypes = new List<string>(PackageItemTypes.BuiltIn);
         foreach (var group in groups)
         {
             if (!itemTypes.Contains(group.Items, StringComparer.OrdinalIgnoreCase))

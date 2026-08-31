@@ -27,12 +27,13 @@ internal sealed record DependencyPin
     /// <summary>Gets the version text, exactly as the declaring file states it.</summary>
     public required string VersionText { get; init; }
 
-    /// <summary>Gets the form <see cref="VersionText"/> takes.</summary>
-    public required PinVersionForm Form { get; init; }
+    /// <summary>Gets whether <c>bv</c> manages the pin, and what stops it when it does not.</summary>
+    public required PinManagement Management { get; init; }
 
     /// <summary>
-    /// Gets the version, when <see cref="Form"/> is <see cref="PinVersionForm.Literal"/>; otherwise,
-    /// <see langword="null"/>.
+    /// Gets the version, when <see cref="VersionText"/> states exactly one; otherwise,
+    /// <see langword="null"/>. A pin can have a version and still be unmanaged, as one carrying
+    /// <c>VersionOverride</c> metadata is.
     /// </summary>
     public NuGetVersion? Version { get; init; }
 
@@ -41,12 +42,6 @@ internal sealed record DependencyPin
     /// slashes: what the report groups by, and what an update would edit.
     /// </summary>
     public required string DeclaringFile { get; init; }
-
-    /// <summary>
-    /// Gets the target framework whose evaluation declares the pin, or <see langword="null"/> when the pin
-    /// does not depend on one.
-    /// </summary>
-    public string? TargetFramework { get; init; }
 
     /// <summary>
     /// Gets the MSBuild item type the pin is declared as, or <see langword="null"/> for a pin that is not an
@@ -67,7 +62,7 @@ internal sealed record DependencyPin
     public string? GroupCaption { get; init; }
 
     /// <summary>
-    /// Creates a pin, reading the form and the version out of the version text.
+    /// Creates a pin, reading the version and what may be done with it out of the version text.
     /// </summary>
     /// <param name="scope">The scope the pin belongs to.</param>
     /// <param name="id">The package id.</param>
@@ -76,13 +71,13 @@ internal sealed record DependencyPin
     /// <returns>The pin.</returns>
     public static DependencyPin Create(DependencyScope scope, string id, string versionText, string declaringFile)
     {
-        var form = PinVersion.Read(versionText, out var version);
+        var management = PinVersion.Read(versionText, out var version);
         return new DependencyPin
         {
             Scope = scope,
             Id = id,
             VersionText = versionText,
-            Form = form,
+            Management = management,
             Version = version,
             DeclaringFile = declaringFile,
         };
