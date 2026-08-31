@@ -10,7 +10,7 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_WithNoOption_AppliesEveryConfiguredScope()
     {
-        var settings = DependenciesUpdateSettings.Parse([]);
+        var settings = DependenciesUpdateSettings.Parse([], []);
         await Assert.That(settings.Included).IsEmpty();
         await Assert.That(settings.Excluded).IsEmpty();
         await Assert.That(settings.Check).IsFalse();
@@ -20,7 +20,7 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_ReadsTheScopeFlags()
     {
-        var settings = DependenciesUpdateSettings.Parse(["--tools", "--sdks"]);
+        var settings = DependenciesUpdateSettings.Parse([], ["--tools", "--sdks"]);
         await Assert.That(settings.Included).IsEquivalentTo([DependencyScope.Sdks, DependencyScope.Tools]);
         await Assert.That(settings.Excluded).IsEmpty();
     }
@@ -28,7 +28,7 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_ReadsCheckAndAll()
     {
-        var settings = DependenciesUpdateSettings.Parse(["--check", "--all"]);
+        var settings = DependenciesUpdateSettings.Parse([], ["--check", "--all"]);
         await Assert.That(settings.Check).IsTrue();
         await Assert.That(settings.All).IsTrue();
     }
@@ -36,7 +36,53 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_WithAllAndNoCheck_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["--all"])).Throws<BuildFailedException>();
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse([], ["--all"])).Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
+    public async Task Parse_ReadsThePinsTheArgumentsName()
+    {
+        var settings = DependenciesUpdateSettings.Parse(["Serilog", "Microsoft.*"], []);
+        await Assert.That(settings.Filters).IsEquivalentTo(["Serilog", "Microsoft.*"]);
+    }
+
+    [Test]
+    public async Task Parse_ReadsTheStatedVersion()
+    {
+        var settings = DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "3.1.0"]);
+        await Assert.That(settings.To?.ToNormalizedString()).IsEqualTo("3.1.0");
+    }
+
+    [Test]
+    public async Task Parse_WithAVersionThatDoesNotParse_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "not-a-version"]))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
+    public async Task Parse_WithToAndCheck_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "3.1.0", "--check"]))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
+    public async Task Parse_WithNetSdkAndAnArgument_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--netsdk"]))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
+    public async Task Parse_WithToAndSeveralArguments_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog", "Newtonsoft.Json"], ["--to", "3.1.0"]))
+            .Throws<BuildFailedException>();
         await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 }

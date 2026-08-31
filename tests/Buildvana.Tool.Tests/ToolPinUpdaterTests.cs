@@ -23,6 +23,16 @@ internal sealed class ToolPinUpdaterTests
         await Assert.That(runner.Runs[0].WorkingDirectory).IsEqualTo(home.RootPath);
     }
 
+    // The CLI refuses to lower a tool's version unless told that lowering it is the point.
+    [Test]
+    public async Task UpdateAsync_OfADowngrade_TellsTheCliToAllowIt()
+    {
+        using var home = new TempHome();
+        var runner = new FakeProcessRunner();
+        await UpdateAsync(home, runner, Moving("ngbv", "0.6.0", "0.5.1")).ConfigureAwait(false);
+        await Assert.That(string.Join(" ", runner.Runs.Single().Args)).EndsWith("--allow-downgrade");
+    }
+
     [Test]
     public async Task UpdateAsync_LeavesAToolThatDoesNotMoveAlone()
     {

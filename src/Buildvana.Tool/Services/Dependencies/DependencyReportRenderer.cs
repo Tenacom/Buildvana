@@ -250,7 +250,9 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
             return;
         }
 
-        var listed = pins.Where(pin => listUpToDate || pin.State != PinResolutionState.UpToDate).ToArray();
+        // A pin no filter named has no news either: the report leaves it out with the up-to-date ones.
+        var listed = pins.Where(pin => listUpToDate || pin.State is not (PinResolutionState.UpToDate or PinResolutionState.Skipped))
+            .ToArray();
         foreach (var file in listed.GroupBy(static pin => pin.Pin.DeclaringFile))
         {
             console.MarkupLineInterpolated($"  {file.Key}");
