@@ -10,6 +10,7 @@ using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Process;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
+using NuGet.Versioning;
 
 namespace Buildvana.Tool.Services.Dependencies;
 
@@ -42,9 +43,19 @@ internal sealed class ToolPinUpdater(IProcessRunner processRunner, IHomeDirector
             reporter.Info($"Updating tool {pin.Pin.Id} to {version}...");
             _ = await processRunner.RunAsync(
                 DotNetMuxer.Path,
-                ["tool", "update", pin.Pin.Id, "--local", "--version", version],
+                ArgumentsFor(pin.Pin.Id, version, IsDowngrade(pin)),
                 workingDirectory: home.HomeDirectory,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
+
+    // The CLI has a downgrade guard of its own, and it stays armed unless the run is an assisted manual
+    // edit: a policy-driven update never lowers a pin, so a downgrade the CLI blocks there is a bug caught.
+    private static bool IsDowngrade(PinResolution pin)
+        => pin.Pin.Version is { } current && VersionComparer.VersionRelease.Compare(pin.Target!, current) < 0;
+
+    private static string[] ArgumentsFor(string id, string version, bool isDowngrade)
+        => isDowngrade
+            ? ["tool", "update", id, "--local", "--version", version, "--allow-downgrade"]
+            : ["tool", "update", id, "--local", "--version", version];
 }

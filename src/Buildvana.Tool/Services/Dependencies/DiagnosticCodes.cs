@@ -10,4 +10,5 @@ internal static class DiagnosticCodes
     public const string UnknownPackage = "BV1200";
     public const string UnknownVersion = "BV1201";
     public const string UnknownNetSdkVersion = "BV1202";
+    public const string NoSuchPin = "BV1203";
 }
