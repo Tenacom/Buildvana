@@ -27,6 +27,8 @@ posted from GitHub Actions or done locally.
 
 - From the second round on, zero findings is the expected outcome. A review that
   finds nothing has done its job.
+- Do not narrate verification. What you checked and found sound is not review
+  output. A round with no findings reports the verdict and stops.
 - Verify each fix against the tree, not against the author's description of it.
 - Do not raise again a finding the author declined with a rationale. The one
   exception is a rationale that rests on a wrong fact, and then name the fact.
