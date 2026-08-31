@@ -251,6 +251,73 @@ internal sealed partial class JsonHelperTests
     }
 
     [Test]
+    public async Task RewriteBooleanValues_SplicesTheLiteral_LeavingEverythingElseAlone()
+    {
+        using var file = new TempJsonFile(
+            """
+            {
+              // a comment nothing may touch
+              "sdk": {
+                "version": "10.0.302",
+                "allowPrerelease": false
+              }
+            }
+
+            """);
+
+        var rewritten = new JsonHelper().RewriteBooleanValues(file.Path, static (path, _) => path is ["sdk", "allowPrerelease"] ? true : null);
+
+        await Assert.That(rewritten).IsTrue();
+        await Assert.That(file.ReadText()).IsEqualTo(
+            """
+            {
+              // a comment nothing may touch
+              "sdk": {
+                "version": "10.0.302",
+                "allowPrerelease": true
+              }
+            }
+
+            """);
+    }
+
+    [Test]
+    public async Task RewriteBooleanValues_LeavingEveryValueAlone_WritesNothing()
+    {
+        const string content = """{"a": true, "b": false}""";
+        using var file = new TempJsonFile(content);
+
+        var rewritten = new JsonHelper().RewriteBooleanValues(file.Path, static (_, current) => current);
+
+        await Assert.That(rewritten).IsFalse();
+        await Assert.That(file.ReadText()).IsEqualTo(content);
+    }
+
+    // A boolean inside an array has no property name, so no rewriter can name it either.
+    [Test]
+    public async Task RewriteBooleanValues_LeavesArrayElementsAlone()
+    {
+        const string content = """{"flags": [true, false]}""";
+        using var file = new TempJsonFile(content);
+
+        var rewritten = new JsonHelper().RewriteBooleanValues(file.Path, static (_, current) => !current);
+
+        await Assert.That(rewritten).IsFalse();
+        await Assert.That(file.ReadText()).IsEqualTo(content);
+    }
+
+    [Test]
+    public async Task RewriteBooleanValues_OfInvalidJson_Fails()
+    {
+        using var file = new TempJsonFile("{ not json");
+
+        bool Act() => new JsonHelper().RewriteBooleanValues(file.Path, static (_, current) => !current);
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("does not contain valid JSON");
+    }
+
+    [Test]
     public async Task InsertProperty_PreservesUtf8Bom()
     {
         var contentBytes = "{\n  \"a\": 1\n}\n"u8.ToArray();
