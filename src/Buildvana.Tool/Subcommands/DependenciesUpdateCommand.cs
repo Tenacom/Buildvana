@@ -31,6 +31,7 @@ internal sealed class DependenciesUpdateCommand(
     BuildvanaConfig config,
     DependencyDiscovery discovery,
     DependencyResolver resolver,
+    DependencyApplier applier,
     DependencyReportRenderer renderer,
     IReporter reporter) : IBvCommand
 {
@@ -40,7 +41,13 @@ internal sealed class DependenciesUpdateCommand(
         var inventory = await discovery.DiscoverAsync(scopes, cancellationToken).ConfigureAwait(false);
         var resolution = await resolver.ResolveAsync(inventory, cancellationToken).ConfigureAwait(false);
         var pending = resolution.HasPendingWork;
-        renderer.WriteUpdate(resolution, scopes, settings.All, applied: false);
-        return pending ? BuildFailedException.DefaultExitCode : 0;
+        if (!settings.Check)
+        {
+            await applier.ApplyPinsAsync(resolution, scopes, cancellationToken).ConfigureAwait(false);
+            applier.ApplyNetSdk(resolution, scopes);
+        }
+
+        renderer.WriteUpdate(resolution, scopes, settings.All, applied: !settings.Check);
+        return settings.Check && pending ? BuildFailedException.DefaultExitCode : 0;
     }
 }
