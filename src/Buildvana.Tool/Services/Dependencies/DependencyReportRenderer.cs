@@ -19,12 +19,13 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// and what a reader would open. Nothing is hidden: a pin nothing can move is listed with the reason, and a
 /// selected scope with no pins says that it has none.</para>
 /// <para>What a pin's state is travels in words. A colour may carry it as well, and never alone.</para>
+/// <para>A pin is one line, and that line never breaks an id or a version. A column layout cannot promise
+/// as much: it divides the console width among the columns, and at the eighty columns of a CI log a preview
+/// version is wider than the share it gets. What a reader must know beyond the line goes under it, indented,
+/// where it wraps as the prose it is.</para>
 /// </remarks>
 internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePolicyResolver policies)
 {
-    private static readonly string[] UpdateHeaders =
-        ["package", "pinned", "policy", "target", "latest stable", "latest preview", "notes"];
-
     /// <summary>
     /// Writes the report of what the selected scopes pin.
     /// </summary>
@@ -91,33 +92,42 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         }
     }
 
-    // Padding is stated as left, top, right and bottom: the first column is indented under the file that
-    // declares its pins, and every column but the last is followed by a gap.
-    private static GridColumn NewColumn(int left, int right) => new() { Padding = new Padding(left, 0, right, 0), NoWrap = true };
+    private static string UpdateLineOf(PinResolution resolution)
+    {
+        var outcome = Outcome(resolution.State, resolution.Target);
+        var latest = Latest(resolution.LatestStable, resolution.LatestPreview);
+        return $"{resolution.Pin.Id} {resolution.Pin.VersionText} ({resolution.Policy}) -> {outcome}{latest}";
+    }
 
-    private static string[] UpdateRowOf(PinResolution resolution)
-        =>
-        [
-            resolution.Pin.Id,
-            resolution.Pin.VersionText,
-            resolution.Policy.ToString(),
-            VersionText(resolution.Target),
-            VersionText(resolution.LatestStable),
-            VersionText(resolution.LatestPreview),
-            resolution.Note,
-        ];
+    private static string UpdateLineOfNetSdk(NetSdkResolution resolution)
+    {
+        var outcome = Outcome(resolution.State, resolution.Target);
+        var latest = Latest(resolution.LatestStable, resolution.LatestPreview);
+        return $"(the .NET SDK) {resolution.Pin.VersionText} ({resolution.Policy}) -> {outcome}{latest}";
+    }
 
-    private static string[] UpdateRowOfNetSdk(NetSdkResolution resolution)
-        =>
-        [
-            "(the .NET SDK)",
-            resolution.Pin.VersionText,
-            resolution.Policy.ToString(),
-            VersionText(resolution.Target),
-            VersionText(resolution.LatestStable),
-            VersionText(resolution.LatestPreview),
-            resolution.Note,
-        ];
+    // What the arrow points at: the version a pin moves to, or the words that say why it moves nowhere. The
+    // last state is Held, which is resolution finding nothing the policy allows.
+    private static string Outcome(PinResolutionState state, NuGetVersion? target)
+        => state switch
+        {
+            PinResolutionState.Updated => VersionText(target),
+            PinResolutionState.UpToDate => "up to date",
+            PinResolutionState.Disabled => "disabled",
+            PinResolutionState.Unmanaged => "not managed",
+            PinResolutionState.Skipped => "not selected",
+            _ => "held",
+        };
+
+    // What the sources have beyond the pin, stable first, and nothing at all where they have nothing to add.
+    private static string Latest(NuGetVersion? stable, NuGetVersion? preview)
+        => (stable, preview) switch
+        {
+            (null, null) => string.Empty,
+            (not null, null) => $" (latest: {VersionText(stable)})",
+            (null, not null) => $" (latest: {VersionText(preview)})",
+            _ => $" (latest: {VersionText(stable)}, {VersionText(preview)})",
+        };
 
     private static string VersionText(NuGetVersion? version) => version?.ToNormalizedString() ?? string.Empty;
 
@@ -140,7 +150,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
 
         var policy = policies.ResolveNetSdk();
         console.MarkupLineInterpolated($"  {GlobalJsonPinReader.RelativePath}");
-        WriteRows([("(the .NET SDK)", pin.VersionText, policy.ToString(), PinNotes.ForNetSdk(pin, policy))]);
+        WritePinLine($"(the .NET SDK) {pin.VersionText} ({policy})", PinNotes.ForNetSdk(pin, policy));
     }
 
     private void WriteScope(string heading, IReadOnlyList<DependencyPin> pins)
@@ -182,14 +192,17 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         foreach (var file in pins.GroupBy(static pin => pin.DeclaringFile))
         {
             console.MarkupLineInterpolated($"  {file.Key}");
-            WriteRows([.. file.Select(RowOf)]);
+            foreach (var pin in file)
+            {
+                WritePin(pin);
+            }
         }
     }
 
-    private (string Id, string Version, string Policy, string Note) RowOf(DependencyPin pin)
+    private void WritePin(DependencyPin pin)
     {
         var policy = policies.Resolve(pin);
-        return (pin.Id, pin.VersionText, policy.ToString(), PinNotes.For(pin, policy));
+        WritePinLine($"{pin.Id} {pin.VersionText} ({policy})", PinNotes.For(pin, policy));
     }
 
     // The baseline is one row, listed when it has news: a version to move to, or an allowPrerelease setting
@@ -208,7 +221,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         if (listUpToDate || !isUpToDate)
         {
             console.MarkupLineInterpolated($"  {GlobalJsonPinReader.RelativePath}");
-            WriteUpdateRows([UpdateRowOfNetSdk(resolution)]);
+            WritePinLine(UpdateLineOfNetSdk(resolution), resolution.Note);
         }
 
         WriteCounts(changes ? 1 : 0, isUpToDate ? 1 : 0, listUpToDate, applied);
@@ -255,7 +268,10 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         foreach (var file in listed.GroupBy(static pin => pin.Pin.DeclaringFile))
         {
             console.MarkupLineInterpolated($"  {file.Key}");
-            WriteUpdateRows([.. file.Select(UpdateRowOf)]);
+            foreach (var pin in file)
+            {
+                WritePinLine(UpdateLineOf(pin), pin.Note);
+            }
         }
     }
 
@@ -280,48 +296,19 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         }
     }
 
-    // The notes column exists only where a row has something to say, and the header names what a reader is
-    // looking at: six versions of the same shape need saying apart.
-    private void WriteUpdateRows(IReadOnlyList<string[]> rows)
+    // A line is markup, and a version is data: `[13.0.4]` names one version, and Spectre would read it as a
+    // style tag. Both halves go in as interpolated values, which Spectre escapes for us. A pin with nothing
+    // to say beyond its line gets no second line, so a report of pins nothing is wrong with carries none.
+    // The two lines are written as lines, not as an indented block: Spectre pads every line of a block to
+    // the block's width, and a report full of trailing spaces is a poor thing to paste into an issue. The
+    // cost is that a line too long for the console continues at column 0.
+    private void WritePinLine(string line, string note)
     {
-        var visible = rows.Any(static row => row[^1].Length > 0) ? UpdateHeaders.Length : UpdateHeaders.Length - 1;
-        var grid = new Grid();
-        for (var index = 0; index < visible; index++)
+        console.MarkupLineInterpolated($"    {line}");
+        if (note.Length > 0)
         {
-            grid.AddColumn(NewColumn(index == 0 ? 4 : 0, index == visible - 1 ? 0 : 2));
+            console.MarkupLineInterpolated($"      {note}");
         }
-
-        grid.AddRow([.. UpdateHeaders.Take(visible).Select(static header => $"[dim]{header}[/]")]);
-        foreach (var row in rows)
-        {
-            grid.AddRow([.. row.Take(visible).Select(Markup.Escape)]);
-        }
-
-        console.Write(grid);
-    }
-
-    // A row is markup, and a version is data: `[13.0.4]` names one version, and Spectre would read it as a
-    // style tag. The notes column exists only where a row has something to say, so that a report of pins
-    // nothing is wrong with carries no empty column and no trailing blanks.
-    private void WriteRows(IReadOnlyList<(string Id, string Version, string Policy, string Note)> rows)
-    {
-        var hasNotes = rows.Any(static row => row.Note.Length > 0);
-        var grid = new Grid();
-        grid.AddColumn(NewColumn(4, 2));
-        grid.AddColumn(NewColumn(0, 2));
-        grid.AddColumn(NewColumn(0, hasNotes ? 2 : 0));
-        if (hasNotes)
-        {
-            grid.AddColumn(new GridColumn { Padding = new Padding(0, 0, 0, 0) });
-        }
-
-        foreach (var row in rows)
-        {
-            string[] cells = [Markup.Escape(row.Id), Markup.Escape(row.Version), Markup.Escape(row.Policy)];
-            grid.AddRow(hasNotes ? [.. cells, Markup.Escape(row.Note)] : cells);
-        }
-
-        console.Write(grid);
     }
 
     private void WriteHeading(string heading)
