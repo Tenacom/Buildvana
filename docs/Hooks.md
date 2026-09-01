@@ -47,6 +47,8 @@ The hook runs after the pins of the `packages`, `tools` and `sdks` scopes are wr
 
 The args state what the run made of every pin of every selected scope: the id, the file that declares it, the version it had, the version it reached (or would reach), the policy that governs it, and the latest stable and prerelease versions the sources have. A scope the invocation left out contributes nothing. A pin an argument left out is stated as `Skipped`, so a hook that derives state from one particular pin sees that pin in every run.
 
+The args also state the [transitive overrides](DependencyManagement.md#transitive-overrides) in effect: the package, the version the generated file states, and the file stating it. An apply run has just rewritten those files, and a check run reports what the last apply run wrote.
+
 This hook has an exit-code convention of its own, because a check run has a verdict to give:
 
 - in a check run (`--check`), exit code 0 means that the hook found nothing to change, and exit code 1 means that it would change something. `bv` folds the 1 into its own verdict, as it folds a pin that has fallen behind. Any other exit code is a failure;
