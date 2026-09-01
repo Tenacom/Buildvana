@@ -24,6 +24,13 @@ internal sealed class PackageSourceCatalogTests
                                            </disabledPackageSources>
                                          """;
 
+    private const string AuditSource = """
+                                         <auditSources>
+                                           <clear />
+                                           <add key="audit" value="audit-feed" />
+                                         </auditSources>
+                                       """;
+
     private const string Mapping = """
                                      <packageSourceMapping>
                                        <packageSource key="local">
@@ -57,6 +64,22 @@ internal sealed class PackageSourceCatalogTests
         using var home = NewHome(TwoSources + "\n" + OtherDisabled);
         var catalog = new PackageSourceCatalog(home.Provider);
         await Assert.That(catalog.Sources.Select(static source => source.Name)).IsEquivalentTo(["local"]);
+    }
+
+    [Test]
+    public async Task AuditSources_WithNoneConfigured_AreThePackageSources()
+    {
+        using var home = NewHome(TwoSources);
+        var catalog = new PackageSourceCatalog(home.Provider);
+        await Assert.That(catalog.AuditSources.Select(static source => source.Name)).IsEquivalentTo(["local", "other"]);
+    }
+
+    [Test]
+    public async Task AuditSources_WithSomeConfigured_AreThoseAlone()
+    {
+        using var home = NewHome(TwoSources + "\n" + AuditSource);
+        var catalog = new PackageSourceCatalog(home.Provider);
+        await Assert.That(catalog.AuditSources.Select(static source => source.Name)).IsEquivalentTo(["audit"]);
     }
 
     [Test]

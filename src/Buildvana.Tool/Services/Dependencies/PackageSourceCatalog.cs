@@ -26,6 +26,7 @@ namespace Buildvana.Tool.Services.Dependencies;
 internal sealed class PackageSourceCatalog
 {
     private readonly Lazy<IReadOnlyList<PackageSource>> _sources;
+    private readonly Lazy<IReadOnlyList<PackageSource>> _auditSources;
     private readonly Lazy<PackageSourceMapping> _mapping;
 
     /// <summary>
@@ -37,7 +38,9 @@ internal sealed class PackageSourceCatalog
     {
         Guard.IsNotNull(home);
         var settings = new Lazy<ISettings>(() => LoadSettings(home));
-        _sources = new Lazy<IReadOnlyList<PackageSource>>(() => [.. SettingsUtility.GetEnabledSources(settings.Value)]);
+        var sources = new Lazy<IReadOnlyList<PackageSource>>(() => [.. SettingsUtility.GetEnabledSources(settings.Value)]);
+        _sources = sources;
+        _auditSources = new Lazy<IReadOnlyList<PackageSource>>(() => LoadAuditSources(settings.Value, sources.Value));
         _mapping = new Lazy<PackageSourceMapping>(() => PackageSourceMapping.GetPackageSourceMapping(settings.Value));
     }
 
@@ -46,6 +49,17 @@ internal sealed class PackageSourceCatalog
     /// </summary>
     /// <exception cref="BuildFailedException">The configuration chain could not be read.</exception>
     public IReadOnlyList<PackageSource> Sources => _sources.Value;
+
+    /// <summary>
+    /// Gets the sources whose vulnerability data says what is vulnerable: the enabled audit sources when the
+    /// configuration states any, and the package sources otherwise.
+    /// </summary>
+    /// <remarks>
+    /// <para>The either/or is NuGet's own. A repository that names audit sources audits against those alone,
+    /// and one that names none audits against the sources it restores from.</para>
+    /// </remarks>
+    /// <exception cref="BuildFailedException">The configuration chain could not be read.</exception>
+    public IReadOnlyList<PackageSource> AuditSources => _auditSources.Value;
 
     /// <summary>
     /// Gets the sources that answer for a package id.
@@ -71,6 +85,20 @@ internal sealed class PackageSourceCatalog
 
         var mapped = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
         return [.. Sources.Where(source => mapped.Contains(source.Name))];
+    }
+
+    private static IReadOnlyList<PackageSource> LoadAuditSources(ISettings settings, IReadOnlyList<PackageSource> packageSources)
+    {
+        try
+        {
+            var configured = new PackageSourceProvider(settings).LoadAuditSources();
+            List<PackageSource> enabled = [.. configured.Where(static source => source.IsEnabled)];
+            return enabled.Count > 0 ? enabled : packageSources;
+        }
+        catch (Exception exception) when (exception is NuGetConfigurationException || exception.IsIORelatedException)
+        {
+            throw new BuildFailedException($"The NuGet configuration could not be read: {exception.Message}", exception);
+        }
     }
 
     private static ISettings LoadSettings(IHomeDirectoryProvider home)
