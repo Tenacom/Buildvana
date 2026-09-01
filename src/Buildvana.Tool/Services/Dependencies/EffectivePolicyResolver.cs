@@ -66,6 +66,22 @@ internal sealed class EffectivePolicyResolver
     }
 
     /// <summary>
+    /// Composes the policy governing a package the repository does not pin at all.
+    /// </summary>
+    /// <param name="packageId">The package id.</param>
+    /// <returns>The policy.</returns>
+    /// <remarks>
+    /// <para>A transitive dependency has no pin, and therefore no metadata and no group. What is left of the
+    /// ladder is the configuration's own patterns, and the default of the <c>packages</c> scope under them.
+    /// The policy bounds how far a transitive override may lift the package.</para>
+    /// </remarks>
+    public PackageUpdatePolicy ResolveTransitive(string packageId)
+    {
+        Guard.IsNotNullOrWhiteSpace(packageId);
+        return Parse(MatchingPattern(packageId) ?? _config.Scopes.Packages);
+    }
+
+    /// <summary>
     /// Composes the policy governing the .NET SDK baseline, which no pin of its own can override.
     /// </summary>
     /// <returns>The policy.</returns>

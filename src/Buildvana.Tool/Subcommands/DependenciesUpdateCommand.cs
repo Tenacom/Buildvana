@@ -33,6 +33,7 @@ internal sealed class DependenciesUpdateCommand(
     DependencyDiscovery discovery,
     DependencyResolver resolver,
     DependencyApplier applier,
+    OverrideLifecycle overrides,
     PostUpdateHookArgsFactory hookArgsFactory,
     HookRunner hookRunner,
     DependencyReportRenderer renderer,
@@ -49,6 +50,13 @@ internal sealed class DependenciesUpdateCommand(
         if (!settings.Check)
         {
             await applier.ApplyPinsAsync(resolution, scopes, cancellationToken).ConfigureAwait(false);
+
+            // A check run leaves the lifecycle alone entirely: it predicts pin movement, and predicting what
+            // a restore would find is not prediction but a restore.
+            if (scopes.Contains(DependencyScope.Packages))
+            {
+                await overrides.RunAsync(inventory.Evaluations, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         // The hook runs before the baseline is written, so the global.json it sees still states the old .NET

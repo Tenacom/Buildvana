@@ -19,8 +19,9 @@ using Spectre.Console.Testing;
 /// <summary>
 /// Runs <c>bv dependencies update</c> end to end over a temporary home directory, with only the process
 /// boundaries faked: child processes (<see cref="FakeProcessRunner"/>), the hook
-/// (<see cref="FakeFileBasedAppRunner"/>), and the two version sources. Everything else — the service graph,
-/// the discovery, the resolution, and the writers — is the real thing.
+/// (<see cref="FakeFileBasedAppRunner"/>), the restore the override lifecycle would run, and the two version
+/// sources. Everything else — the service graph, the discovery, the resolution, and the writers — is the real
+/// thing.
 /// </summary>
 /// <remarks>
 /// <para>Every run leaves the packages scope out, so nothing here spawns MSBuild. The solution factory
@@ -162,6 +163,7 @@ internal sealed class DependenciesUpdateHarness : IDisposable
             // The boundaries, faked. Registered last, so that they win over what AddBvServices registers.
             .AddSingleton<IProcessRunner>(ProcessRunner)
             .AddSingleton<IFileBasedAppRunner>(AppRunner)
+            .AddSingleton<IDependencyRestorer>(new FakeDependencyRestorer())
             .AddSingleton<IPackageVersionSource>(PackageVersions)
             .AddSingleton<INetSdkReleaseSource>(NetSdkReleases)
             .AddSingleton<ISolutionContextFactory>(_solutions)
