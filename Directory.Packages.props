@@ -47,6 +47,7 @@
     <PackageVersion Include="NuGet.Common" Version="7.9.0" />
     <PackageVersion Include="NuGet.Configuration" Version="7.9.0" />
     <PackageVersion Include="NuGet.Credentials" Version="7.9.0" />
+    <PackageVersion Include="NuGet.ProjectModel" Version="7.9.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
     <PackageVersion Include="NuGet.Versioning" Version="7.9.0" />
     <PackageVersion Include="Octokit" Version="14.0.0" />
