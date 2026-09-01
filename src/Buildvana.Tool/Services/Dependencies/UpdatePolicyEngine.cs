@@ -80,6 +80,28 @@ internal static class UpdatePolicyEngine
         return Compose(current, all, inWindow, policy.AllowPrerelease);
     }
 
+    /// <summary>
+    /// Says whether a policy lets a package at one version move to another.
+    /// </summary>
+    /// <param name="current">The version to move from.</param>
+    /// <param name="candidate">The version to move to.</param>
+    /// <param name="policy">The effective policy.</param>
+    /// <returns><see langword="true"/> if the move is within the policy, <see langword="false"/> otherwise.</returns>
+    /// <remarks>
+    /// <para>This is the window the two <c>Select</c> overloads pick a target inside, asked about one version.
+    /// The transitive override lifecycle needs the lowest version that ends a vulnerability rather than the
+    /// furthest one a pin may reach, and the window it must stay inside is the same window.</para>
+    /// </remarks>
+    public static bool Allows(NuGetVersion current, NuGetVersion candidate, PackageUpdatePolicy policy)
+    {
+        Guard.IsNotNull(current);
+        Guard.IsNotNull(candidate);
+        var isAllowedForm = policy.AllowPrerelease || !candidate.IsPrerelease;
+        return policy.Kind != PackageUpdatePolicyKind.Disable
+            && isAllowedForm
+            && IsInWindow(current, candidate, policy.Kind);
+    }
+
     // Disable resolves no target, but the latest-version members still report whatever the caller resolved:
     // a pin the user froze is where "what is out there" is most worth reading. A caller that resolves nothing
     // for a disabled pin passes an empty candidate set and gets nulls back.
