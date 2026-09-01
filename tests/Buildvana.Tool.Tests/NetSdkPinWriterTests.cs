@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
@@ -26,6 +27,15 @@ internal sealed class NetSdkPinWriterTests
                                                  }
                                                }
                                                """;
+
+    private const string WithStringAllowPrerelease = """
+                                                     {
+                                                       "sdk": {
+                                                         "version": "10.0.100",
+                                                         "allowPrerelease": "true"
+                                                       }
+                                                     }
+                                                     """;
 
     [Test]
     public async Task Write_MovesTheBaseline()
@@ -61,6 +71,20 @@ internal sealed class NetSdkPinWriterTests
         home.WriteFile("global.json", WithoutAllowPrerelease);
         Write(home, Resolution("10.0.100", stated: null, target: null, policy: "major-"));
         await Assert.That(home.ReadFile("global.json")).Contains("\"allowPrerelease\": true");
+    }
+
+    // A setting that is neither true nor false reads as no setting at all, so the writer takes the branch that
+    // inserts one, and the file already has the name. Reporting that write would leave every later check run
+    // failing over a file no run can fix.
+    [Test]
+    public async Task Write_WhenAllowPrereleaseIsNeitherTrueNorFalse_Fails()
+    {
+        using var home = new TempHome();
+        home.WriteFile("global.json", WithStringAllowPrerelease);
+        await Assert.That(() => Write(home, Resolution("10.0.100", stated: null, target: null, policy: "major")))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(WithStringAllowPrerelease);
     }
 
     [Test]

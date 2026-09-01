@@ -29,7 +29,8 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
     /// Writes the pins that move.
     /// </summary>
     /// <param name="pins">What the run made of the package pins. Only the ones that move are written.</param>
-    /// <exception cref="BuildFailedException">A file could not be read or written.</exception>
+    /// <exception cref="BuildFailedException">A file could not be read or written, or no longer states a pin
+    /// the run moves.</exception>
     public void Write(IReadOnlyList<PinResolution> pins)
     {
         Guard.IsNotNull(pins);
@@ -42,10 +43,12 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
             {
                 var targets = PinWriting.TargetsOf(items);
                 var itemTypes = items.Select(static pin => pin.Pin.ItemType!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-                _ = MsBuildPinEditor.RewritePins(
+                var rewritten = MsBuildPinEditor.RewritePins(
                     path,
                     itemTypes,
                     pin => PinWriting.Restate(targets, pin.ItemType, pin.Id, pin.VersionText));
+
+                EnsureWritten(rewritten, path);
             }
 
             if (directives.Length > 0)
@@ -53,12 +56,19 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
                 var targets = PinWriting.TargetsOf(directives);
 
                 // The editor calls back only for directives that carry a version, so VersionText is never null here.
-                _ = AppDirectiveEditor.RewriteVersions(
+                var rewritten = AppDirectiveEditor.RewriteVersions(
                     path,
                     directive => PinWriting.Restate(targets, itemType: null, directive.Id, directive.VersionText!));
+
+                EnsureWritten(rewritten, path);
             }
 
             reporter.Detail($"Stated the new versions in {file.Key}.");
         }
     }
+
+    // An editor says whether it wrote anything, and a writer that ignored the answer would report a run it
+    // did not make. The file was read moments ago, so a refusal means it changed under us.
+    private static void EnsureWritten(bool written, string path)
+        => BuildFailedException.ThrowIfNot(written, $"{path} no longer states a package version this run moves.");
 }

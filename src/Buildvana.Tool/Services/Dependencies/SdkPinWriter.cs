@@ -30,7 +30,8 @@ internal sealed class SdkPinWriter(IHomeDirectoryProvider home, IJsonHelper json
     /// Writes the pins that move.
     /// </summary>
     /// <param name="pins">What the run made of the project SDK pins. Only the ones that move are written.</param>
-    /// <exception cref="BuildFailedException">A file could not be read or written.</exception>
+    /// <exception cref="BuildFailedException">A file could not be read or written, or no longer states a pin
+    /// the run moves.</exception>
     public void Write(IReadOnlyList<PinResolution> pins)
     {
         Guard.IsNotNull(pins);
@@ -44,14 +45,21 @@ internal sealed class SdkPinWriter(IHomeDirectoryProvider home, IJsonHelper json
             else
             {
                 var targets = PinWriting.TargetsOf(file);
-                _ = AppDirectiveEditor.RewriteVersions(
+                var rewritten = AppDirectiveEditor.RewriteVersions(
                     path,
                     directive => PinWriting.Restate(targets, itemType: null, directive.Id, directive.VersionText!));
+
+                EnsureWritten(rewritten, path);
             }
 
             reporter.Detail($"Stated the new versions in {file.Key}.");
         }
     }
+
+    // An editor says whether it wrote anything, and a writer that ignored the answer would report a run it
+    // did not make. The file was read moments ago, so a refusal means it changed under us.
+    private static void EnsureWritten(bool written, string path)
+        => BuildFailedException.ThrowIfNot(written, $"{path} no longer states a project SDK version this run moves.");
 
     private void WriteGlobalJson(string path, IReadOnlyList<PinResolution> pins)
     {
@@ -61,10 +69,12 @@ internal sealed class SdkPinWriter(IHomeDirectoryProvider home, IJsonHelper json
             targets[pin.Pin.Id] = pin.Target!;
         }
 
-        _ = jsonHelper.RewriteStringValues(
+        var rewritten = jsonHelper.RewriteStringValues(
             path,
             (propertyPath, currentValue) => propertyPath is [MsBuildSdksSectionName, var id] && targets.TryGetValue(id, out var target)
                 ? PinVersionText.Restate(currentValue, target)
                 : null);
+
+        EnsureWritten(rewritten, path);
     }
 }
