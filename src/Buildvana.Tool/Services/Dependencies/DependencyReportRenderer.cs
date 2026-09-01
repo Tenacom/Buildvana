@@ -57,6 +57,36 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
     }
 
     /// <summary>
+    /// Writes the transitive overrides the repository's files state.
+    /// </summary>
+    /// <param name="overrides">The overrides in effect.</param>
+    /// <remarks>
+    /// <para>These are the state the last apply run left behind, read from the files. They are listed rather
+    /// than judged: whether they are still needed is a question a restore answers, and this report is
+    /// offline.</para>
+    /// </remarks>
+    public void WriteOverrides(IReadOnlyList<TransitiveOverrideEntry> overrides)
+    {
+        Guard.IsNotNull(overrides);
+        WriteHeading("Transitive overrides");
+        if (overrides.Count == 0)
+        {
+            console.MarkupLine("  none in effect");
+            return;
+        }
+
+        foreach (var file in overrides.GroupBy(static entry => entry.DeclaringFile))
+        {
+            console.MarkupLineInterpolated($"  {file.Key}");
+            foreach (var entry in file)
+            {
+                var version = entry.Version ?? "at the version the repository pins";
+                WritePinLine($"{entry.PackageId} {version}", string.Empty);
+            }
+        }
+    }
+
+    /// <summary>
     /// Writes the report of what a run made of the selected scopes.
     /// </summary>
     /// <param name="resolution">What the run made of every pin.</param>

@@ -30,6 +30,7 @@ internal sealed class DependenciesShowCommand(
     DependenciesSettings settings,
     BuildvanaConfig config,
     DependencyDiscovery discovery,
+    SidecarReader sidecars,
     DependencyReportRenderer renderer,
     IReporter reporter) : IBvCommand
 {
@@ -38,6 +39,14 @@ internal sealed class DependenciesShowCommand(
         var scopes = DependencyScopeSelection.Resolve(settings.Included, settings.Excluded, config.Dependencies, reporter);
         var inventory = await discovery.DiscoverAsync(scopes, cancellationToken).ConfigureAwait(false);
         renderer.Write(inventory, scopes);
+
+        // Overrides belong to the packages scope: they are package versions, written for the projects that
+        // resolve them. An invocation that leaves that scope out is not asking about them.
+        if (scopes.Contains(DependencyScope.Packages))
+        {
+            renderer.WriteOverrides(sidecars.Read());
+        }
+
         return 0;
     }
 }

@@ -105,6 +105,34 @@ internal sealed class DependencyReportRendererTests
         await Assert.That(output).DoesNotContain("nothing pinned");
     }
 
+    [Test]
+    public async Task WriteOverrides_StatesEachEntryUnderTheFileThatHoldsIt()
+    {
+        var output = RenderOverrides(
+        [
+            new TransitiveOverrideEntry("Newtonsoft.Json", "13.0.3", "Directory.TransitiveOverrides.props"),
+            new TransitiveOverrideEntry("Serilog", null, "src/Test/Test.TransitiveOverrides.props"),
+        ]);
+
+        await Assert.That(output).Contains("Transitive overrides");
+        await Assert.That(output).Contains("Directory.TransitiveOverrides.props");
+        await Assert.That(output).Contains("Newtonsoft.Json 13.0.3");
+        await Assert.That(output).Contains("src/Test/Test.TransitiveOverrides.props");
+        await Assert.That(output).Contains("Serilog at the version the repository pins");
+    }
+
+    [Test]
+    public async Task WriteOverrides_WithNone_SaysSo()
+        => await Assert.That(RenderOverrides([])).Contains("none in effect");
+
+    private static string RenderOverrides(IReadOnlyList<TransitiveOverrideEntry> overrides)
+    {
+        using var console = new TestConsole();
+        _ = console.Width(200);
+        new DependencyReportRenderer(console, new EffectivePolicyResolver(new DependenciesConfig())).WriteOverrides(overrides);
+        return console.Output;
+    }
+
     private static string Render(DependencyInventory inventory, IReadOnlyList<DependencyScope> scopes)
     {
         // Wide enough that no note wraps: what these tests are about is what the report says, not how a
