@@ -33,6 +33,27 @@ public sealed record PackagePinDump
     /// </summary>
     public bool ManagePackageVersionsCentrally { get; init; }
 
+    /// <summary>
+    /// Gets the full path of the file a restore writes the evaluation's dependency graph to, or
+    /// <see langword="null"/> for an evaluation that states none.
+    /// </summary>
+    /// <remarks>
+    /// <para>The path is the evaluated <c>ProjectAssetsFile</c> property, and not a convention applied to the
+    /// project directory: a repository may put its intermediate output anywhere it likes.</para>
+    /// </remarks>
+    public string? ProjectAssetsFile { get; init; }
+
+    /// <summary>
+    /// Gets the severity at which NuGet's audit starts reporting an advisory, or <see langword="null"/> for
+    /// an evaluation that states none.
+    /// </summary>
+    /// <remarks>
+    /// <para>The value is the evaluated <c>NuGetAuditLevel</c> property: <c>low</c>, <c>moderate</c>,
+    /// <c>high</c>, or <c>critical</c>. The .NET SDK states <c>low</c> where a project does not, so an
+    /// evaluation states none only where the .NET SDK is not the one being evaluated.</para>
+    /// </remarks>
+    public string? NuGetAuditLevel { get; init; }
+
     /// <summary>Gets the package items the evaluation declares, in evaluation order.</summary>
     public IReadOnlyList<PackagePinDumpItem> Items { get; init; } = [];
 }

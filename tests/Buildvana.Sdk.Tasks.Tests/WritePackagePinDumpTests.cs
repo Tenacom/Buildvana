@@ -80,11 +80,15 @@ internal sealed class WritePackagePinDumpTests
             var task = CreateTask(engine, directory);
             task.TargetFramework = "net10.0";
             task.ManagePackageVersionsCentrally = true;
+            task.ProjectAssetsFile = @"C:\repo\artifacts\obj\Test\project.assets.json";
+            task.NuGetAuditLevel = "moderate";
             await Assert.That(task.Execute()).IsTrue();
             var dump = await ReadDumpAsync(directory).ConfigureAwait(false);
             await Assert.That(dump.ProjectFullPath).IsEqualTo(ProjectFullPath);
             await Assert.That(dump.TargetFramework).IsEqualTo("net10.0");
             await Assert.That(dump.ManagePackageVersionsCentrally).IsTrue();
+            await Assert.That(dump.ProjectAssetsFile).IsEqualTo(@"C:\repo\artifacts\obj\Test\project.assets.json");
+            await Assert.That(dump.NuGetAuditLevel).IsEqualTo("moderate");
         }).ConfigureAwait(false);
     }
 
@@ -96,6 +100,20 @@ internal sealed class WritePackagePinDumpTests
             await Assert.That(CreateTask(engine, directory).Execute()).IsTrue();
             var dump = await ReadDumpAsync(directory).ConfigureAwait(false);
             await Assert.That(dump.TargetFramework).IsNull();
+        }).ConfigureAwait(false);
+    }
+
+    // An evaluation the .NET SDK never reached states neither of the two, and the dump says so rather than
+    // inventing a path in the project directory.
+    [Test]
+    public async Task Execute_WithNoAssetsFileAndNoAuditLevel_WritesNoneForEither()
+    {
+        await RunInTempDirectory(async (engine, directory) =>
+        {
+            await Assert.That(CreateTask(engine, directory).Execute()).IsTrue();
+            var dump = await ReadDumpAsync(directory).ConfigureAwait(false);
+            await Assert.That(dump.ProjectAssetsFile).IsNull();
+            await Assert.That(dump.NuGetAuditLevel).IsNull();
         }).ConfigureAwait(false);
     }
 

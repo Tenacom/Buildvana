@@ -92,6 +92,26 @@ internal sealed class PinDumpTests
         await Assert.That(version?.Trim()).IsEqualTo("4.0.0");
     }
 
+    // The two values the transitive override lifecycle reads the graph and judges its findings by. Both come
+    // from the evaluation, so a project that redirects its intermediate output is followed rather than guessed.
+    [Test]
+    public async Task Dump_StatesTheAssetsFileAndTheAuditLevelOfTheEvaluation()
+    {
+        using var fixture = new PinDumpFixture();
+        var dump = fixture.DumpPins(
+            """
+              <PropertyGroup>
+                <ProjectAssetsFile>$(MSBuildProjectDirectory)/artifacts/obj/project.assets.json</ProjectAssetsFile>
+                <NuGetAuditLevel>moderate</NuGetAuditLevel>
+              </PropertyGroup>
+            """).Single();
+
+        // The separators are the ones the property states, on both platforms: MSBuild normalizes a path in
+        // an import or an item, never in a property value.
+        await Assert.That(dump.ProjectAssetsFile).IsEqualTo(fixture.ProjectDirectory + "/artifacts/obj/project.assets.json");
+        await Assert.That(dump.NuGetAuditLevel).IsEqualTo("moderate");
+    }
+
     [Test]
     public async Task Dump_StatesAnImplicitlyDefinedReferenceLikeAnyOther()
     {

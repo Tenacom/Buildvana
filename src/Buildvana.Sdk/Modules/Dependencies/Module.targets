@@ -8,6 +8,10 @@
     The dump states what the evaluation found and judges none of it: implicitly defined references and
     items declared outside the repository are dumped like any other, and bv decides what to do with them.
 
+    Two evaluated values travel with the items, both needed by the transitive override lifecycle: the file
+    a restore writes this evaluation's dependency graph to, and the severity at which NuGet's audit starts
+    reporting an advisory. Neither can be guessed from outside the evaluation.
+
     A multi-targeting project evaluates its package items once per target framework, and an item may be
     conditioned on the framework, so the outer build dispatches the target to one inner build per framework
     instead of dumping its own view, which has no framework and therefore no such item.
@@ -59,6 +63,8 @@
                          ProjectFullPath="$(MSBuildProjectFullPath)"
                          TargetFramework="$(TargetFramework)"
                          ManagePackageVersionsCentrally="$(_BV_PinDumpManagesVersionsCentrally)"
+                         ProjectAssetsFile="$(ProjectAssetsFile)"
+                         NuGetAuditLevel="$(NuGetAuditLevel)"
                          PackageVersions="@(_BV_PinDumpPackageVersion)"
                          GlobalPackageReferences="@(_BV_PinDumpGlobalPackageReference)"
                          PackageReferences="@(_BV_PinDumpPackageReference)" />
