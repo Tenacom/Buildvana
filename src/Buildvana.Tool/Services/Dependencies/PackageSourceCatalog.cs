@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Buildvana.Core;
+using Buildvana.Core.Diagnostics;
 using Buildvana.Core.HomeDirectory;
 using CommunityToolkit.Diagnostics;
 using NuGet.Configuration;
@@ -78,8 +79,10 @@ internal sealed class PackageSourceCatalog
         {
             return Settings.LoadDefaultSettings(home.HomeDirectory);
         }
-        catch (NuGetConfigurationException exception)
+        catch (Exception exception) when (exception is NuGetConfigurationException || exception.IsIORelatedException)
         {
+            // A configuration that cannot be read fails the same way whether NuGet names the failure or the
+            // environment raises it: a nuget.config the process cannot open is code 1, not a stack trace.
             throw new BuildFailedException($"The NuGet configuration could not be read: {exception.Message}", exception);
         }
     }

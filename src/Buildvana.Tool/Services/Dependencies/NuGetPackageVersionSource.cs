@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.Diagnostics;
 using CommunityToolkit.Diagnostics;
 using NuGet.Configuration;
 using NuGet.Credentials;
@@ -109,8 +110,10 @@ internal sealed class NuGetPackageVersionSource : IPackageVersionSource, IDispos
                 _logger,
                 cancellationToken).ConfigureAwait(false);
         }
-        catch (NuGetProtocolException exception)
+        catch (Exception exception) when (exception is NuGetProtocolException || exception.IsIORelatedException)
         {
+            // A source that cannot be reached fails the same way whether the client libraries name the
+            // failure or the environment raises it: an unreadable cache directory is code 1, not a stack trace.
             throw new BuildFailedException(
                 $"Package source '{source.Name}' could not be asked about {packageId}: {exception.Message}",
                 exception);
