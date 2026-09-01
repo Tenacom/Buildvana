@@ -150,7 +150,7 @@ internal sealed class SolutionPinReader(IHomeDirectoryProvider home, IProcessRun
             "-maxCpuCount",
             $"-target:{PinDumpDriverProject.TargetName}",
             $"-property:BV_PinDumpDirectory={directory}",
-            "-property:BV_SuppressTransitiveOverrides=true",
+            $"-property:{TransitiveOverrides.SuppressionProperty}=true",
             $"-verbosity:{reporter.Verbosity}",
         ];
 
