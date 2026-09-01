@@ -140,7 +140,7 @@ internal sealed class DependenciesUpdateSettings
     private static void Validate(DependenciesUpdateSettings settings)
     {
         // An apply run lists what it changed, and what it left alone is the report of `bv dependencies show`.
-        if (settings.All && !settings.Check)
+        if (settings is { All: true, Check: false })
         {
             throw new BuildFailedException(
                 ExitCodes.Usage,
@@ -154,7 +154,7 @@ internal sealed class DependenciesUpdateSettings
         }
 
         // The .NET SDK has no package id, so nothing that filters by id can be about it.
-        if (settings.NetSdk && settings.Filters.Count > 0)
+        if (settings is { NetSdk: true, Filters.Count: > 0 })
         {
             throw new BuildFailedException(
                 ExitCodes.Usage,

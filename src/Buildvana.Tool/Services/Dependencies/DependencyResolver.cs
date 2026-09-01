@@ -225,7 +225,7 @@ internal sealed class DependencyResolver(
         }
 
         // A stated version is the user's own edit, and the baseline takes it whatever the policy says.
-        if (request.To is { } stated && request.TargetId is null)
+        if (request is { To: { } stated, TargetId: null })
         {
             return await ResolveStatedNetSdkAsync(pin, policy, stated, current, writes, note, errors, cancellationToken)
                 .ConfigureAwait(false);

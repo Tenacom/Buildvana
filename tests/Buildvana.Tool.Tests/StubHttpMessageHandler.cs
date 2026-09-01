@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Net;
-using System.Net.Http;
 
 /// <summary>
 /// Answers requests from a table of canned bodies, and records what was asked.

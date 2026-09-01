@@ -55,6 +55,8 @@ internal sealed class ToolPinUpdaterTests
         };
 
         var pins = new[] { Moving("ngbv", "0.5.1", "0.6.0"), Moving("bv", "2.1.0", "2.2.0") };
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await UpdateAsync(home, runner, pins).ConfigureAwait(false))
             .Throws<BuildFailedException>();
         await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);

@@ -11,8 +11,8 @@ internal sealed class FakePackageVersionSource : IPackageVersionSource
 {
     private readonly Dictionary<string, PackageVersionCatalog> _catalogs = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Gets or sets the names of the configured sources.</summary>
-    public IReadOnlyList<string> Sources { get; set; } = ["local"];
+    /// <summary>Gets the names of the configured sources.</summary>
+    public IReadOnlyList<string> Sources { get; init; } = ["local"];
 
     /// <summary>Gets the ids that were asked about, in order.</summary>
     public List<string> Asked { get; } = [];

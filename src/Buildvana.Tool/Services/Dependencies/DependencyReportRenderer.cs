@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Buildvana.Core.Configuration;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 using Spectre.Console;
@@ -205,7 +204,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         }
 
         var changes = resolution.State == PinResolutionState.Updated || resolution.WritesAllowPrerelease;
-        var isUpToDate = resolution.State == PinResolutionState.UpToDate && !resolution.WritesAllowPrerelease;
+        var isUpToDate = resolution is { State: PinResolutionState.UpToDate, WritesAllowPrerelease: false };
         if (listUpToDate || !isUpToDate)
         {
             console.MarkupLineInterpolated($"  {GlobalJsonPinReader.RelativePath}");

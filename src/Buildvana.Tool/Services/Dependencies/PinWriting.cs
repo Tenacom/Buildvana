@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Buildvana.Tool.Utilities;
@@ -25,7 +24,7 @@ internal static class PinWriting
     /// <param name="pins">What the run made of a scope's pins.</param>
     /// <returns>The pins that move.</returns>
     public static IEnumerable<PinResolution> Moving(IEnumerable<PinResolution> pins)
-        => pins.Where(static pin => pin.State == PinResolutionState.Updated && pin.Target is not null);
+        => pins.Where(static pin => pin is { State: PinResolutionState.Updated, Target: not null });
 
     /// <summary>
     /// Indexes the versions a set of pins moves to, by what identifies each pin in its file.
