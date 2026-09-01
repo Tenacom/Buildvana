@@ -102,6 +102,8 @@ internal sealed class PackagePinWriterTests
     {
         using var home = new TempHome();
         home.WriteFile(PropsFile, TwoPins);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         await Assert.That(() => Write(home, Moving("Serilog", "2.0.0", "2.1.0", PropsFile))).Throws<BuildFailedException>();
         await Assert.That(home.ReadFile(PropsFile)).IsEqualTo(TwoPins);
     }
