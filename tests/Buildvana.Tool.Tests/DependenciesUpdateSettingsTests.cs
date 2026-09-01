@@ -79,6 +79,14 @@ internal sealed class DependenciesUpdateSettingsTests
     }
 
     [Test]
+    public async Task Parse_WithToAndAPattern_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog.*"], ["--to", "3.1.0"]))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
     public async Task Parse_WithToAndSeveralArguments_IsRefused()
     {
         var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog", "Newtonsoft.Json"], ["--to", "3.1.0"]))

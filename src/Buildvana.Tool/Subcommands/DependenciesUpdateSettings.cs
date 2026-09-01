@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Buildvana.Core;
@@ -163,6 +164,13 @@ internal sealed class DependenciesUpdateSettings
         if (settings.To is not null && settings.Filters.Count > 1)
         {
             throw new BuildFailedException(ExitCodes.Usage, "--to states the version of one package id, so it takes one argument at most.");
+        }
+
+        // Every pin of one id takes the stated version; every pin of a pattern is a different question, and
+        // one the command line cannot answer.
+        if (settings.To is not null && settings.Filters is [var filter] && filter.Contains('*', StringComparison.Ordinal))
+        {
+            throw new BuildFailedException(ExitCodes.Usage, $"--to states the version of one package, so '{filter}' must be an id, not a pattern.");
         }
     }
 }
