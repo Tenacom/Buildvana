@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using Buildvana.Core.Dependencies;
 
 namespace Buildvana.Tool.Services.Dependencies;
 
@@ -32,4 +33,15 @@ internal sealed record DependencyInventory
     /// ones a file-based app states in a directive. A pin of an additional group carries its caption.
     /// </summary>
     public IReadOnlyList<DependencyPin> Packages { get; init; } = [];
+
+    /// <summary>
+    /// Gets the evaluations the solution's projects answered the pin dump with, one per project and target
+    /// framework, empty where the <c>packages</c> scope was not selected.
+    /// </summary>
+    /// <remarks>
+    /// <para>The pins above are what a run edits. These are what the transitive override lifecycle needs
+    /// besides them: where a restore writes each project's dependency graph, the severity that project audits
+    /// from, and whether it manages its package versions centrally.</para>
+    /// </remarks>
+    public IReadOnlyList<PackagePinDump> Evaluations { get; init; } = [];
 }

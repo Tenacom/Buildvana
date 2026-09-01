@@ -44,17 +44,22 @@ internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter repor
     /// Writes what a plan states, in the central file and in one file per project.
     /// </summary>
     /// <param name="plan">What the files are to hold.</param>
+    /// <returns><see langword="true"/> if any file was written or removed, <see langword="false"/> if the
+    /// files on disk already stated exactly this. The lifecycle reads the answer as the whole question of
+    /// whether the graph it last read is still the current one.</returns>
     /// <exception cref="BuildFailedException">A file could not be written or removed.</exception>
-    public void Write(TransitiveOverridePlan plan)
+    public bool Write(TransitiveOverridePlan plan)
     {
         Guard.IsNotNull(plan);
         var central = plan.Central.Count == 0 ? null : Compose(CentralPurpose, plan.Central, CentralItem);
-        WriteOrRemove(home.GetFullPath(TransitiveOverrides.CentralFileName), central);
+        var changed = WriteOrRemove(home.GetFullPath(TransitiveOverrides.CentralFileName), central);
         foreach (var project in plan.Projects)
         {
             var content = project.Promotions.Count == 0 ? null : Compose(ProjectPurpose, project.Promotions, ProjectItem);
-            WriteOrRemove(TransitiveOverrides.ProjectFilePath(project.ProjectFullPath), content);
+            changed |= WriteOrRemove(TransitiveOverrides.ProjectFilePath(project.ProjectFullPath), content);
         }
+
+        return changed;
     }
 
     // Entries are ordered by id, and lines end the same way on either platform, so that two runs finding the
@@ -97,18 +102,11 @@ internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter repor
 
     private static string Escape(string value) => SecurityElement.Escape(value) ?? value;
 
-    private void WriteOrRemove(string path, string? content)
+    private bool WriteOrRemove(string path, string? content)
     {
         try
         {
-            if (content is null)
-            {
-                RemoveFile(path);
-            }
-            else
-            {
-                WriteFile(path, content);
-            }
+            return content is null ? RemoveFile(path) : WriteFile(path, content);
         }
         catch (Exception exception) when (exception.IsIORelatedException)
         {
@@ -116,26 +114,28 @@ internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter repor
         }
     }
 
-    private void RemoveFile(string path)
+    private bool RemoveFile(string path)
     {
         if (!File.Exists(path))
         {
-            return;
+            return false;
         }
 
         File.Delete(path);
         reporter.Detail($"Removed {Name(path)}, which has nothing left to state.");
+        return true;
     }
 
-    private void WriteFile(string path, string content)
+    private bool WriteFile(string path, string content)
     {
         if (File.Exists(path) && string.Equals(File.ReadAllText(path), content, StringComparison.Ordinal))
         {
-            return;
+            return false;
         }
 
         File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         reporter.Detail($"Wrote {Name(path)}.");
+        return true;
     }
 
     private string Name(string path) => home.TryGetRelativePath(path, out var relative) ? relative : path;

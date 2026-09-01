@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
+using Buildvana.Core.Dependencies;
 using Buildvana.Tool.Services.Solution;
 using CommunityToolkit.Diagnostics;
 
@@ -50,14 +51,17 @@ internal sealed class DependencyDiscovery(
 
         // One scan of the repository's file-based apps answers for both scopes that read directives.
         var directivePins = wantsSdks || wantsPackages ? directives.Read() : [];
+        var packages = wantsPackages
+            ? await ReadPackagesAsync(directivePins, cancellationToken).ConfigureAwait(false)
+            : ([], []);
+
         return new DependencyInventory
         {
             NetSdk = scopes.Contains(DependencyScope.NetSdk) ? globalJsonPins.NetSdk : null,
             Sdks = wantsSdks ? [.. globalJsonPins.Sdks, .. OfScope(directivePins, DependencyScope.Sdks)] : [],
             Tools = scopes.Contains(DependencyScope.Tools) ? tools.Read() : [],
-            Packages = wantsPackages
-                ? await ReadPackagesAsync(directivePins, cancellationToken).ConfigureAwait(false)
-                : [],
+            Packages = packages.Pins,
+            Evaluations = packages.Evaluations,
         };
     }
 
@@ -79,7 +83,7 @@ internal sealed class DependencyDiscovery(
         return groupPins.Where(pin => !known.Contains((pin.DeclaringFile, pin.Id.ToUpperInvariant())));
     }
 
-    private async Task<IReadOnlyList<DependencyPin>> ReadPackagesAsync(
+    private async Task<(IReadOnlyList<DependencyPin> Pins, IReadOnlyList<PackagePinDump> Evaluations)> ReadPackagesAsync(
         IReadOnlyList<DependencyPin> directivePins,
         CancellationToken cancellationToken)
     {
@@ -90,11 +94,13 @@ internal sealed class DependencyDiscovery(
         var dumps = await solutionPins.ReadAsync(projectPaths, cancellationToken).ConfigureAwait(false);
         var solutionPackagePins = packages.Read(dumps);
         var groupPins = await groups.ReadAsync(cancellationToken).ConfigureAwait(false);
-        return
+        IReadOnlyList<DependencyPin> pins =
         [
             .. solutionPackagePins,
             .. WithoutDuplicates(groupPins, solutionPackagePins),
             .. OfScope(directivePins, DependencyScope.Packages),
         ];
+
+        return (pins, dumps);
     }
 }
