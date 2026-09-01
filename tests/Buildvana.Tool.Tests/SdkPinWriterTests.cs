@@ -70,6 +70,8 @@ internal sealed class SdkPinWriterTests
     {
         using var home = new TempHome();
         home.WriteFile("global.json", GlobalJson);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         await Assert.That(() => Write(home, Moving("Fabrikam.Sdk", "1.0.0", "1.1.0", "global.json"))).Throws<BuildFailedException>();
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJson);
     }

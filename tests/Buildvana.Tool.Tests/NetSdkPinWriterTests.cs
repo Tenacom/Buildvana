@@ -81,6 +81,8 @@ internal sealed class NetSdkPinWriterTests
     {
         using var home = new TempHome();
         home.WriteFile("global.json", WithStringAllowPrerelease);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         await Assert.That(() => Write(home, Resolution("10.0.100", stated: null, target: null, policy: "major")))
             .Throws<BuildFailedException>();
 
