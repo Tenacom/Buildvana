@@ -44,6 +44,7 @@
     <PackageReference Include="NuGet.Common" />
     <PackageReference Include="NuGet.Configuration" />
     <PackageReference Include="NuGet.Credentials" />
+    <PackageReference Include="NuGet.ProjectModel" />
     <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="NuGet.Versioning" />
     <PackageReference Include="Octokit" />
