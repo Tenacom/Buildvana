@@ -27,17 +27,18 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// </remarks>
 internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter reporter)
 {
+    // The text of a purpose is indented to sit under the first line of the comment that holds it.
     private const string CentralPurpose = """
-                                            These package versions lift transitive dependencies out of versions covered by a security
-                                            advisory. They reach the projects that manage their package versions centrally, and cover only
-                                            packages the repository does not pin itself.
+                                              These package versions lift transitive dependencies out of versions covered by a
+                                              security advisory. They reach the projects that manage their package versions
+                                              centrally, and cover only packages the repository does not pin itself.
                                           """;
 
     private const string ProjectPurpose = """
-                                            Each reference below promotes a transitive dependency to a direct reference of this project, so
-                                            that the project stops resolving a version covered by a security advisory. PrivateAssets="all"
-                                            keeps the promotions out of the package this project produces: its stated dependencies are the
-                                            ones it would state without this file.
+                                              Each reference below promotes a transitive dependency to a direct reference of this
+                                              project, so that the project stops resolving a version covered by a security advisory.
+                                              PrivateAssets="all" keeps the promotions out of the package this project produces: its
+                                              stated dependencies are the ones it would state without this file.
                                           """;
 
     /// <summary>
