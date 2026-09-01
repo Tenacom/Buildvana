@@ -68,6 +68,15 @@ public sealed record PostUpdateHookArgs : HookArgs, IHookEvent
     public required IReadOnlyList<AdditionalPackagesResult> AdditionalPackages { get; init; }
 
     /// <summary>
+    /// Gets the transitive overrides in effect, as the generated files state them when the hook runs.
+    /// </summary>
+    /// <remarks>
+    /// <para>An apply run that manages the <c>packages</c> scope has just rewritten these files. A check run
+    /// leaves them alone, so what a check run reports here is what the last apply run wrote.</para>
+    /// </remarks>
+    public IReadOnlyList<TransitiveOverride> Overrides { get; init; } = [];
+
+    /// <summary>
     /// Loads the args of the current hook run from the hook's args file.
     /// </summary>
     /// <param name="homeDirectory">The home directory the args file path is resolved against;
