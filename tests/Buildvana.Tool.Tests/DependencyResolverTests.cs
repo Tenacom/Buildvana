@@ -172,6 +172,28 @@ internal sealed class DependencyResolverTests
         await Assert.That(pin.Target?.ToNormalizedString()).IsEqualTo("2.0.0");
     }
 
+    // The stated version overrules the policy, and the policy still governs every run after this one: a pin
+    // left on a prerelease under a stable-only policy is one nothing will move again.
+    [Test]
+    public async Task ResolveAsync_WithAStatedPrereleaseUnderAStableOnlyPolicy_SaysSo()
+    {
+        var versions = new FakePackageVersionSource().Knows("Serilog", ["3.0.0", "4.0.0-preview.1"]);
+        var request = new DependencyResolutionRequest { Filters = ["Serilog"], To = NuGetVersion.Parse("4.0.0-preview.1") };
+        var resolution = await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), request: request).ConfigureAwait(false);
+        await Assert.That(resolution.Packages.Single().Note).Contains("only stable versions");
+    }
+
+    // The version the file ends up holding is the one the note is about, not the one it held.
+    [Test]
+    public async Task ResolveAsync_WithAStatedStableVersionForAPrereleasePin_SaysNothing()
+    {
+        var versions = new FakePackageVersionSource().Knows("Serilog", ["3.0.0", "4.0.0-preview.1"]);
+        var request = new DependencyResolutionRequest { Filters = ["Serilog"], To = NuGetVersion.Parse("3.0.0") };
+        var pins = Packages(Pin("Serilog", "4.0.0-preview.1"));
+        var resolution = await ResolveAsync(versions, pins, request: request).ConfigureAwait(false);
+        await Assert.That(resolution.Packages.Single().Note).IsEmpty();
+    }
+
     [Test]
     public async Task ResolveAsync_WithAStatedVersionNoSourceHas_Fails()
     {

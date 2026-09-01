@@ -168,9 +168,12 @@ internal sealed class DependencyResolver(
         // names the id it is for; with no argument the version is the .NET SDK baseline's.
         if (request.TargetId is not null && request.To is { } stated)
         {
+            // The note is about the version the file ends up holding: a stated prerelease is one no later
+            // policy-driven run will move, and that is worth a word whichever run put it there.
+            var statedNote = PinNotes.ForVersion(stated, policy);
             return VersionComparer.VersionRelease.Equals(stated, current)
-                ? NewResolution(pin, policy, PinResolutionState.UpToDate, string.Empty)
-                : NewResolution(pin, policy, PinResolutionState.Updated, string.Empty) with { Target = stated };
+                ? NewResolution(pin, policy, PinResolutionState.UpToDate, statedNote)
+                : NewResolution(pin, policy, PinResolutionState.Updated, statedNote) with { Target = stated };
         }
 
         if (policy.Kind == PackageUpdatePolicyKind.Disable)
