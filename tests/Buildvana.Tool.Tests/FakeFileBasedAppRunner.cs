@@ -22,10 +22,10 @@ internal sealed class FakeFileBasedAppRunner : IFileBasedAppRunner
     public Action<string, IReadOnlyDictionary<string, string?>?, string?>? OnRun { get; set; }
 
     /// <summary>
-    /// Gets or sets the exit code the app is to answer with. The real runner throws on a non-zero exit code
+    /// Gets the exit code the app is to answer with. The real runner throws on a non-zero exit code
     /// unless the caller says otherwise, and so does this one.
     /// </summary>
-    public int ExitCode { get; set; }
+    public int ExitCode { get; init; }
 
     /// <inheritdoc/>
     public Task<ProcessResult> RunFileBasedAppAsync(

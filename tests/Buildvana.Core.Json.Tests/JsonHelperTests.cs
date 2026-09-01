@@ -311,6 +311,7 @@ internal sealed partial class JsonHelperTests
     {
         using var file = new TempJsonFile("{ not json");
 
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         bool Act() => new JsonHelper().RewriteBooleanValues(file.Path, static (_, current) => !current);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();

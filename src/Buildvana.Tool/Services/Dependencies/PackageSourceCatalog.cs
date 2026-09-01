@@ -24,7 +24,6 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// </remarks>
 internal sealed class PackageSourceCatalog
 {
-    private readonly Lazy<ISettings> _settings;
     private readonly Lazy<IReadOnlyList<PackageSource>> _sources;
     private readonly Lazy<PackageSourceMapping> _mapping;
 
@@ -36,9 +35,9 @@ internal sealed class PackageSourceCatalog
     public PackageSourceCatalog(IHomeDirectoryProvider home)
     {
         Guard.IsNotNull(home);
-        _settings = new Lazy<ISettings>(() => LoadSettings(home));
-        _sources = new Lazy<IReadOnlyList<PackageSource>>(() => [.. SettingsUtility.GetEnabledSources(_settings.Value)]);
-        _mapping = new Lazy<PackageSourceMapping>(() => PackageSourceMapping.GetPackageSourceMapping(_settings.Value));
+        var settings = new Lazy<ISettings>(() => LoadSettings(home));
+        _sources = new Lazy<IReadOnlyList<PackageSource>>(() => [.. SettingsUtility.GetEnabledSources(settings.Value)]);
+        _mapping = new Lazy<PackageSourceMapping>(() => PackageSourceMapping.GetPackageSourceMapping(settings.Value));
     }
 
     /// <summary>
@@ -64,7 +63,7 @@ internal sealed class PackageSourceCatalog
         }
 
         var names = _mapping.Value.GetConfiguredPackageSources(packageId);
-        if (names is null || names.Count == 0)
+        if (names.Count == 0)
         {
             return [];
         }

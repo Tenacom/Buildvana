@@ -124,6 +124,8 @@ internal sealed class DotNetReleaseIndexTests
     {
         var handler = new StubHttpMessageHandler(new Dictionary<string, string> { [DotNetReleaseIndex.IndexUrl] = Index });
         using var index = new DotNetReleaseIndex(handler);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         await Assert.That(async () => await index.GetReleasesAsync(NuGetVersion.Parse("10.0.100")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
     }
@@ -133,6 +135,8 @@ internal sealed class DotNetReleaseIndexTests
     {
         var handler = new StubHttpMessageHandler(new Dictionary<string, string> { [DotNetReleaseIndex.IndexUrl] = "not json" });
         using var index = new DotNetReleaseIndex(handler);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         await Assert.That(async () => await index.GetReleasesAsync(NuGetVersion.Parse("10.0.100")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
     }

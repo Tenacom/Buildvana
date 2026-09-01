@@ -9,7 +9,6 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
-using NuGet.Versioning;
 
 namespace Buildvana.Tool.Services.Dependencies;
 
