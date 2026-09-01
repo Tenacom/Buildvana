@@ -106,6 +106,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<SdkPinWriter>()
                 .AddSingleton<NetSdkPinWriter>()
                 .AddSingleton<DependencyApplier>()
+                .AddSingleton<SidecarReader>()
                 .AddSingleton<DependencyReportRenderer>()
                 .AddSingleton(static sp => DependenciesSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => DependenciesUpdateSettings.Parse(
