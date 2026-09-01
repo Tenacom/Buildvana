@@ -236,10 +236,14 @@ internal sealed class PackagePinReaderTests
     public async Task Read_LeavesOutAnItemDeclaredOutsideTheRepository()
     {
         using var home = new TempHome();
+
+        // Derived from the home directory, never written out: a literal Windows path is a relative path on
+        // Linux, and would resolve to a file inside the repository.
+        var outside = Path.GetFullPath(Path.Combine(home.RootPath, "..", "elsewhere", "Directory.Packages.props"));
         var dump = new PackagePinDump
         {
             ProjectFullPath = home.GetFullPath(ProjectFileName),
-            Items = [Item("PackageVersion", "Serilog", "4.0.0") with { DefiningProjectFullPath = @"C:\elsewhere\Directory.Packages.props" }],
+            Items = [Item("PackageVersion", "Serilog", "4.0.0") with { DefiningProjectFullPath = outside }],
         };
 
         await Assert.That(Read(home, dump)).IsEmpty();
