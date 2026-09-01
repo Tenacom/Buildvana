@@ -15,6 +15,17 @@ Coverage reports are produced by `bv test` (Microsoft.Testing.Extensions.CodeCov
 - Test framework is TUnit on Microsoft.Testing.Platform; use TUnit's built-in assertions (`await Assert.That(...)`), never FluentAssertions.
 - Tests that swap process-global state (console writers, current directory) must be marked `[NotInParallel]`.
 
+## Tests run on Windows and Linux
+
+Both are supported platforms, and CI runs the suite on Linux. A test that passes only on the machine that wrote it is a broken test.
+
+- Never write a platform-specific absolute path. `C:\elsewhere\file` is absolute on Windows and relative on Linux. Code under test then resolves it against its own base directory and reads a file nobody meant.
+- Build every path with `System.IO.Path`, from a base the test owns: a temporary directory, or a fixture root.
+- A path literal is fine where nothing resolves it, as in XML escaping, a dump round trip, or a dictionary key. Derive the path as soon as it can reach the file system.
+- Linux file systems are case-sensitive. Two fixture names differing only in case are one file on Windows and two on Linux.
+- Directory enumeration order is unspecified, and NTFS and ext4 disagree. Sort before asserting an order.
+- Branch on `OperatingSystem.IsWindows()` only when the code under test behaves differently per platform. An example is code that reads a cache from a different directory on each. Never branch to write one path in two forms.
+
 ## Microsoft.Testing.Platform only
 
 Test orchestration targets MTP exclusively. `bv test`, `DotNetService.TestSolution`, and `global.json`'s `"test": { "runner": "Microsoft.Testing.Platform" }` all assume it, and TUnit is MTP-only by design.

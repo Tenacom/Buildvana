@@ -19,7 +19,7 @@ The `.claude` directory is meant to be copied wholesale into other projects. Thi
 - `rules/csharp-style-guide.md` — C# style beyond what `.editorconfig` and `.globalconfig` can express.
 - `rules/file-formats.md` — encoding, indentation, and per-format conventions (including the BOM workflow for new `.cs` files).
 - `rules/powershell.md` — Windows PowerShell 5.1 pitfalls and shell-usage rules.
-- `rules/testing.md` — test framework, MTP-only orchestration, coverage exclusion policy.
+- `rules/testing.md` — test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
 - `rules/dotnet.md` — build commands and tooling. Assumes the project is built with Buildvana.
 - `rules/nuget-version-lookup.md` — procedure for resolving a package's target version.
 - `templates/Default.cs` — new-file template carrying the BOM and the copyright preamble. The preamble names Tenacom; change it for a project under different ownership.
