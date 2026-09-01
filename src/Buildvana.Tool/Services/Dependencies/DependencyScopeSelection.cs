@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using System.Linq;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
@@ -67,6 +68,40 @@ internal static class DependencyScopeSelection
         }
 
         return managed;
+    }
+
+    /// <summary>
+    /// Narrows a selection to what the arguments of an update run allow.
+    /// </summary>
+    /// <param name="selected">The scopes the invocation selected.</param>
+    /// <param name="namesPins">Whether an argument names the pins the run is about.</param>
+    /// <param name="statesVersion">Whether the command line states a version with <c>--to</c>.</param>
+    /// <returns>The scopes to manage.</returns>
+    /// <exception cref="BuildFailedException">A version is stated for the .NET SDK baseline while another
+    /// scope is selected.</exception>
+    /// <remarks>
+    /// <para>An argument names package ids, and the .NET SDK has none, so a run that names pins leaves the
+    /// baseline alone. Stating a version without naming a pin goes the other way: the version is the
+    /// baseline's, and it is an edit of that scope alone.</para>
+    /// </remarks>
+    public static IReadOnlySet<DependencyScope> Narrow(IReadOnlySet<DependencyScope> selected, bool namesPins, bool statesVersion)
+    {
+        Guard.IsNotNull(selected);
+        if (namesPins)
+        {
+            return selected.Where(static scope => scope != DependencyScope.NetSdk).ToHashSet();
+        }
+
+        const string message = "--to with no argument states the version of the .NET SDK, so that scope must be the only one "
+            + "selected. Name a package id, or select the .NET SDK alone with --netsdk.";
+
+        var isNetSdkOnly = selected.Count == 1 && selected.Contains(DependencyScope.NetSdk);
+        if (statesVersion && !isNetSdkOnly)
+        {
+            throw new BuildFailedException(ExitCodes.Usage, message);
+        }
+
+        return selected;
     }
 
     private static HashSet<DependencyScope> ManagedScopes(DependenciesConfig config)

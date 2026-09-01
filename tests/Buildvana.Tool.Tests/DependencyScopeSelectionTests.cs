@@ -12,6 +12,47 @@ internal sealed class DependencyScopeSelectionTests
     private static readonly DependencyScope[] AllScopes =
         [DependencyScope.NetSdk, DependencyScope.Sdks, DependencyScope.Tools, DependencyScope.Packages];
 
+    // An argument names package ids, and the .NET SDK has none.
+    [Test]
+    public async Task Narrow_WhenAnArgumentNamesPins_LeavesTheNetSdkAlone()
+    {
+        var scopes = DependencyScopeSelection.Narrow(AllScopes.ToHashSet(), namesPins: true, statesVersion: false);
+        await Assert.That(scopes).IsEquivalentTo([DependencyScope.Sdks, DependencyScope.Tools, DependencyScope.Packages]);
+    }
+
+    [Test]
+    public async Task Narrow_WithNeitherAnArgumentNorAVersion_ChangesNothing()
+    {
+        var scopes = DependencyScopeSelection.Narrow(AllScopes.ToHashSet(), namesPins: false, statesVersion: false);
+        await Assert.That(scopes).IsEquivalentTo(AllScopes);
+    }
+
+    [Test]
+    public async Task Narrow_WithAVersionForTheNetSdkAlone_ChangesNothing()
+    {
+        var selected = new HashSet<DependencyScope> { DependencyScope.NetSdk };
+        var scopes = DependencyScopeSelection.Narrow(selected, namesPins: false, statesVersion: true);
+        await Assert.That(scopes).IsEquivalentTo([DependencyScope.NetSdk]);
+    }
+
+    // Without an argument the stated version is the baseline's, so it must not reach another scope's pins.
+    [Test]
+    public async Task Narrow_WithAVersionAndAnotherScopeSelected_IsRefused()
+    {
+        var exception = await Assert
+            .That(() => DependencyScopeSelection.Narrow(AllScopes.ToHashSet(), namesPins: false, statesVersion: true))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
+    public async Task Narrow_WithAVersionAndTheNetSdkNotSelected_IsRefused()
+    {
+        var selected = new HashSet<DependencyScope> { DependencyScope.Packages };
+        await Assert.That(() => DependencyScopeSelection.Narrow(selected, namesPins: false, statesVersion: true))
+            .Throws<BuildFailedException>();
+    }
+
     [Test]
     public async Task Resolve_WithNoFlag_TakesEveryManagedScope()
     {
@@ -72,7 +113,7 @@ internal sealed class DependencyScopeSelectionTests
     }
 
     [Test]
-    public async Task Resolve_WithEveryScopeDisabled_TakesNone()
+    public async Task Resolve_WithAllScopesDisabled_TakesNone()
     {
         var config = new DependenciesConfig
         {
