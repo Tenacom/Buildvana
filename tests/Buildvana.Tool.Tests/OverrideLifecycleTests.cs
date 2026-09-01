@@ -88,6 +88,7 @@ internal sealed class OverrideLifecycleTests
             }
 
             // The first active restore lifts the first package and turns up a second finding.
+            // ReSharper disable once AccessToDisposedClosure // the lifecycle runs the restorer before the home directory is disposed
             home.WriteFile(
                 AssetsPath,
                 new AssetsFile()
@@ -96,6 +97,7 @@ internal sealed class OverrideLifecycleTests
                     .Reports("NU1902", "Serilog")
                     .ToString());
 
+            // ReSharper disable once AccessToDisposedClosure // the lifecycle runs the restorer before the home directory is disposed
             restorer.OnRestore = _ => Settle(home);
             return 0;
         };
@@ -112,6 +114,8 @@ internal sealed class OverrideLifecycleTests
     public async Task RunAsync_WithIncompleteVulnerabilityData_ReportsAFailedStep()
     {
         using var home = NewHome(new AssetsFile().Resolves(Vulnerable, "12.0.1").Reports("NU1900"));
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await RunAsync(home, new FakeDependencyRestorer(), Advisories(), Versions())
             .ConfigureAwait(false)).Throws<BuildFailedException>();
 
@@ -123,6 +127,8 @@ internal sealed class OverrideLifecycleTests
     public async Task RunAsync_WithARestoreThatFailedForAnotherReason_ReportsAFailedStep()
     {
         using var home = NewHome(new AssetsFile().Resolves(Vulnerable, "12.0.1").Reports("NU1101", "Contoso.Widgets", "Error"));
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await RunAsync(home, new FakeDependencyRestorer(), Advisories(), Versions())
             .ConfigureAwait(false)).Throws<BuildFailedException>();
 
@@ -159,6 +165,8 @@ internal sealed class OverrideLifecycleTests
             }
 
             pass++;
+
+            // ReSharper disable once AccessToDisposedClosure // the lifecycle runs the restorer before the home directory is disposed
             home.WriteFile(AssetsPath, NeverSettling(pass).ToString());
             return 0;
         };
@@ -171,6 +179,7 @@ internal sealed class OverrideLifecycleTests
             _ = versions.Knows($"Contoso.Package{index}", ["1.0.0", "1.1.0"]);
         }
 
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await RunAsync(home, restorer, advisories, versions).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
