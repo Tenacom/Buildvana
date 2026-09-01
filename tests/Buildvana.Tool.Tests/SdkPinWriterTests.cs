@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
@@ -59,6 +60,17 @@ internal sealed class SdkPinWriterTests
         home.WriteFile("global.json", GlobalJson);
         var pin = DependencyPin.Create(DependencyScope.Sdks, "Contoso.Sdk", "1.0.0", "global.json");
         Write(home, new PinResolution { Pin = pin, Policy = Policy(), State = PinResolutionState.UpToDate });
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJson);
+    }
+
+    // Every pin came out of this file, so a file stating none of them changed under us. Reporting the write
+    // would leave a pin behind, and a report saying it had moved.
+    [Test]
+    public async Task Write_WhenTheFileStatesNoPinThatMoves_Fails()
+    {
+        using var home = new TempHome();
+        home.WriteFile("global.json", GlobalJson);
+        await Assert.That(() => Write(home, Moving("Fabrikam.Sdk", "1.0.0", "1.1.0", "global.json"))).Throws<BuildFailedException>();
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJson);
     }
 

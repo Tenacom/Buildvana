@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
@@ -42,6 +43,28 @@ internal sealed class PackagePinWriterTests
                                                   </Project>
                                                   """;
 
+    private const string TwoVersionsOfOneId = """
+                                              <Project>
+                                                <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+                                                  <PackageVersion Include="Serilog" Version="3.0.0" />
+                                                </ItemGroup>
+                                                <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+                                                  <PackageVersion Include="Serilog" Version="2.0.0" />
+                                                </ItemGroup>
+                                              </Project>
+                                              """;
+
+    private const string TwoVersionsOfOneIdWithTheOlderMoved = """
+                                                               <Project>
+                                                                 <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+                                                                   <PackageVersion Include="Serilog" Version="3.0.0" />
+                                                                 </ItemGroup>
+                                                                 <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+                                                                   <PackageVersion Include="Serilog" Version="2.1.0" />
+                                                                 </ItemGroup>
+                                                               </Project>
+                                                               """;
+
     [Test]
     public async Task Write_SplicesTheVersionAndNothingElse()
     {
@@ -62,12 +85,24 @@ internal sealed class PackagePinWriterTests
         await Assert.That(home.ReadFile(PropsFile).Split("3.1.0").Length).IsEqualTo(3);
     }
 
+    // One id, two declarations, two versions: MSBuild evaluated one of them, and only that one moves.
     [Test]
     public async Task Write_LeavesADeclarationStatingAnotherVersionAlone()
     {
         using var home = new TempHome();
-        home.WriteFile(PropsFile, TwoPins);
+        home.WriteFile(PropsFile, TwoVersionsOfOneId);
         Write(home, Moving("Serilog", "2.0.0", "2.1.0", PropsFile));
+        await Assert.That(home.ReadFile(PropsFile)).IsEqualTo(TwoVersionsOfOneIdWithTheOlderMoved);
+    }
+
+    // Every pin came out of this file, so a file stating none of them changed under us. Reporting the write
+    // would leave a pin behind, and a report saying it had moved.
+    [Test]
+    public async Task Write_WhenTheFileStatesNoPinThatMoves_Fails()
+    {
+        using var home = new TempHome();
+        home.WriteFile(PropsFile, TwoPins);
+        await Assert.That(() => Write(home, Moving("Serilog", "2.0.0", "2.1.0", PropsFile))).Throws<BuildFailedException>();
         await Assert.That(home.ReadFile(PropsFile)).IsEqualTo(TwoPins);
     }
 

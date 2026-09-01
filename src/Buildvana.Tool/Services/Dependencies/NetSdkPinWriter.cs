@@ -32,19 +32,21 @@ internal sealed class NetSdkPinWriter(IHomeDirectoryProvider home, IJsonHelper j
     /// Writes the baseline and its setting.
     /// </summary>
     /// <param name="resolution">What the run made of the baseline.</param>
-    /// <exception cref="BuildFailedException"><c>global.json</c> could not be read or written.</exception>
+    /// <exception cref="BuildFailedException"><c>global.json</c> could not be read or written, or no longer
+    /// states what the run resolved.</exception>
     public void Write(NetSdkResolution resolution)
     {
         Guard.IsNotNull(resolution);
         var path = home.GetFullPath(GlobalJsonPinReader.RelativePath);
         if (resolution.Target is { } target)
         {
-            _ = jsonHelper.RewriteStringValues(
+            var stated = jsonHelper.RewriteStringValues(
                 path,
                 (propertyPath, currentValue) => propertyPath is [SdkSectionName, VersionMemberName]
                     ? PinVersionText.Restate(currentValue, target)
                     : null);
 
+            BuildFailedException.ThrowIfNot(stated, $"{path} no longer states a .NET SDK version this run can move.");
             reporter.Detail($"Stated .NET SDK {target.ToNormalizedString()} in {GlobalJsonPinReader.RelativePath}.");
         }
 
@@ -56,13 +58,25 @@ internal sealed class NetSdkPinWriter(IHomeDirectoryProvider home, IJsonHelper j
         var allowPrerelease = resolution.Policy.AllowPrerelease;
         if (resolution.Pin.AllowPrerelease is null)
         {
-            _ = jsonHelper.InsertProperty(path, [SdkSectionName], AllowPrereleaseMemberName, JsonValue.Create(allowPrerelease));
+            // The pin says the file states no setting, and a refused insertion says the file has one after
+            // all: a value that is neither true nor false, which the reader reads as no setting at all. It is
+            // not ours to guess at, and reporting a write we did not make would leave every later check run
+            // failing with nothing a run can fix.
+            var inserted = jsonHelper.InsertProperty(
+                path,
+                [SdkSectionName],
+                AllowPrereleaseMemberName,
+                JsonValue.Create(allowPrerelease));
+
+            BuildFailedException.ThrowIfNot(inserted, $"{path} states {AllowPrereleaseMemberName} as neither true nor false.");
         }
         else
         {
-            _ = jsonHelper.RewriteBooleanValues(
+            var rewritten = jsonHelper.RewriteBooleanValues(
                 path,
                 (propertyPath, _) => propertyPath is [SdkSectionName, AllowPrereleaseMemberName] ? allowPrerelease : null);
+
+            BuildFailedException.ThrowIfNot(rewritten, $"{path} no longer states {AllowPrereleaseMemberName} as a boolean.");
         }
 
         reporter.Detail($"Stated {AllowPrereleaseMemberName} as {allowPrerelease} in {GlobalJsonPinReader.RelativePath}.");
