@@ -39,6 +39,10 @@ public sealed class WritePackagePinDump : BuildvanaSdkTask
 
     public bool ManagePackageVersionsCentrally { get; set; }
 
+    public string ProjectAssetsFile { get; set; } = string.Empty;
+
+    public string NuGetAuditLevel { get; set; } = string.Empty;
+
 #pragma warning disable CA1819 // Properties should not return arrays - ITaskItem[] properties of MSBuild tasks are a known exception
     public ITaskItem[] PackageVersions { get; set; } = [];
 
@@ -61,6 +65,8 @@ public sealed class WritePackagePinDump : BuildvanaSdkTask
             ProjectFullPath = ProjectFullPath,
             TargetFramework = NullIfEmpty(TargetFramework),
             ManagePackageVersionsCentrally = ManagePackageVersionsCentrally,
+            ProjectAssetsFile = NullIfEmpty(ProjectAssetsFile),
+            NuGetAuditLevel = NullIfEmpty(NuGetAuditLevel),
             Items = items,
         };
 
