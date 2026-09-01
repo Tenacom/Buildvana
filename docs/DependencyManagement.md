@@ -21,6 +21,9 @@
   - [Naming the pins a run is about](#naming-the-pins-a-run-is-about)
   - [Stating a version outright](#stating-a-version-outright)
   - [The `deps/post-update` hook](#the-depspost-update-hook)
+- [Transitive overrides](#transitive-overrides)
+  - [What a run does](#what-a-run-does)
+  - [What no override may lift](#what-no-override-may-lift)
 - [Exit codes](#exit-codes)
 - [What the SDK contributes](#what-the-sdk-contributes)
 
@@ -153,6 +156,8 @@ Which `.cs` files are apps is the repository's own statement, through the `fileB
 - the pins that state a prerelease under a policy taking only stable versions, which no update moves and no update undoes;
 - a `global.json` whose `sdk.allowPrerelease` disagrees with the `netsdk` policy, which is derived state an apply run will write.
 
+It ends with the [transitive overrides](#transitive-overrides) in effect, each under the generated file that states it. Those are the state the last apply run left behind. Whether they are still needed is a question a restore answers, and `show` runs none.
+
 Pins are grouped by the file that declares them, and an additional group's pins appear under its caption. A selected scope with no pins says that it has none.
 
 A pin takes one line, `Serilog 3.0.0 (minor)`, and a note about it takes another, indented under it. The report has no columns. At the eighty columns of a CI log, a column layout divides the width among the columns and breaks ids and versions across lines, and neither is readable in halves.
@@ -209,21 +214,53 @@ Two forms exist:
 
 A repository that derives something from what it pins — a property naming a compiler version, a floor implied by a package — updates what it derives in the `deps/post-update` hook, which runs at the end of every `update` that ran to completion, check runs included. In a check run the hook's exit code 1 says that it would change something, and the command folds that into its own verdict. See [Hooks](Hooks.md#the-depspost-update-hook).
 
+## Transitive overrides
+
+A repository receives packages it never references: one package it does reference brings another, which brings a third. When a security advisory covers the version one of those ends up at, `bv dependencies update` lifts it. It writes a generated file forcing a higher version, and the Buildvana SDK imports the file.
+
+Two kinds of file carry the overrides, and both belong to `bv`:
+
+- `Directory.TransitiveOverrides.props`, at the repository root, states the versions for the projects that manage their package versions centrally;
+- `<ProjectName>.TransitiveOverrides.props`, beside a project, promotes to a reference of that project each package the project must lift.
+
+Do not edit either file. Every apply run that manages the `packages` scope rewrites both from scratch, which is also why a stale override needs no cleaning up: it is simply not written again. A promotion carries `PrivateAssets="all"`, so a package a project produces declares exactly the dependencies it would declare without the file.
+
+Only vulnerability lifting is automatic. An override written for it is a lower bound, it has an oracle nobody has to read, and it disappears on its own once the package that brought the vulnerable version raises its own floor. Every other reason to force a transitive version — holding one back, unifying a version across the solution — has none of those properties. Write those as an ordinary reference with a pin, and let the pin's policy say what may move it.
+
+### What a run does
+
+The lifecycle runs at the end of an apply run, after the pins are written and before the hook. A check run leaves it alone entirely: predicting what a restore would find is not prediction but a restore.
+
+1. Restore, with the override files left out of the evaluation. That is NuGet's verdict on the graph as the repository states it, which is what the overrides are computed from.
+2. Read each project's dependency graph and take restore's own audit findings from it. `bv` does not re-implement the audit, so every NuGet audit setting is honored on its owner's terms: `NuGetAudit`, `NuGetAuditMode`, `NuGetAuditLevel`, `NuGetAuditSuppress`, `NoWarn`, and `<auditSources>`. What a project does not report is not lifted.
+3. For each vulnerable package, take the lowest version its sources list that lies outside every advisory known for it and within its update policy, anchored at the version the project resolves. A package the repository already pins safely gets no version of its own: the project is promoted at the pin, and no new version appears anywhere.
+4. Write the files, restore again with them in place, and repeat from step 2 until the graph stops changing. Promotion can itself change the graph, which is why the graph is read again. Each pass writes everything selected so far in the run, because the graph of a later pass no longer reports what an earlier one lifted.
+
+The whole repository is judged, whatever the invocation named. A run aimed at one package can therefore end with a warning about another: the files describe the graph, not the command line.
+
+### What no override may lift
+
+Two things end a run with a warning that changes no exit code. The vulnerability stays, NuGetAudit keeps reporting it at every build, and what to do about it is the repository's call.
+
+The first is a package no version can lift: none the sources list falls outside every advisory, or the only one that does lies beyond what the package's policy allows. Widening the policy for that package, through a `dependencies.policies` entry, is what lets the next run lift it.
+
+The second is a package a decision of the repository's own governs. `bv` never introduces a version for a package the repository pins or references itself, so a vulnerable direct reference, a vulnerable central pin, and a central pin below the version a project resolves are all left alone. Move the pin, or suppress the advisory through NuGet's own `NuGetAuditSuppress`.
+
 ## Exit codes
 
 The dependency commands return the [exit codes every `bv` command returns](ToolDiagnostics.md#exit-codes), with no meaning of their own added.
 
-Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, or the hook says it would change something. Nothing failed, and nothing was written. It is also the code of every error above that stops a run before it writes: a pin the sources do not know, a source that cannot be reached, a version `--to` names and no source has.
+Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, or the hook says it would change something. Nothing failed, and nothing was written. It is also the code of every error above that stops a run before it writes: a pin the sources do not know, a source that cannot be reached, a version `--to` names and no source has. One failure of its own carries it too: transitive overrides that never stop changing. No program failed there, and the procedure that gave up is `bv`'s own.
 
 Code 2 is a refusal of the command line itself: scope options of both families at once, `--all` without `--check`, `--to` with `--check`, `--netsdk` next to an argument naming pins, `--to` naming the .NET SDK beside another scope, or a version that does not parse.
 
-Code 3 is the one a reader of a report should know about: it says that a program `bv` ran failed, or answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages; a failed `dotnet tool update` and a failed hook are the other two.
+Code 3 is the one a reader of a report should know about: it says that a program `bv` ran failed, or answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages; a failed `dotnet tool update` and a failed hook are two more. The [override lifecycle](#transitive-overrides) adds two of its own: a restore that failed for a reason other than its own audit findings, and a restore that could not read a source's vulnerability data. Overrides regenerated from a fraction of the advisories would delete one that is still needed, so an incomplete answer stops the run and leaves every file as it stands.
 
 ## What the SDK contributes
 
 Two things, both of which `bv` drives and neither of which changes an ordinary build:
 
-- the target that dumps a project's evaluated package items, which `bv dependencies` runs over the solution to see the `packages` scope as a build sees it. Taking the pins from evaluation, rather than from the files, is what makes conditions, imports and layered central package management mean the same thing to `bv` as they do to a build;
-- the import of the transitive override files, which `bv dependencies` will generate once the override lifecycle ships. Until then the files do not exist, and the import finds nothing.
+- the target that dumps a project's evaluated package items, which `bv dependencies` runs over the solution to see the `packages` scope as a build sees it. Taking the pins from evaluation, rather than from the files, is what makes conditions, imports and layered central package management mean the same thing to `bv` as they do to a build. The dump also carries the two values the [override lifecycle](#transitive-overrides) needs from an evaluation: where a restore writes that project's dependency graph, and the severity the project's audit reports from;
+- the import of the [transitive override files](#transitive-overrides), where they exist. A repository whose graph needs none has none, and the import finds nothing.
 
 Both are steered by [internal-use properties](InternalUseProperties.md#dependency-management) that `bv` passes on the command line.
