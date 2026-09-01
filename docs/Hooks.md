@@ -6,6 +6,7 @@
 
 - [Overview](#overview)
 - [The `release/post-release` hook](#the-releasepost-release-hook)
+- [The `deps/post-update` hook](#the-depspost-update-hook)
 - [Writing a hook](#writing-a-hook)
 - [The hook args](#the-hook-args)
 - [The repository configuration](#the-repository-configuration)
@@ -20,7 +21,7 @@ A hook is real code, owned by the repository, that `bv` runs when a well-known e
 
 Hooks live at well-known paths of the form `.buildvana/hooks/<context>/<event>.cs`. `<event>` names the event: the moment of execution that triggers the hook. `<context>` names the context the event belongs to — currently always the invoking command, though nothing ties a context to being a command. If Buildvana were an object and hooks were functions, `.buildvana/hooks/release/post-release.cs` would be the `Release_PostRelease` handler.
 
-Exactly one event exists today: `release/post-release`. A hook is optional; when the file is absent, `bv` skips it with an info message.
+Two events exist today: `release/post-release` and `deps/post-update`. A hook is optional; when the file is absent, `bv` skips it with an info message.
 
 Whatever the context and event, a hook is guaranteed to run with the home directory as its working directory: relative paths in a hook resolve against the repository root, as the example below relies on.
 
@@ -35,6 +36,23 @@ The hook runs _before_ the built-in rewrites, rather than after, because it is a
 The hook runs from the home directory and reports nothing back. `bv` snapshots the working tree before and after the hook; the files the hook changed join the post-release commit alongside the well-known rewrites (or constitute it entirely, when dogfooding is off or rewrote nothing).
 
 **"post-release" names the post-release _commit_**, not the release itself: when the hook runs, nothing has been pushed or published yet, and a non-zero exit code aborts the entire release. Announcements and other externally-visible actions don't belong here.
+
+## The `deps/post-update` hook
+
+A repository often derives something from what it pins: a property that must name the compiler the pinned Roslyn shipped with, a floor a package version implies, a table that has to agree with a tool's version. `bv dependencies update` moves the pins; this hook is where the repository moves what it derives from them.
+
+`.buildvana/hooks/deps/post-update.cs` runs at the end of every `bv dependencies update` that ran to completion, whether or not anything changed, and whether the run applied its updates or only checked them. A run that stopped with an error never reaches the hook. Derived state can drift on its own, so the hook runs even when no pin moved.
+
+The hook runs after the pins of the `packages`, `tools` and `sdks` scopes are written, and _before_ `global.json` is. The `global.json` it reads therefore still states the old .NET SDK version, and its args state the version the run is about to write, as the release hook is told the version being released before the files carry it. `global.json` goes last because a `global.json` naming an SDK that is not installed breaks every `dotnet` invocation after it: `rollForward` never rolls down to an older patch.
+
+The args state what the run made of every pin of every selected scope: the id, the file that declares it, the version it had, the version it reached (or would reach), the policy that governs it, and the latest stable and prerelease versions the sources have. A scope the invocation left out contributes nothing. A pin an argument left out is stated as `Skipped`, so a hook that derives state from one particular pin sees that pin in every run.
+
+This hook has an exit-code convention of its own, because a check run has a verdict to give:
+
+- in a check run (`--check`), exit code 0 means that the hook found nothing to change, and exit code 1 means that it would change something. `bv` folds the 1 into its own verdict, as it folds a pin that has fallen behind. Any other exit code is a failure;
+- in an apply run, exit code 0 means success and anything else is a failure.
+
+A hook that reads `Check` and writes nothing when it is set therefore turns `bv deps update --check` into a complete staleness gate: pins and derived state alike.
 
 ## Writing a hook
 
@@ -71,7 +89,9 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 
 ## The hook args
 
-`bv` serializes the args of the run to a per-hook file, `.buildvana-temp/hook-args/<context>/<event>.json` in the home directory — `.buildvana-temp/hook-args/release/post-release.json` for this hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at trace level, visible at `diagnostic` verbosity. `PostReleaseHookArgs.Load()` reads and deserializes it; the members are:
+`bv` serializes the args of the run to a per-hook file, `.buildvana-temp/hook-args/<context>/<event>.json` in the home directory — `.buildvana-temp/hook-args/release/post-release.json` for the release hook — (re)writing the file before each hook run and leaving it in place afterwards; this is what makes hooks replayable by hand. Its content is logged at trace level, visible at `diagnostic` verbosity. Each hook has an args type of its own, whose `Load()` method reads and deserializes the file; the `RuntimeInfo` section is the part every hook's args share.
+
+`PostReleaseHookArgs.Load()` reads the args of the `release/post-release` hook; the members are:
 
 | Member                           | Type           | Content                                                                                                                                                                              |
 | -------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -90,7 +110,31 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 | `ProducedPackages`               | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                                 |
 | `Dogfooding`                     | boolean        | Whether the built-in self-reference rewrites will run in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value.         |
 
-In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim.
+`PostUpdateHookArgs.Load()` reads the args of the `deps/post-update` hook. It carries the same `RuntimeInfo` section, plus:
+
+| Member               | Type           | Content                                                                                                               |
+| -------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `Check`              | boolean        | Whether the run reports what it would do and changes nothing (`--check`).                                             |
+| `NetSdk`             | object or null | What the run made of the .NET SDK baseline, or `null` when the scope was not selected or the repository pins none.    |
+| `Sdks`               | array          | What the run made of the MSBuild project SDK pins.                                                                    |
+| `Tools`              | array          | What the run made of the .NET local tool pins.                                                                        |
+| `Packages`           | array          | What the run made of the package pins that belong to no additional group.                                             |
+| `AdditionalPackages` | array          | One entry per additional package group, in configuration order, each holding the group's `Caption` and its `Results`. |
+
+Every one of those results, `NetSdk` included, states one pin:
+
+| Member           | Type           | Content                                                                                       |
+| ---------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| `Id`             | string or null | The package id, or `null` for the .NET SDK baseline, which has none.                          |
+| `DeclaringFile`  | string         | Path of the file that declares the pin, relative to the home directory, with forward slashes. |
+| `CurrentVersion` | string         | The pin as it stood before the invocation.                                                    |
+| `Target`         | string or null | The version the pin reached, or would reach in a check run, or `null` when there is none.     |
+| `State`          | string         | One of `UpToDate`, `Updated`, `Disabled`, `Unmanaged`, `Skipped`, `Held`.                     |
+| `LatestStable`   | string or null | The highest stable version the sources have, or `null` when nothing was resolved.             |
+| `LatestPreview`  | string or null | The highest prerelease version the sources have, or `null` when nothing was resolved.         |
+| `Policy`         | string         | The policy governing the pin, in policy-string syntax.                                        |
+
+In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim, and so are the names of enumeration values, such as a result's `State`.
 
 `.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the args files as untracked.
 

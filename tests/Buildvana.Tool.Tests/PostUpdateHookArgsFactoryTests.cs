@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Text.Json;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
@@ -61,6 +62,20 @@ internal sealed class PostUpdateHookArgsFactoryTests
         await Assert.That(args.Packages.Single().Id).IsEqualTo("Serilog");
         await Assert.That(args.AdditionalPackages.Single().Caption).IsEqualTo("SDK package injections");
         await Assert.That(args.AdditionalPackages.Single().Results.Single().Id).IsEqualTo("StyleCop.Analyzers");
+    }
+
+    // The args reach a hook as JSON written by the source-generated context, which is what makes them
+    // readable in a file-based app, where reflection-based serialization is off.
+    [Test]
+    public async Task Create_ProducesArgsTheHookContractCanWrite()
+    {
+        using var home = new TempHome();
+        var resolution = new DependencyResolution { Tools = [Moving("ngbv", "0.5.1", "0.6.0", DependencyScope.Tools)] };
+        var args = Create(home, resolution, check: false);
+        var json = JsonSerializer.Serialize(args, BuildvanaJsonContext.Default.PostUpdateHookArgs);
+        await Assert.That(json).Contains("\"check\": false");
+        await Assert.That(json).Contains("\"id\": \"ngbv\"");
+        await Assert.That(json).Contains("\"state\": \"Updated\"");
     }
 
     private static PackageUpdatePolicy Policy()
