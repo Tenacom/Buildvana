@@ -202,6 +202,8 @@ Buildvana.Runtime.PostUpdateHookArgs.Check.init -> void
 Buildvana.Runtime.PostUpdateHookArgs.Equals(Buildvana.Runtime.PostUpdateHookArgs? other) -> bool
 Buildvana.Runtime.PostUpdateHookArgs.NetSdk.get -> Buildvana.Runtime.DependencyResult?
 Buildvana.Runtime.PostUpdateHookArgs.NetSdk.init -> void
+Buildvana.Runtime.PostUpdateHookArgs.Overrides.get -> System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.TransitiveOverride!>!
+Buildvana.Runtime.PostUpdateHookArgs.Overrides.init -> void
 Buildvana.Runtime.PostUpdateHookArgs.Packages.get -> System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.DependencyResult!>!
 Buildvana.Runtime.PostUpdateHookArgs.Packages.init -> void
 Buildvana.Runtime.PostUpdateHookArgs.PostUpdateHookArgs() -> void
@@ -257,6 +259,16 @@ Buildvana.Runtime.RuntimeInfo.ScratchDirectory.get -> string!
 Buildvana.Runtime.RuntimeInfo.ScratchDirectory.init -> void
 Buildvana.Runtime.RuntimeInfo.Version.get -> string!
 Buildvana.Runtime.RuntimeInfo.Version.init -> void
+Buildvana.Runtime.TransitiveOverride
+Buildvana.Runtime.TransitiveOverride.<Clone>$() -> Buildvana.Runtime.TransitiveOverride!
+Buildvana.Runtime.TransitiveOverride.DeclaringFile.get -> string!
+Buildvana.Runtime.TransitiveOverride.DeclaringFile.init -> void
+Buildvana.Runtime.TransitiveOverride.Equals(Buildvana.Runtime.TransitiveOverride? other) -> bool
+Buildvana.Runtime.TransitiveOverride.PackageId.get -> string!
+Buildvana.Runtime.TransitiveOverride.PackageId.init -> void
+Buildvana.Runtime.TransitiveOverride.TransitiveOverride() -> void
+Buildvana.Runtime.TransitiveOverride.Version.get -> string?
+Buildvana.Runtime.TransitiveOverride.Version.init -> void
 Buildvana.Runtime.UpdatePolicyRule
 Buildvana.Runtime.UpdatePolicyRule.<Clone>$() -> Buildvana.Runtime.UpdatePolicyRule!
 Buildvana.Runtime.UpdatePolicyRule.Equals(Buildvana.Runtime.UpdatePolicyRule? other) -> bool
@@ -346,6 +358,9 @@ override Buildvana.Runtime.ReleaseInfo.ToString() -> string!
 override Buildvana.Runtime.RuntimeInfo.Equals(object? obj) -> bool
 override Buildvana.Runtime.RuntimeInfo.GetHashCode() -> int
 override Buildvana.Runtime.RuntimeInfo.ToString() -> string!
+override Buildvana.Runtime.TransitiveOverride.Equals(object? obj) -> bool
+override Buildvana.Runtime.TransitiveOverride.GetHashCode() -> int
+override Buildvana.Runtime.TransitiveOverride.ToString() -> string!
 override Buildvana.Runtime.UpdatePolicyRule.Equals(object? obj) -> bool
 override Buildvana.Runtime.UpdatePolicyRule.GetHashCode() -> int
 override Buildvana.Runtime.UpdatePolicyRule.ToString() -> string!
@@ -400,6 +415,8 @@ static Buildvana.Runtime.ReleaseInfo.operator !=(Buildvana.Runtime.ReleaseInfo? 
 static Buildvana.Runtime.ReleaseInfo.operator ==(Buildvana.Runtime.ReleaseInfo? left, Buildvana.Runtime.ReleaseInfo? right) -> bool
 static Buildvana.Runtime.RuntimeInfo.operator !=(Buildvana.Runtime.RuntimeInfo? left, Buildvana.Runtime.RuntimeInfo? right) -> bool
 static Buildvana.Runtime.RuntimeInfo.operator ==(Buildvana.Runtime.RuntimeInfo? left, Buildvana.Runtime.RuntimeInfo? right) -> bool
+static Buildvana.Runtime.TransitiveOverride.operator !=(Buildvana.Runtime.TransitiveOverride? left, Buildvana.Runtime.TransitiveOverride? right) -> bool
+static Buildvana.Runtime.TransitiveOverride.operator ==(Buildvana.Runtime.TransitiveOverride? left, Buildvana.Runtime.TransitiveOverride? right) -> bool
 static Buildvana.Runtime.UpdatePolicyRule.operator !=(Buildvana.Runtime.UpdatePolicyRule? left, Buildvana.Runtime.UpdatePolicyRule? right) -> bool
 static Buildvana.Runtime.UpdatePolicyRule.operator ==(Buildvana.Runtime.UpdatePolicyRule? left, Buildvana.Runtime.UpdatePolicyRule? right) -> bool
 static Buildvana.Runtime.VersioningConfig.operator !=(Buildvana.Runtime.VersioningConfig? left, Buildvana.Runtime.VersioningConfig? right) -> bool
@@ -429,6 +446,7 @@ virtual Buildvana.Runtime.HookArgs.PrintMembers(System.Text.StringBuilder! build
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListAdditionalPackagesResult.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.AdditionalPackagesResult>>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListDependencyResult.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.DependencyResult>>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<string>>
+~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListTransitiveOverride.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.TransitiveOverride>>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListUpdatePolicyRule.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.UpdatePolicyRule>>
 ~Buildvana.Runtime.BuildvanaJsonContext.NuGetConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.NuGetConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.NuGetFeedConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.NuGetFeedConfig>
@@ -439,5 +457,6 @@ virtual Buildvana.Runtime.HookArgs.PrintMembers(System.Text.StringBuilder! build
 ~Buildvana.Runtime.BuildvanaJsonContext.ReleaseInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ReleaseInfo>
 ~Buildvana.Runtime.BuildvanaJsonContext.RuntimeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.RuntimeInfo>
 ~Buildvana.Runtime.BuildvanaJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+~Buildvana.Runtime.BuildvanaJsonContext.TransitiveOverride.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.TransitiveOverride>
 ~Buildvana.Runtime.BuildvanaJsonContext.UpdatePolicyRule.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.UpdatePolicyRule>
 ~Buildvana.Runtime.BuildvanaJsonContext.VersioningConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.VersioningConfig>

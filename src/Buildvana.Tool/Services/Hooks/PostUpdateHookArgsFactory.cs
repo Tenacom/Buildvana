@@ -26,7 +26,8 @@ namespace Buildvana.Tool.Services.Hooks;
 internal sealed class PostUpdateHookArgsFactory(
     IHomeDirectoryProvider home,
     BuildvanaJsonConfigProvider configProvider,
-    BuildvanaConfig configuration)
+    BuildvanaConfig configuration,
+    SidecarReader sidecars)
     : HookArgsFactory<PostUpdateHookArgs>(home, configProvider, configuration)
 {
     /// <summary>
@@ -53,8 +54,20 @@ internal sealed class PostUpdateHookArgsFactory(
                     .GroupBy(static pin => pin.Pin.GroupCaption!)
                     .Select(static group => new AdditionalPackagesResult { Caption = group.Key, Results = ResultsOf(group) }),
             ],
+
+            // The files as they stand, whatever the run did to them: an apply run managing the packages
+            // scope has just rewritten them, and every other run reports what the last one wrote.
+            Overrides = OverridesOf(sidecars.Read()),
         };
     }
+
+    private static IReadOnlyList<TransitiveOverride> OverridesOf(IReadOnlyList<TransitiveOverrideEntry> entries)
+        => [.. entries.Select(static entry => new TransitiveOverride
+        {
+            PackageId = entry.PackageId,
+            Version = entry.Version,
+            DeclaringFile = entry.DeclaringFile,
+        })];
 
     private static IReadOnlyList<DependencyResult> ResultsOf(IEnumerable<PinResolution> pins) => [.. pins.Select(ResultOf)];
 

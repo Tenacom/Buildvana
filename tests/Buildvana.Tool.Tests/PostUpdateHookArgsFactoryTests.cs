@@ -78,6 +78,35 @@ internal sealed class PostUpdateHookArgsFactoryTests
         await Assert.That(json).Contains("\"state\": \"Updated\"");
     }
 
+    // The overrides in the args are the files as they stand: an apply run has just rewritten them, and a
+    // check run reports what the last apply run wrote.
+    [Test]
+    public async Task Create_StatesTheOverridesInEffect()
+    {
+        const string overrides = """
+                                 <Project>
+                                   <ItemGroup>
+                                     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+                                   </ItemGroup>
+                                 </Project>
+                                 """;
+
+        using var home = new TempHome();
+        home.WriteFile("Directory.TransitiveOverrides.props", overrides);
+        var args = Create(home, new DependencyResolution(), check: false);
+        var entry = args.Overrides.Single();
+        await Assert.That(entry.PackageId).IsEqualTo("Newtonsoft.Json");
+        await Assert.That(entry.Version).IsEqualTo("13.0.3");
+        await Assert.That(entry.DeclaringFile).IsEqualTo("Directory.TransitiveOverrides.props");
+    }
+
+    [Test]
+    public async Task Create_WithNoOverrideFile_StatesNone()
+    {
+        using var home = new TempHome();
+        await Assert.That(Create(home, new DependencyResolution(), check: false).Overrides).IsEmpty();
+    }
+
     private static PackageUpdatePolicy Policy()
     {
         _ = PackageUpdatePolicy.TryParse("minor", out var policy);
@@ -100,6 +129,10 @@ internal sealed class PostUpdateHookArgsFactoryTests
         };
 
     private static PostUpdateHookArgs Create(TempHome home, DependencyResolution resolution, bool check)
-        => new PostUpdateHookArgsFactory(home.Provider, new BuildvanaJsonConfigProvider(home.Provider), new BuildvanaConfig())
+        => new PostUpdateHookArgsFactory(
+            home.Provider,
+            new BuildvanaJsonConfigProvider(home.Provider),
+            new BuildvanaConfig(),
+            new SidecarReader(home.Provider, new CaptureReporter()))
             .Create(resolution, check);
 }
