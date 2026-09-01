@@ -51,7 +51,7 @@ internal sealed class DependencyDiscovery(
 
         // One scan of the repository's file-based apps answers for both scopes that read directives.
         var directivePins = wantsSdks || wantsPackages ? directives.Read() : [];
-        var packages = wantsPackages
+        var packageScope = wantsPackages
             ? await ReadPackagesAsync(directivePins, cancellationToken).ConfigureAwait(false)
             : ([], []);
 
@@ -60,8 +60,8 @@ internal sealed class DependencyDiscovery(
             NetSdk = scopes.Contains(DependencyScope.NetSdk) ? globalJsonPins.NetSdk : null,
             Sdks = wantsSdks ? [.. globalJsonPins.Sdks, .. OfScope(directivePins, DependencyScope.Sdks)] : [],
             Tools = scopes.Contains(DependencyScope.Tools) ? tools.Read() : [],
-            Packages = packages.Pins,
-            Evaluations = packages.Evaluations,
+            Packages = packageScope.Pins,
+            Evaluations = packageScope.Evaluations,
         };
     }
 

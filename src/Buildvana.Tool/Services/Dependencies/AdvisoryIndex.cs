@@ -25,7 +25,7 @@ internal sealed class AdvisoryIndex
     /// </summary>
     /// <param name="advisories">The advisories, each with the id of the package it covers, in any order and
     /// from any number of sources.</param>
-    public AdvisoryIndex(IEnumerable<(string PackageId, PackageAdvisory Advisory)> advisories)
+    public AdvisoryIndex(IReadOnlyList<(string PackageId, PackageAdvisory Advisory)> advisories)
     {
         Guard.IsNotNull(advisories);
         _advisories = advisories

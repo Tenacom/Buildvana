@@ -98,8 +98,12 @@ internal sealed record OverrideProject
     {
         foreach (var item in evaluation.Items)
         {
-            var isPin = string.Equals(item.ItemType, "PackageVersion", StringComparison.Ordinal) && item.Version is { } version;
-            if (!isPin || !NuGetVersion.TryParse(item.Version!.Trim(), out var pinned))
+            if (!string.Equals(item.ItemType, "PackageVersion", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (item.Version is not { } stated || !NuGetVersion.TryParse(stated.Trim(), out var pinned))
             {
                 continue;
             }

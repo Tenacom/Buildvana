@@ -147,7 +147,7 @@ internal sealed partial class OverrideLifecycle(
                     // other. Only what the project states itself blocks an override.
                     IsDirectReference = projectAssets.DirectReferences.Contains(packageId, StringComparer.OrdinalIgnoreCase)
                         && !state.HasPromotion(project.ProjectFullPath, packageId),
-                    CentralPin = project.CentralPins.TryGetValue(packageId, out var pin) ? pin : null,
+                    CentralPin = project.CentralPins.GetValueOrDefault(packageId),
                 };
 
                 Accept(state, project, packageId, OverrideSelector.Select(request), verdicts, advisories);
