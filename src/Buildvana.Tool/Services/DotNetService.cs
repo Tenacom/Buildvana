@@ -13,6 +13,7 @@ using Buildvana.Core.Process;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Delegation;
+using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
@@ -24,7 +25,7 @@ namespace Buildvana.Tool.Services;
 /// <summary>
 /// Provides shortcut methods for .NET SDK operations.
 /// </summary>
-internal sealed partial class DotNetService : IFileBasedAppRunner
+internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRestorer
 {
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
@@ -78,6 +79,42 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             appendVerbosity: true,
             outputStreaming: OutputStreaming.Unconditional,
             cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> RestoreAsync(
+        SolutionContext solution,
+        bool suppressTransitiveOverrides,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(solution);
+        _reporter.Info("Restoring NuGet packages to read the dependency graph...");
+        string[] args = [
+            "restore",
+            solution.SolutionPath,
+            "--disable-parallel",
+
+            // A restore that finds nothing to do replays the audit results cached with the last one, and the
+            // whole point of this restore is the audit's verdict on the graph as it stands now.
+            "--force",
+            "-nologo",
+        ];
+
+        // The property goes last, where neither a configured nor a forwarded argument can countermand it.
+        string[] trailingArgs = suppressTransitiveOverrides
+            ? [$"-p:{TransitiveOverrides.SuppressionProperty}=true"]
+            : [];
+
+        var result = await RunDotNetAsync(
+            args,
+            invocation: _config.DotNet.Restore,
+            trailingArgs: trailingArgs,
+            appendVerbosity: true,
+            outputStreaming: OutputStreaming.AtVerbosity(Verbosity.Detailed),
+            throwOnNonZero: false,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return result.ExitCode;
     }
 
     /// <summary>
@@ -397,6 +434,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
         IReadOnlyList<string> trailingArgs,
         bool appendVerbosity,
         OutputStreaming outputStreaming,
+        bool throwOnNonZero = true,
         CancellationToken cancellationToken = default)
     {
         var finalArgs = MergeInvocation(args, invocation, trailingArgs);
@@ -404,6 +442,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner
             DotNetMuxer.Path,
             appendVerbosity ? finalArgs.Append($"--verbosity={_reporter.Verbosity}") : finalArgs,
             environment: ChildEnvironment(invocation.Env),
+            throwOnNonZero: throwOnNonZero,
             onStdout: outputStreaming.Enabled ? x => _reporter.ChildOutput(x, outputStreaming.Verbosity) : null,
             onStderr: outputStreaming.Enabled ? x => _reporter.ChildError(x, outputStreaming.Verbosity) : null,
             cancellationToken: cancellationToken);
