@@ -19,12 +19,28 @@ internal sealed class DependencyUpdateReportTests
     {
         var resolution = Packages(Moving("Serilog", "3.0.0", "3.1.0", latestStable: "4.0.0"));
         var output = Render(resolution, [DependencyScope.Packages]);
-        await Assert.That(output).Contains("package");
-        await Assert.That(output).Contains("latest stable");
-        await Assert.That(output).Contains("Serilog");
-        await Assert.That(output).Contains("3.1.0");
-        await Assert.That(output).Contains("4.0.0");
+        await Assert.That(output).Contains("Serilog 3.0.0 (minor) -> 3.1.0 (latest: 4.0.0)");
         await Assert.That(output).Contains("1 pin would change.");
+    }
+
+    // The report at the width of a CI log. A name and a version stay whole, whatever it costs the alignment:
+    // a line breaks between words, where a column layout used to break inside them.
+    [Test]
+    public async Task WriteUpdate_AtEightyColumns_BreaksNoNameAndNoVersion()
+    {
+        var pin = DependencyPin.Create(DependencyScope.Packages, "Microsoft.Build.NoTargets", "3.7.134", "Directory.Packages.props");
+        var resolution = Packages(new PinResolution
+        {
+            Pin = pin,
+            Policy = Policy("minor"),
+            State = PinResolutionState.UpToDate,
+            LatestStable = NuGetVersion.Parse("3.7.134"),
+            LatestPreview = NuGetVersion.Parse("11.0.100-preview.7.26381.103"),
+        });
+
+        var output = Render(resolution, [DependencyScope.Packages], listUpToDate: true, width: 80);
+        await Assert.That(output).Contains("Microsoft.Build.NoTargets 3.7.134 (minor) -> up to date");
+        await Assert.That(output).Contains("11.0.100-preview.7.26381.103");
     }
 
     [Test]
@@ -51,7 +67,7 @@ internal sealed class DependencyUpdateReportTests
     {
         var resolution = Packages(UpToDate("Serilog", "4.0.0"));
         var output = Render(resolution, [DependencyScope.Packages], listUpToDate: true);
-        await Assert.That(output).Contains("Serilog");
+        await Assert.That(output).Contains("Serilog 4.0.0 (minor) -> up to date (latest: 4.0.0)");
         await Assert.That(output).DoesNotContain("not listed");
     }
 
@@ -68,8 +84,8 @@ internal sealed class DependencyUpdateReportTests
         });
 
         var output = Render(resolution, [DependencyScope.Packages]);
-        await Assert.That(output).Contains("notes");
-        await Assert.That(output).Contains("not managed");
+        await Assert.That(output).Contains("Serilog [3.0.0] (minor) -> not managed");
+        await Assert.That(output).Contains("not managed: one version in brackets");
     }
 
     // The baseline has news of its own: a setting an apply run writes, whether or not the version moves.
@@ -182,12 +198,13 @@ internal sealed class DependencyUpdateReportTests
         DependencyResolution resolution,
         IReadOnlyList<DependencyScope> scopes,
         bool listUpToDate = false,
-        bool applied = false)
+        bool applied = false,
+        int width = 200)
     {
-        // Wide enough that no column wraps: what these tests are about is what the report says, not how a
-        // narrow terminal breaks it.
+        // Wide enough by default that no line wraps: what most of these tests are about is what the report
+        // says, not how a narrow terminal breaks it.
         using var console = new TestConsole();
-        _ = console.Width(200);
+        _ = console.Width(width);
         var renderer = new DependencyReportRenderer(console, new EffectivePolicyResolver(new DependenciesConfig()));
         renderer.WriteUpdate(resolution, new HashSet<DependencyScope>(scopes), listUpToDate, applied);
         return console.Output;

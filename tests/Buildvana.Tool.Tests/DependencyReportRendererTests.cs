@@ -22,13 +22,11 @@ internal sealed class DependencyReportRendererTests
 
         var output = Render(inventory, AllScopes);
         await Assert.That(output).Contains(".NET SDK");
-        await Assert.That(output).Contains("10.0.100");
-        await Assert.That(output).Contains("major"); // the netsdk scope's default policy
-        await Assert.That(output).Contains("ngbv");
+        await Assert.That(output).Contains("(the .NET SDK) 10.0.100 (major)"); // the netsdk scope's default policy
         await Assert.That(output).Contains(".config/dotnet-tools.json");
-        await Assert.That(output).Contains("Serilog");
+        await Assert.That(output).Contains("ngbv");
         await Assert.That(output).Contains("Directory.Packages.props");
-        await Assert.That(output).Contains("minor"); // the packages scope's default policy
+        await Assert.That(output).Contains("Serilog 4.0.0 (minor)"); // the packages scope's default policy
     }
 
     // A scope nobody selected is not a scope with nothing in it, and the report says neither about it.
