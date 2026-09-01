@@ -164,8 +164,9 @@ internal sealed class DependencyResolver(
         }
 
         // A stated version is the user's own edit: it overrules the policy, a disabled one included, and it
-        // is the one move that may lower a pin.
-        if (request.To is { } stated)
+        // is the one move that may lower a pin. It reaches a pin of an id-shaped scope only when an argument
+        // names the id it is for; with no argument the version is the .NET SDK baseline's.
+        if (request.TargetId is not null && request.To is { } stated)
         {
             return VersionComparer.VersionRelease.Equals(stated, current)
                 ? NewResolution(pin, policy, PinResolutionState.UpToDate, string.Empty)
