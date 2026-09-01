@@ -45,6 +45,8 @@ BV1106 and BV1107 also report a property _name_ that carries data, as the member
 | BV1202 |  Error   | The .NET release index has no .NET SDK _(version)_.           | The version `global.json` pins, or the one `--to` states, is not a .NET SDK Microsoft published.                                                 |
 | BV1203 |  Error   | No pin bv manages, in the selected scopes, has the id _(id)_. | `--to` states a version for an id that has no pin, or whose only pins are ones `bv` does not manage. A Buildvana family id is always this error. |
 
+BV1203 has a second message, for an id of Buildvana's own package family: _(id)_ belongs to Buildvana's own package family, which moves in lockstep. Use bv self-update. Those pins move together with the SDK, so no scope of `bv dependencies` manages one.
+
 Every one of these is reported by `bv dependencies update`, and every one of them stops the run before anything is written. One run reports all of them, each naming the file that declares the pin.
 
 ## Exit codes

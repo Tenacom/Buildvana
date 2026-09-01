@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.Configuration;
+using NuGet.Versioning;
 
 namespace Buildvana.Tool.Services.Dependencies;
 
@@ -31,13 +32,21 @@ internal static class PinNotes
     public static string For(DependencyPin pin, PackageUpdatePolicy policy)
     {
         var unmanaged = Unmanaged(pin.Management);
-        if (unmanaged.Length > 0)
-        {
-            return unmanaged;
-        }
-
-        return pin.Version is { IsPrerelease: true } && !policy.AllowPrerelease ? PrereleaseUnderStablePolicy : string.Empty;
+        return unmanaged.Length > 0 ? unmanaged : ForVersion(pin.Version, policy);
     }
+
+    /// <summary>
+    /// Says what a reader must know about a version a run states for a pin <c>bv</c> manages.
+    /// </summary>
+    /// <param name="version">The version, or <see langword="null"/> when there is none.</param>
+    /// <param name="policy">The pin's effective policy.</param>
+    /// <returns>The note, or an empty string when the version calls for none.</returns>
+    /// <remarks>
+    /// <para>A run that states a version of its own overrules the policy, and the note is then about the
+    /// version the file ends up holding, rather than the one it held.</para>
+    /// </remarks>
+    public static string ForVersion(NuGetVersion? version, PackageUpdatePolicy policy)
+        => version is { IsPrerelease: true } && !policy.AllowPrerelease ? PrereleaseUnderStablePolicy : string.Empty;
 
     /// <summary>
     /// Says what a reader must know about the .NET SDK baseline.
