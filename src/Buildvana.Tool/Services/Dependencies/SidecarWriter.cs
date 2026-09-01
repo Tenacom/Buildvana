@@ -100,7 +100,7 @@ internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter repor
         return $"""    <PackageReference Include="{Escape(entry.PackageId)}"{version} PrivateAssets="all" />""";
     }
 
-    private static string Escape(string value) => SecurityElement.Escape(value) ?? value;
+    private static string Escape(string value) => SecurityElement.Escape(value);
 
     private bool WriteOrRemove(string path, string? content)
     {
