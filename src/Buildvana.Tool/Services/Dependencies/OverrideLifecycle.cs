@@ -64,7 +64,7 @@ internal sealed partial class OverrideLifecycle(
     {
         Guard.IsNotNull(evaluations);
         Guard.IsNotNull(packages);
-        var projects = OverrideProject.Create(evaluations, packages);
+        var projects = OverrideProject.Create(home, evaluations, packages);
         if (projects.Count == 0)
         {
             reporter.Detail("No project of the solution states where its dependency graph is written, so no override was computed.");

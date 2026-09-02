@@ -16,6 +16,7 @@ internal sealed class OverrideLifecycleTests
     private const string ProjectPath = "src/Test/Test.csproj";
     private const string AssetsPath = "src/Test/obj/project.assets.json";
     private const string CentralFileName = "Directory.TransitiveOverrides.props";
+    private const string CentralPinFileName = "Directory.Packages.props";
     private const string ProjectFileName = "src/Test/Test.TransitiveOverrides.props";
     private const string Vulnerable = "Newtonsoft.Json";
 
@@ -72,6 +73,28 @@ internal sealed class OverrideLifecycleTests
         await RunAsync(home, Lifting(home), Advisories(), Versions(), centralPin: "12.0.2", movedTo: "12.0.3").ConfigureAwait(false);
         await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
         await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
+    }
+
+    // Two files may pin one package at one version, and each of them moves on its own. A move in a file this
+    // project does not read says nothing about the pin it does read.
+    [Test]
+    public async Task RunAsync_WithACentralPinAnotherFileMoved_JudgesTheVersionItsOwnFileStates()
+    {
+        using var home = NewHome(Finding("12.0.1"));
+        var reporter = new CaptureReporter();
+        await RunAsync(
+            home,
+            new FakeDependencyRestorer(),
+            Advisories(),
+            Versions(),
+            centralPin: "12.0.1",
+            movedTo: "12.0.3",
+            movedIn: "samples/Directory.Packages.props",
+            reporter: reporter).ConfigureAwait(false);
+
+        await Assert.That(File.Exists(home.GetFullPath(ProjectFileName))).IsFalse();
+        var warning = reporter.Messages.Single(static message => message.Level == MessageLevel.Warning).Message;
+        await Assert.That(warning).Contains("pins it at 12.0.1, which an advisory covers");
     }
 
     [Test]
@@ -260,6 +283,7 @@ internal sealed class OverrideLifecycleTests
         bool managesCentrally = true,
         string? centralPin = null,
         string? movedTo = null,
+        string movedIn = CentralPinFileName,
         CaptureReporter? reporter = null)
     {
         var actualReporter = reporter ?? new CaptureReporter();
@@ -276,19 +300,19 @@ internal sealed class OverrideLifecycleTests
             new SidecarWriter(home.Provider, actualReporter),
             actualReporter);
 
-        return lifecycle.RunAsync([Evaluation(home, managesCentrally, centralPin)], Moved(centralPin, movedTo));
+        return lifecycle.RunAsync([Evaluation(home, managesCentrally, centralPin)], Moved(centralPin, movedTo, movedIn));
     }
 
-    // What the run made of the central pin: it moved when the test says it did, and the evaluation states the
-    // version it left behind.
-    private static IReadOnlyList<PinResolution> Moved(string? centralPin, string? movedTo)
+    // What the run made of a central pin: it moved when the test says it did, and the evaluation states the
+    // version it left behind. The file that declares it is part of what tells one pin from another.
+    private static IReadOnlyList<PinResolution> Moved(string? centralPin, string? movedTo, string movedIn)
     {
         if (centralPin is null || movedTo is null)
         {
             return [];
         }
 
-        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, "Directory.Packages.props") with
+        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, movedIn) with
         {
             ItemType = "PackageVersion",
         };
@@ -311,7 +335,7 @@ internal sealed class OverrideLifecycleTests
             ItemType = "PackageVersion",
             Id = Vulnerable,
             Version = centralPin,
-            DefiningProjectFullPath = home.GetFullPath("Directory.Packages.props"),
+            DefiningProjectFullPath = home.GetFullPath(CentralPinFileName),
         };
 
         return new PackagePinDump
