@@ -28,4 +28,11 @@ internal sealed record AssetsLogEntry(
     LogLevel Level,
     string LibraryId,
     string Message,
-    IReadOnlyList<string> TargetGraphs);
+    IReadOnlyList<string> TargetGraphs)
+{
+    /// <summary>
+    /// Gets a value indicating whether the entry is one of the audit findings NU1901 to NU1904.
+    /// </summary>
+    public bool IsAuditFinding
+        => Code is NuGetLogCode.NU1901 or NuGetLogCode.NU1902 or NuGetLogCode.NU1903 or NuGetLogCode.NU1904;
+}

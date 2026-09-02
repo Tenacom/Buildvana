@@ -65,6 +65,28 @@ internal sealed class DirectivePinReaderTests
         await Assert.That(Read(home).Single().Management).IsEqualTo(PinManagement.UnreadableVersion);
     }
 
+    // A versionless #:package resolves through central package management, so the id it names is a reference
+    // to the central pin. A versionless #:sdk names no package and is no reference to one.
+    [Test]
+    public async Task Read_StatesAVersionlessPackageDirectiveAsAReference()
+    {
+        using var home = new TempHome();
+        Write(home, "tools/report.cs", ToolApp);
+        var read = ReadAll(home);
+        await Assert.That(read.References).IsEquivalentTo(["Spectre.Console"]);
+    }
+
+    // Two apps may reference one package, and what the answer names is the package, not the mentions of it.
+    [Test]
+    public async Task Read_NamesAReferencedPackageOnce()
+    {
+        using var home = new TempHome();
+        Write(home, "tools/first.cs", "#:package Spectre.Console\n");
+        Write(home, "tools/second.cs", "#:package spectre.console\n");
+        var read = ReadAll(home);
+        await Assert.That(read.References.Count).IsEqualTo(1);
+    }
+
     [Test]
     public async Task Read_IgnoresBuildOutput()
     {
@@ -73,7 +95,9 @@ internal sealed class DirectivePinReaderTests
         await Assert.That(Read(home)).IsEmpty();
     }
 
-    private static IReadOnlyList<DependencyPin> Read(TempHome home, BuildvanaConfig? config = null)
+    private static IReadOnlyList<DependencyPin> Read(TempHome home, BuildvanaConfig? config = null) => ReadAll(home, config).Pins;
+
+    private static DirectivePins ReadAll(TempHome home, BuildvanaConfig? config = null)
         => new DirectivePinReader(home.Provider, config ?? new BuildvanaConfig { FileBasedApps = ["/tools/"] }).Read();
 
     private static void Write(TempHome home, string relativePath, string content)
