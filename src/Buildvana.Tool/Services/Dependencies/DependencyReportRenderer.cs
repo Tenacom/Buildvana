@@ -122,6 +122,37 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
         }
     }
 
+    /// <summary>
+    /// Writes the report of the orphaned pins a run found.
+    /// </summary>
+    /// <param name="orphans">The pins nothing references any more.</param>
+    /// <param name="removed">Whether the run removed them, as opposed to foreseeing their removal.</param>
+    /// <remarks>
+    /// <para>No policy is stated here. A policy says how far a pin may move, and an orphan is not moved: it
+    /// is a pin the repository states and nothing uses, whatever its policy allows.</para>
+    /// </remarks>
+    public void WritePrune(IReadOnlyList<DependencyPin> orphans, bool removed)
+    {
+        Guard.IsNotNull(orphans);
+        WriteHeading("Orphaned NuGet package pins");
+        if (orphans.Count == 0)
+        {
+            console.MarkupLine("  none: something references every pin");
+            return;
+        }
+
+        foreach (var file in orphans.GroupBy(static pin => pin.DeclaringFile))
+        {
+            console.MarkupLineInterpolated($"  {file.Key}");
+            foreach (var pin in file)
+            {
+                WritePinLine($"{pin.Id} {pin.VersionText} -> {(removed ? "removed" : "to remove")}", string.Empty);
+            }
+        }
+
+        console.MarkupLineInterpolated($"  {Pins(orphans.Count)} {(removed ? "removed" : "would be removed")}.");
+    }
+
     private static string UpdateLineOf(PinResolution resolution)
     {
         var outcome = Outcome(resolution.State, resolution.Target);

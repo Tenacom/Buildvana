@@ -111,8 +111,10 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<SidecarWriter>()
                 .AddSingleton<OverrideLifecycle>()
                 .AddSingleton<SidecarReader>()
+                .AddSingleton<OrphanDetector>()
                 .AddSingleton<DependencyReportRenderer>()
                 .AddSingleton(static sp => DependenciesSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
+                .AddSingleton(static sp => DependenciesPruneSettings.Parse(sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => DependenciesUpdateSettings.Parse(
                     sp.GetRequiredService<CommandParameters>().Positionals,
                     sp.GetRequiredService<CommandParameters>().Options))

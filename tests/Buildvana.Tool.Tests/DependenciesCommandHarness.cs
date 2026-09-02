@@ -17,7 +17,7 @@ using Spectre.Console;
 using Spectre.Console.Testing;
 
 /// <summary>
-/// Runs <c>bv dependencies update</c> end to end over a temporary home directory, with only the process
+/// Runs a <c>bv dependencies</c> command end to end over a temporary home directory, with only the process
 /// boundaries faked: child processes (<see cref="FakeProcessRunner"/>), the hook
 /// (<see cref="FakeFileBasedAppRunner"/>), the restore the override lifecycle would run, and the two version
 /// sources. Everything else — the service graph, the discovery, the resolution, and the writers — is the real
@@ -30,7 +30,7 @@ using Spectre.Console.Testing;
 /// <para>Nothing here touches process-wide state, so tests using this harness need no
 /// <c>[NotInParallel]</c>.</para>
 /// </remarks>
-internal sealed class DependenciesUpdateHarness : IDisposable
+internal sealed class DependenciesCommandHarness : IDisposable
 {
     /// <summary>The id of the project SDK the repository pins in <c>global.json</c>.</summary>
     public const string SdkId = "Contoso.Sdk";
@@ -81,12 +81,12 @@ internal sealed class DependenciesUpdateHarness : IDisposable
     private IReadOnlyList<string> _options = [];
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DependenciesUpdateHarness"/> class, populating the home
+    /// Initializes a new instance of the <see cref="DependenciesCommandHarness"/> class, populating the home
     /// directory and composing the service graph.
     /// </summary>
     /// <param name="hookExitCode">The exit code the hook answers with.</param>
     /// <param name="upToDate">Whether the repository already states everything its policies allow.</param>
-    public DependenciesUpdateHarness(int hookExitCode = 0, bool upToDate = false)
+    public DependenciesCommandHarness(int hookExitCode = 0, bool upToDate = false)
     {
         ProcessRunner = new FakeProcessRunner { OnRun = RunDotNet };
         AppRunner = new FakeFileBasedAppRunner { ExitCode = hookExitCode, OnRun = (_, _, _) => Record("hook") };
@@ -141,6 +141,18 @@ internal sealed class DependenciesUpdateHarness : IDisposable
     {
         _options = ["--no-packages", .. options];
         return _services.GetRequiredService<DependenciesUpdateCommand>().ExecuteAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Runs the <c>dependencies prune</c> command, with the packages scope left out.
+    /// </summary>
+    /// <param name="options">The command-line option tokens to run it with.</param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is the
+    /// command's exit code.</returns>
+    public Task<int> RunPruneAsync(params string[] options)
+    {
+        _options = ["--no-packages", .. options];
+        return _services.GetRequiredService<DependenciesPruneCommand>().ExecuteAsync(CancellationToken.None);
     }
 
     /// <inheritdoc/>

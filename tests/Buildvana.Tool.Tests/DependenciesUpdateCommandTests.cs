@@ -12,14 +12,14 @@ internal sealed class DependenciesUpdateCommandTests
     [Test]
     public async Task ExecuteAsync_WritesTheBaselineLastOfAll()
     {
-        using var harness = new DependenciesUpdateHarness();
+        using var harness = new DependenciesCommandHarness();
         var exitCode = await harness.RunAsync().ConfigureAwait(false);
         await Assert.That(exitCode).IsEqualTo(0);
         await Assert.That(harness.Steps.Count).IsEqualTo(2);
         await Assert.That(harness.Steps[0].Name).IsEqualTo("tool");
         await Assert.That(harness.Steps[1].Name).IsEqualTo("hook");
         await Assert.That(harness.ProcessRunner.Runs.Single().Args).Contains("0.6.0");
-        await Assert.That(harness.GlobalJsonNow).Contains(DependenciesUpdateHarness.NewNetSdkVersion);
+        await Assert.That(harness.GlobalJsonNow).Contains(DependenciesCommandHarness.NewNetSdkVersion);
     }
 
     // The hook is told the version the run foresees, and sees a global.json that still states the old one.
@@ -27,11 +27,11 @@ internal sealed class DependenciesUpdateCommandTests
     [Test]
     public async Task ExecuteAsync_RunsTheHookBeforeTheBaselineIsWritten()
     {
-        using var harness = new DependenciesUpdateHarness();
+        using var harness = new DependenciesCommandHarness();
         _ = await harness.RunAsync().ConfigureAwait(false);
         var hook = harness.Steps.Single(step => step.Name == "hook");
-        await Assert.That(hook.GlobalJson).Contains(DependenciesUpdateHarness.OldNetSdkVersion);
-        await Assert.That(hook.GlobalJson).DoesNotContain(DependenciesUpdateHarness.NewNetSdkVersion);
+        await Assert.That(hook.GlobalJson).Contains(DependenciesCommandHarness.OldNetSdkVersion);
+        await Assert.That(hook.GlobalJson).DoesNotContain(DependenciesCommandHarness.NewNetSdkVersion);
         await Assert.That(hook.GlobalJson).Contains("1.1.0");
     }
 
@@ -39,7 +39,7 @@ internal sealed class DependenciesUpdateCommandTests
     [Test]
     public async Task ExecuteAsync_OfACheckRunWhoseHookFindsPendingWork_Fails()
     {
-        using var harness = new DependenciesUpdateHarness(hookExitCode: 1, upToDate: true);
+        using var harness = new DependenciesCommandHarness(hookExitCode: 1, upToDate: true);
         var exitCode = await harness.RunAsync("--check").ConfigureAwait(false);
         await Assert.That(exitCode).IsEqualTo(BuildFailedException.DefaultExitCode);
     }
@@ -47,7 +47,7 @@ internal sealed class DependenciesUpdateCommandTests
     [Test]
     public async Task ExecuteAsync_OfACheckRunWithNothingPending_Succeeds()
     {
-        using var harness = new DependenciesUpdateHarness(upToDate: true);
+        using var harness = new DependenciesCommandHarness(upToDate: true);
         var exitCode = await harness.RunAsync("--check").ConfigureAwait(false);
         await Assert.That(exitCode).IsEqualTo(0);
     }
@@ -56,10 +56,10 @@ internal sealed class DependenciesUpdateCommandTests
     [Test]
     public async Task ExecuteAsync_OfACheckRun_WritesNothing()
     {
-        using var harness = new DependenciesUpdateHarness();
+        using var harness = new DependenciesCommandHarness();
         var exitCode = await harness.RunAsync("--check").ConfigureAwait(false);
         await Assert.That(exitCode).IsEqualTo(BuildFailedException.DefaultExitCode);
-        await Assert.That(harness.GlobalJsonNow).Contains(DependenciesUpdateHarness.OldNetSdkVersion);
+        await Assert.That(harness.GlobalJsonNow).Contains(DependenciesCommandHarness.OldNetSdkVersion);
         await Assert.That(harness.ProcessRunner.Runs).IsEmpty();
         await Assert.That(harness.Steps.Single().Name).IsEqualTo("hook");
     }
@@ -68,7 +68,7 @@ internal sealed class DependenciesUpdateCommandTests
     [Test]
     public async Task ExecuteAsync_WithoutThePackagesScope_NeverReadsTheSolution()
     {
-        using var harness = new DependenciesUpdateHarness();
+        using var harness = new DependenciesCommandHarness();
         _ = await harness.RunAsync().ConfigureAwait(false);
         await Assert.That(harness.SolutionWasAsked).IsFalse();
     }
