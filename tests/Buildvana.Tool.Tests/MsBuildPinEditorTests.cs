@@ -479,6 +479,207 @@ internal sealed class MsBuildPinEditorTests
         await Assert.That(hasMark).IsEqualTo(hasByteOrderMark);
     }
 
+    // The removed element takes its indentation and its line ending with it. The item group it leaves empty
+    // stays: nothing beyond the removal is reformatted.
+    [Test]
+    public async Task RemovePins_RemovesAnAttributeFormPin_WithItsWholeLine()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha" Version="1.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        const string expected = """
+            <Project>
+              <ItemGroup>
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Alpha");
+
+        await Assert.That(changed).IsTrue();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task RemovePins_RemovesAPinStatedWithAVersionChildElement()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha">
+                  <Version>1.0.0</Version>
+                </PackageVersion>
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        const string expected = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Alpha");
+
+        await Assert.That(changed).IsTrue();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task RemovePins_RemovesAPinWithAnEndTagOfItsOwn()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha" Version="1.0.0"></PackageVersion>
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        const string expected = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Alpha");
+
+        await Assert.That(changed).IsTrue();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(expected);
+    }
+
+    // What shares the element's line is not this editor's to move, so only the element goes.
+    [Test]
+    public async Task RemovePins_RemovesAnElementSharingItsLine_AndLeavesTheRest()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha" Version="1.0.0" /> <!-- keep this -->
+              </ItemGroup>
+            </Project>
+            """;
+        const string expected = """
+            <Project>
+              <ItemGroup>
+                 <!-- keep this -->
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Alpha");
+
+        await Assert.That(changed).IsTrue();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(expected);
+    }
+
+    // Two declarations conditioned per target framework are two pins, and a caller naming the id names both.
+    [Test]
+    public async Task RemovePins_RemovesEveryDeclarationTheCallerNames()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha" Version="1.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+                <PackageVersion Include="Alpha" Version="2.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
+              </ItemGroup>
+            </Project>
+            """;
+        const string expected = """
+            <Project>
+              <ItemGroup>
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Alpha");
+
+        await Assert.That(changed).IsTrue();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task RemovePins_LeavesCommentedOutItemsAlone()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <!-- <PackageVersion Include="Alpha" Version="1.0.0" /> -->
+                <PackageVersion Include="Beta" Version="2.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        const string expected = """
+            <Project>
+              <ItemGroup>
+                <!-- <PackageVersion Include="Alpha" Version="1.0.0" /> -->
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Beta");
+
+        await Assert.That(changed).IsTrue();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(expected);
+    }
+
+    [Test]
+    public async Task RemovePins_WithNothingToRemove_LeavesTheFileAlone()
+    {
+        using var home = new TempHome();
+        const string content = """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Alpha" Version="1.0.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        var path = WriteFile(home, content);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static _ => false);
+
+        await Assert.That(changed).IsFalse();
+        await Assert.That(home.ReadFile(FileName)).IsEqualTo(content);
+    }
+
+    [Test]
+    public async Task RemovePins_PreservesCrlfLineEndings()
+    {
+        using var home = new TempHome();
+        var path = Path.Combine(home.RootPath, FileName);
+        const string content = "<Project>\r\n  <PackageVersion Include=\"Alpha\" Version=\"1.0.0\" />\r\n"
+            + "  <PackageVersion Include=\"Beta\" Version=\"2.0.0\" />\r\n</Project>\r\n";
+
+        const string expected = "<Project>\r\n  <PackageVersion Include=\"Beta\" Version=\"2.0.0\" />\r\n</Project>\r\n";
+        await File.WriteAllTextAsync(path, content).ConfigureAwait(false);
+
+        var changed = MsBuildPinEditor.RemovePins(path, ["PackageVersion"], static pin => pin.Id == "Alpha");
+
+        await Assert.That(changed).IsTrue();
+        var rewritten = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+        await Assert.That(rewritten).IsEqualTo(expected);
+    }
+
     private static string WriteFile(TempHome home, string content)
     {
         home.WriteFile(FileName, content);

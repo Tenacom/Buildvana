@@ -45,6 +45,14 @@ internal static class PinWriting
     }
 
     /// <summary>
+    /// Indexes a set of pins by what identifies each of them in its file.
+    /// </summary>
+    /// <param name="pins">The pins, all of them declared in one file.</param>
+    /// <returns>The lookup a removal consults for every declaration it walks past.</returns>
+    public static HashSet<PinKey> KeysOf(IEnumerable<DependencyPin> pins)
+        => [.. pins.Select(static pin => KeyOf(pin.ItemType, pin.Id, pin.VersionText))];
+
+    /// <summary>
     /// States the version a declaration moves to, in the place the file gives it.
     /// </summary>
     /// <param name="targets">The lookup from <see cref="TargetsOf"/>.</param>
@@ -77,6 +85,18 @@ internal static class PinWriting
         string id,
         string versionText)
         => targets.GetValueOrDefault(KeyOf(itemType, id, versionText));
+
+    /// <summary>
+    /// Says whether a declaration is one of the pins indexed.
+    /// </summary>
+    /// <param name="keys">The lookup from <see cref="KeysOf"/>.</param>
+    /// <param name="itemType">The item type of the declaration, or <see langword="null"/> for a directive.</param>
+    /// <param name="id">The id the declaration names.</param>
+    /// <param name="versionText">The version text the declaration holds.</param>
+    /// <returns><see langword="true"/> when the declaration is one of the pins; otherwise,
+    /// <see langword="false"/>.</returns>
+    public static bool Names(HashSet<PinKey> keys, string? itemType, string id, string versionText)
+        => keys.Contains(KeyOf(itemType, id, versionText));
 
     private static PinKey KeyOf(string? itemType, string id, string versionText)
         => new(

@@ -50,7 +50,8 @@ partial class MsBuildPinEditor
             if (tag.VersionStart >= 0)
             {
                 var versionText = text.Substring(tag.VersionStart, tag.VersionLength);
-                matches.Add(new PinMatch(new MsBuildPin(tag.Name, id, versionText), tag.VersionStart));
+                var elementEnd = tag.SelfClosing ? tag.End : FindElementEnd(text, tag.End);
+                matches.Add(new PinMatch(new MsBuildPin(tag.Name, id, versionText), tag.VersionStart, lt, elementEnd));
                 continue;
             }
 
@@ -62,7 +63,8 @@ partial class MsBuildPinEditor
             if (FindVersionChild(text, tag.End, out var continueAt) is { } child)
             {
                 var versionText = text.Substring(child.Start, child.Length);
-                matches.Add(new PinMatch(new MsBuildPin(tag.Name, id, versionText), child.Start));
+                var elementEnd = FindElementEnd(text, continueAt);
+                matches.Add(new PinMatch(new MsBuildPin(tag.Name, id, versionText), child.Start, lt, elementEnd));
             }
 
             i = continueAt;
@@ -302,6 +304,61 @@ partial class MsBuildPinEditor
 
         continueAt = text.Length;
         return null;
+    }
+
+    // Scans from inside an open item element to just past its own end tag, and returns that position, or -1
+    // when the text ends first. A removal cuts the element out whole, so it needs the element's own end
+    // rather than the position the outer scan resumes from.
+    private static int FindElementEnd(string text, int contentStart)
+    {
+        var depth = 1;
+        var i = contentStart;
+        while (i < text.Length)
+        {
+            var lt = text.IndexOf('<', i);
+            if (lt < 0)
+            {
+                break;
+            }
+
+            if (lt + 1 < text.Length && text[lt + 1] == '/')
+            {
+                var gt = text.IndexOf('>', lt + 1);
+                if (gt < 0)
+                {
+                    break;
+                }
+
+                i = gt + 1;
+                depth--;
+                if (depth == 0)
+                {
+                    return i;
+                }
+
+                continue;
+            }
+
+            if (IsMarkupStart(text, lt))
+            {
+                i = SkipMarkup(text, lt);
+                continue;
+            }
+
+            if (!TryParseStartTag(text, lt, out var tag))
+            {
+                i = lt + 1;
+                continue;
+            }
+
+            i = tag.End;
+            if (!tag.SelfClosing)
+            {
+                depth++;
+            }
+        }
+
+        return -1;
     }
 
     // Whether the '<' at the given index opens an end tag for the given name (any casing, optional

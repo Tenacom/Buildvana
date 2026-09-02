@@ -135,6 +135,53 @@ internal sealed class PackagePinWriterTests
         await Assert.That(home.ReadFile(PropsFile)).IsEqualTo(TwoPins);
     }
 
+    [Test]
+    public async Task Remove_TakesOutThePinAndLeavesTheRestOfTheFile()
+    {
+        const string onePin = """
+                            <Project>
+                              <ItemGroup>
+                                <!-- a comment nothing may touch -->
+                                <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+                              </ItemGroup>
+                            </Project>
+                            """;
+
+        using var home = new TempHome();
+        home.WriteFile(PropsFile, TwoPins);
+        Remove(home, Pinned("Serilog", "3.0.0", PropsFile));
+        await Assert.That(home.ReadFile(PropsFile)).IsEqualTo(onePin);
+    }
+
+    // A directive is the reference itself, so nothing here removes one: what is not an MSBuild item is left
+    // to whoever wrote it.
+    [Test]
+    public async Task Remove_LeavesADirectiveAlone()
+    {
+        const string app = """
+                           #:package Serilog@3.0.0
+
+                           Console.WriteLine("hello");
+                           """;
+
+        using var home = new TempHome();
+        home.WriteFile("tools/build.cs", app);
+        Remove(home, Pinned("Serilog", "3.0.0", "tools/build.cs", itemType: null));
+        await Assert.That(home.ReadFile("tools/build.cs")).IsEqualTo(app);
+    }
+
+    // The pin came out of this file, so a file no longer stating it changed under us.
+    [Test]
+    public async Task Remove_WhenTheFileStatesNoPinThatGoes_Fails()
+    {
+        using var home = new TempHome();
+        home.WriteFile(PropsFile, TwoPins);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
+        await Assert.That(() => Remove(home, Pinned("Serilog", "2.0.0", PropsFile))).Throws<BuildFailedException>();
+        await Assert.That(home.ReadFile(PropsFile)).IsEqualTo(TwoPins);
+    }
+
     private static PackageUpdatePolicy Policy()
     {
         _ = PackageUpdatePolicy.TryParse("minor", out var policy);
@@ -150,6 +197,12 @@ internal sealed class PackagePinWriterTests
             Target = NuGetVersion.Parse(to),
         };
 
+    private static DependencyPin Pinned(string id, string version, string file, string? itemType = "PackageVersion")
+        => DependencyPin.Create(DependencyScope.Packages, id, version, file) with { ItemType = itemType };
+
     private static void Write(TempHome home, params PinResolution[] pins)
         => new PackagePinWriter(home.Provider, NullReporter.Instance).Write(pins);
+
+    private static void Remove(TempHome home, params DependencyPin[] pins)
+        => new PackagePinWriter(home.Provider, NullReporter.Instance).Remove(pins);
 }
