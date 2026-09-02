@@ -54,8 +54,9 @@ internal sealed partial class OverrideLifecycle(
     /// the version it moved to and not at the one the evaluations, taken before the run wrote, state.</param>
     /// <param name="cancellationToken">A token that, when signalled, abandons the run.</param>
     /// <returns>A task representing the ongoing operation.</returns>
-    /// <exception cref="BuildFailedException">A restore failed for a reason other than its audit findings, a
-    /// source could not answer, vulnerability data was incomplete, or the graph never settled.</exception>
+    /// <exception cref="BuildFailedException">A restore failed for a reason other than its audit findings or
+    /// could not read a package source in full, an audit source could not answer, or the graph never
+    /// settled.</exception>
     public async Task RunAsync(
         IReadOnlyList<PackagePinDump> evaluations,
         IReadOnlyList<PinResolution> packages,
@@ -244,11 +245,12 @@ internal sealed partial class OverrideLifecycle(
 
     private void Judge(ProjectAssets assets, AssetsLogEntry entry)
     {
-        // Incomplete vulnerability data would make a regenerated file delete an override that is still
-        // needed, so the run stops here and leaves every file as it stands.
+        // NU1900 says a source could not be read, and says nothing about whether the audit's own data was
+        // part of what went missing. A file regenerated from a fraction of the advisories would delete an
+        // override that is still needed, so the run stops here and leaves every file as it stands.
         if (entry.Code == NuGetLogCode.NU1900)
         {
-            var message = $"The restore of '{assets.ProjectFullPath}' could not read the vulnerability data of a source, "
+            var message = $"The restore of '{assets.ProjectFullPath}' could not read a package source in full, "
                 + $"so the overrides were left as they were. {entry.Message}";
 
             throw new BuildFailedException(ExitCodes.ExternalProgramFailed, message);
