@@ -42,24 +42,40 @@ internal sealed record OverrideProject
     /// Folds the evaluations of the solution's projects into one view per project.
     /// </summary>
     /// <param name="evaluations">The evaluations the pin dump answered with.</param>
+    /// <param name="packages">What the run made of the package pins. The evaluations were taken before the
+    /// run wrote anything, so a pin it moved is stated there at the version it left behind, and this is what
+    /// says where that pin now stands.</param>
     /// <returns>One view per project whose evaluation states where its dependency graph is written. A project
     /// that states none is left out: the Buildvana SDK never reached it, and neither does the lifecycle.</returns>
-    public static IReadOnlyList<OverrideProject> Create(IReadOnlyList<PackagePinDump> evaluations)
+    public static IReadOnlyList<OverrideProject> Create(
+        IReadOnlyList<PackagePinDump> evaluations,
+        IReadOnlyList<PinResolution> packages)
     {
         Guard.IsNotNull(evaluations);
+        Guard.IsNotNull(packages);
+        var moved = MovedCentralPins(packages);
         return
         [
             .. evaluations
                 .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
                 .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
-                .Select(Fold)
+                .Select(grouped => Fold(grouped, moved))
                 .OrderBy(static project => project.ProjectFullPath, StringComparer.Ordinal),
         ];
     }
 
+    // Only the central pins are of interest here, and a package pinned twice under two conditions is two
+    // pins, each free to move somewhere else. The version a pin left behind is what tells the two apart.
+    private static ILookup<string, PinResolution> MovedCentralPins(IReadOnlyList<PinResolution> packages)
+        => PinWriting.Moving(packages)
+            .Where(static pin => string.Equals(pin.Pin.ItemType, "PackageVersion", StringComparison.Ordinal))
+            .ToLookup(static pin => pin.Pin.Id, StringComparer.OrdinalIgnoreCase);
+
     // Where two evaluations of one project disagree, the lower of the two answers wins: it is the one that
     // reports more findings and blocks more promotions, and no automatic step should be the bolder reading.
-    private static OverrideProject Fold(IGrouping<string, PackagePinDump> evaluations)
+    private static OverrideProject Fold(
+        IGrouping<string, PackagePinDump> evaluations,
+        ILookup<string, PinResolution> moved)
     {
         var centralPins = new Dictionary<string, NuGetVersion>(StringComparer.OrdinalIgnoreCase);
         var auditLevel = PackageVulnerabilitySeverity.Critical;
@@ -68,7 +84,7 @@ internal sealed record OverrideProject
         {
             managesCentrally |= evaluation.ManagePackageVersionsCentrally;
             auditLevel = (PackageVulnerabilitySeverity)Math.Min((int)auditLevel, (int)AuditLevelOf(evaluation));
-            AddCentralPins(centralPins, evaluation);
+            AddCentralPins(centralPins, evaluation, moved);
         }
 
         return new OverrideProject
@@ -94,7 +110,10 @@ internal sealed record OverrideProject
 
     // A pin whose version is not a plain version says nothing this lifecycle can compare, so it is left out
     // and the package is treated as one the repository does not pin.
-    private static void AddCentralPins(Dictionary<string, NuGetVersion> pins, PackagePinDump evaluation)
+    private static void AddCentralPins(
+        Dictionary<string, NuGetVersion> pins,
+        PackagePinDump evaluation,
+        ILookup<string, PinResolution> moved)
     {
         foreach (var item in evaluation.Items)
         {
@@ -108,11 +127,18 @@ internal sealed record OverrideProject
                 continue;
             }
 
-            var isLower = !pins.TryGetValue(item.Id, out var known) || VersionComparer.VersionRelease.Compare(pinned, known) < 0;
+            var effective = MovedTo(moved, item.Id, pinned) ?? pinned;
+            var isLower = !pins.TryGetValue(item.Id, out var known) || VersionComparer.VersionRelease.Compare(effective, known) < 0;
             if (isLower)
             {
-                pins[item.Id] = pinned;
+                pins[item.Id] = effective;
             }
         }
     }
+
+    // The version a moved pin now states, or null for one this run left where it was.
+    private static NuGetVersion? MovedTo(ILookup<string, PinResolution> moved, string id, NuGetVersion stated)
+        => moved[id]
+            .FirstOrDefault(pin => pin.Pin.Version is { } before && VersionComparer.VersionRelease.Equals(before, stated))
+            ?.Target;
 }

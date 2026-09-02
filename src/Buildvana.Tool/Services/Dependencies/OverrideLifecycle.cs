@@ -50,14 +50,20 @@ internal sealed partial class OverrideLifecycle(
     /// Runs the lifecycle over the solution's projects.
     /// </summary>
     /// <param name="evaluations">The evaluations the pin dump answered with.</param>
+    /// <param name="packages">What the run made of the package pins, so that a pin the run moved is judged at
+    /// the version it moved to and not at the one the evaluations, taken before the run wrote, state.</param>
     /// <param name="cancellationToken">A token that, when signalled, abandons the run.</param>
     /// <returns>A task representing the ongoing operation.</returns>
     /// <exception cref="BuildFailedException">A restore failed for a reason other than its audit findings, a
     /// source could not answer, vulnerability data was incomplete, or the graph never settled.</exception>
-    public async Task RunAsync(IReadOnlyList<PackagePinDump> evaluations, CancellationToken cancellationToken = default)
+    public async Task RunAsync(
+        IReadOnlyList<PackagePinDump> evaluations,
+        IReadOnlyList<PinResolution> packages,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(evaluations);
-        var projects = OverrideProject.Create(evaluations);
+        Guard.IsNotNull(packages);
+        var projects = OverrideProject.Create(evaluations, packages);
         if (projects.Count == 0)
         {
             reporter.Detail("No project of the solution states where its dependency graph is written, so no override was computed.");

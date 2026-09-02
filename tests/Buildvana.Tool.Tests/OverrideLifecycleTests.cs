@@ -2,12 +2,14 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
+using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Dependencies;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Solution;
+using NuGet.Versioning;
 
 internal sealed class OverrideLifecycleTests
 {
@@ -57,6 +59,17 @@ internal sealed class OverrideLifecycleTests
     {
         using var home = NewHome(Finding("12.0.1"));
         await RunAsync(home, Lifting(home), Advisories(), Versions(), centralPin: "12.0.3").ConfigureAwait(false);
+        await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
+        await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
+    }
+
+    // The evaluations were taken before the run wrote the pins, so a pin it moved is stated there at the
+    // version it left behind. What the lifecycle judges is the version now in the file.
+    [Test]
+    public async Task RunAsync_WithACentralPinTheRunMoved_JudgesTheVersionTheRunWrote()
+    {
+        using var home = NewHome(Finding("12.0.1"));
+        await RunAsync(home, Lifting(home), Advisories(), Versions(), centralPin: "12.0.2", movedTo: "12.0.3").ConfigureAwait(false);
         await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
         await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
     }
@@ -229,6 +242,7 @@ internal sealed class OverrideLifecycleTests
         FakePackageVersionSource versions,
         bool managesCentrally = true,
         string? centralPin = null,
+        string? movedTo = null,
         CaptureReporter? reporter = null)
     {
         var actualReporter = reporter ?? new CaptureReporter();
@@ -245,7 +259,32 @@ internal sealed class OverrideLifecycleTests
             new SidecarWriter(home.Provider, actualReporter),
             actualReporter);
 
-        return lifecycle.RunAsync([Evaluation(home, managesCentrally, centralPin)]);
+        return lifecycle.RunAsync([Evaluation(home, managesCentrally, centralPin)], Moved(centralPin, movedTo));
+    }
+
+    // What the run made of the central pin: it moved when the test says it did, and the evaluation states the
+    // version it left behind.
+    private static IReadOnlyList<PinResolution> Moved(string? centralPin, string? movedTo)
+    {
+        if (centralPin is null || movedTo is null)
+        {
+            return [];
+        }
+
+        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, "Directory.Packages.props") with
+        {
+            ItemType = "PackageVersion",
+        };
+
+        var resolution = new PinResolution
+        {
+            Pin = pin,
+            Policy = new PackageUpdatePolicy(PackageUpdatePolicyKind.Minor, AllowPrerelease: false),
+            State = PinResolutionState.Updated,
+            Target = NuGetVersion.Parse(movedTo),
+        };
+
+        return [resolution];
     }
 
     private static PackagePinDump Evaluation(TempHome home, bool managesCentrally, string? centralPin)
