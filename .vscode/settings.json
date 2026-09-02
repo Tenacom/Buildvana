@@ -214,5 +214,6 @@
     "https://schemastore.azurewebsites.net/": true,
     "https://www.schemastore.org/": true
   },
-  "sarif-viewer.connectToGithubCodeScanning": "on",
+  "sarif-viewer.connectToGithubCodeScanning": "off",
+  "sarif-viewer.explorer.openWhenNoResults": false,
 }
