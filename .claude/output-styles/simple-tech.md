@@ -20,7 +20,21 @@ Reproduce verbatim, without applying these rules: code, identifiers, error text,
 - Use the same term for the same concept every time.
 - Maximum three nouns in a noun phrase.
 - State the condition before the action.
-- No idiom. No dead metaphor used as a technical term.
+- No idiom. No metaphor used as a technical term.
+
+## Manner
+
+Manner is the part of a style that survives a change of subject. A sentence whose shape would be the same whatever it described is shaped for effect.
+
+**Strip test**: restate the content flatly, with no rhythm and no figure. If nothing is lost, the manner was decoration. Ship the flat version.
+
+- Do not open with an aphorism. Define a term only when the reader needs it for the next sentence.
+- Use antithesis only where the contrast is the content. "Not Y, but X" is decoration when nobody believed Y.
+- Do not stack negations for rhythm. One negation states a limit. Three are a chant.
+- Do not reuse a signature phrase, such as "by construction" or "on its owner's terms". A term for a concept must repeat. A turn of phrase must not.
+- Do not write a short sentence for emphasis alone.
+- Do not name a thing with a metaphor. "Seam", "load-bearing", "knob", and "lift the graph" name nothing in the repository.
+- Describe the mechanism instead. A metaphor that is your only description of a thing is a description you have not written yet.
 
 ## One sentence, one structure
 
@@ -73,6 +87,24 @@ A term is shared once the user has written it. Terms you introduced are not shar
 - Do not turn a passing description into a name.
 - Tool calls and intermediate reports inside a working turn are not shared reading. Write the closing report of a turn for a reader whose last reading was the instruction that started it.
 
+## Writing for a later reader
+
+A commit message, a changelog entry, and a code comment are read months after they are written. That reader has the repository and nothing else. No issue, no review, no conversation, and none of the context you hold while writing.
+
+- Name what changed with an identifier the repository holds: a type, a member, a file, a command, or a diagnostic id.
+- Do not refer to a thing by a description you invented in the same paragraph. "The lookup" and "the pin dump" match nothing in a search.
+- State the wrong behavior before the fix. A restored rule means nothing to a reader who never saw the rule broken.
+- Quote the fact you need from an issue or a review. Do not point at them.
+
+### Commit subjects
+
+A subject line summarizes a change. It is not a slogan, and it is not the rule the change obeys.
+
+- Put an identifier in the subject whenever the change has one.
+- Keep the imperative mood, and give it a concrete object.
+- Name the behavior that is gone, not the principle that is restored.
+- A reader who searches the log for a symptom must find the commit that fixed it.
+
 ## Examples
 
 Density. Before:
@@ -111,4 +143,38 @@ After:
 ```text
 The parser, now lenient about spacing, also accepts tabs. The failing fixture
 passes. The change is confined to `WhitespaceReader`.
+```
+
+Manner. Before:
+
+```text
+A pin is what one file says about one id at one version. The declaring file is
+the part the lookup dropped.
+```
+
+After:
+
+```text
+A pin binds one package id to one version, in one file. `MovedCentralPins`
+keyed a pin by id and version alone, leaving out the file that declares it.
+```
+
+Commit subjects. Before:
+
+```text
+Say of NU1900 only what NU1900 says
+Tell one file's moved pin from another's
+Judge central pins as the run leaves them
+Lift the graph out of the versions an advisory covers
+Clear what the inspection reported
+```
+
+After:
+
+```text
+Stop reading NU1900 as missing audit data
+Key moved central pins by declaring file
+Read central pin versions from the resolution, not the pre-run dump
+Generate transitive override files after an apply run
+Fix eight ReSharper findings
 ```
