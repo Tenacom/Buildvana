@@ -55,7 +55,7 @@ internal sealed class DependenciesUpdateCommand(
             // a restore would find is not prediction but a restore.
             if (scopes.Contains(DependencyScope.Packages))
             {
-                await overrides.RunAsync(inventory.Evaluations, cancellationToken).ConfigureAwait(false);
+                await overrides.RunAsync(inventory.Evaluations, resolution.Packages, cancellationToken).ConfigureAwait(false);
             }
         }
 
