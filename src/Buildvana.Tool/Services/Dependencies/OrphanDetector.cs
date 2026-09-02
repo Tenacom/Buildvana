@@ -99,7 +99,7 @@ internal sealed class OrphanDetector(
     {
         foreach (var entry in assets.Logs)
         {
-            if (entry.Level == LogLevel.Error && !entry.IsAuditFinding)
+            if (entry is { Level: LogLevel.Error, IsAuditFinding: false })
             {
                 throw new BuildFailedException(
                     ExitCodes.ExternalProgramFailed,

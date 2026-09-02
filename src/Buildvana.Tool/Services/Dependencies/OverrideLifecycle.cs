@@ -269,7 +269,7 @@ internal sealed partial class OverrideLifecycle(
             return;
         }
 
-        if (entry.Level == LogLevel.Error && !entry.IsAuditFinding)
+        if (entry is { Level: LogLevel.Error, IsAuditFinding: false })
         {
             throw new BuildFailedException(
                 ExitCodes.ExternalProgramFailed,
