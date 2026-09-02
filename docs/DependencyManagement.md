@@ -21,6 +21,7 @@
   - [Naming the pins a run is about](#naming-the-pins-a-run-is-about)
   - [Stating a version outright](#stating-a-version-outright)
   - [The `deps/post-update` hook](#the-depspost-update-hook)
+- [`bv dependencies prune`](#bv-dependencies-prune)
 - [Transitive overrides](#transitive-overrides)
   - [What a run does](#what-a-run-does)
   - [What no override may lift](#what-no-override-may-lift)
@@ -33,7 +34,7 @@
 
 The canonical name is `bv dependencies`; `bv deps` is an alias, and help and error messages use the canonical name. `show` is the default subcommand, as it is for `bv version`, so `bv deps` is a complete invocation.
 
-Today the command has two subcommands. `show` works offline and states what the repository says about itself. `update` resolves target versions against the package sources and applies them. `prune`, which removes the pins nothing references any more, is being written; this page grows with it.
+The command has three subcommands. `show` works offline and states what the repository says about itself. `update` resolves target versions against the package sources and applies them. `prune` removes the pins nothing references any more.
 
 ## Scopes
 
@@ -214,6 +215,24 @@ Two forms exist:
 
 A repository that derives something from what it pins — a property naming a compiler version, a floor implied by a package — updates what it derives in the `deps/post-update` hook, which runs at the end of every `update` that ran to completion, check runs included. In a check run the hook's exit code 1 says that it would change something, and the command folds that into its own verdict. See [Hooks](Hooks.md#the-depspost-update-hook).
 
+## `bv dependencies prune`
+
+`prune` removes the central package pins nothing references any more. Such pins accumulate on their own: `dotnet package remove` deletes the reference and leaves the pin behind, and nothing else removes it.
+
+A pin is _orphaned_ when no project of the solution references its package directly, and no versionless `#:package` directive names it. The verdict is NuGet's own. `prune` restores the solution and reads what each project's dependency graph states about its own direct references. A textual scan of the MSBuild files could not answer as much: a reference written through a property or an item transform is one only an evaluation sees. The restore leaves the [transitive override files](#transitive-overrides) out of the evaluation, so a promotion `bv` wrote never makes a pin look alive.
+
+That restore is why the diagnosis lives here rather than in the offline `show`. Removing an entry and moving a version forward are different verbs with different consequences, which is why they are different commands.
+
+Only central pins can be orphaned. A `PackageReference` is itself the reference, and so is a `#:package` directive that carries a version, so neither can outlive anything. The `netsdk`, `sdks`, and `tools` scopes are ignored in silence, and a run whose scope selection leaves out the `packages` scope does nothing and succeeds.
+
+What makes a pin central is its item type, not the file that declares it: a `PackageVersion` item an [additional package group](#additional-package-groups) declares is a central pin, and is judged like one. A group whose items carry a name of its own, `BV_PackageVersion` say, declares no central pin, and `prune` passes over it.
+
+Policy plays no part. A policy says how far a pin may move, and says nothing about whether the repository still needs it, so a pin whose policy is `disable` is removed like any other.
+
+`prune --check` reports the orphaned pins and removes none, exiting 1 when there is at least one. No argument names the pins a run is about: an orphan is a pin nothing references, and a filter that hid one would leave the repository stating a pin the same run had just called dead.
+
+A removal can change what the [transitive overrides](#transitive-overrides) must say, because a promotion may rest on the pin that has just gone: a promoted reference whose central pin is missing is one the next restore rejects. A run that removed at least one pin therefore regenerates the override files before it ends. The `deps/post-update` hook then runs, as it does at the end of every `prune` that ran to completion, whether or not anything was removed. Every pin reaches it as skipped, `prune` having resolved none, and a pin the run removed does not reach it at all.
+
 ## Transitive overrides
 
 A repository receives packages it never references: one package it does reference brings another, which brings a third. When a security advisory covers the version one of those ends up at, `bv dependencies update` lifts it. It writes a generated file forcing a higher version, and the Buildvana SDK imports the file.
@@ -250,11 +269,11 @@ The second is a package a decision of the repository's own governs. `bv` never i
 
 The dependency commands return the [exit codes every `bv` command returns](ToolDiagnostics.md#exit-codes), with no meaning of their own added.
 
-Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, or the hook says it would change something. Nothing failed, and nothing was written. It is also the code of every error above that stops a run before it writes: a pin the sources do not know, a source that cannot be reached, a version `--to` names and no source has. One failure of its own carries it too: transitive overrides that never stop changing. No program failed there, and the procedure that gave up is `bv`'s own.
+Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, or the hook says it would change something. It is the verdict of `prune --check` as well, where it says that the repository states a pin nothing references. Nothing failed, and nothing was written. It is also the code of every error above that stops a run before it writes: a pin the sources do not know, a source that cannot be reached, a version `--to` names and no source has. One failure of its own carries it too: transitive overrides that never stop changing. No program failed there, and the procedure that gave up is `bv`'s own.
 
 Code 2 is a refusal of the command line itself: scope options of both families at once, `--all` without `--check`, `--to` with `--check`, `--netsdk` next to an argument naming pins, `--to` naming the .NET SDK beside another scope, or a version that does not parse.
 
-Code 3 is the one a reader of a report should know about: it says that a program `bv` ran failed, or answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages; a failed `dotnet tool update` and a failed hook are two more. The [override lifecycle](#transitive-overrides) adds two of its own: a restore that failed for a reason other than its own audit findings, and a restore that could not read a package source in full. Overrides regenerated from a fraction of the advisories would delete one that is still needed, so an incomplete answer stops the run and leaves every file as it stands.
+Code 3 is the one a reader of a report should know about: it says that a program `bv` ran failed, or answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages; a failed `dotnet tool update` and a failed hook are two more. The [override lifecycle](#transitive-overrides) adds two of its own: a restore that failed for a reason other than its own audit findings, and a restore that could not read a package source in full. The restore [`prune`](#bv-dependencies-prune) runs carries the first of the two, and not the second: what a project references does not depend on vulnerability data. Overrides regenerated from a fraction of the advisories would delete one that is still needed, so an incomplete answer stops the run and leaves every file as it stands.
 
 ## What the SDK contributes
 
