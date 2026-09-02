@@ -48,23 +48,27 @@ internal sealed record OverrideProject
     /// <param name="packages">What the run made of the package pins. The evaluations were taken before the
     /// run wrote anything, so a pin it moved is stated there at the version it left behind, and this is what
     /// says where that pin now stands.</param>
+    /// <param name="removed">The pins the run removed, which the evaluations still state as well.</param>
     /// <returns>One view per project whose evaluation states where its dependency graph is written. A project
     /// that states none is left out: the Buildvana SDK never reached it, and neither does the lifecycle.</returns>
     public static IReadOnlyList<OverrideProject> Create(
         IHomeDirectoryProvider home,
         IReadOnlyList<PackagePinDump> evaluations,
-        IReadOnlyList<PinResolution> packages)
+        IReadOnlyList<PinResolution> packages,
+        IReadOnlyList<DependencyPin> removed)
     {
         Guard.IsNotNull(home);
         Guard.IsNotNull(evaluations);
         Guard.IsNotNull(packages);
+        Guard.IsNotNull(removed);
         var moved = MovedCentralPins(packages);
+        var gone = RemovedCentralPins(removed);
         return
         [
             .. evaluations
                 .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
                 .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
-                .Select(grouped => Fold(home, grouped, moved))
+                .Select(grouped => Fold(home, grouped, moved, gone))
                 .OrderBy(static project => project.ProjectFullPath, StringComparer.Ordinal),
         ];
     }
@@ -90,12 +94,30 @@ internal sealed record OverrideProject
         return moved;
     }
 
+    // The central pins the run removed, indexed by declaring file as the moved ones are. A removed pin is
+    // one the evaluations still state, and one no lookup here may find.
+    private static Dictionary<string, HashSet<PinKey>> RemovedCentralPins(IReadOnlyList<DependencyPin> removed)
+    {
+        var central = removed
+            .Where(static pin => string.Equals(pin.ItemType, "PackageVersion", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(static pin => pin.DeclaringFile, StringComparer.Ordinal);
+
+        var gone = new Dictionary<string, HashSet<PinKey>>(StringComparer.Ordinal);
+        foreach (var file in central)
+        {
+            gone[file.Key] = PinWriting.KeysOf(file);
+        }
+
+        return gone;
+    }
+
     // Where two evaluations of one project disagree, the lower of the two answers wins: it is the one that
     // reports more findings and blocks more promotions, and no automatic step should be the bolder reading.
     private static OverrideProject Fold(
         IHomeDirectoryProvider home,
         IGrouping<string, PackagePinDump> evaluations,
-        Dictionary<string, Dictionary<PinKey, NuGetVersion>> moved)
+        Dictionary<string, Dictionary<PinKey, NuGetVersion>> moved,
+        Dictionary<string, HashSet<PinKey>> gone)
     {
         var centralPins = new Dictionary<string, NuGetVersion>(StringComparer.OrdinalIgnoreCase);
         var auditLevel = PackageVulnerabilitySeverity.Critical;
@@ -104,7 +126,7 @@ internal sealed record OverrideProject
         {
             managesCentrally |= evaluation.ManagePackageVersionsCentrally;
             auditLevel = (PackageVulnerabilitySeverity)Math.Min((int)auditLevel, (int)AuditLevelOf(evaluation));
-            AddCentralPins(home, centralPins, evaluation, moved);
+            AddCentralPins(home, centralPins, evaluation, moved, gone);
         }
 
         return new OverrideProject
@@ -134,7 +156,8 @@ internal sealed record OverrideProject
         IHomeDirectoryProvider home,
         Dictionary<string, NuGetVersion> pins,
         PackagePinDump evaluation,
-        Dictionary<string, Dictionary<PinKey, NuGetVersion>> moved)
+        Dictionary<string, Dictionary<PinKey, NuGetVersion>> moved,
+        Dictionary<string, HashSet<PinKey>> gone)
     {
         foreach (var item in evaluation.Items)
         {
@@ -149,6 +172,14 @@ internal sealed record OverrideProject
                 continue;
             }
 
+            // A pin the run removed is one the repository no longer states, whatever the evaluation, taken
+            // before the removal, says. The package is one nothing pins, and an override may give it a
+            // version of its own.
+            if (WasRemoved(home, gone, item, versionText))
+            {
+                continue;
+            }
+
             var effective = MovedTo(home, moved, item, versionText) ?? pinned;
             var isLower = !pins.TryGetValue(item.Id, out var known) || VersionComparer.VersionRelease.Compare(effective, known) < 0;
             if (isLower)
@@ -156,6 +187,22 @@ internal sealed record OverrideProject
                 pins[item.Id] = effective;
             }
         }
+    }
+
+    // Whether the run removed the pin this item is declared by. An item declared outside the repository
+    // never became a pin, so nothing removed it either.
+    private static bool WasRemoved(
+        IHomeDirectoryProvider home,
+        Dictionary<string, HashSet<PinKey>> gone,
+        PackagePinDumpItem item,
+        string versionText)
+    {
+        if (!home.TryGetRelativePath(item.DefiningProjectFullPath, out var declaringFile))
+        {
+            return false;
+        }
+
+        return gone.TryGetValue(declaringFile, out var keys) && PinWriting.Names(keys, item.ItemType, item.Id, versionText);
     }
 
     // The version a moved pin now states, or null for one this run left where it was. An item declared
