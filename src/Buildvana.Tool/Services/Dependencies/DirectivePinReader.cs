@@ -1,6 +1,7 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
@@ -21,21 +22,23 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// evaluation of the solution ever sees it.</para>
 /// <para>A versionless directive names no version and is therefore no pin: <c>#:package Serilog</c> resolves
 /// through central package management, and <c>#:sdk Buildvana.Sdk</c> through <c>msbuild-sdks</c> or the
-/// built-in SDKs. Such a directive keeps a pin declared elsewhere alive, which is orphan detection's
-/// business, not this reader's.</para>
+/// built-in SDKs. A versionless <c>#:package</c> is read as a reference all the same, because it keeps the
+/// central pin it resolves through from being an orphan.</para>
 /// </remarks>
 internal sealed class DirectivePinReader(IHomeDirectoryProvider home, BuildvanaConfig config)
 {
     /// <summary>
-    /// Walks the repository's file-based apps and reads the pins their directives state.
+    /// Walks the repository's file-based apps and reads what their directives state.
     /// </summary>
-    /// <returns>The pins found, in walk order.</returns>
+    /// <returns>The pins and the versionless references found, in walk order.</returns>
     /// <exception cref="BuildFailedException">A directory or file could not be read.</exception>
-    public IReadOnlyList<DependencyPin> Read()
+    public DirectivePins Read()
     {
         Guard.IsNotNull(config);
         var scope = FileBasedAppScope.Parse(config.FileBasedApps);
         var pins = new List<DependencyPin>();
+        var references = new List<string>();
+        var named = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var relativePath in RepositoryFiles.CreateFinder(home).GetFiles())
         {
             if (!scope.Contains(relativePath))
@@ -45,14 +48,25 @@ internal sealed class DirectivePinReader(IHomeDirectoryProvider home, BuildvanaC
 
             foreach (var directive in AppDirectiveEditor.ReadDirectives(home.GetFullPath(relativePath)))
             {
-                if (directive.VersionText is { } versionText && !BuildvanaFamily.Contains(directive.Id))
+                // A family directive is invisible here as everywhere else, whether or not it states a
+                // version: bv self-update is the one command that moves the family.
+                if (BuildvanaFamily.Contains(directive.Id))
+                {
+                    continue;
+                }
+
+                if (directive.VersionText is { } versionText)
                 {
                     pins.Add(DependencyPin.Create(ScopeOf(directive.Kind), directive.Id, versionText, relativePath));
+                }
+                else if (directive.Kind == AppDirectiveKind.Package && named.Add(directive.Id))
+                {
+                    references.Add(directive.Id);
                 }
             }
         }
 
-        return pins;
+        return new DirectivePins(pins, references);
     }
 
     private static DependencyScope ScopeOf(AppDirectiveKind kind)

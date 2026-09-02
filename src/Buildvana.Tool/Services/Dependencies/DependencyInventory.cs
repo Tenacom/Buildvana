@@ -35,6 +35,16 @@ internal sealed record DependencyInventory
     public IReadOnlyList<DependencyPin> Packages { get; init; } = [];
 
     /// <summary>
+    /// Gets the package ids a file-based app references without stating a version, empty where the
+    /// <c>packages</c> scope was not selected.
+    /// </summary>
+    /// <remarks>
+    /// <para>Such a reference resolves through central package management, so it is no pin of its own. It is
+    /// what keeps the central pin it resolves through from being an orphan.</para>
+    /// </remarks>
+    public IReadOnlyList<string> DirectiveReferences { get; init; } = [];
+
+    /// <summary>
     /// Gets the evaluations the solution's projects answered the pin dump with, one per project and target
     /// framework, empty where the <c>packages</c> scope was not selected.
     /// </summary>
