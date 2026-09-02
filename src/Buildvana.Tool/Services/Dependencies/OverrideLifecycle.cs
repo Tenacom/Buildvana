@@ -52,6 +52,8 @@ internal sealed partial class OverrideLifecycle(
     /// <param name="evaluations">The evaluations the pin dump answered with.</param>
     /// <param name="packages">What the run made of the package pins, so that a pin the run moved is judged at
     /// the version it moved to and not at the one the evaluations, taken before the run wrote, state.</param>
+    /// <param name="removed">The pins the run removed, which the evaluations still state. A package whose
+    /// pin is gone is one the repository does not pin, and may be given an override version of its own.</param>
     /// <param name="cancellationToken">A token that, when signalled, abandons the run.</param>
     /// <returns>A task representing the ongoing operation.</returns>
     /// <exception cref="BuildFailedException">A restore failed for a reason other than its audit findings or
@@ -60,11 +62,13 @@ internal sealed partial class OverrideLifecycle(
     public async Task RunAsync(
         IReadOnlyList<PackagePinDump> evaluations,
         IReadOnlyList<PinResolution> packages,
+        IReadOnlyList<DependencyPin> removed,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(evaluations);
         Guard.IsNotNull(packages);
-        var projects = OverrideProject.Create(home, evaluations, packages);
+        Guard.IsNotNull(removed);
+        var projects = OverrideProject.Create(home, evaluations, packages, removed);
         if (projects.Count == 0)
         {
             reporter.Detail("No project of the solution states where its dependency graph is written, so no override was computed.");
@@ -98,15 +102,12 @@ internal sealed partial class OverrideLifecycle(
             $"The transitive overrides did not settle in {MaxPasses} passes, so the dependency graph was left as the last pass wrote it.");
     }
 
-    private static bool IsAuditFinding(AssetsLogEntry entry)
-        => entry.Code is NuGetLogCode.NU1901 or NuGetLogCode.NU1902 or NuGetLogCode.NU1903 or NuGetLogCode.NU1904;
-
     // A finding names a package and the target graphs it concerns. An override is a floor and applies to the
     // whole project, so the version to lift from is the highest the flagged graphs resolve.
     private static IEnumerable<(string PackageId, NuGetVersion Resolved)> FindingsOf(ProjectAssets assets)
     {
         var findings = new Dictionary<string, NuGetVersion>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in assets.Logs.Where(IsAuditFinding))
+        foreach (var entry in assets.Logs.Where(static entry => entry.IsAuditFinding))
         {
             foreach (var package in assets.Packages.Where(package => Concerns(entry, package)))
             {
@@ -268,7 +269,7 @@ internal sealed partial class OverrideLifecycle(
             return;
         }
 
-        if (entry.Level == LogLevel.Error && !IsAuditFinding(entry))
+        if (entry.Level == LogLevel.Error && !entry.IsAuditFinding)
         {
             throw new BuildFailedException(
                 ExitCodes.ExternalProgramFailed,

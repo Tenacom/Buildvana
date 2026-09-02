@@ -64,6 +64,16 @@ internal sealed class OverrideLifecycleTests
         await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
     }
 
+    // A pin the run removed is one the repository no longer states, whatever the evaluations say. The package
+    // is then one nothing pins, and the sidecar files give it a version of its own.
+    [Test]
+    public async Task RunAsync_WithACentralPinTheRunRemoved_WritesAVersionForThePackage()
+    {
+        using var home = NewHome(Finding("12.0.1"));
+        await RunAsync(home, Lifting(home), Advisories(), Versions(), centralPin: "12.0.3", removed: true).ConfigureAwait(false);
+        await Assert.That(home.ReadFile(CentralFileName)).Contains("""<PackageVersion Include="Newtonsoft.Json" Version="12.0.3" />""");
+    }
+
     // The evaluations were taken before the run wrote the pins, so a pin it moved is stated there at the
     // version it left behind. What the lifecycle judges is the version now in the file.
     [Test]
@@ -284,6 +294,7 @@ internal sealed class OverrideLifecycleTests
         string? centralPin = null,
         string? movedTo = null,
         string movedIn = CentralPinFileName,
+        bool removed = false,
         CaptureReporter? reporter = null)
     {
         var actualReporter = reporter ?? new CaptureReporter();
@@ -300,7 +311,26 @@ internal sealed class OverrideLifecycleTests
             new SidecarWriter(home.Provider, actualReporter),
             actualReporter);
 
-        return lifecycle.RunAsync([Evaluation(home, managesCentrally, centralPin)], Moved(centralPin, movedTo, movedIn));
+        return lifecycle.RunAsync(
+            [Evaluation(home, managesCentrally, centralPin)],
+            Moved(centralPin, movedTo, movedIn),
+            Removed(centralPin, removed));
+    }
+
+    // What the run removed: a pin the evaluations still state, and that the repository no longer does.
+    private static IReadOnlyList<DependencyPin> Removed(string? centralPin, bool removed)
+    {
+        if (centralPin is null || !removed)
+        {
+            return [];
+        }
+
+        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, CentralPinFileName) with
+        {
+            ItemType = "PackageVersion",
+        };
+
+        return [pin];
     }
 
     // What the run made of a central pin: it moved when the test says it did, and the evaluation states the
