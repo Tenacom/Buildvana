@@ -39,7 +39,8 @@ internal sealed class OverrideLifecycleTests
         var restorer = Lifting(home);
         await RunAsync(home, restorer, Advisories(), Versions()).ConfigureAwait(false);
         await Assert.That(home.ReadFile(CentralFileName)).Contains("""<PackageVersion Include="Newtonsoft.Json" Version="12.0.3" />""");
-        await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
+        await Assert.That(home.ReadFile(ProjectFileName))
+            .Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
         await Assert.That(restorer.Restores).IsEquivalentTo([true, false]);
     }
 
@@ -61,7 +62,8 @@ internal sealed class OverrideLifecycleTests
         using var home = NewHome(Finding("12.0.1"));
         await RunAsync(home, Lifting(home), Advisories(), Versions(), centralPin: "12.0.3").ConfigureAwait(false);
         await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
-        await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
+        await Assert.That(home.ReadFile(ProjectFileName))
+            .Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
     }
 
     // A pin the run removed is one the repository no longer states, whatever the evaluations say. The package
@@ -82,7 +84,8 @@ internal sealed class OverrideLifecycleTests
         using var home = NewHome(Finding("12.0.1"));
         await RunAsync(home, Lifting(home), Advisories(), Versions(), centralPin: "12.0.2", movedTo: "12.0.3").ConfigureAwait(false);
         await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
-        await Assert.That(home.ReadFile(ProjectFileName)).Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
+        await Assert.That(home.ReadFile(ProjectFileName))
+            .Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
     }
 
     // Two files may pin one package at one version, and each of them moves on its own. A move in a file this
@@ -115,7 +118,9 @@ internal sealed class OverrideLifecycleTests
         var versions = new FakePackageVersionSource().Knows(Vulnerable, ["12.0.1"]);
         await RunAsync(home, new FakeDependencyRestorer(), Advisories(), versions, reporter: reporter).ConfigureAwait(false);
         await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
-        var warnings = reporter.Messages.Where(static message => message.Level == MessageLevel.Warning).Select(static message => message.Message);
+        var warnings = reporter.Messages
+            .Where(static message => message.Level == MessageLevel.Warning)
+            .Select(static message => message.Message);
         await Assert.That(warnings.Any(static warning => warning.Contains("no override can lift it", StringComparison.Ordinal))).IsTrue();
     }
 
