@@ -124,7 +124,7 @@ internal sealed class OverrideLifecycleTests
     }
 
     [Test]
-    public async Task RunAsync_WithIncompleteVulnerabilityData_ReportsAFailedStep()
+    public async Task RunAsync_WithASourceTheRestoreCouldNotRead_ReportsAFailedStep()
     {
         using var home = NewHome(new AssetsFile().Resolves(Vulnerable, "12.0.1").Reports("NU1900"));
 
@@ -133,7 +133,7 @@ internal sealed class OverrideLifecycleTests
             .ConfigureAwait(false)).Throws<BuildFailedException>();
 
         await Assert.That(exception!.ExitCode).IsEqualTo(3);
-        await Assert.That(exception.Message).Contains("vulnerability data");
+        await Assert.That(exception.Message).Contains("could not read a package source");
     }
 
     [Test]

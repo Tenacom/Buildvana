@@ -17,8 +17,9 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// a whole.</param>
 /// <remarks>
 /// <para>The audit codes NU1901 to NU1904 name a package a security advisory covers, one code per severity.
-/// Two further codes steer a run of the override lifecycle: NU1900 says that vulnerability data could not be
-/// fetched from a source, and NU1905 that an audit source provided none.</para>
+/// Two further codes steer a run of the override lifecycle: NU1900 says that a package source could not be
+/// read in full, which may be the vulnerability data the audit needs, and NU1905 that an audit source
+/// provided none.</para>
 /// <para>An entry whose level is an error and whose code is none of the audit ones says that the restore
 /// failed for a reason of its own, which the lifecycle reports as a failed step.</para>
 /// </remarks>
