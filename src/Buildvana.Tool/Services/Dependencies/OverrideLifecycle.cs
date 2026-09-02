@@ -157,7 +157,7 @@ internal sealed partial class OverrideLifecycle(
                     CentralPin = project.CentralPins.GetValueOrDefault(packageId),
                 };
 
-                Accept(state, project, packageId, OverrideSelector.Select(request), verdicts, advisories);
+                Accept(state, project, packageId, request, OverrideSelector.Select(request), verdicts);
             }
         }
 
@@ -168,9 +168,9 @@ internal sealed partial class OverrideLifecycle(
         RunState state,
         OverrideProject project,
         string packageId,
+        OverrideRequest request,
         OverrideDecision decision,
-        List<string> verdicts,
-        AdvisoryIndex advisories)
+        List<string> verdicts)
     {
         switch (decision.Outcome)
         {
@@ -187,14 +187,19 @@ internal sealed partial class OverrideLifecycle(
                 state.AddPromotion(project.ProjectFullPath, packageId, version: null);
                 break;
             default:
-                verdicts.Add(Verdict(project, packageId, decision.Reason!, advisories));
+                verdicts.Add(Verdict(project, packageId, request, decision.Reason!));
                 break;
         }
     }
 
-    private string Verdict(OverrideProject project, string packageId, string reason, AdvisoryIndex advisories)
+    // The advisory named is one the project's audit reports and that covers the version the project resolves,
+    // so that the link points at the finding rather than at whatever the package's first advisory happens to
+    // be. A finding no advisory covers gets no link, which is the whole of what the sources say about it.
+    private string Verdict(OverrideProject project, string packageId, OverrideRequest request, string reason)
     {
-        var advisory = advisories.For(packageId).FirstOrDefault(entry => entry.Severity >= project.AuditLevel);
+        var advisory = request.Advisories.FirstOrDefault(
+            entry => entry.Severity >= request.AuditLevel && entry.AffectedVersions.Satisfies(request.ResolvedVersion));
+
         var where = home.TryGetRelativePath(project.ProjectFullPath, out var relative) ? relative : project.ProjectFullPath;
         var see = advisory is null ? string.Empty : $" See {advisory.Url}.";
         return $"{packageId} is vulnerable in {where}, and no override can lift it: {reason}.{see}";
