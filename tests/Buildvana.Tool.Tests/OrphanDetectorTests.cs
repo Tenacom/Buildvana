@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core;
-using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Dependencies;
 using Buildvana.Core.Testing;
 using Buildvana.Tool.Services;
