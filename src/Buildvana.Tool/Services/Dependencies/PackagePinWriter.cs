@@ -48,7 +48,7 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
                     itemTypes,
                     pin => PinWriting.Restate(targets, pin.ItemType, pin.Id, pin.VersionText));
 
-                EnsureWritten(rewritten, path);
+                EnsureEdited(rewritten, path, "moves");
             }
 
             if (directives.Length > 0)
@@ -60,15 +60,41 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
                     path,
                     directive => PinWriting.Restate(targets, itemType: null, directive.Id, directive.VersionText!));
 
-                EnsureWritten(rewritten, path);
+                EnsureEdited(rewritten, path, "moves");
             }
 
             reporter.Detail($"Stated the new versions in {file.Key}.");
         }
     }
 
+    /// <summary>
+    /// Removes pins, in the files that declare them.
+    /// </summary>
+    /// <param name="pins">The pins to remove. Only MSBuild items are removed: a directive is a reference,
+    /// and a reference is removed by whoever wrote it.</param>
+    /// <exception cref="BuildFailedException">A file could not be read or written, or no longer states a pin
+    /// the run removes.</exception>
+    public void Remove(IReadOnlyList<DependencyPin> pins)
+    {
+        Guard.IsNotNull(pins);
+        var items = pins.Where(static pin => pin.ItemType is not null);
+        foreach (var file in items.GroupBy(static pin => pin.DeclaringFile))
+        {
+            var path = home.GetFullPath(file.Key);
+            var keys = PinWriting.KeysOf(file);
+            var itemTypes = file.Select(static pin => pin.ItemType!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            var removed = MsBuildPinEditor.RemovePins(
+                path,
+                itemTypes,
+                pin => PinWriting.Names(keys, pin.ItemType, pin.Id, pin.VersionText));
+
+            EnsureEdited(removed, path, "removes");
+            reporter.Detail($"Removed the orphaned pins stated in {file.Key}.");
+        }
+    }
+
     // An editor says whether it wrote anything, and a writer that ignored the answer would report a run it
     // did not make. The file was read moments ago, so a refusal means it changed under us.
-    private static void EnsureWritten(bool written, string path)
-        => BuildFailedException.ThrowIfNot(written, $"{path} no longer states a package version this run moves.");
+    private static void EnsureEdited(bool edited, string path, string verb)
+        => BuildFailedException.ThrowIfNot(edited, $"{path} no longer states a package version this run {verb}.");
 }
