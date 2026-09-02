@@ -86,6 +86,23 @@ internal sealed class OverrideLifecycleTests
         await Assert.That(warnings.Any(static warning => warning.Contains("no override can lift it", StringComparison.Ordinal))).IsTrue();
     }
 
+    // Two advisories cover the package, and only the second covers the version the project resolves. A link
+    // to the first would point away from the finding the warning is about.
+    [Test]
+    public async Task RunAsync_WithAFindingItCannotLift_LinksAnAdvisoryCoveringTheResolvedVersion()
+    {
+        using var home = NewHome(Finding("12.0.1"));
+        var reporter = new CaptureReporter();
+        var advisories = new FakeVulnerabilityDataSource()
+            .Knows(Vulnerable, "[13.0.0, 13.0.1]", url: "https://example.invalid/elsewhere")
+            .Knows(Vulnerable, "(, 12.0.2]", url: "https://example.invalid/here");
+
+        var versions = new FakePackageVersionSource().Knows(Vulnerable, ["12.0.1"]);
+        await RunAsync(home, new FakeDependencyRestorer(), advisories, versions, reporter: reporter).ConfigureAwait(false);
+        var warning = reporter.Messages.Single(static message => message.Level == MessageLevel.Warning).Message;
+        await Assert.That(warning).Contains("https://example.invalid/here");
+    }
+
     // The second pass's graph no longer reports what the first one lifted. Writing only the latest findings
     // would drop that override and bring the vulnerability back.
     [Test]
