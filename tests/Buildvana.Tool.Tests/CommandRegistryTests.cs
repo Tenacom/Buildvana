@@ -41,7 +41,8 @@ internal sealed class CommandRegistryTests
     {
         var names = string.Join(",", CommandRegistry.Commands.Select(c => c.Name));
         await Assert.That(names).IsEqualTo(
-            "clean,restore,build,test,pack,dependencies show,dependencies update,release,self-update,version advance,version show");
+            "clean,restore,build,test,pack,dependencies prune,dependencies show,dependencies update,release,self-update,"
+            + "version advance,version show");
     }
 
     [Test]

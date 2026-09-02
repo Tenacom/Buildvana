@@ -125,6 +125,45 @@ internal sealed class DependencyReportRendererTests
     public async Task WriteOverrides_WithNone_SaysSo()
         => await Assert.That(RenderOverrides([])).Contains("none in effect");
 
+    [Test]
+    public async Task WritePrune_StatesEveryOrphanUnderItsFile()
+    {
+        var orphans = new[]
+        {
+            DependencyPin.Create(DependencyScope.Packages, "Serilog", "3.0.0", "Directory.Packages.props"),
+            DependencyPin.Create(DependencyScope.Packages, "Newtonsoft.Json", "13.0.3", "Directory.Packages.props"),
+        };
+
+        var output = RenderPrune(orphans, removed: true);
+        await Assert.That(output).Contains("Orphaned NuGet package pins");
+        await Assert.That(output).Contains("Directory.Packages.props");
+        await Assert.That(output).Contains("Serilog 3.0.0 -> removed");
+        await Assert.That(output).Contains("Newtonsoft.Json 13.0.3 -> removed");
+        await Assert.That(output).Contains("2 pins removed.");
+    }
+
+    // A check run states what it would do, and states it as something it has not done.
+    [Test]
+    public async Task WritePrune_OfACheckRun_SaysWhatWouldGo()
+    {
+        var orphan = DependencyPin.Create(DependencyScope.Packages, "Serilog", "3.0.0", "Directory.Packages.props");
+        var output = RenderPrune([orphan], removed: false);
+        await Assert.That(output).Contains("Serilog 3.0.0 -> to remove");
+        await Assert.That(output).Contains("1 pin would be removed.");
+    }
+
+    [Test]
+    public async Task WritePrune_WithNoOrphan_SaysSo()
+        => await Assert.That(RenderPrune([], removed: true)).Contains("something references every pin");
+
+    private static string RenderPrune(IReadOnlyList<DependencyPin> orphans, bool removed)
+    {
+        using var console = new TestConsole();
+        _ = console.Width(200);
+        new DependencyReportRenderer(console, new EffectivePolicyResolver(new DependenciesConfig())).WritePrune(orphans, removed);
+        return console.Output;
+    }
+
     private static string RenderOverrides(IReadOnlyList<TransitiveOverrideEntry> overrides)
     {
         using var console = new TestConsole();
