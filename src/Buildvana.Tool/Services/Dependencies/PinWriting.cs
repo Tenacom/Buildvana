@@ -15,6 +15,8 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// <para>A pin is looked up by item type, id and version text. Ids and item types are compared without
 /// regard to case, as MSBuild and NuGet compare them, and a version text is compared without the whitespace
 /// a file may have put around it.</para>
+/// <para>The declaring file is not part of the key. A caller indexes the declarations of one file at a time,
+/// so that a move in one file is never read as a move in another.</para>
 /// </remarks>
 internal static class PinWriting
 {
@@ -50,10 +52,31 @@ internal static class PinWriting
     /// <param name="id">The id the declaration names.</param>
     /// <param name="versionText">The version text the declaration holds.</param>
     /// <returns>The text to write, or <see langword="null"/> to leave the declaration alone.</returns>
-    public static string? Restate(Dictionary<PinKey, NuGetVersion> targets, string? itemType, string id, string versionText)
-        => targets.TryGetValue(KeyOf(itemType, id, versionText), out var target)
-            ? PinVersionText.Restate(versionText, target)
-            : null;
+    public static string? Restate(
+        Dictionary<PinKey, NuGetVersion> targets,
+        string? itemType,
+        string id,
+        string versionText)
+    {
+        var target = TargetOf(targets, itemType, id, versionText);
+        return target is null ? null : PinVersionText.Restate(versionText, target);
+    }
+
+    /// <summary>
+    /// Names the version a declaration moves to.
+    /// </summary>
+    /// <param name="targets">The lookup from <see cref="TargetsOf"/>.</param>
+    /// <param name="itemType">The item type of the declaration, or <see langword="null"/> for a directive.</param>
+    /// <param name="id">The id the declaration names.</param>
+    /// <param name="versionText">The version text the declaration holds.</param>
+    /// <returns>The version the declaration moves to, or <see langword="null"/> for one that stays where it
+    /// is.</returns>
+    public static NuGetVersion? TargetOf(
+        Dictionary<PinKey, NuGetVersion> targets,
+        string? itemType,
+        string id,
+        string versionText)
+        => targets.GetValueOrDefault(KeyOf(itemType, id, versionText));
 
     private static PinKey KeyOf(string? itemType, string id, string versionText)
         => new(
