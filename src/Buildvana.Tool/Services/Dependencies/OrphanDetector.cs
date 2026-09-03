@@ -24,6 +24,9 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// through a property or an item transform is one only an evaluation sees.</para>
 /// <para>A versionless <c>#:package</c> directive counts as a reference too. It resolves through central
 /// package management, so the pin it resolves through is in use.</para>
+/// <para>A project with <c>CentralPackageTransitivePinningEnabled</c> set is judged by its whole graph
+/// instead. There a pin raises the version of a package nothing references, so a pin binds something as soon
+/// as its package is resolved at all.</para>
 /// <para>The restore leaves the transitive override files out of the evaluation. Those files hold bv's own
 /// references, and a promotion that made a pin look alive would keep it alive for good.</para>
 /// </remarks>
@@ -74,6 +77,13 @@ internal sealed class OrphanDetector(
             var assets = ProjectAssetsReader.Read(projectFullPath, assetsFilePath);
             EnsureRestored(assets);
             referenced.UnionWith(assets.DirectReferences);
+
+            // Where a project pins transitively, a central pin raises the version of a package the project
+            // never references, so what makes such a pin bind something is being in the graph at all.
+            if (assets.PinsTransitively)
+            {
+                referenced.UnionWith(assets.Packages.Select(static package => package.Id));
+            }
         }
 
         return [.. candidates.Where(pin => !referenced.Contains(pin.Id))];

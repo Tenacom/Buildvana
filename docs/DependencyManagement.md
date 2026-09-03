@@ -227,6 +227,8 @@ Only central pins can be orphaned. A `PackageReference` is itself the reference,
 
 What makes a pin central is its item type, not the file that declares it: a `PackageVersion` item an [additional package group](#additional-package-groups) declares is a central pin, and is judged like one. A group whose items carry a name of its own, `BV_PackageVersion` say, declares no central pin, and `prune` passes over it.
 
+Transitive pinning changes the question a project answers. A project with `CentralPackageTransitivePinningEnabled` set raises the version of a package it never references, from the central pin alone, so a direct reference is no longer what keeps a pin alive there. Such a project is judged by its whole resolved graph instead: a pin whose package the project resolves, at any depth, is in use. A pin whose package the graph never resolves raises nothing, and is an orphan there as anywhere else.
+
 Policy plays no part. A policy says how far a pin may move, and says nothing about whether the repository still needs it, so a pin whose policy is `disable` is removed like any other.
 
 `prune --check` reports the orphaned pins and removes none, exiting 1 when there is at least one. No argument names the pins a run is about: an orphan is a pin nothing references, and a filter that hid one would leave the repository stating a pin the same run had just called dead.

@@ -28,6 +28,16 @@ internal sealed record ProjectAssets
     /// </summary>
     public required IReadOnlyList<string> DirectReferences { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether the project raises the version of a transitive dependency from a
+    /// central pin alone, as <c>CentralPackageTransitivePinningEnabled</c> asks it to.
+    /// </summary>
+    /// <remarks>
+    /// <para>Where this holds, a central pin binds a package the project never references, so
+    /// <see cref="DirectReferences"/> no longer says which of the repository's pins are in use.</para>
+    /// </remarks>
+    public required bool PinsTransitively { get; init; }
+
     /// <summary>Gets what the restore logged about the project, in the order it logged it.</summary>
     public required IReadOnlyList<AssetsLogEntry> Logs { get; init; }
 }
