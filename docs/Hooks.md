@@ -43,7 +43,7 @@ A repository often derives something from what it pins: a property that must nam
 
 `.buildvana/hooks/deps/post-update.cs` runs at the end of every `bv dependencies update` that ran to completion, whether or not anything changed, and whether the run applied its updates or only checked them. A run that stopped with an error never reaches the hook. Derived state can drift on its own, so the hook runs even when no pin moved.
 
-`bv dependencies prune` runs the hook too, and for the same reason: a pin it removed may be one the repository derived something from. A `prune` run resolves no version, so every pin reaches the hook as `Skipped`, and a pin the run removed does not reach it at all.
+`bv dependencies prune` runs the hook too, and for the same reason: a pin it removed may be one the repository derived something from. Only a run whose scope selection includes `packages` reaches it, orphans existing among central package pins alone: a run that leaves that scope out removes nothing and ends before the hook. A `prune` run resolves no version, so every pin reaches the hook as `Skipped`, and a pin the run removed does not reach it at all.
 
 The hook runs after the pins of the `packages`, `tools` and `sdks` scopes are written, and _before_ `global.json` is. The `global.json` it reads therefore still states the old .NET SDK version, and its args state the version the run is about to write, as the release hook is told the version being released before the files carry it. `global.json` goes last because a `global.json` naming an SDK that is not installed breaks every `dotnet` invocation after it: `rollForward` never rolls down to an older patch.
 
