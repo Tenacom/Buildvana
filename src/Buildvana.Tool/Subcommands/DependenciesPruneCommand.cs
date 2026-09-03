@@ -53,14 +53,21 @@ internal sealed class DependenciesPruneCommand(
         }
 
         var inventory = await discovery.DiscoverAsync(scopes, cancellationToken).ConfigureAwait(false);
-        var orphans = await detector.DetectAsync(inventory, cancellationToken).ConfigureAwait(false);
-        if (orphans.Count > 0 && !settings.Check)
+
+        // Detection restores with the override files left out of the evaluation, which is a graph no build
+        // may be left with. The lifecycle below restores again; a check run, writing nothing, asks the
+        // detector to do it.
+        var orphans = await detector
+            .DetectAsync(inventory, restoreOverridesAfterwards: settings.Check, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!settings.Check)
         {
             writer.Remove(orphans);
 
             // A promotion may depend on a pin this run has just removed, and a reference with no version to
-            // resolve is one the next restore rejects. The lifecycle is entered where a run with no pin
-            // update enters it: at the restore.
+            // resolve is one the next restore rejects. The lifecycle runs at the end of every apply run that
+            // manages the packages scope, as it does for an update, whether or not a pin moved.
             await overrides.RunAsync(inventory.Evaluations, packages: [], orphans, cancellationToken).ConfigureAwait(false);
         }
 

@@ -128,6 +128,32 @@ internal sealed class OrphanDetectorTests
         await Assert.That(restorer.Restores).IsEquivalentTo([true]);
     }
 
+    // The detection restore rewrites every graph without the override files, and a caller that writes none
+    // of them back would leave the repository building against a graph the overrides exist to correct.
+    [Test]
+    public async Task DetectAsync_AskedToRestoreAfterwards_PutsTheOverrideFilesBack()
+    {
+        using var home = NewHome(new AssetsFile().Resolves("Alpha", "1.0.0"));
+        var restorer = new FakeDependencyRestorer();
+
+        _ = await DetectAsync(Inventory(home, ["Alpha"]), restorer, restoreOverridesAfterwards: true).ConfigureAwait(false);
+
+        await Assert.That(restorer.Restores).IsEquivalentTo([true, false]);
+    }
+
+    // Nothing was suppressed, so there is nothing to put back.
+    [Test]
+    public async Task DetectAsync_AskedToRestoreAfterwardsWithNoCentralPin_RestoresNothing()
+    {
+        using var home = NewHome(new AssetsFile().Resolves("Alpha", "1.0.0"));
+        var restorer = new FakeDependencyRestorer();
+        var inventory = Inventory(home, ["Alpha"], itemType: "PackageReference");
+
+        _ = await DetectAsync(inventory, restorer, restoreOverridesAfterwards: true).ConfigureAwait(false);
+
+        await Assert.That(restorer.Restores).IsEmpty();
+    }
+
     [Test]
     public async Task DetectAsync_WithARestoreThatFailedForAReasonOfItsOwn_ReportsAFailedStep()
     {
@@ -200,11 +226,12 @@ internal sealed class OrphanDetectorTests
 
     private static Task<IReadOnlyList<DependencyPin>> DetectAsync(
         DependencyInventory inventory,
-        IDependencyRestorer? restorer = null)
+        IDependencyRestorer? restorer = null,
+        bool restoreOverridesAfterwards = false)
     {
         // The restorer is the only thing that would use the solution, and it is faked.
         var solution = new Lazy<SolutionContext>(static () => null!);
         var detector = new OrphanDetector(solution, restorer ?? new FakeDependencyRestorer(), new CaptureReporter());
-        return detector.DetectAsync(inventory);
+        return detector.DetectAsync(inventory, restoreOverridesAfterwards);
     }
 }
