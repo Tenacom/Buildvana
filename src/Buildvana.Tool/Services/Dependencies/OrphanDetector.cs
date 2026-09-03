@@ -29,6 +29,9 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// as its package is resolved at all.</para>
 /// <para>The restore leaves the transitive override files out of the evaluation. Those files hold bv's own
 /// references, and a promotion that made a pin look alive would keep it alive for good.</para>
+/// <para>That restore rewrites every dependency graph on disk, so the repository is left stating a graph
+/// without the overrides. A caller that regenerates them restores again on its own; one that writes nothing
+/// asks for the second restore here.</para>
 /// </remarks>
 internal sealed class OrphanDetector(
     Lazy<SolutionContext> solution,
@@ -39,6 +42,9 @@ internal sealed class OrphanDetector(
     /// Names the orphaned pins of an inventory.
     /// </summary>
     /// <param name="inventory">What the repository pins.</param>
+    /// <param name="restoreOverridesAfterwards"><see langword="true"/> to restore once more with the
+    /// transitive override files in the evaluation, so that the graph left on disk is the one the repository
+    /// builds against; <see langword="false"/> when the caller restores anyway.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned restore.</param>
     /// <returns>A task whose result is the pins nothing references, in the order the inventory states
     /// them.</returns>
@@ -46,6 +52,7 @@ internal sealed class OrphanDetector(
     /// dependency graph.</exception>
     public async Task<IReadOnlyList<DependencyPin>> DetectAsync(
         DependencyInventory inventory,
+        bool restoreOverridesAfterwards = false,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(inventory);
@@ -86,7 +93,23 @@ internal sealed class OrphanDetector(
             }
         }
 
-        return [.. candidates.Where(pin => !referenced.Contains(pin.Id))];
+        var orphans = candidates.Where(pin => !referenced.Contains(pin.Id)).ToArray();
+
+        // The restore above rewrote every graph from an evaluation without the override files, and a caller
+        // that writes nothing has nothing else to put them back with.
+        if (restoreOverridesAfterwards)
+        {
+            reporter.Info("Restoring the solution again, to leave its dependency graph as the repository builds it...");
+            var restoredCode = await restorer
+                .RestoreAsync(solution.Value, suppressTransitiveOverrides: false, cancellationToken)
+                .ConfigureAwait(false);
+
+            // Judged no more than the first one, and for the same reason: this restore reports the audit
+            // findings the first one reported, so a non-zero code here says nothing new.
+            reporter.Detail($"The restore exited with code {restoredCode}.");
+        }
+
+        return orphans;
     }
 
     // What a repository pins centrally, whatever file states it: a PackageVersion item is a central pin, and
