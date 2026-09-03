@@ -49,6 +49,46 @@ internal sealed class OrphanDetectorTests
         await Assert.That(orphans).IsEmpty();
     }
 
+    // A project multi-targets, and a reference stated under one framework alone is a reference all the same:
+    // the pin answers for the whole project, and removing it would break that framework.
+    [Test]
+    public async Task DetectAsync_SparesAPinReferencedUnderOneFrameworkAlone()
+    {
+        var assets = new AssetsFile()
+            .Resolves("Alpha", "1.0.0", direct: true)
+            .Resolves("Beta", "2.0.0", direct: true, targetFramework: "netstandard2.0");
+
+        using var home = NewHome(assets);
+
+        var orphans = await DetectAsync(Inventory(home, ["Alpha", "Beta"])).ConfigureAwait(false);
+
+        await Assert.That(orphans).IsEmpty();
+    }
+
+    // Transitive pinning is the mechanism whereby a pin raises the version of a package no project
+    // references, so under it a package the graph resolves at all is one its pin binds.
+    [Test]
+    public async Task DetectAsync_WithTransitivePinning_SparesAPinTheGraphResolves()
+    {
+        using var home = NewHome(new AssetsFile().PinsTransitively().Resolves("Alpha", "1.0.0"));
+
+        var orphans = await DetectAsync(Inventory(home, ["Alpha"])).ConfigureAwait(false);
+
+        await Assert.That(orphans).IsEmpty();
+    }
+
+    // Transitive pinning does not spare every pin. One whose package the graph never resolves raises nothing
+    // there either.
+    [Test]
+    public async Task DetectAsync_WithTransitivePinning_NamesAPinNoGraphResolves()
+    {
+        using var home = NewHome(new AssetsFile().PinsTransitively().Resolves("Beta", "2.0.0", direct: true));
+
+        var orphans = await DetectAsync(Inventory(home, ["Alpha", "Beta"])).ConfigureAwait(false);
+
+        await Assert.That(orphans.Select(static pin => pin.Id)).IsEquivalentTo(["Alpha"]);
+    }
+
     // A PackageReference is the reference itself, so no pin of that shape can be an orphan. Nothing is
     // restored either: the question is answered before a restore could be worth its cost.
     [Test]

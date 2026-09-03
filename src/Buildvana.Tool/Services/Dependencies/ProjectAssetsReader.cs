@@ -42,6 +42,7 @@ internal static partial class ProjectAssetsReader
             ProjectFullPath = projectFullPath,
             Packages = ReadPackages(lockFile),
             DirectReferences = ReadDirectReferences(lockFile),
+            PinsTransitively = lockFile.PackageSpec.RestoreMetadata?.CentralPackageTransitivePinningEnabled ?? false,
             Logs = ReadLogs(lockFile),
         };
     }
