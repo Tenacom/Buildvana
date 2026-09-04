@@ -14,6 +14,8 @@
  *
  * All or nothing: when one of the three values cannot be derived, the trio is left alone rather than made
  * inconsistent. A deliberate move of the floor is expressed by editing the Microsoft.CodeAnalysis pins.
+ * The one exception is a Visual Studio major version absent from the product name map below. The hint then
+ * states a bare version number instead of a product name, and the hook says so on stderr.
  *
  * A run that does not select the packages scope carries no Microsoft.CodeAnalysis.Common result. The hook then has
  * nothing to derive the floor from, and leaves the three properties alone.
