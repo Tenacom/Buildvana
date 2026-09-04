@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -82,7 +81,7 @@ internal static class CommandArgumentValidator
             }
         }
 
-        return new CommandParameters(WithoutStrays(parsed.OptionTokens, strays), bound, parsed.Forwarded);
+        return new CommandParameters(WithoutStrays(parsed.OptionTokens, reader.RemainingIndices), bound, parsed.Forwarded);
     }
 
     private static IReadOnlyList<BvArgumentAttribute> DeclaredArguments(CommandRegistration command)
@@ -171,26 +170,27 @@ internal static class CommandArgumentValidator
         => new(ExitCodes.Usage, $"Unexpected argument '{token}' for command '{command.Name}'.");
 
     // The option tokens the command receives: the given tokens minus the strays, which by this point are all
-    // operands. The reader works on a copy of the token list and removes what it consumes, so the strays are a
-    // subsequence of that list and one ordered pass removes them.
-    private static IReadOnlyList<string> WithoutStrays(IReadOnlyList<string> tokens, IReadOnlyList<string> strays)
+    // operands. A stray goes by its position in the token list, because the same text can be both a stray and
+    // the value a declared option consumed: in `--to V --check V` the first `V` belongs to `--to`, and dropping
+    // it instead of the second would leave `--to --check V` for the command's own `Parse` to misread.
+    private static IReadOnlyList<string> WithoutStrays(IReadOnlyList<string> tokens, IReadOnlyList<int> strayIndices)
     {
-        if (strays.Count == 0)
+        if (strayIndices.Count == 0)
         {
             return tokens;
         }
 
-        var result = new List<string>(tokens.Count - strays.Count);
+        var result = new List<string>(tokens.Count - strayIndices.Count);
         var strayIndex = 0;
-        foreach (var token in tokens)
+        for (var i = 0; i < tokens.Count; i++)
         {
-            if (strayIndex < strays.Count && string.Equals(token, strays[strayIndex], StringComparison.Ordinal))
+            if (strayIndex < strayIndices.Count && strayIndices[strayIndex] == i)
             {
                 strayIndex++;
                 continue;
             }
 
-            result.Add(token);
+            result.Add(tokens[i]);
         }
 
         return result;

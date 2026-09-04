@@ -166,5 +166,15 @@ internal sealed class CliOptionReaderTests
         await Assert.That(Join(reader.Remaining)).IsEqualTo("-c|Debug|--bump|minor");
     }
 
+    [Test]
+    public async Task RemainingIndices_TellOneOccurrenceOfATokenFromAnother()
+    {
+        var reader = new CliOptionReader(["--verbosity", "detailed", "--nologo", "detailed"]);
+        _ = reader.ReadValue("--verbosity", "-v");
+        _ = reader.ReadFlag("--nologo");
+        await Assert.That(Join(reader.Remaining)).IsEqualTo("detailed");
+        await Assert.That(string.Join('|', reader.RemainingIndices)).IsEqualTo("3");
+    }
+
     private static string Join(IReadOnlyList<string> tokens) => string.Join('|', tokens);
 }
