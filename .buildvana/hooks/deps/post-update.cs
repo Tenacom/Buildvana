@@ -99,7 +99,7 @@ catch (Exception exception) when (exception is HttpRequestException or TaskCance
 var band = await FindMinimumBandAsync(http, channels, floorVersion.Major, floorVersion.Minor).ConfigureAwait(false);
 if (band is null)
 {
-    Console.Error.WriteLine($"No released .NET SDK feature band ships a compiler at least {expectedVersion}.");
+    // FindMinimumBandAsync has already said on stderr why it has no band to give.
     return DerivationFailedExitCode;
 }
 
@@ -244,6 +244,10 @@ static async Task<(string ChannelVersion, int Band, Uri ReleasesJsonUrl)?> FindM
     // Compiler versions grow monotonically along the band sequence, so the walk goes from the newest band down
     // and stops at the first one whose compiler no longer meets the floor; the band seen just before it is the
     // lowest one that does. Bands are assumed contiguous from 1xx up to the channel's latest SDK.
+    //
+    // A band that cannot be read ends the walk with null, discarding the bands confirmed so far. Those are the
+    // bands nearest the top, and the answer is the band furthest down, so a partial walk answers too high a band
+    // rather than an approximate one. Every null return says on stderr what stopped the walk.
     (string ChannelVersion, int Band, Uri ReleasesJsonUrl)? candidate = null;
     foreach (var channel in channels.OrderByDescending(static entry => entry.LatestSdk))
     {
@@ -258,22 +262,32 @@ static async Task<(string ChannelVersion, int Band, Uri ReleasesJsonUrl)?> FindM
             {
                 Console.Error.WriteLine(
                     $"Cannot read the compiler version of .NET SDK {channel.ChannelVersion}.{band}xx: {exception.Message}");
-                return candidate;
+                return null;
             }
 
             if (compilerVersion is null)
             {
                 Console.Error.WriteLine($"No release branch or compiler pin found for .NET SDK {channel.ChannelVersion}.{band}xx.");
-                return candidate;
+                return null;
             }
 
             if ((compilerVersion.Major, compilerVersion.Minor).CompareTo((floorMajor, floorMinor)) < 0)
             {
+                if (candidate is null)
+                {
+                    Console.Error.WriteLine($"No .NET SDK feature band ships a compiler at least {floorMajor}.{floorMinor}.");
+                }
+
                 return candidate;
             }
 
             candidate = (channel.ChannelVersion, band, channel.ReleasesJsonUrl);
         }
+    }
+
+    if (candidate is null)
+    {
+        Console.Error.WriteLine("The .NET release index yielded no feature band to examine.");
     }
 
     return candidate;
