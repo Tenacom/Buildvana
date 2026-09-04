@@ -15,6 +15,12 @@ namespace Buildvana.Tool.CommandLine;
 /// from the tokens before it; then classify the residue — the first non-option token is the subcommand, the
 /// non-option tokens immediately following it are positionals, and everything else is left for the command to parse.
 /// </summary>
+/// <remarks>
+/// <para>An operand written after an option therefore starts out among the option tokens. Which options take a
+/// value is declared on the dispatched command's settings type, which is not known here, so
+/// <see cref="Buildvana.Tool.Infrastructure.Execution.CommandArgumentValidator"/> completes the split once the
+/// command is resolved.</para>
+/// </remarks>
 internal static class CliArgSplitter
 {
     /// <summary>
@@ -42,6 +48,17 @@ internal static class CliArgSplitter
 
         var (subcommand, positionals, optionTokens) = Classify(reader.Remaining);
         return new ParsedCommandLine(globals, helpRequested, subcommand, positionals, optionTokens, forwarded);
+    }
+
+    /// <summary>
+    /// Tells whether a token has the shape of an option, that is, whether it starts with <c>'-'</c>.
+    /// </summary>
+    /// <param name="token">The token to examine.</param>
+    /// <returns><see langword="true"/> if the token starts with <c>'-'</c>; otherwise, <see langword="false"/>.</returns>
+    public static bool IsOption(string token)
+    {
+        Guard.IsNotNull(token);
+        return token.StartsWith('-');
     }
 
     private static (IReadOnlyList<string> Working, IReadOnlyList<string> Forwarded) SplitOnSeparator(IReadOnlyList<string> args)
@@ -118,6 +135,4 @@ internal static class CliArgSplitter
 
         return (residue[subcommandIndex], positionals, optionTokens);
     }
-
-    private static bool IsOption(string token) => token.StartsWith('-');
 }

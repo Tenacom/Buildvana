@@ -12,8 +12,8 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("build")!;
         var parsed = CliArgSplitter.Split(["build", "--", "-p:Foo=Bar"]);
-        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
-        await Assert.That(parsed.Forwarded.Count).IsEqualTo(1);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
+        await Assert.That(Join(parameters.Forwarded)).IsEqualTo("-p:Foo=Bar");
     }
 
     [Test]
@@ -45,8 +45,8 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "-c", "Debug"]);
-        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
-        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(2);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
+        await Assert.That(Join(parameters.Options)).IsEqualTo("-c|Debug");
     }
 
     [Test]
@@ -94,8 +94,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "--bump", "minor"]);
-        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
-        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(2);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--bump|minor");
+        await Assert.That(parameters.Positionals.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -103,8 +104,8 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "--bump=minor"]);
-        CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
-        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(1);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--bump=minor");
     }
 
     [Test]
@@ -112,8 +113,8 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("version advance")!;
         var parsed = CliArgSplitter.Split(["version", "advance", "--force"]);
-        CommandArgumentValidator.Validate(command, parsed, []);
-        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(1);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--force");
     }
 
     [Test]
@@ -139,8 +140,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("version advance")!;
         var parsed = CliArgSplitter.Split(["version", "advance", "minor"]);
-        CommandArgumentValidator.Validate(command, parsed, ["minor"]);
-        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(0);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, ["minor"]);
+        await Assert.That(Join(parameters.Positionals)).IsEqualTo("minor");
+        await Assert.That(parameters.Options.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -148,8 +150,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("version advance")!;
         var parsed = CliArgSplitter.Split(["version", "advance"]);
-        CommandArgumentValidator.Validate(command, parsed, []);
-        await Assert.That(parsed.OptionTokens.Count).IsEqualTo(0);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(parameters.Positionals.Count).IsEqualTo(0);
+        await Assert.That(parameters.Options.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -183,4 +186,56 @@ internal sealed class CommandArgumentValidatorTests
         var parsed = CliArgSplitter.Split(["fake"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, [])).ThrowsNothing();
     }
+
+    [Test]
+    public async Task OperandAfterFlag_BindsAsPositional()
+    {
+        var command = CommandRegistry.Find("deps update")!;
+        var parsed = CliArgSplitter.Split(["deps", "update", "--check", "CommunityToolkit.Diagnostics"]);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(Join(parameters.Positionals)).IsEqualTo("CommunityToolkit.Diagnostics");
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--check");
+    }
+
+    [Test]
+    public async Task OperandAfterValueOption_BindsAsPositional()
+    {
+        var command = CommandRegistry.Find("deps update")!;
+        var parsed = CliArgSplitter.Split(["deps", "update", "--to", "1.2.3", "Serilog"]);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(Join(parameters.Positionals)).IsEqualTo("Serilog");
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--to|1.2.3");
+    }
+
+    [Test]
+    public async Task OperandsOnBothSidesOfAnOption_BindInCommandLineOrder()
+    {
+        var command = CommandRegistry.Find("deps update")!;
+        var parsed = CliArgSplitter.Split(["deps", "update", "Serilog", "--check", "Louis"]);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, ["Serilog"]);
+        await Assert.That(Join(parameters.Positionals)).IsEqualTo("Serilog|Louis");
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--check");
+    }
+
+    [Test]
+    public async Task UnknownOptionBeforeAnOperand_IsReportedFirst()
+    {
+        var command = CommandRegistry.Find("deps update")!;
+        var parsed = CliArgSplitter.Split(["deps", "update", "--bogus", "Serilog"]);
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'dependencies update'.");
+    }
+
+    [Test]
+    public async Task ExcessOperandAfterAnOption_IsRejected()
+    {
+        var command = CommandRegistry.Find("version advance")!;
+        var parsed = CliArgSplitter.Split(["version", "advance", "--force", "minor", "extra"]);
+        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("Unexpected argument 'extra' for command 'version advance'.");
+    }
+
+    private static string Join(IReadOnlyList<string> tokens) => string.Join('|', tokens);
 }

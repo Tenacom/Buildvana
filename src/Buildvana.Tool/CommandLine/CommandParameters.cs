@@ -6,12 +6,14 @@ using System.Collections.Generic;
 namespace Buildvana.Tool.CommandLine;
 
 /// <summary>
-/// DI singleton holding the non-global command-line tokens for the dispatched command, as split by
-/// <see cref="CliArgSplitter"/>: the options it should parse, its positional parameters, and the tokens
-/// given after the <c>--</c> separator.
+/// DI singleton holding the non-global command-line tokens for the dispatched command: the options it should
+/// parse, its positional parameters, and the tokens given after the <c>--</c> separator. <see cref="CliArgSplitter"/>
+/// splits the command line, and <see cref="Buildvana.Tool.Infrastructure.Execution.CommandArgumentValidator"/>
+/// tells the command's options from its positionals, which takes the command's own declarations.
 /// </summary>
 /// <param name="Options">The non-global, non-positional tokens before <c>--</c>, for the command to parse. Empty when none were given.</param>
-/// <param name="Positionals">The positional tokens left over after subcommand resolution, for the command to bind. Empty when none were given.</param>
+/// <param name="Positionals">The positional tokens for the command to bind: those left over after subcommand
+/// resolution, plus every operand written after an option. Empty when none were given.</param>
 /// <param name="Forwarded">The tokens after the first <c>--</c>, as typed; the overrides parser consumes the
 /// ones bv owns and forwards the rest to the invoked external command. Empty when none.</param>
 internal sealed record CommandParameters(
