@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -104,7 +103,7 @@ internal static class Program
                 return 0;
             }
 
-            CommandArgumentValidator.Validate(command, parsed, positionals);
+            var parameters = CommandArgumentValidator.Validate(command, parsed, positionals);
 
             // Parse --verbosity eagerly so an invalid value surfaces in the outer catch.
             // The default is the .NET CLI's, so that a bv command's output is comparable to that of the
@@ -121,7 +120,7 @@ internal static class Program
             };
             reporter = new ConsoleReporter(verbosity, colorOverride);
 
-            var services = BuildServiceProvider(console, reporter, globals, parsed, positionals);
+            var services = BuildServiceProvider(console, reporter, globals, parameters);
             await using (services.ConfigureAwait(false))
             {
                 if (command.UsesSdk && !globals.SkipSdkCheck)
@@ -224,14 +223,13 @@ internal static class Program
         IAnsiConsole console,
         IReporter reporter,
         GlobalSettings globals,
-        ParsedCommandLine parsed,
-        IReadOnlyList<string> positionals)
+        CommandParameters parameters)
     {
         return new ServiceCollection()
             .AddSingleton(console)
             .AddSingleton(reporter)
             .AddSingleton(globals)
-            .AddSingleton(new CommandParameters(parsed.OptionTokens, positionals, parsed.Forwarded))
+            .AddSingleton(parameters)
             .AddSingleton<IHomeDirectoryProvider>(static _ => new AnchoringHomeDirectoryProvider(
                 new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory)))
             .AddBvServices()
