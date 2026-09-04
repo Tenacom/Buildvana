@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Buildvana.Core;
 using CommunityToolkit.Diagnostics;
 
@@ -23,6 +24,7 @@ namespace Buildvana.Tool.CommandLine;
 internal sealed class CliOptionReader
 {
     private readonly List<string> _tokens;
+    private readonly List<int> _indices;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CliOptionReader"/> class over a copy of the given tokens.
@@ -32,12 +34,20 @@ internal sealed class CliOptionReader
     {
         Guard.IsNotNull(tokens);
         _tokens = [..tokens];
+        _indices = [..Enumerable.Range(0, tokens.Count)];
     }
 
     /// <summary>
     /// Gets the tokens not yet consumed by a <c>ReadXxx</c> call, in their original order.
     /// </summary>
     public IReadOnlyList<string> Remaining => _tokens;
+
+    /// <summary>
+    /// Gets the positions, in the token list given to the constructor, of the tokens <see cref="Remaining"/>
+    /// holds, in ascending order. A caller that has to tell one occurrence of a token from another with the
+    /// same text reads the positions instead of the tokens.
+    /// </summary>
+    public IReadOnlyList<int> RemainingIndices => _indices;
 
     /// <summary>
     /// Reads a boolean flag, removing every occurrence from the working set.
@@ -55,7 +65,7 @@ internal sealed class CliOptionReader
             if (MatchesExact(_tokens[i], longName, shortName))
             {
                 found = true;
-                _tokens.RemoveAt(i);
+                RemoveAt(i);
                 continue;
             }
 
@@ -108,14 +118,14 @@ internal sealed class CliOptionReader
                 }
 
                 result = ReadTokenValue(token, _tokens[i + 1]);
-                _tokens.RemoveRange(i, 2);
+                RemoveRange(i, 2);
                 continue;
             }
 
             if (TryMatchInline(token, longName, shortName, out var inlineValue))
             {
                 result = ReadTokenValue(token, inlineValue);
-                _tokens.RemoveAt(i);
+                RemoveAt(i);
                 continue;
             }
 
@@ -167,5 +177,18 @@ internal sealed class CliOptionReader
 
         value = string.Empty;
         return false;
+    }
+
+    // Every removal goes through these two, so the position list cannot drift from the token list.
+    private void RemoveAt(int index)
+    {
+        _tokens.RemoveAt(index);
+        _indices.RemoveAt(index);
+    }
+
+    private void RemoveRange(int index, int count)
+    {
+        _tokens.RemoveRange(index, count);
+        _indices.RemoveRange(index, count);
     }
 }

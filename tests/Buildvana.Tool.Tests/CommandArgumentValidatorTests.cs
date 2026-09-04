@@ -237,5 +237,15 @@ internal sealed class CommandArgumentValidatorTests
         await Assert.That(exception!.Message).IsEqualTo("Unexpected argument 'extra' for command 'version advance'.");
     }
 
+    [Test]
+    public async Task OperandRepeatingAConsumedOptionValue_LeavesTheOptionTokensInOrder()
+    {
+        var command = new CommandRegistration([["fake"]], typeof(FakeValueOptionSettings), false, typeof(FakeValueOptionSettings));
+        var parsed = CliArgSplitter.Split(["fake", "--to", "1.0.0", "--force", "1.0.0"]);
+        var parameters = CommandArgumentValidator.Validate(command, parsed, []);
+        await Assert.That(Join(parameters.Options)).IsEqualTo("--to|1.0.0|--force");
+        await Assert.That(Join(parameters.Positionals)).IsEqualTo("1.0.0");
+    }
+
     private static string Join(IReadOnlyList<string> tokens) => string.Join('|', tokens);
 }
