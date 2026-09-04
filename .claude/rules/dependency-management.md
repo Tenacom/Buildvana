@@ -36,10 +36,16 @@ Declared as MSBuild properties:
 
 ## How to update dependencies
 
-Run `dotnet run tools/update-dependencies.cs` from the repository root. In one pass it updates the .NET SDK version in `global.json`, the local dotnet tools, the `PackageVersion` and `BV_PackageVersion` pins, and the three Roslyn floor properties; `dotnet run tools/update-dependencies.cs -- --check` reports what it would do without modifying anything. Package targets are resolved with the procedure described in `nuget-version-lookup.md`, which remains the manual procedure for one-off lookups.
+Run `dotnet bv deps update` from the repository root. One run moves the .NET SDK version in `global.json`, the MSBuild project SDKs, the local dotnet tools, the `PackageVersion` pins, and the `BV_PackageVersion` pins of the "SDK package injections" group that `buildvana.jsonc` declares. At the end of the run, the `deps/post-update` hook (`.buildvana/hooks/deps/post-update.cs`) derives the three Roslyn floor properties from the `Microsoft.CodeAnalysis.Common` pin.
 
-Rules the tool encodes, which hold for manual updates too:
+`dotnet bv deps update --check` reports what a run would do, writes nothing, and exits 1 when anything would move. Add `--all` to list every pin, not only the ones with news.
 
-- A pin currently at a non-stable (preview) version tracks the latest prerelease of its own `major.minor` line; when that line goes quiet — no prerelease ahead of the pin — the latest stable takes over. A pin is never downgraded.
-- Do not update tools with `dotnet tool update --local --all`: for a tool pinned to a prerelease line (usually `bv` itself) it insists on the latest _stable_ — a downgrade — and fails the whole run refusing to do it. Update each tool with `dotnet tool update <id> --local --version <version>` instead.
-- The Roslyn floor properties derive from the `Microsoft.CodeAnalysis.Common` pin: `BV_MinRoslynVersion` is its `major.minor`, `BV_SourceGeneratorsPackageFolder` follows, and `BV_MinRoslynVersionHint` names the lowest released SDK feature band (and its paired Visual Studio version) shipping a compiler at least that new. To deliberately lower the floor, downgrade the `Microsoft.CodeAnalysis.*` pins first and re-run the tool.
+Three packages form the Buildvana family: `bv`, `Buildvana.Sdk` and `Buildvana.Runtime`. They move in lockstep, so no scope of `bv deps` manages one. `bv self-update` is the command that moves them. This repository never needs it: it dogfoods its own release, so the release pipeline re-pins the family to each published version.
+
+`docs/DependencyManagement.md` documents the scopes, the update policies, and what `bv` counts as a pin.
+
+Rules that hold for a manual update:
+
+- A pin at a prerelease version tracks the latest prerelease of its own `major.minor` line. When that line goes quiet, the latest stable takes over. A line is quiet when no prerelease sits ahead of the pin. A pin is never downgraded. Resolve a one-off lookup with the procedure in `nuget-version-lookup.md`.
+- Do not update tools with `dotnet tool update --local --all`. For a tool pinned to a prerelease line it insists on the latest _stable_, which is a downgrade, and it fails the whole run refusing to do it. Update each tool with `dotnet tool update <id> --local --version <version>` instead.
+- To lower the Roslyn floor, downgrade the `Microsoft.CodeAnalysis.*` pins and run `dotnet bv deps update` again. The hook derives `BV_MinRoslynVersion`, `BV_MinRoslynVersionHint` and `BV_SourceGeneratorsPackageFolder` from the pin, so an edit to those three properties alone does not survive the next run.
