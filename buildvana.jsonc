@@ -23,7 +23,7 @@
 {
   // In buildvana.jsonc, the version pinned in .config/dotnet-tools.json. In
   // buildvana.next.jsonc, main: the version it describes does not exist yet.
-  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.367-preview/schemas/buildvana.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.530-preview/schemas/buildvana.schema.json",
 
   "release": {
     "branches": ["^main$", "^v\\d+\\.\\d+$"],
@@ -82,6 +82,21 @@
 
   // No "git": automated commits use the CI bot identity supplied by the
   // server adapter.
+
+  "dependencies": {
+    // No "scopes": the built-in defaults are the ones this repository wants.
+
+    // No "policies": no package here needs a policy of its own.
+
+    "additionalPackages": {
+      "SDK package injections": {
+        "files": "src/Buildvana.Sdk/Sdk/PackageVersions.props",
+        "items": "BV_PackageVersion",
+
+        // No "policy": these are ordinary package pins, and move under the packages scope.
+      },
+    },
+  },
 
   "fileBasedApps": ["/tools/", "/.claude/tools/"],
 }
