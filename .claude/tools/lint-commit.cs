@@ -18,8 +18,8 @@
  *   - no sentence uses a word from the banned list below.
  *
  * A backticked or double-quoted span counts as one word, and nothing inside it is checked. A line that starts
- * with a list marker starts a new sentence. A trailer is a `Key: value` line at the end of the message, and a
- * lone `Part of #123` line counts as one too.
+ * with a list marker starts a new sentence. A trailer block is one or more `Key: value` lines at the end of the
+ * message, with a blank line before it. A lone `Part of #123` line counts as a trailer too.
  *
  * What the tool cannot check stays with the reader: a coined name, a subject that names the rule instead of the
  * behavior that is gone, and a condition stated after its action.
@@ -118,18 +118,24 @@ if (hasUnblankSecondLine)
     findings.Add((subjectIndex + 2, "the line after the subject is not blank"));
 }
 
-// Trailers and the blank lines around them are peeled off the end. Whatever is left is the body.
+// Trailers are peeled off the end, as git reads them: a block of trailer lines with a blank line before it.
+// A trailer-shaped line inside the last paragraph is body text. Whatever is left is the body.
 var end = lines.Length;
-while (end > subjectIndex + 1)
+while (end > subjectIndex + 1 && lines[end - 1].Trim().Length == 0)
 {
-    var trimmed = lines[end - 1].Trim();
-    var isTrailerOrBlank = trimmed.Length == 0 || trailerRegex.IsMatch(trimmed);
-    if (!isTrailerOrBlank)
-    {
-        break;
-    }
-
     end--;
+}
+
+var trailerStart = end;
+while (trailerStart > subjectIndex + 1 && trailerRegex.IsMatch(lines[trailerStart - 1].Trim()))
+{
+    trailerStart--;
+}
+
+var blankBeforeTrailers = trailerStart < end && lines[trailerStart - 1].Trim().Length == 0;
+if (blankBeforeTrailers)
+{
+    end = trailerStart;
 }
 
 var paragraphs = new List<List<(int Line, string Text)>>();
