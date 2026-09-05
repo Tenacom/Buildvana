@@ -23,6 +23,7 @@ The `.claude` directory is meant to be copied wholesale into other projects. Thi
 - `rules/dotnet.md` — build commands and tooling. Assumes the project is built with Buildvana.
 - `rules/nuget-version-lookup.md` — procedure for resolving a package's target version.
 - `templates/Default.cs` — new-file template carrying the BOM and the copyright preamble. The preamble names Tenacom; change it for a project under different ownership.
+- `tools/lint-commit.cs` — commit-message check, run on the draft before every commit. Nothing repo-specific in it.
 - `settings.json` — MCP servers and tool permissions. Nothing repo-specific in it.
 
 ### Project-specific — rewrite when copied
