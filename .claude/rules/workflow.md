@@ -15,6 +15,7 @@
   - This is a quality mechanism, not a trust one, so it holds however routine the item looks. Sometimes you see farther than I do and need context I cannot imagine needing until I read the draft. Reading it is what surfaces what I would never have thought to volunteer.
   - "Just file it" for one item is a one-off, not a policy change.
   - The standing exception is step 3 of "Reacting to reviews", where agreeing on the plan pre-authorizes the replies.
+- Before drafting a plan, a commit message, an issue, a PR description, or a review reply, Read `.claude/output-styles/simple-tech.md` and apply it to the draft. The style sits at the start of the context, and a long session pushes it far from the draft. A fresh copy next to the draft holds better.
 - Surface a working-tree change you did not make, or one unrelated to the task, and ask me before you revert, overwrite, or "clean it up". Unexpected state in this repo is usually my own work in progress, since I edit files by hand mid-session. Keep your own change set clean, but never discard an edit I spent an hour on.
 - When a rule proves insufficient or misleading, propose a fix to the rule file instead of saving a feedback memory. Rules in `.claude/rules/` are checked into the repo and travel across machines. Memory does not. Reserve memory for cross-project context: my role, my preferences, my working style.
 
@@ -94,7 +95,7 @@ safe, never whether it is wanted.
    - For each PR, state what makes it independently mergeable.
 3. We review the plan together
 4. You open a branch on my fork (the `origin` remote) for the pull request
-5. You write the code, and I review before every commit. Always ensure the solution builds with zero errors and zero warnings, and that all tests pass.
+5. You write the code, and I review before every commit. Always ensure the solution builds with zero errors and zero warnings, and that all tests pass. The message of each commit follows "Commit messages" below.
 6. Sanity check. This gates _every_ push to the PR branch, follow-up commits included, not just the final commit of the initial implementation:
    1. Execute `dotnet run .claude/tools/inspect.cs --gate`. It runs `dotnet bv pack` for build, tests, and build artifacts. If that reports nothing, it then analyzes the whole solution with ReSharper at WARNING severity and above. Both phases report every diagnostic as `path(line,col): severity ID: message`, and the tool exits non-zero if there was any.
    2. Address every reported diagnostic, then repeat from step 1 until it exits zero. Ask me when you have any doubt, or when a diagnostic looks like a false positive, or just won't go away.
@@ -117,7 +118,7 @@ safe, never whether it is wanted.
    Once we agree, the rest is automatic. You address the findings, sanity-check, push, and reply, none of it needing my confirmation. Our agreement stands in for the general "check with me before taking any action" rule and for the "I review before every commit" rule of "Solving an issue". Stop and ask only if you get stuck, or if a finding needs a non-trivial refactor we did not foresee.
 4. You address the review's findings as agreed in point 3. A finding we agreed to leave alone produces no commit, only its rationale in the reply.
 
-   One commit per addressed finding is the default, and it is indicative. Several findings of one shape belong in one commit. One finding whose fix is larger than the reviewer thought belongs in several. A commit must never mix unrelated fixes. When a commit covers occurrences the review did not name, say so in its message.
+   One commit per addressed finding is the default, and it is indicative. Several findings of one shape belong in one commit. One finding whose fix is larger than the reviewer thought belongs in several. A commit must never mix unrelated fixes. When a commit covers occurrences the review did not name, say so in its message. The message of each commit follows "Commit messages" below.
 5. Sanity check, same as the "Sanity check" step of "Solving an issue". When it is not green, the fixes go in further commits. Never amend or rewrite the commits from point 4.
 6. When you're done, push and reply to the review:
    - Reply to every code-anchored comment, even if only "Done." or the reason for leaving the finding alone.
@@ -134,6 +135,27 @@ safe, never whether it is wanted.
    - Mention the reviewer by nickname, e.g. `@claude`, in anything that expects them to act.
      - They see only comments that mention them, so an untagged reply reaches human readers alone.
      - The mention does not choose the action. A tagged question gets an answer, and a request for a review gets a review.
+
+## Commit messages
+
+A commit message is read months later, by a reader who has the repository and nothing else. Keep it short, and keep it free of anything that reader cannot look up.
+
+- The subject says what the commit does, in the imperative, with an identifier when the change has one. It names the behavior that is gone, not the rule the change obeys.
+- The body is one paragraph, and it says why. State the wrong behavior first, then the reason the fix took this shape. The diff says what changed, so the body does not repeat it.
+- A term that exists only in the PR's conversation is banned. Name the thing with an identifier from the repository, or describe it. A reader can look up `OverrideLifecycle`. Nobody can look up "the lifecycle".
+- Self-contained does not mean complete. The body stays short by naming things instead of describing them, and by leaving the what to the diff.
+
+Before every commit:
+
+1. Read `.claude/output-styles/simple-tech.md`.
+2. Write the message to a file in the scratchpad directory.
+3. Run `dotnet run .claude/tools/lint-commit.cs <file>`. Fix the message until the tool reports nothing.
+4. Check the three things the tool cannot, and state the result in the turn:
+   - Every definite noun phrase names a repository identifier, or a thing the message defined earlier.
+   - The subject names the behavior that is gone.
+   - Each sentence puts its condition before its action.
+5. Show me the message together with the diff.
+6. Commit with `git commit -F <file>`.
 
 ## Small changes out of scope
 
