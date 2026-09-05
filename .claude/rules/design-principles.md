@@ -68,11 +68,11 @@ State that the reader acts on, such as pass or fail, error, or warning, goes in 
 
 ## Automation that feeds untrusted content to an LLM
 
-Never build a workflow that feeds untrusted content into an LLM that holds a write capability, however narrow. Untrusted content includes PR titles, bodies, diffs, comments, and branch contents. Flag the design instead of iterating on it. Propose on-demand invocation instead: an `@claude` mention, or a maintainer-run CLI review.
+Never build a workflow that automatically feeds untrusted content into an LLM that holds a write capability, however narrow. Untrusted content includes PR titles, bodies, diffs, comments, and branch contents. Flag the design instead of iterating on it. Propose on-demand invocation instead: an `@claude` mention, or a maintainer-run CLI review.
 
 Two independent reasons:
 
 1. **Prompt injection cannot be patched away.** Untrusted input plus a write capability is a prompt-injection target. Tool lockdown, permission scoping, and input sanitization treat symptoms. No filter catches every jailbreak, and a single jailbreak turns the write capability against the repository.
-2. **Generic LLM review has low signal.** An auto-triggered review action does not load `CLAUDE.md` or `.claude/rules/`, so it emits generic style feedback with no project specificity. We have seen this with Copilot review: "every time the same ado about nothing".
+2. **Generic LLM review has low signal.** An auto-triggered review action usually does not load `CLAUDE.md` or `.claude/rules/`, so it emits generic style feedback with no project specificity. We have seen this with Copilot review: "every time the same ado about nothing".
 
 When such a workflow exists and is broken, weigh removing it against fixing it. Do not default to a fix. The rule covers more than PR review: flag any auto-trigger that feeds external content to an LLM with write tools.
