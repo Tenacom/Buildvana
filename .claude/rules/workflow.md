@@ -90,6 +90,7 @@ safe, never whether it is wanted.
 
 1. I tell you which issue must be solved
 2. You read the issue and make a plan.
+   - Assume I have not read the issue. Open the plan with the problem and the acceptance criteria, in the issue's own terms, then the PRs.
    - When the issue needs more than one PR, use the fewest that can each merge on their own. Do not split a coherent area because it is large.
    - Every PR costs a changelog entry, the configuration files, a description, and a style sweep, whatever its size.
    - For each PR, state what makes it independently mergeable.
@@ -111,7 +112,7 @@ safe, never whether it is wanted.
 2. You check that we are on the PR branch and in sync with the remote, since a reviewer may have committed a suggestion through the GitHub UI. Then you read the review and make a plan.
 3. We review the plan together. Usually this is a quick "take this one, leave this other one". On more complicated findings, make sure we agree on the steps. Make sure you have everything you need to proceed on your own. Repeat a question I did not answer, and ask when you have any doubt.
 
-   For each finding, state the shape of the defect, not only the site the review names. Say what you searched for, how many occurrences you found, and how many the review names. Where the two numbers differ, say what you propose to do with the rest. The default is to fix them all in one commit, per "Small changes out of scope". A review samples a defect. It does not count it.
+   Assume I have not read the review. For each finding, first restate what the reviewer said, in one or two sentences, then the plan for it. State the shape of the defect, not only the site the review names. Say what you searched for, how many occurrences you found, and how many the review names. Where the two numbers differ, say what you propose to do with the rest. The default is to fix them all in one commit, per "Small changes out of scope". A review samples a defect. It does not count it.
 
    From the second round on, a finding the reviewer does not treat as blocking starts as "leave alone". Fix it because I say so, not because I said nothing. Prose, comments, changelog wording, documentation symmetry and formatting are worth one round each.
 
