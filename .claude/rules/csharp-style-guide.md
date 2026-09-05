@@ -1,13 +1,12 @@
 # C# style guide
 
-Coding style is mostly configured in `.editorconfig` and `.globalconfig` files.
-Code style is enforced both in the editor and at build time: all style-related warnings become errors.
+`.editorconfig` and `.globalconfig` configure most of the coding style. The editor and the build both enforce it, and every style warning is an error.
 
-Here are additional rules that could not be codified in `*config` files.
+The rules below are the ones those files cannot express.
 
 ## One type per file
 
-Every type must be in its own file. No exceptions, even for delegates.
+Every type goes in its own file, delegates included.
 
 ## File names
 
@@ -18,7 +17,7 @@ Every type must be in its own file. No exceptions, even for delegates.
 
 ## Modern C# features
 
-Use latest C# features whenever possible. Non-exhaustive list of features to use:
+Use the latest C# features. Among them:
 
 - Collection expressions
 - `field` keyword
@@ -28,7 +27,7 @@ Use latest C# features whenever possible. Non-exhaustive list of features to use
 
 ## Pattern matching
 
-Prefer pattern matching over equivalent chains of comparisons, type checks, and casts: a pattern states the shape of the data, while a chain of checks makes the reader reassemble it. In particular:
+Prefer pattern matching over an equivalent chain of comparisons, type checks, and casts. A pattern states the shape of the data. A chain of checks makes the reader reassemble it. In particular:
 
 - List patterns over count checks + indexed comparisons:
 
@@ -47,37 +46,37 @@ Prefer pattern matching over equivalent chains of comparisons, type checks, and 
 
 Semantic differences to keep in mind when converting:
 
-- List, property, and recursive patterns imply a null test: `propertyPath is [PropertyName, PackageId]` is `false` when `propertyPath` is null, where `propertyPath.Count == 2` would throw. Usually an improvement, but it is a behavior change, not a pure rewrite.
-- Constant patterns never use the type's `==` operator. Non-null constants compare with `Equals`; `null` is a plain reference test (a `HasValue` check for nullable value types). With `float` / `double` the pattern is what you want: `x is double.NaN` matches NaN, while `x == double.NaN` is always `false`. Exception: in the rare case of a type that overloads `==` so that `x == null` and `x is null` disagree, keep the operator form.
+- List, property, and recursive patterns imply a null test. `propertyPath is [PropertyName, PackageId]` is `false` when `propertyPath` is null, where `propertyPath.Count == 2` would throw. That is usually an improvement, but it is a behavior change, not a pure rewrite.
+- Constant patterns never use the type's `==` operator. A non-null constant compares with `Equals`. `null` is a plain reference test, or a `HasValue` check for a nullable value type. With `float` and `double` the pattern is what you want: `x is double.NaN` matches NaN, while `x == double.NaN` is always `false`. Exception: when a type overloads `==` so that `x == null` and `x is null` disagree, keep the operator form.
 
 ## Partial classes
 
-Use partial classes to split a class into multiple files if it exceeds 500 lines of code, or for nested types.
+When a class exceeds 500 lines of code, or has nested types, split it into partial class files.
 
-The "main" file containing the class declaration should be named "TypeName.cs". Other files should be named:
+The main file, the one with the class declaration, is named `TypeName.cs`. The other files are named:
 
 - `TypeName.NestedTypeName.cs` for nested types.
 - `TypeName-MethodName.cs` for a file that contains all the overloads of a method.
 - `TypeName-maxThreeWordDescription.cs` for a file that contains code related to a specific aspect.
-- `SomeFunctionalityExtensions-ExtendedType.cs` for a file that contains an extension block for `ExtendedType`, in the context of an extension class that extends multiple types with related functionality (see the "Extension classes" section below).
+- `SomeFunctionalityExtensions-ExtendedType.cs` for the extension block for `ExtendedType`, in an extension class that extends several types. See "Extension classes" below.
 
 Use the generic type rule "TypeName`{N}" for both outer and nested generic types.
 
-Class modifiers (access, static, abstract, etc.) should be specified in the main file, and omitted from other files.
+Class modifiers, such as access, `static`, and `abstract`, go in the main file only.
 
-XML comments for the class should be in the main file, and omitted from other files.
+The XML comment of the class goes in the main file only.
 
-If a class can be clearly split into two or more separate files (for example, if it has three methods, each with a dozen overloads), the main class block may be empty.
+When a class splits cleanly into two or more files, the main class block may be empty. A class with three methods of a dozen overloads each is an example.
 
 ## Member ordering
 
-StyleCop's SA1204 and its siblings already bucket members by access and staticness. Within a single bucket, order by the call graph: a method that calls another goes _above_ the methods it calls.
+StyleCop's SA1204 and its siblings already bucket members by access and staticness. Within a single bucket, order by the call graph. A method that calls another goes above the methods it calls.
 
-The point is top-down readability — a reader meets the high-level method first and drills down into its callees, instead of assembling the picture bottom-up. No analyzer enforces this; apply it when adding methods and when reorganizing existing ones.
+The reader then meets the high-level method first and reads down into its callees. No analyzer enforces this order. Apply it when adding methods and when reorganizing existing ones.
 
-- The rule applies only _within_ a bucket. SA1204 still wins across buckets: private static members stay before private instance ones, and so on.
+- The rule applies only within a bucket. SA1204 still wins across buckets: private static members stay before private instance ones, and so on.
 - When adding a helper, put it below its caller, never above.
-- For peer methods — both called by the same parent, neither calling the other — follow the order the parent calls them in. That is secondary to caller-before-callee.
+- Peer methods are methods called by the same parent, neither calling the other. Order them as the parent calls them. That order is secondary to caller-before-callee.
 
 ## Extension blocks
 
@@ -98,25 +97,25 @@ public static class MyClassExtensions
 }
 ```
 
-The "this" parameter MUST be named `@this`.
+The receiver parameter must be named `@this`.
 
-Add `partial` only when the class is actually split across files, as described in "Partial classes" above and "Extension classes" below. ReSharper's `PartialTypeWithSinglePart` flags a partial class with a single part, and every warning is an error here.
+Add `partial` only when the class is split across files, as described in "Partial classes" above and "Extension classes" below. ReSharper's `PartialTypeWithSinglePart` flags a partial class with a single part, and every warning is an error here.
 
-Do not mix extension blocks with regular static methods of the same class. Refer to "Partial classes" above and "Extension classes" below for splitting extension classes into multiple files if needed.
+Do not mix extension blocks with regular static methods in the same class. "Partial classes" above and "Extension classes" below say how to split an extension class into files.
 
-Do not look into existing files to understand the convention in place: this _is_ the convention.
+Do not infer the convention from existing files. This section is the convention.
 
 ## Extension classes
 
-Prefer one extension block per class. Use multiple blocks only when they provide related functionality and share private helpers, and split them into separate files as described in the rules below.
+Prefer one extension block per class. Use multiple blocks only when they provide related functionality and share private helpers, and split them into separate files as the rules below describe.
 
 ### Classes that extend a single type
 
-Extension classes that extend a single type are named after the extended type, following these rules:
+An extension class that extends a single type is named after the extended type:
 
-- strip the initial "I" if the extended type is an interface;
-- use .NET class names, not C# keywords (e.g., "String" instead of "string");
-- add an "Extensions" suffix.
+- Strip the initial "I" when the extended type is an interface.
+- Use the .NET class name, not the C# keyword: "String", not "string".
+- Add an "Extensions" suffix.
 
 **Examples:**
 
@@ -124,25 +123,23 @@ Extension classes that extend a single type are named after the extended type, f
 - `MyGenericClass<T>` extensions go in ``MyGenericClassExtensions``, because extension classes cannot be generic.
 - `IMyInterface` extensions go in `MyInterfaceExtensions`.
 
-If such an extension class contains private helper methods, they should not be mixed with the extension block. Instead, make a partial class and split private methods into a separate file, e.g., `MyClassExtensions-private.cs`.
-Do this even if the whole class wouldn't exceed the threshold for partial classes.
+When such a class has private helper methods, do not mix them with the extension block. Make the class partial and put the private methods in a separate file, such as `MyClassExtensions-private.cs`. Do this even when the class is under the size threshold for partial classes.
 
 ### Classes that extend more than one type
 
-An extension class may contain more than one extension block if they provide related functionality to multiple types using shared private helpers.
-In this case, the class name should reflect the provided functionality and extension blocks should not be in the main class file.
-The main class file contains private helpers; extension blocks always go in separate files.
-**Example:** class `EmojiExtensions`, which provides a "StripEmojis" method for strings, read-only spans, and related types, is split into these files:
+An extension class may hold more than one extension block when the blocks provide related functionality to several types and share private helpers. Then the class name reflects the functionality. The main class file holds the private helpers, and each extension block goes in a separate file.
 
-- `EmojiExtensions.cs` - XML comment, class modifiers, private helpers.
-- `EmojiExtensions-String.cs` - extension block for `string` (use the .NET class name in the file name, not the keyword).
-- ``EmojiExtensions-ReadOnlySpan`1.cs`` - extension block for `ReadOnlySpan<char>` (same arity convention as for inner types).
-- `EmojiExtensions-StringBuilder.cs` - extension block for `StringBuilder`.
-- `EmojiExtensions-Formattable.cs` - extension block for `IFormattable`.
+**Example:** `EmojiExtensions` provides a `StripEmojis` method for strings, read-only spans, and related types. It is split into these files:
+
+- `EmojiExtensions.cs`: XML comment, class modifiers, private helpers.
+- `EmojiExtensions-String.cs`: extension block for `string` (use the .NET class name in the file name, not the keyword).
+- ``EmojiExtensions-ReadOnlySpan`1.cs``: extension block for `ReadOnlySpan<char>` (same arity convention as for inner types).
+- `EmojiExtensions-StringBuilder.cs`: extension block for `StringBuilder`.
+- `EmojiExtensions-Formattable.cs`: extension block for `IFormattable`.
 
 ## Conditionals and loops
 
-- NO multi-line conditions: use local variables or (possibly static) helpers for condition expressions that don't fit in a single line of reasonable length. Reserve helpers for reusable logic, or cases where several local variables are needed to make the condition readable. Use local variables for all other cases.
+- No multi-line conditions. When a condition does not fit in one line, put it in a local variable, or in a helper method. Reserve a helper for reusable logic, or for a condition that needs several local variables to read well. Use a local variable in every other case.
   Example:
   ```csharp
   // This is wrong
@@ -163,7 +160,7 @@ The main class file contains private helpers; extension blocks always go in sepa
   }
   ```
 
-- ALWAYS use block statements, with opening and closing braces on separate lines, even if they contain just one instruction.
+- Always use block statements, with the braces on their own lines, even for one instruction.
   Example:
   ```csharp
   // This is wrong
@@ -179,7 +176,7 @@ The main class file contains private helpers; extension blocks always go in sepa
 ## Ternaries
 
 - Multi-line ternaries are fine for assignments and computations, not for `if` / `while` conditions.
-- Do NOT use a ternary just for side effects: use `if` instead.
+- Do not use a ternary for side effects. Use `if` instead.
 
 Use these templates:
 
@@ -207,43 +204,43 @@ result = foo is not null ? ComputeSomething(firstParam, secondParam, foo)
 
 This project is single-culture. Its diagnostics are English-only and must read identically on a developer machine and on a CI runner.
 
-- Never give an API an `IFormatProvider` / `CultureInfo` parameter. Bake `CultureInfo.InvariantCulture` into the implementation instead.
-- In particular, do not mirror `string.Format`'s shape with a nullable provider parameter: passing `null` there resolves to `CurrentCulture`, so the parameter's only real function is to produce locale-dependent output by accident.
-- Do not propose a provider-taking overload "for flexibility". That flexibility will never be used, and the parameter only invites mistakes.
+- Never give an API an `IFormatProvider` or `CultureInfo` parameter. Use `CultureInfo.InvariantCulture` inside the implementation instead.
+- In particular, do not mirror the shape of `string.Format` with a nullable provider parameter. Passing `null` there resolves to `CurrentCulture`, so the parameter's only effect is locale-dependent output by accident.
+- Do not propose a provider-taking overload "for flexibility". That flexibility goes unused, and the parameter only invites mistakes.
 
 ## String literals
 
-Pick the form that shows the content most clearly. There is no universal winner, so ReSharper's `UseRawString`, `UseVerbatimString`, and `RawStringCanBeSimplified` are all suppressed: they disagree with each other by design, and the choice between them is a judgment call rather than a rule an inspection can make.
+Pick the form that shows the content most clearly. No form wins in every case, so ReSharper's `UseRawString`, `UseVerbatimString`, and `RawStringCanBeSimplified` are all suppressed. They disagree with each other by design, and the choice is one an inspection cannot make.
 
-- **Raw** (`"""..."""`) when the content itself contains quotes. This is the big win, and it is why the regexes in `SelfReferenceUpdater` are readable: `[^""]+` collapses to `[^"]+`, and the pattern gets _shorter_ as well as clearer. Quotes are the discriminator, not backslashes: raw and verbatim both take a `\` literally, so a backslash alone is no reason to prefer one over the other.
-- **Raw, multi-line** for content that is naturally several lines: JSON documents, expected output, code templates. The indentation of the closing `"""` sets the margin stripped from every line, so the literal lines up with the code around it and needs no `\n`, no concatenation, and no leading-whitespace gymnastics. Prefer this to a single-line literal stitched together with `\n` whenever the content is genuinely multi-line.
-- **Regular, with escapes**, when an escape _is_ the point. `"{\n  \"name\": 42\n}"` in a test that asserts line and column keeps its newlines explicit and independent of the file's line endings; a multi-line raw literal would make them a property of the source file instead.
-- **Verbatim** (`@"..."`) has a narrow remaining niche now that raw strings exist: content heavy in backslashes but free of quotes, such as Windows paths.
-- Prefer **consistency with adjacent literals** over shaving delimiters off one of them. Where several literals form a visual group, matching forms read better than one odd member — even if that member would compile as a plain `"..."`.
+- **Raw** (`"""..."""`) when the content contains quotes. This is why the regexes in `SelfReferenceUpdater` are readable: `[^""]+` becomes `[^"]+`, shorter as well as clearer. Quotes decide, not backslashes. Raw and verbatim both take a `\` literally, so a backslash alone is no reason to prefer one over the other.
+- **Raw, multi-line** for content that is several lines by nature: JSON documents, expected output, code templates. The indentation of the closing `"""` sets the margin stripped from every line. The literal then lines up with the code around it, and needs no `\n` and no concatenation. Prefer this form to a single-line literal joined with `\n` whenever the content is multi-line.
+- **Regular, with escapes**, when the escape is the point. In a test that asserts line and column, `"{\n  \"name\": 42\n}"` keeps its newlines explicit and independent of the file's line endings. A multi-line raw literal would make them a property of the source file.
+- **Verbatim** (`@"..."`) for content heavy in backslashes and free of quotes, such as Windows paths. Raw strings cover every other case it used to serve.
+- Prefer **consistency with adjacent literals** over the shortest form for each. Where several literals form a group, matching forms read better than one odd member, even when that member would compile as a plain `"..."`.
 
 ## Line length
 
-Code and comment lines are limited to 140 characters, including indentation. The limit covers C# source in full: code, ordinary comments, and XML documentation comments alike. Prose files (Markdown and the like) have no line-length limit.
+A line of C# is at most 140 characters, including indentation. The limit covers code, ordinary comments, and XML documentation comments. Prose files, such as Markdown, have no line-length limit.
 
-The limit is a review rule, not a formatter setting: there is deliberately no `max_line_length` in `.editorconfig`, so no tool reformats existing code behind your back.
+The limit is a review rule, not a formatter setting. `.editorconfig` has no `max_line_length` on purpose, so no tool reformats existing code on its own.
 
-New and modified lines always comply. Beyond that, leave the file cleaner than you found it: when you are actually working in a file — adding to it, reworking it, fixing something in it — bring the whole file within the limit, and commit the leftover wraps separately, so that the change under review stays readable. A mechanical sweep that touches many files with a line or two each does not count as working in them: comply on the lines you touch, and leave the rest.
+New and modified lines always comply. When you work in a file, by adding to it, reworking it, or fixing something in it, bring the whole file within the limit. Commit those extra wraps separately, so that the change under review stays readable. A mechanical sweep that touches a line or two in many files does not count as working in them. There, comply on the lines you touch and leave the rest.
 
-Declarations are held to a stricter limit; see "Long parameter lists" below. Whole-file cleanup covers that limit too: a file brought within the general limit but left with over-long declarations is a file that still owes a second sweep.
+Declarations have a stricter limit. See "Long parameter lists" below. Whole-file cleanup covers that limit too. A file within the general limit but with over-long declarations still owes a second sweep.
 
 ## Long parameter lists
 
-When a parameter list makes a declaration exceed 120 characters including indentation, wrap it. Declarations are held to a stricter limit than the 140 characters allowed elsewhere, because a signature is the one line a reader has to parse in full in order to use the member. The rule covers methods, constructors (including primary constructors), records, delegates, indexers, and local functions.
+When a parameter list makes a declaration exceed 120 characters including indentation, wrap it. A declaration has a stricter limit than the 140 characters allowed elsewhere, because a reader parses a signature in full to use the member. The rule covers methods, constructors, primary constructors included, records, delegates, indexers, and local functions.
 
-Invocations are not subject to the 120-character threshold: they follow the general 140-character limit. When a call does have to be wrapped — because it exceeds 140 characters, or because its argument list is long enough that one argument per line simply reads better — wrap it with the mechanics below, which apply to parameter and argument lists alike, base/this constructor calls (`: base(...)` / `: this(...)`) included.
+An invocation follows the general 140-character limit, not the 120-character one. Wrap a call when it exceeds 140 characters, or when its argument list is long enough that one argument per line reads better. The mechanics below apply to parameter lists, argument lists, and base or this constructor calls (`: base(...)`, `: this(...)`) alike.
 
 When wrapping:
 
-- Put every parameter or argument on its own line. Do not mix one parameter next to the opening parenthesis with the rest on their own lines — it's all or nothing.
+- Put every parameter or argument on its own line. Do not leave one parameter next to the opening parenthesis with the rest on their own lines.
 - Indent wrapped parameters or arguments one level beyond the line that contains the opening parenthesis.
 - The closing parenthesis goes on the same line as the last parameter or argument, per StyleCop rule SA1111.
-- Generic constraints (`where T : ...`) go on their own lines after the closing parenthesis. With multiple constraint clauses, each subsequent `where` goes on its own line, indented at the same level as the parameters (StyleCop SA1127 forbids placing two `where` clauses on the same line).
-- Constructor chaining (`: base(...)` or `: this(...)`) goes on its own line before the opening brace, indented at the same level as the parameters. If the chained call is itself long enough to wrap, apply the same rules to its argument list.
+- Generic constraints (`where T : ...`) go on their own lines after the closing parenthesis. With several constraint clauses, each `where` goes on its own line, indented at the same level as the parameters. StyleCop SA1127 forbids two `where` clauses on one line.
+- Constructor chaining (`: base(...)` or `: this(...)`) goes on its own line before the opening brace, indented at the same level as the parameters. When the chained call is itself long enough to wrap, apply the same rules to its argument list.
 
 **Examples:**
 
@@ -291,4 +288,4 @@ Invocation, correct:
 
 ## ReSharper suppressions
 
-Canonical form: `// ReSharper disable once <DiagnosticId> // <justification>` — the justification comment is mandatory.
+Canonical form: `// ReSharper disable once <DiagnosticId> // <justification>`. The justification comment is mandatory.
