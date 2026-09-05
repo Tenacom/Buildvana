@@ -20,7 +20,7 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `rules/powershell.md`: Windows PowerShell 5.1 pitfalls and shell-usage rules.
 - `rules/testing.md`: test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
 - `rules/dotnet.md`: build commands and tooling. Assumes the project is built with Buildvana.
-- `rules/nuget-version-lookup.md`: procedure for resolving a package's target version.
+- `rules/documentation.md`: what counts as user documentation, the register, the structure of `docs/`, the changelog bullet format, and the checks. The names it relies on are in `rules/terminology.md`, and the inventory it applies to is in `rules/architecture.md`.
 - `output-styles/simple-tech.md`: the register for every kind of prose, from chat to commit messages. Select it with `/output-style`.
 - `templates/Default.cs`: new-file template carrying the BOM and the copyright preamble. The preamble names Tenacom. Change it for a project under different ownership.
 - `tools/lint-commit.cs`: commit-message check, run on the draft before every commit. Its `bannedWords` and `announcingVerbs` arrays come from this repository's past commits. They apply anywhere, and a copy may extend them.
@@ -30,7 +30,8 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 
 ### Project-specific: rewrite when copied
 
-- `rules/architecture.md`: Buildvana's own structure, project tiers, target platforms, self-hosting, tool portability. Entirely about this repo.
+- `rules/architecture.md`: Buildvana's own structure, project tiers, target platforms, self-hosting, tool portability, and the documentation inventory: files, subfolders of `docs/`, generated regions. Entirely about this repo.
 - `rules/dependency-management.md`: mostly portable, but the baseline-dependency list and the `Buildvana.Runtime` strictly-BCL carve-out are Buildvana's own.
+- `rules/terminology.md`: the one name for each thing the repository documents. Entirely about this repo.
 - `tools/inspect.cs`: portable except one line: `const string SolutionFileName = "Buildvana.slnx"`. Change it, or the sanity-check gate fails on first run.
 - this file: repository coordinates, and the index itself.

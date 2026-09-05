@@ -69,3 +69,26 @@ The lesson covers anything `bv` needs at runtime: identity, tokens, feed URLs. T
 ## Self-hosting
 
 Buildvana builds itself with the last published version of its own packages, from nuget.org when stable, or from a private NuGet feed when preview. A change to the SDK does not affect the current build. It affects the first build after the new version is published and consumed.
+
+## Documentation
+
+`documentation.md` holds the rules. This section lists what they apply to in this repository.
+
+### Files
+
+- `README.md`
+- `CHANGELOG.md`
+- `docs/`
+- `src/Buildvana.Sdk/NuGet-README.md`
+- `src/Buildvana.Tool/NuGet-README.md`
+
+### Subfolders of `docs/`
+
+- `sdk-modules/`: one page per Buildvana SDK module.
+- `tool-commands/`: one page per `bv` command or command group.
+
+### Generated regions
+
+| Region             | Page                   | Owner                                  |
+| ------------------ | ---------------------- | -------------------------------------- |
+| `TOOLCHAIN-FLOORS` | `docs/introduction.md` | `.buildvana/hooks/deps/post-update.cs` |

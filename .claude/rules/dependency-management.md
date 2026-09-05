@@ -39,12 +39,14 @@ Run `dotnet bv deps update` from the repository root. One run moves the .NET SDK
 
 `dotnet bv deps update --check` reports what a run would do, writes nothing, and exits 1 when anything would move. Add `--all` to list every pin, not only the ones that would move.
 
-Three packages form the Buildvana family: `bv`, `Buildvana.Sdk`, and `Buildvana.Runtime`. They move together, so no scope of `bv deps` manages one of them. `bv self-update` is the command that moves them. This repository never needs it. It builds with its own release, and the release pipeline re-pins the family to each published version.
+Three packages form the Buildvana family: `bv`, `Buildvana.Sdk`, and `Buildvana.Runtime`. `bv deps` does not manage them. This repository never needs to manage them: it builds with its own release, and the release pipeline re-pins the family to each published version.
 
 `docs/DependencyManagement.md` documents the scopes, the update policies, and what `bv` counts as a pin.
 
 Rules that hold for a manual update:
 
-- A pin at a prerelease version tracks the latest prerelease of its own `major.minor` line. When no prerelease sits ahead of the pin on that line, the latest stable takes over. A pin is never downgraded. Resolve a one-off lookup with the procedure in `nuget-version-lookup.md`.
+- A pin moves as far as its policy allows. `dotnet bv deps show` reports the policy of every pin, and `docs/DependencyManagement.md` says where a policy comes from. To see what a pin could move to, run `dotnet bv deps update --check --all <id>`. The pin's line ends with the latest stable and the latest prerelease the sources have. The command exits 1 when the pin would move. Do not read that exit code as a failure.
+- `dotnet bv deps update <id> --to <version>` moves every pin of that id to the version, whatever its policy. It is the one way to lower a pin.
+- `bv deps` knows nothing about a package with no pin. To find its latest version, run `dotnet package search <id> --exact-match`. It returns the latest stable version from the repository's package sources. Add `--prerelease` to count prereleases as well.
 - Do not update tools with `dotnet tool update --local --all`. For a tool pinned to a prerelease line, it picks the latest stable, which is a downgrade. It then fails the whole run instead of downgrading. Update each tool with `dotnet tool update <id> --local --version <version>` instead.
 - To lower the Roslyn floor, downgrade the `Microsoft.CodeAnalysis.*` pins and run `dotnet bv deps update` again. The hook derives `BV_MinRoslynVersion`, `BV_MinRoslynVersionHint` and `BV_SourceGeneratorsPackageFolder` from the pin, so an edit to those three properties alone does not survive the next run.
