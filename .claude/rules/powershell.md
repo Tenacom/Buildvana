@@ -1,19 +1,6 @@
 # Shell usage (Windows PowerShell 5.1)
 
-- To write files without a BOM, do NOT use `Set-Content`/`Out-File`:
-  PS 5.1 has no `utf8NoBOM` encoding, and its `UTF8` means "with BOM".
-  Use `[System.IO.File]::WriteAllText(path, content)` (UTF-8, no BOM) instead.
-- Do not compose structured file content (JSON, XML, regex-bearing text) inside
-  PowerShell string literals; escaping layers stack and fail silently. Use the
-  Write/Edit tools for file content; use the shell for commands only.
-- On a "file is being used by another process" build failure, first probe
-  whether the lock still exists (open the file for exclusive write in a
-  try/catch): IDE tooling (ReSharper worker, MSBuild language server) takes
-  transient locks that clear on their own. Never kill `dotnet` processes
-  without identifying them (`Get-CimInstance Win32_Process`) — some are the
-  IDE's.
-- IDE diagnostics delivered right after an edit may describe a state that
-  later edits in the same batch already fixed (e.g. a partial class before its
-  second part exists, or an unindexed new project reference). Treat them as
-  advisory and let a build be the arbiter — but never dismiss analyzer hits
-  (CAxxxx, SAxxxx) without checking, since all warnings are errors here.
+- To write a file without a BOM, do not use `Set-Content` or `Out-File`. PS 5.1 has no `utf8NoBOM` encoding, and its `UTF8` means "with BOM". Use `[System.IO.File]::WriteAllText(path, content)` instead, which writes UTF-8 without a BOM.
+- Do not compose structured file content, such as JSON, XML, or text with regexes, inside a PowerShell string literal. The escaping layers stack and fail silently. Use the Write and Edit tools for file content, and the shell for commands only.
+- On a "file is being used by another process" build failure, first probe whether the lock still exists, by opening the file for exclusive write in a try/catch. IDE tooling, such as the ReSharper worker and the MSBuild language server, takes transient locks that clear on their own. Never kill a `dotnet` process without identifying it through `Get-CimInstance Win32_Process`. Some of them are the IDE's.
+- An IDE diagnostic delivered right after an edit may describe a state that later edits in the same batch already fixed. A partial class before its second part exists, or an unindexed new project reference, are examples. Treat such a diagnostic as advisory and let a build decide. Never dismiss an analyzer hit, CAxxxx or SAxxxx, without checking, since every warning is an error here.
