@@ -17,7 +17,7 @@
   - The standing exception is step 3 of "Reacting to reviews", where agreeing on the plan pre-authorizes the replies.
 - Before drafting a plan, a commit message, an issue, a PR description, or a review reply, Read `.claude/output-styles/simple-tech.md` and apply it to the draft. The style sits at the start of the context, and a long session pushes it far from the draft. A fresh copy next to the draft holds better.
 - When you find a working-tree change you did not make, or one unrelated to the task, report it. Ask me before you revert or overwrite it. Unexpected state in this repo is usually my own work in progress, since I edit files by hand mid-session. Keep your own change set clean, but never discard my edits.
-- Temporary files go in `.claude/scratchpad/`, not in the session directory that Claude Code assigns. The directory ignores its own contents, so nothing in it reaches `git status` or a commit.
+- Temporary files go in `.claude/scratchpad/`, not in the session directory that Claude Code assigns. `.claude/.gitignore` keeps the directory out of git, so nothing in it reaches `git status` or a commit.
 - When a rule proves insufficient or misleading, propose a fix to the rule file instead of saving a feedback memory. Rules in `.claude/rules/` are checked into the repo and travel across machines. Memory does not. Reserve memory for cross-project context: my role, my preferences, my working style.
 
 ## Tool use and the classifier
