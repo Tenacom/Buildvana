@@ -17,8 +17,9 @@
  *   - a sentence has at most 25 words, holds no semicolon, and holds no dash;
  *   - no sentence uses a word from the banned list below.
  *
- * A backticked or double-quoted span counts as one word, and nothing inside it is checked. A line that starts
- * with a list marker starts a new sentence. A trailer block is one or more `Key: value` lines at the end of the
+ * A backticked or double-quoted span counts as one word, and nothing inside it is checked. A paragraph whose
+ * first line starts with a list marker is a list, and each marker line in it starts a new sentence. A marker at
+ * the start of any other line is text. A trailer block is one or more `Key: value` lines at the end of the
  * message, with a blank line before it. A lone `Part of #123` line counts as a trailer too.
  *
  * What the tool cannot check stays with the reader: a coined name, a subject that names the rule instead of the
@@ -79,7 +80,10 @@ if (!File.Exists(path))
     return 2;
 }
 
-var bannedPattern = string.Join("|", bannedWords.Select(Regex.Escape));
+// A space inside a banned phrase matches any whitespace, the newline between two lines of a paragraph included.
+var bannedPattern = string.Join(
+    "|",
+    bannedWords.Select(word => string.Join(@"[ \t\n]+", word.Split(' ').Select(Regex.Escape))));
 var bannedRegex = new Regex($@"\b(?:{bannedPattern})\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
 // A trailer is what git calls one (`Key: value`), plus the issue reference this repository writes on its own line.
@@ -202,7 +206,8 @@ static void CheckParagraph(
 
     var joined = builder.ToString();
     var guarded = Guard(joined);
-    var sentences = SplitSentences(guarded);
+    var isList = Regex.IsMatch(paragraph[0].Text, @"^(?:[-*]|\d+\.)[ \t]", RegexOptions.CultureInvariant);
+    var sentences = SplitSentences(guarded, isList);
     if (sentences.Count > MaxSentencesPerParagraph)
     {
         var message = $"the paragraph has {sentences.Count} sentences (max {MaxSentencesPerParagraph})";
@@ -232,7 +237,8 @@ static void CheckParagraph(
 
         foreach (Match match in bannedRegex.Matches(sentence))
         {
-            findings.Add((line, $"\"{match.Value}\" names nothing in the repository, describe the mechanism: {shown}"));
+            var word = match.Value.Replace('\n', ' ');
+            findings.Add((line, $"\"{word}\" names nothing in the repository, describe the mechanism: {shown}"));
         }
     }
 }
@@ -257,13 +263,16 @@ static string Guard(string text)
 }
 
 // A sentence ends at a period, a question mark, or an exclamation mark that is followed by whitespace, with
-// a closing quote or parenthesis allowed in between. A line that starts with a list marker also starts a
-// sentence. `\s` is not used, because in .NET it matches the no-break space that Guard relies on.
-static List<(int Offset, int Length)> SplitSentences(string guarded)
+// a closing quote or parenthesis allowed in between. In a list, a line that starts with a list marker also
+// starts a sentence, and the marker is left out of it. `\s` is not used, because in .NET it matches the
+// no-break space that Guard relies on.
+static List<(int Offset, int Length)> SplitSentences(string guarded, bool isList)
 {
+    const string SentenceEnd = @"(?<=[.!?][""')]?)[ \t\n]+";
+    const string ListMarker = @"(?:^|\n)[ \t]*(?:[-*]|\d+\.)[ \t]+";
     var boundaries = Regex.Matches(
         guarded,
-        @"(?<=[.!?][""')]?)[ \t\n]+|\n(?=[ \t]*(?:[-*]|\d+\.)[ \t])",
+        isList ? $"{ListMarker}|{SentenceEnd}" : SentenceEnd,
         RegexOptions.CultureInvariant);
 
     var sentences = new List<(int Offset, int Length)>();
@@ -307,11 +316,10 @@ static int LineOf(IReadOnlyList<(int Offset, int Line)> lineStarts, int offset)
     return line;
 }
 
-// An em dash or an en dash anywhere, or a hyphen standing alone between spaces. A hyphen inside a word
-// ("no-break") is not a dash.
+// An em dash or an en dash anywhere, or a hyphen standing alone: after whitespace or the start of the
+// sentence, and before whitespace or its end. The whitespace may be the newline between two lines of a
+// paragraph. A hyphen inside a word ("no-break") is not a dash.
 static bool HasDash(string sentence)
 {
-    return sentence.Contains('—', StringComparison.Ordinal)
-        || sentence.Contains('–', StringComparison.Ordinal)
-        || sentence.Contains(" - ", StringComparison.Ordinal);
+    return Regex.IsMatch(sentence, @"[—–]|(?:^|[ \t\n])-(?:[ \t\n]|$)", RegexOptions.CultureInvariant);
 }
