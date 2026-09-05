@@ -13,7 +13,7 @@
  *   - the subject is present, at most 72 characters long, and does not start with a word that announces what a
  *     document says now instead of what changed ("Say", "Tell", "Judge", "Clear");
  *   - the line after the subject is blank;
- *   - the body, trailers excluded, is one paragraph of at most six sentences;
+ *   - the body is present, and, trailers excluded, it is one paragraph of at most six sentences;
  *   - a sentence has at most 25 words, holds no semicolon, and holds no dash;
  *   - no sentence uses a word from the banned list below.
  *
@@ -162,7 +162,11 @@ for (var i = subjectIndex + 1; i < end; i++)
     current.Add((i + 1, text));
 }
 
-if (paragraphs.Count > 1)
+if (paragraphs.Count == 0)
+{
+    findings.Add((subjectLine, "the body is missing: state the why in one paragraph"));
+}
+else if (paragraphs.Count > 1)
 {
     findings.Add((paragraphs[1][0].Line, $"the body has {paragraphs.Count} paragraphs: state the why in one"));
 }
