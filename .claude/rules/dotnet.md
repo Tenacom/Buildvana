@@ -2,19 +2,19 @@
 
 ## Build commands
 
-First of all, use `dotnet tool restore` to install global tools. Then use the following commands for common operations:
+Run `dotnet tool restore` first, to install the local tools. Then use these commands:
 
-- `dotnet bv clean` - Remove all build artifacts, intermediate output, and temporary files.
-- `dotnet bv restore` - Restore NuGet packages.
-- `dotnet bv build` - Build the solution.
-- `dotnet bv test` - Run tests.
-- `dotnet bv pack` - Create NuGet packages in `artifacts/`.
+- `dotnet bv clean`: remove all build artifacts, intermediate output, and temporary files.
+- `dotnet bv restore`: restore NuGet packages.
+- `dotnet bv build`: build the solution.
+- `dotnet bv test`: run the tests.
+- `dotnet bv pack`: create the NuGet packages in `artifacts/`.
 
-Each one of the preceding commands includes the previous ones, so `dotnet bv build` also cleans and restores, `dotnet bv test` also builds, and so on.
+Each command includes the ones before it: `dotnet bv build` also cleans and restores, `dotnet bv test` also builds, and so on.
 
 ### Capturing build/test output
 
-`bv` streams a large amount of child-process output line by line. Captured through the agent's shell tools, this output is **truncated before the final summary** (`Build succeeded`, warning/error counts), so the result is invisible — do not run `dotnet bv build`/`test` and expect to read the outcome from the tail.
+`bv` streams a large amount of child-process output line by line. The agent's shell tools truncate that output **before the final summary**, the `Build succeeded` line and the warning and error counts. So the outcome of `dotnet bv build` or `dotnet bv test` is not readable from the tail.
 
 To verify a build, run a plain `dotnet build` through PowerShell and keep only the tail:
 
@@ -22,20 +22,20 @@ To verify a build, run a plain `dotnet build` through PowerShell and keep only t
 dotnet build Buildvana.slnx -v m | Select-Object -Last 25
 ```
 
-This shows the per-project outputs plus the `Build succeeded` / warning / error summary. Use `dotnet bv build` (or `pack`/`test`) when you actually need the full clean + restore + build chain or the artifacts; use the direct `dotnet build` above for a quick compile-and-warning check.
+This shows the per-project outputs plus the summary. Use `dotnet bv build`, `pack`, or `test` when you need the full clean, restore, and build chain, or the artifacts. Use the direct `dotnet build` above for a quick compile-and-warning check.
 
 ## Efficiency
 
-- Use built-in Read, Glob, and Grep tools to examine files. Do not shell out to cat, grep, find, or similar when built-in tools exist.
-- Prefer dotnet CLI commands over writing scripts whenever possible.
-- This is a .NET project. When a quick script is needed, write a single-file C# app, not Python.
+- Use the built-in Read, Glob, and Grep tools to examine files. Do not shell out to cat, grep, find, or similar when a built-in tool exists.
+- Prefer a dotnet CLI command over a script.
+- When a quick script is needed, write a single-file C# app, not Python. This is a .NET project.
 
 ## Inspecting third-party library internals
 
-When you need to understand what a NuGet package actually does (method behavior, argument handling, etc.):
+When you need to know what a NuGet package does, such as a method's behavior or its argument handling:
 
-- Retrieve package information using `dotnet package search <package_name> --exact-match --prerelease --verbosity detailed --format json`. Alongside the current package version you'll probably find the project URL, which is often a GitHub repository.
-- **Go straight to GitHub.** Fetch the source using WebFetch or a subagent. Most packages are open source and tagged by version on GitHub.
-- Do NOT attempt PowerShell/reflection on the DLL — type-load failures from transitive dependencies make this unreliable on Windows.
-- Do NOT try to unzip `.nupkg` files looking for `.cs` source — runtime packages do not contain source. Source packages use `.snupkg` and are rarely needed.
-- Do NOT install or invoke ad-hoc tools (`dotnet-script`, `ildasm`, etc.) unless already confirmed present; fetching source is faster and always works.
+- Retrieve the package information with `dotnet package search <package_name> --exact-match --prerelease --verbosity detailed --format json`. The output usually holds the project URL next to the current version, and the URL is often a GitHub repository.
+- **Read the source on GitHub.** Fetch it with WebFetch or a subagent. Most packages are open source and tagged by version there.
+- Do not load the DLL through PowerShell reflection. Type-load failures from transitive dependencies make it unreliable on Windows.
+- Do not unzip a `.nupkg` file looking for `.cs` source. A runtime package contains no source. Source packages use `.snupkg` and are rarely needed.
+- Do not install or invoke an ad-hoc tool, such as `dotnet-script` or `ildasm`, unless it is confirmed present. Fetching the source is faster and always works.
