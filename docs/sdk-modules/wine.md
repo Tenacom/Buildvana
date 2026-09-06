@@ -1,6 +1,7 @@
 # `Wine` module
 
-This module provides support for running Windows-only tools using [Wine](https://winehq.org) when building under Linux or macOS.
+This module runs Windows-only build tools through [Wine](https://winehq.org) when the build runs on Linux or macOS.
+It checks that a Wine command is configured, and converts host paths to the Windows paths the tools expect.
 
 ---
 
@@ -13,25 +14,25 @@ This module provides support for running Windows-only tools using [Wine](https:/
 - [Usage](#usage)
   - [`NeedWine` items](#needwine-items)
   - [`UseWine` property](#usewine-property)
-  - [Convert all paths](#convert-all-paths)
+  - [Converting paths](#converting-paths)
     - [`GetWinePath` task](#getwinepath-task)
     - [`GetWinePaths` task](#getwinepaths-task)
     - [`ConvertToWinePaths` task](#converttowinepaths-task)
-  - [Putting it all together: invoking a tool through Wine](#putting-it-all-together-invoking-a-tool-through-wine)
+  - [Invoking a tool through Wine](#invoking-a-tool-through-wine)
+- [Diagnostics](#diagnostics)
 
 ---
 
 ## Configuration
 
-The following property can be defined in a [configuration file](../sdk-configuration-files.md).
-
 ### `WineCommand` property
 
-Wine can be configured and fine-tuned in lots of ways; you may want to run your build tools in a different configuration from games or productivity applications.
+The command that runs a tool through Wine.
+Set it in a [Buildvana SDK configuration file](../sdk-configuration-files.md#buildvanasdkprops), because the command depends on the machine.
 
-A simple command line like `wine SomeTool.exe param1 param2` will almost never suffice: some environment variable such as `WINEPREFIX` might have to be set, some registry tweak might be needed, and so on.
-
-Buildvana SDK requires that a `WineCommand` property be set to the command you want to use to run tools in Wine, for example:
+A plain `wine SomeTool.exe param1 param2` seldom suffices.
+Wine reads its configuration from environment variables such as `WINEPREFIX`, and a build may need a Wine prefix of its own.
+The property holds a command prefix, with the environment variable assignments it needs:
 
 ```xml
 <PropertyGroup>
@@ -39,7 +40,7 @@ Buildvana SDK requires that a `WineCommand` property be set to the command you w
 </PropertyGroup>
 ```
 
-or the path to a script to the same effect, for example:
+It may also hold the path of a script to the same effect:
 
 ```xml
 <PropertyGroup>
@@ -47,7 +48,8 @@ or the path to a script to the same effect, for example:
 </PropertyGroup>
 ```
 
-For an example of script used to run Wine. you can take a look at [`buildvana-builder`](https://github.com/Tenacom/buildvana-builder), a Docker image based on Ubuntu LTS, featuring the .NET SDK and [Inno Setup](https://jrsoftware.org/isinfo.php)'s command-line compiler.
+[`buildvana-builder`](https://github.com/Tenacom/buildvana-builder) holds a script of that kind.
+It is a Docker image based on Ubuntu LTS, with the .NET SDK and the command-line compiler of [Inno Setup](https://jrsoftware.org/isinfo.php).
 
 ---
 
@@ -55,7 +57,7 @@ For an example of script used to run Wine. you can take a look at [`buildvana-bu
 
 ### `NeedWine` items
 
-If you use a Windows-only tool in your build process, and you want to run it with Wine when building on Linux or macOS, you must define a `NeedWine` item with the name of the tool, like this:
+Declare a `NeedWine` item for every Windows-only tool the build runs, outside any target:
 
 ```xml
 <ItemGroup>
@@ -63,25 +65,28 @@ If you use a Windows-only tool in your build process, and you want to run it wit
 </ItemGroup>
 ```
 
-`NeedWine` items MUST be defined outside any target. The name you use is just used for informative purposes; it needs not be the name of the executable.
-
-If at least one `NeedWine` item is defined, and the `WineCommand` property is not set (or is set to an empty string) after MSBuild's evaluation phase, Buildvana SDK will issue [error BVSDK2200](../sdk-diagnostics.md#wine-module-2200-2299) with a message listing the names of the tools that need Wine.
+The name is informational, and need not be the name of the executable.
+When at least one `NeedWine` item exists on Linux or macOS, and `WineCommand` is empty after evaluation, Buildvana SDK raises error BVSDK2200.
+The error lists the names of the tools.
 
 ### `UseWine` property
 
-Buildvana SDK will set the `UseWine` property to `true` if at least one `NeedWine` item is defined, _and_ the `WineCommand` property is set to a non-empty string. It will do so in a target run very early during the build process.
+Buildvana SDK sets `UseWine` to `true` in an initial target, when the build runs on Linux or macOS and at least one `NeedWine` item exists.
+On Windows, or without a `NeedWine` item, it sets the property to `false`.
+During evaluation the property is empty, so read it in a target only.
 
-When building on Windows, or if no `NeedWine` item is defined, `UseWine` will always be set to `false`.
+### Converting paths
 
-During MSBuild's evaluation phase, `UseWine` will still be empty.
+A tool takes paths to its input files, output files, and configuration files.
+MSBuild [property functions](https://learn.microsoft.com/en-us/visualstudio/msbuild/property-functions) build and combine such paths, until Wine enters the picture.
 
-### Convert all paths
+A tool that runs through Wine sees a Windows file system, and expects Windows paths, with a drive letter and backslashes.
+Wine itself expects the path of the executable as a Windows path.
+MSBuild runs on the host and behaves as a Unix program.
+It [accepts a backslash as a path separator](https://github.com/dotnet/msbuild/issues/1024), and it knows nothing about drive letters.
 
-Practically any tool needs to be passed paths to input files, output files, configuration files, you name it. You can usually count on MSBuild's [property functions](https://learn.microsoft.com/en-us/visualstudio/msbuild/property-functions) to construct and combine such paths; not as long as Wine is part of the equation, though.
-
-When a tool runs with Wine, it "thinks" it is running on Windows, and of course need Windows-style paths, with drive letters and backspaces as separators. Wine itself needs the path to the tool's executable to be a Windows path. MSBuild, on the other hand, is running under an Unix-like operating system and behaves accordingly: it will [accept backslashes as path separators](https://github.com/dotnet/msbuild/issues/1024), as a tribute to its Windows / .NET Framework roots, but it knows nothing about drive letters, for example.
-
-Converting a Unix-style path to a Windows path usable by Wine is not complicated and could even be done in MSBuild. By default, Wine maps the  `Z:` drive to the root filesystem, so that a _full_ path is easily transformed from, for example, `/usr/share/some/path` to `Z:\usr\share\some\path`.
+Wine maps the `Z:` drive to the root of the host file system by default, so a full path such as `/usr/share/some/path` becomes `Z:\usr\share\some\path`.
+A property function can do the conversion:
 
 ```xml
 <PropertyGroup>
@@ -89,7 +94,7 @@ Converting a Unix-style path to a Windows path usable by Wine is not complicated
 </PropertyGroup>
 ```
 
-What if you have a relative path, for example relative to the project directory, as is pretty customary in MSBuild? Just turn it to a full path before conversion:
+A relative path, such as one relative to the project directory, becomes a full path first:
 
 ```xml
 <PropertyGroup>
@@ -98,13 +103,14 @@ What if you have a relative path, for example relative to the project directory,
 </PropertyGroup>
 ```
 
-OK, this is getting pretty ugly pretty fast. Isn't there a cleaner, less verbose, less error-prone way to convert Unix-like paths to Wine-digestable Windows-style paths?
-
-Thanks to Buildvana SDK's compiled tasks, the answer is yes... although, this being MSBuild, we couldn't do much about verbosity.
+The three tasks below do the same with less code.
+Each one takes a host path, makes it a full path, and returns it with the `Z:` prefix and backslashes.
+On Windows, each one returns the full path unchanged.
 
 #### `GetWinePath` task
 
-To convert a Unix-style full path to a Wine path, you can use the `GetWinePath` task:
+Converts one path.
+`HostPath` is required:
 
 ```xml
 <GetWinePath Condition="$(UseWine)"
@@ -113,7 +119,7 @@ To convert a Unix-style full path to a Wine path, you can use the `GetWinePath` 
 </GetWinePath>
 ```
 
-For a relative path, just use the optional `BasePath` parameter:
+A relative `HostPath` resolves against the optional `BasePath`:
 
 ```xml
 <GetWinePath Condition="$(UseWine)"
@@ -123,28 +129,12 @@ For a relative path, just use the optional `BasePath` parameter:
 </GetWinePath>
 ```
 
-The `Condition="$(UseWine)"` attribute ensures that the task will _not_ be used when building on Windows.
+The `Condition="$(UseWine)"` attribute keeps the task from running on Windows.
 
 #### `GetWinePaths` task
 
-To convert more than one path (up to 10) you can use the `GetWinePaths` task:
-
-```xml
-<GetWinePaths Condition="$(UseWine)"
-              HostPath1="$(MyPath1)"
-              HostPath2="$(MyPath2)"
-              HostPath3="$(MyPath3)"
-              HostPath4="$(MyPath4)"
-              HostPath5="$(MyPath5)">
-  <Output TaskParameter="WinePath1" PropertyName="MyPath1" />
-  <Output TaskParameter="WinePath2" PropertyName="MyPath2" />
-  <Output TaskParameter="WinePath3" PropertyName="MyPath3" />
-  <Output TaskParameter="WinePath4" PropertyName="MyPath4" />
-  <Output TaskParameter="WinePath5" PropertyName="MyPath5" />
-</GetWinePath>
-```
-
-The optional `BasePath` parameter will be valid applied to all paths:
+Converts up to ten paths in one call, from `HostPath1` to `HostPath10`, into `WinePath1` to `WinePath10`.
+The optional `BasePath` applies to all of them:
 
 ```xml
 <GetWinePaths Condition="$(UseWine)"
@@ -164,19 +154,19 @@ The optional `BasePath` parameter will be valid applied to all paths:
 
 #### `ConvertToWinePaths` task
 
-What if the paths to convert are stored in an item group? Just use the `ConvertToWinePaths` task.
-
-Note that in this case you can't use the same item group to store the results directly, as MSBuild will just append them to existing items.
+Converts the paths held by an item group.
+`Items` is required, `BasePath` is optional, and the converted items come out of `ConvertedItems`.
+Do not send the output back to the input item group directly, because MSBuild appends output items to the existing ones.
+Remove the originals first:
 
 ```xml
-<!-- BasePath is optional, as usual -->
 <ConvertToWinePaths Condition="$(UseWine)"
                     BasePath="$(MSBuildProjectDirectory)"
                     Items="@(MyPaths)">
-  <Output TaskParameter="ComvertedItems" ItemName="MyConvertedPaths" />
+  <Output TaskParameter="ConvertedItems" ItemName="MyConvertedPaths" />
 </ConvertToWinePaths>
 
-<!-- Copy converted paths back to MyPaths, then free up memory by emptying MyConvertedPaths -->
+<!-- Copy the converted paths back to MyPaths, then empty MyConvertedPaths -->
 <ItemGroup Condition="$(UseWine)">
   <MyPaths Remove="@(MyPaths)" />
   <MyPaths Include="@(MyConvertedPaths)" />
@@ -184,18 +174,17 @@ Note that in this case you can't use the same item group to store the results di
 </ItemGroup>
 ```
 
-`ConvertToWinePaths` can do more than that. Say, for example, that the paths you want to convert are not the items' identities, but rather in a `Value` metadata:
+With `MetadataName`, the task converts the named metadata of each item instead of its identity:
 
 ```xml
-<!-- BasePath is optional, as usual -->
 <ConvertToWinePaths Condition="$(UseWine)"
                     BasePath="$(MSBuildProjectDirectory)"
                     Items="@(MyItems)"
                     MetadataName="Value">
-  <Output TaskParameter="ComvertedItems" ItemName="MyConvertedItems" />
+  <Output TaskParameter="ConvertedItems" ItemName="MyConvertedItems" />
 </ConvertToWinePaths>
 
-<!-- Copy converted items back to MyItems, then free up memory by emptying MyConvertedItems -->
+<!-- Copy the converted items back to MyItems, then empty MyConvertedItems -->
 <ItemGroup Condition="$(UseWine)">
   <MyItems Remove="@(MyItems)" />
   <MyItems Include="@(MyConvertedItems)" />
@@ -203,21 +192,18 @@ Note that in this case you can't use the same item group to store the results di
 </ItemGroup>
 ```
 
-Finally, if not _all_ `Value` metadata values are paths to convert, you can use another metadata as a flag to signal which items to convert.
-
-The following code will only convert the `Value` metadata of items whose `IsPath` metadata evaluates (case-insensitively) to `"true"`, leaving other items unchanged:
+With `OnlyIfMetadata`, the task converts the items whose named metadata is `true`, ignoring case, and leaves the others as they are:
 
 ```xml
-<!-- BasePath is optional, as usual -->
 <ConvertToWinePaths Condition="$(UseWine)"
                     BasePath="$(MSBuildProjectDirectory)"
                     Items="@(MyItems)"
                     MetadataName="Value"
                     OnlyIfMetadata="IsPath">
-  <Output TaskParameter="ComvertedItems" ItemName="MyConvertedItems" />
+  <Output TaskParameter="ConvertedItems" ItemName="MyConvertedItems" />
 </ConvertToWinePaths>
 
-<!-- Copy converted items back to MyItems, then free up memory by emptying MyConvertedItems -->
+<!-- Copy the converted items back to MyItems, then empty MyConvertedItems -->
 <ItemGroup Condition="$(UseWine)">
   <MyItems Remove="@(MyItems)" />
   <MyItems Include="@(MyConvertedItems)" />
@@ -225,13 +211,12 @@ The following code will only convert the `Value` metadata of items whose `IsPath
 </ItemGroup>
 ```
 
-### Putting it all together: invoking a tool through Wine
+### Invoking a tool through Wine
 
-Let's pretend there's a Windows-only program, called _ExeMangler_, that takes our compiled application's EXE file and does something with it. What it does is not important, as this is only an example.
+Take a Windows-only program, ExeMangler, that processes the executable file of an application.
+Its NuGet package is referenced, the `ExeManglerFullPath` property holds its path, and it takes one argument: the full path of the executable to process.
 
-_ExeMangler_ comes in its own NuGet package, which of course we referenced, and the full path to it is in the `ExeManglerFullPath` property. _ExeMangler_ must be invoked with exactly one parameter: the full path to the executable file to work on.
-
-If we only built our application on Windows, the code would be pretty straightforward:
+On Windows alone, one target does the job:
 
 ```xml
 <Target Name="InvokeExeMangler" AfterTargets="PostBuildEvent">
@@ -241,36 +226,36 @@ If we only built our application on Windows, the code would be pretty straightfo
 </Target>
 ```
 
-Here's how we can support running _ExeMangler_ through Wine when building on Linux or macOS. Note that nothing changes when the `UseWine` property is `false`, i.e. on Windows:
+The target below runs ExeMangler through Wine on Linux and macOS, and unchanged on Windows, where `UseWine` is `false`:
 
 ```xml
-<!-- Trigger Wine module -->
+<!-- Activate the Wine module -->
 <ItemGroup>
   <NeedWine Include="ExeMangler" />
 </ItemGroup>
 
 <Target Name="InvokeExeMangler" AfterTargets="PostBuildEvent">
 
-  <!-- Let's use two "local" properties for the paths we need to convert -->
+  <!-- Two "local" properties for the paths to convert -->
   <PropertyGroup>
     <_TEMP_ExeManglerFullPath>$(ExeManglerFullPath)</_TEMP_ExeManglerFullPath>
     <_TEMP_TargetPath>$(TargetPath)</_TEMP_TargetPath>
   </PropertyGroup>
 
-  <!-- Convert paths when needed -->
+  <!-- Convert the paths when needed -->
   <GetWinePaths Condition="$(UseWine)"
                 HostPath1="$(_TEMP_ExeManglerFullPath)"
-                HostPath2="$(_TEMP_TargetFullPath)">
+                HostPath2="$(_TEMP_TargetPath)">
     <Output TaskParameter="WinePath1" PropertyName="_TEMP_ExeManglerFullPath" />
-    <Output TaskParameter="WinePath2" PropertyName="_TEMP_TargetFullPath" />
+    <Output TaskParameter="WinePath2" PropertyName="_TEMP_TargetPath" />
   </GetWinePaths>
 
-  <!-- Construct the command line for ExeMangler -->
+  <!-- Build the command line -->
   <PropertyGroup>
-    <_TEMP_ExeManglerCommand>$(_TEMP_ExeManglerFullPath) $(_TEMP_TargetFullPath)</_TEMP_ExeManglerCommand>
+    <_TEMP_ExeManglerCommand>$(_TEMP_ExeManglerFullPath) $(_TEMP_TargetPath)</_TEMP_ExeManglerCommand>
   </PropertyGroup>
 
-  <!-- When using Wine, prepend WineCommand to the command line -->
+  <!-- Under Wine, prepend WineCommand to the command line -->
   <PropertyGroup Condition="$(UseWine)">
     <_TEMP_ExeManglerCommand>$(WineCommand) $(_TEMP_ExeManglerCommand)</_TEMP_ExeManglerCommand>
   </PropertyGroup>
@@ -278,7 +263,7 @@ Here's how we can support running _ExeMangler_ through Wine when building on Lin
   <!-- Invoke ExeMangler -->
   <Exec Command="$(_TEMP_ExeManglerCommand)" />
 
-  <!-- Clear "local" properties -->
+  <!-- Clear the "local" properties -->
   <PropertyGroup>
     <_TEMP_ExeManglerFullPath />
     <_TEMP_TargetPath />
@@ -288,4 +273,10 @@ Here's how we can support running _ExeMangler_ through Wine when building on Lin
 </Target>
 ```
 
-For a more convoluted example, you can take a look at [how Buildvana SDK invokes Inno Setup's compiler](../../src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets).
+[`Module.Core.InnoSetup.targets`](../../src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets) shows how Buildvana SDK invokes the Inno Setup compiler the same way.
+
+---
+
+## Diagnostics
+
+The module raises the diagnostics of the [Wine module (2200-2299)](../sdk-diagnostics.md#wine-module-2200-2299) range.
