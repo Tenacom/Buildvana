@@ -229,13 +229,14 @@ internal sealed class ReleaseCommand(
 
             if (changelogUpdated)
             {
-                // Change the new section's title in the changelog to reflect the actual version.
-                changelog.UpdateNewSectionTitle();
+                // Finalize the new section of the changelog with the version actually released: its title
+                // names that version, and its file links are pinned to that version's tag.
+                changelog.FinalizeNewSection();
                 release.UpdateRepository(ChangelogService.FileName);
             }
             else
             {
-                reporter.Notice("Changelog section title update skipped: changelog has not been updated.");
+                reporter.Notice("Changelog new section finalization skipped: changelog has not been updated.");
             }
 
             // Discover the packages produced by the pack step; both the post-release hook args and

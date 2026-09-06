@@ -101,8 +101,7 @@ internal abstract class ServerAdapter
     /// </summary>
     /// <param name="path">The path to the file.</param>
     /// <param name="commitish">The SHA or reference to which the file belongs.</param>
-    /// <returns></returns>
-    // ReSharper disable once UnusedMemberInSuper.Global - We may need this method in the future
+    /// <returns>The URL of the file identified by <paramref name="path"/> at <paramref name="commitish"/>.</returns>
     public abstract Uri GetFileUrl(string path, string commitish);
 
     /// <summary>

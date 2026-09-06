@@ -217,18 +217,31 @@ internal static partial class ChangelogUpdater
     }
 
     /// <summary>
-    /// Rewrites a changelog, replacing the heading of the first section after the "Unreleased changes" section
-    /// to reflect a change in the released version.
+    /// Rewrites a changelog to finalize the first section after the "Unreleased changes" section, once the
+    /// released version is known: the heading of the section is replaced, and each relative file link in its
+    /// body is pinned to the release tag.
     /// </summary>
     /// <param name="lines">The lines of the changelog.</param>
     /// <param name="makeSectionTitle">A callback that produces the new title of the section. It is called
     /// at most once, and only if a section heading is actually replaced.</param>
+    /// <param name="getFileUrl">A callback that produces the URL, at the release tag, of the file at a path
+    /// relative to the home directory. It is called once per relative file link in the section.</param>
     /// <returns>The rewritten changelog, with lines separated by <c>"\n"</c>.</returns>
     /// <exception cref="BuildFailedException">The changelog contains no sections, or only one section.</exception>
-    public static string UpdateNewSectionTitle(IReadOnlyList<string> lines, Func<string> makeSectionTitle)
+    /// <remarks>
+    /// <para>A relative file link is an inline link, or an image, whose target has no URI scheme and does not
+    /// start with <c>'#'</c>. The target is a path relative to the home directory, where the changelog sits,
+    /// with an optional anchor after <c>'#'</c>. The anchor is kept. Code spans are not recognized, so a link
+    /// inside one is rewritten too, and reference-style links are not handled.</para>
+    /// </remarks>
+    public static string FinalizeNewSection(
+        IReadOnlyList<string> lines,
+        Func<string> makeSectionTitle,
+        Func<string, Uri> getFileUrl)
     {
         Guard.IsNotNull(lines);
         Guard.IsNotNull(makeSectionTitle);
+        Guard.IsNotNull(getFileUrl);
 
         // Using a StringWriter instead of a StringBuilder allows for a custom line separator
         // Under Windows, a StringBuilder would only use "\r\n" as a line separator, which would be wrong in this case
@@ -239,8 +252,9 @@ internal static partial class ChangelogUpdater
 
         const int readingFileHeader = 0;
         const int readingUnreleasedChangesSection = 1;
-        const int readingRemainderOfFile = 2;
-        const int readingDone = 3;
+        const int readingNewSection = 2;
+        const int readingRemainderOfFile = 3;
+        const int readingDone = 4;
         var lineIndex = 0;
         var state = readingFileHeader;
         while (state != readingDone)
@@ -263,11 +277,28 @@ internal static partial class ChangelogUpdater
                     {
                         // Replace header of second section
                         writer.WriteLine("## " + makeSectionTitle());
-                        state = readingRemainderOfFile;
+                        state = readingNewSection;
                         break;
                     }
 
                     writer.WriteLine(line);
+                    break;
+                case readingNewSection:
+                    if (line is null)
+                    {
+                        state = readingDone;
+                        break;
+                    }
+
+                    if (sectionHeadingRegex.IsMatch(line))
+                    {
+                        // Reached header of next section, which was released already
+                        writer.WriteLine(line);
+                        state = readingRemainderOfFile;
+                        break;
+                    }
+
+                    writer.WriteLine(PinFileLinks(line, getFileUrl));
                     break;
                 case readingRemainderOfFile:
                     if (line is null)
@@ -307,9 +338,41 @@ internal static partial class ChangelogUpdater
     private static string? GetLineOrNull(IReadOnlyList<string> lines, int index)
         => index < lines.Count ? lines[index] : null;
 
+    // Replaces the target of each relative file link in a line with the URL of the file at the release tag.
+    // The target of an inline link, or of an image, is what follows "](" up to the first whitespace or closing
+    // parenthesis, so that a title after the target is left alone. A target with a scheme is a URL already, and
+    // a target starting with '#' is an anchor in the changelog itself: both are left alone. Anything else is a
+    // path relative to the home directory, followed by an optional anchor of its own, which is kept.
+    // AbsoluteUri keeps the URL escaped, where ToString would turn "%20" back into a space and break the link.
+    private static string PinFileLinks(string line, Func<string, Uri> getFileUrl)
+    {
+        return GetInlineLinkTargetRegex().Replace(line, PinTarget);
+
+        string PinTarget(Match match)
+        {
+            var target = match.Groups["target"].Value;
+            if (target.StartsWith('#') || GetUriSchemeRegex().IsMatch(target))
+            {
+                return match.Value;
+            }
+
+            var anchorIndex = target.IndexOf('#', StringComparison.Ordinal);
+            var path = anchorIndex < 0 ? target : target[..anchorIndex];
+            var anchor = anchorIndex < 0 ? string.Empty : target[anchorIndex..];
+            return "](" + getFileUrl(path).AbsoluteUri + anchor;
+        }
+    }
+
     [GeneratedRegex("^ {0,3}##($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex GetSectionHeadingRegex();
 
     [GeneratedRegex("^ {0,3}###($|[^#])", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex GetSubsectionHeadingRegex();
+
+    [GeneratedRegex(@"\]\((?<target>[^\s)]+)", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    private static partial Regex GetInlineLinkTargetRegex();
+
+    // A scheme, per RFC 3986 section 3.1, is a letter followed by letters, digits, '+', '-', or '.', then ':'.
+    [GeneratedRegex("^[A-Za-z][A-Za-z0-9+.-]*:", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    private static partial Regex GetUriSchemeRegex();
 }

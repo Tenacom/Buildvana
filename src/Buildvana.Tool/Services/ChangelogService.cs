@@ -91,17 +91,20 @@ internal sealed class ChangelogService
     }
 
     /// <summary>
-    /// Updates the heading of the first section of the changelog after the "Unreleased changes" section
-    /// to reflect a change in the released version.
+    /// Finalizes the first section of the changelog after the "Unreleased changes" section, once the released
+    /// version is known: updates its heading, and pins each relative file link in it to the release tag.
     /// </summary>
-    public void UpdateNewSectionTitle()
+    public void FinalizeNewSection()
     {
-        _reporter.Info("Updating changelog's new release section title...");
+        _reporter.Info("Finalizing changelog's new release section...");
         var lines = UserFile.ReadAllLines(FileName, FileEncoding);
-        var text = ChangelogUpdater.UpdateNewSectionTitle(lines, MakeSectionTitle);
+        var text = ChangelogUpdater.FinalizeNewSection(lines, MakeSectionTitle, GetFileUrl);
         UserFile.WriteAllText(FileName, text, FileEncoding);
     }
 
     private string MakeSectionTitle()
         => ChangelogUpdater.MakeSectionTitle(_version.CurrentStr, _server.GetReleaseUrl(_version.CurrentStr), DateTime.Now);
+
+    // The release tag is named after the version, so the version string is the commitish the links pin to.
+    private Uri GetFileUrl(string path) => _server.GetFileUrl(path, _version.CurrentStr);
 }
