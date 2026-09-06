@@ -24,6 +24,7 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `output-styles/simple-tech.md`: the register for every kind of prose, from chat to commit messages. Select it with `/output-style`.
 - `templates/Default.cs`: new-file template carrying the BOM and the copyright preamble. The preamble names Tenacom. Change it for a project under different ownership.
 - `tools/lint-commit.cs`: commit-message check, run on the draft before every commit. Its `bannedWords` and `announcingVerbs` arrays come from this repository's past commits. They apply anywhere, and a copy may extend them.
+- `tools/lint-docs.cs`: documentation check, the first phase of `inspect.cs`. Its `fenceTags` array is the list in `rules/documentation.md`. Its `todoExemptFiles` array names this repository's root README, until #374 rewrites it, and a copy empties it.
 - `scratchpad/`: scratch directory for temporary files, commit messages included. Created on first use.
 - `settings.json`: MCP servers and tool permissions. Nothing repo-specific in it.
 - `.gitignore`: keeps `settings.local.json`, `worktrees/`, `agent-memory-local/`, and `scratchpad/` out of git. Nothing repo-specific in it.
