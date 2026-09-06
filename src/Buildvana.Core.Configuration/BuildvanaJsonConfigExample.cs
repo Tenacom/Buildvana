@@ -32,7 +32,7 @@ public static class BuildvanaJsonConfigExample
     private const int WrappedLineLimit = 72;
 
     // A description is a one-liner, or a two-liner where it must be. A third line is documentation, which
-    // belongs in docs/BuildvanaToolConfiguration.md rather than in an editor tooltip.
+    // belongs in docs/configuration-file.md rather than in an editor tooltip.
     private const int MaxDescriptionLines = 2;
 
     private const string IndentUnit = "  ";

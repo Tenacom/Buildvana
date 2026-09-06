@@ -2,7 +2,7 @@
 
 TODO: document `buildvana.json` / `buildvana.jsonc` — discovery, home-directory marking, validation, and every setting.
 
-The `dependencies` section is documented in [Dependency management](DependencyManagement.md), together with the command it configures.
+The `dependencies` section is documented in [Dependency management](tool-commands/dependencies.md), together with the command it configures.
 
 Until then, four files cover the ground between them.
 

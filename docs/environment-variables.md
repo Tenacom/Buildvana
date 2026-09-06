@@ -6,11 +6,11 @@ This page lists every environment variable `bv` reads or sets. Variables consume
 
 ### `BV_DELEGATED`
 
-The recursion guard for [delegation](DirectoryStructure.md#configdotnet-toolsjson): when a non-local `bv` hands an invocation over to the version pinned in the repository's tool manifest, it sets this variable on the delegated child, with the delegating `bv`'s version as the value. Its mere presence makes `bv` run in place unconditionally, so a delegated invocation can never delegate again, even if the installation layout is mis-detected.
+The recursion guard for [delegation](directory-structure.md#configdotnet-toolsjson): when a non-local `bv` hands an invocation over to the version pinned in the repository's tool manifest, it sets this variable on the delegated child, with the delegating `bv`'s version as the value. Its mere presence makes `bv` run in place unconditionally, so a delegated invocation can never delegate again, even if the installation layout is mis-detected.
 
 The variable is not meant to be set by hand; to keep `bv` from delegating, pass `--skip-delegation` instead.
 
-The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [hooks](Hooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed args.
+The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [hooks](hooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed args.
 
 ### `CI_SERVER_HOST`
 
@@ -24,7 +24,7 @@ By default, `bv` sets both to UTF-8 for the duration of its run and restores the
 
 ### `DOTNET_CLI_HOME`
 
-Read the way the .NET CLI itself reads it: when set, it replaces the user profile directory as the root under which the CLI keeps its per-user state. `bv` consults it to locate the SDK's tool resolver cache (`.dotnet/toolResolverCache` under that root), which [delegation](DirectoryStructure.md#configdotnet-toolsjson) probes to decide whether the pinned `bv` is already installed or a `dotnet tool restore` must run first. When the variable is absent, the platform home directory applies (`USERPROFILE` on Windows, `HOME` elsewhere), as in the CLI.
+Read the way the .NET CLI itself reads it: when set, it replaces the user profile directory as the root under which the CLI keeps its per-user state. `bv` consults it to locate the SDK's tool resolver cache (`.dotnet/toolResolverCache` under that root), which [delegation](directory-structure.md#configdotnet-toolsjson) probes to decide whether the pinned `bv` is already installed or a `dotnet tool restore` must run first. When the variable is absent, the platform home directory applies (`USERPROFILE` on Windows, `HOME` elsewhere), as in the CLI.
 
 ### `DOTNET_HOST_PATH`
 
@@ -54,7 +54,7 @@ Read on non-Windows platforms only, where it is the POSIX way for a terminal to 
 
 ### Secret-carrying variables named by the configuration file
 
-`bv` never stores secrets; the [configuration file](BuildvanaToolConfiguration.md) names the environment variable that carries each one, and `bv` reads the value at the point of use:
+`bv` never stores secrets; the [configuration file](configuration-file.md) names the environment variable that carries each one, and `bv` reads the value at the point of use:
 
 - `github.tokenEnv` names the variable holding the GitHub token used by release operations; the default name is `GITHUB_TOKEN`.
 - `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys for the NuGet push feeds.

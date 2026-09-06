@@ -23,7 +23,7 @@ Buildvana SDK configuration files are `.props` and/or `.targets` files whose sco
 
 At [Tenacom](https://github.com/Tenacom) we strive to minimize the amount of preliminary setup a developer needs to work on a project. Ideally, one should be able to clone a repository, open an IDE (either Visual Studio, Rider, or VS Code) and start working, no additional installations required.
 
-That having been said, there are situations where different actions are required to achieve the same results on different machines (say, CI/CD builders vs. developer workstations) and/or for different users. A notable example is invoking [Wine](https://winehq.org) to run a Windows-only tool in the context of a build on a Linux or Mac system (see [Wine module's documentation](modules/Wine.md) for details).
+That having been said, there are situations where different actions are required to achieve the same results on different machines (say, CI/CD builders vs. developer workstations) and/or for different users. A notable example is invoking [Wine](https://winehq.org) to run a Windows-only tool in the context of a build on a Linux or Mac system (see [Wine module's documentation](sdk-modules/wine.md) for details).
 
 Configuration files are the exception to the basic rule that every file needed for the build must either reside in the repository, or in a NuGet package.
 

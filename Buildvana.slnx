@@ -29,21 +29,23 @@
     <File Path="THIRD-PARTY-NOTICES.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/">
-    <File Path="docs/BuildvanaToolConfiguration.md" />
-    <File Path="docs/ConstantsSyntax.md" />
-    <File Path="docs/DependencyManagement.md" />
-    <File Path="docs/DirectoryStructure.md" />
-    <File Path="docs/EnvironmentVariables.md" />
+    <File Path="docs/configuration-file.md" />
+    <File Path="docs/constants-syntax.md" />
+    <File Path="docs/directory-structure.md" />
+    <File Path="docs/environment-variables.md" />
     <File Path="docs/GettingStarted.md" />
-    <File Path="docs/Hooks.md" />
-    <File Path="docs/InternalUseProperties.md" />
+    <File Path="docs/hooks.md" />
+    <File Path="docs/internal-use-properties.md" />
     <File Path="docs/Introduction.md" />
-    <File Path="docs/SdkConfigurationFiles.md" />
-    <File Path="docs/SdkDiagnostics.md" />
-    <File Path="docs/ToolDiagnostics.md" />
+    <File Path="docs/sdk-configuration-files.md" />
+    <File Path="docs/sdk-diagnostics.md" />
+    <File Path="docs/tool-diagnostics.md" />
   </Folder>
-  <Folder Name="/- Documentation/docs/modules/">
-    <File Path="docs/modules/Wine.md" />
+  <Folder Name="/- Documentation/docs/sdk-modules/">
+    <File Path="docs/sdk-modules/wine.md" />
+  </Folder>
+  <Folder Name="/- Documentation/docs/tool-commands/">
+    <File Path="docs/tool-commands/dependencies.md" />
   </Folder>
   <Folder Name="/- Schemas/">
     <File Path="schemas/buildvana.schema.json" />

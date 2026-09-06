@@ -49,7 +49,7 @@ The hook runs after the pins of the `packages`, `tools` and `sdks` scopes are wr
 
 The args state what the run made of every pin of every selected scope: the id, the file that declares it, the version it had, the version it reached (or would reach), the policy that governs it, and the latest stable and prerelease versions the sources have. A scope the invocation left out contributes nothing. A pin an argument left out is stated as `Skipped`, so a hook that derives state from one particular pin sees that pin in every run.
 
-The args also state the [transitive overrides](DependencyManagement.md#transitive-overrides) in effect: the package, the version the generated file states, and the file stating it. An apply run has just rewritten those files, and a check run reports what the last apply run wrote.
+The args also state the [transitive overrides](tool-commands/dependencies.md#transitive-overrides) in effect: the package, the version the generated file states, and the file stating it. An apply run has just rewritten those files, and a check run reports what the last apply run wrote.
 
 This hook has an exit-code convention of its own, because a check run has a verdict to give:
 
@@ -97,22 +97,22 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 
 `PostReleaseHookArgs.Load()` reads the args of the `release/post-release` hook; the members are:
 
-| Member                           | Type           | Content                                                                                                                                                                              |
-| -------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `RuntimeInfo.Version`            | string         | The version of the `bv` running the hook, in semantic version form without build metadata.                                                                                           |
-| `RuntimeInfo.DelegatingVersion`  | string or null | The version of the `bv` that [delegated](DirectoryStructure.md#configdotnet-toolsjson) the run to the version pinned in the tool manifest, or `null` when the run was not delegated. |
-| `RuntimeInfo.HomeDirectory`      | string         | Absolute path of the home directory, without a trailing separator (also the hook's working directory).                                                                               |
-| `RuntimeInfo.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                                       |
-| `RuntimeInfo.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                                 |
-| `RuntimeInfo.ConfigFile`         | string or null | Absolute path of the configuration file this run read, or `null` when the repository has none. See [The repository configuration](#the-repository-configuration).                    |
-| `RuntimeInfo.Configuration`      | object         | The resolved configuration of the run: every setting at its effective value. See [The repository configuration](#the-repository-configuration).                                      |
-| `Release.Version`                | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                                          |
-| `Release.SemVer`                 | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                                     |
-| `Release.PreviousVersion`        | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                                           |
-| `Release.IsPrerelease`           | boolean        | Whether the version being released is a prerelease.                                                                                                                                  |
-| `Release.IsPublicRelease`        | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                                      |
-| `ProducedPackages`               | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                                 |
-| `Dogfooding`                     | boolean        | Whether the built-in self-reference rewrites will run in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value.         |
+| Member                           | Type           | Content                                                                                                                                                                               |
+| -------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RuntimeInfo.Version`            | string         | The version of the `bv` running the hook, in semantic version form without build metadata.                                                                                            |
+| `RuntimeInfo.DelegatingVersion`  | string or null | The version of the `bv` that [delegated](directory-structure.md#configdotnet-toolsjson) the run to the version pinned in the tool manifest, or `null` when the run was not delegated. |
+| `RuntimeInfo.HomeDirectory`      | string         | Absolute path of the home directory, without a trailing separator (also the hook's working directory).                                                                                |
+| `RuntimeInfo.ArtifactsDirectory` | string         | Absolute path of the directory containing the build artifacts.                                                                                                                        |
+| `RuntimeInfo.ScratchDirectory`   | string         | Absolute path of bv's scratch directory (`.buildvana-temp/`), where hooks can write temporary files without affecting working-tree change detection.                                  |
+| `RuntimeInfo.ConfigFile`         | string or null | Absolute path of the configuration file this run read, or `null` when the repository has none. See [The repository configuration](#the-repository-configuration).                     |
+| `RuntimeInfo.Configuration`      | object         | The resolved configuration of the run: every setting at its effective value. See [The repository configuration](#the-repository-configuration).                                       |
+| `Release.Version`                | string         | The version being released, in simple `MAJOR.MINOR.PATCH` form, without any prerelease tag.                                                                                           |
+| `Release.SemVer`                 | string         | The version being released, in full semantic version form. This is the form used by release tags and embedded in artifact names.                                                      |
+| `Release.PreviousVersion`        | string or null | The previously released version (the latest release tag reachable from `HEAD`), or `null` when no previous release exists.                                                            |
+| `Release.IsPrerelease`           | boolean        | Whether the version being released is a prerelease.                                                                                                                                   |
+| `Release.IsPublicRelease`        | boolean        | Whether the release is a public release. Currently always `true`, since `bv release` requires a public release.                                                                       |
+| `ProducedPackages`               | dictionary     | The packages produced by the release, mapping package ID to version.                                                                                                                  |
+| `Dogfooding`                     | boolean        | Whether the built-in self-reference rewrites will run in this release — the resolved outcome, which the `--dogfood` flag may have overridden away from the configured value.          |
 
 `PostUpdateHookArgs.Load()` reads the args of the `deps/post-update` hook. It carries the same `RuntimeInfo` section, plus:
 
@@ -173,7 +173,7 @@ if (configFile is not null)
 
 ## The build environment
 
-Hooks require Buildvana SDK, which reaches them through the repository's `Directory.Build.{props,targets}` parent-inclusion chain (see [Directory structure](DirectoryStructure.md#directorybuildprops-and-directorybuildtargets)). A repository may add its own `.buildvana/Directory.Build.{props,targets}`, but they must follow the well-known parent-inclusion pattern; otherwise hooks break and the repository owns both pieces.
+Hooks require Buildvana SDK, which reaches them through the repository's `Directory.Build.{props,targets}` parent-inclusion chain (see [Directory structure](directory-structure.md#directorybuildprops-and-directorybuildtargets)). A repository may add its own `.buildvana/Directory.Build.{props,targets}`, but they must follow the well-known parent-inclusion pattern; otherwise hooks break and the repository owns both pieces.
 
 Hooks also inherit the rest of the repository's implicit build files (`nuget.config`, `global.json`, analyzer configuration): a hook compiles under the same rules as the rest of the repository, warnings-as-errors included.
 

@@ -41,11 +41,11 @@ Run `dotnet bv deps update` from the repository root. One run moves the .NET SDK
 
 Three packages form the Buildvana family: `bv`, `Buildvana.Sdk`, and `Buildvana.Runtime`. `bv deps` does not manage them. This repository never needs to manage them: it builds with its own release, and the release pipeline re-pins the family to each published version.
 
-`docs/DependencyManagement.md` documents the scopes, the update policies, and what `bv` counts as a pin.
+`docs/tool-commands/dependencies.md` documents the scopes, the update policies, and what `bv` counts as a pin.
 
 Rules that hold for a manual update:
 
-- A pin moves as far as its policy allows. `dotnet bv deps show` reports the policy of every pin, and `docs/DependencyManagement.md` says where a policy comes from. To see what a pin could move to, run `dotnet bv deps update --check --all <id>`. The pin's line ends with the latest stable and the latest prerelease the sources have. The command exits 1 when the pin would move. Do not read that exit code as a failure.
+- A pin moves as far as its policy allows. `dotnet bv deps show` reports the policy of every pin, and `docs/tool-commands/dependencies.md` says where a policy comes from. To see what a pin could move to, run `dotnet bv deps update --check --all <id>`. The pin's line ends with the latest stable and the latest prerelease the sources have. The command exits 1 when the pin would move. Do not read that exit code as a failure.
 - `dotnet bv deps update <id> --to <version>` moves every pin of that id to the version, whatever its policy. It is the one way to lower a pin.
 - `bv deps` knows nothing about a package with no pin. To find its latest version, run `dotnet package search <id> --exact-match`. It returns the latest stable version from the repository's package sources. Add `--prerelease` to count prereleases as well.
 - Do not update tools with `dotnet tool update --local --all`. For a tool pinned to a prerelease line, it picks the latest stable, which is a downgrade. It then fails the whole run instead of downgrading. Update each tool with `dotnet tool update <id> --local --version <version>` instead.
