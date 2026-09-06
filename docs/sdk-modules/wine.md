@@ -34,17 +34,17 @@ A simple command line like `wine SomeTool.exe param1 param2` will almost never s
 Buildvana SDK requires that a `WineCommand` property be set to the command you want to use to run tools in Wine, for example:
 
 ```xml
-  <PropertyGroup>
-    <WineCommand>WINEPREFIX=~/.alternateWineConfiguration wine</WineCommand>
-  </PropertyGroup>
+<PropertyGroup>
+  <WineCommand>WINEPREFIX=~/.alternateWineConfiguration wine</WineCommand>
+</PropertyGroup>
 ```
 
 or the path to a script to the same effect, for example:
 
 ```xml
-  <PropertyGroup>
-    <WineCommand>/usr/local/bin/run-wine</WineCommand>
-  </PropertyGroup>
+<PropertyGroup>
+  <WineCommand>/usr/local/bin/run-wine</WineCommand>
+</PropertyGroup>
 ```
 
 For an example of script used to run Wine. you can take a look at [`buildvana-builder`](https://github.com/Tenacom/buildvana-builder), a Docker image based on Ubuntu LTS, featuring the .NET SDK and [Inno Setup](https://jrsoftware.org/isinfo.php)'s command-line compiler.
@@ -58,9 +58,9 @@ For an example of script used to run Wine. you can take a look at [`buildvana-bu
 If you use a Windows-only tool in your build process, and you want to run it with Wine when building on Linux or macOS, you must define a `NeedWine` item with the name of the tool, like this:
 
 ```xml
-  <ItemGroup>
-    <NeedWine Include="ToolName" />
-  </ItemGroup>
+<ItemGroup>
+  <NeedWine Include="ToolName" />
+</ItemGroup>
 ```
 
 `NeedWine` items MUST be defined outside any target. The name you use is just used for informative purposes; it needs not be the name of the executable.
@@ -84,18 +84,18 @@ When a tool runs with Wine, it "thinks" it is running on Windows, and of course 
 Converting a Unix-style path to a Windows path usable by Wine is not complicated and could even be done in MSBuild. By default, Wine maps the  `Z:` drive to the root filesystem, so that a _full_ path is easily transformed from, for example, `/usr/share/some/path` to `Z:\usr\share\some\path`.
 
 ```xml
-  <PropertyGroup>
-    <MyFullPath>Z:$(MyFullPath.Replace('/', '\\'))</MyFullPath>
-  </PropertyGroup>
+<PropertyGroup>
+  <MyFullPath>Z:$(MyFullPath.Replace('/', '\\'))</MyFullPath>
+</PropertyGroup>
 ```
 
 What if you have a relative path, for example relative to the project directory, as is pretty customary in MSBuild? Just turn it to a full path before conversion:
 
 ```xml
-  <PropertyGroup>
-    <MyPath>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(MyPath)'))</MyPath>
-    <MyPath>Z:$(MyPath.Replace('/', '\\'))</MyPath>
-  </PropertyGroup>
+<PropertyGroup>
+  <MyPath>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(MyPath)'))</MyPath>
+  <MyPath>Z:$(MyPath.Replace('/', '\\'))</MyPath>
+</PropertyGroup>
 ```
 
 OK, this is getting pretty ugly pretty fast. Isn't there a cleaner, less verbose, less error-prone way to convert Unix-like paths to Wine-digestable Windows-style paths?
@@ -107,20 +107,20 @@ Thanks to Buildvana SDK's compiled tasks, the answer is yes... although, this be
 To convert a Unix-style full path to a Wine path, you can use the `GetWinePath` task:
 
 ```xml
-  <GetWinePath Condition="$(UseWine)"
-               HostPath="$(MyPath)">
-    <Output TaskParameter="WinePath" PropertyName="MyPath" />
-  </GetWinePath>
+<GetWinePath Condition="$(UseWine)"
+             HostPath="$(MyPath)">
+  <Output TaskParameter="WinePath" PropertyName="MyPath" />
+</GetWinePath>
 ```
 
 For a relative path, just use the optional `BasePath` parameter:
 
 ```xml
-  <GetWinePath Condition="$(UseWine)"
-               BasePath="$(MSBuildProjectDirectory)"
-               HostPath="$(MyPath)">
-    <Output TaskParameter="WinePath" PropertyName="MyPath" />
-  </GetWinePath>
+<GetWinePath Condition="$(UseWine)"
+             BasePath="$(MSBuildProjectDirectory)"
+             HostPath="$(MyPath)">
+  <Output TaskParameter="WinePath" PropertyName="MyPath" />
+</GetWinePath>
 ```
 
 The `Condition="$(UseWine)"` attribute ensures that the task will _not_ be used when building on Windows.
@@ -130,36 +130,36 @@ The `Condition="$(UseWine)"` attribute ensures that the task will _not_ be used 
 To convert more than one path (up to 10) you can use the `GetWinePaths` task:
 
 ```xml
-  <GetWinePaths Condition="$(UseWine)"
-                HostPath1="$(MyPath1)"
-                HostPath2="$(MyPath2)"
-                HostPath3="$(MyPath3)"
-                HostPath4="$(MyPath4)"
-                HostPath5="$(MyPath5)">
-    <Output TaskParameter="WinePath1" PropertyName="MyPath1" />
-    <Output TaskParameter="WinePath2" PropertyName="MyPath2" />
-    <Output TaskParameter="WinePath3" PropertyName="MyPath3" />
-    <Output TaskParameter="WinePath4" PropertyName="MyPath4" />
-    <Output TaskParameter="WinePath5" PropertyName="MyPath5" />
-  </GetWinePath>
+<GetWinePaths Condition="$(UseWine)"
+              HostPath1="$(MyPath1)"
+              HostPath2="$(MyPath2)"
+              HostPath3="$(MyPath3)"
+              HostPath4="$(MyPath4)"
+              HostPath5="$(MyPath5)">
+  <Output TaskParameter="WinePath1" PropertyName="MyPath1" />
+  <Output TaskParameter="WinePath2" PropertyName="MyPath2" />
+  <Output TaskParameter="WinePath3" PropertyName="MyPath3" />
+  <Output TaskParameter="WinePath4" PropertyName="MyPath4" />
+  <Output TaskParameter="WinePath5" PropertyName="MyPath5" />
+</GetWinePath>
 ```
 
 The optional `BasePath` parameter will be valid applied to all paths:
 
 ```xml
-  <GetWinePaths Condition="$(UseWine)"
-                BasePath="$(MSBuildProjectDirectory)"
-                HostPath1="$(MyPath1)"
-                HostPath2="$(MyPath2)"
-                HostPath3="$(MyPath3)"
-                HostPath4="$(MyPath4)"
-                HostPath5="$(MyPath5)">
-    <Output TaskParameter="WinePath1" PropertyName="MyPath1" />
-    <Output TaskParameter="WinePath2" PropertyName="MyPath2" />
-    <Output TaskParameter="WinePath3" PropertyName="MyPath3" />
-    <Output TaskParameter="WinePath4" PropertyName="MyPath4" />
-    <Output TaskParameter="WinePath5" PropertyName="MyPath5" />
-  </GetWinePaths>
+<GetWinePaths Condition="$(UseWine)"
+              BasePath="$(MSBuildProjectDirectory)"
+              HostPath1="$(MyPath1)"
+              HostPath2="$(MyPath2)"
+              HostPath3="$(MyPath3)"
+              HostPath4="$(MyPath4)"
+              HostPath5="$(MyPath5)">
+  <Output TaskParameter="WinePath1" PropertyName="MyPath1" />
+  <Output TaskParameter="WinePath2" PropertyName="MyPath2" />
+  <Output TaskParameter="WinePath3" PropertyName="MyPath3" />
+  <Output TaskParameter="WinePath4" PropertyName="MyPath4" />
+  <Output TaskParameter="WinePath5" PropertyName="MyPath5" />
+</GetWinePaths>
 ```
 
 #### `ConvertToWinePaths` task
@@ -169,38 +169,38 @@ What if the paths to convert are stored in an item group? Just use the `ConvertT
 Note that in this case you can't use the same item group to store the results directly, as MSBuild will just append them to existing items.
 
 ```xml
-  <!-- BasePath is optional, as usual -->
-  <ConvertToWinePaths Condition="$(UseWine)"
-                      BasePath="$(MSBuildProjectDirectory)"
-                      Items="@(MyPaths)">
-    <Output TaskParameter="ComvertedItems" ItemName="MyConvertedPaths" />
-  </ConvertToWinePaths>
+<!-- BasePath is optional, as usual -->
+<ConvertToWinePaths Condition="$(UseWine)"
+                    BasePath="$(MSBuildProjectDirectory)"
+                    Items="@(MyPaths)">
+  <Output TaskParameter="ComvertedItems" ItemName="MyConvertedPaths" />
+</ConvertToWinePaths>
 
-  <!-- Copy converted paths back to MyPaths, then free up memory by emptying MyConvertedPaths -->
-  <ItemGroup Condition="$(UseWine)">
-    <MyPaths Remove="@(MyPaths)" />
-    <MyPaths Include="@(MyConvertedPaths)" />
-    <MyConvertedPaths Remove="@(MyConvertedPaths)" />
-  </ItemGroup>
+<!-- Copy converted paths back to MyPaths, then free up memory by emptying MyConvertedPaths -->
+<ItemGroup Condition="$(UseWine)">
+  <MyPaths Remove="@(MyPaths)" />
+  <MyPaths Include="@(MyConvertedPaths)" />
+  <MyConvertedPaths Remove="@(MyConvertedPaths)" />
+</ItemGroup>
 ```
 
 `ConvertToWinePaths` can do more than that. Say, for example, that the paths you want to convert are not the items' identities, but rather in a `Value` metadata:
 
 ```xml
-  <!-- BasePath is optional, as usual -->
-  <ConvertToWinePaths Condition="$(UseWine)"
-                      BasePath="$(MSBuildProjectDirectory)"
-                      Items="@(MyItems)"
-                      MetadataName="Value">
-    <Output TaskParameter="ComvertedItems" ItemName="MyConvertedItems" />
-  </ConvertToWinePaths>
+<!-- BasePath is optional, as usual -->
+<ConvertToWinePaths Condition="$(UseWine)"
+                    BasePath="$(MSBuildProjectDirectory)"
+                    Items="@(MyItems)"
+                    MetadataName="Value">
+  <Output TaskParameter="ComvertedItems" ItemName="MyConvertedItems" />
+</ConvertToWinePaths>
 
-  <!-- Copy converted items back to MyItems, then free up memory by emptying MyConvertedItems -->
-  <ItemGroup Condition="$(UseWine)">
-    <MyItems Remove="@(MyItems)" />
-    <MyItems Include="@(MyConvertedItems)" />
-    <MyConvertedItems Remove="@(MyConvertedItems)" />
-  </ItemGroup>
+<!-- Copy converted items back to MyItems, then free up memory by emptying MyConvertedItems -->
+<ItemGroup Condition="$(UseWine)">
+  <MyItems Remove="@(MyItems)" />
+  <MyItems Include="@(MyConvertedItems)" />
+  <MyConvertedItems Remove="@(MyConvertedItems)" />
+</ItemGroup>
 ```
 
 Finally, if not _all_ `Value` metadata values are paths to convert, you can use another metadata as a flag to signal which items to convert.
@@ -208,21 +208,21 @@ Finally, if not _all_ `Value` metadata values are paths to convert, you can use 
 The following code will only convert the `Value` metadata of items whose `IsPath` metadata evaluates (case-insensitively) to `"true"`, leaving other items unchanged:
 
 ```xml
-  <!-- BasePath is optional, as usual -->
-  <ConvertToWinePaths Condition="$(UseWine)"
-                      BasePath="$(MSBuildProjectDirectory)"
-                      Items="@(MyItems)"
-                      MetadataName="Value"
-                      OnlyIfMetadata="IsPath">
-    <Output TaskParameter="ComvertedItems" ItemName="MyConvertedItems" />
-  </ConvertToWinePaths>
+<!-- BasePath is optional, as usual -->
+<ConvertToWinePaths Condition="$(UseWine)"
+                    BasePath="$(MSBuildProjectDirectory)"
+                    Items="@(MyItems)"
+                    MetadataName="Value"
+                    OnlyIfMetadata="IsPath">
+  <Output TaskParameter="ComvertedItems" ItemName="MyConvertedItems" />
+</ConvertToWinePaths>
 
-  <!-- Copy converted items back to MyItems, then free up memory by emptying MyConvertedItems -->
-  <ItemGroup Condition="$(UseWine)">
-    <MyItems Remove="@(MyItems)" />
-    <MyItems Include="@(MyConvertedItems)" />
-    <MyConvertedItems Remove="@(MyConvertedItems)" />
-  </ItemGroup>
+<!-- Copy converted items back to MyItems, then free up memory by emptying MyConvertedItems -->
+<ItemGroup Condition="$(UseWine)">
+  <MyItems Remove="@(MyItems)" />
+  <MyItems Include="@(MyConvertedItems)" />
+  <MyConvertedItems Remove="@(MyConvertedItems)" />
+</ItemGroup>
 ```
 
 ### Putting it all together: invoking a tool through Wine

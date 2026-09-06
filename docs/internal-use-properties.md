@@ -27,7 +27,8 @@ These properties are prefixed with `BV_` to avoid polluting the already crowded 
 
 If you find yourself referring to or modifying any of these properties in your own projects, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). Chances are we need to either change one or more properties to well-known properties, or otherwise fix what is probably a bug.
 
-> **NOTE:** Not all `BV_`-prefixed properties are documented here, as most of them are use internally by single SDK modules.
+> [!NOTE]
+> Not all `BV_`-prefixed properties are documented here, as most of them are use internally by single SDK modules.
 
 ---
 
@@ -35,7 +36,8 @@ If you find yourself referring to or modifying any of these properties in your o
 
 This group of properties, all starting with `BV_Is`, are flags that identify various types of project (library, executable, test project, etc.).
 
-> **NOTE:** Since some of the project properties we need to determine the values of `BV_Is` properties are not available when `Sdk.props` is included, this group of properties is only available in "post-project" files, including:
+> [!NOTE]
+> Since some of the project properties we need to determine the values of `BV_Is` properties are not available when `Sdk.props` is included, this group of properties is only available in "post-project" files, including:
 >
 > - `BeforeModules.targets`, `Module.targets`, and `AfterModules.targets` in SDK modules;
 > - `BeforeCommon.targets`, `Common.targets`, and `AfterCommon.targets` in solution directories and subdirectories, although their use here is strongly discouraged.
