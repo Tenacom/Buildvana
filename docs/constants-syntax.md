@@ -49,7 +49,7 @@ Buildvana SDK reads the `Value` metadata and applies the first step below that m
 1. An empty `Value` yields a `string?` constant whose value is `null`.
 2. A `Value` whose first and last characters are double quotes yields a `string` constant holding the text between them.
    To put a double quote inside the text, write it twice.
-3. A `Value` holding a colon after its first character is read as `type:value`.
+3. A `Value` whose first colon is not its first character is read as `type:value`.
    `type` is one of the names that [Allowed types](#allowed-types) lists, and `value` is parsed as that type.
    When `type` is unknown, or `value` does not parse as that type, Buildvana SDK raises error BVSDK2301 and the build fails.
 4. A `Value` that parses as an `int` yields an `int` constant.
