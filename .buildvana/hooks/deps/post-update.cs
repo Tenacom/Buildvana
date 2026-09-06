@@ -144,10 +144,11 @@ if (vsProductName is null)
     Console.Error.WriteLine($"No product name known for Visual Studio major version {vsVersion.Major}; extend the map in this hook.");
 }
 
-var vsDisplay = vsProductName is null
-    ? $"{vsVersion.Major}.{vsVersion.Minor}+"
-    : $"{vsProductName} {vsVersion.Major}.{vsVersion.Minor}+";
-var expectedHint = $".NET SDK {bandChannel}.{bandNumber}xx / Visual Studio {vsDisplay}";
+// The hint and the region state the Visual Studio floor in one shape: the product name, then the version. The hint
+// adds a plus, and the region's column header says "Minimum version" instead.
+var vsVersionText = $"{vsVersion.Major}.{vsVersion.Minor}";
+var vsDisplay = vsProductName is null ? vsVersionText : $"{vsProductName} {vsVersionText}";
+var expectedHint = $".NET SDK {bandChannel}.{bandNumber}xx / Visual Studio {vsDisplay}+";
 
 (string Name, string Expected)[] floorProperties = [
     ("BV_MinRoslynVersion", expectedVersion),
@@ -156,15 +157,13 @@ var expectedHint = $".NET SDK {bandChannel}.{bandNumber}xx / Visual Studio {vsDi
 ];
 
 // MSBuild follows the Visual Studio version, and the .NET SDK band ships the same MSBuild, so the MSBuild floor
-// is the paired Visual Studio version. The region states the three minimums the way the hint does.
-var vsVersionText = $"{vsVersion.Major}.{vsVersion.Minor}";
+// is the paired Visual Studio version.
 var expectedMSBuildVersion = vsVersionText;
-var vsCell = vsProductName is null ? vsVersionText : $"{vsProductName} ({vsVersionText})";
 var expectedRegionLines = FormatTable(
 [
     ["Tool", "Minimum version"],
     [".NET SDK", $"{bandChannel}.{bandNumber}00"],
-    ["Visual Studio", vsCell],
+    ["Visual Studio", vsDisplay],
     ["MSBuild", expectedMSBuildVersion],
 ]);
 

@@ -90,7 +90,7 @@ The table lists the minimum version of each tool that can build a project with B
 | Tool          | Minimum version |
 | ------------- | --------------- |
 | .NET SDK      | 10.0.400        |
-| Visual Studio | 2026 (18.9)     |
+| Visual Studio | 2026 18.9       |
 | MSBuild       | 18.9            |
 
 <!-- TOOLCHAIN-FLOORS:END -->
