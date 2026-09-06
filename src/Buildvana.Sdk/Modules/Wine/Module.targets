@@ -9,7 +9,7 @@
   </Target>
 
   <Target Name="BV_CheckWineAvailability"
-          Condition="$([MSBuild]::IsOSPlatform('Linux')) And @(NeedWine->Count()) > 0">
+          Condition="!$([MSBuild]::IsOSPlatform('Windows')) And @(NeedWine->Count()) > 0">
 
     <PropertyGroup>
       <UseWine>true</UseWine>
