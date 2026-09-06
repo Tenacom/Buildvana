@@ -1,10 +1,15 @@
 # Dependency management
 
+`bv dependencies` inspects and updates the dependencies of a repository: the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
+A _pin_ is an exact version recorded in one of the files it manages.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
+- [Subcommands](#subcommands)
 - [Scopes](#scopes)
   - [Selecting scopes](#selecting-scopes)
 - [Update policies](#update-policies)
@@ -28,13 +33,15 @@
 - [Exit codes](#exit-codes)
 - [What the SDK contributes](#what-the-sdk-contributes)
 
-## Overview
+---
 
-`bv dependencies` inspects and updates the dependencies of a repository: the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins. A _pin_ is an exact version recorded in one of the files it manages.
+## Subcommands
 
 The canonical name is `bv dependencies`; `bv deps` is an alias, and help and error messages use the canonical name. `show` is the default subcommand, as it is for `bv version`, so `bv deps` is a complete invocation.
 
 The command has three subcommands. `show` works offline and states what the repository says about itself. `update` resolves target versions against the package sources and applies them. `prune` removes the pins nothing references any more.
+
+---
 
 ## Scopes
 
@@ -61,6 +68,8 @@ Two families of options restrict a single invocation:
 The two families do not mix: naming a scope to manage and another to leave out states the selection twice, and the two statements can disagree, so it is a usage error.
 
 An option that names a scope configuration disables changes nothing, and says so. An option that leaves out such a scope says what is already the case, and says it silently.
+
+---
 
 ## Update policies
 
@@ -104,6 +113,8 @@ Every pin has a policy. It is the first of these that states one:
 A pattern is matched against a whole package id, ignoring case, with `*` standing for any run of characters and every other character standing for itself. Patterns are tried in the order the configuration file states them, and the first match wins: order is the only ranking, so a leading `*` silences every pattern after it.
 
 `bv dependencies show` reports the composed policy of every pin, which makes it the place to see what the ladder produced.
+
+---
 
 ## What bv manages
 
@@ -149,6 +160,8 @@ A versionless directive names no version, so it is no pin: it is a reference to 
 
 Which `.cs` files are apps is the repository's own statement, through the `fileBasedApps` setting, which always includes the hooks directory.
 
+---
+
 ## `bv dependencies show`
 
 `show` lists the pins of every selected scope, with the policy governing each, and everything else that can be said without a network:
@@ -164,6 +177,8 @@ Pins are grouped by the file that declares them, and an additional group's pins 
 A pin takes one line, `Serilog 3.0.0 (minor)`, and a note about it takes another, indented under it. The report has no columns. At the eighty columns of a CI log, a column layout divides the width among the columns and breaks ids and versions across lines, and neither is readable in halves.
 
 The command works offline. The MSBuild evaluation it runs for the `packages` scope is local work, with the same preconditions as building at all. It always exits 0 when it completes: everything it reports is a finding, and what to do about it is the reader's call.
+
+---
 
 ## `bv dependencies update`
 
@@ -215,6 +230,8 @@ Two forms exist:
 
 A repository that derives something from what it pins — a property naming a compiler version, a floor implied by a package — updates what it derives in the `deps/post-update` hook, which runs at the end of every `update` that ran to completion, check runs included. In a check run the hook's exit code 1 says that it would change something, and the command folds that into its own verdict. See [Hooks](../hooks.md#the-depspost-update-hook).
 
+---
+
 ## `bv dependencies prune`
 
 `prune` removes the central package pins nothing references any more. Such pins accumulate on their own: `dotnet package remove` deletes the reference and leaves the pin behind, and nothing else removes it.
@@ -236,6 +253,8 @@ Policy plays no part. A policy says how far a pin may move, and says nothing abo
 `prune --check` reports the orphaned pins and removes none, exiting 1 when there is at least one. No argument names the pins a run is about: an orphan is a pin nothing references, and a filter that hid one would leave the repository stating a pin the same run had just called dead.
 
 A removal can change what the [transitive overrides](#transitive-overrides) must say, because a promotion may rest on the pin that has just gone: a promoted reference whose central pin is missing is one the next restore rejects. An apply run therefore regenerates the override files before it ends, whether or not it removed anything, as `update` does. The diagnosis restores with those files left out of the evaluation. No build may be left with the graph that produces. A check run regenerates nothing, so it restores once more with the files in place. The `deps/post-update` hook then runs, as it does at the end of every `prune` that managed the `packages` scope and ran to completion, whether or not anything was removed. Every pin reaches it as skipped, `prune` having resolved none, and a pin the run removed does not reach it at all.
+
+---
 
 ## Transitive overrides
 
@@ -269,6 +288,8 @@ The first is a package no version can lift: none the sources list falls outside 
 
 The second is a package a decision of the repository's own governs. `bv` never introduces a version for a package the repository pins or references itself, so a vulnerable direct reference, a vulnerable central pin, and a central pin below the version a project resolves are all left alone. Move the pin, or suppress the advisory through NuGet's own `NuGetAuditSuppress`.
 
+---
+
 ## Exit codes
 
 The dependency commands return the [exit codes every `bv` command returns](../tool-diagnostics.md#exit-codes), with no meaning of their own added.
@@ -278,6 +299,8 @@ Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, o
 Code 2 is a refusal of the command line itself: scope options of both families at once, `--all` without `--check`, `--to` with `--check`, `--netsdk` next to an argument naming pins, `--to` naming the .NET SDK beside another scope, or a version that does not parse.
 
 Code 3 is the one a reader of a report should know about: it says that a program `bv` ran failed, or answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages; a failed `dotnet tool update` and a failed hook are two more. The [override lifecycle](#transitive-overrides) adds two of its own: a restore that failed for a reason other than its own audit findings, and a restore that could not read a package source in full. The restore [`prune`](#bv-dependencies-prune) runs carries the first of the two, and not the second: what a project references does not depend on vulnerability data. Overrides regenerated from a fraction of the advisories would delete one that is still needed, so an incomplete answer stops the run and leaves every file as it stands.
+
+---
 
 ## What the SDK contributes
 

@@ -1,10 +1,13 @@
 # `Wine` module
 
+This module provides support for running Windows-only tools using [Wine](https://winehq.org) when building under Linux or macOS.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
 - [Configuration](#configuration)
   - [`WineCommand` property](#winecommand-property)
 - [Usage](#usage)
@@ -16,9 +19,7 @@
     - [`ConvertToWinePaths` task](#converttowinepaths-task)
   - [Putting it all together: invoking a tool through Wine](#putting-it-all-together-invoking-a-tool-through-wine)
 
-## Overview
-
-This module provides support for running Windows-only tools using [Wine](https://winehq.org) when building under Linux or macOS.
+---
 
 ## Configuration
 
@@ -47,6 +48,8 @@ or the path to a script to the same effect, for example:
 ```
 
 For an example of script used to run Wine. you can take a look at [`buildvana-builder`](https://github.com/Tenacom/buildvana-builder), a Docker image based on Ubuntu LTS, featuring the .NET SDK and [Inno Setup](https://jrsoftware.org/isinfo.php)'s command-line compiler.
+
+---
 
 ## Usage
 

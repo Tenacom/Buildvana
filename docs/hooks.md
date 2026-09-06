@@ -1,10 +1,14 @@
 # Hooks
 
+A hook is real code, owned by the repository, that `bv` runs when a well-known event occurs: a [file-based app](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/file-based-programs) (a standalone C# file) acting as an event handler.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
+- [Events and paths](#events-and-paths)
 - [The `release/post-release` hook](#the-releasepost-release-hook)
 - [The `deps/post-update` hook](#the-depspost-update-hook)
 - [Writing a hook](#writing-a-hook)
@@ -15,15 +19,17 @@
 - [Cleaning hook build caches](#cleaning-hook-build-caches)
 - [Contract evolution](#contract-evolution)
 
-## Overview
+---
 
-A hook is real code, owned by the repository, that `bv` runs when a well-known event occurs: a [file-based app](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/file-based-programs) (a standalone C# file) acting as an event handler.
+## Events and paths
 
 Hooks live at well-known paths of the form `.buildvana/hooks/<context>/<event>.cs`. `<event>` names the event: the moment of execution that triggers the hook. `<context>` names the context the event belongs to — currently always the invoking command, though nothing ties a context to being a command. If Buildvana were an object and hooks were functions, `.buildvana/hooks/release/post-release.cs` would be the `Release_PostRelease` handler.
 
 Two events exist today: `release/post-release` and `deps/post-update`. A hook is optional; when the file is absent, `bv` skips it with an info message.
 
 Whatever the context and event, a hook is guaranteed to run with the home directory as its working directory: relative paths in a hook resolve against the repository root, as the example below relies on.
+
+---
 
 ## The `release/post-release` hook
 
@@ -36,6 +42,8 @@ The hook runs _before_ the built-in rewrites, rather than after, because it is a
 The hook runs from the home directory and reports nothing back. `bv` snapshots the working tree before and after the hook; the files the hook changed join the post-release commit alongside the well-known rewrites (or constitute it entirely, when dogfooding is off or rewrote nothing).
 
 **"post-release" names the post-release _commit_**, not the release itself: when the hook runs, nothing has been pushed or published yet, and a non-zero exit code aborts the entire release. Announcements and other externally-visible actions don't belong here.
+
+---
 
 ## The `deps/post-update` hook
 
@@ -57,6 +65,8 @@ This hook has an exit-code convention of its own, because a check run has a verd
 - in an apply run, exit code 0 means success and anything else is a failure.
 
 A hook that reads `Check` and writes nothing when it is set therefore turns `bv deps update --check` into a complete staleness gate: pins and derived state alike.
+
+---
 
 ## Writing a hook
 
@@ -90,6 +100,8 @@ File.WriteAllText("some-file.md", text);
 Because the version pin is applied by the SDK rather than gated on anything `bv` passes, a hook stays buildable and runnable by hand: after `bv` has run the hook once, `dotnet run` it from the home directory to replay it against the args of the last run (or against a hand-written args file).
 
 The well-known paths themselves ship in the package too: `WellKnownPaths` exposes the hook and args directories plus per-hook path helpers, so repository tooling can compute these paths instead of hard-coding them.
+
+---
 
 ## The hook args
 
@@ -142,6 +154,8 @@ In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `rele
 
 `.buildvana-temp/` is bv's scratch directory for machine-generated temporary files; add it to `.gitignore`. `bv` itself never mistakes its contents for hook-made changes — the directory is unconditionally excluded from working-tree change detection — but without the ignore entry, Git tooling will show the args files as untracked.
 
+---
+
 ## The repository configuration
 
 The args carry the facts of the run; for any standing repository setting, read the resolved configuration embedded in the args. `RuntimeInfo.Configuration` holds every setting at its effective value, with the configuration file, the command line, and the built-in defaults already composed (a repository with no configuration file resolves to all defaults), so a hook reads a setting by property access instead of spelling out its own fallback:
@@ -162,6 +176,8 @@ if (configFile is not null)
 }
 ```
 
+---
+
 ## Dependencies
 
 - `#:package Buildvana.Runtime` is special: its version comes from the SDK, not from central package management, so the pin can never lag or race the release.
@@ -171,15 +187,21 @@ if (configFile is not null)
 - `#:project` is the sanctioned way to use repo-local library code: no version pin, compiles against `HEAD`.
 - Pinned `#:package Foo@x.y.z` is allowed but owned by the repository: pins drift on dependency updates, and a pin on a self-produced package lags its own release by one. If you break your own repository, you own both pieces.
 
+---
+
 ## The build environment
 
 Hooks require Buildvana SDK, which reaches them through the repository's `Directory.Build.{props,targets}` parent-inclusion chain (see [Directory structure](directory-structure.md#directorybuildprops-and-directorybuildtargets)). A repository may add its own `.buildvana/Directory.Build.{props,targets}`, but they must follow the well-known parent-inclusion pattern; otherwise hooks break and the repository owns both pieces.
 
 Hooks also inherit the rest of the repository's implicit build files (`nuget.config`, `global.json`, analyzer configuration): a hook compiles under the same rules as the rest of the repository, warnings-as-errors included.
 
+---
+
 ## Cleaning hook build caches
 
 Local file-based-app caching may not notice implicit-build-file changes; CI is always a cold build. `bv clean` clears the build cache of each `*.cs` file under `.buildvana/hooks/` (recursively), deleting its file-based-app artifacts directory. It also deletes the `.buildvana-temp/` scratch directory, last hook args file included.
+
+---
 
 ## Contract evolution
 

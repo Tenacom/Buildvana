@@ -2,6 +2,28 @@
 
 This page lists every environment variable `bv` reads or sets. Variables consumed by the .NET SDK, MSBuild, or NuGet themselves are out of scope; see the corresponding Microsoft documentation.
 
+---
+
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
+
+- [Variables read by `bv`](#variables-read-by-bv)
+  - [`BV_DELEGATED`](#bv_delegated)
+  - [`CI_SERVER_HOST`](#ci_server_host)
+  - [`DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`](#dotnet_cli_console_use_default_encoding)
+  - [`DOTNET_CLI_HOME`](#dotnet_cli_home)
+  - [`DOTNET_HOST_PATH`](#dotnet_host_path)
+  - [`GITHUB_ACTIONS`](#github_actions)
+  - [`GITHUB_OUTPUT`](#github_output)
+  - [`GITLAB_CI`](#gitlab_ci)
+  - [`NO_COLOR`](#no_color)
+  - [`TERM`](#term)
+  - [Secret-carrying variables named by the configuration file](#secret-carrying-variables-named-by-the-configuration-file)
+- [Variables set by `bv`](#variables-set-by-bv)
+
+---
+
 ## Variables read by `bv`
 
 ### `BV_DELEGATED`
@@ -58,6 +80,8 @@ Read on non-Windows platforms only, where it is the POSIX way for a terminal to 
 
 - `github.tokenEnv` names the variable holding the GitHub token used by release operations; the default name is `GITHUB_TOKEN`.
 - `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys for the NuGet push feeds.
+
+---
 
 ## Variables set by `bv`
 
