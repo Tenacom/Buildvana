@@ -34,7 +34,7 @@ Buildvana ships as three packages.
 - Buildvana SDK keeps project files short.
   A project states what differs from the defaults, and the defaults cover more than those of a plain MSBuild SDK.
 - A plain-text `VERSION` file states the version of every project.
-  Buildvana SDK computes the patch number from the Git height.
+  The [`Versioning` module](sdk-modules/versioning.md) computes the patch number from the Git height.
 - One place states the package license and the copyright notice of every project.
 - Buildvana SDK generates assembly attributes beyond the ones the .NET SDK generates, such as `CLSCompliant` and `ComVisible`.
 - Buildvana SDK configures commonly used code analyzers.

@@ -349,4 +349,4 @@ The height restarts from 1 whenever `MAJOR.MINOR` changes, and a `VERSION` file 
 
 Computing the height requires the full commit history. A shallow clone — `git clone --depth`, or a CI checkout that does not ask for everything, such as an `actions/checkout` step without `fetch-depth: 0` — sees fewer commits and therefore computes a lower patch number. Take particular care on a release build: a shallow fetch usually brings down no tags either, leaving `bv release` with no previous release to compare against, so the check just described has nothing to catch.
 
-When a `VERSION` file is present, the Buildvana SDK computes `Version`, `AssemblyVersion`, `FileVersion`, and `InformationalVersion` for all projects in the repository; `bv` uses the same computation for releases and rewrites the file when advancing the version.
+When a `VERSION` file is present, the [`Versioning` module](sdk-modules/versioning.md) of Buildvana SDK computes `Version`, `AssemblyVersion`, `FileVersion`, and `InformationalVersion` for all projects in the repository; `bv` uses the same computation for releases and rewrites the file when advancing the version.
