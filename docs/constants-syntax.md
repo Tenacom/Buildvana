@@ -1,6 +1,6 @@
 # Syntax of constants in ThisAssembly classes
 
-Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` items.
+Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` items of the [`ThisAssemblyClass` module](sdk-modules/this-assembly-class.md).
 
 ---
 
