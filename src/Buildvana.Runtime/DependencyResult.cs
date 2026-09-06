@@ -43,8 +43,8 @@ public sealed record DependencyResult
     public string? LatestStable { get; init; }
 
     /// <summary>
-    /// Gets the highest prerelease version the sources have, or <see langword="null"/> when nothing was
-    /// resolved.
+    /// Gets the highest prerelease version the sources have above <see cref="LatestStable"/>, or
+    /// <see langword="null"/> when there is none or nothing was resolved.
     /// </summary>
     public string? LatestPreview { get; init; }
 

@@ -139,16 +139,16 @@ The well-known paths themselves ship in the package too: `WellKnownPaths` expose
 
 Every one of those results, `NetSdk` included, states one pin:
 
-| Member           | Type           | Content                                                                                       |
-| ---------------- | -------------- | --------------------------------------------------------------------------------------------- |
-| `Id`             | string or null | The package id, or `null` for the .NET SDK baseline, which has none.                          |
-| `DeclaringFile`  | string         | Path of the file that declares the pin, relative to the home directory, with forward slashes. |
-| `CurrentVersion` | string         | The pin as it stood before the invocation.                                                    |
-| `Target`         | string or null | The version the pin reached, or would reach in a check run, or `null` when there is none.     |
-| `State`          | string         | One of `UpToDate`, `Updated`, `Disabled`, `Unmanaged`, `Skipped`, `Held`.                     |
-| `LatestStable`   | string or null | The highest stable version the sources have, or `null` when nothing was resolved.             |
-| `LatestPreview`  | string or null | The highest prerelease version the sources have, or `null` when nothing was resolved.         |
-| `Policy`         | string         | The policy governing the pin, in policy-string syntax.                                        |
+| Member           | Type           | Content                                                                                                                     |
+| ---------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `Id`             | string or null | The package id, or `null` for the .NET SDK baseline, which has none.                                                        |
+| `DeclaringFile`  | string         | Path of the file that declares the pin, relative to the home directory, with forward slashes.                               |
+| `CurrentVersion` | string         | The pin as it stood before the invocation.                                                                                  |
+| `Target`         | string or null | The version the pin reached, or would reach in a check run, or `null` when there is none.                                   |
+| `State`          | string         | One of `UpToDate`, `Updated`, `Disabled`, `Unmanaged`, `Skipped`, `Held`.                                                   |
+| `LatestStable`   | string or null | The highest stable version the sources have, or `null` when nothing was resolved.                                           |
+| `LatestPreview`  | string or null | The highest prerelease version the sources have above `LatestStable`, or `null` when there is none or nothing was resolved. |
+| `Policy`         | string         | The policy governing the pin, in policy-string syntax.                                                                      |
 
 In the JSON file, member names are camelCase (`runtimeInfo.homeDirectory`, `release.semVer`, and so on); dictionary keys are serialized verbatim, and so are the names of enumeration values, such as a result's `State`.
 

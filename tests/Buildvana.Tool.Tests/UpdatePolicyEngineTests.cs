@@ -223,6 +223,17 @@ internal sealed class UpdatePolicyEngineTests
         await Assert.That(selection.LatestPreview?.ToNormalizedString()).IsEqualTo("3.0.0-beta");
     }
 
+    // A prerelease below the latest stable version is nothing a deliberate edit starts from, so it is left out,
+    // whether it is an older line or the latest stable version's own prerelease.
+    [Test]
+    public async Task SelectPackage_LeavesOutAPrereleaseBelowTheLatestStable()
+    {
+        var selection = SelectPackage("patch", "1.2.3", "1.2.4", "1.5.0-beta", "2.0.0-rc.1", "2.0.0");
+
+        await Assert.That(selection.LatestStable?.ToNormalizedString()).IsEqualTo("2.0.0");
+        await Assert.That(selection.LatestPreview).IsNull();
+    }
+
     // No parse produces an undefined kind, but a constructor or a with expression can. The policy's ToString
     // remarks promise that a pin carrying one does not move; this is the test that keeps the promise honest.
     [Test]
@@ -343,6 +354,15 @@ internal sealed class UpdatePolicyEngineTests
 
         await Assert.That(selection.Outcome).IsEqualTo(TargetSelectionOutcome.Update);
         await Assert.That(selection.Target?.ToNormalizedString()).IsEqualTo("12.0.100-rc.2");
+    }
+
+    [Test]
+    public async Task SelectNetSdk_LeavesOutAPrereleaseBelowTheLatestStable()
+    {
+        var selection = SelectNetSdk("patch", "10.0.402", Lts("10.0.403"), Lts("10.0.500-preview.1"), Lts("10.0.502"));
+
+        await Assert.That(selection.LatestStable?.ToNormalizedString()).IsEqualTo("10.0.502");
+        await Assert.That(selection.LatestPreview).IsNull();
     }
 
     // Same for the .NET SDK overload: its policy makes the same promise, kept by the same kind of switch arm.

@@ -155,17 +155,26 @@ internal static class UpdatePolicyEngine
         return CreateSelection(outcome, outcome == TargetSelectionOutcome.Update ? best : null, candidates);
     }
 
+    // The latest members say what the sources have beyond the pin, for a deliberate edit to start from. A
+    // prerelease below the latest stable version is nothing to start from, so it is left out.
     private static TargetSelection CreateSelection(
         TargetSelectionOutcome outcome,
         NuGetVersion? target,
         IReadOnlyCollection<NuGetVersion> candidates)
-        => new()
+    {
+        var latestStable = Highest(candidates.Where(candidate => !candidate.IsPrerelease));
+        var latestPreview = Highest(candidates.Where(candidate => candidate.IsPrerelease && IsAbove(candidate, latestStable)));
+        return new()
         {
             Outcome = outcome,
             Target = target,
-            LatestStable = Highest(candidates.Where(candidate => !candidate.IsPrerelease)),
-            LatestPreview = Highest(candidates.Where(candidate => candidate.IsPrerelease)),
+            LatestStable = latestStable,
+            LatestPreview = latestPreview,
         };
+    }
+
+    private static bool IsAbove(NuGetVersion version, NuGetVersion? floor)
+        => floor is null || VersionComparer.VersionRelease.Compare(version, floor) > 0;
 
     // Max returns null for an empty sequence of a reference type, which is exactly "no candidate".
     private static NuGetVersion? Highest(IEnumerable<NuGetVersion> versions)

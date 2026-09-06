@@ -27,8 +27,8 @@ internal sealed record TargetSelection
     public NuGetVersion? LatestStable { get; init; }
 
     /// <summary>
-    /// Gets the highest prerelease candidate, or <see langword="null"/> when there is none or nothing was
-    /// resolved.
+    /// Gets the highest prerelease candidate above <see cref="LatestStable"/>, or <see langword="null"/> when
+    /// there is none or nothing was resolved.
     /// </summary>
     public NuGetVersion? LatestPreview { get; init; }
 }
