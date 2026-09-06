@@ -27,6 +27,21 @@ internal sealed class ReleaseCommandChangelogTests
 
         """;
 
+    private const string ChangelogWithFileLink = """
+        # Changelog
+
+        ## Unreleased changes
+
+        ### New features
+
+        - A hook [runs from the home directory](docs/hooks.md#the-build-environment).
+
+        ## [2.3.0-preview](https://git.example.invalid/tenacom/test-repo/releases/tag/2.3.0-preview) (2026-01-01)
+
+        - Something released, see [the page](docs/released.md).
+
+        """;
+
     private const string EmptyChangelog = """
         # Changelog
 
@@ -146,5 +161,22 @@ internal sealed class ReleaseCommandChangelogTests
         var changelog = harness.ReadFile("CHANGELOG.md");
         await Assert.That(changelog).Contains($"## [{ReleasedVersion}]");
         await Assert.That(changelog).DoesNotContain("## [2.3.1-preview]");
+    }
+
+    [Test]
+    public async Task Release_PinsFileLinksOfNewSection_ToTheTagActuallyReleased()
+    {
+        using var harness = new ReleaseHarness(new() { ChangelogUpdates = "all", Changelog = ChangelogWithFileLink, Dogfood = false });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        // The links are pinned once the release commit exists and the version is final: the tag they name is
+        // the one released, not the one computed before the commit bumped the Git height. The section released
+        // before this one is left as it is.
+        var changelog = harness.ReadFile("CHANGELOG.md");
+        var pinnedUrl = $"https://git.example.invalid/tenacom/test-repo/blob/{ReleasedVersion}/docs/hooks.md#the-build-environment";
+        await Assert.That(changelog).Contains($"[runs from the home directory]({pinnedUrl})");
+        await Assert.That(changelog).DoesNotContain("blob/2.3.1-preview/");
+        await Assert.That(changelog).Contains("[the page](docs/released.md)");
     }
 }

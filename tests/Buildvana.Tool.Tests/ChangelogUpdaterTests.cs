@@ -356,7 +356,7 @@ internal sealed class ChangelogUpdaterTests
     }
 
     [Test]
-    public async Task UpdateNewSectionTitle_ReplacesTitleOfSectionAfterUnreleasedChanges()
+    public async Task FinalizeNewSection_ReplacesTitleOfSectionAfterUnreleasedChanges()
     {
         string[] lines =
         [
@@ -373,7 +373,7 @@ internal sealed class ChangelogUpdaterTests
             "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
         ];
 
-        var result = ChangelogUpdater.UpdateNewSectionTitle(lines, () => NewSectionTitle);
+        var result = FinalizeNewSection(lines);
 
         await Assert.That(result).IsEqualTo(
             """
@@ -392,8 +392,140 @@ internal sealed class ChangelogUpdaterTests
             """.ReplaceLineEndings("\n"));
     }
 
+    // A relative file link is a path from the home directory, where the changelog sits, with an optional anchor.
+    // Once the section is released, the path is pinned to the tag, the anchor is kept, and a title after the
+    // target is left as it is. An image is a link like any other.
     [Test]
-    public async Task UpdateNewSectionTitle_FailsWhenThereIsOnlyOneSection()
+    public async Task FinalizeNewSection_PinsRelativeFileLinksToTheReleaseTag()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.3-preview.1](https://example.com/releases/tag/1.2.3-preview.1) (2026-01-01)",
+            string.Empty,
+            "- A hook [runs from the home directory](docs/hooks.md#the-build-environment).",
+            "- The [example file](buildvana.example.jsonc \"Generated\") states every setting.",
+            "- Packed: ![logo](img/logo.png), [icon](img/icon.png).",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+
+        var result = FinalizeNewSection(lines);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - A hook [runs from the home directory](https://example.com/blob/1.2.3/docs/hooks.md#the-build-environment).
+            - The [example file](https://example.com/blob/1.2.3/buildvana.example.jsonc "Generated") states every setting.
+            - Packed: ![logo](https://example.com/blob/1.2.3/img/logo.png), [icon](https://example.com/blob/1.2.3/img/icon.png).
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // A target with a scheme is a URL already, and a target starting with '#' is an anchor in the changelog
+    // itself: neither names a file, so neither is pinned.
+    [Test]
+    public async Task FinalizeNewSection_LeavesUrlsAndAnchorsAlone()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.3-preview.1](https://example.com/releases/tag/1.2.3-preview.1) (2026-01-01)",
+            string.Empty,
+            "- See [the site](https://example.com/docs) or [write to us](mailto:info@example.com).",
+            "- Details are [below](#details).",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+        ];
+        var paths = new List<string>();
+
+        var result = ChangelogUpdater.FinalizeNewSection(lines, () => NewSectionTitle, RecordingGetFileUrl(paths));
+
+        await Assert.That(paths).IsEmpty();
+        await Assert.That(result).Contains("- See [the site](https://example.com/docs) or [write to us](mailto:info@example.com).\n");
+        await Assert.That(result).Contains("- Details are [below](#details).\n");
+    }
+
+    // Only the section being released is pinned: the "Unreleased changes" section keeps its relative links
+    // for the next release to pin, and an older section was pinned when it was released.
+    [Test]
+    public async Task FinalizeNewSection_PinsLinksOfTheNewSectionOnly()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "- Unreleased, see [the page](docs/unreleased.md).",
+            string.Empty,
+            "## [1.2.3-preview.1](https://example.com/releases/tag/1.2.3-preview.1) (2026-01-01)",
+            string.Empty,
+            "- Released, see [the page](docs/released.md).",
+            string.Empty,
+            "## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)",
+            string.Empty,
+            "- Older, see [the page](docs/older.md).",
+        ];
+
+        var result = FinalizeNewSection(lines);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            - Unreleased, see [the page](docs/unreleased.md).
+
+            ## [1.2.3](https://example.com/releases/tag/1.2.3) (2026-01-01)
+
+            - Released, see [the page](https://example.com/blob/1.2.3/docs/released.md).
+
+            ## [1.2.2](https://example.com/releases/tag/1.2.2) (2025-12-01)
+
+            - Older, see [the page](docs/older.md).
+
+            """.ReplaceLineEndings("\n"));
+    }
+
+    // The callback gets the path as written, anchor excluded: a backslash is the server adapter's to normalize,
+    // and the anchor is the updater's to put back after the URL.
+    [Test]
+    public async Task FinalizeNewSection_PassesThePathWithoutItsAnchorToGetFileUrl()
+    {
+        string[] lines =
+        [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.3-preview.1](https://example.com/releases/tag/1.2.3-preview.1) (2026-01-01)",
+            string.Empty,
+            @"- See [the syntax](docs\ConstantsSyntax.md) and [the hooks](docs/hooks.md#the-build-environment).",
+        ];
+        var paths = new List<string>();
+
+        _ = ChangelogUpdater.FinalizeNewSection(lines, () => NewSectionTitle, RecordingGetFileUrl(paths));
+
+        await Assert.That(paths).IsEquivalentTo([@"docs\ConstantsSyntax.md", "docs/hooks.md"]);
+    }
+
+    [Test]
+    public async Task FinalizeNewSection_FailsWhenThereIsOnlyOneSection()
     {
         string[] lines =
         [
@@ -404,17 +536,17 @@ internal sealed class ChangelogUpdaterTests
             "- Something new.",
         ];
 
-        string Act() => ChangelogUpdater.UpdateNewSectionTitle(lines, () => NewSectionTitle);
+        string Act() => FinalizeNewSection(lines);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains only one section.");
     }
 
     [Test]
-    public async Task UpdateNewSectionTitle_FailsWhenThereAreNoSections()
+    public async Task FinalizeNewSection_FailsWhenThereAreNoSections()
     {
         string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
-        string Act() => ChangelogUpdater.UpdateNewSectionTitle(lines, () => NewSectionTitle);
+        string Act() => FinalizeNewSection(lines);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
@@ -422,7 +554,7 @@ internal sealed class ChangelogUpdaterTests
 
     // Same guarantee as PrepareForRelease: the title is composed only when a heading is actually replaced.
     [Test]
-    public async Task UpdateNewSectionTitle_DoesNotMakeSectionTitleWhenThereAreNoSections()
+    public async Task FinalizeNewSection_DoesNotMakeSectionTitleWhenThereAreNoSections()
     {
         string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
         var titleMade = false;
@@ -432,7 +564,7 @@ internal sealed class ChangelogUpdaterTests
             return NewSectionTitle;
         }
 
-        string Act() => ChangelogUpdater.UpdateNewSectionTitle(lines, MakeSectionTitle);
+        string Act() => ChangelogUpdater.FinalizeNewSection(lines, MakeSectionTitle, GetFileUrl);
 
         _ = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(titleMade).IsFalse();
@@ -474,4 +606,17 @@ internal sealed class ChangelogUpdaterTests
 
     private static string PrepareForRelease(string[] lines, string? emptyChangelogSubstitute = null)
         => ChangelogUpdater.PrepareForRelease(lines, () => NewSectionTitle, emptyChangelogSubstitute);
+
+    private static string FinalizeNewSection(string[] lines)
+        => ChangelogUpdater.FinalizeNewSection(lines, () => NewSectionTitle, GetFileUrl);
+
+    // Records the path of each link the updater asks a URL for, so that a test can see what reached the callback.
+    private static Func<string, Uri> RecordingGetFileUrl(List<string> paths)
+        => path =>
+        {
+            paths.Add(path);
+            return GetFileUrl(path);
+        };
+
+    private static Uri GetFileUrl(string path) => new($"https://example.com/blob/1.2.3/{path}");
 }
