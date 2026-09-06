@@ -14,14 +14,16 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
-  <!-- The tasks the targets under test run, and the types their output is read back as. -->
+  <!-- The tasks the targets under test run, the types their output is read back as, and the documentation page reader. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Buildvana.Core.Dependencies\Buildvana.Core.Dependencies.csproj" />
+    <ProjectReference Include="..\..\src\Buildvana.Core.Testing\Buildvana.Core.Testing.csproj" />
     <ProjectReference Include="..\..\src\Buildvana.Sdk.Tasks\Buildvana.Sdk.Tasks.csproj" />
   </ItemGroup>
 
-  <!-- The files under test: tests evaluate or run the real ones, in a stub layout of their own. -->
+  <!-- The files under test: tests evaluate or run the real ones, in a stub layout of their own, or read them from the repository. -->
   <ItemGroup>
+    <AssemblyMetadata Include="RepositoryRoot" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..'))" />
     <AssemblyMetadata Include="RealSdkPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.props'))" />
     <AssemblyMetadata Include="RealDependenciesModulePropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.props'))" />
     <AssemblyMetadata Include="RealDependenciesModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.targets'))" />
