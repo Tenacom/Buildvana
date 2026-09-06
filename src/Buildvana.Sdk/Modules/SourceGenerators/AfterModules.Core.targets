@@ -6,9 +6,9 @@
 
     <!--Evaluate error conditons -->
     <ItemGroup>
-      <Error Condition="'$(Language)' != 'C#' And '$(Language)' != 'VB'"
+      <Error Condition="'$(Language)' != 'C#'"
              Code="BVSDK1100"
-             Text="Buildvana SDK source generators are only supported in C# and Visual Basic projects."
+             Text="Buildvana SDK source generators are only supported in C# projects."
              File="$(MSBuildProjectFullPath)" />
       <!--
         CompilerApiVersion: https://github.com/dotnet/sdk/pull/20793
