@@ -2,26 +2,30 @@
 // See the LICENSE file in the project root for full license information.
 
 /*
- * deps/post-update hook: keeps the Roslyn floor properties of Directory.Packages.props in step with the
- * Microsoft.CodeAnalysis.Common pin.
+ * deps/post-update hook: keeps the toolchain floors in step with the Microsoft.CodeAnalysis.Common pin. Five
+ * values in three files: BV_MinRoslynVersion, BV_MinRoslynVersionHint and BV_SourceGeneratorsPackageFolder in
+ * Directory.Packages.props; BV_MinMSBuildVersion in src/Buildvana.Sdk/Sdk/Sdk.props; and the TOOLCHAIN-FLOORS
+ * region of docs/introduction.md, a table stating the minimum .NET SDK, Visual Studio and MSBuild versions.
  *
  * BV_MinRoslynVersion is the pin's major.minor, and BV_SourceGeneratorsPackageFolder follows from it.
  * BV_MinRoslynVersionHint names the lowest released .NET SDK feature band whose compiler is at least that new,
  * paired with the Visual Studio version that shipped it. The bands come from the .NET release index, each band's
  * compiler version from the Microsoft.Net.Compilers.Toolset dependency pinned in eng/Version.Details.xml on the
  * band's dotnet/sdk release branch, and the pairing from the band's smallest vs-version in the channel's
- * releases.json.
+ * releases.json. BV_MinMSBuildVersion is the paired Visual Studio version's major.minor, because MSBuild follows
+ * the Visual Studio version, and the .NET SDK band ships the same MSBuild. The region states the same values.
  *
- * All or nothing: when one of the three values cannot be derived, the trio is left alone rather than made
- * inconsistent. A deliberate move of the floor is expressed by editing the Microsoft.CodeAnalysis pins.
- * The one exception is a Visual Studio major version absent from the product name map below. The hint then
- * states a bare version number instead of a product name, and the hook says so on stderr.
+ * All or nothing: when one of the five values cannot be derived, or one of the files cannot be spliced, every
+ * file is left alone rather than made inconsistent. A deliberate move of the floor is expressed by editing the
+ * Microsoft.CodeAnalysis pins. The one exception is a Visual Studio major version absent from the product name
+ * map below. The hint and the region then state a bare version number instead of a product name, and the hook
+ * says so on stderr.
  *
  * A run that does not select the packages scope carries no Microsoft.CodeAnalysis.Common result. The hook then has
- * nothing to derive the floor from, and leaves the three properties alone.
+ * nothing to derive the floors from, and leaves the files alone.
  *
- * Exit codes: 0 = the trio is right, or was corrected; 1 = a check run found it stale, which bv folds into its
- * own verdict; 2 = the derivation could not complete, which bv reports as its own exit code 3.
+ * Exit codes: 0 = every value is right, or was corrected; 1 = a check run found one stale, which bv folds into
+ * its own verdict; 2 = the derivation could not complete, which bv reports as its own exit code 3.
  */
 
 #:package Buildvana.Runtime
@@ -40,7 +44,7 @@ using System.Xml.Linq;
 using Buildvana.Runtime;
 using NuGet.Versioning;
 
-// This hook runs on the only thread of a short-lived process, and reads one small local file: the async
+// This hook runs on the only thread of a short-lived process, and reads three small local files: the async
 // variants of the file calls would only add noise.
 #pragma warning disable CA1849 // Call async methods when in an async method
 
@@ -48,7 +52,11 @@ const string RoslynFloorPackageId = "Microsoft.CodeAnalysis.Common";
 const string CompilersToolsetDependencyName = "Microsoft.Net.Compilers.Toolset";
 const string ReleasesIndexUrl = "https://builds.dotnet.microsoft.com/dotnet/release-metadata/releases-index.json";
 const string SdkRepoRawUrlPrefix = "https://raw.githubusercontent.com/dotnet/sdk/release/";
-const string PackagesPropsFileName = "Directory.Packages.props";
+const string PackagesPropsPath = "Directory.Packages.props";
+const string SdkPropsPath = "src/Buildvana.Sdk/Sdk/Sdk.props";
+const string IntroductionPath = "docs/introduction.md";
+const string MSBuildFloorPropertyName = "BV_MinMSBuildVersion";
+const string FloorsRegionName = "TOOLCHAIN-FLOORS";
 const int PendingWorkExitCode = 1;
 const int DerivationFailedExitCode = 2;
 
@@ -147,35 +155,43 @@ var expectedHint = $".NET SDK {bandChannel}.{bandNumber}xx / Visual Studio {vsDi
     ("BV_SourceGeneratorsPackageFolder", expectedFolder),
 ];
 
-// A check run splices too, and throws the result away: a property whose element cannot be located is then
-// reported by the run that checks, instead of by the run that writes.
-var packagesPropsPath = Path.Combine(hookArgs.RuntimeInfo.HomeDirectory, PackagesPropsFileName);
-var propsText = File.ReadAllText(packagesPropsPath);
-var propsDocument = XDocument.Parse(propsText);
+// MSBuild follows the Visual Studio version, and the .NET SDK band ships the same MSBuild, so the MSBuild floor
+// is the paired Visual Studio version. The region states the three minimums the way the hint does.
+var vsVersionText = $"{vsVersion.Major}.{vsVersion.Minor}";
+var expectedMSBuildVersion = vsVersionText;
+var vsCell = vsProductName is null ? vsVersionText : $"{vsProductName} ({vsVersionText})";
+var expectedRegionLines = FormatTable(
+[
+    ["Tool", "Minimum version"],
+    [".NET SDK", $"{bandChannel}.{bandNumber}00"],
+    ["Visual Studio", vsCell],
+    ["MSBuild", expectedMSBuildVersion],
+]);
+
+// A check run splices too, and throws the result away: a property whose element cannot be located, or a region
+// whose markers are missing or doubled, is then reported by the run that checks, instead of by the run that
+// writes. Nothing is written until every splice has succeeded.
+var homeDirectory = hookArgs.RuntimeInfo.HomeDirectory;
+var packagesPropsText = File.ReadAllText(Path.Combine(homeDirectory, PackagesPropsPath));
+var sdkPropsText = File.ReadAllText(Path.Combine(homeDirectory, SdkPropsPath));
+var introductionText = File.ReadAllText(Path.Combine(homeDirectory, IntroductionPath));
 var staleCount = 0;
 foreach (var (propertyName, expectedValue) in floorProperties)
 {
-    var currentValue = propsDocument.Descendants(propertyName).FirstOrDefault()?.Value;
-    if (currentValue is null)
+    if (!TrySpliceProperty(ref packagesPropsText, PackagesPropsPath, propertyName, expectedValue, ref staleCount))
     {
-        Console.Error.WriteLine($"Property {propertyName} not found in {PackagesPropsFileName}.");
         return DerivationFailedExitCode;
     }
+}
 
-    if (string.Equals(currentValue, expectedValue, StringComparison.Ordinal))
-    {
-        continue;
-    }
+if (!TrySpliceProperty(ref sdkPropsText, SdkPropsPath, MSBuildFloorPropertyName, expectedMSBuildVersion, ref staleCount))
+{
+    return DerivationFailedExitCode;
+}
 
-    Console.WriteLine($"{propertyName}: {currentValue} -> {expectedValue}");
-    staleCount++;
-    var oldElement = $"<{propertyName}>{currentValue}</{propertyName}>";
-    var newElement = $"<{propertyName}>{expectedValue}</{propertyName}>";
-    if (!TryReplaceOnce(ref propsText, oldElement, newElement))
-    {
-        Console.Error.WriteLine($"Cannot locate {oldElement} in {PackagesPropsFileName}.");
-        return DerivationFailedExitCode;
-    }
+if (!TrySpliceRegion(ref introductionText, IntroductionPath, FloorsRegionName, expectedRegionLines, ref staleCount))
+{
+    return DerivationFailedExitCode;
 }
 
 // The .NET SDK the repository pins must be able to run the compiler the floor demands. global.json still states
@@ -199,7 +215,9 @@ if (hookArgs.Check)
     return PendingWorkExitCode;
 }
 
-File.WriteAllText(packagesPropsPath, propsText);
+WriteIfChanged(homeDirectory, PackagesPropsPath, packagesPropsText);
+WriteIfChanged(homeDirectory, SdkPropsPath, sdkPropsText);
+WriteIfChanged(homeDirectory, IntroductionPath, introductionText);
 return 0;
 
 static async Task<List<(string ChannelVersion, NuGetVersion LatestSdk, Uri ReleasesJsonUrl)>> LoadStableChannelsAsync(
@@ -367,15 +385,84 @@ static IEnumerable<JsonElement> EnumerateSdkEntries(JsonElement release)
     }
 }
 
-static bool TryReplaceOnce(ref string text, string oldValue, string newValue)
+static bool TrySpliceProperty(
+    ref string text,
+    string path,
+    string propertyName,
+    string expectedValue,
+    ref int staleCount)
 {
-    var start = text.IndexOf(oldValue, StringComparison.Ordinal);
-    if (start < 0)
+    var currentValue = XDocument.Parse(text).Descendants(propertyName).FirstOrDefault()?.Value;
+    if (currentValue is null)
     {
+        Console.Error.WriteLine($"Property {propertyName} not found in {path}.");
         return false;
     }
 
-    if (text.IndexOf(oldValue, start + oldValue.Length, StringComparison.Ordinal) >= 0)
+    if (string.Equals(currentValue, expectedValue, StringComparison.Ordinal))
+    {
+        return true;
+    }
+
+    Console.WriteLine($"{propertyName}: {currentValue} -> {expectedValue}");
+    staleCount++;
+    var oldElement = $"<{propertyName}>{currentValue}</{propertyName}>";
+    var newElement = $"<{propertyName}>{expectedValue}</{propertyName}>";
+    if (TryReplaceOnce(ref text, oldElement, newElement))
+    {
+        return true;
+    }
+
+    Console.Error.WriteLine($"Cannot locate {oldElement} in {path}.");
+    return false;
+}
+
+// The region body is a blank line, the table, and a blank line, so that the table is surrounded by blank lines
+// as markdownlint's MD058 wants, whatever the prose around the markers.
+static bool TrySpliceRegion(
+    ref string text,
+    string path,
+    string regionName,
+    string[] expectedLines,
+    ref int staleCount)
+{
+    var startMarker = $"<!-- {regionName}:START -->";
+    var endMarker = $"<!-- {regionName}:END -->";
+    var start = IndexOfOnce(text, startMarker);
+    var end = IndexOfOnce(text, endMarker);
+    if (start < 0 || end < start)
+    {
+        Console.Error.WriteLine($"Region {regionName} of {path} needs one start marker, and one end marker after it.");
+        return false;
+    }
+
+    var newline = text.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+    var expectedBody = newline + newline + string.Join(newline, expectedLines) + newline + newline;
+    var bodyStart = start + startMarker.Length;
+    if (text.AsSpan(bodyStart, end - bodyStart).SequenceEqual(expectedBody))
+    {
+        return true;
+    }
+
+    Console.WriteLine($"Region {regionName} of {path}: stale");
+    staleCount++;
+    text = string.Concat(text.AsSpan(0, bodyStart), expectedBody, text.AsSpan(end));
+    return true;
+}
+
+static void WriteIfChanged(string homeDirectory, string path, string text)
+{
+    var fullPath = Path.Combine(homeDirectory, path);
+    if (!string.Equals(File.ReadAllText(fullPath), text, StringComparison.Ordinal))
+    {
+        File.WriteAllText(fullPath, text);
+    }
+}
+
+static bool TryReplaceOnce(ref string text, string oldValue, string newValue)
+{
+    var start = IndexOfOnce(text, oldValue);
+    if (start < 0)
     {
         return false;
     }
@@ -383,6 +470,37 @@ static bool TryReplaceOnce(ref string text, string oldValue, string newValue)
     text = string.Concat(text.AsSpan(0, start), newValue, text.AsSpan(start + oldValue.Length));
     return true;
 }
+
+// The index of the one occurrence of value in text, or -1 when there is none, or more than one.
+static int IndexOfOnce(string text, string value)
+{
+    var start = text.IndexOf(value, StringComparison.Ordinal);
+    if (start < 0)
+    {
+        return -1;
+    }
+
+    return text.IndexOf(value, start + value.Length, StringComparison.Ordinal) >= 0 ? -1 : start;
+}
+
+// A pipe table in the "aligned" style of markdownlint's MD060: every cell padded to the width of its column.
+static string[] FormatTable(string[][] rows)
+{
+    var widths = new int[rows[0].Length];
+    foreach (var row in rows)
+    {
+        for (var column = 0; column < widths.Length; column++)
+        {
+            widths[column] = Math.Max(widths[column], row[column].Length);
+        }
+    }
+
+    var separator = widths.Select(static width => new string('-', width)).ToArray();
+    return [FormatRow(rows[0], widths), FormatRow(separator, widths), .. rows.Skip(1).Select(row => FormatRow(row, widths))];
+}
+
+static string FormatRow(string[] cells, int[] widths)
+    => "| " + string.Join(" | ", cells.Select((cell, column) => cell.PadRight(widths[column]))) + " |";
 
 static async Task<string?> FetchTextOrNullAsync(HttpClient http, Uri url)
 {

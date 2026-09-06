@@ -8,9 +8,11 @@
   <!--
     Minimum supported version of MSBuild.
     Used by the SDK to determine whether the MSBuild version in use is supported.
+    The deps/post-update hook derives it from the Visual Studio version paired with the Roslyn floor,
+    so an edit made here alone does not survive the next `dotnet bv deps update` run.
   -->
   <PropertyGroup>
-    <BV_MinMSBuildVersion>17.4</BV_MinMSBuildVersion>
+    <BV_MinMSBuildVersion>18.9</BV_MinMSBuildVersion>
   </PropertyGroup>
 
   <!-- Import the project file containing the SDK version. -->
