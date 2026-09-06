@@ -1,6 +1,7 @@
 # Environment variables
 
-This page lists every environment variable `bv` reads or sets. Variables consumed by the .NET SDK, MSBuild, or NuGet themselves are out of scope; see the corresponding Microsoft documentation.
+This page lists every environment variable `bv` reads or sets.
+The variables that the .NET SDK, MSBuild, and NuGet read are out of scope, and their own documentation lists them.
 
 ---
 
@@ -28,62 +29,103 @@ This page lists every environment variable `bv` reads or sets. Variables consume
 
 ### `BV_DELEGATED`
 
-The recursion guard for [delegation](directory-structure.md#configdotnet-toolsjson): when a non-local `bv` hands an invocation over to the version pinned in the repository's tool manifest, it sets this variable on the delegated child, with the delegating `bv`'s version as the value. Its mere presence makes `bv` run in place unconditionally, so a delegated invocation can never delegate again, even if the installation layout is mis-detected.
+The marker of a [delegated](directory-structure.md#configdotnet-toolsjson) run.
+When `bv` hands an invocation over to the version the tool manifest pins, it sets the variable on the child.
+The value is the version of the delegating `bv`.
+A `bv` that finds the variable set runs in place, whatever else it detects, so a delegated invocation never delegates again.
 
-The variable is not meant to be set by hand; to keep `bv` from delegating, pass `--skip-delegation` instead.
+Do not set the variable by hand.
+To keep `bv` from delegating, pass `--skip-delegation`.
 
-The marker is only true for the delegated `bv` itself, so `bv` removes the variable from the environment of its own child processes (solution builds, [hooks](hooks.md), and so on): a `bv` reached through one of them — say, a globally-installed `bv` invoked by a hook — makes its own delegation decision, instead of inheriting a marker that is not about it. Hooks that need to know whether they run under delegation read the `RuntimeInfo.DelegatingVersion` member of their typed args.
+`bv` removes the variable from the environment of every child process it starts, such as a `dotnet` invocation or a [hook](hooks.md).
+A `bv` that one of them starts then makes its own delegation decision.
+A hook that needs to know whether the run was delegated reads the `RuntimeInfo.DelegatingVersion` member of its args.
 
 ### `CI_SERVER_HOST`
 
-Set by GitLab CI to the hostname of the GitLab instance running the job. `bv` uses it to build the e-mail address of the CI bot identity (`gitlab-ci@noreply.<host>`), which authors the commits `bv release` creates when the repository's Git configuration names no committer of its own. Only meaningful together with `GITLAB_CI`, which is what makes `bv` use the GitLab adapter in the first place.
+GitLab CI sets it to the host name of the GitLab instance that runs the job.
+`bv` reads it to build the e-mail address of the CI bot identity, `gitlab-ci@noreply.<host>`.
+That identity authors the commits of `bv release`, unless `buildvana.jsonc` states a `git.identity`.
+The variable matters only together with `GITLAB_CI`, which is what selects the GitLab adapter.
 
 ### `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`
 
-The .NET CLI's opt-out from having the console's encoding changed, honored by `bv` on the CLI's own terms so that a single variable governs the whole toolchain. Set it to `1` — the literal value, exactly as the CLI tests for it — and `bv` leaves the console's output and input encoding alone.
+The opt-out of the .NET CLI from changing the console encoding.
+`bv` honors it under the rule of the CLI: the literal value `1` opts out, and any other value does not.
 
-By default, `bv` sets both to UTF-8 for the duration of its run and restores the previous encodings on exit, as `dotnet` and MSBuild do, so that what `bv` can render depends neither on the codepage the console happened to be using nor on how `bv` was launched. Both encodings are set because that is what moves the console's active codepage: setting the output encoding alone takes effect in `cmd.exe` but not in PowerShell. The change is skipped where the console encoding APIs do not exist and, on Windows, below build 10.0.18363.
+By default, `bv` sets the output and input encodings of the console to UTF-8 for its run, as `dotnet` and MSBuild do.
+It restores the previous encodings on exit.
+What `bv` can render then depends neither on the codepage of the console nor on how `bv` was launched.
+Both encodings move because that is what changes the active codepage of the console.
+Setting the output encoding alone takes effect in `cmd.exe` and not in PowerShell.
+`bv` leaves the encodings alone where the console encoding APIs do not exist, and on Windows below build 10.0.18363.
 
 ### `DOTNET_CLI_HOME`
 
-Read the way the .NET CLI itself reads it: when set, it replaces the user profile directory as the root under which the CLI keeps its per-user state. `bv` consults it to locate the SDK's tool resolver cache (`.dotnet/toolResolverCache` under that root), which [delegation](directory-structure.md#configdotnet-toolsjson) probes to decide whether the pinned `bv` is already installed or a `dotnet tool restore` must run first. When the variable is absent, the platform home directory applies (`USERPROFILE` on Windows, `HOME` elsewhere), as in the CLI.
+`bv` reads it as the .NET CLI does.
+When the variable is set, it replaces the user profile directory as the root of the per-user state of the CLI.
+`bv` uses it to locate the tool resolver cache of the SDK, `.dotnet/toolResolverCache` under that root.
+[Delegation](directory-structure.md#configdotnet-toolsjson) probes the cache to decide whether the pinned `bv` is installed, or a `dotnet tool restore` must run first.
+When the variable is unset, the platform home directory applies: `USERPROFILE` on Windows, `HOME` elsewhere.
 
 ### `DOTNET_HOST_PATH`
 
-Set by the `dotnet` muxer on every process it launches, with the full path of the `dotnet` executable as the value. `bv` uses it to launch its child `dotnet` invocations (builds, tool restores, delegated runs, hooks) through the exact host that launched `bv` itself, instead of relying on `dotnet` being on the `PATH`. When the variable is absent — e.g. `bv` was installed as a global tool and run through its native shim — `bv` falls back to `dotnet` from the `PATH`.
+The `dotnet` muxer sets it on every process it starts, with the full path of the `dotnet` executable as the value.
+`bv` starts its child `dotnet` processes through that path: builds, tool restores, delegated runs, and hooks.
+The variable is unset when `bv` runs through the native shim of a global tool.
+`bv` then runs the `dotnet` found on the `PATH`.
 
 ### `GITHUB_ACTIONS`
 
-Set to `true` by GitHub Actions on every step. `bv` reads it to recognize that it is running on GitHub Actions and act through the corresponding server adapter: releases go to the GitHub API, step outputs are published as described under `GITHUB_OUTPUT` below, and the `github-actions[bot]` identity authors the commits `bv release` creates when the repository's Git configuration names no committer of its own. The comparison is case-insensitive, so `TRUE` and `True` count as well; any other value, or no value at all, means "not GitHub Actions".
+GitHub Actions sets it to `true` on every step.
+`bv` reads it to recognize a GitHub Actions run and act through the GitHub adapter.
+Releases then go to the GitHub API, and the step output goes to the file `GITHUB_OUTPUT` names.
+The `github-actions[bot]` identity authors the commits of `bv release`, unless `buildvana.jsonc` states a `git.identity`.
+The comparison ignores case, so `TRUE` and `True` count too.
+Any other value, or no value, means no GitHub Actions.
 
 ### `GITHUB_OUTPUT`
 
-Set by GitHub Actions to the path of the file that collects a step's outputs. `bv release` appends to that file to publish the released version as the `version` step output, so that later steps of the same job can refer to it; the release fails if the variable is unset, and fails up front, before creating anything, rather than at the moment the output is written. `bv` never sets this variable itself.
+GitHub Actions sets it to the path of the file that collects the outputs of a step.
+`bv release` appends the released version to that file as the `version` step output, for the later steps of the job.
+When the variable is unset, the release fails before creating anything.
+`bv` never sets the variable.
 
 ### `GITLAB_CI`
 
-Set by GitLab CI on every job. Its mere presence — whatever the value — makes `bv` recognize a GitLab CI run and act through the corresponding server adapter, including the bot identity built from `CI_SERVER_HOST` above.
+GitLab CI sets it on every job.
+Its presence, whatever the value, makes `bv` recognize a GitLab CI run and act through the GitLab adapter, with the bot identity built from `CI_SERVER_HOST`.
 
 ### `NO_COLOR`
 
-The widely-adopted convention for opting out of colored output; see [no-color.org](https://no-color.org). Any non-empty value — the convention's own rule, which counts presence rather than a particular value — turns off color in `bv`'s own narration. `--color` and `--no-color` win over it either way, so `bv --color` stays colored with `NO_COLOR` set.
+The convention for opting out of colored output, documented at [no-color.org](https://no-color.org).
+Any non-empty value turns off color in the narration of `bv`, as the convention prescribes.
+`--color` and `--no-color` win over the variable, so `bv --color` stays colored with `NO_COLOR` set.
 
-Note that this rule deliberately differs from `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`'s, which acts only on the literal value `1`. Each convention belongs to whoever defined it and is honored on its owner's terms; making the two agree would mean obeying neither.
+The rule differs from that of `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`, which acts on the literal value `1` alone.
+Each convention follows the rules of whoever defined it.
 
 ### `TERM`
 
-Read on non-Windows platforms only, where it is the POSIX way for a terminal to declare what it understands. An unset, empty, or `dumb` value tells `bv` that ANSI escape sequences would not be interpreted, so color auto-detection turns color off; `--color` still forces it on. On Windows the equivalent question is a console mode rather than a variable, and `TERM` is not consulted.
+`bv` reads it on every platform but Windows, where a terminal declares what it understands through this variable.
+An unset, empty, or `dumb` value says that the terminal does not interpret ANSI escape sequences, so color detection turns color off.
+`--color` still forces color on.
+On Windows, a console mode answers the question, and `bv` does not read `TERM`.
 
 ### Secret-carrying variables named by the configuration file
 
-`bv` never stores secrets; the [configuration file](configuration-file.md) names the environment variable that carries each one, and `bv` reads the value at the point of use:
+`bv` stores no secret.
+The [configuration file](configuration-file.md) names the environment variable that carries each one, and `bv` reads the value where it uses it.
 
-- `github.tokenEnv` names the variable holding the GitHub token used by release operations; the default name is `GITHUB_TOKEN`.
-- `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys for the NuGet push feeds.
+- `github.tokenEnv` names the variable holding the GitHub token of the release operations.
+  The default name is `GITHUB_TOKEN`.
+- `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys of the NuGet push feeds.
 
 ---
 
 ## Variables set by `bv`
 
-- `BV_DELEGATED` on the delegated `bv`, as described above — and removed from the environment of `bv`'s other child processes.
-- The variables configured under `dotnet.all.env` and the per-command `dotnet.<command>.env` sections of the configuration file, on the corresponding child `dotnet` invocations; a `null` value removes the variable from the child's environment.
+- `BV_DELEGATED`, on the delegated `bv`, as described above.
+  `bv` removes it from the environment of its other child processes.
+- The variables under `dotnet.all.env` and under the per-command `dotnet.<command>.env` sections of the configuration file, on the matching child `dotnet` invocations.
+  A `null` value removes the variable from the environment of the child.
