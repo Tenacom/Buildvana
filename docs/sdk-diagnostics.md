@@ -62,10 +62,10 @@ More task-specific diagnostics (if any) are listed under relevant modules.
 
 ## Source generators (1100-1199)
 
-| Code      | Severity | Message                                                                             | Description                                                                                                                                                                                                    |
-| --------- | :------: | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BVSDK1100 |  Error   | Buildvana SDK source generators are only supported in C# and Visual Basic projects. | You are trying to use Buildvana SDK source generators in a project whose language is neither C# nor Visual Basic.                                                                                              |
-| BVSDK1101 |  Error   | Buildvana SDK source generators require Roslyn version...                           | You are trying to use Buildvana SDK source generators with an unsupported version of Roslyn. See [Toolchain](introduction.md#toolchain) for the .NET SDK and Visual Studio versions that ship a supported one. |
+| Code      | Severity | Message                                                            | Description                                                                                                                                                                                                    |
+| --------- | :------: | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK1100 |  Error   | Buildvana SDK source generators are only supported in C# projects. | You are trying to use Buildvana SDK source generators in a project whose language is not C#.                                                                                                                   |
+| BVSDK1101 |  Error   | Buildvana SDK source generators require Roslyn version...          | You are trying to use Buildvana SDK source generators with an unsupported version of Roslyn. See [Toolchain](introduction.md#toolchain) for the .NET SDK and Visual Studio versions that ship a supported one. |
 
 ---
 
