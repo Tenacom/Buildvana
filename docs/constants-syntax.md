@@ -16,27 +16,28 @@ Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` ite
 
 ## Declaring constants
 
-```XML
-  <!-- Generation of a ThisAssembly class is disabled by default. -->
-  <PropertyGroup>
-    <GenerateThisAssemblyClass>true</GenerateThisAssemblyClass>
-  </PropertyGroup>
+```xml
+<!-- Generation of a ThisAssembly class is disabled by default. -->
+<PropertyGroup>
+  <GenerateThisAssemblyClass>true</GenerateThisAssemblyClass>
+</PropertyGroup>
 
-  <!-- Add a System.Int32 constant named ThisAssembly.Answer with a value of 42. -->
-  <ItemGroup>
-    <ThisAssemblyConstant Include="Answer" Value="42" />
-  </ItemGroup>
+<!-- Add a System.Int32 constant named ThisAssembly.Answer with a value of 42. -->
+<ItemGroup>
+  <ThisAssemblyConstant Include="Answer" Value="42" />
+</ItemGroup>
 ```
 
 The type of a constant may also be explicitly specified:
 
-```XML
-  <ItemGroup>
-    <ThisAssemblyConstant Include="Answer" Value="int:42" />
-  </ItemGroup>
+```xml
+<ItemGroup>
+  <ThisAssemblyConstant Include="Answer" Value="int:42" />
+</ItemGroup>
 ```
 
-> **NOTE:** `ThisAssembly` class generation is only supported in C# projects.
+> [!NOTE]
+> `ThisAssembly` class generation is only supported in C# projects.
 
 ---
 

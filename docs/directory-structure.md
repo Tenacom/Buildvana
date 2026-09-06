@@ -98,12 +98,12 @@ This is also, usually, the root of your repository: it is where you checked out 
 
 The full path of the home directory, including a trailing path separator, is stored in the `HomeDirectory` MSBuild property. You can use this property to define your own paths as needed. For example:
 
-```XML
-  <!-- Directory where I keep some additional files I need. -->
-  <PropertyGroup>
-    <!-- The HomeDirectory property is guaranteed to end with a path separator. -->
-    <MyDirectory>$(HomeDirectory)MyStuff\</MyDirectory>
-  </PropertyGroup>
+```xml
+<!-- Directory where I keep some additional files I need. -->
+<PropertyGroup>
+  <!-- The HomeDirectory property is guaranteed to end with a path separator. -->
+  <MyDirectory>$(HomeDirectory)MyStuff\</MyDirectory>
+</PropertyGroup>
 ```
 
 **Note for Windows users:** Do not nest a home directory too deeply in a drive, as Windows has a 260-character limitation on the length of paths (you can read more about it in [this article](https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation) on Microsoft's documentation site.) There are bound to be some levels of nested directories under the home directory: for example, the executable file for a project might be `$(HomeDirectory)\src\MyProgram\bin\Release\netcoreapp3.1\MyProgram.exe`. If the `$(HomeDirectory)` part is more than 200 characters long to start with, the compiler won't even be able to create the executable.
@@ -241,7 +241,7 @@ The advantage of `Common.*` versus `Directory.Build.*` files is predictability. 
 
 A typical `Common.props` file in a home directory may look like this:
 
-```XML
+```xml
 <Project>
 
   <!-- Common project / package metadata -->
@@ -259,7 +259,7 @@ A typical `Common.props` file in a home directory may look like this:
 
 An example `tests\Common.props` file may look like this:
 
-```XML
+```xml
 <Project>
 
   <PropertyGroup>
@@ -292,7 +292,7 @@ These files, which must be in the home directory, serve two purposes:
 
 Here's what must be in `Directory.Build.props`:
 
-```XML
+```xml
 <Project>
 
   <Import Project="Sdk.props" Sdk="Buildvana.Sdk" /> <!-- Buildvana.Sdk version is specified in global.json -->
@@ -302,7 +302,7 @@ Here's what must be in `Directory.Build.props`:
 
 As you may have guessed, `Directory.Build.targets` is similar:
 
-```XML
+```xml
 <Project>
 
   <Import Project="Sdk.targets" Sdk="Buildvana.Sdk" /> <!-- Buildvana.Sdk version is specified in global.json -->
@@ -320,7 +320,7 @@ It is important that no other `Directory.Build.props` and / or `Directory.Build.
 
 [`global.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json) is where the .NET SDK looks up the version of any MSBuild project SDK referenced without an explicit version, under the `msbuild-sdks` key. Since the `<Import>` elements in `Directory.Build.props` and `Directory.Build.targets` reference Buildvana SDK without a `Version` attribute (see [the previous section](#directorybuildprops-and-directorybuildtargets)), the version of Buildvana SDK used by the repository is pinned here:
 
-```JSON
+```json
 {
   "msbuild-sdks": {
     "Buildvana.Sdk": "1.0.0"

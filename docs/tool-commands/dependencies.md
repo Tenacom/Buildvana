@@ -47,11 +47,11 @@ The command has three subcommands. `show` works offline and states what the repo
 
 Four _scopes_ divide the dependencies, one per kind and per file:
 
-| Scope      | What it manages      | Where it lives                                                                 |
-| ---------- | -------------------- | ------------------------------------------------------------------------------ |
-| `netsdk`   | The .NET SDK version | `global.json`, in the `sdk` section                                            |
-| `sdks`     | MSBuild project SDKs | `global.json`, in the `msbuild-sdks` section, and `#:sdk` directives           |
-| `tools`    | .NET local tools     | `.config/dotnet-tools.json`                                                    |
+| Scope      | What it manages      | Where it lives                                                                                      |
+| ---------- | -------------------- | --------------------------------------------------------------------------------------------------- |
+| `netsdk`   | The .NET SDK version | `global.json`, in the `sdk` section                                                                 |
+| `sdks`     | MSBuild project SDKs | `global.json`, in the `msbuild-sdks` section, and `#:sdk` directives                                |
+| `tools`    | .NET local tools     | `.config/dotnet-tools.json`                                                                         |
 | `packages` | NuGet package pins   | central package management files, project files, additional group files, and `#:package` directives |
 
 Configuration decides which scopes are managed at all: a scope whose policy is `disable` is managed by nothing, listed by nothing, and no command-line option brings it back. By default all four are managed.
@@ -77,23 +77,23 @@ An update policy answers one question: given the current version of a pin, how f
 
 Two vocabularies exist, because a .NET SDK version is not SemVer: its patch field encodes the feature band, so in `10.0.402` the feature band is 4 and the patch is 2.
 
-| Package policy | Meaning                                                     |
-| -------------- | ------------------------------------------------------------ |
-| `disable`      | Never move this pin.                                        |
+| Package policy | Meaning                                                                    |
+| -------------- | -------------------------------------------------------------------------- |
+| `disable`      | Never move this pin.                                                       |
 | `exact`        | Move within the same version, i.e. a prerelease to its own stable release. |
-| `revision`     | Move within the same major, minor and patch.                |
-| `patch`        | Move within the same major and minor.                       |
-| `minor`        | Move within the same major.                                 |
-| `major`        | Move to the latest version.                                 |
+| `revision`     | Move within the same major, minor and patch.                               |
+| `patch`        | Move within the same major and minor.                                      |
+| `minor`        | Move within the same major.                                                |
+| `major`        | Move to the latest version.                                                |
 
-| .NET SDK policy | Meaning                                             |
-| --------------- | ----------------------------------------------------- |
-| `disable`       | Never move the baseline.                            |
-| `patch`         | Move within the same feature band.                  |
-| `feature`       | Move within the same major and minor.               |
-| `minor`         | Move within the same major.                         |
-| `major`         | Move to the latest release.                         |
-| `lts`           | Move to the latest long-term support release.       |
+| .NET SDK policy | Meaning                                       |
+| --------------- | --------------------------------------------- |
+| `disable`       | Never move the baseline.                      |
+| `patch`         | Move within the same feature band.            |
+| `feature`       | Move within the same major and minor.         |
+| `minor`         | Move within the same major.                   |
+| `major`         | Move to the latest release.                   |
+| `lts`           | Move to the latest long-term support release. |
 
 ### Policy strings
 
