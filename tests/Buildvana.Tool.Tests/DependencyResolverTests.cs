@@ -41,7 +41,7 @@ internal sealed class DependencyResolverTests
     [Test]
     public async Task ResolveAsync_APinItsPolicyDisables_IsNotLookedUp()
     {
-        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { Packages = "disable" } };
+        var config = new DependenciesConfig { Policies = [new UpdatePolicyRule { Pattern = "Serilog", Policy = "disable" }] };
         var versions = new FakePackageVersionSource().Knows("Serilog", ["3.0.0", "4.0.0"]);
         var resolution = await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), config).ConfigureAwait(false);
         await Assert.That(resolution.Packages.Single().State).IsEqualTo(PinResolutionState.Disabled);
@@ -163,7 +163,7 @@ internal sealed class DependencyResolverTests
     [Test]
     public async Task ResolveAsync_WithAStatedVersion_TakesItWhateverThePolicySays()
     {
-        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { Packages = "disable" } };
+        var config = new DependenciesConfig { Policies = [new UpdatePolicyRule { Pattern = "Serilog", Policy = "disable" }] };
         var versions = new FakePackageVersionSource().Knows("Serilog", ["2.0.0", "3.0.0"]);
         var request = new DependencyResolutionRequest { Filters = ["Serilog"], To = NuGetVersion.Parse("2.0.0") };
         var resolution = await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), config, request).ConfigureAwait(false);
@@ -233,7 +233,7 @@ internal sealed class DependencyResolverTests
     [Test]
     public async Task ResolveAsync_AskedForTheLatest_MovesAPinItsPolicyDisables()
     {
-        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { Packages = "disable" } };
+        var config = new DependenciesConfig { Policies = [new UpdatePolicyRule { Pattern = "Serilog", Policy = "disable" }] };
         var versions = new FakePackageVersionSource().Knows("Serilog", ["3.0.0", "4.0.0", "5.0.0-beta.1"]);
         var request = new DependencyResolutionRequest { Filters = ["Serilog"], Latest = true };
         var resolution = await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), config, request).ConfigureAwait(false);
