@@ -174,7 +174,7 @@ internal sealed class ReleaseCommandChangelogTests
         // the one released, not the one computed before the commit bumped the Git height. The section released
         // before this one is left as it is.
         var changelog = harness.ReadFile("CHANGELOG.md");
-        var pinnedUrl = $"https://git.example.invalid/tenacom/test-repo/blob/{ReleasedVersion}/docs/hooks.md#the-build-environment";
+        const string pinnedUrl = $"https://git.example.invalid/tenacom/test-repo/blob/{ReleasedVersion}/docs/hooks.md#the-build-environment";
         await Assert.That(changelog).Contains($"[runs from the home directory]({pinnedUrl})");
         await Assert.That(changelog).DoesNotContain("blob/2.3.1-preview/");
         await Assert.That(changelog).Contains("[the page](docs/released.md)");
