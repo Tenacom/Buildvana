@@ -24,6 +24,11 @@
  * A run that does not select the packages scope carries no Microsoft.CodeAnalysis.Common result. The hook then has
  * nothing to derive the floors from, and leaves the files alone.
  *
+ * BV_MinRoslynVersion and BV_MinMSBuildVersion are public floors: BVSDK1101 and BVSDK1004 fail a consumer's build
+ * on a compiler or an MSBuild older than them. The other three values follow the Roslyn floor and carry no floor
+ * of their own. An apply run that moves a public floor says so on stderr, because the changelog bullet the move
+ * needs is written by hand.
+ *
  * Exit codes: 0 = every value is right, or was corrected; 1 = a check run found one stale, which bv folds into
  * its own verdict; 2 = the derivation could not complete, which bv reports as its own exit code 3.
  */
@@ -55,6 +60,7 @@ const string SdkRepoRawUrlPrefix = "https://raw.githubusercontent.com/dotnet/sdk
 const string PackagesPropsPath = "Directory.Packages.props";
 const string SdkPropsPath = "src/Buildvana.Sdk/Sdk/Sdk.props";
 const string IntroductionPath = "docs/introduction.md";
+const string RoslynFloorPropertyName = "BV_MinRoslynVersion";
 const string MSBuildFloorPropertyName = "BV_MinMSBuildVersion";
 const string FloorsRegionName = "TOOLCHAIN-FLOORS";
 const int PendingWorkExitCode = 1;
@@ -151,7 +157,7 @@ var vsDisplay = vsProductName is null ? vsVersionText : $"{vsProductName} {vsVer
 var expectedHint = $".NET SDK {bandChannel}.{bandNumber}xx / Visual Studio {vsDisplay}+";
 
 (string Name, string Expected)[] floorProperties = [
-    ("BV_MinRoslynVersion", expectedVersion),
+    (RoslynFloorPropertyName, expectedVersion),
     ("BV_MinRoslynVersionHint", expectedHint),
     ("BV_SourceGeneratorsPackageFolder", expectedFolder),
 ];
@@ -175,15 +181,16 @@ var packagesPropsText = File.ReadAllText(Path.Combine(homeDirectory, PackagesPro
 var sdkPropsText = File.ReadAllText(Path.Combine(homeDirectory, SdkPropsPath));
 var introductionText = File.ReadAllText(Path.Combine(homeDirectory, IntroductionPath));
 var staleCount = 0;
+var propertyMoves = new List<(string Name, string OldValue, string NewValue)>();
 foreach (var (propertyName, expectedValue) in floorProperties)
 {
-    if (!TrySpliceProperty(ref packagesPropsText, PackagesPropsPath, propertyName, expectedValue, ref staleCount))
+    if (!TrySpliceProperty(ref packagesPropsText, PackagesPropsPath, propertyName, expectedValue, ref staleCount, propertyMoves))
     {
         return DerivationFailedExitCode;
     }
 }
 
-if (!TrySpliceProperty(ref sdkPropsText, SdkPropsPath, MSBuildFloorPropertyName, expectedMSBuildVersion, ref staleCount))
+if (!TrySpliceProperty(ref sdkPropsText, SdkPropsPath, MSBuildFloorPropertyName, expectedMSBuildVersion, ref staleCount, propertyMoves))
 {
     return DerivationFailedExitCode;
 }
@@ -217,6 +224,17 @@ if (hookArgs.Check)
 WriteIfChanged(homeDirectory, PackagesPropsPath, packagesPropsText);
 WriteIfChanged(homeDirectory, SdkPropsPath, sdkPropsText);
 WriteIfChanged(homeDirectory, IntroductionPath, introductionText);
+
+// The two public floors: BVSDK1101 and BVSDK1004 fail a consumer's build below them. The bullet is written by hand.
+foreach (var (name, oldValue, newValue) in propertyMoves)
+{
+    if (name is RoslynFloorPropertyName or MSBuildFloorPropertyName)
+    {
+        Console.Error.WriteLine(
+            $"{name} moved from {oldValue} to {newValue}, a breaking change for Buildvana SDK consumers: add a changelog bullet.");
+    }
+}
+
 return 0;
 
 static async Task<List<(string ChannelVersion, NuGetVersion LatestSdk, Uri ReleasesJsonUrl)>> LoadStableChannelsAsync(
@@ -389,7 +407,8 @@ static bool TrySpliceProperty(
     string path,
     string propertyName,
     string expectedValue,
-    ref int staleCount)
+    ref int staleCount,
+    List<(string Name, string OldValue, string NewValue)> moves)
 {
     var currentValue = XDocument.Parse(text).Descendants(propertyName).FirstOrDefault()?.Value;
     if (currentValue is null)
@@ -405,6 +424,7 @@ static bool TrySpliceProperty(
 
     Console.WriteLine($"{propertyName}: {currentValue} -> {expectedValue}");
     staleCount++;
+    moves.Add((propertyName, currentValue, expectedValue));
     var oldElement = $"<{propertyName}>{currentValue}</{propertyName}>";
     var newElement = $"<{propertyName}>{expectedValue}</{propertyName}>";
     if (TryReplaceOnce(ref text, oldElement, newElement))
