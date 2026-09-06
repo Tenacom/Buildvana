@@ -56,8 +56,8 @@ string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shel
 // Files the TODO check leaves alone. None here; a copy of this tool may name some.
 string[] todoExemptFiles = [];
 
-// Files the sentence check leaves alone. Here, the changelog, whose released sections are never edited, and the
-// one page not yet rewritten in the documentation register.
+// Files the sentence check leaves alone. Here, the changelog, whose released sections hold lines over the limit and
+// are never edited, and the one page not yet rewritten in the documentation register.
 string[] sentenceExemptFiles = ["CHANGELOG.md", "docs/tool-commands/dependencies.md"];
 
 if (args.Length > 1)
