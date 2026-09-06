@@ -10,25 +10,25 @@
       Minimum supported version of Roslyn.
       Used by the SDK to determine whether the compiler in use is supported.
     -->
-    <BV_MinRoslynVersion>5.6</BV_MinRoslynVersion>
+    <BV_MinRoslynVersion>5.9</BV_MinRoslynVersion>
 
     <!--
       A textual hint telling which toolchains contain a supported version of Roslyn.
       Used by the SDK to construct a meaningful diagnostic message when an unsupported Roslyn version is detected.
     -->
-    <BV_MinRoslynVersionHint>.NET SDK 10.0.3xx / Visual Studio 2026 18.6+</BV_MinRoslynVersionHint>
+    <BV_MinRoslynVersionHint>.NET SDK 10.0.4xx / Visual Studio 2026 18.9+</BV_MinRoslynVersionHint>
 
     <!--
       The package folder, under analyzers/dotnet, where the source generators DLL is put when packing the SDK.
       Used by the SDK project when packing.
     -->
-    <BV_SourceGeneratorsPackageFolder>roslyn5.6</BV_SourceGeneratorsPackageFolder>
+    <BV_SourceGeneratorsPackageFolder>roslyn5.9</BV_SourceGeneratorsPackageFolder>
 
   </PropertyGroup>
 
   <!-- Run-time dependencies-->
   <ItemGroup>
-    <PackageVersion Include="CliWrap" Version="3.10.4" />
+    <PackageVersion Include="CliWrap" Version="3.10.5" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
     <PackageVersion Include="JetBrains.Annotations.Sources" Version="2026.2.0" />
     <PackageVersion Include="LibGit2Sharp" Version="0.32.0" />
@@ -36,9 +36,9 @@
     <PackageVersion Include="Microsoft.Build.Framework" Version="18.9.6" />
     <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="18.9.6" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.9.6" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.6.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.6.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="5.9.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.11" />
@@ -64,7 +64,7 @@
     <PackageVersion Include="Microsoft.Build" Version="18.9.6" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.11.2" />
     <PackageVersion Include="Spectre.Console.Testing" Version="0.57.2" />
-    <PackageVersion Include="TUnit" Version="1.65.0" />
+    <PackageVersion Include="TUnit" Version="1.66.10" />
   </ItemGroup>
 
   <!-- Transitive package overrides -->

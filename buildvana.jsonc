@@ -85,9 +85,12 @@
 
   "dependencies": {
     // No "scopes": the built-in defaults are the ones this repository wants.
-
-    // No "policies": no package here needs a policy of its own.
-
+    "policies": {
+      "Louis": "minor-",
+      "Louis.*": "minor-",
+      "StyleCop.Analyzers": "minor-",
+      "Microsoft.CodeAnalysis.*": "patch",
+    },
     "additionalPackages": {
       "SDK package injections": {
         "files": "src/Buildvana.Sdk/Sdk/PackageVersions.props",
