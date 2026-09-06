@@ -121,14 +121,14 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Buildvana.Runtime;
 
-var args = PostReleaseHookArgs.Load();
-if (!args.Dogfooding)
+var hookArgs = PostReleaseHookArgs.Load();
+if (!hookArgs.Dogfooding)
 {
     return;
 }
 
 var text = File.ReadAllText("some-file.md");
-text = Regex.Replace(text, "(MyOrg/MyRepo/)[^/]+(/docs/)", $"${{1}}{args.Release.SemVer}$2");
+text = Regex.Replace(text, "(MyOrg/MyRepo/)[^/]+(/docs/)", $"${{1}}{hookArgs.Release.SemVer}$2");
 File.WriteAllText("some-file.md", text);
 ```
 
@@ -215,7 +215,7 @@ A repository with no configuration file resolves to the defaults.
 A hook reads a setting by property access, without a fallback of its own:
 
 ```csharp
-var branches = args.RuntimeInfo.Configuration.Release.Branches;
+var branches = hookArgs.RuntimeInfo.Configuration.Release.Branches;
 ```
 
 The embedded configuration is a snapshot, taken when the args were written.
@@ -228,7 +228,7 @@ It must act on the file `bv` read.
 Do not hard-code a file name, and do not search for one:
 
 ```csharp
-var configFile = args.RuntimeInfo.ConfigFile;
+var configFile = hookArgs.RuntimeInfo.ConfigFile;
 if (configFile is not null)
 {
     File.WriteAllText(configFile, Rewrite(File.ReadAllText(configFile)));
