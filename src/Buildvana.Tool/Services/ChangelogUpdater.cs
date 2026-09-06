@@ -231,8 +231,10 @@ internal static partial class ChangelogUpdater
     /// <remarks>
     /// <para>A relative file link is an inline link, or an image, whose target has no URI scheme and does not
     /// start with <c>'#'</c>. The target is a path relative to the home directory, where the changelog sits,
-    /// with an optional anchor after <c>'#'</c>. The anchor is kept. Code spans are not recognized, so a link
-    /// inside one is rewritten too, and reference-style links are not handled.</para>
+    /// with an optional anchor after <c>'#'</c>. The anchor is kept.</para>
+    /// <para>The rewrite has three limits. Code spans and fenced code blocks are not recognized, so a link
+    /// inside either is rewritten too. Reference-style links are not handled. A target is read up to the first
+    /// whitespace or closing parenthesis, so a path holding a parenthesis is cut short at it.</para>
     /// </remarks>
     public static string FinalizeNewSection(
         IReadOnlyList<string> lines,
