@@ -14,7 +14,7 @@
          - force to false for projects in unsupported languages;
          - force to false for NoTargets projects. -->
   <PropertyGroup>
-    <GenerateAdditionalAssemblyInfo Condition="'$(Language)' != 'C#' And '$(Language)' != 'VB'">false</GenerateAdditionalAssemblyInfo>
+    <GenerateAdditionalAssemblyInfo Condition="'$(Language)' != 'C#'">false</GenerateAdditionalAssemblyInfo>
     <GenerateAdditionalAssemblyInfo Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">false</GenerateAdditionalAssemblyInfo>
     <GenerateAdditionalAssemblyInfo Condition="'$(GenerateAdditionalAssemblyInfo)' == ''">true</GenerateAdditionalAssemblyInfo>
     <GenerateAdditionalAssemblyInfo Condition="'$(GenerateAdditionalAssemblyInfo)' != 'true'">false</GenerateAdditionalAssemblyInfo>

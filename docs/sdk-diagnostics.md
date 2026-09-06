@@ -89,9 +89,9 @@ More task-specific diagnostics (if any) are listed under relevant modules.
 
 ## AdditionalAssemblyInfo module (1400-1499)
 
-| Code      | Severity | Message                                                                  | Description                                                                                                                                                             |
-| --------- | :------: | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BVSDK1400 | Warning  | Additional assembly info generation is not supported for language '...'. | Property `GenerateAdditionalAssemblyInfo` was set to `true` in a project whose language is neither C# nor Visual Basic. Additional assembly info will not be generated. |
+| Code      | Severity | Message                                                                  | Description                                                                                                                                        |
+| --------- | :------: | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK1400 | Warning  | Additional assembly info generation is not supported for language '...'. | Property `GenerateAdditionalAssemblyInfo` was set to `true` in a project whose language is not C#. Additional assembly info will not be generated. |
 
 ---
 
