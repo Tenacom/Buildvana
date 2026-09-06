@@ -28,7 +28,7 @@ These properties are prefixed with `BV_` to avoid polluting the already crowded 
 If you find yourself referring to or modifying any of these properties in your own projects, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). Chances are we need to either change one or more properties to well-known properties, or otherwise fix what is probably a bug.
 
 > [!NOTE]
-> Not all `BV_`-prefixed properties are documented here, as most of them are use internally by single SDK modules.
+> Not all `BV_`-prefixed properties are documented here, as most of them are used internally by single SDK modules.
 
 ---
 
