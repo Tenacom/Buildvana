@@ -1,6 +1,6 @@
 # Directory structure
 
-This is the recommended directory structure for a repository using Buildvana SDK.
+This page describes the recommended layout of a repository that uses Buildvana SDK, and says what each file and directory is for.
 
 ---
 
@@ -24,152 +24,161 @@ This is the recommended directory structure for a repository using Buildvana SDK
 
 ## Layout
 
-The asterisk `(*)` marks files and directories that are always present. Other files and directories may or may not be present, depending on the specific project; for example, not all projects need a `lib` subdirectory.
-
-We will follow the MSBuild convention of a backslash (`\`) as a path separator. On non-Windows systems, MSBuild automatically converts backslashes to slashes (`/`) when accessing the filesystem.
+The asterisk, `(*)`, marks the files and directories that every repository has.
+The others depend on the product.
+The tree follows the MSBuild convention of a backslash as the path separator.
+On a system other than Windows, MSBuild turns a backslash into a slash when it accesses the file system.
 
 ```text
-<some_path>\                   <<< (*) Home directory (the root of your repository)
+<some_path>\                   <<< (*) Home directory, usually the root of the repository
 |
-+--- .buildvana\               <<< Optional grouping directory for Buildvana files
++--- .buildvana\               <<< Grouping directory for Buildvana files
 |    |
-|    +--- hooks\               <<< Repo-owned hooks run by bv (see hooks.md)
+|    +--- hooks\               <<< Hooks, run by bv (see hooks.md)
+|    |    |
+|    |    +--- deps\
+|    |    |    |
+|    |    |    +--- post-update.cs
 |    |    |
 |    |    +--- release\
 |    |         |
 |    |         +--- post-release.cs
 |
-+--- .buildvana-temp\          <<< bv's scratch directory (machine-generated; add to .gitignore)
++--- .buildvana-temp\          <<< Scratch directory of bv (machine-generated; add to .gitignore)
 |
 +--- .config\
 |    |
-|    +--- dotnet-tools.json    <<< .NET local tool manifest; pins the bv version used by `dotnet bv`
+|    +--- dotnet-tools.json    <<< .NET local tool manifest; pins the bv version that `dotnet bv` runs
 |
-+--- artifacts\                <<< (*) Final results of builds
++--- artifacts\                <<< (*) Results of builds
 |
 +--- samples\                  <<< Sample projects
 |    |
-|    +--- Common.props         <<< Portions of MSBuild code common to all projects in samples\
+|    +--- Common.props         <<< MSBuild code common to every project under samples\
 |    +--- Common.targets
 |
-+--- src\                      <<< (*) Source code (except tests and sample projects)
++--- src\                      <<< (*) Source code, except tests and sample projects
 |    |
-|    +--- Common.props         <<< Portions of MSBuild code common to all projects in src\
+|    +--- Common.props         <<< MSBuild code common to every project under src\
 |    +--- Common.targets
 |
 +--- tests\                    <<< Test projects
 |    |
-|    +--- Common.props         <<< Portions of MSBuild code common to all projects in tests\
+|    +--- Common.props         <<< MSBuild code common to every project under tests\
 |    +--- Common.targets
 |
 +--- buildvana.jsonc           <<< Buildvana configuration file (or buildvana.json)
 |
-+--- Common.props              <<< Common parts of MSBuild projects
++--- Common.props              <<< MSBuild code common to every project
 +--- Common.targets
 |
-+--- Directory.Build.props     <<< (*) Scaffold files used to import Buildvana SDK
++--- Directory.Build.props     <<< (*) Scaffold files that import Buildvana SDK
 +--- Directory.Build.targets
 |
-+--- global.json               <<< (*) Pins the Buildvana SDK version (and, optionally, the .NET SDK version)
++--- global.json               <<< (*) Pins the Buildvana SDK version, and optionally the .NET SDK version
 |
-+--- LICENSE                   <<< License file
++--- LICENSE                   <<< License file, packed by the NuGetPack module
 |
-+--- README.md                 <<< README file
++--- README.md                 <<< README file, packed by the NuGetPack module
 |
-+--- THIRD-PARTY-NOTICES       <<< Third-party copyright notices
++--- THIRD-PARTY-NOTICES       <<< Third-party copyright notices, packed by the NuGetPack module
 |
-+--- VERSION                   <<< (*) Single source of truth for project version
++--- VERSION                   <<< (*) Version of the product
 |
-+--- <solution>.sln            <<< (*) Your solution file
++--- <solution>.slnx           <<< (*) Solution file, in either format
 ```
-
-This document explains what each of this files and directories is and how it is related to Buildvana SDK.
 
 ---
 
 ## Home directory
 
-This is the "home" of your product. All files specific to your product should be here, or in a directory herein; once this directory is copied to another computer, as long as it has the right tools installed, the product may be built on the second computer exactly the same way as on the first.
+The home directory holds every file of the product.
+A copy of the directory on another computer with the same tools builds the product the same way.
 
-This is also, usually, the root of your repository: it is where you checked out to, or checked in from. A Git repository is not strictly required, though: any directory containing a Buildvana configuration file can serve as a home directory (see below).
+The home directory is usually the root of the repository: the directory you cloned into.
+A Git repository is not required, because any directory that holds `buildvana.jsonc` can serve as a home directory, as [Location of the home directory](#location-of-the-home-directory) says.
 
-The full path of the home directory, including a trailing path separator, is stored in the `HomeDirectory` MSBuild property. You can use this property to define your own paths as needed. For example:
+The `HomeDirectory` MSBuild property holds the full path of the home directory, with a trailing path separator.
+A path of yours can build on it:
 
 ```xml
-<!-- Directory where I keep some additional files I need. -->
 <PropertyGroup>
-  <!-- The HomeDirectory property is guaranteed to end with a path separator. -->
   <MyDirectory>$(HomeDirectory)MyStuff\</MyDirectory>
 </PropertyGroup>
 ```
 
-**Note for Windows users:** Do not nest a home directory too deeply in a drive, as Windows has a 260-character limitation on the length of paths (you can read more about it in [this article](https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#maximum-path-length-limitation) on Microsoft's documentation site.) There are bound to be some levels of nested directories under the home directory: for example, the executable file for a project might be `$(HomeDirectory)\src\MyProgram\bin\Release\netcoreapp3.1\MyProgram.exe`. If the `$(HomeDirectory)` part is more than 200 characters long to start with, the compiler won't even be able to create the executable.
+> [!NOTE]
+> On Windows, keep the home directory near the root of a drive.
+> A path is limited to 260 characters, as [Maximum Path Length Limitation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation) explains.
+> An output path such as `$(HomeDirectory)src\MyProgram\bin\Release\net10.0\MyProgram.exe` adds several levels, and a home directory over 200 characters leaves the compiler no room for it.
 
 ### Location of the home directory
 
-Buildvana SDK determines the location of the home directory by walking up the directory hierarchy, starting from the project's directory (included), and stopping at the nearest directory that contains any of these home markers:
+Buildvana SDK walks up from the directory of the project, that directory included, and stops at the nearest directory that holds a home marker:
 
-- a Buildvana configuration file (`buildvana.json` or `buildvana.jsonc`);
-- a Git worktree or submodule (a file named `.git`);
-- a regular Git repository (a file named `HEAD` in a `.git` subdirectory).
+- [`buildvana.jsonc`](configuration-file.md), under either name;
+- a Git worktree or submodule, as a file named `.git`;
+- a Git repository, as a file named `HEAD` in a `.git` subdirectory.
 
-The directory containing the marker becomes the home directory, and its full path becomes the value of `HomeDirectory`. Every marker sits in the directory it marks, so nothing under a subdirectory — the `.buildvana` directory included — takes part in discovery: hooks are projects living under `.buildvana\`, and a marker recognized in there would make each of them discover `.buildvana\` as its own home directory. A configuration file does not have to actually configure anything: an empty JSON object (`{}`) is valid content, making the file usable as a pure home-directory marker.
+That directory becomes the home directory, and `HomeDirectory` holds its full path.
+A marker sits in the directory it marks, so nothing under a subdirectory takes part in discovery, `.buildvana\` included.
+A hook is a project under `.buildvana\`, and a marker recognized there would make each hook discover `.buildvana\` as its home directory.
+A configuration file does not have to configure anything: an empty JSON object, `{}`, is valid content, and marks the directory.
 
-If no marker is found, the build (or project loading in Visual Studio) stops with error [BVSDK1003](sdk-diagnostics.md#buildvana-sdk-core-1000-1049).
+When no marker exists, the build stops with error [BVSDK1003](sdk-diagnostics.md#buildvana-sdk-core-1000-1049).
+Loading the project in Visual Studio stops the same way.
 
 ---
 
 ## `.buildvana-temp\`
 
-bv's scratch directory: machine-generated temporary files, such as the args files for [hooks](hooks.md#the-hook-args) and the package pins [`bv dependencies`](tool-commands/dependencies.md) reads from MSBuild, live here. Add it to `.gitignore`: `bv` itself never considers its contents when detecting working-tree changes during a release, but without the ignore entry, Git tooling will show them as untracked. `bv clean` deletes the directory.
+The scratch directory of `bv`, for machine-generated temporary files: the args files of [hooks](hooks.md#the-hook-args), and the package pins that [`bv dependencies`](tool-commands/dependencies.md) reads from MSBuild.
+Add it to `.gitignore`.
+`bv` never counts its content as a working-tree change during a release, but without the ignore entry Git tooling shows the files as untracked.
+`bv clean` deletes the directory.
 
 ---
 
 ## `.config\dotnet-tools.json`
 
-[`dotnet-tools.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use) is the .NET local tool manifest: it pins the versions of the .NET tools used by the repository, so that `dotnet <tool>` invocations run the pinned versions. In a repository using Buildvana, this usually includes `bv` itself, which is why the manifest appears in the directory structure above. It is optional, though: `bv` can also be installed globally, or run via `dnx`, in which case the manifest (or its `bv` entry) may be absent.
+[`dotnet-tools.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use) is the .NET local tool manifest.
+It pins the versions of the .NET tools the repository uses, so that `dotnet <tool>` runs the pinned version.
+A repository that uses Buildvana usually pins `bv` there.
+The manifest is optional: `bv` also runs as a global tool, or through `dnx`.
 
-Besides being read by the .NET CLI itself, the manifest drives `bv`'s _delegation_: whenever it pins `bv`, the pinned version is the one that runs, no matter which `bv` you invoke — like the Angular CLI, where a global `ng` always hands over to the project-local install. On every invocation, `bv` reads the manifest's `bv` entry and, unless it is itself the pinned version running from the local tool cache, delegates the entire command line to the pinned version: it makes sure the version is installed — probing the same cache `dotnet tool run` resolves tools from, and running `dotnet tool restore` only on a miss; a failed restore is reported but does not block the attempt — then runs it (`dotnet tool run bv`) with inherited standard streams, and forwards its exit code. When the versions differ, an info line on standard error names the version that runs:
-
-```text
-Delegating to bv 2.1.58-preview from this repository's tool manifest.
-```
-
-A delegating `bv` does not judge the command line beyond the minimal split that finds the subcommand and the global options, and does not read the configuration file at all: both may be valid for the pinned version and not for the invoked one, and judging them is the pinned version's job. The split does reject one malformed shape on its own — a value-bearing global option with nothing after it, such as a trailing `-v` — but every `bv` version phrases that rejection the same way, so the answer does not depend on which binary gives it. There are two exceptions to the hand-over itself:
-
-- the `--skip-delegation` global option runs the exact binary you invoked;
-- the [`self-update`](#globaljson) subcommand always runs the invoked `bv`, since its job is precisely to re-pin the repository to that `bv`'s version.
-
-Two details of the hand-over are worth knowing. The delegated `bv` runs from the home directory, not from the directory you invoked it in, so that the .NET CLI resolves this repository's manifest rather than a nested one; `bv`'s own arguments are unaffected — they are interpreted against the home directory anyway — but a relative path inside _forwarded_ arguments (e.g. `bv build -- -p:SomeDir=../out` from a subdirectory) is interpreted by the pinned `bv` from the home directory, not from where you typed it. And `--version` answers for the `bv` that actually runs — the pinned one, consistent with the rest of the invocation; pass `--skip-delegation --version` to ask the exact binary you invoked.
-
-An [environment variable](environment-variables.md), `BV_DELEGATED`, is set on the delegated `bv` (carrying the delegating `bv`'s version) so that a delegated invocation never delegates again.
+When the manifest pins `bv`, the pinned version is the one that runs, whichever `bv` you invoke.
+`bv` reads the `bv` entry of the manifest on every invocation, and installs the pinned version when it is missing.
+It then hands the whole command line to that version with `dotnet tool run bv`.
+When the versions differ, `bv` prints an info line on standard error naming the version that runs.
+Two exceptions exist.
+The `--skip-delegation` option runs the `bv` you invoked.
+`bv self-update` always runs the `bv` you invoked, because its job is to re-pin the repository to that version.
+The delegated `bv` runs from the home directory, and gets the [`BV_DELEGATED`](environment-variables.md#bv_delegated) environment variable, so that it never delegates again.
 
 ---
 
 ## `artifacts\`
 
-This is where the results of your hard work will be stored, in the form of NuGet packages, setup executables, ready to-deploy web directories, and so on.
-
-Buildvana SDK will automatically create this directory if it does not exist.
+The directory where the results of a build go: NuGet packages, setup executables, publish directories.
+Buildvana SDK creates it when it does not exist.
 
 ---
 
 ## `src\`, `tests\`, `samples\`
 
-The only hard rule about the location of projects in a product uising Buildvana SDK is that they must reside somewhere under `HomeDirectory`.
+The one rule about the location of a project is that it resides under the home directory.
+Three locations are recommended:
 
-The following three locations are strongly recommended, though:
-
-- `src\` for the product itself;
-- `tests\` for test projects;
-- `samples\` for sample projects.
+- `src\` for the product;
+- `tests\` for the test projects;
+- `samples\` for the sample projects.
 
 ```text
 <home_directory>\
 |
 +--- samples\
 |    |
-|    +--- Sample1\                <<< Sample project to illustrate use of MyLibrary
+|    +--- Sample1\                <<< Sample project showing the use of MyLibrary
 |    |    |
 |    |    +--- Sample1.csproj
 |    |    +--- ...
@@ -184,12 +193,12 @@ The following three locations are strongly recommended, though:
 |
 +--- src\
 |    |
-|    +--- MyLibrary\              <<< My library (probably distributed as a NuGet package)
+|    +--- MyLibrary\              <<< The library, distributed as a NuGet package
 |    |    |
 |    |    +--- MyLibrary.csproj
 |    |    +--- ...
 |    |
-|    +--- MyLibrary.Extras\       <<< Additional features for MyLibrary (distributed as a separate package)
+|    +--- MyLibrary.Extras\       <<< Additional features for MyLibrary, distributed as a separate package
 |    |    |
 |    |    +--- MyLibrary.Extras.csproj
 |    |    +--- ...
@@ -204,7 +213,7 @@ The following three locations are strongly recommended, though:
 |    |    +--- MyLibrary.Tests.csproj
 |    |    +--- ...
 |    |
-|    +--- MyLibrary.Extras.Tests\  <<< Unit tests for MyLibrary.Extras
+|    +--- MyLibrary.Extras.Tests\ <<< Unit tests for MyLibrary.Extras
 |    |    |
 |    |    +--- MyLibrary.Extras.Tests.csproj
 |    |    +--- ...
@@ -212,110 +221,115 @@ The following three locations are strongly recommended, though:
 |    +--- Common.props
 |    +--- Common.targets
 |
-+--- MyLibrary.sln
++--- MyLibrary.slnx
 +--- ...
 ```
 
-The advantages of grouping similar projects under subdirectories become evident when you start to put common parts of projects (such as common dependencies) in `Common.props` and `Common.targets` files. This is explained below [in its own section](#commonprops-and-commontargets).
+Grouping projects this way pays off once the parts they share, such as common dependencies, go in the `Common.props` and `Common.targets` files of the group.
+[The next section](#commonprops-and-commontargets) explains those files.
 
 ---
 
 ## `Common.props` and `Common.targets`
 
-You may be aware of how MSBuild [automatically imports](https://docs.microsoft.com/visualstudio/msbuild/customize-your-build#directorybuildprops-and-directorybuildtargets) `Directory.Build.props` and `Directory.Build.targets` files. You can use them to define common properties, build settings, and the like, for all projects residing under a directory.
+MSBuild [imports](https://learn.microsoft.com/visualstudio/msbuild/customize-your-build#directorybuildprops-and-directorybuildtargets) a `Directory.Build.props` and a `Directory.Build.targets` file into every project under their directory.
+They hold the properties and build settings that projects share.
+MSBuild imports only the first such file it finds, walking up from the directory of the project.
+With one `Directory.Build.props` in the home directory and one in `src\`, MSBuild sees the second alone, unless it imports the first.
+The `<Import>` element may sit anywhere in the file, and a reader cannot tell which file's properties win.
+A `Directory.Build.props` in a directory above the repository is imported the same way, and changes the build without a trace in the repository.
 
-This method, however, has an annoying limitation: MSBuild will only import the _first_ `Directory.Build.props` (or `Directory.Build.targets`) file it finds, looking from the project's directory and going up the hierarchy.
+Buildvana SDK replaces both files with `Common.props` and `Common.targets`.
+They serve the same purpose: the properties and build instructions that every project under a directory shares, such as `Owners`, `Company`, and `Copyright`.
+Buildvana SDK imports every `Common.props` from the home directory down to the directory of the project, in that order.
+A subdirectory therefore overrides what a parent directory sets.
+It imports at most ten of them, and never one outside the home directory.
 
-Say you have both a `Directory.Build.props` file in the home directory and one in the `src\` subdirectory: only the latter will be "seen" by MSBuild, unless you add code in it to explicitly import the other. Although not a big burden at the beginning, this may easily lead to confusion, as the necessary `<Import>` tag mey be at the beginning, at the end, or even in the middle of the file, making it difficult for new collaborators to understand which file's `<PropertyGroup>`s may override those in other files.
+Buildvana SDK also imports `BeforeCommon.props` and `AfterCommon.props`, and the `.targets` counterparts of all three, by the same walk.
+Every `BeforeCommon.props` comes before every `Common.props`, and every `AfterCommon.props` after.
+An `AfterCommon.props` in the home directory therefore overrides what a `Common.props` in a subdirectory sets.
 
-Even if you have no such files in your repository, but there is a `Directory.Build.props` and/or `Directory.Build.targets` file in a directory above it, they will be silently imported, potentially altering your build process in unpredictable ways.
-
-**Buildvana SDK discourages the use of `Directory.Build.props` and/or `Directory.Build.targets` files** in favor of `Common.props` and `Common.targets`, respectively.
-
-`Common.props` and `Common.targets` files serve the same purpose as MSBuild's `Directory.Build.props` and `Directory.Build.targets`: specify information and/or build istructions that are common to all projects contained in a directory or in a subdirectory therein. Such information may include, for example, properties such as `<Owners>`, `<Company>`, `<Copyright>`... all that redundant stuff that is the same for all related projects.
-
-The advantage of `Common.*` versus `Directory.Build.*` files is predictability. Buildvana SDK will import `Common.*`  files starting from the home directory and moving down to the project's directory; therefore, settings (e.g. property values) specified in a directory may be overridden in a subdirectory. Furthermore, `Common.*` files external to the repository will never be imported.
-
-A typical `Common.props` file in a home directory may look like this:
+A `Common.props` in the home directory:
 
 ```xml
 <Project>
 
-  <!-- Common project / package metadata -->
+  <!-- Common project and package metadata -->
   <PropertyGroup>
     <Product>MyProduct</Product>
     <Authors>myself</Authors> <!-- My NuGet account -->
-    <Owners>mycompany</Owners> <!-- The company's NuGet account, used to upload packages -->
+    <Owners>mycompany</Owners> <!-- The NuGet account of the company, which uploads the packages -->
     <Company>MyCompany, Inc.</Company>
-    <Copyright>Copyright (C) 2018-2020 MyCompany, Inc.</Copyright>
-    <PackageReleaseNotes>A changelog is available at $(PackageProjectUrl)/blob/master/CHANGELOG.md</PackageReleaseNotes>
+    <Copyright>Copyright (C) 2018-2026 MyCompany, Inc.</Copyright>
+    <PackageReleaseNotes>A changelog is available at $(PackageProjectUrl)/blob/main/CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>
 ```
 
-An example `tests\Common.props` file may look like this:
+A `tests\Common.props`:
 
 ```xml
 <Project>
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="nunit" />
-    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="TUnit" />
   </ItemGroup>
 
 </Project>
 ```
 
-(You may have noticed that no version is specified for package references. This assumes that you are [managing package versions centrally](https://stu.dev/managing-package-versions-centrally/), which is one of the good practices contemplated by the Buildvana method.)
+The package reference states no version, because the repository [manages package versions centrally](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management), which Buildvana recommends.
 
-`Common.targets` files are not so often needed as their `.props` counterparts. They may contain, for example, [BeforeBuild and/or AfterBuild targets](https://docs.microsoft.com/en-us/visualstudio/msbuild/how-to-extend-the-visual-studio-build-process) that you want to add to all projects, or at least to all projects within a directory.
+A `Common.targets` file is needed less often.
+It holds, for example, a target that runs [before or after the build](https://learn.microsoft.com/en-us/visualstudio/msbuild/how-to-extend-the-visual-studio-build-process) of every project under its directory.
 
 ---
 
 ## `Directory.Build.props` and `Directory.Build.targets`
 
-These two files are the only exception to the "no-Directory.Build-files" rule outlined [in the previous section](#commonprops-and-commontargets).
+The two files are the exception to the rule of the previous section.
+They sit in the home directory and serve two purposes.
+They import `Sdk.props` and `Sdk.targets` from the Buildvana SDK package, and they keep MSBuild from importing a `Directory.Build.props` or `Directory.Build.targets` from outside the repository.
 
-These files, which must be in the home directory, serve two purposes:
-
-- importing `Sdk.props` and `Sdk.targets`, respectively, from Buildvana SDK's NuGet package, and
-- making sure that no other `Directory.Build.*` file from outside the repository is imported.
-
-Here's what must be in `Directory.Build.props`:
+`Directory.Build.props` holds:
 
 ```xml
 <Project>
 
-  <Import Project="Sdk.props" Sdk="Buildvana.Sdk" /> <!-- Buildvana.Sdk version is specified in global.json -->
+  <Import Project="Sdk.props" Sdk="Buildvana.Sdk" /> <!-- The Buildvana.Sdk version is specified in global.json -->
 
 </Project>
 ```
 
-As you may have guessed, `Directory.Build.targets` is similar:
+`Directory.Build.targets` holds:
 
 ```xml
 <Project>
 
-  <Import Project="Sdk.targets" Sdk="Buildvana.Sdk" /> <!-- Buildvana.Sdk version is specified in global.json -->
+  <Import Project="Sdk.targets" Sdk="Buildvana.Sdk" /> <!-- The Buildvana.Sdk version is specified in global.json -->
 
 </Project>
 ```
 
-Note that neither `<Import>` carries a `Version` attribute: the version of Buildvana SDK is pinned once, for the whole repository, in [`global.json`](#globaljson). Pinning the version in a single place keeps the two files identical across repositories and guarantees that `Sdk.props` and `Sdk.targets` are imported from the same version of Buildvana SDK. Should they ever come from different versions — for example, because of stray `Version` attributes — they might be incompatible with each other; Buildvana SDK detects such a situation and issues a [`BVSDK1002`](sdk-diagnostics.md#buildvana-sdk-core-1000-1049) error.
+Neither `<Import>` carries a `Version` attribute.
+[`global.json`](#globaljson) pins the version of Buildvana SDK once, for the whole repository.
+The two files are therefore identical across repositories, and import `Sdk.props` and `Sdk.targets` from one version.
+When a stray `Version` attribute makes them come from two versions, Buildvana SDK raises error [BVSDK1002](sdk-diagnostics.md#buildvana-sdk-core-1000-1049).
 
-It is important that no other `Directory.Build.props` and / or `Directory.Build.targets` files exist in the repository; use `Common.props` and `Common.targets`, instead, as explained above.
+Prefer `Common.props` and `Common.targets` to a `Directory.Build.props` or `Directory.Build.targets` elsewhere in the repository.
+Where one exists, it must import the file of the home directory, as [The build environment](hooks.md#the-build-environment) says for `.buildvana\`.
 
 ---
 
 ## `global.json`
 
-[`global.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json) is where the .NET SDK looks up the version of any MSBuild project SDK referenced without an explicit version, under the `msbuild-sdks` key. Since the `<Import>` elements in `Directory.Build.props` and `Directory.Build.targets` reference Buildvana SDK without a `Version` attribute (see [the previous section](#directorybuildprops-and-directorybuildtargets)), the version of Buildvana SDK used by the repository is pinned here:
+[`global.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json) is where the .NET SDK reads the version of an MSBuild project SDK referenced without a version, under the `msbuild-sdks` key.
+The `<Import>` elements of `Directory.Build.props` and `Directory.Build.targets` reference Buildvana SDK without a `Version` attribute, so the file pins the version of Buildvana SDK:
 
 ```json
 {
@@ -325,28 +339,24 @@ It is important that no other `Directory.Build.props` and / or `Directory.Build.
 }
 ```
 
-Of course, `global.json` can also serve its better-known purpose, pinning the version of the .NET SDK itself via the `sdk` key; the two uses coexist in the same file.
+The file also pins the version of the .NET SDK, under the `sdk` key, and the two uses coexist.
 
-The pinned version is not just a build input: `bv`, Buildvana SDK, and the `Buildvana.Runtime` library are released in lockstep and designed to work as a matched group. Every `bv` command that uses the SDK (`restore`, `build`, `test`, `pack`, and `release`) first verifies that the pinned version matches the version of the running `bv`, and refuses to run on a mismatch — including a missing `global.json`, section, or entry (pass `--skip-sdk-check` to bypass the check when you need a deliberate mismatch). Thanks to [delegation](#configdotnet-toolsjson), the `bv` that runs is normally the one pinned in the tool manifest, so the check can only trip when the repository's own pins disagree with each other — a half-updated repository.
-
-To update the repository as a whole, run `bv self-update`: it re-pins the repository's entire Buildvana surface to the version of the running `bv` — or to the version named by `--to <version>` — creating files and sections as needed and preserving formatting everywhere. Despite the name, it never replaces a binary: "bring this repository to me" is the whole job. The surface covers the `bv` entry in the [tool manifest](#configdotnet-toolsjson), the `Buildvana.Sdk` entry in `global.json`, every pin of a Buildvana family package (`bv`, `Buildvana.Sdk`, `Buildvana.Runtime` — a closed list, so a third-party `Buildvana.*` package is never dragged along) declared in the repository's own files — package items in projects and shared props/targets files, and versioned `#:package`/`#:sdk` directives in file-based apps — and the [configuration file](configuration-file.md)'s `$schema` reference. Family pins are found by a gitignore-aware walk of the repository, so build debris is never touched; `.cs` files are read only within the file-based-app scope — `.buildvana/hooks/` plus the gitignore-syntax patterns the `fileBasedApps` configuration setting adds — so discovery cost does not scale with the size of the source tree, and when the configuration file cannot be read the scope degrades to `.buildvana/hooks/` with a warning instead of blocking the update. Package items are read under the well-known item names, plus the item name of every group declared under the `dependencies.additionalPackages` configuration setting: a repository that pins packages under a name of its own gets those pins stamped too, lockstep admitting no exceptions. A pin whose version is not a literal (a property reference such as `$(SomeVersion)`, a range, a floating version) is reported and left alone. A family package versioned through `VersionOverride` is deliberately not seen at all, not even in the summary: an override overrules a dependency update — self-update included — so whoever writes one owns the version and its consequences, drift out of lockstep included. The summary lists every family pin found, one line per pin naming its declaring file — unchanged and left-alone pins included — so you can check at a glance that everything you intended to move was discovered. The tool manifest is updated through `dotnet tool update` (or `dotnet tool install --create-manifest-if-needed`), which also downloads the version so the next `dotnet bv` invocation can run it; with `--to`, that step doubles as the existence check, so a version no configured source knows fails the update before anything is written. Afterwards, the configuration file is loaded with the new version's model, and any problems are reported as warnings for you to review.
-
-`self-update` is exempt from delegation — it updates the repository to the `bv` you actually invoked ("bring this repository to me"). The usual upgrade flow is therefore: update your global `bv` (`dotnet tool update -g bv`), then run `bv self-update` in the repository; `dnx bv@<version> self-update` targets any specific version without touching the global install, and `bv self-update --to <version>` does the same without switching binaries. As a safety net, `bv self-update` refuses to move a repository backwards when its pins are newer than the version being stamped, unless you pass `--force`.
+`bv`, Buildvana SDK, and `Buildvana.Runtime` are released together and work as one matched group.
+Every `bv` command that uses Buildvana SDK first checks that the pinned version equals its own, and refuses to run on a mismatch.
+Those commands are `restore`, `build`, `test`, `pack`, and `release`.
+A missing `global.json`, section, or entry counts as a mismatch.
+Pass `--skip-sdk-check` when you need the mismatch, as when bisecting a regression of Buildvana SDK.
+`bv self-update` re-pins the whole repository to the version of the running `bv`, this file included.
 
 ---
 
 ## `VERSION`
 
-The single source of truth for the version of your product: a plain-text file, in the home directory, holding a single `MAJOR.MINOR[-[tag]]` version specification, for example:
+A plain-text file in the home directory, holding the `MAJOR.MINOR[-[tag]]` version specification of the product:
 
 ```text
 2.0-preview
 ```
 
-The presence of `-` after the minor version marks a prerelease line; the tag text after it is optional and informational (the effective prerelease tag comes from the `versioning.prereleaseTag` key of `buildvana.json`). The patch number is not stored in the file: it is the Git height of the version line, i.e. the number of commits since the last change of `MAJOR.MINOR`.
-
-The height restarts from 1 whenever `MAJOR.MINOR` changes, and a `VERSION` file that did not exist before counts as a change: the first commit on a new version line always computes patch 1, no matter how much history precedes it. Therefore, **adopt Buildvana — or upgrade from a Buildvana version that read `version.json` — in the same commit that bumps `MAJOR.MINOR`**. On a fresh version line the restart costs nothing; stay on the old line instead, and every version computed afterwards is lower than the ones already published on it, until the line accumulates more commits than the highest patch number you published. `bv release` refuses to publish a version lower than your latest release tag, so the mistake blocks a release rather than corrupting your feed, but recovering from it takes a commit: edit `MAJOR.MINOR` in `VERSION` and commit that before releasing again. Passing `--bump` to `bv release` does not help, because the check runs before the requested bump is applied.
-
-Computing the height requires the full commit history. A shallow clone — `git clone --depth`, or a CI checkout that does not ask for everything, such as an `actions/checkout` step without `fetch-depth: 0` — sees fewer commits and therefore computes a lower patch number. Take particular care on a release build: a shallow fetch usually brings down no tags either, leaving `bv release` with no previous release to compare against, so the check just described has nothing to catch.
-
-When a `VERSION` file is present, the [`Versioning` module](sdk-modules/versioning.md) of Buildvana SDK computes `Version`, `AssemblyVersion`, `FileVersion`, and `InformationalVersion` for all projects in the repository; `bv` uses the same computation for releases and rewrites the file when advancing the version.
+The [`Versioning` module](sdk-modules/versioning.md) reads it, and computes the patch number from the Git history.
+`bv release` and `bv version advance` rewrite the file when they advance the version.
