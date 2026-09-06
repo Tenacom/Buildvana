@@ -215,7 +215,7 @@ A repository with no configuration file resolves to the defaults.
 A hook reads a setting by property access, without a fallback of its own:
 
 ```csharp
-var branches = hookArgs.RuntimeInfo.Configuration.Release.Branches;
+var branches = args.RuntimeInfo.Configuration.Release.Branches;
 ```
 
 The embedded configuration is a snapshot, taken when the args were written.
@@ -228,7 +228,7 @@ It must act on the file `bv` read.
 Do not hard-code a file name, and do not search for one:
 
 ```csharp
-var configFile = hookArgs.RuntimeInfo.ConfigFile;
+var configFile = args.RuntimeInfo.ConfigFile;
 if (configFile is not null)
 {
     File.WriteAllText(configFile, Rewrite(File.ReadAllText(configFile)));
