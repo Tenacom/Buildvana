@@ -46,7 +46,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
         await Assert.That(source).Contains("internal static partial class ThisAssembly");
         await Assert.That(source).Contains("public const int Answer = 42;");
         await Assert.That(source).DoesNotContain("namespace");
-        await AssertCompiles(result).ConfigureAwait(false);
+        await TestCompilation.AssertHasNoErrors(result.OutputCompilation).ConfigureAwait(false);
     }
 
     [Test]
@@ -70,7 +70,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
         await Assert.That(source).Contains("public const bool BoolValue = true;");
         await Assert.That(source).Contains("public const string StringValue = \"Hello World\";");
         await Assert.That(source).Contains("public const string? NullValue = null;");
-        await AssertCompiles(result).ConfigureAwait(false);
+        await TestCompilation.AssertHasNoErrors(result.OutputCompilation).ConfigureAwait(false);
     }
 
     [Test]
@@ -80,7 +80,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
         var result = RunGenerator("Tricky=a%3Db%0A%22%5C%09\n");
         var source = GetSingleGeneratedSource(result);
         await Assert.That(source).Contains("public const string Tricky = \"a=b\\n\\\"\\\\\\t\";");
-        await AssertCompiles(result).ConfigureAwait(false);
+        await TestCompilation.AssertHasNoErrors(result.OutputCompilation).ConfigureAwait(false);
     }
 
     [Test]
@@ -95,7 +95,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
         var source = GetSingleGeneratedSource(result);
         await Assert.That(source).Contains("namespace Some.Name.Space");
         await Assert.That(source).Contains("internal static partial class MyAssemblyInfo");
-        await AssertCompiles(result).ConfigureAwait(false);
+        await TestCompilation.AssertHasNoErrors(result.OutputCompilation).ConfigureAwait(false);
     }
 
     [Test]
@@ -115,11 +115,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
         IReadOnlyDictionary<string, string>? globalOptions = null,
         bool tagFile = true)
     {
-        var compilation = CSharpCompilation.Create(
-            "TestAssembly",
-            references: GetReferences(),
-            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
+        var compilation = TestCompilation.Create();
         var additionalTexts = constantsContent is null
             ? []
             : new AdditionalText[] { new InMemoryAdditionalText(ConstantsFilePath, constantsContent) };
@@ -145,21 +141,4 @@ internal sealed class ThisAssemblyClassGeneratorTests
 
     private static string GetSingleGeneratedSource((GeneratorDriverRunResult RunResult, Compilation OutputCompilation) result)
         => result.RunResult.GeneratedTrees.Single().ToString();
-
-    private static async Task AssertCompiles((GeneratorDriverRunResult RunResult, Compilation OutputCompilation) result)
-    {
-        var errors = result.OutputCompilation
-                           .GetDiagnostics()
-                           .Where(d => d.Severity == DiagnosticSeverity.Error)
-                           .ToArray();
-        await Assert.That(errors).IsEmpty();
-    }
-
-    private static IEnumerable<MetadataReference> GetReferences()
-    {
-        var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator);
-        return trustedAssemblies
-              .Where(p => Path.GetFileName(p) is "System.Runtime.dll" or "System.Private.CoreLib.dll" or "netstandard.dll")
-              .Select(MetadataReference (p) => MetadataReference.CreateFromFile(p));
-    }
 }
