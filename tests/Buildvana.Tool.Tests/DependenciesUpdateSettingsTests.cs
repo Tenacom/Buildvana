@@ -70,6 +70,31 @@ internal sealed class DependenciesUpdateSettingsTests
         await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
+    // Unlike --to, --latest names no version, so it takes patterns and several arguments as a plain run does.
+    [Test]
+    public async Task Parse_ReadsLatestNextToPatterns()
+    {
+        var settings = DependenciesUpdateSettings.Parse(["Serilog", "Microsoft.*"], ["--latest"]);
+        await Assert.That(settings.Latest).IsTrue();
+        await Assert.That(settings.Filters).IsEquivalentTo(["Serilog", "Microsoft.*"]);
+    }
+
+    [Test]
+    public async Task Parse_WithLatestAndTo_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--latest", "--to", "3.1.0"]))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
+    [Test]
+    public async Task Parse_WithLatestAndCheck_IsRefused()
+    {
+        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse([], ["--latest", "--check"]))
+            .Throws<BuildFailedException>();
+        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+    }
+
     [Test]
     public async Task Parse_WithNetSdkAndAnArgument_IsRefused()
     {
