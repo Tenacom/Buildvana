@@ -3,6 +3,7 @@
 
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 
 /// <summary>
 /// A script fake for <see cref="ServerAdapter"/>: every member answers with a constant, and creating a release
@@ -13,10 +14,12 @@ using Buildvana.Tool.Services.ServerAdapters;
 /// <para>The fake deliberately carries no logic. <c>ServerAdapter</c> is to be split into a CI-platform adapter
 /// and a Git-host adapter; the knobs below are grouped by the side each one will end up on, so that the split
 /// can cut this class in two without rewriting what it answers.</para>
+/// <para>The URLs come from <see cref="GitHubRepositoryUrls"/>, so that a release over the fake sees the same
+/// rejections a release on GitHub does: a file URL for a path outside the repository is an error, not a URL.</para>
 /// </remarks>
 internal sealed class RecordingServerAdapter(IServiceProvider services) : ServerAdapter
 {
-    private const string RepositoryPath = "https://git.example.invalid/tenacom/test-repo";
+    private static readonly GitHubRepositoryUrls Urls = new("git.example.invalid", "tenacom", "test-repo");
 
     // --- Platform side ---
 
@@ -68,7 +71,7 @@ internal sealed class RecordingServerAdapter(IServiceProvider services) : Server
     public override string RepositoryName => "test-repo";
 
     /// <inheritdoc/>
-    public override Uri RepositoryUrl => new(RepositoryPath);
+    public override Uri RepositoryUrl => Urls.Repository;
 
     /// <inheritdoc/>
     public override bool IsCloudBuild => CloudBuild;
@@ -86,10 +89,10 @@ internal sealed class RecordingServerAdapter(IServiceProvider services) : Server
     public override Task<bool> IsPrivateRepositoryAsync() => Task.FromResult(false);
 
     /// <inheritdoc/>
-    public override Uri GetReleaseUrl(string version) => new($"{RepositoryPath}/releases/tag/{version}");
+    public override Uri GetReleaseUrl(string version) => Urls.ReleaseTag(version);
 
     /// <inheritdoc/>
-    public override Uri GetFileUrl(string path, string commitish) => new($"{RepositoryPath}/blob/{commitish}/{path}");
+    public override Uri GetFileUrl(string path, string commitish) => Urls.File(path, commitish);
 
     /// <inheritdoc/>
     public override Task<ServerRelease> CreateReleaseAsync()
