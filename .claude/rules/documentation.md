@@ -170,6 +170,7 @@ Example:
   - every page follows the template: summary paragraph, rulers, and a table of contents that matches the headings;
   - the index links every page, and no link points at a missing file or anchor;
   - every fenced block has a tag from the list above;
+  - a prose line, outside a fenced block and a table, holds one sentence of at most 25 words, counting a code span as one word and a link as the words of its text;
   - no documentation file contains "TODO";
   - generated-region markers exist and pair;
   - a changelog bullet holds no nested list, and no sentence break outside code spans;

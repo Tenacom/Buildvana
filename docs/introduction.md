@@ -25,7 +25,8 @@ This page says what Buildvana is made of, what it does for a project, and what i
 Buildvana ships as three packages.
 
 - Buildvana SDK, package id `Buildvana.Sdk`, is an MSBuild SDK that works alongside the SDK a project specifies.
-- `bv`, package id `bv`, is a .NET CLI global tool that wraps common MSBuild targets and higher-level build operations, such as releasing a version and updating dependencies.
+- `bv`, package id `bv`, is a .NET CLI global tool that wraps common MSBuild targets and higher-level build operations.
+  Examples are releasing a version and updating dependencies.
 - `Buildvana.Runtime` is a library holding the typed model of the Buildvana configuration, and of the run-time information `bv` passes to [hooks](hooks.md).
 
 ---

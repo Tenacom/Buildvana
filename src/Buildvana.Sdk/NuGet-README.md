@@ -7,9 +7,9 @@ Licensing and attributions:
 
 Buildvana SDK is an opinionated, best-practices-based, CI-friendly, VS- and VS Code-friendly, MSBuild-powered build system for .NET projects.
 
-It is part of [the Buildvana project](https://github.com/Tenacom/Buildvana/).
+It is part of [Buildvana](https://github.com/Tenacom/Buildvana/).
 
-Want to know more? [Here's the complete README.](https://github.com/Tenacom/Buildvana#readme)
+[The README of the repository](https://github.com/Tenacom/Buildvana#readme) links the documentation.
 
 ---
 

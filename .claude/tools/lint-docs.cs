@@ -24,7 +24,9 @@
  *   DocsFence      a fenced block with no language tag, or with a tag outside the list of the rules;
  *   DocsTodo       the word TODO;
  *   DocsRegion     a generated-region marker without its pair;
- *   DocsChangelog  a relative file link in a released section of CHANGELOG.md.
+ *   DocsChangelog  a relative file link in a released section of CHANGELOG.md;
+ *   DocsSentence   a prose line, outside a fenced block and a table, holding more than 25 words, or more than
+ *                  one sentence; a code span counts as one word, and a link as the words of its text.
  *
  * Only inline links, `[text](target)`, are checked. A reference-style link is not. A link inside a code span or
  * a fenced block is not a link. A relative target must match the case of the file name, so that a link that
@@ -46,12 +48,17 @@ const string TocTitle = "**Table of contents**";
 const string EnableMarker = "<!-- markdownlint-enable MD036 -->";
 const string Ruler = "---";
 const string UnreleasedHeading = "Unreleased changes";
+const int MaxSentenceWords = 25;
 
 // The language tags `.claude/rules/documentation.md` admits on a fenced block.
 string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shell", "text", "xml", "yaml"];
 
 // Files the TODO check leaves alone. None here; a copy of this tool may name some.
 string[] todoExemptFiles = [];
+
+// Files the sentence check leaves alone. Here, the changelog, whose released sections are never edited, and the
+// one page not yet rewritten in the documentation register.
+string[] sentenceExemptFiles = ["CHANGELOG.md", "docs/tool-commands/dependencies.md"];
 
 if (args.Length > 1)
 {
@@ -79,6 +86,9 @@ var schemeRegex = new Regex(@"^[a-z][a-z0-9+.-]*:", RegexOptions.CultureInvarian
 var regionRegex = new Regex(@"<!-- (?<name>[A-Za-z0-9_-]+):(?<kind>START|END)\b[^>]*-->", RegexOptions.CultureInvariant);
 var tocEntryRegex = new Regex(@"^(?<indent> *)- \[(?<text>.+)\]\(#(?<anchor>[^)]+)\)$", RegexOptions.CultureInvariant);
 var todoRegex = new Regex(@"\bTODO\b", RegexOptions.CultureInvariant);
+var linkTextRegex = new Regex(@"!?\[(?<text>[^\]]*)\]\([^)]*\)", RegexOptions.CultureInvariant);
+var lineMarkerRegex = new Regex(@"^\s*(?:[-*+]|\d+\.)\s+|^\s*>\s*(?:\[!\w+\]\s*)?", RegexOptions.CultureInvariant);
+var sentenceBreakRegex = new Regex(@"[.!?]\s+(?=[A-Z0-9(])", RegexOptions.CultureInvariant);
 
 var findings = new List<(string File, int Line, int Column, string Code, string Message)>();
 
@@ -145,6 +155,7 @@ foreach (var file in files)
     var isPage = file.StartsWith("docs/", StringComparison.Ordinal) && !string.Equals(file, IndexPath, StringComparison.Ordinal);
     var isChangelog = string.Equals(file, ChangelogPath, StringComparison.Ordinal);
     var checkTodo = !todoExemptFiles.Contains(file, StringComparer.Ordinal);
+    var checkSentences = !sentenceExemptFiles.Contains(file, StringComparer.Ordinal);
     var openRegions = new Dictionary<string, int>(StringComparer.Ordinal);
     var releasedSection = string.Empty;
     var targets = new HashSet<string>(StringComparer.Ordinal);
@@ -172,6 +183,11 @@ foreach (var file in files)
             }
 
             continue;
+        }
+
+        if (checkSentences)
+        {
+            CheckSentence(file, lineNumber, line);
         }
 
         foreach (Match match in regionRegex.Matches(line))
@@ -337,6 +353,36 @@ void CheckFenceTag(string file, int lineNumber, string line)
     else if (!fenceTags.Contains(tag, StringComparer.Ordinal))
     {
         Report(file, lineNumber, 1, "DocsFence", $"the language tag \"{tag}\" is not one of {string.Join(", ", fenceTags)}");
+    }
+}
+
+// A prose line holds one sentence of at most MaxSentenceWords words. A blank line, a heading, a table row, and a
+// line of HTML are not prose. A code span counts as one word, and a link as the words of its text. The list
+// marker, the blockquote marker, and the alert marker of a line are not words.
+void CheckSentence(string file, int lineNumber, string line)
+{
+    var trimmed = line.Trim();
+    var isProse = trimmed.Length > 0
+        && !trimmed.StartsWith('#')
+        && !trimmed.StartsWith('|')
+        && !trimmed.StartsWith('<');
+    if (!isProse)
+    {
+        return;
+    }
+
+    var prose = codeSpanRegex.Replace(line, "CODE");
+    prose = linkTextRegex.Replace(prose, "${text}");
+    prose = lineMarkerRegex.Replace(prose, string.Empty);
+    var words = prose.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+    if (words > MaxSentenceWords)
+    {
+        Report(file, lineNumber, 1, "DocsSentence", $"the line holds {words} words, and a sentence holds at most {MaxSentenceWords}");
+    }
+
+    if (sentenceBreakRegex.IsMatch(prose))
+    {
+        Report(file, lineNumber, 1, "DocsSentence", "the line holds more than one sentence");
     }
 }
 

@@ -22,7 +22,8 @@ Licensing and attributions:
 | `Buildvana.Sdk` | [![Buildvana.Sdk @ NuGet](https://badgen.net/nuget/v/Buildvana.Sdk?icon=nuget&label=)](https://nuget.org/packages/Buildvana.Sdk) | ![Buildvana.Sdk @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/Buildvana.Sdk?label=&color=orange) |
 | `bv`            | [![bv @ NuGet](https://badgen.net/nuget/v/bv?icon=nuget&label=)](https://nuget.org/packages/bv)                                  | ![bv @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/bv?label=&color=orange)                       |
 
-**You can get preview versions of Buildvana packages from our preview feed on [Feedz.io](https://feedz.io). The NuGet v3 URL is `https://f.feedz.io/tenacom/preview/nuget/index.json`.**
+**Preview versions of the Buildvana packages are on the preview feed of Tenacom at [Feedz.io](https://feedz.io).**
+**The NuGet v3 URL is `https://f.feedz.io/tenacom/preview/nuget/index.json`.**
 
 ---
 
@@ -66,4 +67,5 @@ _Of course_ we accept contributions! :smiley: Just take a look at our [Code of C
 
 - [PolyKit](https://github.com/Tenacom/PolyKit) is the last polyfill library you'll ever need for your C# projects.
 - [L.o.U.I.S.](https://github.com/Tenacom/Louis) is a general-purpose library, providing commonly-used types, suitable for multi-platform libraries and applications.
-- Practically every one of [Tenacom](https://github.com/Tenacom)'s private projects since the first preview of Buildvana SDK: almost 50 libraries, a bunch of console apps, some WinForms apps, even an Avalonia UI app (with more coming soon).
+- Almost every private project of [Tenacom](https://github.com/Tenacom) since the first preview of Buildvana SDK.
+  They are about 50 libraries, a few console apps, some WinForms apps, and an Avalonia UI app.
