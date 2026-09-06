@@ -85,11 +85,15 @@ Each table below states a status for every item.
 
 The table lists the minimum version of each tool Buildvana builds with.
 
+<!-- TOOLCHAIN-FLOORS:START -->
+
 | Tool          | Minimum version |
 | ------------- | --------------- |
 | .NET SDK      | 10.0.400        |
 | Visual Studio | 2026 (18.9)     |
-| MSBuild       | 17.4            |
+| MSBuild       | 18.9            |
+
+<!-- TOOLCHAIN-FLOORS:END -->
 
 MSBuild ships with Visual Studio and with the .NET SDK.
 A Visual Studio version that meets its minimum ships an `msbuild.exe` that meets the MSBuild minimum.
