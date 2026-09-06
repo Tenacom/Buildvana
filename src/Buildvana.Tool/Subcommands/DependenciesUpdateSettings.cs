@@ -83,6 +83,11 @@ internal sealed class DependenciesUpdateSettings
     [Description("Set the named pins to this version, whatever their policy says. Downgrades included.")]
     public NuGetVersion? To { get; init; }
 
+    /// <summary>Gets a value indicating whether the named pins move to the latest version, whatever their policy.</summary>
+    [BvOption("--latest")]
+    [Description("Move the named pins to the latest version, past their policy. Prereleases only under a policy ending in '-'.")]
+    public bool Latest { get; init; }
+
     /// <summary>Gets the scopes the command line names to manage, in scope order.</summary>
     public IReadOnlyList<DependencyScope> Included => DependencyScopeFlags.Of(NetSdk, Sdks, Tools, Packages);
 
@@ -119,6 +124,7 @@ internal sealed class DependenciesUpdateSettings
             Check = reader.ReadFlag("--check"),
             All = reader.ReadFlag("--all"),
             To = ParseVersion(reader.ReadValue("--to")),
+            Latest = reader.ReadFlag("--latest"),
         };
 
         Validate(settings);
@@ -151,6 +157,18 @@ internal sealed class DependenciesUpdateSettings
         if (settings.To is not null && settings.Check)
         {
             throw new BuildFailedException(ExitCodes.Usage, "--to states a version to write, so it does not go with --check.");
+        }
+
+        // Each of the two says where the named pins go, and the two answers differ.
+        if (settings is { Latest: true, To: not null })
+        {
+            throw new BuildFailedException(ExitCodes.Usage, "--latest and --to each say where the named pins go, so they do not go together.");
+        }
+
+        // A check run judges the pins against their policy, and a move past the policy is an edit.
+        if (settings is { Latest: true, Check: true })
+        {
+            throw new BuildFailedException(ExitCodes.Usage, "--latest moves the named pins past their policy, so it does not go with --check.");
         }
 
         // The .NET SDK has no package id, so nothing that filters by id can be about it.

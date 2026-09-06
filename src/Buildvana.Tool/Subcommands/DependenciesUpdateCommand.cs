@@ -43,7 +43,7 @@ internal sealed class DependenciesUpdateCommand(
     {
         var selected = DependencyScopeSelection.Resolve(settings.Included, settings.Excluded, config.Dependencies, reporter);
         var scopes = DependencyScopeSelection.Narrow(selected, settings.Filters.Count > 0, settings.To is not null);
-        var request = new DependencyResolutionRequest { Filters = settings.Filters, To = settings.To };
+        var request = new DependencyResolutionRequest { Filters = settings.Filters, To = settings.To, Latest = settings.Latest };
         var inventory = await discovery.DiscoverAsync(scopes, cancellationToken).ConfigureAwait(false);
         var resolution = await resolver.ResolveAsync(inventory, request, cancellationToken).ConfigureAwait(false);
         var pending = resolution.HasPendingWork;

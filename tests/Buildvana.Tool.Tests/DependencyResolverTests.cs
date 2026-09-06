@@ -228,6 +228,62 @@ internal sealed class DependencyResolverTests
         await Assert.That(exception!.Diagnostics.Single().Message).Contains("bv self-update");
     }
 
+    // A request for the latest version moves past the kind of the policy, a disabled one included. The pin is
+    // reported under its own policy.
+    [Test]
+    public async Task ResolveAsync_AskedForTheLatest_MovesAPinItsPolicyDisables()
+    {
+        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { Packages = "disable" } };
+        var versions = new FakePackageVersionSource().Knows("Serilog", ["3.0.0", "4.0.0", "5.0.0-beta.1"]);
+        var request = new DependencyResolutionRequest { Filters = ["Serilog"], Latest = true };
+        var resolution = await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), config, request).ConfigureAwait(false);
+        var pin = resolution.Packages.Single();
+        await Assert.That(pin.State).IsEqualTo(PinResolutionState.Updated);
+        await Assert.That(pin.Target?.ToNormalizedString()).IsEqualTo("4.0.0");
+        await Assert.That(pin.Policy.ToString()).IsEqualTo("disable");
+    }
+
+    // The prerelease flag of the policy holds: it says what the repository accepts, not how far a run moves.
+    [Test]
+    public async Task ResolveAsync_AskedForTheLatest_KeepsThePrereleaseFlagOfThePolicy()
+    {
+        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { Packages = "patch-" } };
+        var versions = new FakePackageVersionSource().Knows("Serilog", ["3.0.0", "4.0.0", "5.0.0-beta.1"]);
+        var request = new DependencyResolutionRequest { Filters = ["Serilog"], Latest = true };
+        var resolution = await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), config, request).ConfigureAwait(false);
+        await Assert.That(resolution.Packages.Single().Target?.ToNormalizedString()).IsEqualTo("5.0.0-beta.1");
+    }
+
+    [Test]
+    public async Task ResolveAsync_AskedForTheLatest_MovesEveryPinAPatternNames()
+    {
+        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { Packages = "patch" } };
+        var versions = new FakePackageVersionSource()
+            .Knows("Serilog", ["3.0.0", "4.0.0"])
+            .Knows("Serilog.Sinks.Console", ["5.0.0", "6.0.0"])
+            .Knows("Newtonsoft.Json", ["13.0.3", "14.0.0"]);
+        var inventory = Packages(Pin("Serilog", "3.0.0"), Pin("Serilog.Sinks.Console", "5.0.0"), Pin("Newtonsoft.Json", "13.0.3"));
+        var request = new DependencyResolutionRequest { Filters = ["Serilog*"], Latest = true };
+        var resolution = await ResolveAsync(versions, inventory, config, request).ConfigureAwait(false);
+        await Assert.That(resolution.Packages[0].Target?.ToNormalizedString()).IsEqualTo("4.0.0");
+        await Assert.That(resolution.Packages[1].Target?.ToNormalizedString()).IsEqualTo("6.0.0");
+        await Assert.That(resolution.Packages[2].State).IsEqualTo(PinResolutionState.Skipped);
+    }
+
+    // The baseline moves past its policy too, and under lts the latest release is the latest of all.
+    [Test]
+    public async Task ResolveAsync_AskedForTheLatest_MovesTheNetSdkPastItsPolicy()
+    {
+        var config = new DependenciesConfig { Scopes = new DependencyScopesConfig { NetSdk = "lts" } };
+        var releases = new FakeNetSdkReleaseSource().Knows(isLts: true, "10.0.100", "10.0.101").Knows(isLts: false, "11.0.100");
+        var request = new DependencyResolutionRequest { Latest = true };
+        var pin = NetSdkPin.Create("10.0.100", allowPrerelease: false);
+        var resolution = await ResolveNetSdkAsync(releases, pin, request, config).ConfigureAwait(false);
+        await Assert.That(resolution.NetSdk!.State).IsEqualTo(PinResolutionState.Updated);
+        await Assert.That(resolution.NetSdk.Target?.ToNormalizedString()).IsEqualTo("11.0.100");
+        await Assert.That(resolution.NetSdk.Policy.ToString()).IsEqualTo("lts");
+    }
+
     [Test]
     public async Task ResolveAsync_WithAStatedVersionForTheNetSdk_TakesIt()
     {
@@ -271,12 +327,13 @@ internal sealed class DependencyResolverTests
     private static Task<DependencyResolution> ResolveNetSdkAsync(
         FakeNetSdkReleaseSource releases,
         NetSdkPin pin,
-        DependencyResolutionRequest? request = null)
+        DependencyResolutionRequest? request = null,
+        DependenciesConfig? config = null)
     {
         var resolver = new DependencyResolver(
             new FakePackageVersionSource(),
             releases,
-            new EffectivePolicyResolver(new DependenciesConfig()));
+            new EffectivePolicyResolver(config ?? new DependenciesConfig()));
         return resolver.ResolveAsync(new DependencyInventory { NetSdk = pin }, request ?? DependencyResolutionRequest.None);
     }
 }

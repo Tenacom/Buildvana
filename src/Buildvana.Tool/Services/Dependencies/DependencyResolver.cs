@@ -21,7 +21,8 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// changes nothing at all. A pin naming a package or a version no source has is the repository's own error,
 /// and one run reports every one of them: fixing them one failed run at a time would be its own chore.</para>
 /// <para>A pin nothing can be resolved for costs no lookup. An unmanaged pin has no version to move, and a
-/// pin whose policy is <c>disable</c> is one the repository has frozen on purpose.</para>
+/// pin whose policy is <c>disable</c> is one the repository has frozen on purpose. A run that states a
+/// version, or asks for the latest one, overrules the policy, the frozen one included.</para>
 /// </remarks>
 internal sealed class DependencyResolver(
     IPackageVersionSource packageVersions,
@@ -176,7 +177,11 @@ internal sealed class DependencyResolver(
                 : NewResolution(pin, policy, PinResolutionState.Updated, statedNote) with { Target = stated };
         }
 
-        if (policy.Kind == PackageUpdatePolicyKind.Disable)
+        // A run that asks for the latest version moves past the kind of the policy and within its prerelease
+        // flag: the flag says what the repository accepts, and the kind says how far a run moves on its own.
+        // The pin is reported under its own policy, which is what a reader recognizes it by.
+        var window = request.Latest ? policy with { Kind = PackageUpdatePolicyKind.Major } : policy;
+        if (window.Kind == PackageUpdatePolicyKind.Disable)
         {
             return NewResolution(pin, policy, PinResolutionState.Disabled, PinNotes.For(pin, policy));
         }
@@ -200,7 +205,7 @@ internal sealed class DependencyResolver(
 
         // A delisted pin is resolved like any other. Delisting often means the version is vulnerable, so
         // moving away from it is the remedy, and refusing to would be perverse.
-        var selection = UpdatePolicyEngine.Select(current, catalog.Listed, policy);
+        var selection = UpdatePolicyEngine.Select(current, catalog.Listed, window);
         return new PinResolution
         {
             Pin = pin,
@@ -234,7 +239,10 @@ internal sealed class DependencyResolver(
                 .ConfigureAwait(false);
         }
 
-        if (policy.Kind == NetSdkUpdatePolicyKind.Disable)
+        // The latest version is asked for past the kind of the policy, as for a package pin: under lts, the
+        // latest release is the latest of all, whether or not it is a long-term support one.
+        var window = request.Latest ? policy with { Kind = NetSdkUpdatePolicyKind.Major } : policy;
+        if (window.Kind == NetSdkUpdatePolicyKind.Disable)
         {
             // A disabled scope is skipped whole: bv states what global.json says and writes nothing at all.
             return NewNetSdkResolution(pin, policy, PinResolutionState.Disabled, writesAllowPrerelease: false, note);
@@ -250,7 +258,7 @@ internal sealed class DependencyResolver(
             return NewNetSdkResolution(pin, policy, PinResolutionState.Skipped, writes, note);
         }
 
-        var selection = UpdatePolicyEngine.Select(current, releases, policy);
+        var selection = UpdatePolicyEngine.Select(current, releases, window);
         return new NetSdkResolution
         {
             Pin = pin,

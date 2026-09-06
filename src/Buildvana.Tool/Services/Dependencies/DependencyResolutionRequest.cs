@@ -8,14 +8,17 @@ using NuGet.Versioning;
 namespace Buildvana.Tool.Services.Dependencies;
 
 /// <summary>
-/// What an invocation asks of resolution beyond the pins themselves: which pins it is about, and whether it
-/// states the version they must reach.
+/// What an invocation asks of resolution beyond the pins themselves: which pins it is about, whether it
+/// states the version they must reach, and whether it asks for the latest one.
 /// </summary>
 /// <remarks>
 /// <para>A filter names package ids, as a glob or as an id of its own. A pin no filter names is skipped
 /// rather than left out, so that a hook deriving state from a particular pin sees it in every run.</para>
 /// <para>A stated version is an assisted manual edit. It overrules the policy, downgrades included, which is
 /// the one thing no automatic update ever does.</para>
+/// <para>A request for the latest version overrules the kind of the policy, a <c>disable</c> kind included,
+/// and keeps its prerelease flag: a pin under <c>patch</c> lands on the latest stable version, and a pin under
+/// <c>patch-</c> on the latest version of all.</para>
 /// </remarks>
 internal sealed record DependencyResolutionRequest
 {
@@ -27,6 +30,12 @@ internal sealed record DependencyResolutionRequest
 
     /// <summary>Gets the version the invocation states, or <see langword="null"/> when it states none.</summary>
     public NuGetVersion? To { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the pins the invocation is about move to the latest version the sources
+    /// have, whatever the kind of their policy.
+    /// </summary>
+    public bool Latest { get; init; }
 
     /// <summary>
     /// Gets the package id whose pins the invocation sets to <see cref="To"/>, or <see langword="null"/> when

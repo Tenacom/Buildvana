@@ -24,7 +24,7 @@ A _pin_ is an exact version recorded in one of the files it manages.
   - [Where versions come from](#where-versions-come-from)
   - [What a run writes, and in what order](#what-a-run-writes-and-in-what-order)
   - [Naming the pins a run is about](#naming-the-pins-a-run-is-about)
-  - [Stating a version outright](#stating-a-version-outright)
+  - [Moving a pin past its policy](#moving-a-pin-past-its-policy)
   - [The `deps/post-update` hook](#the-depspost-update-hook)
 - [`bv dependencies prune`](#bv-dependencies-prune)
 - [Transitive overrides](#transitive-overrides)
@@ -217,7 +217,7 @@ Arguments name the pins a run is about, as package ids or as globs: `bv deps upd
 
 The .NET SDK has no package id, so a run that names pins leaves the baseline alone. Passing `--netsdk` next to such an argument states the contradiction outright, and is a usage error.
 
-### Stating a version outright
+### Moving a pin past its policy
 
 `--to <VERSION>` states the version the named pins must reach. It is an assisted manual edit, so it overrules the policy: it moves a pin whose policy is `disable`, it crosses a prerelease line, and it is the one move that may lower a pin. It does not go with `--check`, which writes nothing by definition.
 
@@ -225,6 +225,17 @@ Two forms exist:
 
 - with one argument naming a package id, every pin of that id in the selected scopes takes the version. It is an error when no source has that version, and when the id has no pin `bv` manages — which is always the case for a Buildvana family package, whose pins `bv self-update` moves as one;
 - with no argument and `netsdk` as the only selected scope, `global.json` takes the version. Any other selected scope alongside is a usage error.
+
+`--latest` moves the named pins to the latest version the sources have, whatever the kind of their policy.
+The prerelease flag of the policy still holds.
+Under `patch`, a pin lands on the latest stable version.
+Under `patch-`, it lands on the latest version, prerelease included.
+A pin whose policy is `disable` moves like any other, and so does the .NET SDK under `lts`.
+`--latest` takes ids and patterns, several at once, as a plain run does.
+With no argument, it applies to every pin of the selected scopes, the .NET SDK included.
+Pass `--no-netsdk` to move the packages and the tools and leave the .NET SDK where its policy holds it.
+`--latest` and `--to` each say where the named pins go, so they do not go together.
+Like `--to`, `--latest` does not go with `--check`.
 
 ### The `deps/post-update` hook
 
@@ -296,7 +307,7 @@ The dependency commands return the [exit codes every `bv` command returns](../to
 
 Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, or the hook says it would change something. It is the verdict of `prune --check` as well, where it says that the repository states a pin nothing references. Nothing failed, and nothing was written. It is also the code of every error above that stops a run before it writes: a pin the sources do not know, a source that cannot be reached, a version `--to` names and no source has. One failure of its own carries it too: transitive overrides that never stop changing. No program failed there, and the procedure that gave up is `bv`'s own.
 
-Code 2 is a refusal of the command line itself: scope options of both families at once, `--all` without `--check`, `--to` with `--check`, `--netsdk` next to an argument naming pins, `--to` naming the .NET SDK beside another scope, or a version that does not parse.
+Code 2 is a refusal of the command line itself: scope options of both families at once, `--all` without `--check`, `--to` with `--check`, `--latest` with `--check`, `--latest` with `--to`, `--netsdk` next to an argument naming pins, `--to` naming the .NET SDK beside another scope, or a version that does not parse.
 
 Code 3 is the one a reader of a report should know about: it says that a program `bv` ran failed, or answered with something `bv` cannot read. The pins of the `packages` scope come from an MSBuild evaluation, and a report missing that scope would otherwise read as a repository with no packages; a failed `dotnet tool update` and a failed hook are two more. The [override lifecycle](#transitive-overrides) adds two of its own: a restore that failed for a reason other than its own audit findings, and a restore that could not read a package source in full. The restore [`prune`](#bv-dependencies-prune) runs carries the first of the two, and not the second: what a project references does not depend on vulnerability data. Overrides regenerated from a fraction of the advisories would delete one that is still needed, so an incomplete answer stops the run and leaves every file as it stands.
 
