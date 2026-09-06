@@ -34,7 +34,7 @@ The `Buildvana.Core.*` tier is flat by default. Areas share a project until ther
 - `Buildvana.Core.Abstractions`: the single shared abstractions library for the whole Core tier. It holds contracts, the helpers the `.Abstractions` discipline above prescribes, and trivial null or no-op stubs. A stub is stateless and allocation-free, and serves as a default argument or in tests.
 - `Buildvana.Core.X`: the concrete implementation of area `X`. Create it only when the area has a common implementation. An area without one has no `Buildvana.Core.X` project.
 - `Buildvana.Core.X.<discriminator>`: an alternative concrete implementation of area `X`. Create it only when a second implementation exists. Do not pre-create it.
-- `Buildvana.Core.Testing`: the single shared library for stateful test doubles, such as capture-and-assert fakes and recorders. Create it on first need. Stateful fakes never go into the abstractions library.
+- `Buildvana.Core.Testing`: the single shared library for stateful test doubles, such as capture-and-assert fakes and recorders, and for the test harnesses several test projects need, such as a temporary Git repository or a documentation page reader. Stateful fakes never go into the abstractions library.
 
 #### Promotion triggers
 

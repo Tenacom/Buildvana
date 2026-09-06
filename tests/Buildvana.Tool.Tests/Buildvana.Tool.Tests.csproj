@@ -12,6 +12,11 @@
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
+  <!-- The files under test: tests read the documentation pages that list the tool's diagnostics. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="RepositoryRoot" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..'))" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Buildvana.Core.Testing\Buildvana.Core.Testing.csproj" />
     <ProjectReference Include="..\..\src\Buildvana.Tool\Buildvana.Tool.csproj" />
