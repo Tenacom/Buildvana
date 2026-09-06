@@ -68,7 +68,7 @@ An example of `Buildvana.Sdk.props`:
   <!-- Wine module configuration -->
   <PropertyGroup>
     <WineCommand>/usr/local/bin/wine-run</WineCommand>
-  <PropertyGroup>
+  </PropertyGroup>
 
 </Project>
 ```
