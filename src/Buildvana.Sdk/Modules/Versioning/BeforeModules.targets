@@ -9,21 +9,6 @@
   </PropertyGroup>
 
   <!--
-    UseNerdbankGitVersioning is a deprecated alias for UseVersioning, kept for compatibility with projects
-    written for previous versions of the SDK, where versioning was implemented via Nerdbank.GitVersioning.
-    Its value (if valid) only applies when UseVersioning itself is not specified.
-  -->
-  <ItemGroup Condition="'$(UseNerdbankGitVersioning)' != ''">
-    <EvaluationWarning Include="BVSDK2001"
-                       Text="The UseNerdbankGitVersioning property is deprecated; use UseVersioning instead." />
-  </ItemGroup>
-
-  <PropertyGroup Condition="'$(UseVersioning)' == ''">
-    <UseVersioning Condition="'$(UseNerdbankGitVersioning)' == 'true'">true</UseVersioning>
-    <UseVersioning Condition="'$(UseNerdbankGitVersioning)' == 'false'">false</UseVersioning>
-  </PropertyGroup>
-
-  <!--
     Unless explicitly told not to, look for the version file (VERSION) in the home directory.
     Unlike the version.json of Nerdbank.GitVersioning, the version file lives at the repository root only.
   -->
@@ -43,7 +28,7 @@
 
   <!--
     Issue an error if UseVersioning is 'true' and no version file was found in the home directory.
-    Note that this can only happen if UseVersioning (or its deprecated alias) was *explicitly* set to 'true'.
+    Note that this can only happen if UseVersioning was *explicitly* set to 'true'.
   -->
   <ItemGroup Condition="'$(BV_VersionFilePath)' == ''">
     <EvaluationError Condition="$(UseVersioning)"

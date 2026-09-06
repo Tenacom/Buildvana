@@ -144,10 +144,9 @@ This module has no associated diagnostics.
 
 ## Versioning module (2000-2099)
 
-| Code      | Severity | Message                                                                         | Description                                                                                                                                           |
-| --------- | :------: | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BVSDK2000 |  Error   | Version file (VERSION) not found in home directory.                             | The `UseVersioning` property was explicitly set to `true`, but no `VERSION` file was found in the home directory.                                     |
-| BVSDK2001 | Warning  | The UseNerdbankGitVersioning property is deprecated; use UseVersioning instead. | The project sets the `UseNerdbankGitVersioning` property, which is a deprecated alias for `UseVersioning` kept for compatibility with older projects. |
+| Code      | Severity | Message                                             | Description                                                                                                       |
+| --------- | :------: | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| BVSDK2000 |  Error   | Version file (VERSION) not found in home directory. | The `UseVersioning` property was explicitly set to `true`, but no `VERSION` file was found in the home directory. |
 
 ---
 

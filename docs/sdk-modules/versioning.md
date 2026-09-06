@@ -36,9 +36,6 @@ Buildvana SDK activates the module when the home directory holds a `VERSION` fil
 
 When the module is off, Buildvana SDK still defines an empty `GetBuildVersion` target, so that a target of yours can depend on it in every project.
 
-`UseNerdbankGitVersioning` is a deprecated alias of `UseVersioning`.
-Buildvana SDK reads it only when `UseVersioning` is not set, and raises warning BVSDK2001 whenever a project sets it.
-
 ### `VERSION` file
 
 The file is plain text, in the home directory, and holds one version specification in the form `MAJOR.MINOR[-[tag]]`:
