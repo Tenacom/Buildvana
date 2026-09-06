@@ -44,10 +44,10 @@ Buildvana ships as three packages.
 ## Compatibility
 
 Each table below states a status for every item.
-"Supported" means that Buildvana builds the item.
+"Supported" means that Buildvana works with the item.
 "Supported with limits" means the same, with the limit stated in the table.
-"Untested" means that no report of a build with the item exists, and that testers are welcome.
-"Unsupported" means that Buildvana does not build the item.
+"Untested" means that nobody has reported using Buildvana with the item, and that testers are welcome.
+"Unsupported" means that Buildvana does not work with the item.
 
 ### Project types
 
@@ -83,7 +83,7 @@ Each table below states a status for every item.
 
 ### Toolchain
 
-The table lists the minimum version of each tool Buildvana builds with.
+The table lists the minimum version of each tool that can build a project with Buildvana.
 
 <!-- TOOLCHAIN-FLOORS:START -->
 
