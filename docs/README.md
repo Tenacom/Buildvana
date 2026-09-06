@@ -2,6 +2,10 @@
 
 Every page of the Buildvana user documentation is listed here, in one group per topic, with one line saying what the page covers.
 
+## Getting started
+
+- [Introduction](introduction.md): what Buildvana is made of, what it does for a project, and what it runs on.
+
 ## Repository layout
 
 - [Directory structure](directory-structure.md): the recommended layout of a repository that uses Buildvana SDK, and what each file and directory is for.

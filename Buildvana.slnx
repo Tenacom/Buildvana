@@ -35,6 +35,7 @@
     <File Path="docs/environment-variables.md" />
     <File Path="docs/hooks.md" />
     <File Path="docs/internal-use-properties.md" />
+    <File Path="docs/introduction.md" />
     <File Path="docs/README.md" />
     <File Path="docs/sdk-configuration-files.md" />
     <File Path="docs/sdk-diagnostics.md" />
