@@ -55,7 +55,8 @@ The default is empty, and the class then goes in the global namespace.
 ### `ThisAssemblyConstant` items
 
 An item declares one constant.
-The name of the constant is the item's `Include`, and its value is the `Value` metadata, in the syntax of [Syntax of constants in ThisAssembly classes](../constants-syntax.md).
+The name of the constant is the item's `Include`, and its value is the `Value` metadata.
+[Syntax of constants in ThisAssembly classes](../constants-syntax.md) says how to write the value.
 Declare the items outside any target.
 
 ```xml
@@ -89,7 +90,8 @@ internal static partial class ThisAssembly
 The class is partial, so a file of yours can add members to it.
 
 A Roslyn source generator that Buildvana SDK ships writes the class, so the [toolchain floors](../introduction.md#toolchain) apply.
-The generator reads the constants from a file that the `BV_WriteThisAssemblyConstantsFile` target writes before compilation, because some values, such as version numbers, exist only once the build has computed them.
+The generator reads the constants from a file that the `BV_WriteThisAssemblyConstantsFile` target writes before compilation.
+The target writes the file because some values, such as version numbers, exist only once the build has computed them.
 
 ### Default constants
 
