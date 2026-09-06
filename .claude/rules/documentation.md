@@ -153,6 +153,7 @@ A region a tool maintains sits between two HTML comment markers:
 - Breaking changes come first in their subsection.
 - Migration steps go in a section of the feature's page, and the bullet links there.
 - A release section may open with one paragraph, when a note applies to the whole release. The sentence rules apply to it.
+- A bullet under "Unreleased changes" links a repository file by relative path. When `bv release` moves the section into a release, it pins each such link to the release tag, so a released section keeps its links whatever happens to the files later. Do not edit links in a released section by hand.
 
 Example:
 
@@ -171,4 +172,6 @@ Example:
   - every fenced block has a tag from the list above;
   - no documentation file contains "TODO";
   - generated-region markers exist and pair;
-  - a changelog bullet holds no nested list, and no sentence break outside code spans.
+  - a changelog bullet holds no nested list, and no sentence break outside code spans;
+  - a released changelog section holds no relative file link.
+- A reference page that lists a code surface is pinned by a test in the test project of that code. The test fails when a command, option, setting, or diagnostic exists in the code and not on the page, or on the page and not in the code. The command pages are pinned against `CommandRegistry`, `configuration-file.md` against the configuration model, and the diagnostics pages against the code that raises the diagnostics.
