@@ -182,7 +182,7 @@ The command works offline. The MSBuild evaluation it runs for the `packages` sco
 
 ## `bv dependencies update`
 
-`update` moves every pin of every selected scope as far as its policy allows, and no further. Its report gives each pin the line the `show` report gives it, with an arrow after it: `Serilog 3.0.0 (minor) -> 3.1.0 (latest: 3.1.0, 4.0.0-preview.2)`. The arrow points at the version the pin moves to, or at the words that say why it moves nowhere: `up to date`, `disabled`, `not managed`, `not selected`, or `held`. The versions in parentheses are the latest stable and prerelease the sources have, which are what a deliberate pin edit starts from. A pin already at its target is counted and left out; `--check --all` lists those as well.
+`update` moves every pin of every selected scope as far as its policy allows, and no further. Its report gives each pin the line the `show` report gives it, with an arrow after it: `Serilog 3.0.0 (minor) -> 3.1.0 (latest: 3.1.0, 4.0.0-preview.2)`. The arrow points at the version the pin moves to, or at the words that say why it moves nowhere: `up to date`, `disabled`, `not managed`, `not selected`, or `held`. The versions in parentheses are the latest stable version the sources have, and the latest prerelease above it, when there is one; they are what a deliberate pin edit starts from. A pin already at its target is counted and left out; `--check --all` lists those as well.
 
 `--check` reports what would change and changes nothing, exiting 1 when anything would. That is the staleness gate for CI.
 

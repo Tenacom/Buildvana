@@ -38,7 +38,10 @@ internal sealed record NetSdkResolution
     /// <summary>Gets the highest stable release, or <see langword="null"/> when nothing was resolved.</summary>
     public NuGetVersion? LatestStable { get; init; }
 
-    /// <summary>Gets the highest prerelease, or <see langword="null"/> when nothing was resolved.</summary>
+    /// <summary>
+    /// Gets the highest prerelease above <see cref="LatestStable"/>, or <see langword="null"/> when there is
+    /// none or nothing was resolved.
+    /// </summary>
     public NuGetVersion? LatestPreview { get; init; }
 
     /// <summary>Gets what a reader must know about the baseline, or an empty string when there is nothing.</summary>
