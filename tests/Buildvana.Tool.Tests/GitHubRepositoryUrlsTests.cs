@@ -86,6 +86,16 @@ internal sealed class GitHubRepositoryUrlsTests
     }
 
     [Test]
+    [Arguments("/docs/ConstantsSyntax.md")]
+    [Arguments(@"\docs\ConstantsSyntax.md")]
+    public async Task File_RejectsRootedPath(string path)
+    {
+        // Rejected on every platform: Path.IsPathFullyQualified would accept a leading slash on Windows, where
+        // a fully qualified path needs a drive or a UNC share, and reject it on Linux.
+        await Assert.That(() => Urls.File(path, "main")).Throws<ArgumentException>();
+    }
+
+    [Test]
     public async Task ReleaseTag_RejectsEmptyVersion()
     {
         await Assert.That(() => Urls.ReleaseTag(string.Empty)).Throws<ArgumentException>();
