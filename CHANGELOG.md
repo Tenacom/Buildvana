@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased changes
 
 No 2.0 stable release exists.
-When Buildvana replaced Nerdbank.GitVersioning with the `Versioning` module, `version.json` gave way to `VERSION`, and the patch number restarted from 1, below the 2.0.x versions already published.
+When Buildvana replaced Nerdbank.GitVersioning with the `Versioning` module, `version.json` gave way to `VERSION`.
+The patch number restarted from 1, below the 2.0.x versions already published.
 `bv release` refuses a version below the latest release tag, so the minor version moved to 2.1 instead.
 [Migration from Nerdbank.GitVersioning](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) says how to avoid the restart in your own repository.
 

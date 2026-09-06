@@ -34,7 +34,8 @@ Buildvana SDK activates the module when the home directory holds a `VERSION` fil
 `false` leaves the module off with the file present.
 `true` with no file raises error BVSDK2000.
 
-When the module is off, Buildvana SDK still defines an empty `GetBuildVersion` target, so that a target of yours can depend on it in every project.
+When the module is off, Buildvana SDK still defines an empty `GetBuildVersion` target.
+A target of yours can then depend on it in every project.
 
 ### `VERSION` file
 
@@ -146,7 +147,8 @@ A build is a public release when the current branch matches a pattern of `releas
 On any other branch, and in detached `HEAD` state, the build is not a public release.
 
 On a build that is not a public release, `InformationalVersion` carries the first ten characters of the commit ID, prefixed with `g`.
-The ID joins the prerelease part of the version with a dot, or becomes the prerelease part when the version has none: `1.2.3-preview.g0123456789` on a prerelease line, `1.2.3-g0123456789` on a stable line.
+The ID joins the prerelease part of the version with a dot, as in `1.2.3-preview.g0123456789`.
+When the version has no prerelease part, the ID becomes it, as in `1.2.3-g0123456789`.
 A repository with no commit has no ID, and `InformationalVersion` is then `Version` alone.
 The `IsPublicRelease` constant of `ThisAssembly` carries the same verdict.
 
@@ -183,7 +185,8 @@ A repository coming from that setup migrates in one commit:
 1. Create `VERSION` in the home directory, holding the `version` value of `version.json`, such as `2.0-preview`.
    The Git height restarts at the commit that creates the file.
    When the latest published patch number is high, bump `MAJOR.MINOR` in the same commit.
-   On the old line, every computed version stays below the published ones until the line holds more commits than the highest patch number published, and `bv release` refuses a version below the latest release tag.
+   On the old line, every computed version stays below the published ones, until the line holds more commits than the highest patch number published.
+   `bv release` refuses a version below the latest release tag.
 2. Move `publicReleaseRefSpec` to `release.branches` in `buildvana.jsonc`.
    A refspec pattern becomes a pattern on the short branch name: `^refs/heads/main$` becomes `^main$`.
 3. Move `release.firstUnstableTag` to `versioning.prereleaseTag`, and `assemblyVersion.precision` to `versioning.assemblyVersionPrecision`.

@@ -24,7 +24,8 @@ This module exports the [JetBrains annotations](https://www.jetbrains.com/help/r
 
 Set it to `true` to export the annotations.
 The default is `false`.
-Buildvana SDK forces it to `false` in a project whose language is not C#, and in a project that uses the `Microsoft.Build.NoTargets` SDK, because the exporter reads C# source.
+Buildvana SDK forces it to `false` in a project whose language is not C#, and in a project that uses the `Microsoft.Build.NoTargets` SDK.
+The exporter reads C# source, and neither kind of project compiles any.
 
 The module adds no package to the project.
 Reference an annotations source yourself: the [`JetBrains.Annotations`](https://www.nuget.org/packages/JetBrains.Annotations) package, the [`JetBrains.Annotations.Sources`](https://www.nuget.org/packages/JetBrains.Annotations.Sources) package, or attributes of your own in the `JetBrains.Annotations` namespace.
@@ -36,10 +37,12 @@ Reference an annotations source yourself: the [`JetBrains.Annotations`](https://
 ### External annotations file
 
 After the build of each target framework, the `BV_ExportJetBrainsAnnotations` target runs the `ExportJetBrainsAnnotations` task.
-The task builds a Roslyn compilation from the project's `Compile` items, its resolved references, `DefineConstants`, and `LangVersion`, and writes `$(AssemblyName).ExternalAnnotations.xml` to the output directory.
+The task builds a Roslyn compilation from the project's `Compile` items, its resolved references, `DefineConstants`, and `LangVersion`.
+It writes `$(AssemblyName).ExternalAnnotations.xml` to the output directory.
 The target is incremental: it runs again when a source file or a reference changes.
 
-The file describes the attributes of the `JetBrains.Annotations` namespace on the public, protected, and protected internal types and members of the assembly, on their parameters, and on their type parameters.
+The file describes the attributes of the `JetBrains.Annotations` namespace on the public, protected, and protected internal types and members of the assembly.
+It also describes the attributes on their parameters and on their type parameters.
 Six attributes that ReSharper does not read from an external annotations file are left out: `AspMvcSuppressViewError`, `LocalizationRequired`, `MeansImplicitUse`, `NoReorder`, `PublicAPI`, and `UsedImplicitly`.
 
 When the attributes carry `[Conditional("JETBRAINS_ANNOTATIONS")]`, as the JetBrains packages define them, the compiled assembly holds no annotation metadata, and the file is the only carrier.
