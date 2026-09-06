@@ -1,6 +1,7 @@
 # Buildvana SDK configuration files
 
-Buildvana SDK configuration files are `.props` and/or `.targets` files whose scope is not a single project or a repository, but a machine or a user.
+A Buildvana SDK configuration file is a `.props` file whose scope is a machine or a user, not a repository.
+This page says what the files are for, where Buildvana SDK looks for them, and what each one holds.
 
 ---
 
@@ -8,59 +9,47 @@ Buildvana SDK configuration files are `.props` and/or `.targets` files whose sco
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Why configuration files?](#why-configuration-files)
-- [Configuration file locations](#configuration-file-locations)
-- [A word to the wise](#a-word-to-the-wise)
-- [Configuration files, one by one](#configuration-files-one-by-one)
-  - [`Buildvana.Sdk.props`](#buildvanasdkprops)
+- [Purpose](#purpose)
+- [Locations](#locations)
+- [`Buildvana.Sdk.props`](#buildvanasdkprops)
 
 ---
 
-## Why configuration files?
+## Purpose
 
-At [Tenacom](https://github.com/Tenacom) we strive to minimize the amount of preliminary setup a developer needs to work on a project. Ideally, one should be able to clone a repository, open an IDE (either Visual Studio, Rider, or VS Code) and start working, no additional installations required.
+Every file a build needs resides in the repository or in a NuGet package, so that a clone builds the same way on every machine.
+A configuration file is the exception.
+It holds a setting that differs between machines or between users, and that no repository can state.
+The `WineCommand` property of the [`Wine` module](sdk-modules/wine.md) is one.
+A CI image runs Windows-only tools through a script of its own, and a developer workstation through another.
 
-That having been said, there are situations where different actions are required to achieve the same results on different machines (say, CI/CD builders vs. developer workstations) and/or for different users. A notable example is invoking [Wine](https://winehq.org) to run a Windows-only tool in the context of a build on a Linux or Mac system (see [Wine module's documentation](sdk-modules/wine.md) for details).
-
-Configuration files are the exception to the basic rule that every file needed for the build must either reside in the repository, or in a NuGet package.
-
----
-
-## Configuration file locations
-
-Buildvana SDK looks for configuration files in the following directories, according to the operating system:
-
-| Windows                                      | macOS                              | Linux                             |
-| -------------------------------------------- | ---------------------------------- | --------------------------------- |
-|                                              | /etc/buildvana                     | /etc/buildvana                    |
-| C:\\ProgramData\\buildvana                   | /usr/share/buildvana               | /usr/share/buildvana              |
-| C:\\Users\\John\\.buildvana                  | /Users/john/.buildvana             | /home/john/.buildvana             |
-| C:\\Users\\John\\AppData\\Roaming\\buildvana | /Users/john/.config/buildvana      | /home/john/.config/buildvana      |
-| C:\\Users\\John\\AppData\\Local\\buildvana   | /Users/john/.local/share/buildvana | /home/john/.local/share/buildvana |
-
-_(Note that the above table assumes default folder locations and a user name of `John` (on Windows) or `john` (on other systems). If, for example, the user profile is in `D:\Some\Path\Users\Paul`, Buildvana SDK will look for configuration files in `D:\Some\Path\Users\Paul\.buildvana`, etc.)_
-
-If a configuration file with the same name is present in more than one of the above locations, Buildvana SDK will import all of them, in the order specified by the table above.
+Keep a configuration file to the settings that the module pages name under "Configuration".
+Any other property it sets reaches every project of every repository on the machine, and makes a build hard to reproduce.
 
 ---
 
-## A word to the wise
+## Locations
 
-Since configuration files are just XML files imported into every project, the possibilities they open up are endless... _in theory_.
+Buildvana SDK imports `Buildvana.Sdk.props` from each directory below that holds one, in the order of the table.
+A later file overrides a property an earlier one sets.
 
-In practice, though, you should keep their contents to a minimum and only use them for the purposes specified in this documentation (particularly in the "Configuration" section of module docs, when present).
+| Windows                                     | macOS                                | Linux                               |
+| ------------------------------------------- | ------------------------------------ | ----------------------------------- |
+|                                             | `/etc/buildvana`                     | `/etc/buildvana`                    |
+| `C:\ProgramData\buildvana`                  | `/usr/share/buildvana`               | `/usr/share/buildvana`              |
+| `C:\Users\John\.buildvana`                  | `/Users/john/.buildvana`             | `/home/john/.buildvana`             |
+| `C:\Users\John\AppData\Roaming\buildvana`   | `/Users/john/.config/buildvana`      | `/home/john/.config/buildvana`      |
+| `C:\Users\John\AppData\Local\buildvana`     | `/Users/john/.local/share/buildvana` | `/home/john/.local/share/buildvana` |
 
-Remember that configuration files have the potential to introduce a "surprise factor" in your builds. MSBuild _hates_ surprises and is a vindictive b*tch. You have been warned.
+The table assumes the default folder locations and a user named `John` on Windows, or `john` elsewhere.
+Buildvana SDK asks the operating system for the folder locations, so a user profile at `D:\Some\Path\Users\Paul` yields `D:\Some\Path\Users\Paul\.buildvana`.
 
 ---
 
-## Configuration files, one by one
+## `Buildvana.Sdk.props`
 
-### `Buildvana.Sdk.props`
-
-This file is imported, if present, before any module and `Common.props` file. Its purpose is to set global properties that can vary by machine and/or user.
-
-An example of `Buildvana.Sdk.props`:
+`Sdk.props` imports the file before every module and before `Common.props`.
+Its purpose is to set the properties that vary by machine or by user.
 
 ```xml
 <Project>
