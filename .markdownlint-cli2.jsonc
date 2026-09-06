@@ -117,7 +117,8 @@
     "no-space-in-links": true,
 
     // MD040/fenced-code-language : Fenced code blocks should have a language specified : https://github.com/DavidAnson/markdownlint/blob/main/doc/md040.md
-    "fenced-code-language": { "allowed_languages": [], "language_only": false },
+    // The list is the one in .claude/rules/documentation.md, which lint-docs.cs enforces in the gate.
+    "fenced-code-language": { "allowed_languages": ["csharp", "json", "jsonc", "markdown", "powershell", "shell", "text", "xml", "yaml"], "language_only": false },
 
     // MD041/first-line-heading/first-line-h1 : First line in a file should be a top-level heading : https://github.com/DavidAnson/markdownlint/blob/main/doc/md041.md
     "first-line-heading": { "allow_preamble": false, "front_matter_title": "^\\s*title\\s*[:=]", "level": 1 },
