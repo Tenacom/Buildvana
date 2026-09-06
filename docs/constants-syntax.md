@@ -1,6 +1,7 @@
 # Syntax of constants in ThisAssembly classes
 
-Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` items of the [`ThisAssemblyClass` module](sdk-modules/this-assembly-class.md).
+The [`ThisAssemblyClass` module](sdk-modules/this-assembly-class.md) generates a `ThisAssembly` class from `ThisAssemblyConstant` items.
+This page says how Buildvana SDK turns the `Value` metadata of an item into a typed constant.
 
 ---
 
@@ -9,12 +10,15 @@ Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` ite
 <!-- markdownlint-enable MD036 -->
 
 - [Declaring constants](#declaring-constants)
-- [How Buildvana SDK parses constant values](#how-buildvana-sdk-parses-constant-values)
+- [Parsing steps](#parsing-steps)
 - [Allowed types](#allowed-types)
 
 ---
 
 ## Declaring constants
+
+A `ThisAssemblyConstant` item declares one constant.
+The `Include` of the item is the name of the constant, and the `Value` metadata is its value.
 
 ```xml
 <!-- Generation of a ThisAssembly class is disabled by default. -->
@@ -22,13 +26,13 @@ Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` ite
   <GenerateThisAssemblyClass>true</GenerateThisAssemblyClass>
 </PropertyGroup>
 
-<!-- Add a System.Int32 constant named ThisAssembly.Answer with a value of 42. -->
+<!-- Add an int constant named ThisAssembly.Answer with a value of 42. -->
 <ItemGroup>
   <ThisAssemblyConstant Include="Answer" Value="42" />
 </ItemGroup>
 ```
 
-The type of a constant may also be explicitly specified:
+The `Value` may name the type of the constant, with one of the names that [Allowed types](#allowed-types) lists:
 
 ```xml
 <ItemGroup>
@@ -36,40 +40,51 @@ The type of a constant may also be explicitly specified:
 </ItemGroup>
 ```
 
-> [!NOTE]
-> `ThisAssembly` class generation is only supported in C# projects.
-
 ---
 
-## How Buildvana SDK parses constant values
+## Parsing steps
 
-Given the `Value` metadata of a `ThisAssemblyConstant` item, Buildvana SDK performs the following steps:
+Buildvana SDK reads the `Value` metadata and applies the first step below that matches it.
 
-- If the metadata is empty, the resulting constant is a null string (`public const string? Name = null;`).
-- If the first and last characters of the metadata are double quotes, the result is a `System.String` whose value is the string between the double quotes. In this case, _double quote characters within the metadata must be doubled._  
-  **Examples:** `""` -> the empty string; `"""Murder"", she wrote"` -> `"Murder", she wrote`.
-- If the metadata contains a colon, it is assumed to be of the form `type:value`, where `type` must be one of the strings listed in the table [below](#allowed-types), and `value` must be parsable as the specified type. If `type` is not recognized, or `value` cannot be successfully parsed, an error is logged and the build stops.  
-  **Examples:** `int:42` -> `42`; `long:42` -> `42L`.
-- If the metadata can be successfully parsed as a `System.Int32`, the result is the parsed value.  
-  **Examples:** `42` -> `42`; `-13` -> `-13`.
-- If the metadata can be successfully parsed as a `System.Int64`, the result is the parsed value.  
-  **Examples:** `9999999999` -> `9999999999L`; `-9999999999` -> `-9999999999L`.
-- If the metadata can be successfully parsed as a `System.Boolean`, the result is the parsed value.  
-  **Examples:** `true` -> `true`; `false` -> `false`.
-- If none of the previous steps yields a result, the result is a `System.String` whose value is the metadata, unchanged.  
-  **Examples:** `foo` -> `"foo"`; `false90` -> `"false90"`.
+1. An empty `Value` yields a `string?` constant whose value is `null`.
+2. A `Value` whose first and last characters are double quotes yields a `string` constant holding the text between them.
+   To put a double quote inside the text, write it twice.
+3. A `Value` holding a colon is read as `type:value`.
+   `type` is one of the names that [Allowed types](#allowed-types) lists, and `value` is parsed as that type.
+   When `type` is unknown, or `value` does not parse as that type, Buildvana SDK raises error BVSDK2301 and the build fails.
+4. A `Value` that parses as an `int` yields an `int` constant.
+5. A `Value` that parses as a `long` yields a `long` constant.
+6. A `Value` that parses as a `bool` yields a `bool` constant.
+7. Any other `Value` yields a `string` constant holding the text unchanged.
+
+The table shows the constant each step produces, as the generated class declares it.
+
+| `Value`                   | Step | Declaration                                           |
+| ------------------------- | :--: | ----------------------------------------------------- |
+| (empty)                   |  1   | `public const string? Name = null;`                   |
+| `""`                      |  2   | `public const string Name = "";`                      |
+| `"""Murder"", she wrote"` |  2   | `public const string Name = "\"Murder\", she wrote";` |
+| `int:42`                  |  3   | `public const int Name = 42;`                         |
+| `long:42`                 |  3   | `public const long Name = 42L;`                       |
+| `42`                      |  4   | `public const int Name = 42;`                         |
+| `-13`                     |  4   | `public const int Name = -13;`                        |
+| `9999999999`              |  5   | `public const long Name = 9999999999L;`               |
+| `true`                    |  6   | `public const bool Name = true;`                      |
+| `foo`                     |  7   | `public const string Name = "foo";`                   |
+| `false90`                 |  7   | `public const string Name = "false90";`               |
 
 ---
 
 ## Allowed types
 
-The following table lists the recognized types for constants, along with the prefixes that select each of them in the `type:value` syntax.
+The table lists the types a constant can have, with the names that select each one in the `type:value` form.
+The names are case-insensitive.
 
-| Type           | Recognized prefixes (case-insensitive) |
-| -------------- | -------------------------------------- |
-| System.Byte    | `System.Byte`, `byte`, `uint8`         |
-| System.Int16   | `System.Int16`, `short`, `int16`       |
-| System.Int32   | `System.Int32`, `int`, `int32`         |
-| System.Int64   | `System.Int64`, `long`, `int64`        |
-| System.Boolean | `System.Boolean`, `bool`               |
-| System.String  | `System.String`, `string`              |
+| Type     | Names                            |
+| -------- | -------------------------------- |
+| `byte`   | `byte`, `uint8`, `System.Byte`   |
+| `short`  | `short`, `int16`, `System.Int16` |
+| `int`    | `int`, `int32`, `System.Int32`   |
+| `long`   | `long`, `int64`, `System.Int64`  |
+| `bool`   | `bool`, `System.Boolean`         |
+| `string` | `string`, `System.String`        |
