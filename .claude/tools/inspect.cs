@@ -95,7 +95,10 @@ var diagnosticRegex = new Regex(
 // The documentation check takes a second and needs no build, so it runs first, and its findings are printed
 // before the build starts. A finding does not stop the build: the gate reports everything it can in one run.
 var lintDocsPath = Path.Combine(repoRoot, ".claude", "tools", "lint-docs.cs");
-var findingRegex = new Regex(@"^.+\(\d+,\d+\): (?:error|warning) \S+: ", RegexOptions.CultureInvariant);
+
+// The regex names the `Docs` codes because a compiler error from `dotnet run` has the same shape. Matching any
+// code would count a broken tool as a documentation finding, and the failure check below would never fire.
+var findingRegex = new Regex(@"^.+\(\d+,\d+\): error Docs\w+: ", RegexOptions.CultureInvariant);
 Console.Error.WriteLine("info: running lint-docs...");
 var lintDocs = Run(
     "dotnet",
@@ -104,8 +107,8 @@ var lintDocs = Run(
     line => gate && line.StartsWith("=== ", StringComparison.Ordinal));
 var docsDiagnostics = lintDocs.Lines.Where(line => findingRegex.IsMatch(line)).ToList();
 
-// lint-docs exits 1 on findings. `dotnet run` exits 1 when it cannot build the tool, with no finding to show
-// for it, and lint-docs itself exits 2 on a usage error. Neither is a clean result.
+// lint-docs exits 1 on findings. `dotnet run` exits 1 when it cannot build the tool, with compiler errors in
+// place of findings, and lint-docs itself exits 2 on a usage error. Neither is a clean result.
 var lintDocsFailed = lintDocs.ExitCode is not (0 or 1) || (lintDocs.ExitCode == 1 && docsDiagnostics.Count == 0);
 if (lintDocsFailed)
 {
