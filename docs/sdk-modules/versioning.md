@@ -131,7 +131,8 @@ Buildvana SDK walks the history from `HEAD`, and counts the commits whose commit
 - A commit that changes only the prerelease marker or the tag stays on the line.
 - A `VERSION` file that did not exist before counts as a change of `MAJOR.MINOR`.
   The commit that creates the file has height 1, whatever history precedes it.
-- Height 0 means that no commit carries the version line, because `VERSION` changed in the working tree and is not committed.
+- Height 0 means that `HEAD` is not on the version line: its `VERSION` is missing or holds another `MAJOR.MINOR`, or the repository has no commit.
+  The usual cause is a `VERSION` changed in the working tree and not committed.
   A build gets that version, and `bv release` refuses to publish it, because a build of the tagged commit would compute a different one.
 
 Buildvana SDK reads the repository through LibGit2Sharp and needs no `git` executable.
@@ -146,6 +147,7 @@ On any other branch, and in detached `HEAD` state, the build is not a public rel
 
 On a build that is not a public release, `InformationalVersion` carries the first ten characters of the commit ID, prefixed with `g`.
 The ID joins the prerelease part of the version with a dot, or becomes the prerelease part when the version has none: `1.2.3-preview.g0123456789` on a prerelease line, `1.2.3-g0123456789` on a stable line.
+A repository with no commit has no ID, and `InformationalVersion` is then `Version` alone.
 The `IsPublicRelease` constant of `ThisAssembly` carries the same verdict.
 
 ### `ThisAssembly` constants
