@@ -12,6 +12,7 @@ This page says what Buildvana is made of, what it does for a project, and what i
 - [Packages](#packages)
 - [Benefits](#benefits)
 - [Compatibility](#compatibility)
+  - [Operating systems](#operating-systems)
   - [Project types](#project-types)
   - [Programming languages](#programming-languages)
   - [Git servers](#git-servers)
@@ -49,6 +50,14 @@ Each table below states a status for every item.
 "Untested" means that nobody has reported using Buildvana with the item, and that testers are welcome.
 "Unsupported" means that Buildvana does not work with the item.
 
+### Operating systems
+
+| Operating system | Status    |
+| ---------------- | --------- |
+| Windows          | Supported |
+| Linux            | Supported |
+| macOS            | Untested  |
+
 ### Project types
 
 | Project type                                       | Status      |
@@ -67,12 +76,12 @@ Each table below states a status for every item.
 
 ### Programming languages
 
-| Language        | Status                | Limits                      |
-| --------------- | --------------------- | --------------------------- |
-| C#              | Supported             |                             |
-| Visual Basic    | Unsupported           |                             |
-| F#              | Supported with limits | Some features are disabled. |
-| Other languages | Unsupported           |                             |
+| Language        | Status      |
+| --------------- | ----------- |
+| C#              | Supported   |
+| Visual Basic    | Unsupported |
+| F#              | Unsupported |
+| Other languages | Unsupported |
 
 ### Git servers
 
