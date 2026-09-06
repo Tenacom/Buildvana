@@ -22,7 +22,7 @@ This module provides support for running Windows-only tools using [Wine](https:/
 
 ## Configuration
 
-The following property can be defined in a [configuration file](../SdkConfigurationFiles.md).
+The following property can be defined in a [configuration file](../sdk-configuration-files.md).
 
 ### `WineCommand` property
 
@@ -62,7 +62,7 @@ If you use a Windows-only tool in your build process, and you want to run it wit
 
 `NeedWine` items MUST be defined outside any target. The name you use is just used for informative purposes; it needs not be the name of the executable.
 
-If at least one `NeedWine` item is defined, and the `WineCommand` property is not set (or is set to an empty string) after MSBuild's evaluation phase, Buildvana SDK will issue [error BVSDK2200](../Diagnostics.md#wine-module-2200-2299) with a message listing the names of the tools that need Wine.
+If at least one `NeedWine` item is defined, and the `WineCommand` property is not set (or is set to an empty string) after MSBuild's evaluation phase, Buildvana SDK will issue [error BVSDK2200](../sdk-diagnostics.md#wine-module-2200-2299) with a message listing the names of the tools that need Wine.
 
 ### `UseWine` property
 
@@ -285,4 +285,4 @@ Here's how we can support running _ExeMangler_ through Wine when building on Lin
 </Target>
 ```
 
-For a more convoluted example, you can take a look at [how Buildvana SDK invokes Inno Setup's compiler](https://github.com/Tenacom/Buildvana/blob/main/src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets).
+For a more convoluted example, you can take a look at [how Buildvana SDK invokes Inno Setup's compiler](../../src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets).

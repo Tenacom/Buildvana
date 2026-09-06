@@ -115,13 +115,13 @@ A pin is managed when the file that declares it states one exact version, and th
 - a version the file does not state itself, because an MSBuild property holds it or a `PackageReference Update="..."` elsewhere applies it;
 - a `VersionOverride`, which is central package management's way of departing from the central pin for one project.
 
-Two kinds of item are never pins at all. A reference an SDK injects, marked `IsImplicitlyDefined`, belongs to that SDK. An item declared outside the [home directory](DirectoryStructure.md#home-directory) belongs to whoever owns the file; `bv` names it at `detail` verbosity and moves on.
+Two kinds of item are never pins at all. A reference an SDK injects, marked `IsImplicitlyDefined`, belongs to that SDK. An item declared outside the [home directory](../directory-structure.md#home-directory) belongs to whoever owns the file; `bv` names it at `detail` verbosity and moves on.
 
 A pin is what one file says about one id, so ten projects sharing one `Directory.Build.props` reference have one pin between them, while one file stating one id at two versions, one per target framework, has two.
 
 ### Buildvana's own packages
 
-`bv`, `Buildvana.Sdk` and `Buildvana.Runtime` are released in lockstep and must stay in lockstep, so `bv dependencies` never sees them, in any scope. [`bv self-update`](DirectoryStructure.md#globaljson) is the command that moves them, all at once.
+`bv`, `Buildvana.Sdk` and `Buildvana.Runtime` are released in lockstep and must stay in lockstep, so `bv dependencies` never sees them, in any scope. [`bv self-update`](../directory-structure.md#globaljson) is the command that moves them, all at once.
 
 ### Additional package groups
 
@@ -182,7 +182,7 @@ Package versions come from the repository's own package sources, read through Nu
 Two things stop a run, and both leave the repository untouched:
 
 - a source that cannot answer. A resolution against the sources that happened to reply could only be wrong in silence, and an "up to date" report is a claim, not a guess;
-- a pin naming a package, or a version, that no source has. That is the repository's own error — a mistyped id, a source missing from `nuget.config` — and one run reports every one of them, each naming the file that declares the pin. See [the BV12xx diagnostics](ToolDiagnostics.md#dependency-management-1200-1299).
+- a pin naming a package, or a version, that no source has. That is the repository's own error — a mistyped id, a source missing from `nuget.config` — and one run reports every one of them, each naming the file that declares the pin. See [the BV12xx diagnostics](../tool-diagnostics.md#dependency-management-1200-1299).
 
 A version some source knows and has delisted is not that error. Delisting often means the version is vulnerable, so moving away from it is the remedy: the pin is reported, and the update proceeds.
 
@@ -213,7 +213,7 @@ Two forms exist:
 
 ### The `deps/post-update` hook
 
-A repository that derives something from what it pins — a property naming a compiler version, a floor implied by a package — updates what it derives in the `deps/post-update` hook, which runs at the end of every `update` that ran to completion, check runs included. In a check run the hook's exit code 1 says that it would change something, and the command folds that into its own verdict. See [Hooks](Hooks.md#the-depspost-update-hook).
+A repository that derives something from what it pins — a property naming a compiler version, a floor implied by a package — updates what it derives in the `deps/post-update` hook, which runs at the end of every `update` that ran to completion, check runs included. In a check run the hook's exit code 1 says that it would change something, and the command folds that into its own verdict. See [Hooks](../hooks.md#the-depspost-update-hook).
 
 ## `bv dependencies prune`
 
@@ -271,7 +271,7 @@ The second is a package a decision of the repository's own governs. `bv` never i
 
 ## Exit codes
 
-The dependency commands return the [exit codes every `bv` command returns](ToolDiagnostics.md#exit-codes), with no meaning of their own added.
+The dependency commands return the [exit codes every `bv` command returns](../tool-diagnostics.md#exit-codes), with no meaning of their own added.
 
 Code 1 is the verdict of `update --check`: a pin has fallen behind its policy, or the hook says it would change something. It is the verdict of `prune --check` as well, where it says that the repository states a pin nothing references. Nothing failed, and nothing was written. It is also the code of every error above that stops a run before it writes: a pin the sources do not know, a source that cannot be reached, a version `--to` names and no source has. One failure of its own carries it too: transitive overrides that never stop changing. No program failed there, and the procedure that gave up is `bv`'s own.
 
@@ -286,4 +286,4 @@ Two things, both of which `bv` drives and neither of which changes an ordinary b
 - the target that dumps a project's evaluated package items, which `bv dependencies` runs over the solution to see the `packages` scope as a build sees it. Taking the pins from evaluation, rather than from the files, is what makes conditions, imports and layered central package management mean the same thing to `bv` as they do to a build. The dump also carries the two values the [override lifecycle](#transitive-overrides) needs from an evaluation: where a restore writes that project's dependency graph, and the severity the project's audit reports from;
 - the import of the [transitive override files](#transitive-overrides), where they exist. A repository whose graph needs none has none, and the import finds nothing.
 
-Both are steered by [internal-use properties](InternalUseProperties.md#dependency-management) that `bv` passes on the command line.
+Both are steered by [internal-use properties](../internal-use-properties.md#dependency-management) that `bv` passes on the command line.

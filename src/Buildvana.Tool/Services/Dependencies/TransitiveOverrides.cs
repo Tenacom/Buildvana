@@ -12,7 +12,7 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// <remarks>
 /// <para>The Buildvana SDK imports the override files, and <c>bv</c> alone decides what they hold. The
 /// property named here is the whole of the SDK's side of the conversation, and it is documented as an
-/// internal-use property in <c>docs/InternalUseProperties.md</c>.</para>
+/// internal-use property in <c>docs/internal-use-properties.md</c>.</para>
 /// </remarks>
 internal static class TransitiveOverrides
 {

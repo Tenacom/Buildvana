@@ -8,7 +8,7 @@ using System.Globalization;
 namespace Buildvana.Sdk.SourceGenerators.Internal;
 
 /// <summary>
-/// Parses constant values expressed in the syntax documented in <c>docs/ConstantsSyntax.md</c>:
+/// Parses constant values expressed in the syntax documented in <c>docs/constants-syntax.md</c>:
 /// an empty string yields <see langword="null"/>; a double-quoted string (with inner double quotes doubled)
 /// yields the quoted text; a <c>type:value</c> pair yields a value of the specified type;
 /// anything else is parsed by guessing the type (int, then long, then bool, then string).
