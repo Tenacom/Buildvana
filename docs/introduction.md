@@ -70,7 +70,7 @@ Each table below states a status for every item.
 | Language        | Status                | Limits                      |
 | --------------- | --------------------- | --------------------------- |
 | C#              | Supported             |                             |
-| Visual Basic    | Supported             |                             |
+| Visual Basic    | Unsupported           |                             |
 | F#              | Supported with limits | Some features are disabled. |
 | Other languages | Unsupported           |                             |
 
