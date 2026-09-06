@@ -66,13 +66,16 @@ internal sealed class GitHubRepositoryUrls
     {
         Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNullOrEmpty(commitish);
-        Guard.IsTrue(!Path.IsPathFullyQualified(path), nameof(path), "A path must be relative to be converted to a file URL.");
 
-        // Normalize to forward slashes for the URL, then reject paths that escape the repo.
+        // Normalize to forward slashes for the URL, then reject paths that are rooted or escape the repo.
+        // A rooted path is checked after normalization, so that a leading slash of either kind is rejected on
+        // every platform: Path.IsPathFullyQualified is true for "/docs/x.md" on Linux and false on Windows,
+        // where a fully qualified path needs a drive or a UNC share, and a backslash is a separator only there.
         // Every ".." segment must go, not just a leading one: Uri collapses parent segments as it parses,
         // so enough of them anywhere in the path walk out of the repository and even out of the owner
         // (".../blob/main/docs/../../../../../../etc/passwd" parses to "https://github.com/etc/passwd").
         var remotePath = path.Replace('\\', '/');
+        Guard.IsTrue(!Path.IsPathRooted(remotePath), nameof(path), "A path must be relative to be converted to a file URL.");
         var hasParentSegment = remotePath == ".."
             || remotePath.StartsWith("../", StringComparison.Ordinal)
             || remotePath.EndsWith("/..", StringComparison.Ordinal)
