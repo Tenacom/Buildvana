@@ -108,7 +108,7 @@ A **reference** lists items of one kind: diagnostics, environment variables, pro
 - A table, when every item fits one line per column. The diagnostics pages are the model.
 - One level 3 heading per item, named by the identifier in backticks, when an item needs paragraphs. The environment variables page is the model.
 
-A **module page** documents one SDK module. Its level 2 headings come in this order, each present when the module has the content: "Configuration", for the properties the user sets; "Usage", for items, tasks, and targets; "Diagnostics", for a link to the module's range in the SDK diagnostics page.
+A **module page** documents one SDK module. Its level 2 headings come in this order, each present when the module has the content: "Configuration", for the properties and the `buildvana.jsonc` settings the user sets; "Usage", for items, tasks, and targets; "Diagnostics", for a link to the module's range in the SDK diagnostics page. A migration section, when the page has one, comes last.
 
 A **command page** documents one `bv` command or command group. Topic sections come first. "Options" and "Exit codes" come last, each present when the command has them.
 
