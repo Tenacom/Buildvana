@@ -25,10 +25,14 @@ The file is a home-directory marker.
 Home-directory discovery stops at the nearest directory that holds one, and [Location of the home directory](directory-structure.md#location-of-the-home-directory) lists the other markers.
 An empty JSON object, `{}`, is valid content, and marks a directory without configuring anything.
 
+---
+
 ## Settings
 
 The `dependencies` section is documented in [Dependency management](tool-commands/dependencies.md), together with the command it configures.
 The files below describe every other setting.
+
+---
 
 ## Related files
 
