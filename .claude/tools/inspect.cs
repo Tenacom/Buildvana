@@ -2,8 +2,10 @@
 // See the LICENSE file in the project root for full license information.
 
 /*
- * Runs the whole pre-push gate in one shot: `bv build` first, then ReSharper inspectcode, reporting the
- * diagnostics of both. Inspection only runs if the build reported nothing, because it analyzes the build output.
+ * Runs the whole pre-push gate in one shot: `lint-docs.cs` on the documentation first, then `bv build`, then
+ * ReSharper inspectcode, reporting the diagnostics of all three. The documentation check takes a second and
+ * needs no build, so it runs whatever the build does. Inspection only runs if the build reported nothing,
+ * because it analyzes the build output.
  *
  * Run from the repo root:
  *   `dotnet run .claude/tools/inspect.cs --gate`  pre-push gate: builds with `bv pack`, so that tests run and
@@ -23,7 +25,7 @@
  *
  * Both modes write one `path(line,col): severity ID: message` per diagnostic to standard output and nothing
  * else, which is what the `$msCompile` problem matcher consumes; progress and failure context go to standard
- * error. The raw output of both child processes, and the SARIF report, are left in `.buildvana-temp`.
+ * error. The raw output of the three child processes, and the SARIF report, are left in `.buildvana-temp`.
  */
 
 using System;
@@ -90,6 +92,37 @@ var diagnosticRegex = new Regex(
     @"^.+?\s*:\s*(?<severity>error|warning)\s+[A-Za-z][A-Za-z0-9_]*\s*:",
     RegexOptions.CultureInvariant);
 
+// The documentation check takes a second and needs no build, so it runs first, and its findings are printed
+// before the build starts. A finding does not stop the build: the gate reports everything it can in one run.
+var lintDocsPath = Path.Combine(repoRoot, ".claude", "tools", "lint-docs.cs");
+var findingRegex = new Regex(@"^.+\(\d+,\d+\): (?:error|warning) \S+: ", RegexOptions.CultureInvariant);
+Console.Error.WriteLine("info: running lint-docs...");
+var lintDocs = Run(
+    "dotnet",
+    ["run", lintDocsPath, repoRoot],
+    repoRoot,
+    line => gate && line.StartsWith("=== ", StringComparison.Ordinal));
+var docsDiagnostics = lintDocs.Lines.Where(line => findingRegex.IsMatch(line)).ToList();
+
+// lint-docs exits 1 on findings. `dotnet run` exits 1 when it cannot build the tool, with no finding to show
+// for it, and lint-docs itself exits 2 on a usage error. Neither is a clean result.
+var lintDocsFailed = lintDocs.ExitCode is not (0 or 1) || (lintDocs.ExitCode == 1 && docsDiagnostics.Count == 0);
+if (lintDocsFailed)
+{
+    Console.Error.WriteLine($"lint-docs failed with exit code {lintDocs.ExitCode}.");
+    foreach (var line in lintDocs.Lines.TakeLast(TailLineCount))
+    {
+        Console.Error.WriteLine(line);
+    }
+
+    return 2;
+}
+
+foreach (var diagnostic in docsDiagnostics)
+{
+    Console.WriteLine(diagnostic);
+}
+
 // The gate stands in for the whole pre-push sanity check, so it packs: that runs the tests and leaves the
 // artifacts in place for inspection. Everything else only needs the build that `--no-build` inspection reads.
 var buildCommand = gate ? "pack" : "build";
@@ -98,6 +131,7 @@ var build = Run("dotnet", ["bv", buildCommand, "--no-color", "--nologo"], repoRo
 
 // Only now: the build starts with a clean, which deletes the scratch directory.
 _ = Directory.CreateDirectory(scratchPath);
+File.WriteAllLines(Path.Combine(scratchPath, "lint-docs.log"), lintDocs.Lines);
 File.WriteAllLines(Path.Combine(scratchPath, "build.log"), build.Lines);
 
 var buildDiagnostics = new List<string>();
@@ -265,12 +299,13 @@ foreach (var diagnostic in inspectDiagnostics)
     Console.WriteLine(diagnostic);
 }
 
-if (gate && inspectDiagnostics.Count == 0)
+var gatePassed = gate && docsDiagnostics.Count == 0 && inspectDiagnostics.Count == 0;
+if (gatePassed)
 {
-    Console.Error.WriteLine($"=== gate passed: neither bv {buildCommand} nor inspectcode reported anything ===");
+    Console.Error.WriteLine($"=== gate passed: neither lint-docs, bv {buildCommand}, nor inspectcode reported anything ===");
 }
 
-return gate && inspectDiagnostics.Count > 0 ? 1 : 0;
+return gate && !gatePassed ? 1 : 0;
 
 static string FindRepoRoot(string startDirectory, string solutionFileName)
 {
