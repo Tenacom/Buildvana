@@ -1,0 +1,29 @@
+# Buildvana documentation
+
+Every page of the Buildvana user documentation is listed here, in one group per topic, with one line saying what the page covers.
+
+## Repository layout
+
+- [Directory structure](directory-structure.md): the recommended layout of a repository that uses Buildvana SDK, and what each file and directory is for.
+- [The Buildvana configuration file](configuration-file.md): where `bv` and Buildvana SDK find `buildvana.jsonc`, and the files that describe its settings.
+
+## Buildvana SDK
+
+- [Buildvana SDK configuration files](sdk-configuration-files.md): the machine-scoped and user-scoped `.props` files Buildvana SDK imports, and where it looks for them.
+- [Syntax of constants in ThisAssembly classes](constants-syntax.md): how Buildvana SDK parses the `Value` metadata of a `ThisAssemblyConstant` item.
+- [Internal-use properties](internal-use-properties.md): the `BV_` properties meant for use by Buildvana SDK and `bv` alone, and what each one means.
+- [Diagnostics issued by Buildvana SDK](sdk-diagnostics.md): every `BVSDK` diagnostic, by module, with its severity and its meaning.
+
+## SDK modules
+
+- [`Wine` module](sdk-modules/wine.md): running Windows-only build tools through Wine on Linux and macOS.
+
+## `bv`
+
+- [Environment variables](environment-variables.md): every environment variable `bv` reads or sets.
+- [Hooks](hooks.md): the repository-owned file-based apps `bv` runs at well-known events, and the args it passes them.
+- [Diagnostics and exit codes of `bv`](tool-diagnostics.md): every `BV` diagnostic, and the exit codes every `bv` command returns.
+
+## `bv` commands
+
+- [Dependency management](tool-commands/dependencies.md): `bv dependencies`, its subcommands, its update policies, and the transitive overrides it writes.
