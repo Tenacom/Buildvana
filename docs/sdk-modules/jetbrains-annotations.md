@@ -60,7 +60,7 @@ The module raises the diagnostics of the [JetBrainsAnnotations module (1300-1399
 ## Migration to `ExportJetBrainsAnnotations`
 
 Releases before 2.1 exported annotations through the `UseJetBrainsAnnotations` property.
-The module added the `JetBrains.Annotations` package to the project, read the annotations from the compiled assembly with Mono.Cecil in a second build pass, and supported Visual Basic projects.
+The module added the `JetBrains.Annotations` package to the project, and read the annotations from the compiled assembly with Mono.Cecil in a second build pass.
 Buildvana SDK ignores `UseJetBrainsAnnotations`.
 
 To migrate a C# project:
@@ -68,5 +68,3 @@ To migrate a C# project:
 1. Remove `UseJetBrainsAnnotations` from the project files.
 2. Reference an annotations source, as [`ExportJetBrainsAnnotations` property](#exportjetbrainsannotations-property) describes.
 3. Set `ExportJetBrainsAnnotations` to `true`.
-
-A Visual Basic project cannot export annotations.
