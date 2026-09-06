@@ -237,6 +237,19 @@ Pass `--no-netsdk` to move the packages and the tools and leave the .NET SDK whe
 `--latest` and `--to` each say where the named pins go, so they do not go together.
 Like `--to`, `--latest` does not go with `--check`.
 
+Some packages depend on each other at one version.
+`Microsoft.CodeAnalysis.CSharp` depends on `Microsoft.CodeAnalysis.Common` at exactly its own version, so a restore with the two pins at different versions fails with NU1605.
+Move such packages in one run, with `--latest` and a pattern:
+
+```shell
+bv deps update Microsoft.CodeAnalysis.* --latest
+```
+
+`--to` takes one id, so moving the same packages to a version that is not the latest takes one run per package.
+Every run but the last writes its pin, and then fails with exit code 3 when the [override lifecycle](#transitive-overrides) restores the solution.
+The `deps/post-update` hook does not run, and no report is written.
+The last run finds the pins in agreement, and the restore succeeds.
+
 ### The `deps/post-update` hook
 
 A repository that derives something from what it pins — a property naming a compiler version, a floor implied by a package — updates what it derives in the `deps/post-update` hook, which runs at the end of every `update` that ran to completion, check runs included. In a check run the hook's exit code 1 says that it would change something, and the command folds that into its own verdict. See [Hooks](../hooks.md#the-depspost-update-hook).
