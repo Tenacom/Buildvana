@@ -7,9 +7,9 @@ Licensing and attributions:
 
 `bv` is a .NET global CLI tool that helps implement better development workflows, both locally and in CI.
 
-It is part of [the Buildvana project](https://github.com/Tenacom/Buildvana/).
+It is part of [Buildvana](https://github.com/Tenacom/Buildvana/).
 
-Want to know more? [Here's the complete README.](https://github.com/Tenacom/Buildvana#readme)
+[The README of the repository](https://github.com/Tenacom/Buildvana#readme) links the documentation.
 
 ---
 
