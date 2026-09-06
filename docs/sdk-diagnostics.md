@@ -36,14 +36,14 @@ Each module is assigned a contiguous range of 100 diagnostics, as listed below. 
 
 ## Buildvana SDK core (1000-1049)
 
-| Code      | Severity | Message                                                 | Description                                                                                                                                                    |
-| --------- | :------: | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BVSDK1000 |  Error   | Sdk.props not imported.                                 | `Sdk.targets` was imported, but `Sdk.props` was not.                                                                                                           |
-| BVSDK1001 |  Error   | Sdk.targets not imported.                               | `Sdk.props` was imported, but `Sdk.targets` was not.                                                                                                           |
-| BVSDK1002 |  Error   | Sdk.props and Sdk.targets are in different directories. | `Sdk.props` and `Sdk.targets` were imported from two different versions of Buildvana SDK; look for stray `Version` attributes in the `<Import>` directives.    |
-| BVSDK1003 |  Error   | Home directory not defined.                             | No suitable value for the `HomeDirectory` property has been found.                                                                                             |
-| BVSDK1004 |  Error   | Buildvana SDK requires at least MSBuild v...            | You are trying to use Buildvana SDK with an unsupported version of MSBuild. See [the README](../README.md#toolchain) for a list of supported MSBuild versions. |
-| BVSDK1005 |  Error   | Multiple Buildvana configuration files found.           | A home directory contains both `buildvana.json` and `buildvana.jsonc`; keep only one.                                                                          |
+| Code      | Severity | Message                                                 | Description                                                                                                                                                 |
+| --------- | :------: | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK1000 |  Error   | Sdk.props not imported.                                 | `Sdk.targets` was imported, but `Sdk.props` was not.                                                                                                        |
+| BVSDK1001 |  Error   | Sdk.targets not imported.                               | `Sdk.props` was imported, but `Sdk.targets` was not.                                                                                                        |
+| BVSDK1002 |  Error   | Sdk.props and Sdk.targets are in different directories. | `Sdk.props` and `Sdk.targets` were imported from two different versions of Buildvana SDK; look for stray `Version` attributes in the `<Import>` directives. |
+| BVSDK1003 |  Error   | Home directory not defined.                             | No suitable value for the `HomeDirectory` property has been found.                                                                                          |
+| BVSDK1004 |  Error   | Buildvana SDK requires at least MSBuild v...            | You are trying to use Buildvana SDK with an unsupported version of MSBuild. See [Toolchain](introduction.md#toolchain) for the supported MSBuild versions.  |
+| BVSDK1005 |  Error   | Multiple Buildvana configuration files found.           | A home directory contains both `buildvana.json` and `buildvana.jsonc`; keep only one.                                                                       |
 
 ---
 

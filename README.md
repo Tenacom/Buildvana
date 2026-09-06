@@ -26,84 +26,10 @@ Licensing and attributions:
 
 ---
 
-> [!IMPORTANT]
-> This project is undergoing _massive_ maintenance at the moment.
-> The documentation below only refers to Buildvana SDK and will eventually be moved to its own file.
-> A decent README for the whole project is in the works.
->
-> _- @rdeago 2026-04-22_
+Buildvana is a build system for .NET projects, built on MSBuild and Roslyn.
+It comes as an MSBuild SDK, Buildvana SDK, and a .NET CLI global tool, `bv`.
 
----
-
-- [At a glance](#at-a-glance)
-  - [Benefits](#benefits)
-  - [Compatibility](#compatibility)
-    - [Project types](#project-types)
-    - [Programming languages](#programming-languages)
-    - [Git servers](#git-servers)
-    - [Toolchain](#toolchain)
-- [Quick start](#quick-start)
-- [Contributing](#contributing)
-- [Contributors](#contributors)
-- [Proudly built using Buildvana SDK](#proudly-built-using-buildvana-sdk)
-
----
-
-## At a glance
-
-Buildvana SDK is an opinionated, best-practices-based, CI-friendly, VS-friendly, MSBuild-powered build system for .NET projects.
-
-> **DISCLAIMER:** Buildvana SDK is still a work in progress.
-Your mileage may vary, if you break your build you own both pieces, and so on and so forth.
-However, Buildvana SDK has already been used successfully in production, for both business and open source projects.
-
-### Benefits
-
-- Helps you keep your project files clean and concise - even better than "plain" MSBuild SDKs
-- Single source of truth for assembly versions (a plain-text `VERSION` file, with the patch number computed from Git height)
-- Single source of truth for package licenses and copyright notices
-- More auto-generated assembly information (`ClsCompliant`, `COMVisible`)
-- Automatic configuration of commonly-used code analyzers
-- ...
-
-### Compatibility
-
-#### Project types
-
-- :heart: Multi-platform / Cross-platform projects
-- :heart: Libraries
-- :heart: Console apps
-- :heart: Windows Forms
-- :heart: ASP.NET
-- :heart: Projects using `Microsoft.Build.NoTargets` SDK
-- :heart: [Avalonia UI](https://avaloniaui.net) (still experimenting, but no problems so far)
-- :question: WPF (testers welcome)
-- :question: [UNO Platform](https://platform.uno) (testers welcome)
-- :question: .NET MAUI (testers welcome)
-- :thumbsdown: Legacy (non-SDK) projects
-
-#### Programming languages
-
-- :heart: C#
-- :heart: Visual Basic
-- :yellow_heart: F# (some features disabled)
-- :thumbsdown: other languages
-
-#### Git servers
-
-- :heart: GitHub / GitHub Enterprise
-- :yellow_heart: All others (no automatic SourceLink configuration)
-
-#### Toolchain
-
-- :heart: MSBuild v17.4 or newer (`msbuild`) running under .NET Framework 4.8 or newer / .NET 10.0 or newer
-- :heart: Visual Studio 2026 v18.4 or newer (building from IDE)
-- :heart: .NET SDK 10.0.202 or newer (`dotnet build`, `dotnet msbuild`, etc.)
-- :question: JetBrains Rider (not tested)
-
-## Quick start
-
-**TODO**
+Read the [introduction](docs/introduction.md) first, then the [documentation index](docs/README.md).
 
 ## Contributing
 

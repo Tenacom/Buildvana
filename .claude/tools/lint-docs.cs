@@ -50,8 +50,8 @@ const string UnreleasedHeading = "Unreleased changes";
 // The language tags `.claude/rules/documentation.md` admits on a fenced block.
 string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shell", "text", "xml", "yaml"];
 
-// The root README holds the word TODO under "Quick start" until #374 rewrites it. Drop this exemption then.
-string[] todoExemptFiles = ["README.md"];
+// Files the TODO check leaves alone. None here; a copy of this tool may name some.
+string[] todoExemptFiles = [];
 
 if (args.Length > 1)
 {
