@@ -190,13 +190,13 @@ To skip automatic dogfooding, either pass `--updateSelfReferences=false` to `dot
 
 ### New features
 
-- Buildvana SDK now supports loading a machine- and/or user-scoped configuration file named `Buildvana.Sdk.props`. Please refer to the relevant [documentation](docs/SdkConfigurationFiles.md) for details.
+- Buildvana SDK now supports loading a machine- and/or user-scoped configuration file named `Buildvana.Sdk.props`. Please refer to the relevant [documentation](https://github.com/Tenacom/Buildvana/blob/1.0.154-preview/docs/ConfigurationFiles.md) for details.
 - A `.pfx` file used to sign an assembly through the `AssemblySigning` module can now have no password. Previous versions issued an error if the `PfxPassword` property was empty or not defined.
 (Please note that the `PfxPassword` property has also been renamed to `AssemblyOriginatorKeyPassword`, as noted below in the "Changes to existing features" section.)
-- Some support has been added for running Windows-only tools under [Wine](https://winehq.org) when building under Linux or macOS. Please refer to the relevant [documentation](docs/modules/Wine.md) for details.
+- Some support has been added for running Windows-only tools under [Wine](https://winehq.org) when building under Linux or macOS. Please refer to the relevant [documentation](https://github.com/Tenacom/Buildvana/blob/1.0.154-preview/docs/modules/Wine.md) for details.
 - In Inno Setup support, when there is no `AssemblyTitle` property, `AppFullName` now defaults to `AssemblyName`.
 - Inno Setup's compiler can now run on macOS and Linux (through Wine):
-  - Wine support must be configured at machine / user level - please refer to the documentation for [configuration files](docs/SdkConfigurationFiles.md) and the [`Wine` module](docs/modules/Wine.md);
+  - Wine support must be configured at machine / user level - please refer to the documentation for [configuration files](https://github.com/Tenacom/Buildvana/blob/1.0.154-preview/docs/ConfigurationFiles.md) and the [`Wine` module](https://github.com/Tenacom/Buildvana/blob/1.0.154-preview/docs/modules/Wine.md);
   - `InnoSetupConstant` items whose `Value` metadata is a filesystem path must have an `IsPath="true"` metadata, so that paths are converted to Windows-style paths when using Wine.
 
 ### Changes to existing features
@@ -536,7 +536,7 @@ Polyfills are a complicated topic, with lots of edge cases. They are best dealt 
 ### Changes to existing features
 
 - **POTENTIALLY BREAKING CHANGE:** The minimum supported MSBuild version is 16.7 (.NET SDK 3.1, Visual Studio 2019 v16.7).
-- **BREAKING CHANGE:** The syntax for parameters of literal assembly attributes, as well as constants in "ThisAssembly" classes, has changed. The new syntax is described in [this document](docs\ConstantsSyntax.md).
+- **BREAKING CHANGE:** The syntax for parameters of literal assembly attributes, as well as constants in "ThisAssembly" classes, has changed. The new syntax is described in [this document](https://github.com/Tenacom/Buildvana/blob/1.0.0-alpha.10/docs/ConstantsSyntax.md).
 - **BREAKING CHANGE:** The `Microsoft.CodeAnalysis.FxCopAnalyzers` package is not imported any more, due to its deprecation in favor of `Microsoft.CodeAnalysis.NetAnalyzers` (see [the relevant documentation](https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview) for more details).
 - **BREAKING CHANGE:** The `UseStandardAnalyzers` property is not used any more. The new `UseStyleCopAnalyzers` property enables the use of the `StyleCop.Analyzers` package.
 - https://github.com/Tenacom/Buildvana/pull/62 - Messages listing the icon, license file, and/or third-party copyright notice included in packages are now shown only when packing.
@@ -545,7 +545,7 @@ Polyfills are a complicated topic, with lots of edge cases. They are best dealt 
 - Compiled tasks used to generate ThisAssembly classes and literal assembly attributes have been completely rewritten using Roslyn code generators.
 - The message for error `BVE1004` now reports the minimum required MSBuild version.
 - The message for warning `BVW1900` ("ThisAssembly class generation is only supported in C# and Visual Basic projects") now reports the `Language` MSBuild property value for the project.
-- **POTENTIALLY BREAKING CHANGE:** Errors `BVE1900` and `BVE1901` did not make sense with [the new constant syntax](docs\ConstantsSyntax.md). They have been removed, and the old error `BVE1902` is now `BVE1900`.
+- **POTENTIALLY BREAKING CHANGE:** Errors `BVE1900` and `BVE1901` did not make sense with [the new constant syntax](https://github.com/Tenacom/Buildvana/blob/1.0.0-alpha.10/docs/ConstantsSyntax.md). They have been removed, and the old error `BVE1902` is now `BVE1900`.
 
 ### Bugs fixed in this release
 
@@ -585,7 +585,7 @@ Polyfills are a complicated topic, with lots of edge cases. They are best dealt 
 ### Changes to existing features
 
 - **POTENTIALLY BREAKING CHANGE:** https://github.com/Tenacom/Buildvana/issues/44 - The `AssemblyInfo` module has been removed. Assembly attribute generation-related properties like e.g. `GenerateAssemblyInfo`, `GenerateAssemblyVersionAttribute`, etc. are not set to `true` any more at project and common files evaluation time; instead, they are left unset and defaulted to `true` later.
-- **POTENTIALLY BREAKING CHANGE:** [Errors and warnings](docs/ErrorsAndWarnings.md) have been renumbered.
+- **POTENTIALLY BREAKING CHANGE:** [Errors and warnings](https://github.com/Tenacom/Buildvana/blob/1.0.0-alpha.7/docs/ErrorsAndWarnings.md) have been renumbered.
 - **BREAKING CHANGE:** https://github.com/Tenacom/Buildvana/issues/44 - The `CLSCompliant` property is no longer set to `true` by default; it must be set explicitly in order to generate the respective assembly attribute. Projects that contain `CLSCompliant` attributes on types and members and do not set the `CLSCompliant` property will now issue warning CS3021: _'<type_or_member>' does not need a CLSCompliant attribute because the assembly does not have a CLSCompliant attribute._. To avoid the warning, set the `CLSCompliant` property to `true` (the previous default) in the project file or in a common file.
 - **BREAKING CHANGE:** https://github.com/Tenacom/Buildvana/issues/44 - The `ComVisible` property is no longer set to `false` by default; it must be set explicitly in order to generate the respective assembly attribute. In projects that need to have all types and members of the compiled assembly hidden from COM, now you must set the `ComVisible` property to `false` (the previous default) in the project file or in a common file.
 
