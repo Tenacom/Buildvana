@@ -42,6 +42,21 @@ internal sealed class ReleaseCommandChangelogTests
 
         """;
 
+    private const string ChangelogWithOutsideLink = """
+        # Changelog
+
+        ## Unreleased changes
+
+        ### New features
+
+        - Something new, see [the page](../outside.md).
+
+        ## [2.3.0-preview](https://git.example.invalid/tenacom/test-repo/releases/tag/2.3.0-preview) (2026-01-01)
+
+        - Something released.
+
+        """;
+
     private const string EmptyChangelog = """
         # Changelog
 
@@ -178,5 +193,27 @@ internal sealed class ReleaseCommandChangelogTests
         await Assert.That(changelog).Contains($"[runs from the home directory]({pinnedUrl})");
         await Assert.That(changelog).DoesNotContain("blob/2.3.1-preview/");
         await Assert.That(changelog).Contains("[the page](docs/released.md)");
+    }
+
+    [Test]
+    public async Task Release_WithLinkOutsideRepository_FailsNamingTheTarget()
+    {
+        using var harness = new ReleaseHarness(new()
+        {
+            ChangelogUpdates = "all",
+            Changelog = ChangelogWithOutsideLink,
+            Dogfood = false,
+        });
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md links '../outside.md', which is not a path to a file in the repository.");
+
+        // The links are pinned once the version is final, after the artifact pass, so the failure comes with
+        // the release commit in place. The rollback undoes that commit.
+        await Assert.That(harness.Events.Any(x => x.Name == "pack")).IsTrue();
+        await Assert.That(harness.Repo.GetCommits(1)[0].Message).IsEqualTo("Initial commit");
     }
 }

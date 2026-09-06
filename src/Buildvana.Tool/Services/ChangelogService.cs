@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
 using Buildvana.Tool.Services.ServerAdapters;
@@ -106,5 +107,17 @@ internal sealed class ChangelogService
         => ChangelogUpdater.MakeSectionTitle(_version.CurrentStr, _server.GetReleaseUrl(_version.CurrentStr), DateTime.Now);
 
     // The release tag is named after the version, so the version string is the commitish the links pin to.
-    private Uri GetFileUrl(string path) => _server.GetFileUrl(path, _version.CurrentStr);
+    // The adapter rejects a path that leaves the repository, or a rooted one, with an ArgumentException. The
+    // path comes from a changelog bullet, so the rejection is reported as a build failure that names it.
+    private Uri GetFileUrl(string path)
+    {
+        try
+        {
+            return _server.GetFileUrl(path, _version.CurrentStr);
+        }
+        catch (ArgumentException e)
+        {
+            throw new BuildFailedException($"{FileName} links '{path}', which is not a path to a file in the repository.", e);
+        }
+    }
 }
