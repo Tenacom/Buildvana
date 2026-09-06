@@ -343,7 +343,7 @@ The file also pins the version of the .NET SDK, under the `sdk` key, and the two
 
 `bv`, Buildvana SDK, and `Buildvana.Runtime` are released together and work as one matched group.
 Every `bv` command that uses Buildvana SDK first checks that the pinned version equals its own, and refuses to run on a mismatch.
-Those commands are `restore`, `build`, `test`, `pack`, and `release`.
+Those commands are `restore`, `build`, `test`, `pack`, `release`, and the `dependencies` subcommands.
 A missing `global.json`, section, or entry counts as a mismatch.
 Pass `--skip-sdk-check` when you need the mismatch, as when bisecting a regression of Buildvana SDK.
 `bv self-update` re-pins the whole repository to the version of the running `bv`, this file included.
