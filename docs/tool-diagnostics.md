@@ -1,24 +1,33 @@
 # Diagnostics and exit codes of `bv`
 
+All diagnostics issued by the `bv` CLI tool have a `BV` prefix.
+All numbers start from 1000, so there are no leading zeros.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
+- [Ranges](#ranges)
 - [Main program (1000-1099)](#main-program-1000-1099)
 - [Configuration (1100-1199)](#configuration-1100-1199)
 - [Dependency management (1200-1299)](#dependency-management-1200-1299)
 - [Exit codes](#exit-codes)
 
-## Overview
+---
 
-All diagnostics issued by the `bv` CLI tool have a `BV` prefix. All numbers start from 1000, so there are no leading zeros.
+## Ranges
 
 Each part of the program is assigned a contiguous range of 100 diagnostics, as listed below. The first range is reserved for the main program.
+
+---
 
 ## Main program (1000-1099)
 
 There are no associated diagnostics.
+
+---
 
 ## Configuration (1100-1199)
 
@@ -36,6 +45,8 @@ There are no associated diagnostics.
 
 BV1106 and BV1107 also report a property _name_ that carries data, as the members of `dependencies.policies` and `dependencies.additionalPackages` do: a name is held to the same non-blank rule as any other required string, and the location points at the name rather than at the value it introduces.
 
+---
+
 ## Dependency management (1200-1299)
 
 | Code   | Severity | Message                                                       | Description                                                                                                                                      |
@@ -48,6 +59,8 @@ BV1106 and BV1107 also report a property _name_ that carries data, as the member
 BV1203 has a second message, for an id of Buildvana's own package family: _(id)_ belongs to Buildvana's own package family, which moves in lockstep. Use bv self-update. Those pins move together with the SDK, so no scope of `bv dependencies` manages one.
 
 Every one of these is reported by `bv dependencies update`, and every one of them stops the run before anything is written. One run reports all of them, each naming the file that declares the pin.
+
+---
 
 ## Exit codes
 

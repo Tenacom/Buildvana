@@ -1,10 +1,15 @@
 # Internal-use properties
 
+Buildvana SDK introduces some properties only meant for use by the SDK itself.
+These properties are prefixed with `BV_` to avoid polluting the already crowded MSBuild property namespace.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
+- [Compatibility](#compatibility)
 - [Project type](#project-type)
   - [`BV_IsExeProject`](#bv_isexeproject)
   - [`BV_IsLibraryProject`](#bv_islibraryproject)
@@ -14,15 +19,17 @@
   - [`BV_PinDumpDirectory`](#bv_pindumpdirectory)
   - [`BV_SuppressTransitiveOverrides`](#bv_suppresstransitiveoverrides)
 
-## Overview
+---
 
-Buildvana SDK introduces some properties only meant for use by the SDK itself. These properties are prefixed with `BV_` to avoid polluting the already crowded MSBuild property namespace.
+## Compatibility
 
 **These properties are not meant for use outside of the SDK.** Any change in their names, contents, and/or semantics, as well as the addition and/or removal of internal-use properties, _will not be considered a breaking change_.
 
 If you find yourself referring to or modifying any of these properties in your own projects, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). Chances are we need to either change one or more properties to well-known properties, or otherwise fix what is probably a bug.
 
 > **NOTE:** Not all `BV_`-prefixed properties are documented here, as most of them are use internally by single SDK modules.
+
+---
 
 ## Project type
 
@@ -66,6 +73,8 @@ This property is `true` if the project uses the `Microsoft.Build.NoTargets` SDK.
 By default, both standard analyzers and public API analyzers are disabled for this type of project.
 
 By default, XML documentation generation is disabled for this type of project.
+
+---
 
 ## Dependency management
 

@@ -1,10 +1,15 @@
 # Diagnostics issued by Buildvana SDK
 
+All diagnostics issued by Buildvana SDK have a `BVSDK` prefix.
+All numbers start from 1000, so there are no leading zeros.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
+- [Ranges](#ranges)
 - [Buildvana SDK core (1000-1049)](#buildvana-sdk-core-1000-1049)
 - [Buildvana SDK tasks (1050-1099)](#buildvana-sdk-tasks-1050-1099)
 - [Source generators (1100-1199)](#source-generators-1100-1199)
@@ -21,11 +26,13 @@
 - [Wine module (2200-2299)](#wine-module-2200-2299)
 - [ThisAssemblyClass module (2300-2399)](#thisassemblyclass-module-2300-2399)
 
-## Overview
+---
 
-All diagnostics issued by Buildvana SDK have a `BVSDK` prefix. All numbers start from 1000, so there are no leading zeros.
+## Ranges
 
 Each module is assigned a contiguous range of 100 diagnostics, as listed below. The first ranges are reserved for the SDK itself and for source generators.
+
+---
 
 ## Buildvana SDK core (1000-1049)
 
@@ -38,6 +45,8 @@ Each module is assigned a contiguous range of 100 diagnostics, as listed below. 
 | BVSDK1004 |  Error   | Buildvana SDK requires at least MSBuild v...            | You are trying to use Buildvana SDK with an unsupported version of MSBuild. See [the README](../README.md#toolchain) for a list of supported MSBuild versions. |
 | BVSDK1005 |  Error   | Multiple Buildvana configuration files found.           | A home directory contains both `buildvana.json` and `buildvana.jsonc`; keep only one.                                                                          |
 
+---
+
 ## Buildvana SDK tasks (1050-1099)
 
 The following are generic diagnostics that might be issued by any task in `Buildvana.Sdk.Tasks.dll`.  
@@ -49,9 +58,13 @@ More task-specific diagnostics (if any) are listed under relevant modules.
 | BVSDK1051 |  Error   | The file '...' could not be created. | There was an error trying to write to a file. Try cleaning the project and rebuilding it. If the problem arises again, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). |
 | BVSDK1052 |  Error   | The file '...' could not be read.    | There was an error trying to read a file. Try cleaning the project and rebuilding it. If the problem arises again, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose).     |
 
+---
+
 ## Source generators (1100-1199)
 
 This module has no associated diagnostics.
+
+---
 
 ## AssemblySigning module (1200-1299)
 
@@ -61,17 +74,23 @@ This module has no associated diagnostics.
 | BVSDK1201 |  Error   | Cannot extract certificate from '...'.                | The `.pfx` certificate file specified by the `AssemblyOriginatorKeyFile` property is invalid, or the wrong password (or no password) was given in the `AssemblyOriginatorKeyPassword` property. |
 | BVSDK1202 |  Error   | '...' does not contain an exportable RSA private key. | The `.pfx` certificate file specified by the `AssemblyOriginatorKeyFile` property does not contain an RSA private key that can be exported to a `.snk` file.                                    |
 
+---
+
 ## JetBrainsAnnotations module (1300-1399)
 
 | Code      | Severity | Message                                           | Description                                                                                                                                                                                                                                   |
 | --------- | :------: | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | BVSDK1300 |  Error   | Could not export JetBrains annotations for '...'. | An error occurred while exporting ReSharper external annotations. The accompanying message describes the failure. Clean and rebuild; if the problem persists, please [open an issue](https://github.com/Tenacom/Buildvana/issues/new/choose). |
 
+---
+
 ## AdditionalAssemblyInfo module (1400-1499)
 
 | Code      | Severity | Message                                                                  | Description                                                                                                                                                             |
 | --------- | :------: | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | BVSDK1400 | Warning  | Additional assembly info generation is not supported for language '...'. | Property `GenerateAdditionalAssemblyInfo` was set to `true` in a project whose language is neither C# nor Visual Basic. Additional assembly info will not be generated. |
+
+---
 
 ## NuGetPack module (1500-1599)
 
@@ -90,17 +109,25 @@ This module has no associated diagnostics.
 | BVSDK1510 |  Error   | Specified README file '...' was not found.              | A README file specified by the `PackageReadmeFile` property was not found in the project's directory nor in any containing directory.                                                                                                     |
 | BVSDK1511 |  Error   | No README file found for package.                       | No README file was specified, and no default README file has been found. Set the `ReadmeFileInPackage` property to `false` to explicitly exclude any README file to be included in the package.                                           |
 
+---
+
 ## ReferenceAssemblies module (1600-1699)
 
 This module has no associated diagnostics.
+
+---
 
 ## StandardAnalyzers module (1700-1799)
 
 This module has no associated diagnostics.
 
+---
+
 ## XmlDocumentation module (1800-1899)
 
 This module has no associated diagnostics.
+
+---
 
 ## AlternatePack module (1900-1999)
 
@@ -110,6 +137,8 @@ This module has no associated diagnostics.
 | BVSDK1901 |  Error   | InnoSetup script '...' referenced by '...' does not exist.       | An `InnoSetup` item's `Script` metadata refers to a non-existing file.                                                |
 | BVSDK1902 |  Error   | InnoSetup item '...' refers to non-existent PublishFolder '...'. | An `InnoSetup` item has a `SourcePublishFolder` metadata, but no `PublishFolder` item exists with the specified name. |
 
+---
+
 ## Versioning module (2000-2099)
 
 | Code      | Severity | Message                                                                         | Description                                                                                                                                           |
@@ -117,15 +146,21 @@ This module has no associated diagnostics.
 | BVSDK2000 |  Error   | Version file (VERSION) not found in home directory.                             | The `UseVersioning` property was explicitly set to `true`, but no `VERSION` file was found in the home directory.                                     |
 | BVSDK2001 | Warning  | The UseNerdbankGitVersioning property is deprecated; use UseVersioning instead. | The project sets the `UseNerdbankGitVersioning` property, which is a deprecated alias for `UseVersioning` kept for compatibility with older projects. |
 
+---
+
 ## ReleaseAssetList module (2100-2199)
 
 This module has no associated diagnostics.
+
+---
 
 ## Wine module (2200-2299)
 
 | Code      | Severity | Message                                                                                                       | Description                                                                                                                                                                                                                                                                                                            |
 | --------- | :------: | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | BVSDK2200 |  Error   | One or more tools need Wine to run on this system, but no Wine invocation command has been defined: ...[;...] | One or more tools needed to build and/or distribute your project need [Wine](https://winehq.org) to run under a non-Windows operating system. In order to use Wine with Buildvana SDK, the `WineInvocationCommand` property must be set as explained in [the module documentation](sdk-modules/wine.md#configuration). |
+
+---
 
 ## ThisAssemblyClass module (2300-2399)
 

@@ -1,16 +1,20 @@
 # Syntax of constants in ThisAssembly classes
 
+Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` items.
+
+---
+
 <!-- markdownlint-disable MD036 -->
 **Table of contents**
 <!-- markdownlint-enable MD036 -->
 
-- [Overview](#overview)
+- [Declaring constants](#declaring-constants)
 - [How Buildvana SDK parses constant values](#how-buildvana-sdk-parses-constant-values)
 - [Allowed types](#allowed-types)
 
-## Overview
+---
 
-Constants in `ThisAssembly` classes are specified via `ThisAssemblyConstant` items:
+## Declaring constants
 
 ```XML
   <!-- Generation of a ThisAssembly class is disabled by default. -->
@@ -34,6 +38,8 @@ The type of a constant may also be explicitly specified:
 
 > **NOTE:** `ThisAssembly` class generation is only supported in C# projects.
 
+---
+
 ## How Buildvana SDK parses constant values
 
 Given the `Value` metadata of a `ThisAssemblyConstant` item, Buildvana SDK performs the following steps:
@@ -51,6 +57,8 @@ Given the `Value` metadata of a `ThisAssemblyConstant` item, Buildvana SDK perfo
   **Examples:** `true` -> `true`; `false` -> `false`.
 - If none of the previous steps yields a result, the result is a `System.String` whose value is the metadata, unchanged.  
   **Examples:** `foo` -> `"foo"`; `false90` -> `"false90"`.
+
+---
 
 ## Allowed types
 
