@@ -177,6 +177,8 @@ The module raises the diagnostics of the [Versioning module (2000-2099)](../sdk-
 ## Migration from Nerdbank.GitVersioning
 
 Releases before 2.1 versioned projects through Nerdbank.GitVersioning: a `version.json` file, the `NerdbankGitVersioning` module, and the `nbgv` tool.
+The module added the `Nerdbank.GitVersioning` package to every project.
+Buildvana SDK adds no versioning package, and [handles versioning itself](#getbuildversion-target).
 A repository coming from that setup migrates in one commit:
 
 1. Create `VERSION` in the home directory, holding the `version` value of `version.json`, such as `2.0-preview`.
