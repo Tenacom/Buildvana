@@ -292,27 +292,6 @@
                     MimeType="application/octet-stream"
                     Description="$(_ReleaseAssetDescription_)" />
     </ItemGroup>
-    <ItemGroup Condition="@(InnoSetup->Count()) &gt; 1">
-      <InnoSetup Update="$(_Identity_)"
-                 Condition="'$(_UniqueOutputName_)' == ''"
-                 UniqueOutputName="true" />
-    </ItemGroup>
-
-    <!-- The default for OutputName depends upon UniqueOutputName. -->
-    <ItemGroup>
-      <InnoSetup Update="$(_Identity_)"
-                 Condition="'$(_OutputName_)' == '' And '$(_UniqueOutputName_)' == 'false'"
-                 OutputName="$(AppShortName)_$(AssemblyInformationalVersion)" />
-      <InnoSetup Update="$(_Identity_)"
-                 Condition="'$(_OutputName_)' == '' And '$(_UniqueOutputName_)' != 'false'"
-                 OutputName="$(AppShortName)-$(_Identity_)_$(AssemblyInformationalVersion)" />
-    </ItemGroup>
-
-    <!-- OutputDir is taken as relative to the artifacts subdirectory. -->
-    <ItemGroup>
-      <InnoSetup Update="$(_Identity_)"
-                 OutputDir="$([MSBuild]::NormalizeDirectory('$(ArtifactsDirectory)$(Configuration)', '$(_OutputDir_)'))" />
-    </ItemGroup>
 
     <!-- Don't leave stray properties around. -->
     <PropertyGroup>
@@ -452,20 +431,16 @@
       <_InnoSetupCompiler_>$(InnoSetupCompiler)</_InnoSetupCompiler_>
       <_ScriptFullPath_>%(InnoSetup.ScriptFullPath)</_ScriptFullPath_>
       <_IncludeFileFullPath_>%(InnoSetup.IncludeFileFullPath)</_IncludeFileFullPath_>
-      <_InnoDownloadPluginDir_>$(InnoDownloadPluginDir)</_InnoDownloadPluginDir_>
     </PropertyGroup>
-
 
     <!-- Convert paths if needed for Wine. -->
     <GetWinePaths Condition="$(UseWine)"
                   HostPath1="$(_InnoSetupCompiler_)"
                   HostPath2="$(_ScriptFullPath_)"
-                  HostPath3="$(_IncludeFileFullPath_)"
-                  HostPath4="$(_InnoDownloadPluginDir_)">
+                  HostPath3="$(_IncludeFileFullPath_)">
       <Output TaskParameter="WinePath1" PropertyName="_InnoSetupCompiler_" />
       <Output TaskParameter="WinePath2" PropertyName="_ScriptFullPath_" />
       <Output TaskParameter="WinePath3" PropertyName="_IncludeFileFullPath_" />
-      <Output TaskParameter="WinePath4" PropertyName="_InnoDownloadPluginDir_" />
     </GetWinePaths>
 
     <!--
@@ -473,7 +448,7 @@
       If running in a buildvana-builder container, prepend the path of the Wine invocation script to the command line.
     -->
     <PropertyGroup>
-      <_CommandLine_>&quot;$(_InnoSetupCompiler_)&quot; &quot;/I$(_InnoDownloadPluginDir_)&quot; &quot;/J$(_IncludeFileFullPath_)&quot; &quot;$(_ScriptFullPath_)&quot;</_CommandLine_>
+      <_CommandLine_>&quot;$(_InnoSetupCompiler_)&quot; &quot;/J$(_IncludeFileFullPath_)&quot; &quot;$(_ScriptFullPath_)&quot;</_CommandLine_>
       <_CommandLine_ Condition="$(UseWine)">$(WineCommand) $(_CommandLine_)</_CommandLine_>
     </PropertyGroup>
 
@@ -486,7 +461,6 @@
       <_InnoSetupCompiler_ />
       <_ScriptFullPath_ />
       <_IncludeFileFullPath_ />
-      <_InnoDownloadPluginDir_ />
       <_CommandLine_ />
     </PropertyGroup>
 
