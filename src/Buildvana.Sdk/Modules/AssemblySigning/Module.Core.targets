@@ -14,9 +14,10 @@
 
   </Target>
 
-  <!-- Convert the PFX file to SNK before building. -->
-  <Target Name="BV_ConvertPfxToSnkBeforeBuild"
-          BeforeTargets="Build"
+  <!-- Convert the PFX file to SNK before ResolveKeySource reads AssemblyOriginatorKeyFile.
+       ResolveKeySource runs in the DependsOnTargets of Build, so a target that runs before Build runs after it. -->
+  <Target Name="BV_ConvertPfxToSnkBeforeResolveKeySource"
+          BeforeTargets="ResolveKeySource"
           Condition="$(BV_ConvertPfxToSnk)">
 
     <ConvertPfxToSnk PfxPath="$(AssemblyOriginatorKeyFile)"

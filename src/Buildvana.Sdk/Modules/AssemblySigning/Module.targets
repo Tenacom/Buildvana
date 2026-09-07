@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <BV_ConvertPfxToSnk>false</BV_ConvertPfxToSnk>
-    <BV_ConvertPfxToSnk Condition="$(AssemblyOriginatorKeyFile.EndsWith('.pfx'))">true</BV_ConvertPfxToSnk>
+    <BV_ConvertPfxToSnk Condition="'$(SignAssembly)' == 'true' And $(AssemblyOriginatorKeyFile.EndsWith('.pfx', StringComparison.OrdinalIgnoreCase))">true</BV_ConvertPfxToSnk>
   </PropertyGroup>
 
   <ItemGroup Condition="$(BV_ConvertPfxToSnk)">
