@@ -273,7 +273,7 @@ The target below runs ExeMangler through Wine on Linux and macOS, and unchanged 
 </Target>
 ```
 
-[`Module.Core.InnoSetup.targets`](../../src/Buildvana.Sdk/Modules/AlternatePack/Module.Core.InnoSetup.targets) shows how Buildvana SDK invokes the Inno Setup compiler the same way.
+The [`AlternatePack` module](alternate-pack.md#running-under-wine) invokes the Inno Setup compiler the same way.
 
 ---
 
