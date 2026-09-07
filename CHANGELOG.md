@@ -107,9 +107,9 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The `Wine` module [sets `UseWine`](docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
 - Outside GitHub Actions, `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](docs/command-line.md#home-directory) has no `origin` remote.
 - The `NuGetPack` module finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
-- The `AssemblySigning` module reads the RSA private key of a `.pfx` file from any key provider, where [BVSDK1202](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) fired on most keys.
-- The `AssemblySigning` module converts the `.pfx` file before `ResolveKeySource` reads `AssemblyOriginatorKeyFile`, where `dotnet build` failed with `PFX signing not supported on .NET Core`.
-- The `AssemblySigning` module converts a `.pfx` file only when `SignAssembly` is `true`, where a project that does not sign got [BVSDK1200](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) for a missing file.
+- The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) reads the RSA private key of a `.pfx` file from any key provider, where [BVSDK1202](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) fired on most keys.
+- The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) converts the `.pfx` file before `ResolveKeySource` reads `AssemblyOriginatorKeyFile`, where `dotnet build` failed with `PFX signing not supported on .NET Core`.
+- The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) converts a `.pfx` file only when `SignAssembly` is `true`, where a project that does not sign got [BVSDK1200](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) for a missing file.
 - The `SourceGenerators` module raises [BVSDK1100 and BVSDK1101](docs/sdk-diagnostics.md#source-generators-1100-1199), where `BV_CheckRoslynVersion` declared them inside an `ItemGroup` and neither ever fired.
 - The `AlternatePack` module [deletes a `PublishFolder`](docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
 
