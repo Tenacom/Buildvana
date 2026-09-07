@@ -5,6 +5,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 ## Getting started
 
 - [Introduction](introduction.md): what Buildvana is made of, what it does for a project, and what it runs on.
+- [Getting started](getting-started.md): from an empty repository to a first `bv build`, one step at a time.
 
 ## Repository layout
 

@@ -34,6 +34,7 @@
     <File Path="docs/constants-syntax.md" />
     <File Path="docs/directory-structure.md" />
     <File Path="docs/environment-variables.md" />
+    <File Path="docs/getting-started.md" />
     <File Path="docs/hooks.md" />
     <File Path="docs/internal-use-properties.md" />
     <File Path="docs/introduction.md" />
