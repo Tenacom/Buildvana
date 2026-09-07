@@ -8,11 +8,14 @@ using Buildvana.Core.Testing;
 
 // The settings table of docs/configuration-file.md, pinned against the schema BuildvanaJsonConfigSchema generates
 // from the wire model. A test fails when a setting exists in the schema and not on the page, or on the page and
-// not in the schema, or when the page states a default other than the one the schema states. The repository
-// root reaches the tests as ToolDiagnosticsPageTests reads it.
+// not in the schema, or when the page states a default other than the one the schema states, or a default where
+// the schema states none. The repository root reaches the tests as ToolDiagnosticsPageTests reads it.
 internal sealed class ConfigurationPageTests
 {
     private const string SectionHeading = "Settings";
+
+    // What the page writes for a setting the schema states no default for.
+    private const string NoDefault = "none";
 
     private static readonly string RepositoryRoot = typeof(ConfigurationPageTests).Assembly
         .GetCustomAttributes<AssemblyMetadataAttribute>()
@@ -20,6 +23,15 @@ internal sealed class ConfigurationPageTests
         .Value!;
 
     private static readonly JsonObject Schema = (JsonObject)BuildvanaJsonConfigSchema.GenerateNode();
+
+    // The settings that fall back to another setting, as the "Resolution" section of the page names them. The
+    // schema states no default for them, because BuildvanaConfigFactory resolves the fallback at run time.
+    private static readonly Dictionary<string, string> Fallbacks = new(StringComparer.Ordinal)
+    {
+        ["release.configuration"] = "dotnet.configuration",
+        ["nuget.feeds.prerelease.source"] = "nuget.feeds.release.source",
+        ["nuget.feeds.prerelease.apiKeyEnv"] = "nuget.feeds.release.apiKeyEnv",
+    };
 
     // The page promises the order of the schema, so the order is asserted along with the set.
     [Test]
@@ -31,18 +43,20 @@ internal sealed class ConfigurationPageTests
         await Assert.That(Join(listed)).IsEqualTo(Join(declared));
     }
 
-    // A setting the schema states a default for shows the same default on the page. A setting without one shows
-    // whatever the page has to say, which nothing here reads.
+    // A setting the schema states a default for shows the same default on the page. A setting that falls back to
+    // another setting shows that setting, and every other setting shows NoDefault. A member whose stated value
+    // adds to a built-in one, as fileBasedApps does, has no default in the sense of the page, which says that a
+    // stated setting replaces its default.
     [Test]
-    public async Task SettingsTable_StatesTheDefaultsOfTheSchema()
+    public async Task SettingsTable_StatesTheDefaultOfEverySetting()
     {
         var page = LoadPage();
         var names = page.GetTableColumn(SectionHeading, "Setting");
         var defaults = page.GetTableColumn(SectionHeading, "Default");
         var listed = names.Zip(defaults).ToDictionary(static pair => pair.First, static pair => pair.Second, StringComparer.Ordinal);
-        var declared = Settings(Schema, path: string.Empty).Where(static setting => setting.Default is not null).ToList();
+        var declared = Settings(Schema, path: string.Empty).ToList();
         var shown = declared.Select(setting => $"{setting.Name} = {listed.GetValueOrDefault(setting.Name, "(no row)")}");
-        var expected = declared.Select(static setting => $"{setting.Name} = {setting.Default}");
+        var expected = declared.Select(static setting => $"{setting.Name} = {ExpectedDefault(setting)}");
 
         await Assert.That(Join(shown)).IsEqualTo(Join(expected));
     }
@@ -86,6 +100,9 @@ internal sealed class ConfigurationPageTests
             JsonValue value when value.TryGetValue<string>(out var text) => text,
             _ => node.ToJsonString(),
         };
+
+    private static string ExpectedDefault((string Name, string? Default) setting)
+        => setting.Default ?? Fallbacks.GetValueOrDefault(setting.Name, NoDefault);
 
     private static string Join(IEnumerable<string> items) => string.Join("; ", items);
 }
