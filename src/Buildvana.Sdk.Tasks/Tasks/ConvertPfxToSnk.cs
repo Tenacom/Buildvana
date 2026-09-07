@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Buildvana.Core;
 using Buildvana.Core.Diagnostics;
+using Buildvana.Sdk.Internal;
 using Buildvana.Sdk.Resources;
 using Microsoft.Build.Framework;
 
@@ -57,10 +58,22 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
     }
 
     private static byte[] ExtractPrivateKey(X509Certificate2 certificate, string certificatePath)
-        => certificate.GetRSAPrivateKey() is RSACryptoServiceProvider privateKey
-            ? privateKey.ExportCspBlob(true)
-            : throw new BuildFailedException(
-                string.Format(CultureInfo.InvariantCulture, Strings.AssemblySigning.MissingRsaPrivateKeyFmt, certificatePath));
+    {
+        // GetRSAPrivateKey returns RSACng on Windows and RSAOpenSsl on Linux, whatever provider the file names,
+        // so the blob is written from the key parameters instead of exported from a CryptoAPI key.
+        using var privateKey = certificate.GetRSAPrivateKey() ?? throw MissingRsaPrivateKey(certificatePath);
+        try
+        {
+            return StrongNameKeyBlob.Write(privateKey.ExportParameters(includePrivateParameters: true));
+        }
+        catch (CryptographicException)
+        {
+            throw MissingRsaPrivateKey(certificatePath);
+        }
+    }
+
+    private static BuildFailedException MissingRsaPrivateKey(string certificatePath)
+        => new(string.Format(CultureInfo.InvariantCulture, Strings.AssemblySigning.MissingRsaPrivateKeyFmt, certificatePath));
 
     private static void SaveBytes(string outputPath, byte[] bytes)
     {
