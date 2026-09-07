@@ -19,9 +19,47 @@
   <Target Name="PublishInPublishFolders"
           Condition="@(PublishFolder->Count()) > 0"
           DependsOnTargets="$(PublishInPublishFoldersDependsOn);
+                            InitializePublishFoldersMetadata;
                             ProcessPublishFoldersMetadata;
                             InvokePublishTargetForPublishFolders;
                             ZipPublishFolders" />
+
+  <!--
+    =====================================================
+     Prepare PublishFolder items for metadata completion.
+    =====================================================
+  -->
+  <Target Name="InitializePublishFoldersMetadata">
+
+    <!--
+      UniqueZipFileName defaults to false if only 1 PublishFolder item is zipped, true otherwise.
+      A folder is zipped when its CreateZipFile is true or its ZipFileName is set.
+      The count is taken here because ProcessPublishFoldersMetadata is batched, and @(PublishFolder) inside a batch
+      holds the items of that batch alone.
+    -->
+    <ItemGroup>
+      <_ZippedPublishFolder_ Include="@(PublishFolder)"
+                             Condition="'%(PublishFolder.CreateZipFile)' == 'true' Or '%(PublishFolder.ZipFileName)' != ''" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_DefaultUniqueZipFileName_>false</_DefaultUniqueZipFileName_>
+      <_DefaultUniqueZipFileName_ Condition="@(_ZippedPublishFolder_->Count()) &gt; 1">true</_DefaultUniqueZipFileName_>
+    </PropertyGroup>
+    <ItemGroup>
+      <PublishFolder Update="%(PublishFolder.Identity)"
+                     Condition="'%(PublishFolder.UniqueZipFileName)' == ''"
+                     UniqueZipFileName="$(_DefaultUniqueZipFileName_)" />
+    </ItemGroup>
+
+    <!-- Don't leave stray items and properties around. -->
+    <ItemGroup>
+      <_ZippedPublishFolder_ Remove="@(_ZippedPublishFolder_)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_DefaultUniqueZipFileName_ />
+    </PropertyGroup>
+
+  </Target>
 
   <!--
     ==============================================================
@@ -57,7 +95,7 @@
       <!-- CreateZipFile is otherwise false by default. -->
       <_CreateZipFile_ Condition="'$(_CreateZipFile_)' != 'true'">false</_CreateZipFile_>
 
-      <!-- UniqueZipFileName defaults to false. -->
+      <!-- Coalesce UniqueZipFileName, which InitializePublishFoldersMetadata has defaulted. -->
       <_UniqueZipFileName_ Condition="$(_CreateZipFile_) And '$(_UniqueZipFileName_)' != 'true'">false</_UniqueZipFileName_>
 
     </PropertyGroup>
