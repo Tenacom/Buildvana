@@ -125,6 +125,26 @@
                  SourcePublishFolderFound="false" />
     </ItemGroup>
 
+    <!--
+      UniqueOutputName defaults to false if there is only 1 InnoSetup item, true otherwise.
+      The count is taken here because CompleteInnoSetupMetadata is batched, and @(InnoSetup) inside a batch
+      holds the items of that batch alone.
+    -->
+    <PropertyGroup>
+      <_DefaultUniqueOutputName_>false</_DefaultUniqueOutputName_>
+      <_DefaultUniqueOutputName_ Condition="@(InnoSetup->Count()) &gt; 1">true</_DefaultUniqueOutputName_>
+    </PropertyGroup>
+    <ItemGroup>
+      <InnoSetup Update="%(InnoSetup.Identity)"
+                 Condition="'%(InnoSetup.UniqueOutputName)' == ''"
+                 UniqueOutputName="$(_DefaultUniqueOutputName_)" />
+    </ItemGroup>
+
+    <!-- Don't leave stray properties around. -->
+    <PropertyGroup>
+      <_DefaultUniqueOutputName_ />
+    </PropertyGroup>
+
   </Target>
 
   <!--
@@ -215,19 +235,7 @@
       <_ReleaseAssetDescription_>%(InnoSetup.ReleaseAssetDescription)</_ReleaseAssetDescription_>
     </PropertyGroup>
 
-    <!-- UniqueOutputName defaults to false if there is only 1 InnoSetup item, true otherwise. -->
-    <ItemGroup Condition="@(InnoSetup->Count()) &lt; 2">
-      <InnoSetup Update="$(_Identity_)"
-                     Condition="'$(_UniqueOutputName_)' == ''"
-                     UniqueOutputName="false" />
-    </ItemGroup>
-    <ItemGroup Condition="@(InnoSetup->Count()) &gt; 1">
-      <InnoSetup Update="$(_Identity_)"
-                 Condition="'$(_UniqueOutputName_)' == ''"
-                 UniqueOutputName="true" />
-    </ItemGroup>
-
-    <!-- The default for OutputName depends upon UniqueOutputName. -->
+    <!-- The default for OutputName depends upon UniqueOutputName, which InitializeInnoSetupMetadata has defaulted. -->
     <ItemGroup>
       <InnoSetup Update="$(_Identity_)"
                  Condition="'$(_OutputName_)' == '' And '$(_UniqueOutputName_)' == 'false'"
