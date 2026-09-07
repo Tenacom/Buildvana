@@ -18,9 +18,12 @@ using Spectre.Console.Testing;
 
 internal sealed class DotNetServiceResolutionTests
 {
-    // A build pipeline command needs no Git repository: Buildvana SDK computes the version itself, and the one
-    // member of DotNetService that reads the version is the NuGet push. The home directory below is not a Git
-    // repository, so VersionService cannot be constructed, and DotNetService resolves all the same.
+    // Outside GitHub Actions, a build pipeline command needs no Git repository: Buildvana SDK computes the version
+    // itself, and the one member of DotNetService that reads the version is the NuGet push. The home directory
+    // below is not a Git repository, so VersionService cannot be constructed, and DotNetService resolves all the
+    // same. RecordingServerAdapter replaces ServerAdapter.Create, whose GitHubServerAdapter opens the repository
+    // in its constructor, so the test covers the Lazy<VersionService> dependency alone, and not what a GitHub
+    // Actions runner resolves.
     [Test]
     public async Task GetRequiredService_HomeDirectoryIsNotGitRepository_ResolvesDotNetService()
     {
