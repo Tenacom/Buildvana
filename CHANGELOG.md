@@ -77,8 +77,8 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNerdbankGitVersioning`, which gives way to [`UseVersioning`](docs/sdk-modules/versioning.md#useversioning-property).
 - **BREAKING CHANGE**: `pathFilters`, nested `version.json` files, and package version schemes other than SemVer 2.0 have [no counterpart](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) in the `Versioning` module.
 - **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](docs/tool-diagnostics.md#exit-codes), so a script that tests for exit code 1 accepts 2 and 3 too.
-- **BREAKING CHANGE**: With one `InnoSetup` item, the `AlternatePack` module names the setup program `$(AppShortName)_$(AssemblyInformationalVersion).exe`, where the name used to include the item identity.
-- **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module defaults `UniqueZipFileName` to `true`, where the default was `false` whatever the count.
+- **BREAKING CHANGE**: With one `InnoSetup` item, the `AlternatePack` module [names the setup program](docs/sdk-modules/alternate-pack.md#innosetup-items) `$(AppShortName)_$(AssemblyInformationalVersion).exe`, where the name used to include the item identity.
+- **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module [defaults `UniqueZipFileName` to `true`](docs/sdk-modules/alternate-pack.md#publishfolder-items), where the default was `false` whatever the count.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
 - `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
@@ -108,7 +108,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - Outside GitHub Actions, `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](docs/command-line.md#home-directory) has no `origin` remote.
 - The `NuGetPack` module finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
 - The `SourceGenerators` module raises [BVSDK1100 and BVSDK1101](docs/sdk-diagnostics.md#source-generators-1100-1199), where `BV_CheckRoslynVersion` declared them inside an `ItemGroup` and neither ever fired.
-- The `AlternatePack` module deletes a `PublishFolder` whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
+- The `AlternatePack` module [deletes a `PublishFolder`](docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
 
 ### Known problems introduced by this release
 
