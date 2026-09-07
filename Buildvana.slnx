@@ -49,6 +49,7 @@
     <File Path="docs/sdk-modules/wine.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/tool-commands/">
+    <File Path="docs/tool-commands/build-pipeline.md" />
     <File Path="docs/tool-commands/dependencies.md" />
   </Folder>
   <Folder Name="/- Schemas/">
