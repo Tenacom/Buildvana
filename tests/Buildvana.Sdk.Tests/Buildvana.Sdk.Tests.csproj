@@ -28,6 +28,7 @@
     <AssemblyMetadata Include="RealDependenciesModulePropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.props'))" />
     <AssemblyMetadata Include="RealDependenciesModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.targets'))" />
     <AssemblyMetadata Include="RealNuGetPackReadmeTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\NuGetPack\Readme.targets'))" />
+    <AssemblyMetadata Include="RealSourceGeneratorsAfterModulesCoreTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\SourceGenerators\AfterModules.Core.targets'))" />
   </ItemGroup>
 
 </Project>
