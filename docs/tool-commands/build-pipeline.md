@@ -66,7 +66,7 @@ bv clean [OPTIONS]
 - the build cache of every [hook](../hooks.md#cleaning-hook-build-caches).
 
 It leaves a `TestResults\` directory under a project alone.
-`bv clean` runs no `dotnet` command, needs no SDK version check, and takes no forwarded arguments.
+`bv clean` runs no `dotnet` command, needs no SDK version check, and refuses a `--` separator, because it has nothing to forward to.
 It does what `dotnet clean` does, and more.
 
 ---
