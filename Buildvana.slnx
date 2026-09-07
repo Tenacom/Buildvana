@@ -51,6 +51,7 @@
   <Folder Name="/- Documentation/docs/tool-commands/">
     <File Path="docs/tool-commands/build-pipeline.md" />
     <File Path="docs/tool-commands/dependencies.md" />
+    <File Path="docs/tool-commands/release.md" />
   </Folder>
   <Folder Name="/- Schemas/">
     <File Path="schemas/buildvana.schema.json" />
