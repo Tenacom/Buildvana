@@ -24,9 +24,11 @@
  *   DocsFence      a fenced block with no language tag, or with a tag outside the list of the rules;
  *   DocsTodo       the word TODO;
  *   DocsRegion     a generated-region marker without its pair;
- *   DocsChangelog  a relative file link in a released section of CHANGELOG.md;
+ *   DocsChangelog  a relative file link in a released section of CHANGELOG.md, a nested list under "Unreleased
+ *                  changes", or a breaking change after a plain bullet in a subsection of "Unreleased changes";
  *   DocsSentence   a prose line, outside a fenced block and a table, holding more than 25 words, or more than
- *                  one sentence; a code span counts as one word, and a link as the words of its text.
+ *                  one sentence; a code span counts as one word, and a link as the words of its text. The
+ *                  released sections of CHANGELOG.md are not checked.
  *
  * Only inline links, `[text](target)`, are checked. A reference-style link is not. A link inside a code span or
  * a fenced block is not a link. A relative target must match the case of the file name, so that a link that
@@ -48,6 +50,7 @@ const string TocTitle = "**Table of contents**";
 const string EnableMarker = "<!-- markdownlint-enable MD036 -->";
 const string Ruler = "---";
 const string UnreleasedHeading = "Unreleased changes";
+const string BreakingChangePrefix = "- **BREAKING CHANGE**:";
 const int MaxSentenceWords = 25;
 
 // The language tags `.claude/rules/documentation.md` admits on a fenced block.
@@ -56,9 +59,9 @@ string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shel
 // Files the TODO check leaves alone. None here; a copy of this tool may name some.
 string[] todoExemptFiles = [];
 
-// Files the sentence check leaves alone. Here, the changelog, whose released sections hold lines over the limit and
-// are never edited.
-string[] sentenceExemptFiles = ["CHANGELOG.md"];
+// Files the sentence check leaves alone. None here: the released sections of CHANGELOG.md, whose lines exceed the
+// limit and are never edited, are skipped by section. A copy of this tool may name some.
+string[] sentenceExemptFiles = [];
 
 if (args.Length > 1)
 {
@@ -89,6 +92,7 @@ var todoRegex = new Regex(@"\bTODO\b", RegexOptions.CultureInvariant);
 var linkTextRegex = new Regex(@"!?\[(?<text>[^\]]*)\]\([^)]*\)", RegexOptions.CultureInvariant);
 var lineMarkerRegex = new Regex(@"^\s*(?:[-*+]|\d+\.)\s+|^\s*>\s*(?:\[!\w+\]\s*)?", RegexOptions.CultureInvariant);
 var sentenceBreakRegex = new Regex(@"[.!?]\s+(?=[A-Z0-9(])", RegexOptions.CultureInvariant);
+var nestedListRegex = new Regex(@"^\s+(?:[-*+]|\d+\.)\s", RegexOptions.CultureInvariant);
 
 var findings = new List<(string File, int Line, int Column, string Code, string Message)>();
 
@@ -158,6 +162,8 @@ foreach (var file in files)
     var checkSentences = !sentenceExemptFiles.Contains(file, StringComparer.Ordinal);
     var openRegions = new Dictionary<string, int>(StringComparer.Ordinal);
     var releasedSection = string.Empty;
+    var inUnreleased = false;
+    var plainBulletSeen = false;
     var targets = new HashSet<string>(StringComparer.Ordinal);
     linkTargetsByFile[file] = targets;
 
@@ -185,7 +191,44 @@ foreach (var file in files)
             continue;
         }
 
-        if (checkSentences)
+        if (isChangelog)
+        {
+            var heading = headingRegex.Match(line);
+            if (heading.Success && heading.Groups["hashes"].Value.Length == 2)
+            {
+                // A released section is headed by a link to the release, and the version is its text.
+                var text = heading.Groups["text"].Value;
+                var versionLink = Regex.Match(text, @"^\[(?<version>[^\]]+)\]", RegexOptions.CultureInvariant);
+                var shownSection = versionLink.Success ? versionLink.Groups["version"].Value : text;
+                inUnreleased = string.Equals(text, UnreleasedHeading, StringComparison.Ordinal);
+                releasedSection = inUnreleased ? string.Empty : shownSection;
+            }
+
+            // A bullet under "Unreleased changes" is one sentence, so it holds no nested list, and the breaking
+            // changes of a subsection come before its other bullets. A heading starts a subsection.
+            if (heading.Success)
+            {
+                plainBulletSeen = false;
+            }
+            else if (inUnreleased && nestedListRegex.IsMatch(line))
+            {
+                Report(file, lineNumber, 1, "DocsChangelog", "a bullet under \"Unreleased changes\" holds a nested list");
+            }
+            else if (inUnreleased && line.StartsWith("- ", StringComparison.Ordinal))
+            {
+                var isBreaking = line.StartsWith(BreakingChangePrefix, StringComparison.Ordinal);
+                if (isBreaking && plainBulletSeen)
+                {
+                    Report(file, lineNumber, 1, "DocsChangelog", "a breaking change follows a plain bullet in its subsection");
+                }
+
+                plainBulletSeen |= !isBreaking;
+            }
+        }
+
+        // The released sections of the changelog hold lines over the limit, and are never edited.
+        var isReleased = isChangelog && releasedSection.Length > 0;
+        if (checkSentences && !isReleased)
         {
             CheckSentence(file, lineNumber, line);
         }
@@ -201,19 +244,6 @@ foreach (var file in files)
             else if (!isStart && !openRegions.Remove(regionName))
             {
                 Report(file, lineNumber, match.Index + 1, "DocsRegion", $"region \"{regionName}\" ends without starting");
-            }
-        }
-
-        if (isChangelog)
-        {
-            var heading = headingRegex.Match(line);
-            if (heading.Success && heading.Groups["hashes"].Value.Length == 2)
-            {
-                // A released section is headed by a link to the release, and the version is its text.
-                var text = heading.Groups["text"].Value;
-                var versionLink = Regex.Match(text, @"^\[(?<version>[^\]]+)\]", RegexOptions.CultureInvariant);
-                var shownSection = versionLink.Success ? versionLink.Groups["version"].Value : text;
-                releasedSection = string.Equals(text, UnreleasedHeading, StringComparison.Ordinal) ? string.Empty : shownSection;
             }
         }
 
