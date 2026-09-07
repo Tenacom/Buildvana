@@ -52,27 +52,20 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: `BV_MinMSBuildVersion` moves from 17.4 to 18.9, so Buildvana SDK raises BVSDK1004 on [MSBuild older than 18.9](docs/introduction.md#toolchain).
 - **BREAKING CHANGE**: The `AlternatePack` module no longer adds `Tools.InnoDownloadPlugin` to an Inno Setup project, and the built-in [`download` and `issigverify` flags](https://jrsoftware.org/ishelp/topic_filessection.htm) replace it.
 - **BREAKING CHANGE**: `bv` defaults to [`minimal` verbosity](docs/command-line.md#verbosity) for every command, where it used to default to `normal`.
-- A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`, and the tasks of Buildvana SDK show each level from the same verbosity as `bv`.
 - **BREAKING CHANGE**: `.buildvana-home` no longer marks a home directory, and a [`buildvana.jsonc` holding `{}`](docs/configuration-file.md#migration-from-the-buildvana-home-marker) replaces it.
 - **BREAKING CHANGE**: The `JetBrainsAnnotations` module no longer adds a JetBrains annotations package to a project, and `UseJetBrainsAnnotations` gives way to [`ExportJetBrainsAnnotations`](docs/sdk-modules/jetbrains-annotations.md#migration-to-exportjetbrainsannotations).
 - **BREAKING CHANGE**: Buildvana SDK no longer supports [Visual Basic projects](docs/introduction.md#programming-languages).
 - **BREAKING CHANGE**: Buildvana SDK no longer supports [F# projects](docs/introduction.md#programming-languages).
-- `bv` may be invoked from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory of the run.
 - **BREAKING CHANGE**: The `prepare` command of `bv` is renamed [`clean`](docs/tool-commands/build-pipeline.md#bv-clean), after `dotnet clean`.
 - **BREAKING CHANGE**: [`bv test`](docs/tool-commands/build-pipeline.md#bv-test) supports Microsoft.Testing.Platform alone, and a VSTest test project fails at test time.
 - **BREAKING CHANGE**: [Code coverage reports](docs/tool-commands/build-pipeline.md#bv-test) go to `TestResults` in the home directory, one file per test project, and are not merged.
 - **BREAKING CHANGE**: A test project is a project whose [`IsTestingPlatformApplication`](docs/tool-commands/build-pipeline.md#bv-test) is `true`, and a `.Tests` name suffix and `IsTestProject` no longer mark one.
 - **BREAKING CHANGE**: [`bv clean`](docs/tool-commands/build-pipeline.md#bv-clean) deletes `TestResults` in the home directory.
-- `bv clean` no longer deletes the `TestResults` directory of each test project.
-- `bv release` moves the self-reference rewrites out of the release commit into a [post-release commit](docs/tool-commands/release.md#the-post-release-commit), so the release tag names the source state that was built.
-- `bv release` takes the [identity of its commits](docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity of the platform, then from the Git configuration of the repository.
 - **BREAKING CHANGE**: The `bv release` options `--versionSpecChange`, `--checkPublicApiFiles`, and `--updateSelfReferences` are renamed [`--bump`, `--check-public-api`, and `--dogfood`](docs/tool-commands/release.md#options).
 - **BREAKING CHANGE**: `bv` no longer reads `CONFIGURATION`, `VERSION_SPEC_CHANGE`, `CHECK_PUBLIC_API_FILES`, or `UPDATE_SELF_REFERENCES` as [defaults for its options](docs/command-line.md#migration-from-the-removed-environment-variables).
 - **BREAKING CHANGE**: `bv release` no longer reads `GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`, `PRIVATE_NUGET_KEY`, `PRERELEASE_NUGET_SOURCE`, `PRERELEASE_NUGET_KEY`, `RELEASE_NUGET_SOURCE`, or `RELEASE_NUGET_KEY`, and reads the [variables `buildvana.json` names](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) instead.
 - **BREAKING CHANGE**: `bv release` selects the [push feed](docs/tool-commands/release.md#publishing) by version kind, stable or prerelease, and no longer by the visibility of the repository.
 - **BREAKING CHANGE**: `--verbosity` accepts the [values of the .NET CLI](docs/command-line.md#verbosity), `quiet`, `minimal`, `normal`, `detailed`, and `diagnostic`, and the Cake values, such as `verbose`, are gone.
-- `bv` renders a message as a [level label and a colored line](docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
-- `bv` streams the [output of `dotnet`](docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
 - **BREAKING CHANGE**: `bv` writes its narration to [standard error](docs/command-line.md#output-streams) and keeps standard output for results, so a script that captured diagnostics from standard output reads standard error instead.
 - **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` forward the [arguments after a `--` separator](docs/tool-commands/build-pipeline.md#forwarded-arguments) to `dotnet` verbatim, and refuse an option before the separator.
 - **BREAKING CHANGE**: `bv release` [refuses a `--` separator](docs/tool-commands/release.md#options), because it forwards nothing.
@@ -80,11 +73,18 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` read [`-c` and `--configuration`](docs/tool-commands/build-pipeline.md#the-build-configuration) among the forwarded arguments, after the `--` separator, and no longer before it.
 - **BREAKING CHANGE**: The `--main-branch` global option is removed, and the changelog link of a [release description](docs/tool-commands/release.md#publishing) points at the release branch.
 - **BREAKING CHANGE**: The `--unstable-changelog` and `--require-changelog` options of `bv release` are removed, and the [`release.changelogUpdates` and `release.emptyChangelog` settings](docs/tool-commands/release.md#the-changelog) replace them.
-- The build pipeline commands and `bv release` [observe cancellation](docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
 - **BREAKING CHANGE**: Buildvana SDK and `bv` no longer read `version.json` or run `nbgv`, so a repository [migrates from Nerdbank.GitVersioning](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) to a `VERSION` file.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNerdbankGitVersioning`, which gives way to [`UseVersioning`](docs/sdk-modules/versioning.md#useversioning-property).
 - **BREAKING CHANGE**: `pathFilters`, nested `version.json` files, and package version schemes other than SemVer 2.0 have [no counterpart](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) in the `Versioning` module.
 - **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](docs/tool-diagnostics.md#exit-codes), where 2 is a refused command line and 3 a failed program, so a script that tests for exit code 1 accepts 2 and 3 as well.
+- A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`, and the tasks of Buildvana SDK show each level from the same verbosity as `bv`.
+- `bv` may be invoked from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory of the run.
+- `bv clean` no longer deletes the `TestResults` directory of each test project.
+- `bv release` moves the self-reference rewrites out of the release commit into a [post-release commit](docs/tool-commands/release.md#the-post-release-commit), so the release tag names the source state that was built.
+- `bv release` takes the [identity of its commits](docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity of the platform, then from the Git configuration of the repository.
+- `bv` renders a message as a [level label and a colored line](docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
+- `bv` streams the [output of `dotnet`](docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
+- The build pipeline commands and `bv release` [observe cancellation](docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
 - `bv` sets the [console encoding](docs/command-line.md#console-encoding) to UTF-8 for its run, as the .NET CLI does, unless `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING` is `1`.
 - `bv release` rewrites each relative file link of the changelog section it releases into a permalink to the release tag.
 - [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to a page under its old name breaks.
