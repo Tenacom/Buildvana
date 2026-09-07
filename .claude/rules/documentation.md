@@ -170,9 +170,9 @@ Example:
   - every page follows the template: summary paragraph, rulers, and a table of contents that matches the headings;
   - the index links every page, and no link points at a missing file or anchor;
   - every fenced block has a tag from the list above;
-  - a prose line, outside a fenced block and a table, holds one sentence of at most 25 words, counting a code span as one word and a link as the words of its text;
+  - a prose line, outside a fenced block, a table, and a released changelog section, holds one sentence of at most 25 words, counting a code span as one word and a link as the words of its text;
   - no documentation file contains "TODO";
   - generated-region markers exist and pair;
-  - a changelog bullet holds no nested list, and no sentence break outside code spans;
+  - a bullet under "Unreleased changes" holds no nested list, and the breaking changes of a subsection come before its other bullets;
   - a released changelog section holds no relative file link.
 - A reference page that lists a code surface is pinned by a test in the test project of that code. The test fails when a command, option, setting, or diagnostic exists in the code and not on the page, or on the page and not in the code. The command pages are pinned against `CommandRegistry`, `configuration-file.md` against the configuration model, and the diagnostics pages against the code that raises the diagnostics.
