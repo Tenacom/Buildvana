@@ -51,14 +51,16 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
         }
         catch (CryptographicException)
         {
-            throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.AssemblySigning.CannotExtractCertificateFmt, path));
+            throw new BuildFailedException(
+                string.Format(CultureInfo.InvariantCulture, Strings.AssemblySigning.CannotExtractCertificateFmt, path));
         }
     }
 
     private static byte[] ExtractPrivateKey(X509Certificate2 certificate, string certificatePath)
         => certificate.GetRSAPrivateKey() is RSACryptoServiceProvider privateKey
             ? privateKey.ExportCspBlob(true)
-            : throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.AssemblySigning.MissingRsaPrivateKeyFmt, certificatePath));
+            : throw new BuildFailedException(
+                string.Format(CultureInfo.InvariantCulture, Strings.AssemblySigning.MissingRsaPrivateKeyFmt, certificatePath));
 
     private static void SaveBytes(string outputPath, byte[] bytes)
     {
@@ -69,7 +71,9 @@ public sealed class ConvertPfxToSnk : BuildvanaSdkTask
         }
         catch (Exception e) when (e.IsIORelatedException)
         {
-            throw new BuildFailedException(string.Format(CultureInfo.InvariantCulture, Strings.CouldNotWriteFileFmt, outputPath, e.Message), e);
+            throw new BuildFailedException(
+                string.Format(CultureInfo.InvariantCulture, Strings.CouldNotWriteFileFmt, outputPath, e.Message),
+                e);
         }
     }
 }
