@@ -88,7 +88,7 @@ internal sealed class CommandPagesTests
 
     private static string RenderOption(BvOptionAttribute option)
     {
-        var names = string.Join(", ", option.ShortNames.Concat(option.LongNames));
+        var names = string.Join(", ", option.ShortNames.Take(1).Concat(option.LongNames));
         return option.ValueName is null ? names : $"{names} <{option.ValueName}>";
     }
 
