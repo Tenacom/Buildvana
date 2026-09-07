@@ -44,6 +44,7 @@
     <File Path="docs/tool-diagnostics.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/sdk-modules/">
+    <File Path="docs/sdk-modules/additional-assembly-info.md" />
     <File Path="docs/sdk-modules/jetbrains-annotations.md" />
     <File Path="docs/sdk-modules/this-assembly-class.md" />
     <File Path="docs/sdk-modules/versioning.md" />
