@@ -75,7 +75,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: `bv` writes its narration to [standard error](docs/command-line.md#output-streams) and keeps standard output for results, so a script that captured diagnostics from standard output reads standard error instead.
 - **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` forward the [arguments after a `--` separator](docs/tool-commands/build-pipeline.md#forwarded-arguments) to `dotnet` verbatim, and refuse an option before the separator.
 - **BREAKING CHANGE**: `bv release` [refuses a `--` separator](docs/tool-commands/release.md#options), because it forwards nothing.
-- **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of the [build pipeline](docs/tool-commands/build-pipeline.md#forwarded-arguments).
+- **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of the [build pipeline](docs/tool-commands/build-pipeline.md#the-pipeline).
 - **BREAKING CHANGE**: The build pipeline commands read [`-c` and `--configuration`](docs/tool-commands/build-pipeline.md#the-build-configuration) among the forwarded arguments, after the `--` separator, and no longer before it.
 - **BREAKING CHANGE**: The `--main-branch` global option is removed, and the changelog link of a [release description](docs/tool-commands/release.md#publishing) points at the release branch.
 - **BREAKING CHANGE**: The `--unstable-changelog` and `--require-changelog` options of `bv release` are removed, and the [`release.changelogUpdates` and `release.emptyChangelog` settings](docs/tool-commands/release.md#the-changelog) replace them.
