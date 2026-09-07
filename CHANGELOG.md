@@ -22,7 +22,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv --help` lists the [global options](docs/command-line.md#global-options), which every command accepts before or after its name, without regard to case.
 - `bv --help` marks the build pipeline commands that [forward arguments to `dotnet`](docs/tool-commands/build-pipeline.md#forwarded-arguments), and `bv <command> --help` describes the forwarding.
 - `bv` reads [`buildvana.jsonc`](docs/configuration-file.md) from the home directory, and a file with an error fails every command, `clean` included.
-- A committed [JSON schema](docs/configuration-file.md#related-files), generated from the typed model, describes the file to an editor, with the default and an example of each setting.
+- A committed [JSON schema](docs/configuration-file.md#related-files), generated from the typed model, describes every setting to an editor and states each fixed default.
 - [`buildvana.example.jsonc`](docs/configuration-file.md#related-files) states every setting, with its description and an example or default value.
 - Buildvana SDK and `bv` treat `buildvana.jsonc` as a [home-directory marker](docs/configuration-file.md#discovery), and discovery stops at the nearest directory that holds any marker, the starting directory included.
 - `dotnet.configuration` sets the [build configuration](docs/tool-commands/build-pipeline.md#the-build-configuration) of the build pipeline and of `bv release`.
