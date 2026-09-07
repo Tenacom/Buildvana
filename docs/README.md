@@ -21,6 +21,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 
 ## SDK modules
 
+- [`AdditionalAssemblyInfo` module](sdk-modules/additional-assembly-info.md): generating the `CLSCompliant` and `ComVisible` assembly attributes of a C# project.
 - [`JetBrainsAnnotations` module](sdk-modules/jetbrains-annotations.md): exporting the JetBrains annotations of a C# project to a ReSharper external annotations file.
 - [`ThisAssemblyClass` module](sdk-modules/this-assembly-class.md): generating a `ThisAssembly` class holding constants that describe the assembly.
 - [`Versioning` module](sdk-modules/versioning.md): computing the version of every project from a `VERSION` file and the Git history.
