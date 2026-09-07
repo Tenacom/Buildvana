@@ -30,7 +30,10 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
     private readonly ServerAdapter _server;
-    private readonly VersionService _version;
+
+    // Resolved on first use, which is the NuGet push alone. Constructing the version service opens the Git
+    // repository and reads its origin remote, and a build needs neither: the SDK computes the version itself.
+    private readonly Lazy<VersionService> _version;
     private readonly BuildvanaConfig _config;
 
     /// <summary>
@@ -40,7 +43,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
         IReporter reporter,
         IProcessRunner processRunner,
         ServerAdapter server,
-        VersionService version,
+        Lazy<VersionService> version,
         BuildvanaConfig config)
     {
         Guard.IsNotNull(reporter);
@@ -281,7 +284,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
             return;
         }
 
-        var feed = ResolvePushFeed(_config.NuGet.Feeds, _version.IsPrerelease);
+        var feed = ResolvePushFeed(_config.NuGet.Feeds, _version.Value.IsPrerelease);
         var apiKey = RuntimeAccess.Translate(feed.GetApiKey);
 
         foreach (var path in packages)
