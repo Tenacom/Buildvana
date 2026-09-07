@@ -62,6 +62,7 @@ internal sealed class CommandPagesTests
     public async Task OptionsTable_ListsTheOptionsOfTheSettingsType(string name)
     {
         var command = CommandRegistry.Find(name)!;
+        await Assert.That(Pages.Keys).Contains(command.CanonicalPath[0]);
         var page = LoadPage(Path.Combine("tool-commands", Pages[command.CanonicalPath[0]]));
         var listed = ListedOptions(page, command);
         IEnumerable<string> declared = command.SettingsType is null ? [] : RenderOptions(command.SettingsType);
