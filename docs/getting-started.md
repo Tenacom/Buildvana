@@ -150,7 +150,7 @@ Two files in the home directory import Buildvana SDK into every project under it
 
 Neither import states a version, because `global.json` pins it.
 The two files never change again, and the settings that every project shares go in `Common.props`.
-Create it with one setting:
+Create it in the home directory, with one setting:
 
 ```xml
 <Project>
