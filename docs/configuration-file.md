@@ -125,7 +125,7 @@ A setting whose member names are data, such as `dependencies.policies` and `dotn
 ## Related files
 
 - [`schemas/buildvana.schema.json`](../schemas/buildvana.schema.json) is the JSON schema, generated from the typed model.
-  It names every setting, with its description, its built-in default value, and an example where one helps.
+  It names every setting with its description, states each fixed default, and gives an example where one helps.
   An editor reads it to validate the file and to complete it.
 - [`buildvana.example.jsonc`](../buildvana.example.jsonc) is a worked example, generated from that schema.
   Every setting appears, introduced by its description and carrying an example or default value.
