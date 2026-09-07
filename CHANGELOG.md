@@ -107,6 +107,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - Outside GitHub Actions, `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](docs/command-line.md#home-directory) has no `origin` remote.
 - The `NuGetPack` module finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
 - The `SourceGenerators` module raises [BVSDK1100 and BVSDK1101](docs/sdk-diagnostics.md#source-generators-1100-1199), where `BV_CheckRoslynVersion` declared them inside an `ItemGroup` and neither ever fired.
+- The `AlternatePack` module deletes a `PublishFolder` whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
 
 ### Known problems introduced by this release
 

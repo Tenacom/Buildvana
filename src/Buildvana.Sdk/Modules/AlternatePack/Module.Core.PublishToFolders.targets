@@ -35,7 +35,7 @@
     <PropertyGroup>
       <_Identity_>%(PublishFolder.Identity)</_Identity_>
       <_PublishDir_>%(PublishFolder.PublishDir)</_PublishDir_>
-      <_Temporary_>%(PublishFolder.PublishDir)</_Temporary_>
+      <_Temporary_>%(PublishFolder.Temporary)</_Temporary_>
       <_CreateZipFile_>%(PublishFolder.CreateZipFile)</_CreateZipFile_>
       <_ZipFileName_>%(PublishFolder.ZipFileName)</_ZipFileName_>
       <_UniqueZipFileName_>%(PublishFolder.UniqueZipFileName)</_UniqueZipFileName_>
