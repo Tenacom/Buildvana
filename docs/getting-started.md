@@ -47,7 +47,7 @@ Add one line for the scratch directory of `bv`:
 .buildvana-temp/
 ```
 
-[`artifacts\`](directory-structure.md#artifacts) receives the results of a build, and [`.buildvana-temp\`](directory-structure.md#buildvana-temp) holds the temporary files of `bv`.
+[`artifacts/`](directory-structure.md#artifacts) receives the results of a build, and [`.buildvana-temp/`](directory-structure.md#buildvana-temp) holds the temporary files of `bv`.
 
 ---
 
@@ -61,7 +61,7 @@ dotnet new tool-manifest -o .config
 dotnet tool install bv
 ```
 
-The first command creates [`.config\dotnet-tools.json`](directory-structure.md#configdotnet-toolsjson), under `.config\`, where `bv` reads it.
+The first command creates [`.config/dotnet-tools.json`](directory-structure.md#configdotnet-toolsjson), under `.config/`, where `bv` reads it.
 The second adds `bv` to the manifest at the latest version.
 From here on, `dotnet bv <command>` runs that version.
 [Invocation](command-line.md#invocation) describes the other ways to run `bv`.
@@ -180,7 +180,7 @@ dotnet sln add src/MyLibrary
 
 `bv` builds the solution file of the home directory, and takes a `.slnx` file before a `.sln` file.
 Buildvana SDK enables StyleCop and the public API analyzers, and the template class `Class1.cs` raises warnings from both.
-Delete `src\MyLibrary\Class1.cs`, and the empty library builds with no warning.
+Delete `src/MyLibrary/Class1.cs`, and the empty library builds with no warning.
 
 ---
 
