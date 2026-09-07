@@ -31,16 +31,16 @@ Every step but `clean` wraps the `dotnet` command of the same name, run on the s
 `bv` takes the first `.slnx` file of the home directory, or the first `.sln` file when there is none.
 With neither, it fails.
 
-Every `dotnet` command gets these arguments:
+Every `dotnet` command of a step gets these arguments:
 
-- `-nologo`;
+- `-nologo`, except `dotnet test`;
 - the build configuration, as [The build configuration](#the-build-configuration) says, except `dotnet restore`, which rejects it;
 - the arguments of the `dotnet.all` section of `buildvana.jsonc`, then the arguments of the `dotnet.<command>` section, then the [forwarded arguments](#forwarded-arguments);
 - `ContinuousIntegrationBuild=true` on GitHub Actions and GitLab CI, and `ContinuousIntegrationBuild=false` elsewhere;
 - the verbosity of `bv`, as `--verbosity`.
 
 The last two come last, so that no configured or forwarded argument overrides them.
-Every `dotnet` command also gets the environment variables of the `dotnet.all` section, and then those of the `dotnet.<command>` section.
+Every `dotnet` command of a step also gets the environment variables of the `dotnet.all` section, and then those of the `dotnet.<command>` section.
 A `null` value removes the variable from the environment of the child.
 
 `bv` sets no `-maxcpucount`, so MSBuild uses its default parallelism unless you forward `-m` or `-maxcpucount`.
@@ -107,7 +107,10 @@ A VSTest project fails at test time.
 Buildvana SDK reads the same property, and sets [`BV_IsTestProject`](../internal-use-properties.md#project-type) from it.
 
 `bv test` first asks MSBuild for the property of every project of the solution, in turn, and stops at the first test project.
-When the solution has none, `bv test` prints `notice: No test projects found, skipping tests.` and returns 0.
+The probe is `dotnet msbuild <project> -nologo -getProperty:IsTestingPlatformApplication`.
+It runs with none of the arguments and environment variables of [The pipeline](#the-pipeline), and without the verbosity.
+A configured or forwarded option may be one `dotnet msbuild` rejects.
+When the solution has no test project, `bv test` prints `notice: No test projects found, skipping tests.` and returns 0.
 Otherwise it runs `dotnet test` on the solution, with `--no-restore` and `--no-build`, and with these arguments:
 
 - `--results-directory TestResults`, so that every report goes to `TestResults\` in the home directory;
@@ -136,7 +139,7 @@ Buildvana SDK may make the `Pack` target produce other artifacts, such as setup 
 
 Everything after the first `--` is forwarded to `dotnet` verbatim, in the order given.
 `bv` neither parses nor validates it, with one exception, the build configuration, described [below](#the-build-configuration).
-The forwarded arguments reach every `dotnet` command of the run.
+The forwarded arguments reach the `dotnet` command of every step of the run, and not the property probe of [`bv test`](#bv-test).
 `bv pack -- -m:8` passes `-m:8` to `dotnet restore`, `dotnet build`, `dotnet test`, and `dotnet pack` alike.
 
 A malformed or unknown forwarded argument is an error from `dotnet`, or from the test application under `dotnet test`, and not from `bv`.
