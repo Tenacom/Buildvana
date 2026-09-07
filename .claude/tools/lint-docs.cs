@@ -57,8 +57,8 @@ string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shel
 string[] todoExemptFiles = [];
 
 // Files the sentence check leaves alone. Here, the changelog, whose released sections hold lines over the limit and
-// are never edited, and the one page not yet rewritten in the documentation register.
-string[] sentenceExemptFiles = ["CHANGELOG.md", "docs/tool-commands/dependencies.md"];
+// are never edited.
+string[] sentenceExemptFiles = ["CHANGELOG.md"];
 
 if (args.Length > 1)
 {
