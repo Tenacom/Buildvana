@@ -9,7 +9,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 ## Repository layout
 
 - [Directory structure](directory-structure.md): the recommended layout of a repository that uses Buildvana SDK, and what each file and directory is for.
-- [The Buildvana configuration file](configuration-file.md): where `bv` and Buildvana SDK find `buildvana.jsonc`, and the files that describe its settings.
+- [The Buildvana configuration file](configuration-file.md): where `bv` and Buildvana SDK find `buildvana.jsonc`, how a setting resolves, and every setting with its default.
 
 ## Buildvana SDK
 

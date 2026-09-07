@@ -154,6 +154,7 @@ When neither the hook nor the rewrites changed a file, there is no post-release 
 ## Publishing
 
 `bv release` pushes the commits, then every `.nupkg` file of `artifacts\<configuration>\`, with `dotnet nuget push --skip-duplicate`.
+`dotnet nuget push` gets the arguments and environment variables of the `dotnet.all` and `dotnet.nugetPush` sections of `buildvana.jsonc`, and no forwarded argument.
 A prerelease goes to the `nuget.feeds.prerelease` feed, and a stable version to the `nuget.feeds.release` feed.
 A repository that states no prerelease feed pushes prereleases to the release feed.
 The API key comes from the environment variable that the `apiKeyEnv` member of the feed names.
