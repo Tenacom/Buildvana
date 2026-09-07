@@ -103,6 +103,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv` reports a failed or denied file access as one error line naming the operation, the path, and the reason, not as an unhandled exception.
 - The release date `bv release` writes in a changelog section title uses the Gregorian calendar and the invariant format, whatever the culture of the machine.
 - The `Wine` module [sets `UseWine`](docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
+- `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail before the first `dotnet` command when the [home directory](docs/command-line.md#home-directory) has no `origin` remote, or no Git repository.
 
 ### Known problems introduced by this release
 
