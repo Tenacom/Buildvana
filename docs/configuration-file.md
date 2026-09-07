@@ -38,7 +38,7 @@ A hook reads the settings of its run from [its args](hooks.md#the-repository-con
 
 Every setting has a built-in default, and a repository with no configuration file runs on the defaults.
 A setting the file states replaces its default.
-Three settings also have a command-line option, and the option replaces both:
+Four settings also have a command-line option, and the option replaces both:
 
 | Option                  | Setting                                            |
 | ----------------------- | -------------------------------------------------- |
