@@ -146,14 +146,8 @@ It pins the versions of the .NET tools the repository uses, so that `dotnet <too
 A repository that uses Buildvana usually pins `bv` there.
 The manifest is optional: `bv` also runs as a global tool, or through `dnx`.
 
-When the manifest pins `bv`, the pinned version is the one that runs, whichever `bv` you invoke.
-`bv` reads the `bv` entry of the manifest on every invocation, and installs the pinned version when it is missing.
-It then hands the whole command line to that version with `dotnet tool run bv`.
-When the versions differ, `bv` prints an info line on standard error naming the version that runs.
-Two exceptions exist.
-The `--skip-delegation` option runs the `bv` you invoked.
-`bv self-update` always runs the `bv` you invoked, because its job is to re-pin the repository to that version.
-The delegated `bv` runs from the home directory, and gets the [`BV_DELEGATED`](environment-variables.md#bv_delegated) environment variable, so that it never delegates again.
+When the manifest pins `bv`, the pinned `bv` runs in place of the invoked one.
+[Delegation](command-line.md#delegation) says when `bv` delegates, and what the delegated run gets.
 
 ---
 
@@ -341,12 +335,9 @@ The `<Import>` elements of `Directory.Build.props` and `Directory.Build.targets`
 
 The file also pins the version of the .NET SDK, under the `sdk` key, and the two uses coexist.
 
-`bv`, Buildvana SDK, and `Buildvana.Runtime` are released together and work as one matched group.
-Every `bv` command that uses Buildvana SDK first checks that the pinned version equals its own, and refuses to run on a mismatch.
-Those commands are `restore`, `build`, `test`, `pack`, `release`, and the `dependencies` subcommands.
-A missing `global.json`, section, or entry counts as a mismatch.
-Pass `--skip-sdk-check` when you need the mismatch, as when bisecting a regression of Buildvana SDK.
-`bv self-update` re-pins the whole repository to the version of the running `bv`, this file included.
+Before running, a command that uses Buildvana SDK checks that the file pins `Buildvana.Sdk` at the version of the running `bv`.
+[The SDK version check](command-line.md#the-sdk-version-check) says which commands check, and how to skip the check.
+[`bv self-update`](tool-commands/self-update.md) re-pins the file to the version of the running `bv`.
 
 ---
 

@@ -29,7 +29,7 @@ The variables that the .NET SDK, MSBuild, and NuGet read are out of scope, and t
 
 ### `BV_DELEGATED`
 
-The marker of a [delegated](directory-structure.md#configdotnet-toolsjson) run.
+The marker of a [delegated](command-line.md#delegation) run.
 When `bv` hands an invocation over to the version the tool manifest pins, it sets the variable on the child.
 The value is the version of the delegating `bv`.
 A `bv` that finds the variable set runs in place, whatever else it detects, so a delegated invocation never delegates again.
@@ -65,7 +65,7 @@ Setting the output encoding alone takes effect in `cmd.exe` and not in PowerShel
 `bv` reads it as the .NET CLI does.
 When the variable is set, it replaces the user profile directory as the root of the per-user state of the CLI.
 `bv` uses it to locate the tool resolver cache of the SDK, `.dotnet/toolResolverCache` under that root.
-[Delegation](directory-structure.md#configdotnet-toolsjson) probes the cache to decide whether the pinned `bv` is installed, or a `dotnet tool restore` must run first.
+[Delegation](command-line.md#delegation) probes the cache to decide whether the pinned `bv` is installed, or a `dotnet tool restore` must run first.
 When the variable is unset, the platform home directory applies: `USERPROFILE` on Windows, `HOME` elsewhere.
 
 ### `DOTNET_HOST_PATH`
