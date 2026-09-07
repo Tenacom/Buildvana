@@ -4,22 +4,20 @@
           BeforeTargets="BeforeCompile;CoreCompile"
           DependsOnTargets="ResolvePackageAssets">
 
-    <!--Evaluate error conditons -->
-    <ItemGroup>
-      <Error Condition="'$(Language)' != 'C#'"
-             Code="BVSDK1100"
-             Text="Buildvana SDK source generators are only supported in C# projects."
-             File="$(MSBuildProjectFullPath)" />
-      <!--
-        CompilerApiVersion: https://github.com/dotnet/sdk/pull/20793
-        VersionLessThan: https://github.com/dotnet/msbuild/pull/4911
-      -->
-      <Error Condition="!$(CompilerApiVersion.StartsWith('roslyn'))
-                     Or $(CompilerApiVersion.Length) &lt; 9
-                     Or $([MSBuild]::VersionLessThan('$(CompilerApiVersion.Substring(6))', '$(BV_MinRoslynVersion)'))" 
-             Code="BVSDK1101"
-             Text="Buildvana SDK source generators require Roslyn version $(BV_MinRoslynVersion) or later ($(BV_MinRoslynVersionHint))" />
-    </ItemGroup>
+    <Error Condition="'$(Language)' != 'C#'"
+           Code="BVSDK1100"
+           Text="Buildvana SDK source generators are only supported in C# projects."
+           File="$(MSBuildProjectFullPath)" />
+
+    <!--
+      CompilerApiVersion: https://github.com/dotnet/sdk/pull/20793
+      VersionLessThan: https://github.com/dotnet/msbuild/pull/4911
+    -->
+    <Error Condition="!$(CompilerApiVersion.StartsWith('roslyn'))
+                   Or $(CompilerApiVersion.Length) &lt; 9
+                   Or $([MSBuild]::VersionLessThan('$(CompilerApiVersion.Substring(6))', '$(BV_MinRoslynVersion)'))"
+           Code="BVSDK1101"
+           Text="Buildvana SDK source generators require Roslyn version $(BV_MinRoslynVersion) or later ($(BV_MinRoslynVersionHint))" />
 
   </Target>
 
