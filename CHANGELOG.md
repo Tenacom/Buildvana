@@ -104,6 +104,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The release date `bv release` writes in a changelog section title uses the Gregorian calendar and the invariant format, whatever the culture of the machine.
 - The `Wine` module [sets `UseWine`](docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
 - `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail before the first `dotnet` command when the [home directory](docs/command-line.md#home-directory) has no `origin` remote, or no Git repository.
+- The `NuGetPack` module finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
 
 ### Known problems introduced by this release
 

@@ -34,7 +34,7 @@
     </When>
     <When Condition="'$(PackageReadmeFile)' != ''">
       <PropertyGroup>
-        <PackageReadmePath>$([MSBuild]::GetPathOfFileAbove('$(PackageLicenseFile)', '$(MSBuildProjectDirectory)'))</PackageReadmePath>
+        <PackageReadmePath>$([MSBuild]::GetPathOfFileAbove('$(PackageReadmeFile)', '$(MSBuildProjectDirectory)'))</PackageReadmePath>
       </PropertyGroup>
       <ItemGroup>
         <EvaluationError Condition="'$(PackageReadmePath)' == ''"
