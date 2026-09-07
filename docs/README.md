@@ -27,6 +27,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 
 ## `bv`
 
+- [Command line](command-line.md): how to invoke `bv`, and what every command has in common, from the global options to delegation and the SDK version check.
 - [Environment variables](environment-variables.md): every environment variable `bv` reads or sets.
 - [Hooks](hooks.md): the repository-owned file-based apps `bv` runs at well-known events, and the args it passes them.
 - [Diagnostics and exit codes of `bv`](tool-diagnostics.md): every `BV` diagnostic, and the exit codes every `bv` command returns.

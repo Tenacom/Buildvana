@@ -29,6 +29,7 @@
     <File Path="THIRD-PARTY-NOTICES.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/">
+    <File Path="docs/command-line.md" />
     <File Path="docs/configuration-file.md" />
     <File Path="docs/constants-syntax.md" />
     <File Path="docs/directory-structure.md" />
