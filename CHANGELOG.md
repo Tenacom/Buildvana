@@ -42,7 +42,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - When `.config/dotnet-tools.json` pins `bv`, the pinned `bv` [runs in place of the invoked one](docs/command-line.md#delegation), unless `--skip-delegation` is passed.
 - [`bv self-update`](docs/tool-commands/self-update.md) moves every Buildvana pin of the repository to one version: the version of the invoked `bv`, or the one `--to` names.
 - [`bv version show`](docs/tool-commands/version.md#bv-version-show) prints the current and published versions, and [`bv version advance`](docs/tool-commands/version.md#bv-version-advance) applies a version spec change to `VERSION`.
-- [`bv dependencies`](docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes what a repository pins: the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
+- [`bv dependencies`](docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
 - An apply run of `bv dependencies update` writes [transitive overrides](docs/tool-commands/dependencies.md#transitive-overrides), which lift the transitive dependencies of the repository out of the versions security advisories cover.
 - Buildvana SDK [contributes two things to `bv dependencies`](docs/tool-commands/dependencies.md#what-buildvana-sdk-contributes): the target that dumps the package items of a project, and the import of the transitive override files.
 
@@ -66,7 +66,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: `bv release` no longer reads `GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`, `PRIVATE_NUGET_KEY`, `PRERELEASE_NUGET_SOURCE`, `PRERELEASE_NUGET_KEY`, `RELEASE_NUGET_SOURCE`, or `RELEASE_NUGET_KEY`, and reads the [variables `buildvana.json` names](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) instead.
 - **BREAKING CHANGE**: `bv release` selects the [push feed](docs/tool-commands/release.md#publishing) by version kind, stable or prerelease, and no longer by the visibility of the repository.
 - **BREAKING CHANGE**: `--verbosity` accepts the [values of the .NET CLI](docs/command-line.md#verbosity), `quiet`, `minimal`, `normal`, `detailed`, and `diagnostic`, and the Cake values, such as `verbose`, are gone.
-- **BREAKING CHANGE**: `bv` writes its narration to [standard error](docs/command-line.md#output-streams) and keeps standard output for results, so a script that captured diagnostics from standard output reads standard error instead.
+- **BREAKING CHANGE**: `bv` writes its narration to [standard error](docs/command-line.md#output-streams) and keeps standard output for results, so a script reads diagnostics from standard error.
 - **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` forward the [arguments after a `--` separator](docs/tool-commands/build-pipeline.md#forwarded-arguments) to `dotnet` verbatim, and refuse an option before the separator.
 - **BREAKING CHANGE**: `bv release` [refuses a `--` separator](docs/tool-commands/release.md#options), because it forwards nothing.
 - **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of the [build pipeline](docs/tool-commands/build-pipeline.md#the-pipeline).
@@ -76,31 +76,32 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: Buildvana SDK and `bv` no longer read `version.json` or run `nbgv`, so a repository [migrates from Nerdbank.GitVersioning](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) to a `VERSION` file.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNerdbankGitVersioning`, which gives way to [`UseVersioning`](docs/sdk-modules/versioning.md#useversioning-property).
 - **BREAKING CHANGE**: `pathFilters`, nested `version.json` files, and package version schemes other than SemVer 2.0 have [no counterpart](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) in the `Versioning` module.
-- **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](docs/tool-diagnostics.md#exit-codes), where 2 is a refused command line and 3 a failed program, so a script that tests for exit code 1 accepts 2 and 3 as well.
-- A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`, and the tasks of Buildvana SDK show each level from the same verbosity as `bv`.
-- `bv` may be invoked from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory of the run.
+- **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](docs/tool-diagnostics.md#exit-codes), so a script that tests for exit code 1 accepts 2 and 3 too.
+- A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
+- The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
+- `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
 - `bv clean` no longer deletes the `TestResults` directory of each test project.
 - `bv release` moves the self-reference rewrites out of the release commit into a [post-release commit](docs/tool-commands/release.md#the-post-release-commit), so the release tag names the source state that was built.
-- `bv release` takes the [identity of its commits](docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity of the platform, then from the Git configuration of the repository.
+- `bv release` takes the [identity of its commits](docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity, then from the Git configuration.
 - `bv` renders a message as a [level label and a colored line](docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
 - `bv` streams the [output of `dotnet`](docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
 - The build pipeline commands and `bv release` [observe cancellation](docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
 - `bv` sets the [console encoding](docs/command-line.md#console-encoding) to UTF-8 for its run, as the .NET CLI does, unless `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING` is `1`.
 - `bv release` rewrites each relative file link of the changelog section it releases into a permalink to the release tag.
-- [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to a page under its old name breaks.
+- [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
 
 ### Bugs fixed in this release
 
 - A `buildvana.jsonc` that states a property name twice fails as [BV1108](docs/tool-diagnostics.md#configuration-1100-1199), at the repeated name, and no longer as an exception naming no file.
 - Buildvana SDK sets [`BV_IsTestProject`](docs/internal-use-properties.md#project-type) from `IsTestingPlatformApplication`, where it used to read `IsTestProject`.
 - `bv release` no longer tags a version one patch above the built one, because [the release commit](docs/tool-commands/release.md#the-release-commit) is created before the build in every release.
-- `bv release` no longer tags a version one patch below the built one after a version spec change, because the files are staged before [the release commit](docs/tool-commands/release.md#the-release-commit) and the version is computed after it.
-- `bv release` refuses to publish a version whose [Git height is 0](docs/tool-commands/release.md#the-release-commit), because no commit carries its version line and a build of the tag would produce another version.
+- `bv release` no longer tags one patch below the built version after a version spec change, because the version is computed after [the release commit](docs/tool-commands/release.md#the-release-commit).
+- `bv release` refuses to publish a version whose [Git height is 0](docs/tool-commands/release.md#the-release-commit), because a build of the tag would produce another version.
 - `bv release` requires [`GITHUB_OUTPUT`](docs/environment-variables.md#github_output) before it changes anything, where a missing variable used to fail the release after publishing and roll it back.
-- The URLs `bv release` builds from the repository URL carry the separator before the first path segment, so a release link comes out as `.../Buildvana/releases/tag/1.1.10` and no longer as `.../Buildvanareleases/tag/1.1.10`.
-- Every `bv` command [refuses an option it does not declare](docs/command-line.md#options-and-arguments) before anything else runs, where `bv clean` used to ignore one and `bv release` reported one after the SDK version check.
-- A denied or failed file or directory access during a `bv` command is reported as one error line naming the operation, the path, and the reason, where it used to surface as an unhandled exception.
-- The release date in the changelog section titles `bv release` writes is formatted with the Gregorian calendar and the invariant format, whatever the culture of the machine.
+- A release link `bv release` builds comes out as `.../Buildvana/releases/tag/1.1.10`, and no longer as `.../Buildvanareleases/tag/1.1.10`, because a separator follows the repository URL.
+- Every `bv` command [refuses an option it does not declare](docs/command-line.md#options-and-arguments) before anything else runs, where `bv clean` ignored one and `bv release` reported it late.
+- `bv` reports a failed or denied file access as one error line naming the operation, the path, and the reason, not as an unhandled exception.
+- The release date `bv release` writes in a changelog section title uses the Gregorian calendar and the invariant format, whatever the culture of the machine.
 - The `Wine` module [sets `UseWine`](docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
 
 ### Known problems introduced by this release
