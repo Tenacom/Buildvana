@@ -50,7 +50,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 
 - **BREAKING CHANGE**: `BV_MinRoslynVersion` moves from 5.3 to 5.9, so Buildvana SDK raises BVSDK1101 on [Roslyn older than 5.9](docs/sdk-diagnostics.md#source-generators-1100-1199).
 - **BREAKING CHANGE**: `BV_MinMSBuildVersion` moves from 17.4 to 18.9, so Buildvana SDK raises BVSDK1004 on [MSBuild older than 18.9](docs/introduction.md#toolchain).
-- **BREAKING CHANGE**: In projects that use InnoSetup to produce installers, the `Tools.InnoDownloadPlugin` package is not automatically added as a dependency any longer. InnoSetup Download Plugin is an unmaintained 32-bit DLL: unusable in Inno Setup 7's 64-bit installers. Use the built-in [`download`/`issigverify` flags](https://jrsoftware.org/ishelp/topic_filessection.htm) instead.
+- **BREAKING CHANGE**: The `AlternatePack` module no longer adds `Tools.InnoDownloadPlugin` to an Inno Setup project, and the built-in [`download` and `issigverify` flags](https://jrsoftware.org/ishelp/topic_filessection.htm) replace it.
 - **BREAKING CHANGE**: `bv` defaults to [`minimal` verbosity](docs/command-line.md#verbosity) for every command, where it used to default to `normal`.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`, and the tasks of Buildvana SDK show each level from the same verbosity as `bv`.
 - **BREAKING CHANGE**: `.buildvana-home` no longer marks a home directory, and a [`buildvana.jsonc` holding `{}`](docs/configuration-file.md#migration-from-the-buildvana-home-marker) replaces it.
@@ -69,6 +69,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: The `bv release` options `--versionSpecChange`, `--checkPublicApiFiles`, and `--updateSelfReferences` are renamed [`--bump`, `--check-public-api`, and `--dogfood`](docs/tool-commands/release.md#options).
 - **BREAKING CHANGE**: `bv` no longer reads `CONFIGURATION`, `VERSION_SPEC_CHANGE`, `CHECK_PUBLIC_API_FILES`, or `UPDATE_SELF_REFERENCES` as [defaults for its options](docs/command-line.md#migration-from-the-removed-environment-variables).
 - **BREAKING CHANGE**: `bv release` no longer reads `GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`, `PRIVATE_NUGET_KEY`, `PRERELEASE_NUGET_SOURCE`, `PRERELEASE_NUGET_KEY`, `RELEASE_NUGET_SOURCE`, or `RELEASE_NUGET_KEY`, and reads the [variables `buildvana.json` names](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) instead.
+- **BREAKING CHANGE**: `bv release` selects the [push feed](docs/tool-commands/release.md#publishing) by version kind, stable or prerelease, and no longer by the visibility of the repository.
 - **BREAKING CHANGE**: `--verbosity` accepts the [values of the .NET CLI](docs/command-line.md#verbosity), `quiet`, `minimal`, `normal`, `detailed`, and `diagnostic`, and the Cake values, such as `verbose`, are gone.
 - `bv` renders a message as a [level label and a colored line](docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
 - `bv` streams the [output of `dotnet`](docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
@@ -90,8 +91,8 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 
 ### Bugs fixed in this release
 
-- A `buildvana.json`/`buildvana.jsonc` file that states the same property name twice is now reported as an error (`BV1108`), at the repeated name, alongside every other problem the file has. `JsonObject` cannot hold a member name twice, so a repeat used to surface as a bare `ArgumentException` thrown from wherever the parsed document was first materialized: no diagnostic, no location, and no mention of the file it came from. Every dictionary-valued setting could reach this, `dotnet.all.env` included.
-- Buildvana SDK now correctly checks the `IsTestingPlatformApplication` (required by MTP) instead of `IsTestProject` (required by VSTest) to determine whether a project is a test project and set `BV_IsTestProject` accordingly.
+- A `buildvana.jsonc` that states a property name twice fails as [BV1108](docs/tool-diagnostics.md#configuration-1100-1199), at the repeated name, and no longer as an exception naming no file.
+- Buildvana SDK sets [`BV_IsTestProject`](docs/internal-use-properties.md#project-type) from `IsTestingPlatformApplication`, where it used to read `IsTestProject`.
 - `bv release` no longer tags a version one patch above the built one, because [the release commit](docs/tool-commands/release.md#the-release-commit) is created before the build in every release.
 - `bv release` no longer tags a version one patch below the built one after a version spec change, because the files are staged before [the release commit](docs/tool-commands/release.md#the-release-commit) and the version is computed after it.
 - `bv release` refuses to publish a version whose [Git height is 0](docs/tool-commands/release.md#the-release-commit), because no commit carries its version line and a build of the tag would produce another version.
