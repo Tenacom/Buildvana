@@ -93,8 +93,8 @@ An argument may come before or after the options, so `bv deps update --check Ser
 - an argument too many or too few;
 - an option value that does not parse.
 
-The build pipeline commands take no options of their own, and pass everything after `--` to `dotnet`, as [Forwarded arguments](tool-commands/build-pipeline.md#forwarded-arguments) says.
-Every other command refuses a `--` separator and everything after it, because it has nothing to forward to.
+`bv restore`, `bv build`, `bv test`, and `bv pack` take no options of their own, and pass everything after `--` to `dotnet`, as [Forwarded arguments](tool-commands/build-pipeline.md#forwarded-arguments) says.
+Every other command, `bv clean` included, refuses a `--` separator and everything after it, because it has nothing to forward to.
 
 ---
 

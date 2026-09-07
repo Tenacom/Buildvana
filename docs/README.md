@@ -34,7 +34,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 
 ## `bv` commands
 
-- [Build pipeline](tool-commands/build-pipeline.md): `bv clean`, `bv restore`, `bv build`, `bv test`, and `bv pack`, the arguments they forward to `dotnet`, and the build configuration.
+- [Build pipeline](tool-commands/build-pipeline.md): `bv clean`, `bv restore`, `bv build`, `bv test`, and `bv pack`, the arguments all but `bv clean` forward to `dotnet`, and the build configuration.
 - [Dependency management](tool-commands/dependencies.md): `bv dependencies`, its subcommands, its update policies, and the transitive overrides it writes.
 - [Release](tool-commands/release.md): what `bv release` checks, what it does step by step, and what it undoes when a step fails.
 - [Self-update](tool-commands/self-update.md): the pins `bv self-update` moves to one version, the summary it prints, and when it refuses to run.
