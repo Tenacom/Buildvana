@@ -129,7 +129,8 @@ When the tool manifest, `global.json`, or a family pin with a literal version is
 The message names every such pin.
 An old `bv` run by habit in a newer repository then never rolls it back.
 `--force` allows the downgrade, for a deliberate one, such as bisecting a regression.
-With `--force`, `bv` passes `--allow-downgrade` to `dotnet tool update`.
+When the tool manifest pin is above the target, `bv` passes `--allow-downgrade` to `dotnet tool update`.
+Without the flag, the .NET CLI refuses to lower a tool version.
 
 ---
 
