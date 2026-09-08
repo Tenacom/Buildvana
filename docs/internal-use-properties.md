@@ -63,8 +63,7 @@ The `StandardAnalyzers` and `XmlDocumentation` modules read them to set the defa
 
 ## Dependency management
 
-`bv dependencies` steers the evaluation of a project through two properties.
-Buildvana SDK does not compute them: `bv` passes them on the command line, and the `Dependencies` module obeys.
+`bv dependencies` passes two properties on the command line, and the [`Dependencies` module](sdk-modules/dependencies.md) reads them.
 
 ### `BV_PinDumpDirectory`
 
