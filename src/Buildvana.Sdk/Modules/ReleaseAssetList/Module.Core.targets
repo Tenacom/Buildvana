@@ -9,10 +9,7 @@
       <ReleaseAssetDefaultMimeType>application/octet-stream</ReleaseAssetDefaultMimeType>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(ReleaseAssetDefaultDescription)' == ''">
-      <ReleaseAssetDefaultDescription>(no description given)</ReleaseAssetDefaultDescription>
-    </PropertyGroup>
-
+    <!-- No default for ReleaseAssetDefaultDescription: bv release sets the description as the label of the asset. -->
     <ItemGroup>
       <ReleaseAsset Update="%(ReleaseAsset.Identity)"
                     MimeType="$([System.String]::Copy('%(ReleaseAsset.MimeType)').Trim())" />
@@ -33,8 +30,9 @@
           DependsOnTargets="$(WriteReleaseAssetListDependsOn);PrepareReleaseAssetList"
           Condition="$(GenerateReleaseAssetList)">
 
+    <!-- The tabs are escaped, because MSBuild trims an item spec and a literal tab after an empty description would go. -->
     <ItemGroup>
-      <BV_ReleaseAssetText Include="%(ReleaseAsset.FullPath)&#09;%(MimeType)&#09;%(Description)" />
+      <BV_ReleaseAssetText Include="%(ReleaseAsset.FullPath)%09%(MimeType)%09%(Description)" />
     </ItemGroup>
 
     <PropertyGroup>
