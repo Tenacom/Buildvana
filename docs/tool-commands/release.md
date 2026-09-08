@@ -162,7 +162,7 @@ Without a feed, the release fails.
 
 The release assets are collected from two sources:
 
-- every `*.assets.txt` file in the artifacts directory, where each line holds a path, a MIME type, and a description, separated by tabs;
+- every [`*.assets.txt` file](../sdk-modules/release-asset-list.md) in the artifacts directory, where each line holds a path, a MIME type, and a description, separated by tabs;
 - every `.nupkg` file, and the `.snupkg` file next to it, when one exists.
 
 A line with the wrong shape, or one naming a file that does not exist, is a warning, and the asset is skipped.

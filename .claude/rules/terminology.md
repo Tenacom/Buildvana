@@ -22,5 +22,6 @@ One name per thing, in every kind of prose: documentation, chat, commit messages
 | The check that `global.json` pins Buildvana SDK at the version of the running `bv`                 | SDK version check   | version check, SDK check                           |
 | The commit `bv release` creates before the build, which the release tag names                      | release commit      | "Prepare release" commit                           |
 | The commit `bv release` adds after the build, with the self-reference rewrites and hook changes    | post-release commit | dogfood commit                                     |
+| The `<project>.assets.txt` file the `ReleaseAssetList` module writes                               | release asset list  | asset list, assets file                            |
 
 `buildvana.jsonc` stands for either spelling because the name reminds the reader that comments and trailing commas are accepted. The page about the configuration file says that `buildvana.json` is accepted too.
