@@ -79,6 +79,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](docs/tool-diagnostics.md#exit-codes), so a script that tests for exit code 1 accepts 2 and 3 too.
 - **BREAKING CHANGE**: With one `InnoSetup` item, the `AlternatePack` module [names the setup program](docs/sdk-modules/alternate-pack.md#innosetup-items) `$(AppShortName)_$(AssemblyInformationalVersion).exe`, where the name used to include the item identity.
 - **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module [defaults `UniqueZipFileName` to `true`](docs/sdk-modules/alternate-pack.md#publishfolder-items), where the default was `false` whatever the count.
+- **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNETFrameworkReferenceAssemblies` or adds [`Microsoft.NETFramework.ReferenceAssemblies`](https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/reference-assemblies), which the .NET SDK adds when no targeting pack is installed.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
 - `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
