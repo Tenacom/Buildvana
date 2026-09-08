@@ -53,6 +53,7 @@
     <File Path="docs/sdk-modules/nuget-pack.md" />
     <File Path="docs/sdk-modules/release-asset-list.md" />
     <File Path="docs/sdk-modules/source-generators.md" />
+    <File Path="docs/sdk-modules/standard-analyzers.md" />
     <File Path="docs/sdk-modules/this-assembly-class.md" />
     <File Path="docs/sdk-modules/versioning.md" />
     <File Path="docs/sdk-modules/wine.md" />
