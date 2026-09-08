@@ -47,6 +47,7 @@
     <File Path="docs/sdk-modules/additional-assembly-info.md" />
     <File Path="docs/sdk-modules/alternate-pack.md" />
     <File Path="docs/sdk-modules/assembly-signing.md" />
+    <File Path="docs/sdk-modules/dependencies.md" />
     <File Path="docs/sdk-modules/jetbrains-annotations.md" />
     <File Path="docs/sdk-modules/this-assembly-class.md" />
     <File Path="docs/sdk-modules/versioning.md" />

@@ -470,15 +470,10 @@ Move the pin, or suppress the advisory through `NuGetAuditSuppress`.
 
 ## What Buildvana SDK contributes
 
-Buildvana SDK contributes two things, both driven by `bv`, and neither changes an ordinary build:
+Buildvana SDK contributes two things through its [`Dependencies` module](../sdk-modules/dependencies.md), and neither changes an ordinary build:
 
-- the target that dumps the evaluated package items of a project.
-  `bv dependencies` runs it over the solution to see the `packages` scope as a build sees it.
-  `bv` takes the pins from the evaluation rather than from the files.
+- a helper target that only `bv dependencies` runs, to see the `packages` scope as a build sees it.
   Conditions, imports, and layered central package management then mean the same thing to `bv` as to a build.
-  The dump also carries the two values the [transitive overrides](#transitive-overrides) need from an evaluation.
-  One is where a restore writes the dependency graph of that project.
-  The other is the severity the audit of the project reports from.
 - the import of the [transitive override files](#transitive-overrides), where they exist.
   A repository whose graph needs none has none, and the import finds nothing.
 
