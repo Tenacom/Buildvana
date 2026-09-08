@@ -32,6 +32,9 @@
     <AssemblyMetadata Include="RealNuGetPackPackableProjectTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\NuGetPack\Module.Core.PackableProject.targets'))" />
     <AssemblyMetadata Include="RealReleaseAssetListModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\ReleaseAssetList\Module.targets'))" />
     <AssemblyMetadata Include="RealSourceGeneratorsAfterModulesCoreTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\SourceGenerators\AfterModules.Core.targets'))" />
+    <AssemblyMetadata Include="RealXmlDocumentationBeforeModulesPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\BeforeModules.props'))" />
+    <AssemblyMetadata Include="RealXmlDocumentationBeforeModulesTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\BeforeModules.targets'))" />
+    <AssemblyMetadata Include="RealXmlDocumentationModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\Module.targets'))" />
   </ItemGroup>
 
 </Project>
