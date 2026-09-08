@@ -5,9 +5,12 @@
     it is set in Microsoft.NET.Sdk.BeforeCommon.targets, before we can determine the project type.
     Instead, Buildvana SDK uses the XmlDocs property.
     The default value for XmlDocs is true for libraries (except test projects), false for other projects.
+    BeforeModules.props sets GenerateDocumentationFile to true before the project, so any other value here
+    means that the project, or a file imported after the props, turned XML documentation off.
+    The default value for XmlDocs is then false, whatever the project type.
   -->
   <PropertyGroup Condition="'$(XmlDocs)' == ''">
-    <XmlDocs Condition="'$(BV_IsLibraryProject)' == 'true'">true</XmlDocs>
+    <XmlDocs Condition="'$(BV_IsLibraryProject)' == 'true' And '$(GenerateDocumentationFile)' == 'true'">true</XmlDocs>
   </PropertyGroup>
   <PropertyGroup Condition="'$(XmlDocs)' != 'true'">
     <XmlDocs>false</XmlDocs>
