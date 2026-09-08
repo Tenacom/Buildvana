@@ -112,6 +112,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) converts a `.pfx` file only when `SignAssembly` is `true`, where a project that does not sign got [BVSDK1200](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) for a missing file.
 - The `SourceGenerators` module raises [BVSDK1100 and BVSDK1101](docs/sdk-diagnostics.md#source-generators-1100-1199), where `BV_CheckRoslynVersion` declared them inside an `ItemGroup` and neither ever fired.
 - The `AlternatePack` module [deletes a `PublishFolder`](docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
+- The `NuGetPack` module no longer forces `PackageRequireLicenseAcceptance` to `false` when `PackageLicenseExpression` states the license.
 
 ### Known problems introduced by this release
 

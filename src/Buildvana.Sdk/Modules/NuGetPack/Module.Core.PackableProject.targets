@@ -14,7 +14,7 @@
 
   <!-- Coalesce PackageRequireLicenseAcceptance to a boolean value. Default is false. -->
   <PropertyGroup>
-    <PackageRequireLicenseAcceptance Condition="'$(LicensePackageExpression)' == '' And !$(LicenseFileInPackage)">false</PackageRequireLicenseAcceptance>
+    <PackageRequireLicenseAcceptance Condition="'$(PackageLicenseExpression)' == '' And !$(LicenseFileInPackage)">false</PackageRequireLicenseAcceptance>
     <PackageRequireLicenseAcceptance Condition="'$(PackageRequireLicenseAcceptance)' != 'true'">false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 

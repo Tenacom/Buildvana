@@ -1,7 +1,7 @@
 <Project>
 
   <!-- Coalesce LicenseFileInPackage to a boolean value.
-       Default is true, unless LicensePackageExpression is defined. -->
+       Default is true, unless PackageLicenseExpression is defined. -->
   <PropertyGroup>
     <LicenseFileInPackage Condition="'$(PackageLicenseExpression)' != ''">false</LicenseFileInPackage>
     <LicenseFileInPackage Condition="'$(LicenseFileInPackage)' == ''">true</LicenseFileInPackage>
