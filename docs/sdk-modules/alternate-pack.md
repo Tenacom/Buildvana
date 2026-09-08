@@ -1,7 +1,7 @@
 # `AlternatePack` module
 
 This module replaces NuGet packing with two pack methods: publishing the project to folders, and building Windows setup programs with [Inno Setup](https://jrsoftware.org/isinfo.php).
-`dotnet pack` runs both, and the zip files and setup programs they produce join the release asset list that [`bv release` publishes](../tool-commands/release.md#publishing).
+`dotnet pack` runs both, and the zip files and setup programs they produce join the [release asset list](release-asset-list.md) that [`bv release` publishes](../tool-commands/release.md#publishing).
 
 ---
 
@@ -129,7 +129,7 @@ For each item, the module runs the `Publish` target of the .NET SDK with `Publis
 A condition on `PublishingFolder` lets a project file vary its content per folder.
 A project with several target frameworks states `TargetFramework` on every item, because the .NET SDK refuses to publish such a project without one.
 
-The zip file goes in `$(ArtifactsDirectory)$(Configuration)/`, and joins the release asset list when `GenerateReleaseAssetList` is `true`.
+The zip file goes in `$(ArtifactsDirectory)$(Configuration)/`, and joins the release asset list when [`GenerateReleaseAssetList`](release-asset-list.md#generatereleaseassetlist-property) is `true`.
 `Temporary` is for a folder that exists only to be zipped or to feed a setup program.
 
 ### `InnoSetup` items
@@ -160,7 +160,7 @@ The example publishes the project, builds `artifacts/Release/MyApp_1.2.3.exe` wi
 | `ReleaseAssetDescription` | none                                                                                                     | The description of the setup program in the list.                         |
 
 `<version>` is `$(AssemblyInformationalVersion)`.
-The setup program joins the release asset list with the MIME type `application/octet-stream`, when `GenerateReleaseAssetList` is `true`.
+The setup program joins the release asset list with the MIME type `application/octet-stream`, when [`GenerateReleaseAssetList`](release-asset-list.md#generatereleaseassetlist-property) is `true`.
 
 The module raises an error when:
 
