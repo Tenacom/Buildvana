@@ -13,9 +13,9 @@ This page says which events exist, how to write a hook, and what `bv` passes to 
 - [The `release/post-release` hook](#the-releasepost-release-hook)
 - [The `deps/post-update` hook](#the-depspost-update-hook)
 - [Writing a hook](#writing-a-hook)
+  - [Dependencies](#dependencies)
 - [The hook args](#the-hook-args)
 - [The repository configuration](#the-repository-configuration)
-- [Dependencies](#dependencies)
 - [The build environment](#the-build-environment)
 - [Cleaning hook build caches](#cleaning-hook-build-caches)
 - [Contract evolution](#contract-evolution)
@@ -132,12 +132,21 @@ text = Regex.Replace(text, "(MyOrg/MyRepo/)[^/]+(/docs/)", $"${{1}}{hookArgs.Rel
 File.WriteAllText("some-file.md", text);
 ```
 
-Buildvana SDK applies the version pin, and nothing `bv` passes gates it, so a hook builds and runs by hand too.
-After `bv` has run the hook once, run `dotnet run` on it from the home directory.
+A hook runs by hand too.
+After `bv` has run it once, run `dotnet run` on it from the home directory.
 The hook then replays against the args of the last run, or against an args file written by hand.
 
 `WellKnownPaths`, in the same package, exposes the hook and args directories, and a path helper per hook.
 Repository tooling computes the paths through it instead of hard-coding them.
+
+### Dependencies
+
+A hook states its other dependencies in `#:package` directives, and the rules of the repository apply to them as to any project.
+Under central package management, the directive states no version, and `Directory.Packages.props` declares a `PackageVersion` item for the package.
+Without central package management, the directive states the version: `#:package Serilog@4.0.0`.
+`bv dependencies update` moves the version in either place, as [File-based apps](tool-commands/dependencies.md#file-based-apps) describes.
+
+To use library code of the repository in a hook, reference its project with `#:project`.
 
 ---
 
@@ -234,24 +243,6 @@ if (configFile is not null)
     File.WriteAllText(configFile, Rewrite(File.ReadAllText(configFile)));
 }
 ```
-
----
-
-## Dependencies
-
-- `#:package Buildvana.Runtime` is a special case.
-  Its version comes from the [`Hooks` module](sdk-modules/hooks.md), not from central package management, so the pin can neither lag nor race the release.
-- Beyond it, prefer a hook with BCL dependencies only.
-  The BCL, `System.Text.Json` included, covers version-rewriting jobs.
-- For a third-party package, prefer a versionless `#:package` directive, resolved through `Directory.Packages.props`.
-  File-based apps support central package management, and the version then lives where dependency updates already look.
-- Never reference a package the repository produces through a versionless `#:package` directive.
-  At hook time, `Directory.Packages.props` still pins the version published before, because the built-in rewrites happen after the hook.
-  The hook then builds against the last release, and fails to compile, mid-release, against anything the release adds.
-- `#:project` is the way to use library code of the repository: no version pin, compiled against `HEAD`.
-- Without central package management, a pinned `#:package Foo@x.y.z` is allowed, and the repository owns it.
-  A pin drifts on dependency updates, and a pin on a package the repository produces lags its own release by one.
-  Under central package management, the directive fails with NU1008.
 
 ---
 
