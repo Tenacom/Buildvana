@@ -50,6 +50,7 @@
     <File Path="docs/sdk-modules/dependencies.md" />
     <File Path="docs/sdk-modules/hooks.md" />
     <File Path="docs/sdk-modules/jetbrains-annotations.md" />
+    <File Path="docs/sdk-modules/nuget-pack.md" />
     <File Path="docs/sdk-modules/this-assembly-class.md" />
     <File Path="docs/sdk-modules/versioning.md" />
     <File Path="docs/sdk-modules/wine.md" />
