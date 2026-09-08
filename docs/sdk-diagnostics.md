@@ -17,7 +17,6 @@ This page lists them by range, with the severity, the message, and the meaning o
 - [JetBrainsAnnotations module (1300-1399)](#jetbrainsannotations-module-1300-1399)
 - [AdditionalAssemblyInfo module (1400-1499)](#additionalassemblyinfo-module-1400-1499)
 - [NuGetPack module (1500-1599)](#nugetpack-module-1500-1599)
-- [ReferenceAssemblies module (1600-1699)](#referenceassemblies-module-1600-1699)
 - [StandardAnalyzers module (1700-1799)](#standardanalyzers-module-1700-1799)
 - [XmlDocumentation module (1800-1899)](#xmldocumentation-module-1800-1899)
 - [AlternatePack module (1900-1999)](#alternatepack-module-1900-1999)
@@ -113,12 +112,6 @@ A diagnostic specific to one task is listed under its module.
 | BVSDK1509 |  Error   | Specified README file '...' does not exist.             | The file that `PackageReadmePath` names does not exist.                                                                                             |
 | BVSDK1510 |  Error   | Specified README file '...' was not found.              | The file that `PackageReadmeFile` names exists neither in the project directory nor in a directory above it.                                        |
 | BVSDK1511 |  Error   | No README file found for package.                       | No README file was specified, and no default one exists. Set `ReadmeFileInPackage` to `false` to pack no README file.                               |
-
----
-
-## ReferenceAssemblies module (1600-1699)
-
-The module raises no diagnostic.
 
 ---
 
