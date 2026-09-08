@@ -89,7 +89,7 @@ internal static partial class ThisAssembly
 
 The class is partial, so a file of yours can add members to it.
 
-A Roslyn source generator that Buildvana SDK ships writes the class, so the [toolchain floors](../introduction.md#toolchain) apply.
+A Roslyn source generator that Buildvana SDK ships writes the class, and the [`SourceGenerators` module](source-generators.md) adds it to the compilation.
 The generator reads the constants from a file that the `BV_WriteThisAssemblyConstantsFile` target writes before compilation.
 The target writes the file because some values, such as version numbers, exist only once the build has computed them.
 

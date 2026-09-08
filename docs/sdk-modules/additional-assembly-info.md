@@ -67,7 +67,7 @@ With the defaults, the module adds this source to the compilation:
 [assembly:System.Runtime.InteropServices.ComVisible(false)]
 ```
 
-A Roslyn source generator that Buildvana SDK ships writes the attributes, so the [toolchain floors](../introduction.md#toolchain) apply.
+A Roslyn source generator that Buildvana SDK ships writes the attributes, and the [`SourceGenerators` module](source-generators.md) adds it to the compilation.
 
 A file of the project that declares either attribute duplicates the generated one, and the compiler reports error CS0579.
 Remove the attribute from the file, or set `GenerateAssemblyCLSCompliantAttribute` or `GenerateAssemblyComVisibleAttribute` to `false`.
