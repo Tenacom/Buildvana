@@ -162,7 +162,7 @@ Create it in the home directory, with one setting:
 </Project>
 ```
 
-`IncludeNuGetPackSupport` set to `false` turns off the `NuGetPack` module.
+`IncludeNuGetPackSupport` set to `false` turns off the [`NuGetPack` module](sdk-modules/nuget-pack.md).
 The module packs a README, a license, a third-party notice, and an icon into every package.
 A packable project, such as a class library, fails to build until the four files exist.
 Remove the setting when the library is ready to pack.

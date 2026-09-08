@@ -31,7 +31,7 @@ This module replaces NuGet packing with two pack methods: publishing the project
 Set it to `true` to turn the module on.
 The default is `false`.
 
-The module then sets `IncludeNuGetPackSupport` to `false`, which turns the `NuGetPack` module off, and skips the import of the NuGet pack targets.
+The module then sets `IncludeNuGetPackSupport` to `false`, which turns the [`NuGetPack` module](nuget-pack.md) off, and skips the import of the NuGet pack targets.
 [`Pack` target](#pack-target) says what runs in their place.
 
 ### `InnoSetupCompiler` property
