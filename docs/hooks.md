@@ -104,7 +104,7 @@ A hook that reads `Check` and writes nothing when it is `true` turns `bv depende
 A hook is a file-based app: top-level statements, run through `dotnet run`.
 The types a hook needs, the typed args and the typed configuration, ship in the `Buildvana.Runtime` package.
 Reference it with an unversioned `#:package` directive.
-Buildvana SDK pins the package to its own version for every file-based app built in the repository.
+The [`Hooks` module](sdk-modules/hooks.md) pins the package to the version of Buildvana SDK, for every file-based app built in the repository.
 `bv`, Buildvana SDK, and the hooks then agree on the shape of the data.
 
 ```csharp
@@ -240,7 +240,7 @@ if (configFile is not null)
 ## Dependencies
 
 - `#:package Buildvana.Runtime` is a special case.
-  Its version comes from Buildvana SDK, not from central package management, so the pin can neither lag nor race the release.
+  Its version comes from the [`Hooks` module](sdk-modules/hooks.md), not from central package management, so the pin can neither lag nor race the release.
 - Beyond it, prefer a hook with BCL dependencies only.
   The BCL, `System.Text.Json` included, covers version-rewriting jobs.
 - For a third-party package, prefer a versionless `#:package` directive, resolved through `Directory.Packages.props`.
