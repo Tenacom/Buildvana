@@ -214,7 +214,13 @@ string[] inspectArguments = [
     "--yes",
 ];
 
-var inspect = Run("dotnet", inspectArguments, repoRoot, _ => false);
+// ReSharper 2026.2.1 on the .NET 10.0.12 runtime crashes in coreclr.dll with an access violation during
+// solution-wide analysis, in inspectcode itself or in its Roslyn worker, and runs to the end with tiered
+// compilation off. The tool asks for .NET 8 as "8.0.0.0", a version the host matches under LatestMajor alone,
+// so no roll-forward setting can move it to an older runtime. Remove once a ReSharper or runtime release no
+// longer needs it.
+var inspectEnvironment = new Dictionary<string, string> { ["DOTNET_TieredCompilation"] = "0" };
+var inspect = Run("dotnet", inspectArguments, repoRoot, _ => false, inspectEnvironment);
 File.WriteAllLines(Path.Combine(scratchPath, "inspect.log"), inspect.Lines);
 if (inspect.ExitCode != 0)
 {
@@ -327,7 +333,8 @@ static (int ExitCode, List<string> Lines) Run(
     string executable,
     IReadOnlyList<string> arguments,
     string workingDirectory,
-    Func<string, bool> shouldEcho)
+    Func<string, bool> shouldEcho,
+    IReadOnlyDictionary<string, string>? environment = null)
 {
     var startInfo = new ProcessStartInfo(executable)
     {
@@ -340,6 +347,14 @@ static (int ExitCode, List<string> Lines) Run(
     foreach (var argument in arguments)
     {
         startInfo.ArgumentList.Add(argument);
+    }
+
+    if (environment is not null)
+    {
+        foreach (var (name, value) in environment)
+        {
+            startInfo.Environment[name] = value;
+        }
     }
 
     var lines = new List<string>();
