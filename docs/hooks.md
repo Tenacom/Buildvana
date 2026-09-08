@@ -249,8 +249,9 @@ if (configFile is not null)
   At hook time, `Directory.Packages.props` still pins the version published before, because the built-in rewrites happen after the hook.
   The hook then builds against the last release, and fails to compile, mid-release, against anything the release adds.
 - `#:project` is the way to use library code of the repository: no version pin, compiled against `HEAD`.
-- A pinned `#:package Foo@x.y.z` is allowed, and the repository owns it.
+- Without central package management, a pinned `#:package Foo@x.y.z` is allowed, and the repository owns it.
   A pin drifts on dependency updates, and a pin on a package the repository produces lags its own release by one.
+  Under central package management, the directive fails with NU1008.
 
 ---
 
