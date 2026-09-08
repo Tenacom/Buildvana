@@ -50,7 +50,7 @@ Buildvana supports that platform alone, so the `IsTestProject` property of VSTes
 The properties exist in the files MSBuild reads after the project body: the `.targets` files of the modules, and `BeforeCommon.targets`, `Common.targets`, and `AfterCommon.targets`.
 A `.props` file sees them empty.
 
-The [`StandardAnalyzers`](sdk-modules/standard-analyzers.md) and `XmlDocumentation` modules read them to set the defaults of four properties.
+The [`StandardAnalyzers`](sdk-modules/standard-analyzers.md) and [`XmlDocumentation`](sdk-modules/xml-documentation.md) modules read them to set the defaults of four properties.
 
 | Project type            | `EnableNETAnalyzers` | `UseStyleCopAnalyzers` | `UsePublicApiAnalyzers` | `XmlDocs` |
 | ----------------------- | :------------------: | :--------------------: | :---------------------: | :-------: |

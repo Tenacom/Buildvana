@@ -57,6 +57,7 @@
     <File Path="docs/sdk-modules/this-assembly-class.md" />
     <File Path="docs/sdk-modules/versioning.md" />
     <File Path="docs/sdk-modules/wine.md" />
+    <File Path="docs/sdk-modules/xml-documentation.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/tool-commands/">
     <File Path="docs/tool-commands/build-pipeline.md" />

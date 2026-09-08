@@ -34,6 +34,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 - [`ThisAssemblyClass` module](sdk-modules/this-assembly-class.md): generating a `ThisAssembly` class holding constants that describe the assembly.
 - [`Versioning` module](sdk-modules/versioning.md): computing the version of every project from a `VERSION` file and the Git history.
 - [`Wine` module](sdk-modules/wine.md): running Windows-only build tools through Wine on Linux and macOS.
+- [`XmlDocumentation` module](sdk-modules/xml-documentation.md): generating the XML documentation file of every library project, and turning the documentation warnings off in every other project.
 
 ## `bv`
 
