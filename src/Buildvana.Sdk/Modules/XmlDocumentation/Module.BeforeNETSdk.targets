@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    Default GenerateDocumentationFile to true for a library project, and leave every other case to the .NET SDK.
+    Microsoft.NET.Sdk.BeforeCommon.targets reads the property right after this file: an empty value becomes true
+    when DocumentationFile is set and false otherwise, and true gives DocumentationFile its default path.
+  -->
+  <PropertyGroup>
+    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == '' And '$(BV_IsLibraryProject)' == 'true'">true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,52 @@
+<Project>
+
+  <!--
+    Microsoft.NET.Sdk imports this file right after the project body, through BeforeMicrosoftNETSdkTargets,
+    which Sdk.props sets. Every SDK that layers on Microsoft.NET.Sdk reaches the import.
+    The .NET SDK has not read the project yet, so a module that defaults one of the .NET SDK's own properties,
+    such as GenerateDocumentationFile, does it in its Module.BeforeNETSdk.targets, imported below.
+    Sdk.targets raises BVSDK1006 when this file did not run.
+  -->
+  <PropertyGroup>
+    <BV_BeforeNETSdkTargetsHasBeenImported>true</BV_BeforeNETSdkTargetsHasBeenImported>
+  </PropertyGroup>
+
+  <!--
+    Determine the kind of project.
+    Everything the conditions read is set by now: Microsoft.NET.Sdk.props defaults OutputType, a test framework
+    sets IsTestingPlatformApplication in its props, and Microsoft.Build.NoTargets sets UsingMicrosoftNoTargetsSdk
+    in its Sdk.props.
+  -->
+  <PropertyGroup>
+    <BV_IsNoTargetsProject>false</BV_IsNoTargetsProject>
+    <BV_IsTestProject>false</BV_IsTestProject>
+    <BV_IsLibraryProject>false</BV_IsLibraryProject>
+    <BV_IsExeProject>false</BV_IsExeProject>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">
+      <PropertyGroup>
+        <BV_IsNoTargetsProject>true</BV_IsNoTargetsProject>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(IsTestingPlatformApplication)' == 'true'">
+      <PropertyGroup>
+        <BV_IsTestProject>true</BV_IsTestProject>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(OutputType)' == 'Library'">
+      <PropertyGroup>
+        <BV_IsLibraryProject>true</BV_IsLibraryProject>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(OutputType)' == 'Exe' Or '$(OutputType)' == 'WinExe'">
+      <PropertyGroup>
+        <BV_IsExeProject>true</BV_IsExeProject>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <!-- Import modules -->
+  <Import Project="$(BuildvanaModulesDirectory)**\Module.BeforeNETSdk.targets" />
+
+</Project>

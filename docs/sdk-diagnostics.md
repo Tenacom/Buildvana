@@ -45,6 +45,7 @@ A `...` in a message stands for a value the message carries, such as a file name
 | BVSDK1003 |  Error   | Home directory not defined.                                      | No [home marker](directory-structure.md#location-of-the-home-directory) exists above the project directory, so `HomeDirectory` has no value. |
 | BVSDK1004 |  Error   | Buildvana SDK requires at least MSBuild v...                     | The MSBuild version is below the [minimum](introduction.md#toolchain).                                                                       |
 | BVSDK1005 |  Error   | Multiple Buildvana configuration files found: ... Keep only one. | The home directory holds both `buildvana.json` and `buildvana.jsonc`.                                                                        |
+| BVSDK1006 |  Error   | BeforeNETSdk.targets not imported.                               | The project SDK does not layer on `Microsoft.NET.Sdk`, or the project overwrote `BeforeMicrosoftNETSdkTargets` instead of appending to it.   |
 
 ---
 
@@ -123,9 +124,7 @@ The module raises no diagnostic.
 
 ## XmlDocumentation module (1800-1899)
 
-| Code      | Severity | Message                                                                                       | Description                                                                                                                                                      |
-| --------- | :------: | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| BVSDK1800 | Warning  | GenerateDocumentationFile is set to '...', and Buildvana SDK ignores it. Set XmlDocs instead. | `GenerateDocumentationFile` is set in a project, and the [`XmlDocumentation` module](sdk-modules/xml-documentation.md#xmldocs-property) sets it from `XmlDocs`.  |
+The module raises no diagnostic.
 
 ---
 

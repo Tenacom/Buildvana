@@ -80,6 +80,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: With one `InnoSetup` item, the `AlternatePack` module [names the setup program](docs/sdk-modules/alternate-pack.md#innosetup-items) `$(AppShortName)_$(AssemblyInformationalVersion).exe`, where the name used to include the item identity.
 - **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module [defaults `UniqueZipFileName` to `true`](docs/sdk-modules/alternate-pack.md#publishfolder-items), where the default was `false` whatever the count.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNETFrameworkReferenceAssemblies` or adds [`Microsoft.NETFramework.ReferenceAssemblies`](https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/reference-assemblies), which the .NET SDK adds when no targeting pack is installed.
+- **BREAKING CHANGE**: Buildvana SDK no longer reads `XmlDocs`, and the `XmlDocumentation` module [defaults `GenerateDocumentationFile`](docs/sdk-modules/xml-documentation.md#migrating-from-xmldocs) per project type instead.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
 - `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
@@ -115,7 +116,8 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The `AlternatePack` module [deletes a `PublishFolder`](docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
 - The [`NuGetPack` module](docs/sdk-modules/nuget-pack.md#package-metadata) no longer forces `PackageRequireLicenseAcceptance` to `false` when `PackageLicenseExpression` states the license.
 - [`ReleaseAssetDefaultDescription`](docs/sdk-modules/release-asset-list.md#releaseassetdefaultdescription-property) no longer defaults to `(no description given)`, which `bv release` set as the GitHub label of every asset without a `Description`.
-- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#xmldocs-property) ignores a `GenerateDocumentationFile` set by the project and reports [BVSDK1800](docs/sdk-diagnostics.md#xmldocumentation-module-1800-1899), where a library project that set it to `false` got SA0001.
+- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) suppresses the documentation warnings when a project sets `GenerateDocumentationFile` to `false`, where a library project got SA0001.
+- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) generates the file when a project sets `GenerateDocumentationFile` to `true`, where an Exe project got none.
 - The [`AlternatePack` module](docs/sdk-modules/alternate-pack.md#innosetup-items) leaves `_<version>` out of the default `OutputName` of an `InnoSetup` item when `AssemblyInformationalVersion` is empty, where the name ended in `_`.
 
 ### Known problems introduced by this release
