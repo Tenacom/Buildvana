@@ -67,7 +67,7 @@ internal sealed class DelegationService(
     /// <returns>The delegated invocation's exit code, to be forwarded verbatim; or <see langword="null"/> when
     /// this bv should run in place.</returns>
     /// <exception cref="BuildFailedException">The delegated process could not be started (e.g. the dotnet
-    /// muxer was not found).</exception>
+    /// muxer was not found), or the home directory keeps its tool manifest under <c>.config</c>.</exception>
     public async Task<int?> TryDelegateAsync(DelegationContext context, CancellationToken cancellationToken = default)
     {
         var runInPlace = context.DelegationMarkerPresent
@@ -82,6 +82,11 @@ internal sealed class DelegationService(
         {
             return null;
         }
+
+        // A manifest under .config stops the run outright. ReadBvPin fails on it too, but a failure inside the
+        // try below is printed as a warning and this bv runs in place, leaving the dotnet CLI to keep writing
+        // bv's pin into a file bv never reads.
+        ToolManifest.EnsureNoLegacyManifest(homeDirectory);
 
         BvManifestPin manifestPin;
         try

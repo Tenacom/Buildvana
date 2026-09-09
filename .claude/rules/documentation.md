@@ -159,7 +159,7 @@ Example:
 
 ```markdown
 - **BREAKING CHANGE**: `bv` no longer reads `CONFIGURATION`, `VERSION_SPEC_CHANGE`, `CHECK_PUBLIC_API_FILES`, or `UPDATE_SELF_REFERENCES` as defaults for its options.
-- When `.config/dotnet-tools.json` pins `bv`, the pinned version [runs in place of the invoked one](docs/directory-structure.md#configdotnet-toolsjson).
+- When `dotnet-tools.json` pins `bv`, the pinned version [runs in place of the invoked one](docs/directory-structure.md#dotnet-toolsjson).
 ```
 
 ## Checks

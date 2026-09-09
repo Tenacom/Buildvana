@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Buildvana.Core;
 using Buildvana.Core.Json;
 using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
@@ -51,6 +52,26 @@ internal sealed class DelegationServiceTests
         var result = await service.TryDelegateAsync(Context(home, subcommand: subcommand)).ConfigureAwait(false);
 
         await Assert.That(result).IsNull();
+        await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(0);
+    }
+
+    // A manifest under .config is a hard stop, not a skipped delegation: this bv would run in place while the
+    // dotnet CLI keeps writing bv's pin into a file bv never reads.
+    [Test]
+    public async Task TryDelegate_WithManifestUnderDotConfig_Fails()
+    {
+        using var home = new TempHome();
+        MarkAsHome(home);
+        home.WriteFile(".config/dotnet-tools.json", """{ "version": 1, "isRoot": true, "tools": { } }""");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(runner);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
+        var exception = await Assert.That(async () => await service.TryDelegateAsync(Context(home)).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(0);
     }
 
@@ -369,9 +390,5 @@ internal sealed class DelegationServiceTests
         return home;
     }
 
-    private static void WriteToolManifest(TempHome home, string content)
-    {
-        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
-        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), content);
-    }
+    private static void WriteToolManifest(TempHome home, string content) => home.WriteFile("dotnet-tools.json", content);
 }

@@ -16,14 +16,14 @@ internal sealed class DependencyReportRendererTests
         var inventory = new DependencyInventory
         {
             NetSdk = NetSdkPin.Create("10.0.100", allowPrerelease: false),
-            Tools = [DependencyPin.Create(DependencyScope.Tools, "ngbv", "0.5.1", ".config/dotnet-tools.json")],
+            Tools = [DependencyPin.Create(DependencyScope.Tools, "ngbv", "0.5.1", "dotnet-tools.json")],
             Packages = [DependencyPin.Create(DependencyScope.Packages, "Serilog", "4.0.0", "Directory.Packages.props")],
         };
 
         var output = Render(inventory, AllScopes);
         await Assert.That(output).Contains(".NET SDK");
         await Assert.That(output).Contains("(the .NET SDK) 10.0.100 (major)"); // the netsdk scope's default policy
-        await Assert.That(output).Contains(".config/dotnet-tools.json");
+        await Assert.That(output).Contains("dotnet-tools.json");
         await Assert.That(output).Contains("ngbv");
         await Assert.That(output).Contains("Directory.Packages.props");
         await Assert.That(output).Contains("Serilog 4.0.0 (minor)"); // the packages scope's default policy

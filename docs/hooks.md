@@ -38,7 +38,7 @@ When the file is absent, `bv` skips it and says so at `info` level.
 
 ## The `release/post-release` hook
 
-`bv release` rewrites three files to the version being released, when dogfooding is enabled: `global.json`, `.config/dotnet-tools.json`, and `Directory.Packages.props`.
+`bv release` rewrites three files to the version being released, when dogfooding is enabled: `global.json`, `dotnet-tools.json`, and `Directory.Packages.props`.
 A repository that embeds the version in other files rewrites them in this hook.
 
 `bv release` runs `.buildvana/hooks/release/post-release.cs` while it assembles the post-release commit: after the artifacts are built, before the three rewrites, and before anything is pushed.

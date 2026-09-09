@@ -190,7 +190,7 @@ A repository coming from that setup migrates in one commit:
 2. Move `publicReleaseRefSpec` to `release.branches` in `buildvana.jsonc`.
    A refspec pattern becomes a pattern on the short branch name: `^refs/heads/main$` becomes `^main$`.
 3. Move `release.firstUnstableTag` to `versioning.prereleaseTag`, and `assemblyVersion.precision` to `versioning.assemblyVersionPrecision`.
-4. Delete `version.json`, and remove `nbgv` from `.config/dotnet-tools.json` when it is there.
+4. Delete `version.json`, and remove `nbgv` from `dotnet-tools.json` when it is there.
 5. Replace `UseNerdbankGitVersioning` with `UseVersioning` in project files.
 
 Nerdbank.GitVersioning features with no counterpart:

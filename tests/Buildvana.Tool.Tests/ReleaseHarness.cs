@@ -92,7 +92,7 @@ internal sealed class ReleaseHarness : IDisposable
 
     /// <summary>
     /// Gets the IDs of the packages the faked <c>pack</c> produces, one per kind of file the self-reference
-    /// update rewrites: an MSBuild SDK (<c>global.json</c>), a .NET tool (<c>.config/dotnet-tools.json</c>),
+    /// update rewrites: an MSBuild SDK (<c>global.json</c>), a .NET tool (<c>dotnet-tools.json</c>),
     /// and an ordinary package (<c>Directory.Packages.props</c>).
     /// </summary>
     public static IReadOnlyList<string> ProducedPackageIds { get; } = ["Test.Sdk", "Test.Tool", "Test.Lib"];
@@ -356,7 +356,7 @@ internal sealed class ReleaseHarness : IDisposable
                 },
             },
         };
-        WriteFile(".config/dotnet-tools.json", toolManifest.ToJsonString(IndentedJson));
+        WriteFile("dotnet-tools.json", toolManifest.ToJsonString(IndentedJson));
         if (_options.SelfReferenceTargets < 3)
         {
             return;

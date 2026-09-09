@@ -23,7 +23,7 @@ namespace Buildvana.Tool.Services;
 /// <para>Updates are applied in-place to the following well-known files, when present:</para>
 /// <list type="bullet">
 ///   <item><description><c>global.json</c> — entries under <c>msbuild-sdks</c>.</description></item>
-///   <item><description><c>.config/dotnet-tools.json</c> — entries under <c>tools</c>.</description></item>
+///   <item><description><c>dotnet-tools.json</c> — entries under <c>tools</c>.</description></item>
 ///   <item><description><c>Directory.Packages.props</c> — <c>&lt;PackageVersion&gt;</c> items.</description></item>
 /// </list>
 /// <para>Version values that look like MSBuild property references (e.g. <c>$(SomePackageVersion)</c>) are
@@ -50,7 +50,7 @@ internal sealed class SelfReferenceUpdater
         _targets =
         [
             ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
-            (".config/dotnet-tools.json", (p, produced) => UpdateJsonContainer(
+            (ToolManifest.RelativePath, (p, produced) => UpdateJsonContainer(
                 p,
                 produced,
                 container: "tools",
@@ -66,9 +66,13 @@ internal sealed class SelfReferenceUpdater
     /// <returns>The list of files that were actually modified. Pass this to
     /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, string[])"/> to commit them
     /// into a separate post-release commit on top of the "Prepare release" commit.</returns>
+    /// <exception cref="Buildvana.Core.BuildFailedException">The home directory keeps its tool manifest under
+    /// <c>.config</c>, where the rewrite would miss it and the post-release commit would leave bv's own pin
+    /// behind.</exception>
     public IReadOnlyList<string> UpdateReferences(IReadOnlyDictionary<string, string> producedPackages)
     {
         Guard.IsNotNull(producedPackages);
+        ToolManifest.EnsureNoLegacyManifest(_home.HomeDirectory);
         if (producedPackages.Count == 0)
         {
             _reporter.Info("Self-reference update: no produced packages.");

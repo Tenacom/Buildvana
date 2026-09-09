@@ -2,8 +2,11 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json.Nodes;
+using Buildvana.Core;
 using Buildvana.Core.Json;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
@@ -11,14 +14,31 @@ using NuGet.Versioning;
 namespace Buildvana.Tool.Services;
 
 /// <summary>
-/// Reads bv's own entry in a repository's .NET tool manifest (<c>.config/dotnet-tools.json</c>).
+/// Locates a repository's .NET tool manifest (<c>dotnet-tools.json</c>) and reads bv's own entry in it.
 /// </summary>
+/// <remarks>
+/// <para>The .NET SDK before version 10 created the manifest under a <c>.config</c> subdirectory, and the
+/// dotnet CLI still reads and writes it there. bv does not: it reads <c>dotnet-tools.json</c> in the home
+/// directory, and fails on a manifest under <c>.config</c> instead of ignoring it, because the CLI would keep
+/// writing bv's own pin into a file bv never reads. The failure names the move.</para>
+/// </remarks>
 internal static class ToolManifest
 {
     /// <summary>
+    /// The file name of a tool manifest.
+    /// </summary>
+    public const string FileName = "dotnet-tools.json";
+
+    /// <summary>
     /// The path of the tool manifest, relative to the home directory.
     /// </summary>
-    public const string RelativePath = ".config/dotnet-tools.json";
+    public const string RelativePath = FileName;
+
+    /// <summary>
+    /// The path of the tool manifest bv rejects, relative to the home directory: the one the .NET SDK before
+    /// version 10 created.
+    /// </summary>
+    public const string LegacyRelativePath = ".config/" + FileName;
 
     /// <summary>
     /// The ID of bv's NuGet package, which is also its tool command name.
@@ -37,9 +57,9 @@ internal static class ToolManifest
     /// which walks up from the working directory merging manifests until one is marked <c>isRoot</c>. An
     /// ancestor manifest's bv entry therefore pins bv for the CLI but not for bv itself: the repository's own
     /// manifest is the pin bv manages, and both delegation and <c>bv self-update</c> key their decisions on it
-    /// alone. The dotnet CLI they spawn follows its own manifest-location rules from the home directory —
-    /// which lands on this same manifest whenever it has a bv entry, though <c>bv self-update</c>'s no-entry
-    /// install can reach an ancestor's.</para>
+    /// alone. The dotnet CLI they spawn is pointed at this same manifest with <c>--tool-manifest</c>, so its
+    /// own upward walk from the home directory plays no part.</para>
+    /// <para>A manifest under <c>.config</c> fails the read; see the class remarks.</para>
     /// <para>Version parseability is judged with <see cref="NuGetVersion.TryParse(string?, out NuGetVersion)"/> — the
     /// same call the dotnet CLI makes when it reads the manifest (see <c>ToolManifestEditor</c> in the
     /// dotnet/sdk repository) — so "no usable version" here is exactly "a manifest the dotnet CLI cannot use".</para>
@@ -47,12 +67,14 @@ internal static class ToolManifest
     /// <param name="jsonHelper">The JSON helper used to read the manifest.</param>
     /// <param name="homeDirectory">The home directory whose manifest to read.</param>
     /// <returns>What the manifest says about bv; a missing manifest reads as no entry.</returns>
-    /// <exception cref="Buildvana.Core.BuildFailedException">The manifest exists but cannot be read or parsed.</exception>
+    /// <exception cref="BuildFailedException">The manifest exists but cannot be read or parsed, or a manifest sits
+    /// under <c>.config</c>.</exception>
     public static BvManifestPin ReadBvPin(IJsonHelper jsonHelper, string homeDirectory)
     {
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNullOrEmpty(homeDirectory);
 
+        EnsureNoLegacyManifest(homeDirectory);
         var path = Path.Combine(homeDirectory, RelativePath);
         if (!File.Exists(path))
         {
@@ -72,6 +94,62 @@ internal static class ToolManifest
         return new BvManifestPin(HasEntry: true, versionText, version);
     }
 
+    /// <summary>
+    /// Fails when the home directory holds a tool manifest under <c>.config</c>.
+    /// </summary>
+    /// <param name="homeDirectory">The home directory to check.</param>
+    /// <exception cref="BuildFailedException"><see cref="LegacyRelativePath"/> exists. The message names the
+    /// move.</exception>
+    public static void EnsureNoLegacyManifest(string homeDirectory)
+    {
+        Guard.IsNotNullOrEmpty(homeDirectory);
+        if (File.Exists(Path.Combine(homeDirectory, LegacyRelativePath)))
+        {
+            throw LegacyManifestError([LegacyRelativePath]);
+        }
+    }
+
+    /// <summary>
+    /// Tells whether a path names a tool manifest, at any depth.
+    /// </summary>
+    /// <param name="relativePath">The path, relative to the home directory, with <c>/</c> as the separator.</param>
+    /// <returns><see langword="true"/> when the file is named <c>dotnet-tools.json</c>.</returns>
+    public static bool IsManifestPath(string relativePath)
+    {
+        Guard.IsNotNull(relativePath);
+        return relativePath == FileName || relativePath.EndsWith("/" + FileName, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Tells whether a path names a tool manifest under a <c>.config</c> directory, at any depth.
+    /// </summary>
+    /// <param name="relativePath">The path, relative to the home directory, with <c>/</c> as the separator.</param>
+    /// <returns><see langword="true"/> when the path ends with <see cref="LegacyRelativePath"/>.</returns>
+    public static bool IsLegacyManifestPath(string relativePath)
+    {
+        Guard.IsNotNull(relativePath);
+        return relativePath == LegacyRelativePath
+            || relativePath.EndsWith("/" + LegacyRelativePath, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Creates the failure that reports tool manifests under <c>.config</c>.
+    /// </summary>
+    /// <param name="relativePaths">The paths of the manifests, relative to the home directory, with <c>/</c> as
+    /// the separator.</param>
+    /// <returns>The failure. Its message names each file and the <c>git mv</c> that moves it.</returns>
+    public static BuildFailedException LegacyManifestError(IReadOnlyList<string> relativePaths)
+    {
+        Guard.IsNotEmpty(relativePaths);
+        var moves = string.Join("; ", relativePaths.Select(static path => $"git mv {path} {MovedPathOf(path)}"));
+        return relativePaths.Count == 1
+            ? new BuildFailedException(
+                $"The tool manifest is at {relativePaths[0]}, where bv does not read it. Move it up one level: {moves}")
+            : new BuildFailedException(
+                $"Tool manifests are at {string.Join(", ", relativePaths)}, where bv does not read them. "
+                + $"Move each up one level: {moves}");
+    }
+
     private static JsonNode? FindBvEntry(JsonObject tools)
     {
         foreach (var (name, node) in tools)
@@ -84,4 +162,9 @@ internal static class ToolManifest
 
         return null;
     }
+
+    // ".config/dotnet-tools.json" becomes "dotnet-tools.json", and "docs/.config/dotnet-tools.json" becomes
+    // "docs/dotnet-tools.json".
+    private static string MovedPathOf(string legacyPath)
+        => legacyPath[..^LegacyRelativePath.Length] + FileName;
 }

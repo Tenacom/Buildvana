@@ -110,7 +110,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(summary.ToolManifestLine).Contains("tool manifest, unchanged");
         await Assert.That(summary.GlobalJsonLine).Contains("global.json, unchanged");
         await Assert.That(summary.ConfigFileLine).IsNull();
@@ -132,7 +133,8 @@ internal sealed class SelfVersionServiceTests
             .ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.43-preview"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.43-preview (tool manifest, unchanged)");
         await Assert.That(summary.GlobalJsonLine).IsEqualTo("Buildvana.Sdk: 2.1.41-preview -> 2.1.43-preview (global.json)");
     }
@@ -151,13 +153,16 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (executable, args, workingDirectory) = runner.Runs[0];
         await Assert.That(executable).IsNotNull();
-        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
 
+    // With no manifest at all, one is created in the home directory before the install. Left to the dotnet
+    // CLI, `dotnet tool install` picks the directory by its own markers, which can be an ancestor.
     [Test]
-    public async Task UpdateRepository_WithoutManifestEntry_RunsDotnetToolInstall()
+    public async Task UpdateRepository_WithoutManifest_CreatesItThenRunsDotnetToolInstall()
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
@@ -166,9 +171,28 @@ internal sealed class SelfVersionServiceTests
 
         var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
 
+        await Assert.That(runner.Runs.Count).IsEqualTo(2);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["new", "tool-manifest"]);
+        await Assert.That(runner.Runs[0].WorkingDirectory).IsEqualTo(home.RootPath);
+        await Assert.That(runner.Runs[1].Args).IsEquivalentTo(
+            ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithManifestButNoEntry_RunsDotnetToolInstall()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.41-preview");
+        WriteRawToolManifest(home, """{ "version": 1, "isRoot": true, "tools": { } }""");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        var (_, args, _) = runner.Runs[0];
-        await Assert.That(args).IsEquivalentTo(["tool", "install", "bv", "--version", "2.1.41-preview", "--create-manifest-if-needed"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
     }
 
@@ -189,7 +213,8 @@ internal sealed class SelfVersionServiceTests
         var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
 
@@ -366,7 +391,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (_, args, _) = runner.Runs[0];
-        await Assert.That(args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview", "--allow-downgrade"]);
+        await Assert.That(args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.42-preview -> 2.1.41-preview (tool manifest)");
     }
@@ -385,7 +411,8 @@ internal sealed class SelfVersionServiceTests
         var summary = await service.UpdateRepositoryAsync(toVersion: null, force: true).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.41-preview"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
 
@@ -404,7 +431,8 @@ internal sealed class SelfVersionServiceTests
             .ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.43-preview"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.43-preview"));
         await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(SchemaConfigText("2.1.43-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview -> 2.1.43-preview (tool manifest)");
@@ -448,7 +476,8 @@ internal sealed class SelfVersionServiceTests
             .ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "update", "bv", "--version", "2.1.40-preview", "--allow-downgrade"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.40-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.40-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview -> 2.1.40-preview (tool manifest)");
     }
@@ -528,8 +557,7 @@ internal sealed class SelfVersionServiceTests
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.40-preview");
-        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
-        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), manifestContent);
+        WriteRawToolManifest(home, manifestContent);
         var before = home.ReadFile("global.json");
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
@@ -539,7 +567,28 @@ internal sealed class SelfVersionServiceTests
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains(expectedDetail);
-        await Assert.That(exception.Message).Contains(".config/dotnet-tools.json");
+        await Assert.That(exception.Message).Contains("dotnet-tools.json");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
+    }
+
+    // The .NET SDK before version 10 created the manifest under .config, and the dotnet CLI would still write
+    // bv's pin there: the update must fail before the CLI runs, naming the move.
+    [Test]
+    public async Task UpdateRepository_WithManifestUnderDotConfig_FailsBeforeChangingAnything()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        home.WriteFile(".config/dotnet-tools.json", """{ "version": 1, "isRoot": true, "tools": { } }""");
+        var before = home.ReadFile("global.json");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
@@ -767,9 +816,5 @@ internal sealed class SelfVersionServiceTests
         WriteRawToolManifest(home, content);
     }
 
-    private static void WriteRawToolManifest(TempHome home, string content)
-    {
-        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
-        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), content);
-    }
+    private static void WriteRawToolManifest(TempHome home, string content) => home.WriteFile("dotnet-tools.json", content);
 }

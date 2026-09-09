@@ -43,7 +43,7 @@ internal sealed record ReleaseHarnessOptions
 
     /// <summary>
     /// Gets the number of self-reference targets the repository contains, out of the three the updater knows
-    /// about: <c>global.json</c>, <c>.config/dotnet-tools.json</c>, and <c>Directory.Packages.props</c>, in
+    /// about: <c>global.json</c>, <c>dotnet-tools.json</c>, and <c>Directory.Packages.props</c>, in
     /// that order. What is written is a prefix of that list: a repository legitimately has fewer than all
     /// three, and one that references none of the packages it produces has none at all.
     /// </summary>

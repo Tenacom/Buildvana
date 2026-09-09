@@ -40,7 +40,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`Buildvana.Runtime` package](docs/introduction.md#packages) holds the typed models `bv` shares with the hooks: the resolved configuration, the hook args, and the well-known paths.
 - The [`FileBasedApps` module](docs/sdk-modules/file-based-apps.md) pins `Buildvana.Runtime` to the version of Buildvana SDK in a file-based app, and suppresses SA1402 and SA1649 there.
 - Before running a command that uses Buildvana SDK, `bv` runs [the SDK version check](docs/command-line.md#the-sdk-version-check), which `--skip-sdk-check` skips.
-- When `.config/dotnet-tools.json` pins `bv`, the pinned `bv` [runs in place of the invoked one](docs/command-line.md#delegation), unless `--skip-delegation` is passed.
+- When `dotnet-tools.json` pins `bv`, the pinned `bv` [runs in place of the invoked one](docs/command-line.md#delegation), unless `--skip-delegation` is passed.
 - [`bv self-update`](docs/tool-commands/self-update.md) moves every Buildvana pin of the repository to one version: the version of the invoked `bv`, or the one `--to` names.
 - [`bv version show`](docs/tool-commands/version.md#bv-version-show) prints the current and published versions, and [`bv version advance`](docs/tool-commands/version.md#bv-version-advance) applies a version spec change to `VERSION`.
 - [`bv dependencies`](docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
@@ -84,6 +84,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `XmlDocs`, and the `XmlDocumentation` module [defaults `GenerateDocumentationFile`](docs/sdk-modules/xml-documentation.md#migrating-from-xmldocs) per project type instead.
 - **BREAKING CHANGE**: Buildvana SDK raises BVSDK1006 on a project whose [SDK does not layer on `Microsoft.NET.Sdk`](docs/introduction.md#project-types), where such a project used to build.
 - **BREAKING CHANGE**: A file-based app is a [project type of its own](docs/internal-use-properties.md#project-type), `BV_IsFileBasedAppProject`, so `BV_IsExeProject` is `false` for it.
+- **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](docs/directory-structure.md#migration-from-configdotnet-toolsjson) when a repository holds one.
 - The [`ReleaseAssetList` module](docs/sdk-modules/release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for a file-based app.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.

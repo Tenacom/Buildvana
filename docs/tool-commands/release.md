@@ -138,7 +138,7 @@ After the artifacts are built, `bv release` runs the [`release/post-release` hoo
 A self-reference is a pin of a package the release produced, in one of three files:
 
 - `global.json`, under `msbuild-sdks`;
-- `.config/dotnet-tools.json`, under `tools`;
+- `dotnet-tools.json`, under `tools`;
 - `Directory.Packages.props`, as a `PackageVersion` item.
 
 `bv` splices the new version over the old one, and leaves the rest of the file as it was, line endings and comments included.

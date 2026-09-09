@@ -98,7 +98,7 @@ internal sealed class DependencyDiscoveryTests
     private static void WriteRepository(TempHome home)
     {
         home.WriteFile("global.json", GlobalJson);
-        home.WriteFile(".config/dotnet-tools.json", """{ "tools": { "ngbv": { "version": "0.5.1" } } }""");
+        home.WriteFile("dotnet-tools.json", """{ "tools": { "ngbv": { "version": "0.5.1" } } }""");
         home.WriteFile("tools/report.cs", "#:package Spectre.Console@0.51.0\n#:sdk Microsoft.Build.Traversal@4.1.0\n");
         home.WriteFile("Test.slnx", """<Solution><Project Path="src/App/App.csproj" /></Solution>""");
         home.WriteFile("src/App/App.csproj", Project);

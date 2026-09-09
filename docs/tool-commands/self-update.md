@@ -28,8 +28,9 @@ bv self-update [OPTIONS]
 `bv`, `Buildvana.Sdk`, and `Buildvana.Runtime` are released together, and a repository pins them at one version.
 `bv self-update` moves every pin of the three to the target version, in this order:
 
-1. The `bv` entry of the tool manifest, `.config/dotnet-tools.json`, through `dotnet tool update bv --version <target>`.
-   When the manifest has no `bv` entry, `dotnet tool install bv --version <target> --create-manifest-if-needed` adds it, and creates the manifest when the repository has none.
+1. The `bv` entry of the tool manifest, `dotnet-tools.json`, through `dotnet tool update bv --version <target> --tool-manifest dotnet-tools.json`.
+   When the manifest has no `bv` entry, `dotnet tool install bv --version <target> --tool-manifest dotnet-tools.json` adds it.
+   When the home directory has no manifest, `dotnet new tool-manifest` creates it there first.
    The .NET CLI downloads the version too, so the next `dotnet bv` runs it.
 2. The `Buildvana.Sdk` entry under `msbuild-sdks` in `global.json`.
    `bv` creates the file, or the section, when it is missing, and keeps the formatting of the file otherwise.

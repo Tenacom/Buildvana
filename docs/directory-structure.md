@@ -12,7 +12,8 @@ This page describes the recommended layout of a repository that uses Buildvana S
 - [Home directory](#home-directory)
   - [Location of the home directory](#location-of-the-home-directory)
 - [`.buildvana-temp\`](#buildvana-temp)
-- [`.config\dotnet-tools.json`](#configdotnet-toolsjson)
+- [`dotnet-tools.json`](#dotnet-toolsjson)
+  - [Migration from `.config\dotnet-tools.json`](#migration-from-configdotnet-toolsjson)
 - [`artifacts\`](#artifacts)
 - [`src\`, `tests\`, `samples\`](#src-tests-samples)
 - [`Common.props` and `Common.targets`](#commonprops-and-commontargets)
@@ -46,10 +47,6 @@ On a system other than Windows, MSBuild turns a backslash into a slash when it a
 |
 +--- .buildvana-temp\          <<< Scratch directory of bv (machine-generated; add to .gitignore)
 |
-+--- .config\
-|    |
-|    +--- dotnet-tools.json    <<< .NET local tool manifest; pins the bv version that `dotnet bv` runs
-|
 +--- artifacts\                <<< (*) Results of builds
 |
 +--- samples\                  <<< Sample projects
@@ -74,6 +71,8 @@ On a system other than Windows, MSBuild turns a backslash into a slash when it a
 |
 +--- Directory.Build.props     <<< (*) Scaffold files that import Buildvana SDK
 +--- Directory.Build.targets
+|
++--- dotnet-tools.json         <<< .NET local tool manifest; pins the bv version that `dotnet bv` runs
 |
 +--- global.json               <<< (*) Pins the Buildvana SDK version, and optionally the .NET SDK version
 |
@@ -139,15 +138,37 @@ Add it to `.gitignore`.
 
 ---
 
-## `.config\dotnet-tools.json`
+## `dotnet-tools.json`
 
 [`dotnet-tools.json`](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use) is the .NET local tool manifest.
 It pins the versions of the .NET tools the repository uses, so that `dotnet <tool>` runs the pinned version.
 A repository that uses Buildvana usually pins `bv` there.
 The manifest is optional: `bv` also runs as a global tool, or through `dnx`.
 
+The manifest sits in the home directory.
+`bv` reads that manifest, and never one of a directory above the home directory.
 When the manifest pins `bv`, the pinned `bv` runs in place of the invoked one.
 [Delegation](command-line.md#delegation) says when `bv` delegates, and what the delegated run gets.
+[`bv self-update`](tool-commands/self-update.md) moves the `bv` pin, and creates the manifest when the home directory has none.
+A manifest in a subdirectory pins the tools run from there, and [`bv dependencies`](tool-commands/dependencies.md) manages its pins as well.
+
+`bv` does not read `.config\dotnet-tools.json`.
+When the home directory, or a directory under it, holds one, `bv` stops with an error that names the file and the move.
+[Migration from `.config\dotnet-tools.json`](#migration-from-configdotnet-toolsjson) says why, and how to move the file.
+
+### Migration from `.config\dotnet-tools.json`
+
+The .NET SDK before version 10 created the manifest as `.config\dotnet-tools.json`, and the dotnet CLI reads it in either place.
+`bv` reads `dotnet-tools.json` alone, where the .NET SDK creates it.
+Move the manifest up one level, and delete `.config\` when it is empty:
+
+```shell
+git mv .config/dotnet-tools.json dotnet-tools.json
+```
+
+Then update every path that names the file: CI workflows, cache keys, and scripts.
+A cache key that hashes `.config/dotnet-tools.json` matches nothing after the move, so the key stops changing.
+`dotnet tool restore` needs no change, because the dotnet CLI reads the manifest in either place.
 
 ---
 

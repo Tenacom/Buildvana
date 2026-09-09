@@ -138,10 +138,10 @@ internal sealed partial class SelfVersionService
     /// <paramref name="toVersion"/> names.
     /// </summary>
     /// <remarks>
-    /// <para>The tool manifest is updated through <c>dotnet tool update</c> (or <c>dotnet tool install
-    /// --create-manifest-if-needed</c> when there is no bv entry yet), which also downloads the version so the
-    /// next <c>dotnet bv</c> invocation can run it. The <c>global.json</c> pin is rewritten in place, creating
-    /// the file or the <c>msbuild-sdks</c> section as needed. Family pins found by
+    /// <para>The tool manifest is updated through <c>dotnet tool update</c> (or <c>dotnet tool install</c> when
+    /// there is no bv entry yet, after <c>dotnet new tool-manifest</c> when there is no manifest at all), which
+    /// also downloads the version so the next <c>dotnet bv</c> invocation can run it. The <c>global.json</c>
+    /// pin is rewritten in place, creating the file or the <c>msbuild-sdks</c> section as needed. Family pins found by
     /// <see cref="FamilyPinUpdater"/> — package items in MSBuild-syntax files, versioned directives in
     /// file-based apps — are spliced in place, except those whose version is not a literal (a property
     /// reference, a range, a floating version), which are reported and left alone. The configuration file's
@@ -297,8 +297,11 @@ internal sealed partial class SelfVersionService
     // Pins the target version in the tool manifest through the dotnet CLI, which rewrites the manifest and
     // downloads the version in one go — hand-editing the manifest would leave the pin unrestored. The choice
     // between update and install is keyed on entry presence, mirroring the CLI's own contract: update rewrites
-    // an existing entry, and install creates the manifest itself when the repository has none. (An entry with
-    // an unusable version never reaches this point; EnsureUsableManifestEntry rejects it up front.)
+    // an existing entry, and install adds one. (An entry with an unusable version never reaches this point;
+    // EnsureUsableManifestEntry rejects it up front.) The manifest itself is created with `dotnet new
+    // tool-manifest`, in the home directory, when there is none. Left to `dotnet tool install`, the CLI picks
+    // the directory by its own markers — a `.git` directory anywhere above, then a solution file — which can be
+    // an ancestor of the home directory. --tool-manifest names the file for the same reason.
     // The CLI runs even when the manifest already pins the target: self-update is delegation-exempt, so the
     // pinned version need not be the one running, or even be present on the machine — and with --to this run
     // is the promised existence check. The dotnet CLI takes an already-pinned version in stride.
@@ -317,9 +320,22 @@ internal sealed partial class SelfVersionService
         // EnsureNoUnforcedDowngrade), so pass the flag exactly when bv has itself authorized the downgrade,
         // leaving the CLI's guard armed on every other path.
         var isDowngrade = currentPin is not null && VersionComparer.VersionRelease.Compare(currentPin, target) > 0;
+        if (!File.Exists(_home.GetFullPath(ToolManifest.RelativePath)))
+        {
+            await RunDotNetAsync(["new", "tool-manifest"], cancellationToken).ConfigureAwait(false);
+        }
+
         string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", targetText, "--allow-downgrade"]
             : hasEntry ? ["tool", "update", ToolPackageId, "--version", targetText]
-            : ["tool", "install", ToolPackageId, "--version", targetText, "--create-manifest-if-needed"];
+            : ["tool", "install", ToolPackageId, "--version", targetText];
+        await RunDotNetAsync([.. args, "--tool-manifest", ToolManifest.RelativePath], cancellationToken).ConfigureAwait(false);
+        return !hasEntry ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
+            : isUnchanged ? $"{ToolPackageId}: {targetText} (tool manifest, unchanged)"
+            : $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)";
+    }
+
+    private async Task RunDotNetAsync(string[] args, CancellationToken cancellationToken)
+    {
         _ = await _processRunner.RunAsync(
             DotNetMuxer.Path,
             args,
@@ -327,9 +343,6 @@ internal sealed partial class SelfVersionService
             onStdout: line => _reporter.ChildOutput(line, null),
             onStderr: line => _reporter.ChildError(line, null),
             cancellationToken: cancellationToken).ConfigureAwait(false);
-        return !hasEntry ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
-            : isUnchanged ? $"{ToolPackageId}: {targetText} (tool manifest, unchanged)"
-            : $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)";
     }
 
     private string UpdateGlobalJson(string? currentPinText, NuGetVersion? currentPin, NuGetVersion target)

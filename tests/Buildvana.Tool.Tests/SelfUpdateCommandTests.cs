@@ -149,7 +149,6 @@ internal sealed class SelfUpdateCommandTests
 
     private static void WriteToolManifest(TempHome home, string version)
     {
-        _ = Directory.CreateDirectory(Path.Combine(home.RootPath, ".config"));
         var content = $$"""
             {
               "version": 1,
@@ -165,6 +164,6 @@ internal sealed class SelfUpdateCommandTests
             }
 
             """;
-        home.WriteFile(Path.Combine(".config", "dotnet-tools.json"), content);
+        home.WriteFile("dotnet-tools.json", content);
     }
 }

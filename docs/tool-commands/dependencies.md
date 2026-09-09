@@ -60,7 +60,7 @@ Four _scopes_ divide the dependencies, one per kind and per file:
 | ---------- | -------------------- | --------------------------------------------------------------------------------------------------- |
 | `netsdk`   | The .NET SDK version | `global.json`, in the `sdk` section                                                                 |
 | `sdks`     | MSBuild project SDKs | `global.json`, in the `msbuild-sdks` section, and `#:sdk` directives                                |
-| `tools`    | .NET local tools     | `.config/dotnet-tools.json`                                                                         |
+| `tools`    | .NET local tools     | `dotnet-tools.json` files, in the home directory and its subdirectories                             |
 | `packages` | NuGet package pins   | central package management files, project files, additional group files, and `#:package` directives |
 
 `buildvana.jsonc` decides which scopes are managed at all.
@@ -282,7 +282,7 @@ Package pins and project SDK pins are spliced in the file that declares them.
 Only the version text changes, so formatting, comments, attribute order, and encoding survive byte for byte.
 A pin declared twice at the same version, once per target framework, moves in both places, because MSBuild evaluated the two as one pin.
 
-A tool is handed to `dotnet tool update <id> --local --version <target>`, one tool at a time.
+A tool is handed to `dotnet tool update <id> --local --version <target> --tool-manifest <manifest>`, one tool at a time, where `<manifest>` is the file that declares the pin.
 The CLI then keeps the manifest and the installed tools in agreement.
 `--all` is unusable here.
 For a tool pinned to a prerelease line, it insists on the latest stable version, which is a downgrade, and then refuses to do it.
