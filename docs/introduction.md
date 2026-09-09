@@ -66,6 +66,7 @@ Each table below states a status for every item.
 | Multi-platform and cross-platform projects               | Supported   |
 | Libraries                                                | Supported   |
 | Console apps                                             | Supported   |
+| File-based apps                                          | Supported   |
 | Windows Forms                                            | Supported   |
 | ASP.NET                                                  | Supported   |
 | Projects using the `Microsoft.Build.NoTargets` SDK       | Supported   |

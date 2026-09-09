@@ -27,7 +27,7 @@ The [`AlternatePack` module](alternate-pack.md) adds its zip files and setup pro
 ### `GenerateReleaseAssetList` property
 
 Whether the module writes the list.
-The default is `true`, except in a [library or test project](../internal-use-properties.md#project-type), where it is `false`.
+The default is `true`, except in a [library, test, or file-based app project](../internal-use-properties.md#project-type), where it is `false`.
 The NuGet package of a library needs no list, because `bv release` uploads every package of the artifacts directory.
 Set the property to `true` in a library that produces another file to release.
 

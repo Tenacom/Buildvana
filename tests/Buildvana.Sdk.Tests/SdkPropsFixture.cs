@@ -27,6 +27,7 @@ internal sealed class SdkPropsFixture : IDisposable
 
     private static readonly string[] ProjectTypeProperties =
     [
+        "BV_IsFileBasedAppProject",
         "BV_IsNoTargetsProject",
         "BV_IsTestProject",
         "BV_IsLibraryProject",

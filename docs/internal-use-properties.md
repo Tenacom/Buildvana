@@ -33,17 +33,19 @@ The property may need a public counterpart, or the need may point at a bug.
 
 ## Project type
 
-Four properties say what kind of project Buildvana SDK is building.
+Five properties say what kind of project Buildvana SDK is building.
 `BeforeNETSdk.targets` computes them right after the project body, in the order of the table, and the first condition that holds wins.
 At most one of them is `true`, and the others are `false`.
 
-| Property                | `true` when the project                       |
-| ----------------------- | --------------------------------------------- |
-| `BV_IsNoTargetsProject` | uses the `Microsoft.Build.NoTargets` SDK      |
-| `BV_IsTestProject`      | sets `IsTestingPlatformApplication` to `true` |
-| `BV_IsLibraryProject`   | sets `OutputType` to `Library`                |
-| `BV_IsExeProject`       | sets `OutputType` to `Exe` or `WinExe`        |
+| Property                   | `true` when the project                           |
+| -------------------------- | ------------------------------------------------- |
+| `BV_IsFileBasedAppProject` | is a file-based app, marked by `FileBasedProgram` |
+| `BV_IsNoTargetsProject`    | uses the `Microsoft.Build.NoTargets` SDK          |
+| `BV_IsTestProject`         | sets `IsTestingPlatformApplication` to `true`     |
+| `BV_IsLibraryProject`      | sets `OutputType` to `Library`                    |
+| `BV_IsExeProject`          | sets `OutputType` to `Exe` or `WinExe`            |
 
+`FileBasedProgram` is the property the .NET CLI sets in the project it generates for a [file-based app](sdk-modules/file-based-apps.md).
 `IsTestingPlatformApplication` is the property `dotnet test` reads to find a test project under Microsoft.Testing.Platform.
 Buildvana supports that platform alone, so the `IsTestProject` property of VSTest plays no part.
 
@@ -53,12 +55,13 @@ A `.props` file sees them empty.
 
 The [`StandardAnalyzers`](sdk-modules/standard-analyzers.md) and [`XmlDocumentation`](sdk-modules/xml-documentation.md) modules read them to set the defaults of four properties.
 
-| Project type            | `EnableNETAnalyzers` | `UseStyleCopAnalyzers` | `UsePublicApiAnalyzers` | `GenerateDocumentationFile` |
-| ----------------------- | :------------------: | :--------------------: | :---------------------: | :-------------------------: |
-| `BV_IsNoTargetsProject` |       `false`        |        `false`         |         `false`         |           `false`           |
-| `BV_IsTestProject`      |        `true`        |         `true`         |         `false`         |           `false`           |
-| `BV_IsLibraryProject`   |        `true`        |         `true`         |         `true`          |           `true`            |
-| `BV_IsExeProject`       |        `true`        |         `true`         |         `false`         |           `false`           |
+| Project type               | `EnableNETAnalyzers` | `UseStyleCopAnalyzers` | `UsePublicApiAnalyzers` | `GenerateDocumentationFile` |
+| -------------------------- | :------------------: | :--------------------: | :---------------------: | :-------------------------: |
+| `BV_IsFileBasedAppProject` |        `true`        |         `true`         |         `false`         |           `false`           |
+| `BV_IsNoTargetsProject`    |       `false`        |        `false`         |         `false`         |           `false`           |
+| `BV_IsTestProject`         |        `true`        |         `true`         |         `false`         |           `false`           |
+| `BV_IsLibraryProject`      |        `true`        |         `true`         |         `true`          |           `true`            |
+| `BV_IsExeProject`          |        `true`        |         `true`         |         `false`         |           `false`           |
 
 ---
 
