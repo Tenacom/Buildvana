@@ -113,6 +113,17 @@
     <BuildvanaModulesDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\Modules'))</BuildvanaModulesDirectory>
   </PropertyGroup>
 
+  <!--
+    Have Microsoft.NET.Sdk import BeforeNETSdk.targets right after the project body, before it reads the project.
+    Its Sdk.targets imports the files that BeforeMicrosoftNETSdkTargets names before anything else, and every SDK
+    that layers on Microsoft.NET.Sdk goes through that file. Sdk.targets raises BVSDK1006 when the import did not happen.
+    Append, so that a file a Common.props or a project names stays.
+  -->
+  <PropertyGroup Condition="$(BV_IsConfigured)">
+    <BeforeMicrosoftNETSdkTargets Condition="'$(BeforeMicrosoftNETSdkTargets)' != ''">$(BeforeMicrosoftNETSdkTargets);</BeforeMicrosoftNETSdkTargets>
+    <BeforeMicrosoftNETSdkTargets>$(BeforeMicrosoftNETSdkTargets)$(BuildvanaSdkDirectory)BeforeNETSdk.targets</BeforeMicrosoftNETSdkTargets>
+  </PropertyGroup>
+
   <!-- Select an appropriate assembly for compiled tasks. -->
   <PropertyGroup>
     <BV_BinariesDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\bin'))</BV_BinariesDir>

@@ -1,36 +1,20 @@
 <Project>
 
   <!--
-    If XML documentation generation is enabled:
-      * set GenerateDocumentationFile to true, whatever the project set (BeforeModules.props set it to true,
-        and BeforeModules.targets warns when the project set anything else)
-      * set DocumentationFile when it is empty, because Microsoft.NET.Sdk.BeforeCommon.targets empties it when it
-        reads a GenerateDocumentationFile other than true. The value is the one the same file sets when it reads true.
+    If the project generates no XML documentation file, suppress the documentation warnings:
+      * the compiler's, as suggested in https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA0001.md
+      * StyleCop's, because of https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3097
+      * SA0001 itself (see also https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3092 for a reason why)
+    Microsoft.NET.Sdk.BeforeCommon.targets has coalesced GenerateDocumentationFile to true or false by now,
+    and has emptied DocumentationFile when it is false.
   -->
-  <PropertyGroup Condition="$(XmlDocs)">
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DocumentationFile Condition="'$(DocumentationFile)' == ''">$(IntermediateOutputPath)$(AssemblyName).xml</DocumentationFile>
-  </PropertyGroup>
-
-  <!--
-    If XML documentation generation is disabled:
-      * set GenerateDocumentationFile to false (it was set to true in BeforeModules.props)
-      * set DocumentationFile to the empty string
-      * suppress documentation-related compiler warnings, as suggested in https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA0001.md
-      * also suppress documentation-related StyleCop warnings because of https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3097
-      * suppress warning SA0001 (see also https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3092 for a reason why)
-      * disable publishing of the documentation file, because it's not supposed to be there to start with
-  -->
-  <PropertyGroup Condition="!$(XmlDocs)">
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <DocumentationFile />
+  <PropertyGroup Condition="'$(GenerateDocumentationFile)' != 'true'">
     <NoWarn Condition="'$(NoWarn)' != ''">$(NoWarn);</NoWarn>
     <NoWarn>$(NoWarn)CS1573;CS1591;CS1712</NoWarn>
     <NoWarn>$(NoWarn);SA0001</NoWarn>
     <NoWarn>$(NoWarn);SA1600;SA1601;SA1602;SA1603;SA1604;SA1605;SA1606;SA1607;SA1608;SA1609</NoWarn>
     <NoWarn>$(NoWarn);SA1610;SA1611;SA1612;SA1613;SA1614;SA1615;SA1616;SA1617;SA1618;SA1619</NoWarn>
     <NoWarn>$(NoWarn);SA1620;SA1621;SA1622;SA1623;SA1624;SA1625;SA1626;SA1627;SA1628;SA1629</NoWarn>
-    <PublishDocumentationFile>false</PublishDocumentationFile>
   </PropertyGroup>
 
 </Project>

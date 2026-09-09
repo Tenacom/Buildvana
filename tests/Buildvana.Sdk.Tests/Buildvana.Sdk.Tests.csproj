@@ -25,6 +25,9 @@
   <ItemGroup>
     <AssemblyMetadata Include="RepositoryRoot" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..'))" />
     <AssemblyMetadata Include="RealSdkPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.props'))" />
+    <AssemblyMetadata Include="RealSdkTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.targets'))" />
+    <AssemblyMetadata Include="RealBeforeNETSdkTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\BeforeNETSdk.targets'))" />
+    <AssemblyMetadata Include="RealModulesDirectory" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules'))" />
     <AssemblyMetadata Include="RealAlternatePackInnoSetupTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AlternatePack\Module.Core.InnoSetup.targets'))" />
     <AssemblyMetadata Include="RealAlternatePackPublishToFoldersTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AlternatePack\Module.Core.PublishToFolders.targets'))" />
     <AssemblyMetadata Include="RealAssemblySigningModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AssemblySigning\Module.targets'))" />
@@ -34,8 +37,6 @@
     <AssemblyMetadata Include="RealNuGetPackPackableProjectTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\NuGetPack\Module.Core.PackableProject.targets'))" />
     <AssemblyMetadata Include="RealReleaseAssetListModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\ReleaseAssetList\Module.targets'))" />
     <AssemblyMetadata Include="RealSourceGeneratorsAfterModulesCoreTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\SourceGenerators\AfterModules.Core.targets'))" />
-    <AssemblyMetadata Include="RealXmlDocumentationBeforeModulesPropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\BeforeModules.props'))" />
-    <AssemblyMetadata Include="RealXmlDocumentationBeforeModulesTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\BeforeModules.targets'))" />
     <AssemblyMetadata Include="RealXmlDocumentationModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\Module.targets'))" />
   </ItemGroup>
 

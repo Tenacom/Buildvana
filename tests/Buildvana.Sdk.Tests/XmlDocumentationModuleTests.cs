@@ -6,23 +6,22 @@ using Buildvana.Core.Testing;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
 
-// Evaluates the real BeforeModules.props, BeforeModules.targets, and Module.targets of the XmlDocumentation
-// module in a Microsoft.NET.Sdk project of a temporary home directory. Directory.Build.props imports the
-// props file, and Directory.Build.targets imports the two targets files, so that the .NET SDK reads
-// GenerateDocumentationFile between them, as it does in a build. Evaluation-only: no targets are executed,
-// so assertions are limited to properties and items.
-internal sealed partial class XmlDocumentationModuleTests
+// Evaluates the real BeforeNETSdk.targets and the XmlDocumentation module in a Microsoft.NET.Sdk project of a
+// temporary home directory. Directory.Build.props names BeforeNETSdk.targets in BeforeMicrosoftNETSdkTargets and
+// points BuildvanaModulesDirectory at the real modules, so the .NET SDK imports the module's
+// Module.BeforeNETSdk.targets right after the project body. Directory.Build.targets imports the module's
+// Module.targets, which runs after the .NET SDK has read GenerateDocumentationFile, as in a build.
+// Evaluation-only: no targets are executed, so assertions are limited to properties.
+internal sealed class XmlDocumentationModuleTests
 {
     [Test]
     public async Task Evaluate_Library_GeneratesDocumentationFile()
     {
         using var home = new TempHome();
         var result = Evaluate(home, "Library", string.Empty);
-        await Assert.That(result.XmlDocs).IsEqualTo("true");
         await Assert.That(result.GenerateDocumentationFile).IsEqualTo("true");
         await Assert.That(result.DocumentationFile).EndsWith("Test.xml");
         await Assert.That(result.NoWarn).DoesNotContain("SA0001");
-        await Assert.That(result.Warnings).IsEmpty();
     }
 
     [Test]
@@ -30,59 +29,64 @@ internal sealed partial class XmlDocumentationModuleTests
     {
         using var home = new TempHome();
         var result = Evaluate(home, "Exe", string.Empty);
-        await Assert.That(result.XmlDocs).IsEqualTo("false");
         await Assert.That(result.GenerateDocumentationFile).IsEqualTo("false");
         await Assert.That(result.DocumentationFile).IsEmpty();
         await Assert.That(result.NoWarn).Contains("SA0001");
-        await Assert.That(result.Warnings).IsEmpty();
     }
 
-    // BeforeModules.props sets GenerateDocumentationFile to true before the project, and the .NET SDK empties
-    // DocumentationFile when the project sets it back to false. XmlDocs used to stay true for such a library,
-    // so nothing suppressed the documentation rules, and StyleCop reported SA0001. XmlDocs is the one switch,
-    // so the module sets the file back, to the path the .NET SDK gives a library that leaves the property alone,
-    // and warns.
+    // The module used to read XmlDocs, default it to true for a library, and force GenerateDocumentationFile to
+    // true before the project. A library that set GenerateDocumentationFile back to false got no file from the
+    // .NET SDK, and no suppression from the module, so StyleCop reported SA0001.
     [Test]
-    public async Task Evaluate_LibraryWithGenerateDocumentationFileOff_GeneratesDocumentationFileAndWarns()
+    public async Task Evaluate_LibraryWithGenerateDocumentationFileOff_SuppressesDocumentationWarnings()
     {
         using var home = new TempHome();
-        using var plainHome = new TempHome();
         var result = Evaluate(home, "Library", "<GenerateDocumentationFile>false</GenerateDocumentationFile>");
-        var plain = Evaluate(plainHome, "Library", string.Empty);
-        await Assert.That(result.XmlDocs).IsEqualTo("true");
-        await Assert.That(result.GenerateDocumentationFile).IsEqualTo("true");
-        await Assert.That(result.DocumentationFile).IsEqualTo(plain.DocumentationFile);
-        await Assert.That(result.NoWarn).DoesNotContain("SA0001");
-        await Assert.That(result.Warnings).IsEquivalentTo(["BVSDK1800"]);
+        await Assert.That(result.GenerateDocumentationFile).IsEqualTo("false");
+        await Assert.That(result.DocumentationFile).IsEmpty();
+        await Assert.That(result.NoWarn).Contains("SA0001");
     }
 
+    // With XmlDocs at its default of false for an Exe, the module used to set GenerateDocumentationFile back to
+    // false, so an Exe that set the property got no file.
     [Test]
-    public async Task Evaluate_ExeWithXmlDocsOn_GeneratesDocumentationFile()
+    public async Task Evaluate_ExeWithGenerateDocumentationFileOn_GeneratesDocumentationFile()
     {
         using var home = new TempHome();
-        var result = Evaluate(home, "Exe", "<XmlDocs>true</XmlDocs>");
-        await Assert.That(result.XmlDocs).IsEqualTo("true");
+        var result = Evaluate(home, "Exe", "<GenerateDocumentationFile>true</GenerateDocumentationFile>");
         await Assert.That(result.GenerateDocumentationFile).IsEqualTo("true");
         await Assert.That(result.DocumentationFile).EndsWith("Test.xml");
         await Assert.That(result.NoWarn).DoesNotContain("SA0001");
-        await Assert.That(result.Warnings).IsEmpty();
     }
 
-    private static Evaluation Evaluate(TempHome home, string outputType, string properties)
+    // The .NET SDK turns GenerateDocumentationFile on when the project sets DocumentationFile alone, and the module
+    // leaves that to it.
+    [Test]
+    public async Task Evaluate_ExeWithDocumentationFileAlone_GeneratesDocumentationFile()
+    {
+        using var home = new TempHome();
+        var result = Evaluate(home, "Exe", "<DocumentationFile>docs/Test.xml</DocumentationFile>");
+        await Assert.That(result.GenerateDocumentationFile).IsEqualTo("true");
+        await Assert.That(result.DocumentationFile).IsEqualTo("docs/Test.xml");
+        await Assert.That(result.NoWarn).DoesNotContain("SA0001");
+    }
+
+    private static (string GenerateDocumentationFile, string DocumentationFile, string NoWarn) Evaluate(
+        TempHome home,
+        string outputType,
+        string properties)
     {
         var propsText = $"""
             <Project>
-              <Import Project="{GetRealPath("RealXmlDocumentationBeforeModulesPropsPath")}" />
+              <PropertyGroup>
+                <BeforeMicrosoftNETSdkTargets>{GetRealPath("RealBeforeNETSdkTargetsPath")}</BeforeMicrosoftNETSdkTargets>
+                <BuildvanaModulesDirectory>{GetRealPath("RealModulesDirectory")}</BuildvanaModulesDirectory>
+              </PropertyGroup>
             </Project>
             """;
         home.WriteFile("Directory.Build.props", propsText);
         var targetsText = $"""
             <Project>
-              <PropertyGroup>
-                <BV_IsLibraryProject>false</BV_IsLibraryProject>
-                <BV_IsLibraryProject Condition="'$(OutputType)' == 'Library'">true</BV_IsLibraryProject>
-              </PropertyGroup>
-              <Import Project="{GetRealPath("RealXmlDocumentationBeforeModulesTargetsPath")}" />
               <Import Project="{GetRealPath("RealXmlDocumentationModuleTargetsPath")}" />
             </Project>
             """;
@@ -101,13 +105,10 @@ internal sealed partial class XmlDocumentationModuleTests
 
         using var collection = new ProjectCollection();
         var project = Project.FromFile(projectPath, new ProjectOptions { ProjectCollection = collection });
-        var warnings = project.GetItems("EvaluationWarning").Select(static item => item.EvaluatedInclude).ToList();
-        return new Evaluation(
-            project.GetPropertyValue("XmlDocs"),
+        return (
             project.GetPropertyValue("GenerateDocumentationFile"),
             project.GetPropertyValue("DocumentationFile"),
-            project.GetPropertyValue("NoWarn"),
-            warnings);
+            project.GetPropertyValue("NoWarn"));
     }
 
     private static string GetRealPath(string key)

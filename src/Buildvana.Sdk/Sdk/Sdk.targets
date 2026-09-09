@@ -24,35 +24,17 @@
                      Text="Sdk.props and Sdk.targets are in different directories." />
   </ItemGroup>
 
-  <!-- Determine the kind of project. -->
-  <PropertyGroup>
-    <BV_IsNoTargetsProject>false</BV_IsNoTargetsProject>
-    <BV_IsTestProject>false</BV_IsTestProject>
-    <BV_IsLibraryProject>false</BV_IsLibraryProject>
-    <BV_IsExeProject>false</BV_IsExeProject>
-  </PropertyGroup>
-  <Choose>
-    <When Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">
-      <PropertyGroup>
-        <BV_IsNoTargetsProject>true</BV_IsNoTargetsProject>
-      </PropertyGroup>
-    </When>
-    <When Condition="'$(IsTestingPlatformApplication)' == 'true'">
-      <PropertyGroup>
-        <BV_IsTestProject>true</BV_IsTestProject>
-      </PropertyGroup>
-    </When>
-    <When Condition="'$(OutputType)' == 'Library'">
-      <PropertyGroup>
-        <BV_IsLibraryProject>true</BV_IsLibraryProject>
-      </PropertyGroup>
-    </When>
-    <When Condition="'$(OutputType)' == 'Exe' Or '$(OutputType)' == 'WinExe'">
-      <PropertyGroup>
-        <BV_IsExeProject>true</BV_IsExeProject>
-      </PropertyGroup>
-    </When>
-  </Choose>
+  <!--
+    Check that BeforeNETSdk.targets has been imported.
+    Sdk.props names it in BeforeMicrosoftNETSdkTargets, and Microsoft.NET.Sdk imports it right after the project body.
+    A project SDK that does not layer on Microsoft.NET.Sdk skips it, and so does a project that overwrites the property.
+    The project type and the modules' Module.BeforeNETSdk.targets files are then missing.
+  -->
+  <ItemGroup Condition="$(BV_IsConfigured)">
+    <EvaluationError Condition="'$(BV_BeforeNETSdkTargetsHasBeenImported)' != 'true'"
+                     Include="BVSDK1006"
+                     Text="BeforeNETSdk.targets not imported." />
+  </ItemGroup>
 
   <!-- Import BeforeCommon.targets, Common.targets, and AfterCommon.targets files  -->
   <ImportGroup Condition="$(BV_IsConfigured)">

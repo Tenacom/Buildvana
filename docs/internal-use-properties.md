@@ -34,7 +34,7 @@ The property may need a public counterpart, or the need may point at a bug.
 ## Project type
 
 Four properties say what kind of project Buildvana SDK is building.
-`Sdk.targets` computes them in the order of the table, and the first condition that holds wins.
+`BeforeNETSdk.targets` computes them right after the project body, in the order of the table, and the first condition that holds wins.
 At most one of them is `true`, and the others are `false`.
 
 | Property                | `true` when the project                       |
@@ -48,16 +48,17 @@ At most one of them is `true`, and the others are `false`.
 Buildvana supports that platform alone, so the `IsTestProject` property of VSTest plays no part.
 
 The properties exist in the files MSBuild reads after the project body: the `.targets` files of the modules, and `BeforeCommon.targets`, `Common.targets`, and `AfterCommon.targets`.
+The `.targets` files of the .NET SDK see them too, because Buildvana SDK computes them before the .NET SDK reads the project.
 A `.props` file sees them empty.
 
 The [`StandardAnalyzers`](sdk-modules/standard-analyzers.md) and [`XmlDocumentation`](sdk-modules/xml-documentation.md) modules read them to set the defaults of four properties.
 
-| Project type            | `EnableNETAnalyzers` | `UseStyleCopAnalyzers` | `UsePublicApiAnalyzers` | `XmlDocs` |
-| ----------------------- | :------------------: | :--------------------: | :---------------------: | :-------: |
-| `BV_IsNoTargetsProject` |       `false`        |        `false`         |         `false`         |  `false`  |
-| `BV_IsTestProject`      |        `true`        |         `true`         |         `false`         |  `false`  |
-| `BV_IsLibraryProject`   |        `true`        |         `true`         |         `true`          |  `true`   |
-| `BV_IsExeProject`       |        `true`        |         `true`         |         `false`         |  `false`  |
+| Project type            | `EnableNETAnalyzers` | `UseStyleCopAnalyzers` | `UsePublicApiAnalyzers` | `GenerateDocumentationFile` |
+| ----------------------- | :------------------: | :--------------------: | :---------------------: | :-------------------------: |
+| `BV_IsNoTargetsProject` |       `false`        |        `false`         |         `false`         |           `false`           |
+| `BV_IsTestProject`      |        `true`        |         `true`         |         `false`         |           `false`           |
+| `BV_IsLibraryProject`   |        `true`        |         `true`         |         `true`          |           `true`            |
+| `BV_IsExeProject`       |        `true`        |         `true`         |         `false`         |           `false`           |
 
 ---
 
