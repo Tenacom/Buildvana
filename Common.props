@@ -38,7 +38,6 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile> <!--Do not generate XML documentation -->
-    <XmlDocs>false</XmlDocs> <!-- Read by the pinned Buildvana SDK. Remove once the pinned version reads GenerateDocumentationFile. -->
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
   </PropertyGroup>
 

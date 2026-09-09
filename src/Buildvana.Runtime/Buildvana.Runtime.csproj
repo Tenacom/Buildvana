@@ -8,7 +8,6 @@
     <TargetFramework>$(StandardTfm)</TargetFramework>
     <IsPackable>true</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <XmlDocs>true</XmlDocs> <!-- Read by the pinned Buildvana SDK. Remove once the pinned version reads GenerateDocumentationFile. -->
     <UsePublicApiAnalyzers>true</UsePublicApiAnalyzers>
   </PropertyGroup>
 
