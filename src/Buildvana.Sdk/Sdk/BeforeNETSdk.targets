@@ -13,17 +13,24 @@
 
   <!--
     Determine the kind of project.
-    Everything the conditions read is set by now: Microsoft.NET.Sdk.props defaults OutputType, a test framework
-    sets IsTestingPlatformApplication in its props, and Microsoft.Build.NoTargets sets UsingMicrosoftNoTargetsSdk
+    Everything the conditions read is set by now: the .NET CLI sets FileBasedProgram in the project it generates
+    for a file-based app, before the SDK import; Microsoft.NET.Sdk.props defaults OutputType; a test framework
+    sets IsTestingPlatformApplication in its props; and Microsoft.Build.NoTargets sets UsingMicrosoftNoTargetsSdk
     in its Sdk.props.
   -->
   <PropertyGroup>
+    <BV_IsFileBasedAppProject>false</BV_IsFileBasedAppProject>
     <BV_IsNoTargetsProject>false</BV_IsNoTargetsProject>
     <BV_IsTestProject>false</BV_IsTestProject>
     <BV_IsLibraryProject>false</BV_IsLibraryProject>
     <BV_IsExeProject>false</BV_IsExeProject>
   </PropertyGroup>
   <Choose>
+    <When Condition="'$(FileBasedProgram)' == 'true'">
+      <PropertyGroup>
+        <BV_IsFileBasedAppProject>true</BV_IsFileBasedAppProject>
+      </PropertyGroup>
+    </When>
     <When Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">
       <PropertyGroup>
         <BV_IsNoTargetsProject>true</BV_IsNoTargetsProject>

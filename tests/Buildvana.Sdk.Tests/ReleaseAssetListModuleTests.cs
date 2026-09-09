@@ -3,18 +3,40 @@
 
 using System.Reflection;
 using Buildvana.Core.Testing;
+using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 
 // Runs the real targets of the ReleaseAssetList module against a temporary project, and reads the list file
-// back. The project states the two project-type properties that Sdk.targets computes in a real build, and the
-// artifacts directory. The module used to default the description of an asset to "(no description given)",
-// which bv release then set as the GitHub label of the asset, shown in place of its file name.
+// back. The project states the three project-type properties that BeforeNETSdk.targets computes in a real build,
+// and the artifacts directory. The module used to default the description of an asset to "(no description
+// given)", which bv release then set as the GitHub label of the asset, shown in place of its file name.
 // One MSBuild build manager serves the whole process, so target tests run one at a time.
 [NotInParallel]
 internal sealed class ReleaseAssetListModuleTests
 {
     private const string ListFileName = "Test.assets.txt";
+
+    // A file-based app is not part of the solution bv pack packs, so the module writes no list for it.
+    [Test]
+    public async Task Evaluate_FileBasedApp_TurnsGenerateReleaseAssetListOff()
+    {
+        using var home = new TempHome();
+        var projectText = $"""
+            <Project>
+              <PropertyGroup>
+                <BV_IsLibraryProject>false</BV_IsLibraryProject>
+                <BV_IsTestProject>false</BV_IsTestProject>
+                <BV_IsFileBasedAppProject>true</BV_IsFileBasedAppProject>
+              </PropertyGroup>
+              <Import Project="{GetRealTargetsPath()}" />
+            </Project>
+            """;
+        home.WriteFile("Test.proj", projectText);
+        using var collection = new ProjectCollection();
+        var project = Project.FromFile(home.GetFullPath("Test.proj"), new ProjectOptions { ProjectCollection = collection });
+        await Assert.That(project.GetPropertyValue("GenerateReleaseAssetList")).IsEqualTo("false");
+    }
 
     [Test]
     public async Task WriteReleaseAssetList_WithTwoItems_WritesOneLinePerItem()
@@ -69,6 +91,7 @@ internal sealed class ReleaseAssetListModuleTests
               <PropertyGroup>
                 <BV_IsLibraryProject>false</BV_IsLibraryProject>
                 <BV_IsTestProject>false</BV_IsTestProject>
+                <BV_IsFileBasedAppProject>false</BV_IsFileBasedAppProject>
                 <ArtifactsDirectory>{artifactsDirectory}</ArtifactsDirectory>
                 <Configuration>Release</Configuration>
                 {defaultDescriptionProperty}

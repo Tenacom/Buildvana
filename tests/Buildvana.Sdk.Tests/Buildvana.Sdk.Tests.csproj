@@ -33,6 +33,7 @@
     <AssemblyMetadata Include="RealAssemblySigningModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AssemblySigning\Module.targets'))" />
     <AssemblyMetadata Include="RealDependenciesModulePropsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.props'))" />
     <AssemblyMetadata Include="RealDependenciesModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Dependencies\Module.targets'))" />
+    <AssemblyMetadata Include="RealFileBasedAppsModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\FileBasedApps\Module.targets'))" />
     <AssemblyMetadata Include="RealNuGetPackReadmeTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\NuGetPack\Readme.targets'))" />
     <AssemblyMetadata Include="RealNuGetPackPackableProjectTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\NuGetPack\Module.Core.PackableProject.targets'))" />
     <AssemblyMetadata Include="RealReleaseAssetListModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\ReleaseAssetList\Module.targets'))" />

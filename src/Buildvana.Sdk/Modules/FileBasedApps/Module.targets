@@ -1,0 +1,36 @@
+<Project>
+
+  <!--
+    A file-based app is a hook under {home}/.buildvana/hooks/, or any other file-based app built in the
+    repository, such as one under a tools/ directory. The .NET CLI sets FileBasedProgram to true in the project
+    it generates for the app, and BeforeNETSdk.targets computes BV_IsFileBasedAppProject from it.
+  -->
+
+  <!--
+    The app is named after its file, and no type declared in the file can match the file name.
+    SA1649, "File name should match first type name", is suppressed.
+  -->
+  <PropertyGroup Condition="'$(BV_IsFileBasedAppProject)' == 'true'">
+    <NoWarn Condition="'$(NoWarn)' != ''">$(NoWarn);</NoWarn>
+    <NoWarn>$(NoWarn)SA1649</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    The app can reference the Buildvana.Runtime package with an unversioned `#:package Buildvana.Runtime`
+    directive; the SDK pins the package to its own version, so bv, the SDK, and hooks always agree on the
+    shape of configuration and hook args. An explicitly versioned directive is left alone. Under central
+    package management a versioned directive fails with NU1008 (upstream SDK behavior); pin via your own
+    PackageVersion item instead, which the SDK likewise leaves alone.
+
+    With central package management enabled the pin is a PackageVersion item; otherwise the version
+    is stamped directly onto the PackageReference produced by the directive. Item conditions cannot
+    reference metadata of the updated item at evaluation time (MSB4191), hence the item functions.
+  -->
+  <ItemGroup Condition="'$(BV_IsFileBasedAppProject)' == 'true'">
+    <PackageVersion Include="Buildvana.Runtime" Version="$(BuildvanaSdkVersion)"
+                    Condition="'$(ManagePackageVersionsCentrally)' == 'true' and '@(PackageVersion->WithMetadataValue('Identity','Buildvana.Runtime'))' == ''" />
+    <PackageReference Update="Buildvana.Runtime" Version="$(BuildvanaSdkVersion)"
+                      Condition="'$(ManagePackageVersionsCentrally)' != 'true' and '@(PackageReference->WithMetadataValue('Identity','Buildvana.Runtime')->Metadata('Version'))' == ''" />
+  </ItemGroup>
+
+</Project>

@@ -1,9 +1,9 @@
 <Project>
   
-  <!-- The default for GenerateReleaseAssetList is true, except for libraries and test projects -->
+  <!-- The default for GenerateReleaseAssetList is true, except for libraries, test projects, and file-based apps -->
   <PropertyGroup Condition="'$(GenerateReleaseAssetList)' == ''">
     <GenerateReleaseAssetList>true</GenerateReleaseAssetList>
-    <GenerateReleaseAssetList Condition="$(BV_IsLibraryProject) Or $(BV_IsTestProject)">false</GenerateReleaseAssetList>
+    <GenerateReleaseAssetList Condition="$(BV_IsLibraryProject) Or $(BV_IsTestProject) Or $(BV_IsFileBasedAppProject)">false</GenerateReleaseAssetList>
   </PropertyGroup>
 
   <!-- Coalesce GenerateReleaseAssetList to a boolean value, defaulting to false -->

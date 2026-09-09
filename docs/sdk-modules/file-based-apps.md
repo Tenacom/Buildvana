@@ -1,6 +1,7 @@
-# `Hooks` module
+# `FileBasedApps` module
 
-This module pins the `Buildvana.Runtime` package to the version of Buildvana SDK, in every file-based app the repository builds.
+This module adapts a file-based app to the repository that builds it.
+It pins the `Buildvana.Runtime` package to the version of Buildvana SDK, and suppresses the one StyleCop rule such an app cannot meet.
 `bv`, Buildvana SDK, and the [hooks](../hooks.md) then agree on the shape of the configuration and of the hook args.
 
 ---
@@ -12,13 +13,15 @@ This module pins the `Buildvana.Runtime` package to the version of Buildvana SDK
 - [Configuration](#configuration)
 - [Usage](#usage)
   - [`#:package` directive](#package-directive)
+  - [Suppressed warnings](#suppressed-warnings)
+  - [Release asset list](#release-asset-list)
 
 ---
 
 ## Configuration
 
 The module has no property of its own, and Buildvana SDK imports it into every project.
-It acts on [file-based apps](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/file-based-programs) only.
+It acts on a [file-based app](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/file-based-programs) only, which [`BV_IsFileBasedAppProject`](../internal-use-properties.md#project-type) identifies.
 
 ---
 
@@ -38,3 +41,12 @@ Without central package management, the module writes the version into the `Pack
 
 Under central package management, a directive that states a version fails with NU1008, as any `PackageReference` item with a version does.
 To pin another version there, declare a `PackageVersion` item.
+
+### Suppressed warnings
+
+A file-based app is named after its file, and no type declared in the file can match the file name.
+The module adds SA1649, "File name should match first type name", to `NoWarn`.
+
+### Release asset list
+
+A file-based app is not part of the solution `bv pack` packs, so the [`ReleaseAssetList` module](release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for it.
