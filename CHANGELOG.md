@@ -81,6 +81,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module [defaults `UniqueZipFileName` to `true`](docs/sdk-modules/alternate-pack.md#publishfolder-items), where the default was `false` whatever the count.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNETFrameworkReferenceAssemblies` or adds [`Microsoft.NETFramework.ReferenceAssemblies`](https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/reference-assemblies), which the .NET SDK adds when no targeting pack is installed.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `XmlDocs`, and the `XmlDocumentation` module [defaults `GenerateDocumentationFile`](docs/sdk-modules/xml-documentation.md#migrating-from-xmldocs) per project type instead.
+- **BREAKING CHANGE**: Buildvana SDK raises BVSDK1006 on a project whose [SDK does not layer on `Microsoft.NET.Sdk`](docs/introduction.md#project-types), where such a project used to build.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
 - `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
