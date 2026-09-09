@@ -25,6 +25,8 @@ The `Write` tool strips the leading BOM, even when U+FEFF is embedded in the con
 
 When you must use `Write` to rewrite an existing `.cs` file in full, which also strips the BOM, prepend `0xEF 0xBB 0xBF` to the file afterwards.
 
+A scratch `.cs` file under `.claude/scratchpad/` needs neither the BOM nor the preamble. The `Common.props` there turns StyleCop off, and the `.editorconfig` sets `charset = utf-8`, so `Write` creates it directly.
+
 ## MSBuild XML files (`*.*proj`, `*.props`, `*.targets`)
 
 - No prolog (`<?xml ... ?>`)

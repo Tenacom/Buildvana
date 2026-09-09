@@ -1,0 +1,42 @@
+<Project>
+
+  <!--
+    Build options for scratch code: the throwaway programs and projects a session writes to check a fact. Every
+    property is stated here, whatever the Common.props of the home directory says, so that this file works in any
+    repository.
+  -->
+  <PropertyGroup>
+
+    <!--
+      Scratch code is verified by running it, not by reading it. No StyleCop, so no BOM, header, file name, or
+      comment layout rule, and no code style enforcement.
+    -->
+    <UseStyleCopAnalyzers>false</UseStyleCopAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+
+    <!--
+      The code analyzers stay, at the recommended level: "All" turns on the rules that ship off by default, and
+      scratch code does not earn them. A warning is still an error, so that a scratch project that builds is one
+      that builds clean.
+    -->
+    <AnalysisMode>Recommended</AnalysisMode>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      No documentation file, no public API, no package. The NuGetPack diagnostics run at evaluation, so a packable
+      scratch library would fail on a missing README. A scratch project that tests packing sets
+      IncludeNuGetPackSupport back in its own file.
+    -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
+    <IncludeNuGetPackSupport>false</IncludeNuGetPackSupport>
+
+    <!--
+      A scratch Exe that gets packed would otherwise write its asset list into the artifacts directory of the
+      repository, where bv release reads it.
+    -->
+    <GenerateReleaseAssetList>false</GenerateReleaseAssetList>
+
+  </PropertyGroup>
+
+</Project>
