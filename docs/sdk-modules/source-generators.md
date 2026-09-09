@@ -40,10 +40,11 @@ A `PackageReference` of yours to `Buildvana.Sdk` replaces the module's reference
 ### Roslyn version check
 
 The generators need the compiler APIs of a minimum Roslyn version, and an older compiler cannot run them.
-Before compilation, the module checks that the project is C# and that the compiler meets the minimum version.
-A project that fails either check gets error BVSDK1100 or error BVSDK1101.
+Before compilation, the module checks that the compiler meets the minimum version, and a project below it gets error BVSDK1101.
 The message of BVSDK1101 names the minimum version, and the .NET SDK and Visual Studio versions that ship it.
 The [toolchain](../introduction.md#toolchain) table of the introduction lists them too.
+The check also raises error BVSDK1100 when the project is not C#.
+A build never reaches it, because the `AdditionalAssemblyInfo` and `ThisAssemblyClass` modules turn themselves off outside C#.
 
 ---
 
