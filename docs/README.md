@@ -25,7 +25,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 - [`AlternatePack` module](sdk-modules/alternate-pack.md): publishing a project to folders and building Windows setup programs with Inno Setup, in place of NuGet packing.
 - [`AssemblySigning` module](sdk-modules/assembly-signing.md): signing an assembly with a strong name from a `.pfx` certificate file.
 - [`Dependencies` module](sdk-modules/dependencies.md): importing the transitive override files and dumping the package items of a project, both for `bv dependencies`.
-- [`FileBasedApps` module](sdk-modules/file-based-apps.md): pinning `Buildvana.Runtime` to the version of Buildvana SDK in every file-based app of the repository, and suppressing SA1649 there.
+- [`FileBasedApps` module](sdk-modules/file-based-apps.md): pinning `Buildvana.Runtime` to the version of Buildvana SDK in every file-based app of the repository, and suppressing SA1402 and SA1649 there.
 - [`JetBrainsAnnotations` module](sdk-modules/jetbrains-annotations.md): exporting the JetBrains annotations of a C# project to a ReSharper external annotations file.
 - [`NuGetPack` module](sdk-modules/nuget-pack.md): packing a README, a license, a third-party notice, and an icon into every NuGet package, and feeding a `.nuspec` file.
 - [`ReleaseAssetList` module](sdk-modules/release-asset-list.md): writing the list of files that `bv release` uploads as the assets of a release.

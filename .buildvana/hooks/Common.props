@@ -25,12 +25,13 @@
     <IsPackable>false</IsPackable>
 
     <!--
-      SA1649, "File name should match first type name": a hook file is named after its event, so a type declared
-      in it can never match. The FileBasedApps module of Buildvana SDK suppresses the rule too, and these two
-      lines go once the pinned Buildvana SDK carries the module.
+      SA1402, "File may only contain a single type": a hook is one file, so every type it declares shares that
+      file. SA1649, "File name should match first type name": a hook file is named after its event, so a type
+      declared in it can never match. The FileBasedApps module of Buildvana SDK suppresses both rules too, and
+      these two lines go once the pinned Buildvana SDK carries the module.
     -->
     <NoWarn Condition="'$(NoWarn)' != ''">$(NoWarn);</NoWarn>
-    <NoWarn>$(NoWarn)SA1649</NoWarn>
+    <NoWarn>$(NoWarn)SA1402;SA1649</NoWarn>
 
   </PropertyGroup>
 

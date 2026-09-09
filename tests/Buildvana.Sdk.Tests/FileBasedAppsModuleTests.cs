@@ -18,11 +18,13 @@ internal sealed class FileBasedAppsModuleTests
     private const string UnversionedReference = """<PackageReference Include="Buildvana.Runtime" />""";
 
     [Test]
-    public async Task Evaluate_FileBasedApp_SuppressesSA1649()
+    public async Task Evaluate_FileBasedApp_SuppressesSA1402AndSA1649()
     {
         using var home = new TempHome();
         var result = Evaluate(home, fileBasedApp: true, string.Empty, string.Empty);
-        await Assert.That(result.NoWarn.Split(';')).Contains("SA1649");
+        var noWarn = result.NoWarn.Split(';');
+        await Assert.That(noWarn).Contains("SA1402");
+        await Assert.That(noWarn).Contains("SA1649");
     }
 
     [Test]
@@ -30,7 +32,9 @@ internal sealed class FileBasedAppsModuleTests
     {
         using var home = new TempHome();
         var result = Evaluate(home, fileBasedApp: false, string.Empty, string.Empty);
-        await Assert.That(result.NoWarn.Split(';')).DoesNotContain("SA1649");
+        var noWarn = result.NoWarn.Split(';');
+        await Assert.That(noWarn).DoesNotContain("SA1402");
+        await Assert.That(noWarn).DoesNotContain("SA1649");
     }
 
     [Test]

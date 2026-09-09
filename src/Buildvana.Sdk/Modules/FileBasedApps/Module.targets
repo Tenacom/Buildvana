@@ -7,12 +7,13 @@
   -->
 
   <!--
-    The file of the app often has a name no type can match, such as post-update.cs, the file of a hook.
-    SA1649, "File name should match first type name", is suppressed.
+    The app is one file, so every type it declares shares that file, and the file often has a name no type can
+    match, such as post-update.cs, the file of a hook. SA1402, "File may only contain a single type", and SA1649,
+    "File name should match first type name", are suppressed.
   -->
   <PropertyGroup Condition="'$(BV_IsFileBasedAppProject)' == 'true'">
     <NoWarn Condition="'$(NoWarn)' != ''">$(NoWarn);</NoWarn>
-    <NoWarn>$(NoWarn)SA1649</NoWarn>
+    <NoWarn>$(NoWarn)SA1402;SA1649</NoWarn>
   </PropertyGroup>
 
   <!--
