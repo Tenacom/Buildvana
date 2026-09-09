@@ -116,6 +116,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`NuGetPack` module](docs/sdk-modules/nuget-pack.md#package-metadata) no longer forces `PackageRequireLicenseAcceptance` to `false` when `PackageLicenseExpression` states the license.
 - [`ReleaseAssetDefaultDescription`](docs/sdk-modules/release-asset-list.md#releaseassetdefaultdescription-property) no longer defaults to `(no description given)`, which `bv release` set as the GitHub label of every asset without a `Description`.
 - The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#xmldocs-property) ignores a `GenerateDocumentationFile` set by the project and reports [BVSDK1800](docs/sdk-diagnostics.md#xmldocumentation-module-1800-1899), where a library project that set it to `false` got SA0001.
+- The [`AlternatePack` module](docs/sdk-modules/alternate-pack.md#innosetup-items) leaves `_<version>` out of the default `OutputName` of an `InnoSetup` item when `AssemblyInformationalVersion` is empty, where the name ended in `_`.
 
 ### Known problems introduced by this release
 

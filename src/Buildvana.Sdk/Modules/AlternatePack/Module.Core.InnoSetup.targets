@@ -235,14 +235,18 @@
       <_ReleaseAssetDescription_>%(InnoSetup.ReleaseAssetDescription)</_ReleaseAssetDescription_>
     </PropertyGroup>
 
-    <!-- The default for OutputName depends upon UniqueOutputName, which InitializeInnoSetupMetadata has defaulted. -->
+    <!--
+      The default for OutputName depends upon UniqueOutputName, which InitializeInnoSetupMetadata has defaulted,
+      and upon the presence of AssemblyInformationalVersion, as the default ZipFileName of a PublishFolder item does.
+    -->
+    <PropertyGroup Condition="'$(_OutputName_)' == ''">
+      <_OutputName_>$(AppShortName)</_OutputName_>
+      <_OutputName_ Condition="'$(_UniqueOutputName_)' != 'false'">$(_OutputName_)-$(_Identity_)</_OutputName_>
+      <_OutputName_ Condition="'$(AssemblyInformationalVersion)' != ''">$(_OutputName_)_$(AssemblyInformationalVersion)</_OutputName_>
+    </PropertyGroup>
     <ItemGroup>
       <InnoSetup Update="$(_Identity_)"
-                 Condition="'$(_OutputName_)' == '' And '$(_UniqueOutputName_)' == 'false'"
-                 OutputName="$(AppShortName)_$(AssemblyInformationalVersion)" />
-      <InnoSetup Update="$(_Identity_)"
-                 Condition="'$(_OutputName_)' == '' And '$(_UniqueOutputName_)' != 'false'"
-                 OutputName="$(AppShortName)-$(_Identity_)_$(AssemblyInformationalVersion)" />
+                 OutputName="$(_OutputName_)" />
     </ItemGroup>
 
     <!-- OutputDir is taken as relative to the artifacts subdirectory. -->
