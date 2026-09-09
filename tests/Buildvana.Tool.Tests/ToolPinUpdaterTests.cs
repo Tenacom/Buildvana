@@ -11,15 +11,20 @@ using NuGet.Versioning;
 
 internal sealed class ToolPinUpdaterTests
 {
+    // Each pin's own manifest is named on the command line, so a pin read from a subdirectory's manifest is
+    // written back there.
     [Test]
     public async Task UpdateAsync_DelegatesEachToolToTheCli()
     {
         using var home = new TempHome();
         var runner = new FakeProcessRunner();
-        await UpdateAsync(home, runner, Moving("ngbv", "0.5.1", "0.6.0"), Moving("bv", "2.1.0", "2.2.0")).ConfigureAwait(false);
+        var pins = new[] { Moving("ngbv", "0.5.1", "0.6.0"), Moving("docfx", "2.78.3", "2.79.0", "docs/dotnet-tools.json") };
+        await UpdateAsync(home, runner, pins).ConfigureAwait(false);
         await Assert.That(runner.Runs.Count).IsEqualTo(2);
-        await Assert.That(string.Join(" ", runner.Runs[0].Args)).IsEqualTo("tool update ngbv --local --version 0.6.0");
-        await Assert.That(string.Join(" ", runner.Runs[1].Args)).IsEqualTo("tool update bv --local --version 2.2.0");
+        await Assert.That(string.Join(" ", runner.Runs[0].Args))
+            .IsEqualTo("tool update ngbv --local --version 0.6.0 --tool-manifest dotnet-tools.json");
+        await Assert.That(string.Join(" ", runner.Runs[1].Args))
+            .IsEqualTo("tool update docfx --local --version 2.79.0 --tool-manifest docs/dotnet-tools.json");
         await Assert.That(runner.Runs[0].WorkingDirectory).IsEqualTo(home.RootPath);
     }
 
@@ -30,7 +35,8 @@ internal sealed class ToolPinUpdaterTests
         using var home = new TempHome();
         var runner = new FakeProcessRunner();
         await UpdateAsync(home, runner, Moving("ngbv", "0.6.0", "0.5.1")).ConfigureAwait(false);
-        await Assert.That(string.Join(" ", runner.Runs.Single().Args)).EndsWith("--allow-downgrade");
+        await Assert.That(string.Join(" ", runner.Runs.Single().Args))
+            .IsEqualTo("tool update ngbv --local --version 0.5.1 --allow-downgrade --tool-manifest dotnet-tools.json");
     }
 
     [Test]
@@ -38,7 +44,7 @@ internal sealed class ToolPinUpdaterTests
     {
         using var home = new TempHome();
         var runner = new FakeProcessRunner();
-        var pin = DependencyPin.Create(DependencyScope.Tools, "ngbv", "0.5.1", ".config/dotnet-tools.json");
+        var pin = DependencyPin.Create(DependencyScope.Tools, "ngbv", "0.5.1", "dotnet-tools.json");
         var resolution = new PinResolution { Pin = pin, Policy = Policy(), State = PinResolutionState.UpToDate };
         await UpdateAsync(home, runner, resolution).ConfigureAwait(false);
         await Assert.That(runner.Runs).IsEmpty();
@@ -69,10 +75,10 @@ internal sealed class ToolPinUpdaterTests
         return policy;
     }
 
-    private static PinResolution Moving(string id, string from, string to)
+    private static PinResolution Moving(string id, string from, string to, string declaringFile = "dotnet-tools.json")
         => new()
         {
-            Pin = DependencyPin.Create(DependencyScope.Tools, id, from, ".config/dotnet-tools.json"),
+            Pin = DependencyPin.Create(DependencyScope.Tools, id, from, declaringFile),
             Policy = Policy(),
             State = PinResolutionState.Updated,
             Target = NuGetVersion.Parse(to),

@@ -45,7 +45,7 @@ internal sealed class DependenciesCommandHarness : IDisposable
     public const string NewNetSdkVersion = "10.0.201";
 
     private const string GlobalJsonName = "global.json";
-    private const string ToolManifestName = ".config/dotnet-tools.json";
+    private const string ToolManifestName = "dotnet-tools.json";
 
     private const string GlobalJson = """
                                       {

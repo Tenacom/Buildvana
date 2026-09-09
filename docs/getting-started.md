@@ -57,11 +57,11 @@ Add one line for the scratch directory of `bv`:
 Pin it in the tool manifest of the repository, so that every machine runs the same version:
 
 ```shell
-dotnet new tool-manifest -o .config
+dotnet new tool-manifest
 dotnet tool install bv
 ```
 
-The first command creates [`.config/dotnet-tools.json`](directory-structure.md#configdotnet-toolsjson), under `.config/`, where `bv` reads it.
+The first command creates [`dotnet-tools.json`](directory-structure.md#dotnet-toolsjson) in the home directory, where `bv` reads it.
 The second adds `bv` to the manifest at the latest version.
 From here on, `dotnet bv <command>` runs that version.
 [Invocation](command-line.md#invocation) describes the other ways to run `bv`.

@@ -99,7 +99,7 @@ internal sealed class ReleaseCommandTests
         var commits = harness.Repo.GetCommits(2);
         await Assert.That(commits[0].Message).IsEqualTo(PostReleaseCommitMessage);
         await Assert.That(commits[0].ChangedFiles).IsEquivalentTo(
-            [".config/dotnet-tools.json", "Directory.Packages.props", "global.json"]);
+            ["Directory.Packages.props", "dotnet-tools.json", "global.json"]);
         await Assert.That(commits[1].Message).IsEqualTo(ReleaseCommitMessage);
 
         // The rewritten files carry the version this release produced, not the one they started at.
@@ -339,7 +339,7 @@ internal sealed class ReleaseCommandTests
         await Assert.That(commits[1].Message).IsEqualTo($"Prepare release {bumpedVersion} [skip ci]");
         await Assert.That(commits[0].Message).IsEqualTo($"Post-release updates for {bumpedVersion} [skip ci]");
         await Assert.That(commits[0].ChangedFiles).IsEquivalentTo(
-            [".config/dotnet-tools.json", "Directory.Packages.props", "global.json"]);
+            ["Directory.Packages.props", "dotnet-tools.json", "global.json"]);
         foreach (var relativePath in commits[0].ChangedFiles)
         {
             await Assert.That(harness.ReadFile(relativePath)).Contains(bumpedVersion).And.DoesNotContain(ReleaseHarness.PreviousVersion);

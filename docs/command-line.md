@@ -41,7 +41,7 @@ The page ends with tips, with the remedies for the most common failures, and wit
 
 `bv` is a .NET tool, and runs in three ways:
 
-- `dotnet bv <command>` runs the `bv` that the tool manifest, `.config/dotnet-tools.json`, pins, after a `dotnet tool restore`.
+- `dotnet bv <command>` runs the `bv` that the tool manifest, `dotnet-tools.json`, pins, after a `dotnet tool restore`.
 - `bv <command>` runs the global tool that `dotnet tool install -g bv` installed.
 - `dnx bv@<version> <command>` runs one version, without installing it.
 

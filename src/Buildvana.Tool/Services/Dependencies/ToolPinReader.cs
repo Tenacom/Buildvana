@@ -2,20 +2,24 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json.Nodes;
 using Buildvana.Core;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Json;
+using Buildvana.Tool.Utilities;
 
 namespace Buildvana.Tool.Services.Dependencies;
 
 /// <summary>
-/// Reads the pins of the <c>tools</c> scope: the .NET local tools of the repository's tool manifest.
+/// Reads the pins of the <c>tools</c> scope: the .NET local tools of every tool manifest under the home
+/// directory.
 /// </summary>
 /// <remarks>
-/// <para>Only the repository's own manifest is read, never an ancestor's, which is the rule the rest of
-/// <c>bv</c> follows; see <see cref="ToolManifest"/>. An absent manifest is no pin, not a problem.</para>
+/// <para>Every <c>dotnet-tools.json</c> the repository owns is read, the home directory's and the ones in
+/// subdirectories alike, the way the <c>packages</c> scope reads every project file: a pin belongs to the
+/// file that declares it, and <see cref="ToolPinUpdater"/> writes it back there. An ancestor's manifest is
+/// never read, which is the rule the rest of <c>bv</c> follows; see <see cref="ToolManifest"/>. An absent
+/// manifest is no pin, not a problem. A manifest under <c>.config</c> fails the read, at any depth.</para>
 /// <para>The <c>bv</c> entry is a family pin and is not among the results: <c>bv self-update</c> is the one
 /// command that moves it.</para>
 /// </remarks>
@@ -25,24 +29,44 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
     private const string VersionMemberName = "version";
 
     /// <summary>
-    /// Reads the tool manifest's pins.
+    /// Reads the pins of every tool manifest under the home directory.
     /// </summary>
-    /// <returns>One pin per tool the manifest states, in the order it states them.</returns>
-    /// <exception cref="BuildFailedException">The manifest exists and could not be read or parsed.</exception>
+    /// <returns>One pin per tool the manifests state, manifest by manifest in the order the repository walk
+    /// finds them, and within a manifest in the order it states them.</returns>
+    /// <exception cref="BuildFailedException">A manifest could not be read or parsed, or a manifest sits under
+    /// <c>.config</c>. In the latter case the message names every such manifest and the move that fixes
+    /// it.</exception>
     public IReadOnlyList<DependencyPin> Read()
     {
-        var path = home.GetFullPath(ToolManifest.RelativePath);
-        if (!File.Exists(path))
-        {
-            return [];
-        }
-
-        if (jsonHelper.LoadObject(path)[ToolsSectionName] is not JsonObject tools)
-        {
-            return [];
-        }
-
         var pins = new List<DependencyPin>();
+        var legacyPaths = new List<string>();
+        foreach (var relativePath in RepositoryFiles.CreateFinder(home).GetFiles())
+        {
+            if (ToolManifest.IsLegacyManifestPath(relativePath))
+            {
+                legacyPaths.Add(relativePath);
+            }
+            else if (ToolManifest.IsManifestPath(relativePath))
+            {
+                ReadManifest(relativePath, pins);
+            }
+        }
+
+        if (legacyPaths.Count > 0)
+        {
+            throw ToolManifest.LegacyManifestError(legacyPaths);
+        }
+
+        return pins;
+    }
+
+    private void ReadManifest(string relativePath, List<DependencyPin> pins)
+    {
+        if (jsonHelper.LoadObject(home.GetFullPath(relativePath))[ToolsSectionName] is not JsonObject tools)
+        {
+            return;
+        }
+
         foreach (var (id, node) in tools)
         {
             if (BuildvanaFamily.Contains(id))
@@ -56,10 +80,8 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
                 && entry[VersionMemberName] is JsonValue value
                 && value.TryGetValue<string>(out var version))
             {
-                pins.Add(DependencyPin.Create(DependencyScope.Tools, id, version, ToolManifest.RelativePath));
+                pins.Add(DependencyPin.Create(DependencyScope.Tools, id, version, relativePath));
             }
         }
-
-        return pins;
     }
 }
