@@ -1,0 +1,37 @@
+<Project>
+
+  <!--
+    Build options for the hooks. Every property is stated here, whatever the Common.props of the home directory
+    says, so that this file works in any repository.
+  -->
+  <PropertyGroup>
+
+    <!--
+      A hook is a script, and nobody reads the documentation of its helpers. Without a documentation file, the
+      XmlDocumentation module suppresses SA0001, SA1600 to SA1629, and the compiler's CS1591 family.
+    -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!--
+      A hook has no public API. The default is false for an Exe project, but a Common.props of the home directory
+      may set it for every project.
+    -->
+    <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
+
+    <!--
+      A hook is never packed. The NuGetPack diagnostics run at evaluation, so a packable hook would fail on a
+      missing README.
+    -->
+    <IsPackable>false</IsPackable>
+
+    <!--
+      SA1649, "File name should match first type name": a hook file is named after its event, so a type declared
+      in it can never match. The FileBasedApps module of Buildvana SDK suppresses the rule too, and these two
+      lines go once the pinned Buildvana SDK carries the module.
+    -->
+    <NoWarn Condition="'$(NoWarn)' != ''">$(NoWarn);</NoWarn>
+    <NoWarn>$(NoWarn)SA1649</NoWarn>
+
+  </PropertyGroup>
+
+</Project>
