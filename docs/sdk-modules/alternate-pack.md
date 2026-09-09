@@ -160,6 +160,7 @@ The example publishes the project, builds `artifacts/Release/MyApp_1.2.3.exe` wi
 | `ReleaseAssetDescription` | none                                                                                                     | The description of the setup program in the list.                         |
 
 `<version>` is `$(AssemblyInformationalVersion)`.
+When `AssemblyInformationalVersion` is empty, the `_<version>` part is absent.
 The setup program joins the release asset list with the MIME type `application/octet-stream`, when [`GenerateReleaseAssetList`](release-asset-list.md#generatereleaseassetlist-property) is `true`.
 
 The module raises an error when:

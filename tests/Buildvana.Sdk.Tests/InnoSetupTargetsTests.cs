@@ -12,7 +12,8 @@ using Microsoft.Build.Execution;
 // output name embeds, and the artifacts directory OutputDir resolves against. CompleteInnoSetupMetadata
 // used to count the InnoSetup items itself, but it is batched over them, so the count was always 1, and
 // its OutputName default read UniqueOutputName before the default was written, so a single item came out
-// as MyApp-Main_1.2.3.
+// as MyApp-Main_1.2.3. The default also appended the version whatever its value, so an empty version ended
+// the name in an underscore.
 // One MSBuild build manager serves the whole process, so target tests run one at a time.
 [NotInParallel]
 internal sealed class InnoSetupTargetsTests
@@ -61,7 +62,20 @@ internal sealed class InnoSetupTargetsTests
         await Assert.That(result.Items["Lite"].GetMetadataValue("OutputName")).IsEqualTo($"{AppShortName}_{Version}");
     }
 
-    private static (bool Succeeded, Dictionary<string, ProjectItemInstance> Items) Run(string items)
+    [Test]
+    public async Task CompleteInnoSetupMetadata_WithNoVersion_LeavesTheVersionOutOfTheOutputName()
+    {
+        const string items = """
+            <InnoSetup Include="Main" Script="main.iss" />
+            """;
+        var result = Run(items, string.Empty);
+        await Assert.That(result.Succeeded).IsTrue();
+        await Assert.That(result.Items["Main"].GetMetadataValue("OutputName")).IsEqualTo(AppShortName);
+    }
+
+    private static (bool Succeeded, Dictionary<string, ProjectItemInstance> Items) Run(
+        string items,
+        string version = Version)
     {
         using var home = new TempHome();
         var artifactsDirectory = home.GetFullPath("artifacts") + Path.DirectorySeparatorChar;
@@ -72,7 +86,7 @@ internal sealed class InnoSetupTargetsTests
                 <ArtifactsDirectory>{artifactsDirectory}</ArtifactsDirectory>
                 <Configuration>Release</Configuration>
                 <AppShortName>{AppShortName}</AppShortName>
-                <AssemblyInformationalVersion>{Version}</AssemblyInformationalVersion>
+                <AssemblyInformationalVersion>{version}</AssemblyInformationalVersion>
               </PropertyGroup>
               <ItemGroup>
                 {items}
