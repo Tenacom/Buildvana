@@ -115,7 +115,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The `AlternatePack` module [deletes a `PublishFolder`](docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
 - The [`NuGetPack` module](docs/sdk-modules/nuget-pack.md#package-metadata) no longer forces `PackageRequireLicenseAcceptance` to `false` when `PackageLicenseExpression` states the license.
 - [`ReleaseAssetDefaultDescription`](docs/sdk-modules/release-asset-list.md#releaseassetdefaultdescription-property) no longer defaults to `(no description given)`, which `bv release` set as the GitHub label of every asset without a `Description`.
-- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#xmldocs-property) defaults `XmlDocs` to `false` when a project sets `GenerateDocumentationFile` to `false`, where such a library project got SA0001 from StyleCop.
+- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#xmldocs-property) ignores a `GenerateDocumentationFile` set by the project and reports [BVSDK1800](docs/sdk-diagnostics.md#xmldocumentation-module-1800-1899), where a library project that set it to `false` got SA0001.
 
 ### Known problems introduced by this release
 

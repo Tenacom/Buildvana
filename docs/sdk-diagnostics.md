@@ -123,7 +123,9 @@ The module raises no diagnostic.
 
 ## XmlDocumentation module (1800-1899)
 
-The module raises no diagnostic.
+| Code      | Severity | Message                                                                                       | Description                                                                                                                                                      |
+| --------- | :------: | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BVSDK1800 | Warning  | GenerateDocumentationFile is set to '...', and Buildvana SDK ignores it. Set XmlDocs instead. | `GenerateDocumentationFile` is set in a project, and the [`XmlDocumentation` module](sdk-modules/xml-documentation.md#xmldocs-property) sets it from `XmlDocs`.  |
 
 ---
 

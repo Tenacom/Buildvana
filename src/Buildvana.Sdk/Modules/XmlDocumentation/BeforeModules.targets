@@ -3,17 +3,30 @@
   <!--
     We don't have control over the GenerateDocumentationFile property:
     it is set in Microsoft.NET.Sdk.BeforeCommon.targets, before we can determine the project type.
-    Instead, Buildvana SDK uses the XmlDocs property.
+    Instead, Buildvana SDK uses the XmlDocs property, and Module.targets sets GenerateDocumentationFile from it.
     The default value for XmlDocs is true for libraries (except test projects), false for other projects.
-    BeforeModules.props sets GenerateDocumentationFile to true before the project, so any other value here
-    means that the project, or a file imported after the props, turned XML documentation off.
-    The default value for XmlDocs is then false, whatever the project type.
   -->
   <PropertyGroup Condition="'$(XmlDocs)' == ''">
-    <XmlDocs Condition="'$(BV_IsLibraryProject)' == 'true' And '$(GenerateDocumentationFile)' == 'true'">true</XmlDocs>
+    <XmlDocs Condition="'$(BV_IsLibraryProject)' == 'true'">true</XmlDocs>
   </PropertyGroup>
   <PropertyGroup Condition="'$(XmlDocs)' != 'true'">
     <XmlDocs>false</XmlDocs>
   </PropertyGroup>
+
+  <!--
+    BeforeModules.props sets GenerateDocumentationFile to true before the project, so any other value here
+    means that the project, or a file imported after the props, set it. XmlDocs is the switch, so the value
+    has no effect, and a warning tells the project to set XmlDocs instead.
+    Save the value in a property: MSBuild evaluates items after every property, so the condition of the
+    warning would otherwise read the value Module.targets writes.
+  -->
+  <PropertyGroup>
+    <BV_SaveGenerateDocumentationFile>$(GenerateDocumentationFile)</BV_SaveGenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <EvaluationWarning Condition="'$(BV_SaveGenerateDocumentationFile)' != 'true'"
+                       Include="BVSDK1800"
+                       Text="GenerateDocumentationFile is set to '$(BV_SaveGenerateDocumentationFile)', and Buildvana SDK ignores it. Set XmlDocs instead." />
+  </ItemGroup>
 
 </Project>

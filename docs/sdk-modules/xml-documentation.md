@@ -27,7 +27,7 @@ The default is `true` for a [library project](../internal-use-properties.md#proj
 Any value other than `true` counts as `false`.
 
 The module sets `GenerateDocumentationFile` from `XmlDocs`, so set `XmlDocs` rather than `GenerateDocumentationFile`.
-A library project that sets `GenerateDocumentationFile` to `false`, and not `XmlDocs`, gets `XmlDocs` at `false`.
+A `GenerateDocumentationFile` that the project sets has no effect, and the module reports warning BVSDK1800 for a value other than `true`.
 
 ---
 
@@ -35,9 +35,10 @@ A library project that sets `GenerateDocumentationFile` to `false`, and not `Xml
 
 ### Documentation file
 
-When `XmlDocs` is `true`, the compiler writes `$(AssemblyName).xml` to the intermediate output directory, and the .NET SDK copies it next to the assembly.
+When `XmlDocs` is `true`, the module sets `GenerateDocumentationFile` to `true`.
+It also sets `DocumentationFile` to `$(AssemblyName).xml` in the intermediate output directory, when the project leaves the property empty.
+The compiler writes the file there, and the .NET SDK copies it next to the assembly.
 `dotnet pack` puts the file in the package next to the assembly, and `dotnet publish` copies it to the publish directory.
-`DocumentationFile` sets the path of the file when `XmlDocs` is `true`, and the module empties it otherwise.
 
 The compiler reports CS1591 for every public type and member without a documentation comment, and [StyleCop](standard-analyzers.md#usestylecopanalyzers-property) reports SA1600 with it.
 
@@ -51,4 +52,4 @@ The module also empties `DocumentationFile` and sets `PublishDocumentationFile` 
 
 ## Diagnostics
 
-The module raises no diagnostic in its [XmlDocumentation module (1800-1899)](../sdk-diagnostics.md#xmldocumentation-module-1800-1899) range.
+The module raises the diagnostics of the [XmlDocumentation module (1800-1899)](../sdk-diagnostics.md#xmldocumentation-module-1800-1899) range.
