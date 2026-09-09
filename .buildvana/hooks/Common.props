@@ -13,8 +13,8 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
 
     <!--
-      A hook has no public API. The default is false for an Exe project, but a Common.props of the home directory
-      may set it for every project.
+      A hook has no public API. The StandardAnalyzers module defaults the property to true for a library alone, but
+      a Common.props of the home directory may set it for every project.
     -->
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
 
