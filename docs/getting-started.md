@@ -128,6 +128,8 @@ The [`Versioning` module](sdk-modules/versioning.md) computes the patch number f
 ## Import Buildvana SDK into the projects
 
 Two files in the home directory import Buildvana SDK into every project under it.
+Every project under it needs `Microsoft.NET.Sdk`, or an SDK that layers on it, such as `Microsoft.NET.Sdk.Web` or `Microsoft.Build.NoTargets`.
+Buildvana SDK raises [BVSDK1006](sdk-diagnostics.md#buildvana-sdk-core-1000-1049) on any other project.
 `Directory.Build.props` holds:
 
 ```xml

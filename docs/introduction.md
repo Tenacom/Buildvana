@@ -61,19 +61,20 @@ Each table below states a status for every item.
 
 ### Project types
 
-| Project type                                       | Status      |
-| -------------------------------------------------- | ----------- |
-| Multi-platform and cross-platform projects         | Supported   |
-| Libraries                                          | Supported   |
-| Console apps                                       | Supported   |
-| Windows Forms                                      | Supported   |
-| ASP.NET                                            | Supported   |
-| Projects using the `Microsoft.Build.NoTargets` SDK | Supported   |
-| [Avalonia UI](https://avaloniaui.net)              | Supported   |
-| WPF                                                | Untested    |
-| [UNO Platform](https://platform.uno)               | Untested    |
-| .NET MAUI                                          | Untested    |
-| Legacy projects, with no `Sdk` attribute           | Unsupported |
+| Project type                                             | Status      |
+| -------------------------------------------------------- | ----------- |
+| Multi-platform and cross-platform projects               | Supported   |
+| Libraries                                                | Supported   |
+| Console apps                                             | Supported   |
+| Windows Forms                                            | Supported   |
+| ASP.NET                                                  | Supported   |
+| Projects using the `Microsoft.Build.NoTargets` SDK       | Supported   |
+| [Avalonia UI](https://avaloniaui.net)                    | Supported   |
+| WPF                                                      | Untested    |
+| [UNO Platform](https://platform.uno)                     | Untested    |
+| .NET MAUI                                                | Untested    |
+| Legacy projects, with no `Sdk` attribute                 | Unsupported |
+| Projects whose SDK does not layer on `Microsoft.NET.Sdk` | Unsupported |
 
 ### Programming languages
 
