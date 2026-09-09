@@ -58,7 +58,7 @@ internal static class StrongNameKeyBlob
     }
 
     private static byte[] Require(byte[]? value, string name)
-        => value ?? throw new ArgumentException($"The {name} parameter is missing.", nameof(value));
+        => value ?? throw new ArgumentException($"The {name} parameter is missing.", name);
 
     private static ReadOnlySpan<byte> TrimLeadingZeros(ReadOnlySpan<byte> bigEndian)
         => bigEndian.TrimStart((byte)0);
