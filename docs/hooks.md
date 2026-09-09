@@ -146,7 +146,10 @@ Under central package management, the directive states no version, and `Director
 Without central package management, the directive states the version: `#:package Serilog@4.0.0`.
 `bv dependencies update` moves the version in either place, as [File-based apps](tool-commands/dependencies.md#file-based-apps) describes.
 
-To use library code of the repository in a hook, reference its project with `#:project`.
+Do not reference a package the repository produces with a `#:package` directive.
+The pin of such a package names the version published before, because the built-in rewrites of `bv release` run after the hook.
+The hook then builds against the last release, and fails to compile against anything the release adds.
+To use library code of the repository in a hook, reference its project with `#:project`, which compiles it from the working tree.
 
 ---
 
