@@ -27,12 +27,14 @@ internal sealed partial class ModulePagesTests
         await Assert.That(Join(titled)).IsEqualTo(Join(modules));
     }
 
-    // The index links every page, and links no page that does not exist.
+    // The index links every page, and links no page that does not exist. A repeated link counts once.
     [Test]
     public async Task Index_LinksEveryPage()
     {
         var index = await File.ReadAllTextAsync(Path.Combine(RepositoryRoot, "docs", "README.md")).ConfigureAwait(false);
-        var linked = IndexLinkRegex().Matches(index).Select(static match => match.Groups["file"].Value);
+        var linked = IndexLinkRegex().Matches(index)
+            .Select(static match => match.Groups["file"].Value)
+            .Distinct(StringComparer.Ordinal);
         var pages = PageFiles().Select(static path => Path.GetFileName(path));
 
         await Assert.That(Join(linked)).IsEqualTo(Join(pages));
