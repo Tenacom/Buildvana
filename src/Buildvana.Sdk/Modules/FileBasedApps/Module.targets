@@ -1,13 +1,13 @@
 <Project>
 
   <!--
-    A file-based app is a hook under {home}/.buildvana/hooks/, or any other file-based app built in the
-    repository, such as one under a tools/ directory. The .NET CLI sets FileBasedProgram to true in the project
-    it generates for the app, and BeforeNETSdk.targets computes BV_IsFileBasedAppProject from it.
+    The module acts on every file-based app the repository builds, such as a hook under {home}/.buildvana/hooks/
+    or a tool under tools/. The .NET CLI sets FileBasedProgram to true in the project it generates for the app,
+    and BeforeNETSdk.targets computes BV_IsFileBasedAppProject from it.
   -->
 
   <!--
-    The app is named after its file, and no type declared in the file can match the file name.
+    The file of the app often has a name no type can match, such as post-update.cs, the file of a hook.
     SA1649, "File name should match first type name", is suppressed.
   -->
   <PropertyGroup Condition="'$(BV_IsFileBasedAppProject)' == 'true'">

@@ -1,7 +1,7 @@
 # `FileBasedApps` module
 
 This module adapts a file-based app to the repository that builds it.
-It pins the `Buildvana.Runtime` package to the version of Buildvana SDK, and suppresses the one StyleCop rule such an app cannot meet.
+It pins the `Buildvana.Runtime` package to the version of Buildvana SDK, and suppresses the StyleCop rule on file names, which such an app often cannot meet.
 `bv`, Buildvana SDK, and the [hooks](../hooks.md) then agree on the shape of the configuration and of the hook args.
 
 ---
@@ -44,7 +44,7 @@ To pin another version there, declare a `PackageVersion` item.
 
 ### Suppressed warnings
 
-A file-based app is named after its file, and no type declared in the file can match the file name.
+The file of a file-based app often has a name no type can match, as `post-update.cs`, the file of a hook.
 The module adds SA1649, "File name should match first type name", to `NoWarn`.
 
 ### Release asset list
