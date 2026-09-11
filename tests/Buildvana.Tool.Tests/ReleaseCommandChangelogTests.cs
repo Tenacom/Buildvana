@@ -143,6 +143,7 @@ internal sealed class ReleaseCommandChangelogTests
         await Assert.That(exception!.Message).Contains("release.emptyChangelog");
 
         // The failure happens before anything is built or committed.
+        await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Events.Count).IsEqualTo(0);
         await Assert.That(harness.Repo.GetCommits(1)[0].Message).IsEqualTo("Initial commit");
     }

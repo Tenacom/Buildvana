@@ -24,7 +24,8 @@ internal sealed class ReleaseCommandFailureTests
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains($"Tag '{ReleasedVersion}' already exists");
 
-        // The check gates the pipeline run: nothing is restored, built, or packed.
+        // The check gates the pipeline run: no step runs, Clean included.
+        await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
@@ -85,6 +86,7 @@ internal sealed class ReleaseCommandFailureTests
 
         // The preliminary checks run before the pipeline, so a release that can never succeed costs
         // nothing: no clean, no build, no test run.
+        await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
@@ -98,6 +100,7 @@ internal sealed class ReleaseCommandFailureTests
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("committer identity");
+        await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
