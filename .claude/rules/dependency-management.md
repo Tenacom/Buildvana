@@ -32,7 +32,7 @@ MSBuild properties declare them:
 ## Other dependencies
 
 - `global.json`: the .NET SDK version.
-- `.config/dotnet-tools.json`: the versions of the local dotnet tools, such as `bv` and `ngbv`.
+- `dotnet-tools.json`: the versions of the local dotnet tools, such as `bv`.
 
 ## How to update dependencies
 

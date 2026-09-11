@@ -41,7 +41,7 @@
     - any-glob-to-any-file:
       - '**/Directory.Packages.props'
       - global.json
-      - .config/dotnet-tools.json
+      - dotnet-tools.json
 
 'area:docs':
  - changed-files:

@@ -14,7 +14,7 @@ internal sealed class RepositoryConfigFilesTests
     private const string CurrentFileName = "buildvana.jsonc";
     private const string NextFileName = "buildvana.next.jsonc";
     private const string ExampleFileName = "buildvana.example.jsonc";
-    private const string ToolManifestFileName = ".config/dotnet-tools.json";
+    private const string ToolManifestFileName = "dotnet-tools.json";
     private const string ToolPackageId = "bv";
 
     // The one member the two configuration files are meant to disagree on: the current file pins a released

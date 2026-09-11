@@ -21,7 +21,7 @@
 // Every member ends with a comma, the last one included. Adding a member
 // then touches one line, not two.
 {
-  // In buildvana.jsonc, the version pinned in .config/dotnet-tools.json. In
+  // In buildvana.jsonc, the version pinned in dotnet-tools.json. In
   // buildvana.next.jsonc, main: the version it describes does not exist yet.
   "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.727-preview/schemas/buildvana.schema.json",
 

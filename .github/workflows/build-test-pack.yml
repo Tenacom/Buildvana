@@ -37,7 +37,7 @@ jobs:
         cache: true
         cache-dependency-path: |
           global.json
-          .config/dotnet-tools.json
+          dotnet-tools.json
           Directory.Packages.props
     - name: Restore .NET tools
       shell: bash
