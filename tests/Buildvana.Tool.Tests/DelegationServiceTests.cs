@@ -75,6 +75,27 @@ internal sealed class DelegationServiceTests
         await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(0);
     }
 
+    // With a manifest in both places, the dotnet CLI reads the two as one and writes bv's pin into the .config
+    // one, and a move would fail on the existing file: the message asks for a merge.
+    [Test]
+    public async Task TryDelegate_WithManifestsInBothPlaces_FailsNamingTheMerge()
+    {
+        using var home = new TempHome();
+        MarkAsHome(home);
+        home.WriteFile(".config/dotnet-tools.json", """{ "version": 1, "isRoot": true, "tools": { } }""");
+        home.WriteFile("dotnet-tools.json", """{ "version": 1, "isRoot": true, "tools": { } }""");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(runner);
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
+        var exception = await Assert.That(async () => await service.TryDelegateAsync(Context(home)).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message)
+            .Contains("Merge the tools of .config/dotnet-tools.json into dotnet-tools.json, then delete .config/dotnet-tools.json.");
+        await Assert.That(exception.Message).DoesNotContain("git mv");
+    }
+
     [Test]
     public async Task TryDelegate_WithoutToolManifest_RunsInPlace()
     {

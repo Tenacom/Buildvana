@@ -166,6 +166,9 @@ Move the manifest up one level, and delete `.config\` when it is empty:
 git mv .config/dotnet-tools.json dotnet-tools.json
 ```
 
+When `dotnet-tools.json` exists as well, the dotnet CLI reads the two files as one manifest.
+Merge the tools of `.config\dotnet-tools.json` into `dotnet-tools.json` instead, then delete `.config\dotnet-tools.json`.
+
 Then update every path that names the file: CI workflows, cache keys, and scripts.
 A cache key that hashes `.config/dotnet-tools.json` matches nothing after the move, so the key stops changing.
 `dotnet tool restore` needs no change, because the dotnet CLI reads the manifest in either place.

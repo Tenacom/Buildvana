@@ -77,6 +77,24 @@ internal sealed class ToolPinReaderTests
         await Assert.That(exception.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
     }
 
+    // Where the destination exists, a move would fail on it, and the dotnet CLI reads the two files as one
+    // manifest: the message asks for a merge there, and names the move elsewhere.
+    [Test]
+    public async Task Read_WithAManifestUnderDotConfigNextToOne_NamesTheMerge()
+    {
+        using var home = new TempHome();
+        home.WriteFile(".config/dotnet-tools.json", """{ "tools": { } }""");
+        home.WriteFile("dotnet-tools.json", """{ "tools": { } }""");
+        home.WriteFile("docs/.config/dotnet-tools.json", """{ "tools": { } }""");
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
+        var exception = await Assert.That(() => CreateReader(home).Read()).Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message)
+            .Contains("merge the tools of .config/dotnet-tools.json into dotnet-tools.json, then delete .config/dotnet-tools.json");
+        await Assert.That(exception.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
+    }
+
     // A manifest under .config is reported before any manifest is parsed, so a repository with both problems
     // hears about the move first.
     [Test]
