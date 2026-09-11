@@ -40,7 +40,7 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
     /// it.</exception>
     public IReadOnlyList<DependencyPin> Read()
     {
-        var pins = new List<DependencyPin>();
+        var manifestPaths = new List<string>();
         var legacyPaths = new List<string>();
         foreach (var relativePath in RepositoryFiles.CreateFinder(home).GetFiles())
         {
@@ -50,13 +50,21 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
             }
             else if (ToolManifest.IsManifestPath(relativePath))
             {
-                ReadManifest(relativePath, pins);
+                manifestPaths.Add(relativePath);
             }
         }
 
+        // The manifests under .config are reported before any manifest is parsed: a repository with both
+        // problems would otherwise hear about the parse error alone.
         if (legacyPaths.Count > 0)
         {
             throw ToolManifest.LegacyManifestError(legacyPaths);
+        }
+
+        var pins = new List<DependencyPin>();
+        foreach (var relativePath in manifestPaths)
+        {
+            ReadManifest(relativePath, pins);
         }
 
         return pins;
