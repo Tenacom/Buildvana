@@ -9,6 +9,7 @@ using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
 using Buildvana.Core.Versioning;
 using Buildvana.Runtime;
+using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
@@ -49,6 +50,7 @@ internal sealed class ReleaseHarness : IDisposable
     private const string Configuration = "Release";
 
     private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
+    private static readonly HashSet<string> StepNames = [.. Enum.GetNames<BuildStep>()];
 
     private readonly ReleaseHarnessOptions _options;
     private readonly TestConsole _console = new();
@@ -128,6 +130,15 @@ internal sealed class ReleaseHarness : IDisposable
     /// Gets the observable steps of the release, in order.
     /// </summary>
     public IReadOnlyList<ReleaseEvent> Events => _events;
+
+    /// <summary>
+    /// Gets the build pipeline steps the release ran, in order. <see cref="BuildPipeline"/> begins a reporter
+    /// activity named after each step, so the list also holds the steps that invoke no child process:
+    /// <see cref="BuildStep.Clean"/>, and <see cref="BuildStep.Test"/> over a solution without test projects.
+    /// <see cref="Events"/> sees neither.
+    /// </summary>
+    public IReadOnlyList<BuildStep> PipelineSteps
+        => [.. Reporter.ActivityTitles.Where(StepNames.Contains).Select(Enum.Parse<BuildStep>)];
 
     /// <summary>
     /// Gets the full path of the artifacts directory the release builds into.

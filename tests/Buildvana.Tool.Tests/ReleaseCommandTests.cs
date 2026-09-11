@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.ConsoleOutput;
+using Buildvana.Tool.Build;
 
 /// <summary>
 /// End-to-end tests of the <c>release</c> command's happy path, over a real repository with only the process
@@ -35,6 +36,11 @@ internal sealed class ReleaseCommandTests
         await Assert.That(steps).IsEquivalentTo(
             ["restore", "build", "pack", "nuget-push", "nuget-push", "nuget-push", "publish"]);
         await Assert.That(harness.Events[0].HeadMessage).IsEqualTo(ReleaseCommitMessage);
+
+        // The run goes from Clean through Pack. The events cannot see Clean, which invokes no child process,
+        // nor Test over a solution without test projects, so the steps are read from the pipeline's activities.
+        await Assert.That(harness.PipelineSteps).IsEquivalentTo(
+            [BuildStep.Clean, BuildStep.Restore, BuildStep.Build, BuildStep.Test, BuildStep.Pack]);
     }
 
     [Test]
