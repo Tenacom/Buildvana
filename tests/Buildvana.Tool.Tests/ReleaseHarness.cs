@@ -159,7 +159,7 @@ internal sealed class ReleaseHarness : IDisposable
 
     /// <summary>
     /// Computes the version of the repository as it now stands, the way a build of it would: this is what
-    /// the artifact pass stamps on the packages, and what a later build of the released commit produces.
+    /// the pack step stamps on the packages, and what a later build of the released commit produces.
     /// </summary>
     /// <returns>The version, in full semantic version form.</returns>
     public string ComputeVersion()

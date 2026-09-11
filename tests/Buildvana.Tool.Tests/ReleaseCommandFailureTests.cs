@@ -13,7 +13,7 @@ internal sealed class ReleaseCommandFailureTests
     private const string ReleasedVersion = "2.3.2-preview";
 
     [Test]
-    public async Task Release_OnExistingTag_FailsBeforeBuildingArtifacts()
+    public async Task Release_OnExistingTag_FailsBeforeBuilding()
     {
         using var harness = new ReleaseHarness();
         TagAnotherBranch(harness);
@@ -24,8 +24,8 @@ internal sealed class ReleaseCommandFailureTests
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains($"Tag '{ReleasedVersion}' already exists");
 
-        // The check gates the artifact pass: the verification pass has run, the artifact pass has not.
-        await Assert.That(harness.Events.Select(x => x.Name)).IsEquivalentTo(["restore", "build"]);
+        // The check gates the pipeline run: nothing is restored, built, or packed.
+        await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -83,8 +83,8 @@ internal sealed class ReleaseCommandFailureTests
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains("cloud build");
 
-        // The preliminary checks run before the verification pass, so a release that can never succeed
-        // costs nothing: no clean, no build, no test run.
+        // The preliminary checks run before the pipeline, so a release that can never succeed costs
+        // nothing: no clean, no build, no test run.
         await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
 
