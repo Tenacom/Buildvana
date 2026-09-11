@@ -213,7 +213,7 @@ internal sealed partial class SelfVersionService
             ? "has no version"
             : $"pins version '{manifestPin.VersionText}', which is not a valid version";
         throw new BuildFailedException(
-            $"Cannot update this repository: the {ToolPackageId} entry in {ToolManifest.RelativePath} {problem}. "
+            $"Cannot update this repository: the {ToolPackageId} entry in {ToolManifest.FileName} {problem}. "
             + $"Fix or remove the entry, then run '{ToolPackageId} self-update' again.");
     }
 
@@ -320,7 +320,7 @@ internal sealed partial class SelfVersionService
         // EnsureNoUnforcedDowngrade), so pass the flag exactly when bv has itself authorized the downgrade,
         // leaving the CLI's guard armed on every other path.
         var isDowngrade = currentPin is not null && VersionComparer.VersionRelease.Compare(currentPin, target) > 0;
-        if (!File.Exists(_home.GetFullPath(ToolManifest.RelativePath)))
+        if (!File.Exists(_home.GetFullPath(ToolManifest.FileName)))
         {
             await RunDotNetAsync(["new", "tool-manifest"], cancellationToken).ConfigureAwait(false);
         }
@@ -328,7 +328,7 @@ internal sealed partial class SelfVersionService
         string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", targetText, "--allow-downgrade"]
             : hasEntry ? ["tool", "update", ToolPackageId, "--version", targetText]
             : ["tool", "install", ToolPackageId, "--version", targetText];
-        await RunDotNetAsync([.. args, "--tool-manifest", ToolManifest.RelativePath], cancellationToken).ConfigureAwait(false);
+        await RunDotNetAsync([.. args, "--tool-manifest", ToolManifest.FileName], cancellationToken).ConfigureAwait(false);
         return !hasEntry ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
             : isUnchanged ? $"{ToolPackageId}: {targetText} (tool manifest, unchanged)"
             : $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)";

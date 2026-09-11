@@ -25,14 +25,10 @@ namespace Buildvana.Tool.Services;
 internal static class ToolManifest
 {
     /// <summary>
-    /// The file name of a tool manifest.
+    /// The file name of a tool manifest. The home directory's manifest is this name, relative to the home
+    /// directory.
     /// </summary>
     public const string FileName = "dotnet-tools.json";
-
-    /// <summary>
-    /// The path of the tool manifest, relative to the home directory.
-    /// </summary>
-    public const string RelativePath = FileName;
 
     /// <summary>
     /// The path of the tool manifest bv rejects, relative to the home directory: the one the .NET SDK before
@@ -75,7 +71,7 @@ internal static class ToolManifest
         Guard.IsNotNullOrEmpty(homeDirectory);
 
         EnsureNoLegacyManifest(homeDirectory);
-        var path = Path.Combine(homeDirectory, RelativePath);
+        var path = Path.Combine(homeDirectory, FileName);
         if (!File.Exists(path))
         {
             return new BvManifestPin(HasEntry: false, VersionText: null, Version: null);

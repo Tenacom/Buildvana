@@ -50,7 +50,7 @@ internal sealed class SelfReferenceUpdater
         _targets =
         [
             ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
-            (ToolManifest.RelativePath, (p, produced) => UpdateJsonContainer(
+            (ToolManifest.FileName, (p, produced) => UpdateJsonContainer(
                 p,
                 produced,
                 container: "tools",
