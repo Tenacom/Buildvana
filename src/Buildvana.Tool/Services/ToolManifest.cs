@@ -99,13 +99,13 @@ internal static class ToolManifest
     /// </summary>
     /// <param name="homeDirectory">The home directory to check.</param>
     /// <exception cref="BuildFailedException"><see cref="LegacyRelativePath"/> exists. The message names the
-    /// move.</exception>
+    /// fix.</exception>
     public static void EnsureNoLegacyManifest(string homeDirectory)
     {
         Guard.IsNotNullOrEmpty(homeDirectory);
         if (File.Exists(Path.Combine(homeDirectory, LegacyRelativePath)))
         {
-            throw LegacyManifestError([LegacyRelativePath]);
+            throw LegacyManifestError(homeDirectory, [LegacyRelativePath]);
         }
     }
 
@@ -135,19 +135,36 @@ internal static class ToolManifest
     /// <summary>
     /// Creates the failure that reports tool manifests under <c>.config</c>.
     /// </summary>
+    /// <remarks>
+    /// <para>The fix for a manifest is the <c>git mv</c> that moves it up one level. When a manifest exists at
+    /// the destination as well, the dotnet CLI reads the two as one manifest and writes into the one under
+    /// <c>.config</c>, and a move would fail on the existing file. The fix is then a merge into the manifest bv
+    /// reads.</para>
+    /// </remarks>
+    /// <param name="homeDirectory">The home directory the paths are relative to.</param>
     /// <param name="relativePaths">The paths of the manifests, relative to the home directory, with <c>/</c> as
     /// the separator.</param>
-    /// <returns>The failure. Its message names each file and the <c>git mv</c> that moves it.</returns>
-    public static BuildFailedException LegacyManifestError(IReadOnlyList<string> relativePaths)
+    /// <returns>The failure. Its message names each file and its fix.</returns>
+    public static BuildFailedException LegacyManifestError(string homeDirectory, IReadOnlyList<string> relativePaths)
     {
+        Guard.IsNotNullOrEmpty(homeDirectory);
         Guard.IsNotEmpty(relativePaths);
-        var moves = string.Join("; ", relativePaths.Select(static path => $"git mv {path} {MovedPathOf(path)}"));
-        return relativePaths.Count == 1
+        if (relativePaths.Count > 1)
+        {
+            var fixes = string.Join("; ", relativePaths.Select(path => FixFor(homeDirectory, path)));
+            return new BuildFailedException(
+                $"Tool manifests are at {string.Join(", ", relativePaths)}, where bv does not read them. Fix each: {fixes}");
+        }
+
+        var legacyPath = relativePaths[0];
+        var movedPath = MovedPathOf(legacyPath);
+        return ExistsIn(homeDirectory, movedPath)
             ? new BuildFailedException(
-                $"The tool manifest is at {relativePaths[0]}, where bv does not read it. Move it up one level: {moves}")
+                $"A tool manifest is at {legacyPath}, where bv does not read it, and another is at {movedPath}. "
+                + $"Merge the tools of {legacyPath} into {movedPath}, then delete {legacyPath}.")
             : new BuildFailedException(
-                $"Tool manifests are at {string.Join(", ", relativePaths)}, where bv does not read them. "
-                + $"Move each up one level: {moves}");
+                $"The tool manifest is at {legacyPath}, where bv does not read it. "
+                + $"Move it up one level: git mv {legacyPath} {movedPath}");
     }
 
     private static JsonNode? FindBvEntry(JsonObject tools)
@@ -163,8 +180,20 @@ internal static class ToolManifest
         return null;
     }
 
+    // The fix for one manifest, as a phrase of a list.
+    private static string FixFor(string homeDirectory, string legacyPath)
+    {
+        var movedPath = MovedPathOf(legacyPath);
+        return ExistsIn(homeDirectory, movedPath)
+            ? $"merge the tools of {legacyPath} into {movedPath}, then delete {legacyPath}"
+            : $"git mv {legacyPath} {movedPath}";
+    }
+
     // ".config/dotnet-tools.json" becomes "dotnet-tools.json", and "docs/.config/dotnet-tools.json" becomes
     // "docs/dotnet-tools.json".
     private static string MovedPathOf(string legacyPath)
         => legacyPath[..^LegacyRelativePath.Length] + FileName;
+
+    private static bool ExistsIn(string homeDirectory, string relativePath)
+        => File.Exists(Path.Combine(homeDirectory, relativePath));
 }

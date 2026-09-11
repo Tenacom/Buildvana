@@ -58,7 +58,7 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
         // problems would otherwise hear about the parse error alone.
         if (legacyPaths.Count > 0)
         {
-            throw ToolManifest.LegacyManifestError(legacyPaths);
+            throw ToolManifest.LegacyManifestError(home.HomeDirectory, legacyPaths);
         }
 
         var pins = new List<DependencyPin>();
