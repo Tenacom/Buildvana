@@ -84,7 +84,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `XmlDocs`, and the `XmlDocumentation` module [defaults `GenerateDocumentationFile`](docs/sdk-modules/xml-documentation.md#migrating-from-xmldocs) per project type instead.
 - **BREAKING CHANGE**: Buildvana SDK raises BVSDK1006 on a project whose [SDK does not layer on `Microsoft.NET.Sdk`](docs/introduction.md#project-types), where such a project used to build.
 - **BREAKING CHANGE**: A file-based app is a [project type of its own](docs/internal-use-properties.md#project-type), `BV_IsFileBasedAppProject`, so `BV_IsExeProject` is `false` for it.
-- **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](docs/directory-structure.md#migration-from-configdotnet-toolsjson) when a repository holds one.
+- **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](docs/directory-structure.md#migration-from-configdotnet-toolsjson) when the home directory holds one.
 - The [`ReleaseAssetList` module](docs/sdk-modules/release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for a file-based app.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.

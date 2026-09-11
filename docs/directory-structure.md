@@ -153,7 +153,8 @@ When the manifest pins `bv`, the pinned `bv` runs in place of the invoked one.
 A manifest in a subdirectory pins the tools run from there, and [`bv dependencies`](tool-commands/dependencies.md) manages its pins as well.
 
 `bv` does not read `.config\dotnet-tools.json`.
-When the home directory, or a directory under it, holds one, `bv` stops with an error that names the file and the move.
+When the home directory holds one, `bv` stops with an error that names the file and the fix.
+`bv dependencies` stops on one in a subdirectory as well.
 [Migration from `.config\dotnet-tools.json`](#migration-from-configdotnet-toolsjson) says why, and how to move the file.
 
 ### Migration from `.config\dotnet-tools.json`
