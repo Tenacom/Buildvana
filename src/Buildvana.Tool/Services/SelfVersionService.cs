@@ -301,7 +301,9 @@ internal sealed partial class SelfVersionService
     // EnsureUsableManifestEntry rejects it up front.) The manifest itself is created with `dotnet new
     // tool-manifest`, in the home directory, when there is none. Left to `dotnet tool install`, the CLI picks
     // the directory by its own markers — a `.git` directory anywhere above, then a solution file — which can be
-    // an ancestor of the home directory. --tool-manifest names the file for the same reason.
+    // an ancestor of the home directory. --tool-manifest names the file for the same reason. The template writes
+    // the file in the working directory from the .NET SDK 10 on, and the check after the run is there in case a
+    // later SDK writes elsewhere: the CLI would fail on the --tool-manifest path and leave a file bv refuses.
     // The CLI runs even when the manifest already pins the target: self-update is delegation-exempt, so the
     // pinned version need not be the one running, or even be present on the machine — and with --to this run
     // is the promised existence check. The dotnet CLI takes an already-pinned version in stride.
@@ -320,9 +322,15 @@ internal sealed partial class SelfVersionService
         // EnsureNoUnforcedDowngrade), so pass the flag exactly when bv has itself authorized the downgrade,
         // leaving the CLI's guard armed on every other path.
         var isDowngrade = currentPin is not null && VersionComparer.VersionRelease.Compare(currentPin, target) > 0;
-        if (!File.Exists(_home.GetFullPath(ToolManifest.FileName)))
+        var manifestPath = _home.GetFullPath(ToolManifest.FileName);
+        if (!File.Exists(manifestPath))
         {
             await RunDotNetAsync(["new", "tool-manifest"], cancellationToken).ConfigureAwait(false);
+            if (!File.Exists(manifestPath))
+            {
+                throw new BuildFailedException(
+                    $"'dotnet new tool-manifest' did not create {ToolManifest.FileName} in the home directory.");
+            }
         }
 
         string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", targetText, "--allow-downgrade"]
