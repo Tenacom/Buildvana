@@ -77,7 +77,7 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
             return;
         }
 
-        var isHomeManifest = relativePath == ToolManifest.RelativePath;
+        var isHomeManifest = relativePath == ToolManifest.FileName;
         foreach (var (id, node) in tools)
         {
             if (isHomeManifest && BuildvanaFamily.Contains(id))
