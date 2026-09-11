@@ -77,6 +77,21 @@ internal sealed class ToolPinReaderTests
         await Assert.That(exception.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
     }
 
+    // A manifest under .config is reported before any manifest is parsed, so a repository with both problems
+    // hears about the move first.
+    [Test]
+    public async Task Read_WithAManifestUnderDotConfigAndAnUnparseableOne_NamesTheMove()
+    {
+        using var home = new TempHome();
+        home.WriteFile("docs/.config/dotnet-tools.json", """{ "tools": { } }""");
+        home.WriteFile("dotnet-tools.json", "{ not json");
+
+        // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
+        var exception = await Assert.That(() => CreateReader(home).Read()).Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
+    }
+
     // The bv entry of the home directory's manifest moves with the family, so bv dependencies never sees it.
     [Test]
     public async Task Read_LeavesTheFamilyToolOfTheHomeManifestOut()
