@@ -216,7 +216,7 @@ internal sealed class DependencyResolverTests
         await Assert.That(exception!.Diagnostics.Single().Code).IsEqualTo("BV1203");
     }
 
-    // A family id has no pin bv manages, and the message says where to go instead.
+    // A family id with no pin bv manages gets the message that says where to go instead.
     [Test]
     public async Task ResolveAsync_WithAStatedVersionForAFamilyId_PointsAtSelfUpdate()
     {

@@ -57,10 +57,11 @@ A name is held to the same rule as any other required string, and the location p
 | BV1200 |  Error   | No configured package source knows _(id)_.                    | No source the repository configures has ever had the package. The id is mistyped, or the source that has it is missing from `nuget.config`.   |
 | BV1201 |  Error   | No configured package source has _(id)_ _(version)_.          | The sources know the package, and none has the version the repository pins, or the version `--to` states.                                     |
 | BV1202 |  Error   | The .NET release index has no .NET SDK _(version)_.           | The version `global.json` pins, or the one `--to` states, is not a .NET SDK that Microsoft published.                                         |
-| BV1203 |  Error   | No pin bv manages, in the selected scopes, has the id _(id)_. | `--to` states a version for an id that has no pin, or whose pins `bv` does not manage. A Buildvana family id is always this error.            |
+| BV1203 |  Error   | No pin bv manages, in the selected scopes, has the id _(id)_. | `--to` states a version for an id with no pin, or whose pins `bv` does not manage. A Buildvana family id is this error, with one exception.   |
 
 BV1203 has a second message for an id of the Buildvana package family: `<id> belongs to Buildvana's own package family, which moves in lockstep. Use bv self-update.`
-Those pins move together with Buildvana SDK, so no scope of `bv dependencies` manages one.
+Those pins move together with Buildvana SDK, so `bv dependencies` manages none of them in any scope, with one exception.
+A `bv` entry in a tool manifest below the home directory is [a tool pin like any other](tool-commands/dependencies.md#buildvanas-own-packages).
 
 `bv dependencies update` reports every one of these, and each one stops the run before anything is written.
 One run reports all of them, each naming the file that declares the pin.

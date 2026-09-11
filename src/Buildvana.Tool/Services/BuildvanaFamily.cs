@@ -7,8 +7,9 @@ namespace Buildvana.Tool.Services;
 
 /// <summary>
 /// The closed list of packages released in lockstep as the Buildvana family: the bv tool, the Buildvana SDK,
-/// and the Buildvana.Runtime library. <c>bv self-update</c> stamps one version into every family pin it can
-/// find, and <c>bv deps</c> (once it exists) will treat family pins as invisible; both key on this list.
+/// and the Buildvana.Runtime library. <c>bv self-update</c> stamps one version into every family pin it
+/// reads. The readers of <c>bv deps</c> leave family ids out, except the <c>bv</c> entry of a tool manifest
+/// below the home directory. Both commands key on this list.
 /// </summary>
 /// <remarks>
 /// Membership is deliberately a closed list, not a <c>Buildvana.*</c> prefix match: a third-party package

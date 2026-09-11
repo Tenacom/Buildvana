@@ -74,8 +74,8 @@ internal sealed class DependencyResolver(
     private static BuildDiagnostic Error(string code, string message, string? file = null)
         => new(BuildDiagnosticSeverity.Error, code, message, file);
 
-    // The id a stated version is for must have a pin the run can write. A family id never has one: the
-    // family moves in lockstep, and one command moves it.
+    // The id a stated version is for must have a pin the run can write. A family id has one only in a tool
+    // manifest below the home directory: bv self-update moves the family everywhere else.
     private static void EnsureStatedVersionHasAPin(
         DependencyResolutionRequest request,
         DependencyResolution resolution,

@@ -314,6 +314,7 @@ Two forms exist:
 - with one argument naming a package id, every pin of that id in the selected scopes takes the version.
   It is an error when no source has that version, and when the id has no pin `bv` manages.
   A Buildvana family package is the second case, because [`bv self-update`](self-update.md) moves its pins as one.
+  A `bv` entry in a tool manifest below the home directory is the exception, as [Buildvana's own packages](#buildvanas-own-packages) says.
 - with no argument and `netsdk` as the only selected scope, `global.json` takes the version.
   Any other selected scope alongside is a usage error.
 
