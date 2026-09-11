@@ -166,7 +166,19 @@ internal sealed class SelfVersionServiceTests
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
-        var runner = new FakeProcessRunner();
+        var manifestPath = Path.Combine(home.RootPath, "dotnet-tools.json");
+        var runner = new FakeProcessRunner
+        {
+            OnRun = (executable, args) =>
+            {
+                if (args is ["new", "tool-manifest"])
+                {
+                    File.WriteAllText(manifestPath, """{ "version": 1, "isRoot": true, "tools": { } }""");
+                }
+
+                return new ProcessResult($"{executable} {string.Join(' ', args)}", 0, string.Empty, string.Empty, TimeSpan.Zero);
+            },
+        };
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
@@ -177,6 +189,26 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(runner.Runs[1].Args).IsEquivalentTo(
             ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
+    }
+
+    // A template that writes the manifest elsewhere would make the install fail on the --tool-manifest path and
+    // leave a file bv refuses: the check after the run says so in one message, before the install.
+    [Test]
+    public async Task UpdateRepository_WhenTemplateCreatesNoManifest_FailsBeforeChangingAnything()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        var before = home.ReadFile("global.json");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("'dotnet new tool-manifest' did not create dotnet-tools.json");
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
 
     [Test]
