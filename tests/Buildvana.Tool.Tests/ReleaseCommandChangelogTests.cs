@@ -143,7 +143,7 @@ internal sealed class ReleaseCommandChangelogTests
         await Assert.That(exception!.Message).Contains("release.emptyChangelog");
 
         // The failure happens before anything is built or committed.
-        await Assert.That(harness.Events.Any(x => x.Name == "pack")).IsFalse();
+        await Assert.That(harness.Events.Count).IsEqualTo(0);
         await Assert.That(harness.Repo.GetCommits(1)[0].Message).IsEqualTo("Initial commit");
     }
 
@@ -171,8 +171,8 @@ internal sealed class ReleaseCommandChangelogTests
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
-        // The section is written before the artifact pass, when the version is already final: the title
-        // names the released version, and no other.
+        // The heading is written after the build, when the version is final: it names the released
+        // version, and no other.
         var changelog = harness.ReadFile("CHANGELOG.md");
         await Assert.That(changelog).Contains($"## [{ReleasedVersion}]");
         await Assert.That(changelog).DoesNotContain("## [2.3.1-preview]");
@@ -211,8 +211,8 @@ internal sealed class ReleaseCommandChangelogTests
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md links '../outside.md', which is not a path to a file in the repository.");
 
-        // The links are pinned once the version is final, after the artifact pass, so the failure comes with
-        // the release commit in place. The rollback undoes that commit.
+        // The links are pinned once the version is final, after the build, so the failure comes with the
+        // release commit in place. The rollback undoes that commit.
         await Assert.That(harness.Events.Any(x => x.Name == "pack")).IsTrue();
         await Assert.That(harness.Repo.GetCommits(1)[0].Message).IsEqualTo("Initial commit");
     }

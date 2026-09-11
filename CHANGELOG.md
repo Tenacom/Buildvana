@@ -97,6 +97,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The build pipeline commands and `bv release` [observe cancellation](docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
 - `bv` sets the [console encoding](docs/command-line.md#console-encoding) to UTF-8 for its run, as the .NET CLI does, unless `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING` is `1`.
 - `bv release` rewrites each relative file link of the changelog section it releases into a permalink to the release tag.
+- `bv release` runs the [build pipeline](docs/tool-commands/release.md#the-steps) once, from `clean` through `pack`, after the release commit, and no longer runs `clean` through `test` before it.
 - [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
 
 ### Bugs fixed in this release

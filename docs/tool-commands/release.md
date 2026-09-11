@@ -55,30 +55,29 @@ With `actions/checkout`, that is `fetch-depth: 0`.
 
 ## The steps
 
-1. Run the build pipeline from `clean` through `test`, with the release configuration, to verify the repository.
-2. Create a provisional draft release on GitHub, named `<version> [provisional]`, so that a token without permission fails the release early.
-3. Rewrite `VERSION` when the version spec change is not `none`, with the tag `versioning.prereleaseTag` names.
-4. For a stable version, move the unshipped public API into the shipped one.
+1. Create a provisional draft release on GitHub, named `<version> [provisional]`, so that a token without permission fails the release early.
+2. Rewrite `VERSION` when the version spec change is not `none`, with the tag `versioning.prereleaseTag` names.
+3. For a stable version, move the unshipped public API into the shipped one.
    Every `PublicAPI.Unshipped.txt` next to a `PublicAPI.Shipped.txt` is emptied into it, and a line starting with `*REMOVED*` removes its API from the shipped file.
-5. Update the changelog, as [The changelog](#the-changelog) says.
-6. Create the release commit, whether or not a file changed, as [The release commit](#the-release-commit) says.
-7. Check the versions once more.
+4. Update the changelog, as [The changelog](#the-changelog) says.
+5. Create the release commit, whether or not a file changed, as [The release commit](#the-release-commit) says.
+6. Check the versions once more.
    The version to publish has a Git height above 0, and is above the latest tag and the latest stable tag.
-8. Check that the release tag does not exist.
-9. Print `notice: Releasing version <version>.`
+7. Check that the release tag does not exist.
+8. Print `notice: Releasing version <version>.`
    From here on, the version is final.
-10. Run the build pipeline from `restore` through `pack`, with the release configuration, to produce the artifacts.
-11. Finalize the new changelog section with the released version, as [The changelog](#the-changelog) says.
-12. Find the produced packages: every `.nupkg` file in `artifacts\<configuration>\` whose name ends with `.<version>.nupkg`.
-13. Run the [`release/post-release` hook](../hooks.md#the-releasepost-release-hook), and record the files it changed.
-14. Rewrite the self-references when `release.dogfood` is `true`, as [The post-release commit](#the-post-release-commit) says.
-15. Create the post-release commit, when the hook or the rewrites changed a file.
-16. Push the commits.
-17. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
-18. Collect the release assets, as [Publishing](#publishing) says.
-19. Publish the release, and write the `version` step output.
+9. Run the build pipeline from `clean` through `pack`, with the release configuration, to build, test, and produce the artifacts.
+10. Finalize the new changelog section with the released version, as [The changelog](#the-changelog) says.
+11. Find the produced packages: every `.nupkg` file in `artifacts\<configuration>\` whose name ends with `.<version>.nupkg`.
+12. Run the [`release/post-release` hook](../hooks.md#the-releasepost-release-hook), and record the files it changed.
+13. Rewrite the self-references when `release.dogfood` is `true`, as [The post-release commit](#the-post-release-commit) says.
+14. Create the post-release commit, when the hook or the rewrites changed a file.
+15. Push the commits.
+16. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
+17. Collect the release assets, as [Publishing](#publishing) says.
+18. Publish the release, and write the `version` step output.
 
-Every step from 2 on is undone when a later step fails, as [Rollback](#rollback) says.
+Every step is undone when a later step fails, as [Rollback](#rollback) says.
 
 ---
 

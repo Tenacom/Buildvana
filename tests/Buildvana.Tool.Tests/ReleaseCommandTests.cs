@@ -21,7 +21,7 @@ internal sealed class ReleaseCommandTests
     private const string PostReleaseCommitMessage = $"Post-release updates for {ReleasedVersion} [skip ci]";
 
     [Test]
-    public async Task Release_RunsPipelineTwice_ThenPushesAndPublishes()
+    public async Task Release_RunsPipelineOnce_ThenPushesAndPublishes()
     {
         using var harness = new ReleaseHarness();
 
@@ -29,14 +29,12 @@ internal sealed class ReleaseCommandTests
 
         await Assert.That(exitCode).IsEqualTo(0);
 
-        // The verification pass (Clean→Test) runs before the release commit exists; the artifact pass
-        // (Restore→Pack) runs after it, so that what is packed carries the version that will be tagged.
+        // The pipeline runs once, after the release commit exists, so that what is built and packed carries
+        // the version that will be tagged.
         var steps = harness.Events.Select(x => x.Name).ToArray();
         await Assert.That(steps).IsEquivalentTo(
-            ["restore", "build", "restore", "build", "pack", "nuget-push", "nuget-push", "nuget-push", "publish"]);
-        await Assert.That(harness.Events[0].HeadMessage).IsEqualTo("Initial commit");
-        await Assert.That(harness.Events[1].HeadMessage).IsEqualTo("Initial commit");
-        await Assert.That(harness.Events[4].HeadMessage).IsEqualTo(ReleaseCommitMessage);
+            ["restore", "build", "pack", "nuget-push", "nuget-push", "nuget-push", "publish"]);
+        await Assert.That(harness.Events[0].HeadMessage).IsEqualTo(ReleaseCommitMessage);
     }
 
     [Test]

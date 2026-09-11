@@ -58,10 +58,10 @@ internal sealed class ReleaseCommand(
         var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
 
         // Perform some preliminary checks.
-        // Everything from here to the verification pass reads the environment, the current branch, the
-        // repository's version history, and the public API files — none of which building can change — so
-        // it all runs before the build: a release that cannot succeed is refused at once, instead of after
-        // a full clean, build, and test cycle whose result is then thrown away.
+        // Everything from here to the draft release reads the environment, the current branch, the
+        // repository's version history, and the public API files. A build changes none of them, so it
+        // all runs first: a release that cannot succeed is refused at once, before there is anything
+        // to build or to roll back.
         BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
         BuildFailedException.ThrowIf(string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
         BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
@@ -111,9 +111,6 @@ internal sealed class ReleaseCommand(
         var versionSpecChange = version.ComputeVersionSpecChange(
             requestedChange: settings.ResolveBump(),
             checkPublicApiFiles: config.Release.CheckPublicApi);
-
-        // Verification pass (Clean→Test), mirroring today's [IsDependentOn(TestTask)] chain.
-        await pipeline.RunThroughAsync(BuildStep.Test, configuration, cancellationToken).ConfigureAwait(false);
 
         var release = await server.CreateReleaseAsync().ConfigureAwait(false);
         await using (release.ConfigureAwait(false))
@@ -224,8 +221,12 @@ internal sealed class ReleaseCommand(
             // place where stating the version is a record of a decision rather than a guess.
             reporter.Notice($"Releasing version {version.CurrentStr}.");
 
-            // Artifact pass (Restore→Pack, no Clean): rebuild against the resolved version and make artifacts.
-            await pipeline.RunRangeAsync(BuildStep.Restore, BuildStep.Pack, configuration, cancellationToken).ConfigureAwait(false);
+            // Build, test, and pack the tree of the release commit, in the one pipeline run of the release.
+            // The run comes after the commit, so that the artifacts carry the version that is tagged and
+            // published. A run before the commit would test a tree that differs from this one only by the
+            // version file, the public API files, and the changelog, at the cost of a second build. A
+            // failure here rolls back the release commit and the draft release, like any later failure.
+            await pipeline.RunThroughAsync(BuildStep.Pack, configuration, cancellationToken).ConfigureAwait(false);
 
             if (changelogUpdated)
             {
