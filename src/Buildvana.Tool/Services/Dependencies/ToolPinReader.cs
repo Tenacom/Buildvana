@@ -20,8 +20,10 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// file that declares it, and <see cref="ToolPinUpdater"/> writes it back there. An ancestor's manifest is
 /// never read, which is the rule the rest of <c>bv</c> follows; see <see cref="ToolManifest"/>. An absent
 /// manifest is no pin, not a problem. A manifest under <c>.config</c> fails the read, at any depth.</para>
-/// <para>The <c>bv</c> entry is a family pin and is not among the results: <c>bv self-update</c> is the one
-/// command that moves it.</para>
+/// <para>The <c>bv</c> entry of the home directory's manifest is a family pin and is not among the results: it
+/// is the entry that delegation runs and <c>bv self-update</c> moves. A <c>bv</c> entry in any other manifest is
+/// read like any other tool, because delegation and <c>bv self-update</c> read the home directory's manifest
+/// alone.</para>
 /// </remarks>
 internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jsonHelper)
 {
@@ -67,9 +69,10 @@ internal sealed class ToolPinReader(IHomeDirectoryProvider home, IJsonHelper jso
             return;
         }
 
+        var isHomeManifest = relativePath == ToolManifest.RelativePath;
         foreach (var (id, node) in tools)
         {
-            if (BuildvanaFamily.Contains(id))
+            if (isHomeManifest && BuildvanaFamily.Contains(id))
             {
                 continue;
             }

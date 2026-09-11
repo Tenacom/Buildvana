@@ -77,9 +77,9 @@ internal sealed class ToolPinReaderTests
         await Assert.That(exception.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
     }
 
-    // bv moves with the family, so bv dependencies never sees its own entry.
+    // The bv entry of the home directory's manifest moves with the family, so bv dependencies never sees it.
     [Test]
-    public async Task Read_LeavesTheFamilyToolOut()
+    public async Task Read_LeavesTheFamilyToolOfTheHomeManifestOut()
     {
         const string content = """
                                {
@@ -92,6 +92,19 @@ internal sealed class ToolPinReaderTests
         using var home = new TempHome();
         Write(home, content);
         await Assert.That(CreateReader(home).Read().Single().Id).IsEqualTo("ngbv");
+    }
+
+    // Delegation and bv self-update read the home directory's manifest alone, so a bv entry in any other
+    // manifest is a tool pin like any other.
+    [Test]
+    public async Task Read_StatesTheFamilyToolOfASubdirectoryManifest()
+    {
+        using var home = new TempHome();
+        home.WriteFile("dotnet-tools.json", """{ "tools": { "bv": { "version": "2.1.40-preview" } } }""");
+        home.WriteFile("tools/dotnet-tools.json", """{ "tools": { "bv": { "version": "2.1.30-preview" } } }""");
+        var pins = CreateReader(home).Read();
+        await Assert.That(pins.Select(static pin => pin.Id + " " + pin.DeclaringFile))
+            .IsEquivalentTo(["bv tools/dotnet-tools.json"]);
     }
 
     [Test]
