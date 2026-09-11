@@ -13,8 +13,9 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// <para>A pin is what one file says about one id. The same package pinned in two files is two pins, each
 /// governed on its own, and a package the same file states twice — once per target framework — is two pins
 /// as well, told apart by their version text.</para>
-/// <para>Family pins never become instances of this record: they are filtered out as they are read, so that
-/// no later step can act on one. <c>bv self-update</c> is the one command that moves them.</para>
+/// <para>A family pin becomes an instance of this record only as the <c>bv</c> entry of a tool manifest below
+/// the home directory, which is a tool pin like any other. Every other reader filters family ids out, so that
+/// no later step can act on one: <c>bv self-update</c> moves them.</para>
 /// </remarks>
 internal sealed record DependencyPin
 {

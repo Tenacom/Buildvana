@@ -48,8 +48,8 @@ internal sealed class DirectivePinReader(IHomeDirectoryProvider home, BuildvanaC
 
             foreach (var directive in AppDirectiveEditor.ReadDirectives(home.GetFullPath(relativePath)))
             {
-                // A family directive is invisible here as everywhere else, whether or not it states a
-                // version: bv self-update is the one command that moves the family.
+                // A family directive is invisible here, whether or not it states a version: bv self-update
+                // is the command that moves it.
                 if (BuildvanaFamily.Contains(directive.Id))
                 {
                     continue;
