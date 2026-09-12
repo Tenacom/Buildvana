@@ -66,15 +66,17 @@ trim_trailing_whitespace = false
 end_of_line = crlf
 indent_size = 2
 
-################################################################################
-# STATIC ANALYSIS CONFIGURATION
-################################################################################
+# ==============================================================================================
+#                                  ROSLYN ANALYZERS CONFIGURATION
+# ----------------------------------------------------------------------------------------------
+# Reference: in latest Visual Studio, Add -> New item... -> ".editorconfig File (.NET)"
+# ----------------------------------------------------------------------------------------------
+# Last update: 2026-09-13 (VS 18.10.0, .NET SDK 10.0.401)
+# ==============================================================================================
 
 [*.{cs,csx,cake}]
 
 #### .NET Coding Conventions ####
-
-dotnet_style_operator_placement_when_wrapping = beginning_of_line:suggestion
 
 # Organize usings
 dotnet_separate_import_directive_groups = false
@@ -93,37 +95,40 @@ dotnet_style_predefined_type_for_member_access = true:suggestion
 
 # Parentheses preferences
 dotnet_style_parentheses_in_arithmetic_binary_operators = never_if_unnecessary:suggestion
-dotnet_style_parentheses_in_relational_binary_operators = never_if_unnecessary:suggestion
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:suggestion
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:suggestion
+dotnet_style_parentheses_in_relational_binary_operators = never_if_unnecessary:suggestion
 
 # Modifier preferences
-dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
+dotnet_style_require_accessibility_modifiers = for_non_interface_members
 
 # Expression-level preferences
-dotnet_style_coalesce_expression = true:suggestion
-dotnet_style_collection_initializer = true:suggestion
-dotnet_style_explicit_tuple_names = true:warning
-dotnet_style_namespace_match_folder = true:suggestion
-dotnet_style_null_propagation = true:suggestion
-dotnet_style_object_initializer = true:suggestion
-dotnet_style_operator_placement_when_wrapping = beginning_of_line:suggestion
+dotnet_prefer_system_hash_code = true
+dotnet_style_coalesce_expression = true
+dotnet_style_collection_initializer = true
+dotnet_style_explicit_tuple_names = true
+dotnet_style_namespace_match_folder = true
+dotnet_style_null_propagation = true
+dotnet_style_object_initializer = true
+dotnet_style_operator_placement_when_wrapping = beginning_of_line
 dotnet_style_prefer_auto_properties = true:suggestion
-dotnet_style_prefer_compound_assignment = true:suggestion
+dotnet_style_prefer_collection_expression = when_types_loosely_match
+dotnet_style_prefer_compound_assignment = true
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
-dotnet_style_prefer_conditional_expression_over_return = false:suggestion
-dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed:suggestion
-dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
-dotnet_style_prefer_inferred_tuple_names = true:suggestion
-dotnet_style_prefer_is_null_check_over_reference_equality_method = true:warning
-dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
-dotnet_style_prefer_simplified_interpolation = true:suggestion
+dotnet_style_prefer_conditional_expression_over_return = true:suggestion
+dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed
+dotnet_style_prefer_inferred_anonymous_type_member_names = true
+dotnet_style_prefer_inferred_tuple_names = true
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true
+dotnet_style_prefer_non_hidden_explicit_cast_in_source = true
+dotnet_style_prefer_simplified_boolean_expressions = true
+dotnet_style_prefer_simplified_interpolation = true
 
 # Field preferences
-dotnet_style_readonly_field = true:suggestion
+dotnet_style_readonly_field = true
 
 # Parameter preferences
-dotnet_code_quality_unused_parameters = non_public:suggestion
+dotnet_code_quality_unused_parameters = non_public
 
 # Suppression preferences
 dotnet_remove_unnecessary_suppression_exclusions = none
@@ -134,9 +139,6 @@ dotnet_style_allow_statement_immediately_after_block_experimental = false:sugges
 
 #### C# Coding Conventions ####
 
-# Namespace declarations
-csharp_style_namespace_declarations = file_scoped:suggestion
-
 # var preferences
 csharp_style_var_elsewhere = true:suggestion
 csharp_style_var_for_built_in_types = true:suggestion
@@ -144,7 +146,7 @@ csharp_style_var_when_type_is_apparent = true:suggestion
 
 # Expression-bodied members
 csharp_style_expression_bodied_accessors = true:suggestion
-csharp_style_expression_bodied_constructors = false:suggestion
+csharp_style_expression_bodied_constructors = false:warning
 csharp_style_expression_bodied_indexers = true:suggestion
 csharp_style_expression_bodied_lambdas = true:suggestion
 csharp_style_expression_bodied_local_functions = when_on_single_line:suggestion
@@ -153,10 +155,9 @@ csharp_style_expression_bodied_operators = when_on_single_line:suggestion
 csharp_style_expression_bodied_properties = true:suggestion
 
 # Pattern matching preferences
-# Pattern matching is preferred over equivalent comparison / type-check / cast chains: see .claude/rules/csharp-style-guide.md.
 csharp_style_pattern_matching_over_as_with_null_check = true:warning
 csharp_style_pattern_matching_over_is_with_cast_check = true:warning
-csharp_style_prefer_extended_property_pattern = true:suggestion
+csharp_style_prefer_extended_property_pattern = true
 csharp_style_prefer_not_pattern = true:warning
 csharp_style_prefer_pattern_matching = true:warning
 csharp_style_prefer_switch_expression = true:warning
@@ -165,15 +166,21 @@ csharp_style_prefer_switch_expression = true:warning
 csharp_style_conditional_delegate_call = true:suggestion
 
 # Modifier preferences
-csharp_prefer_static_local_function = true:suggestion
-csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async
+csharp_prefer_static_anonymous_function = true
+csharp_prefer_static_local_function = true
+csharp_preferred_modifier_order = public,private,protected,internal,file,static,extern,new,virtual,abstract,closed,sealed,override,readonly,unsafe,required,volatile,async
 csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
 
 # Code-block preferences
 csharp_prefer_braces = true:warning
 csharp_prefer_simple_using_statement = true:warning
+csharp_prefer_system_threading_lock = true
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_style_prefer_labeled_jump_statements = true
 csharp_style_prefer_method_group_conversion = true:warning
+csharp_style_prefer_primary_constructors = false
+csharp_style_prefer_simple_property_accessors = true
 csharp_style_prefer_top_level_statements = false
 
 # Expression-level preferences
@@ -181,11 +188,13 @@ csharp_prefer_simple_default_expression = true:suggestion
 csharp_style_deconstructed_variable_declaration = true:suggestion
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 csharp_style_inlined_variable_declaration = true:suggestion
+csharp_style_prefer_implicitly_typed_lambda_expression = true
 csharp_style_prefer_index_operator = true:suggestion
 csharp_style_prefer_local_over_anonymous_function = true:warning
 csharp_style_prefer_null_check_over_type_check = true:warning
 csharp_style_prefer_range_operator = true:suggestion
 csharp_style_prefer_tuple_swap = true:suggestion
+csharp_style_prefer_unbound_generic_type_in_nameof = true
 csharp_style_prefer_utf8_string_literals = true:suggestion
 csharp_style_throw_expression = true:suggestion
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
@@ -194,14 +203,14 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sug
 # 'using' directive preferences
 csharp_using_directive_placement = outside_namespace:warning
 
-### C# Formatting Rules
-
 # New line preferences
 csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:suggestion
 csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = false:suggestion
 csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = false:suggestion
 csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:suggestion
 csharp_style_allow_embedded_statements_on_same_line_experimental = false:suggestion
+
+### C# Formatting Rules ###
 
 # New line preferences
 csharp_new_line_before_catch = true
@@ -290,36 +299,13 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-### Miscellaneous code analysis configuration
-
-# Relaxed rules related to IDisposable implementation - https://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html
-dotnet_diagnostic.CA1063.severity = none # CA1063: Implement IDisposable correctly
-dotnet_diagnostic.CA1816.severity = none # CA1816: Call GC.SuppressFinalize correctly
-
-# Disable CA1508 (false positive when a value is set inside a catch block)
-dotnet_diagnostic.CA1508.severity = none       # CA1508: Avoid dead conditional code
-
-# Rules stricter than the default
-dotnet_diagnostic.CA1001.severity = warning # CA1001: Types that own disposable fields should be disposable
-dotnet_diagnostic.CA1047.severity = warning # CA1047: Do not declare protected members in sealed types
-dotnet_diagnostic.CA1070.severity = warning # CA1070: Do not declare event fields as virtual
-dotnet_diagnostic.CA2000.severity = warning # CA2000: Dispose objects before losing scope
-dotnet_diagnostic.IDE0043.severity = error # IDE0043: Format string contains invalid placeholder
-dotnet_diagnostic.IDE0076.severity = warning # IDE0076: Remove invalid global 'SuppressMessageAttribute'
-dotnet_diagnostic.IDE0077.severity = warning # IDE0077: Avoid legacy format target in global 'SuppressMessageAttribute'
-
-# Miscellaneous relaxations
-dotnet_diagnostic.CA1000.severity = none       # CA1000: Do not declare static members on generic types
-dotnet_diagnostic.CA1032.severity = suggestion # CA1032: Implement standard exception constructors
-dotnet_diagnostic.CA1303.severity = none       # CA1303: Do not pass literals as localized parameters
-
-# Miscellaneous configuration
-dotnet_code_quality.CA1303.use_naming_heuristic = false                   # Don't raise CA1303 just because a parameter name contains Text, Message, or Caption.
-dotnet_code_quality.CA1062.exclude_extension_method_this_parameter = true # Extension methods: null check may be skipped on "this" parameter.
-dotnet_code_quality.CA1062.null_check_validation_methods = System.String.IsNullOrEmpty|System.String.IsNullOrWhiteSpace
-dotnet_code_quality.dispose_ownership_transfer_at_constructor = true      # Disposables passed to a constructor must be disposed by the constructed object.
-
-### StyleCop Analyzers rules
+# ==============================================================================================
+#
+# ----------------------------------------------------------------------------------------------
+# Reference:
+# ----------------------------------------------------------------------------------------------
+# Last update:
+# ==============================================================================================
 
 # StyleCop Analyzers - Special rules
 dotnet_diagnostic.SA0001.severity = warning # XML comment analysis disabled
@@ -367,7 +353,7 @@ dotnet_diagnostic.SA1105.severity = warning # Query clauses spanning multiple li
 dotnet_diagnostic.SA1106.severity = warning # Code should not contain empty statements
 dotnet_diagnostic.SA1107.severity = warning # Code should not contain multiple statements on one line
 dotnet_diagnostic.SA1108.severity = warning # Block statements should not contain embedded comments
-dotnet_diagnostic.SA1109.severity = warning # Block statements should not contain embedded regions
+# Rule SA1109 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/998
 dotnet_diagnostic.SA1110.severity = warning # Opening parenthesis or bracket should be on declaration line
 dotnet_diagnostic.SA1111.severity = warning # Closing parenthesis should be on line of last parameter
 dotnet_diagnostic.SA1112.severity = warning # Closing parenthesis should be on line of opening parenthesis
@@ -383,7 +369,7 @@ dotnet_diagnostic.SA1122.severity = warning # Use string.Empty for empty strings
 dotnet_diagnostic.SA1123.severity = warning # Do not place regions within elements
 dotnet_diagnostic.SA1124.severity = warning # Do not use regions
 dotnet_diagnostic.SA1125.severity = warning # Use shorthand for nullable types
-dotnet_diagnostic.SA1126.severity = warning # Prefix calls correctly
+# Rule SA1126 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/59
 dotnet_diagnostic.SA1127.severity = warning # Generic type constraints should be on their own line
 dotnet_diagnostic.SA1128.severity = warning # Put constructor initializers on their own line
 dotnet_diagnostic.SA1129.severity = warning # Do not use default value type constructor
@@ -395,6 +381,7 @@ dotnet_diagnostic.SA1134.severity = warning # Attributes should not share line
 dotnet_diagnostic.SA1135.severity = warning # Using directives should be qualified
 dotnet_diagnostic.SA1136.severity = warning # Enum values should be on separate lines
 dotnet_diagnostic.SA1137.severity = warning # Elements should have the same indentation
+# There is no SA1138 rule - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/2034
 dotnet_diagnostic.SA1139.severity = warning # Use literal suffix notation instead of casting
 
 # StyleCop Analyzers - Ordering rules
@@ -413,6 +400,7 @@ dotnet_diagnostic.SA1211.severity = warning # Using alias directives should be o
 dotnet_diagnostic.SA1212.severity = warning # Property accessors should follow order
 dotnet_diagnostic.SA1213.severity = warning # Event accessors should follow order
 dotnet_diagnostic.SA1214.severity = warning # Readonly fields should appear before non-readonly fields
+# Rule SA1215 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/1812
 dotnet_diagnostic.SA1216.severity = warning # Using static directives should be placed at the correct location
 dotnet_diagnostic.SA1217.severity = warning # Using static directives should be ordered alphabetically
 
@@ -434,6 +422,8 @@ dotnet_diagnostic.SA1311.severity = warning # Static readonly fields should begi
 dotnet_diagnostic.SA1312.severity = warning # Variable names should begin with lower-case letter
 dotnet_diagnostic.SA1313.severity = warning # Parameter names should begin with lower-case letter
 dotnet_diagnostic.SA1314.severity = warning # Type parameter names should begin with T
+# Rule SA1315 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1949
+dotnet_diagnostic.SA1316.severity = warning # Tuple element names should use correct casing
 
 # StyleCop Analyzers - Maintainability rules
 dotnet_diagnostic.SA1119.severity = warning # Statement should not use unnecessary parenthesis
@@ -446,11 +436,12 @@ dotnet_diagnostic.SA1405.severity = warning # Debug.Assert should provide messag
 dotnet_diagnostic.SA1406.severity = warning # Debug.Fail should provide message text
 dotnet_diagnostic.SA1407.severity = none # Arithmetic expressions should declare precedence
 dotnet_diagnostic.SA1408.severity = warning # Conditional expressions should declare precedence
-dotnet_diagnostic.SA1409.severity = none # Remove unnecessary code
+# Rule SA1409 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1058
 dotnet_diagnostic.SA1410.severity = warning # Remove delegate parenthesis when possible
 dotnet_diagnostic.SA1411.severity = warning # Attribute constructor should not use unnecessary parenthesis
-dotnet_diagnostic.SA1412.severity = warning # Store files as UTF-8 with byte order mark
+dotnet_diagnostic.SA1412.severity = none # Store files as UTF-8 with byte order mark
 dotnet_diagnostic.SA1413.severity = warning # Use trailing comma in multi-line initializers
+dotnet_diagnostic.SA1414.severity = warning # Tuple types in signatures should have element names
 
 # StyleCop Analyzers - Layout rules
 dotnet_diagnostic.SA1500.severity = warning # Braces for multi-line statements should not share line
@@ -479,7 +470,7 @@ dotnet_diagnostic.SA1520.severity = warning # Use braces consistently
 dotnet_diagnostic.SA1600.severity = warning # Elements should be documented
 dotnet_diagnostic.SA1601.severity = none # Partial elements should be documented
 dotnet_diagnostic.SA1602.severity = warning # Enumeration items should be documented
-dotnet_diagnostic.SA1603.severity = warning # Documentation should contain valid XML
+# Rule SA1603 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1291
 dotnet_diagnostic.SA1604.severity = warning # Element documentation should have summary
 dotnet_diagnostic.SA1605.severity = warning # Partial element documentation should have summary
 dotnet_diagnostic.SA1606.severity = warning # Element documentation should have summary text
@@ -504,11 +495,11 @@ dotnet_diagnostic.SA1624.severity = warning # Property summary documentation sho
 dotnet_diagnostic.SA1625.severity = warning # Element documentation should not be copied and pasted
 dotnet_diagnostic.SA1626.severity = warning # Single-line comments should not use documentation style slashes
 dotnet_diagnostic.SA1627.severity = warning # Documentation text should not be empty
-dotnet_diagnostic.SA1628.severity = warning # Documentation text should begin with a capital letter
+# Rule SA1628 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1057
 dotnet_diagnostic.SA1629.severity = warning # Documentation text should end with a period
-dotnet_diagnostic.SA1630.severity = warning # Documentation text should contain whitespace
-dotnet_diagnostic.SA1631.severity = none # Documentation should meet character percentage
-dotnet_diagnostic.SA1632.severity = none # Documentation text should meet minimum character length
+# Rule SA1630 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1057
+# Rule SA1631 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1057
+# Rule SA1632 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1057
 dotnet_diagnostic.SA1633.severity = warning # File should have header
 dotnet_diagnostic.SA1634.severity = warning # File header should show copyright
 dotnet_diagnostic.SA1635.severity = warning # File header should have copyright text
@@ -520,24 +511,133 @@ dotnet_diagnostic.SA1640.severity = warning # File header should have valid comp
 dotnet_diagnostic.SA1641.severity = warning # File header company name text should match
 dotnet_diagnostic.SA1642.severity = warning # Constructor summary documentation should begin with standard text
 dotnet_diagnostic.SA1643.severity = warning # Destructor summary documentation should begin with standard text
-dotnet_diagnostic.SA1644.severity = warning # Documentation headers should not contain blank lines
-dotnet_diagnostic.SA1645.severity = warning # Included documentation file does not exist
-dotnet_diagnostic.SA1646.severity = warning # Included documentation XPath does not exist
-dotnet_diagnostic.SA1647.severity = warning # Include node does not contain valid file and path
+# Rule SA1644 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/164
+# Rule SA1645 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/165
+# Rule SA1646 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/166
+# Rule SA1647 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/167
 dotnet_diagnostic.SA1648.severity = warning # Inheritdoc should be used with inheriting class
 dotnet_diagnostic.SA1649.severity = warning # File name should match first type name
-dotnet_diagnostic.SA1650.severity = warning # Element documentation should be spelled correctly
+# Rule SA1650 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1057
 dotnet_diagnostic.SA1651.severity = warning # Do not use placeholder elements
+# Rule SA1652 superseded by SA0001
+
+# ==============================================================================================
+#                                    RESHARPER INSPECTIONS
+# ----------------------------------------------------------------------------------------------
+# This is the single source of truth for ReSharper inspection severities.
+# DO NOT set severities in .DotSettings files, as precedence rules are unclear.
+# We only list non-default severities here, as the complete list would be over 1k lines long.
+# Ordering and grouping follows the categories listed in the official documentation.
+# Groups are listed even if empty, for reference.
+# See https://www.jetbrains.com/help/resharper/Reference__Code_Inspections_CSHARP.html
+# ----------------------------------------------------------------------------------------------
+# Last updated: 2026-09-13 (ReSharper 2026.2)
+# ==============================================================================================
+
+# Code Notification
+
+# Common Practices and Code Improvements
+resharper_can_replace_cast_with_lambda_return_type_highlighting = warning
+resharper_convert_to_constant_local_highlighting = warning
+resharper_annotate_not_null_parameter_highlighting = warning
+resharper_annotate_can_be_null_parameter_highlighting = warning
+resharper_annotate_not_null_type_member_highlighting = warning
+resharper_annotate_can_be_null_type_member_highlighting = warning
+resharper_can_simplify_dictionary_try_get_value_with_get_value_or_default_highlighting = warning
+resharper_property_can_be_made_init_only_global_highlighting = warning
+
+# Compiler Warnings
+
+# Constraints Violations
+
+# Entity Framework
+
+# Formatting
+
+# Grammar Issues
+
+# Language Usage Opportunities
+resharper_use_pattern_matching_highlighting = warning
+resharper_convert_to_primary_constructor_highlighting = none
+resharper_convert_to_local_function_highlighting = warning
+resharper_use_await_using_highlighting = warning
+resharper_convert_closure_to_method_group_highlighting = warning
+resharper_use_verbatim_string_highlighting = none
+resharper_merge_into_pattern_highlighting = warning
+resharper_use_raw_string_highlighting = none
+resharper_use_utf8_string_literal_highlighting = warning
+
+# NUnit
+
+# Potential Code Quality Issues
+resharper_merge_cast_with_type_check_highlighting = warning
+
+# Redundancies in Code
+resharper_raw_string_can_be_simplified_highlighting = none
+resharper_redundant_lambda_signature_parentheses_highlighting = warning
+
+# Redundancies in Symbol Declarations
+
+# Security
+
+# Spelling Issues
+
+# Syntax Style
+resharper_arrange_redundant_parentheses_highlighting = warning
+resharper_arrange_object_creation_when_type_not_evident_highlighting = none
+
+# Unity
+
+# Unity Burst Compiler Warnings
+
+# Unity Performance Inspections
+
+# Unreal Build System
+
+# Xunit
+
+# ==============================================================================================
+#                                MISCELLANEOUS CONFIGURATION
+# ==============================================================================================
+
+# Relaxed rules related to IDisposable implementation - https://blog.stephencleary.com/2009/08/how-to-implement-idisposable-and.html
+dotnet_diagnostic.CA1063.severity = none # CA1063: Implement IDisposable correctly
+dotnet_diagnostic.CA1816.severity = none # CA1816: Call GC.SuppressFinalize correctly
+
+# Disable CA1508 (false positive when a value is set inside a catch block)
+dotnet_diagnostic.CA1508.severity = none # CA1508: Avoid dead conditional code
+
+# Rules stricter than the default
+dotnet_diagnostic.CA1001.severity = warning # CA1001: Types that own disposable fields should be disposable
+dotnet_diagnostic.CA1047.severity = warning # CA1047: Do not declare protected members in sealed types
+dotnet_diagnostic.CA1070.severity = warning # CA1070: Do not declare event fields as virtual
+dotnet_diagnostic.CA2000.severity = warning # CA2000: Dispose objects before losing scope
+dotnet_diagnostic.IDE0043.severity = error # IDE0043: Format string contains invalid placeholder
+dotnet_diagnostic.IDE0076.severity = warning # IDE0076: Remove invalid global 'SuppressMessageAttribute'
+dotnet_diagnostic.IDE0077.severity = warning # IDE0077: Avoid legacy format target in global 'SuppressMessageAttribute'
+
+# Miscellaneous relaxations
+dotnet_diagnostic.CA1000.severity = none # CA1000: Do not declare static members on generic types
+dotnet_diagnostic.CA1032.severity = suggestion # CA1032: Implement standard exception constructors
+dotnet_diagnostic.CA1303.severity = none # CA1303: Do not pass literals as localized parameters
+
+# Miscellaneous configuration
+dotnet_code_quality.CA1303.use_naming_heuristic = false                   # Don't raise CA1303 just because a parameter name contains Text, Message, or Caption.
+dotnet_code_quality.CA1062.exclude_extension_method_this_parameter = true # Extension methods: null check may be skipped on "this" parameter.
+dotnet_code_quality.CA1062.null_check_validation_methods = System.String.IsNullOrEmpty|System.String.IsNullOrWhiteSpace
+dotnet_code_quality.dispose_ownership_transfer_at_constructor = true      # Disposables passed to a constructor must be disposed by the constructed object.
 
 # Suppress some annoying IDE messages
 dotnet_diagnostic.IDE0040.severity = none # Accessibility modifiers required - has confusing rules and is a dupe of SA1400.
 dotnet_diagnostic.IDE0079.severity = none # Remove unnecessary suppression - apparently VS (as of v17.3.0) deems way too much stuff "unnecessary".
 dotnet_diagnostic.IDE0290.severity = none # Use primary constructor - No. Just no.
 
-# Solution-specific overrides
+# ==============================================================================================
+#                                SOLUTION-SPECIFIC OVERRIDES
+# ==============================================================================================
 
 # Some types and members are unused but present for completeness and/or future use, or instantiated via DI.
-# We don't need to flag every unused type or member: sprinkling PublicAPI and/or UsedImplicitly attributes around would be mostly noise.
+# Sprinkling PublicAPI and/or UsedImplicitly attributes around would be mostly noise.
 resharper_class_never_instantiated_global_highlighting = none
 resharper_unused_type_global_highlighting = none
 resharper_unused_member_global_highlighting = none
@@ -545,53 +645,6 @@ resharper_member_can_be_private_global_highlighting = none
 
 # Given the type of C# projects (compiled MSBuild tasks, CLI tool) we don't need to optimize logging with LoggerMessage delegates (CA1848),
 # nor do we need CA1873 to complain that "argument evaluation may be expensive when logging is disabled".
-# Disabling these rules globally helps keep code clean and simple without needing to sprinkle pragmas or suppression attributes around the codebase.
+# Disabling these rules globally helps keep code clean and simple without needing to sprinkle pragmas or suppressions around.
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
-
-# ReSharper inspection severities live here and nowhere else. Buildvana.slnx.DotSettings can express them too, but a setting
-# in both places is a setting a reader cannot resolve without running the tool, so that file keeps only its UI-filter rows.
-
-# Promote selected ReSharper hints to warnings, so that the inspectcode gate (which runs with --severity=WARNING) enforces them.
-
-# Pattern matching is preferred over equivalent comparison / type-check / cast chains: see .claude/rules/csharp-style-guide.md.
-resharper_merge_into_pattern_highlighting = warning
-resharper_use_pattern_matching_highlighting = warning
-resharper_merge_cast_with_type_check_highlighting = warning
-
-# Modernizations that are essentially always improvements.
-resharper_use_await_using_highlighting = warning
-resharper_use_utf8_string_literal_highlighting = warning
-resharper_can_simplify_dictionary_try_get_value_with_get_value_or_default_highlighting = warning
-resharper_convert_closure_to_method_group_highlighting = warning
-resharper_convert_to_local_function_highlighting = warning
-resharper_property_can_be_made_init_only_global_highlighting = warning
-
-# Declarations should state what they mean: a local that never changes is a constant, and a lambda's return type belongs
-# in its signature rather than in a cast on the returned expression.
-resharper_convert_to_constant_local_highlighting = warning
-resharper_can_replace_cast_with_lambda_return_type_highlighting = warning
-
-# Redundant syntax with no legitimate exception: parentheses around a single lambda parameter whose type is inferred.
-resharper_redundant_lambda_signature_parentheses_highlighting = warning
-
-# Migrated from Buildvana.slnx.DotSettings, preserving severity: these ask for explicit JetBrains nullability annotations,
-# which matter here because the SDK exports external-annotation files for the API surface it builds.
-resharper_annotate_can_be_null_parameter_highlighting = warning
-resharper_annotate_can_be_null_type_member_highlighting = warning
-resharper_annotate_not_null_parameter_highlighting = warning
-resharper_annotate_not_null_type_member_highlighting = warning
-
-# Suppress ReSharper hints we do not want at all. Hint is the lowest severity ReSharper offers, so silencing one means "none".
-
-# Target-typed `new()` is used freely here: whatever is being assigned already names the type, so repeating it adds nothing.
-resharper_arrange_object_creation_when_type_not_evident_highlighting = none
-
-# Primary constructors: no. Migrated from Buildvana.slnx.DotSettings; IDE0290 above is the Roslyn counterpart.
-resharper_convert_to_primary_constructor_highlighting = none
-
-# Which literal form shows a string best is a judgment call, not a rule an inspection can make: these three disagree with
-# each other by design. See "String literals" in .claude/rules/csharp-style-guide.md.
-resharper_use_raw_string_highlighting = none
-resharper_use_verbatim_string_highlighting = none
-resharper_raw_string_can_be_simplified_highlighting = none
