@@ -1,4 +1,4 @@
-﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 // The defaults instance for the defaults-emission tests: domain-model style, with every default a

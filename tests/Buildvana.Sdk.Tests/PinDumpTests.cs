@@ -1,4 +1,4 @@
-﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 // One MSBuild build manager serves the whole process, so target tests run one at a time.

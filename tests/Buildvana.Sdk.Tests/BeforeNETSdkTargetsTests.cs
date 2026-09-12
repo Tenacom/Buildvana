@@ -1,4 +1,4 @@
-﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 // The import point Sdk.props adds through BeforeMicrosoftNETSdkTargets, evaluated through the real Sdk.props,
