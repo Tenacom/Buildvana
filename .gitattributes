@@ -3,11 +3,11 @@
 # Other text-specific git commands (e.g. diff) are unaffected. **Only line ending normalization is changed.**
 # https://stackoverflow.com/a/64633700
 * -text
-# IMPORTANT: Always keep EOL settings in sync with .editorconfig
 
 # Code files
-*.cake diff=csharp
 *.cs   diff=csharp
+*.csx  diff=csharp
+*.cake diff=csharp
 
 # Shell scripts
 *.in diff=bash
