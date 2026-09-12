@@ -501,16 +501,9 @@ public static class JsonSchemaValidator
         var located = new List<JsonSchemaValidationError>(errors.Count);
         foreach (var error in errors)
         {
-            int line;
-            int column;
-            if (error.IsPropertyName)
-            {
-                _ = sourceMap.TryGetNamePosition(error.JsonPointer, out line, out column);
-            }
-            else
-            {
-                _ = sourceMap.TryGetPosition(error.JsonPointer, out line, out column);
-            }
+            _ = error.IsPropertyName
+                ? sourceMap.TryGetNamePosition(error.JsonPointer, out var line, out var column)
+                : sourceMap.TryGetPosition(error.JsonPointer, out line, out column);
 
             located.Add(error with { Line = line, Column = column });
         }

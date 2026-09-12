@@ -134,16 +134,13 @@ partial class GitignorePattern
         return tokenIndex == tokens.Length;
     }
 
-    private static bool MatchesChar(GitignoreToken token, char c, bool ignoreCase)
+    private static bool MatchesChar(GitignoreToken token, char c, bool ignoreCase) => token.Kind switch
     {
-        return token.Kind switch
-        {
-            GitignoreTokenKind.Literal => CharsEqual(token.Value, c, ignoreCase),
-            GitignoreTokenKind.AnyChar => true,
-            GitignoreTokenKind.CharClass => token.CharClass!.Matches(c, ignoreCase),
-            _ => false, // AnyRun is consumed by MatchTokens and never reaches here.
-        };
-    }
+        GitignoreTokenKind.Literal => CharsEqual(token.Value, c, ignoreCase),
+        GitignoreTokenKind.AnyChar => true,
+        GitignoreTokenKind.CharClass => token.CharClass!.Matches(c, ignoreCase),
+        _ => false, // AnyRun is consumed by MatchTokens and never reaches here.
+    };
 
     // Invariant simple case folding — the folding OrdinalIgnoreCase comparisons use. Git folds with plain
     // ASCII tolower (wildmatch.c); invariant folding agrees on ASCII and extends the same idea to the

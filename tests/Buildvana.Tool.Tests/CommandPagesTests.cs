@@ -65,7 +65,7 @@ internal sealed class CommandPagesTests
         await Assert.That(Pages.Keys).Contains(command.CanonicalPath[0]);
         var page = LoadPage(Path.Combine("tool-commands", Pages[command.CanonicalPath[0]]));
         var listed = ListedOptions(page, command);
-        IEnumerable<string> declared = command.SettingsType is null ? [] : RenderOptions(command.SettingsType);
+        var declared = command.SettingsType is null ? [] : RenderOptions(command.SettingsType);
 
         await Assert.That(Join(listed)).IsEqualTo(Join(declared));
     }

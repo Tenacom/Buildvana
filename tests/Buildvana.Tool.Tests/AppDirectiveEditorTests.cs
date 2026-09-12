@@ -289,7 +289,7 @@ internal sealed class AppDirectiveEditorTests
             #:package Alpha@1.0.0
             using System;
             """;
-        byte[] contentBytes = Encoding.UTF8.GetBytes(content);
+        var contentBytes = Encoding.UTF8.GetBytes(content);
         await File.WriteAllBytesAsync(path, hasByteOrderMark ? [0xEF, 0xBB, 0xBF, .. contentBytes] : contentBytes).ConfigureAwait(false);
 
         var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.1");

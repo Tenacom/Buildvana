@@ -27,17 +27,19 @@ internal abstract class ServerAdapter
     /// <summary>
     /// Gets the name of the remote repository's host.
     /// </summary>
-    // ReSharper disable once UnusedMemberInSuper.Global - We may need this property in the future
+    // ReSharper disable once UnusedMemberInSuper.Global - We will need this property to complete the implementation of server adapters
     public abstract string HostName { get; }
 
     /// <summary>
     /// Gets the owner of the remote repository.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global - We will need this property to complete the implementation of server adapters
     public abstract string RepositoryOwner { get; }
 
     /// <summary>
     /// Gets the name of the remote repository.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global - We will need this property to complete the implementation of server adapters
     public abstract string RepositoryName { get; }
 
     /// <summary>

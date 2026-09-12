@@ -1,7 +1,6 @@
 ﻿// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,7 +72,7 @@ internal sealed class DependenciesPruneCommand(
 
         // The args state the repository as the run leaves it, so a pin the run removed is gone from them. A
         // check run removed none, and states them all.
-        IReadOnlyList<DependencyPin> removed = settings.Check ? [] : orphans;
+        var removed = settings.Check ? [] : orphans;
         var hookArgs = hookArgsFactory.Create(DependencyResolution.Skipping(inventory, policies, removed), settings.Check);
         var hookOutcome = await hookRunner
             .RunHookAsync(hookArgs, acceptsPendingWork: settings.Check, cancellationToken: cancellationToken)

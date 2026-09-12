@@ -91,7 +91,7 @@ internal sealed class AssetsFile
     /// <returns>The JSON a restore would have written.</returns>
     public override string ToString()
     {
-        List<string> frameworks = _frameworks.Count > 0 ? _frameworks : [DefaultTargetFramework];
+        var frameworks = _frameworks.Count > 0 ? _frameworks : [DefaultTargetFramework];
         var targets = string.Join(",\n", frameworks.Select(TargetOf));
         var projectFrameworks = string.Join(",\n", frameworks.Select(FrameworkOf));
         var restoreFrameworks = string.Join(

@@ -37,7 +37,7 @@ internal static class StrongNameKeyBlob
         var modulus = TrimLeadingZeros(Require(parameters.Modulus, nameof(parameters.Modulus)));
         var modulusLength = modulus.Length;
         var halfLength = (modulusLength + 1) / 2;
-        var blob = new byte[HeaderLength + (modulusLength * 2) + (halfLength * 5)];
+        var blob = new byte[HeaderLength + modulusLength * 2 + halfLength * 5];
         var span = blob.AsSpan();
         span[0] = PrivateKeyBlobType;
         span[1] = BlobVersion;

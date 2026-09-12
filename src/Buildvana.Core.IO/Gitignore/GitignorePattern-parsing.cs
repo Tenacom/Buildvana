@@ -315,23 +315,20 @@ partial class GitignorePattern
         return true;
     }
 
-    private static GitignoreNamedClass? GetNamedClass(string name)
+    private static GitignoreNamedClass? GetNamedClass(string name) => name switch
     {
-        return name switch
-        {
-            "alnum" => GitignoreNamedClass.Alnum,
-            "alpha" => GitignoreNamedClass.Alpha,
-            "blank" => GitignoreNamedClass.Blank,
-            "cntrl" => GitignoreNamedClass.Cntrl,
-            "digit" => GitignoreNamedClass.Digit,
-            "graph" => GitignoreNamedClass.Graph,
-            "lower" => GitignoreNamedClass.Lower,
-            "print" => GitignoreNamedClass.Print,
-            "punct" => GitignoreNamedClass.Punct,
-            "space" => GitignoreNamedClass.Space,
-            "upper" => GitignoreNamedClass.Upper,
-            "xdigit" => GitignoreNamedClass.Xdigit,
-            _ => null,
-        };
-    }
+        "alnum" => GitignoreNamedClass.Alnum,
+        "alpha" => GitignoreNamedClass.Alpha,
+        "blank" => GitignoreNamedClass.Blank,
+        "cntrl" => GitignoreNamedClass.Cntrl,
+        "digit" => GitignoreNamedClass.Digit,
+        "graph" => GitignoreNamedClass.Graph,
+        "lower" => GitignoreNamedClass.Lower,
+        "print" => GitignoreNamedClass.Print,
+        "punct" => GitignoreNamedClass.Punct,
+        "space" => GitignoreNamedClass.Space,
+        "upper" => GitignoreNamedClass.Upper,
+        "xdigit" => GitignoreNamedClass.Xdigit,
+        _ => null,
+    };
 }

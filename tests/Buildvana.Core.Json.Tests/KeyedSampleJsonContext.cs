@@ -9,6 +9,4 @@ using System.Text.Json.Serialization;
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(IReadOnlyList<KeyedGroupSample>))]
-internal sealed partial class KeyedSampleJsonContext : JsonSerializerContext
-{
-}
+internal sealed partial class KeyedSampleJsonContext : JsonSerializerContext;

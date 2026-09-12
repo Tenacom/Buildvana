@@ -19,12 +19,12 @@ public readonly record struct GitignoreToken
     /// <summary>
     /// Gets the token that matches any run of characters, the empty run included (<c>*</c>).
     /// </summary>
-    public static GitignoreToken AnyRun { get; } = new(GitignoreTokenKind.AnyRun, default, null);
+    public static GitignoreToken AnyRun { get; } = new(GitignoreTokenKind.AnyRun, '\0', null);
 
     /// <summary>
     /// Gets the token that matches any single character (<c>?</c>).
     /// </summary>
-    public static GitignoreToken AnyChar { get; } = new(GitignoreTokenKind.AnyChar, default, null);
+    public static GitignoreToken AnyChar { get; } = new(GitignoreTokenKind.AnyChar, '\0', null);
 
     /// <summary>
     /// Gets the token's kind.
@@ -56,5 +56,5 @@ public readonly record struct GitignoreToken
     /// <param name="charClass">The bracket expression.</param>
     /// <returns>The character class token.</returns>
     internal static GitignoreToken ForCharClass(GitignoreCharClass charClass)
-        => new(GitignoreTokenKind.CharClass, default, charClass);
+        => new(GitignoreTokenKind.CharClass, '\0', charClass);
 }

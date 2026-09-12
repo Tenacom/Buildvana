@@ -224,19 +224,21 @@ internal sealed class OverrideLifecycleTests
     {
         using var home = NewHome(NeverSettling(1));
         var pass = 1;
-        var restorer = new FakeDependencyRestorer();
-        restorer.OnRestore = suppressed =>
+        var restorer = new FakeDependencyRestorer
         {
-            if (suppressed)
+            OnRestore = suppressed =>
             {
+                if (suppressed)
+                {
+                    return 0;
+                }
+
+                pass++;
+
+                // ReSharper disable once AccessToDisposedClosure // the lifecycle runs the restorer before the home directory is disposed
+                home.WriteFile(AssetsPath, NeverSettling(pass).ToString());
                 return 0;
-            }
-
-            pass++;
-
-            // ReSharper disable once AccessToDisposedClosure // the lifecycle runs the restorer before the home directory is disposed
-            home.WriteFile(AssetsPath, NeverSettling(pass).ToString());
-            return 0;
+            },
         };
 
         var advisories = new FakeVulnerabilityDataSource();
@@ -279,8 +281,7 @@ internal sealed class OverrideLifecycleTests
     // graph is the one the test wrote, and it is what the lifecycle reads first.
     private static FakeDependencyRestorer Lifting(TempHome home)
     {
-        var restorer = new FakeDependencyRestorer();
-        restorer.OnRestore = suppressed => suppressed ? 0 : Settle(home);
+        var restorer = new FakeDependencyRestorer { OnRestore = suppressed => suppressed ? 0 : Settle(home) };
         return restorer;
     }
 

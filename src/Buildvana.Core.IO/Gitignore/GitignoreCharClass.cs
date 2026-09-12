@@ -66,25 +66,22 @@ public sealed class GitignoreCharClass
         return IsNegated ? !isInSet : isInSet;
     }
 
-    private static bool MatchesNamedClass(GitignoreNamedClass namedClass, char c)
+    private static bool MatchesNamedClass(GitignoreNamedClass namedClass, char c) => namedClass switch
     {
-        return namedClass switch
-        {
-            GitignoreNamedClass.Alnum => char.IsAsciiLetterOrDigit(c),
-            GitignoreNamedClass.Alpha => char.IsAsciiLetter(c),
-            GitignoreNamedClass.Blank => c is ' ' or '\t',
-            GitignoreNamedClass.Cntrl => c is < ' ' or '\u007f',
-            GitignoreNamedClass.Digit => char.IsAsciiDigit(c),
-            GitignoreNamedClass.Graph => c is > ' ' and < '\u007f',
-            GitignoreNamedClass.Lower => char.IsAsciiLetterLower(c),
-            GitignoreNamedClass.Print => c is >= ' ' and < '\u007f',
-            GitignoreNamedClass.Punct => c is > ' ' and < '\u007f' && !char.IsAsciiLetterOrDigit(c),
-            GitignoreNamedClass.Space => c is ' ' or '\t' or '\n' or '\v' or '\f' or '\r',
-            GitignoreNamedClass.Upper => char.IsAsciiLetterUpper(c),
-            GitignoreNamedClass.Xdigit => char.IsAsciiHexDigit(c),
-            _ => false,
-        };
-    }
+        GitignoreNamedClass.Alnum => char.IsAsciiLetterOrDigit(c),
+        GitignoreNamedClass.Alpha => char.IsAsciiLetter(c),
+        GitignoreNamedClass.Blank => c is ' ' or '\t',
+        GitignoreNamedClass.Cntrl => c is < ' ' or '\u007f',
+        GitignoreNamedClass.Digit => char.IsAsciiDigit(c),
+        GitignoreNamedClass.Graph => c is > ' ' and < '\u007f',
+        GitignoreNamedClass.Lower => char.IsAsciiLetterLower(c),
+        GitignoreNamedClass.Print => c is >= ' ' and < '\u007f',
+        GitignoreNamedClass.Punct => c is > ' ' and < '\u007f' && !char.IsAsciiLetterOrDigit(c),
+        GitignoreNamedClass.Space => c is ' ' or '\t' or '\n' or '\v' or '\f' or '\r',
+        GitignoreNamedClass.Upper => char.IsAsciiLetterUpper(c),
+        GitignoreNamedClass.Xdigit => char.IsAsciiHexDigit(c),
+        _ => false,
+    };
 
     private bool Contains(char c)
     {

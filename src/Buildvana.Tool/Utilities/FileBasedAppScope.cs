@@ -22,7 +22,10 @@ internal sealed class FileBasedAppScope
 {
     private readonly PathPatternSet _patterns;
 
-    private FileBasedAppScope(PathPatternSet patterns) => _patterns = patterns;
+    private FileBasedAppScope(PathPatternSet patterns)
+    {
+        _patterns = patterns;
+    }
 
     /// <summary>
     /// Reads a scope from its patterns.

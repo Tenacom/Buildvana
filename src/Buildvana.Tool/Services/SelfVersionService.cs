@@ -343,15 +343,13 @@ internal sealed partial class SelfVersionService
     }
 
     private async Task RunDotNetAsync(string[] args, CancellationToken cancellationToken)
-    {
-        _ = await _processRunner.RunAsync(
+        => _ = await _processRunner.RunAsync(
             DotNetMuxer.Path,
             args,
             workingDirectory: _home.HomeDirectory,
             onStdout: line => _reporter.ChildOutput(line, null),
             onStderr: line => _reporter.ChildError(line, null),
             cancellationToken: cancellationToken).ConfigureAwait(false);
-    }
 
     private string UpdateGlobalJson(string? currentPinText, NuGetVersion? currentPin, NuGetVersion target)
     {

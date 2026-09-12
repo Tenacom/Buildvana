@@ -112,7 +112,7 @@ internal sealed class ReleaseAssetListModuleTests
         var result = BuildManager.DefaultBuildManager.Build(parameters, request);
         var listPath = Path.Combine(artifactsDirectory, "Release", ListFileName);
         var listExists = File.Exists(listPath);
-        string[] lines = listExists ? File.ReadAllLines(listPath) : [];
+        var lines = listExists ? File.ReadAllLines(listPath) : [];
         return (result.OverallResult == BuildResultCode.Success, listExists, lines);
     }
 

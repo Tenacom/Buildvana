@@ -224,8 +224,7 @@ internal static class Program
         IReporter reporter,
         GlobalSettings globals,
         CommandParameters parameters)
-    {
-        return new ServiceCollection()
+        => new ServiceCollection()
             .AddSingleton(console)
             .AddSingleton(reporter)
             .AddSingleton(globals)
@@ -234,5 +233,4 @@ internal static class Program
                 new DiscoveredHomeDirectoryProvider(Environment.CurrentDirectory)))
             .AddBvServices()
             .BuildServiceProvider();
-    }
 }

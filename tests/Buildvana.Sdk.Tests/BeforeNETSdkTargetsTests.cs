@@ -6,7 +6,7 @@
 // BeforeNETSdk.targets, which computes the project type. A project with no SDK never does, so Sdk.targets reports
 // BVSDK1006. The .NET CLI sets FileBasedProgram in the project it generates for a file-based app, and the project
 // body of the fixture stands in for it.
-internal sealed class BeforeNETSdkTargetsTests
+internal sealed class BeforeNetSdkTargetsTests
 {
     [Test]
     [Arguments("", "BV_IsLibraryProject")]

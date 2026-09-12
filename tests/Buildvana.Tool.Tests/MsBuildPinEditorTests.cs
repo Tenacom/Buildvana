@@ -468,7 +468,7 @@ internal sealed class MsBuildPinEditorTests
               <PackageVersion Include="Alpha" Version="1.0.0" />
             </Project>
             """;
-        byte[] contentBytes = Encoding.UTF8.GetBytes(content);
+        var contentBytes = Encoding.UTF8.GetBytes(content);
         await File.WriteAllBytesAsync(path, hasByteOrderMark ? [0xEF, 0xBB, 0xBF, .. contentBytes] : contentBytes).ConfigureAwait(false);
 
         var changed = MsBuildPinEditor.RewritePins(path, ["PackageVersion"], _ => "1.0.1");
