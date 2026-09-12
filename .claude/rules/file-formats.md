@@ -14,18 +14,10 @@ A section below overrides them for its own file type.
 
 ## C# source files (`*.cs`)
 
-- Charset: UTF-8 with BOM. StyleCop's SA1412 fails the build on a missing BOM.
-
-### Creating new C# files
-
-The `Write` tool strips the leading BOM, even when U+FEFF is embedded in the content, so it cannot create a `.cs` file. Use this workflow instead:
-
-1. Copy `.claude/templates/Default.cs` to the target path. The template carries the BOM and the standard copyright preamble.
-2. Use the `Edit` tool to replace `// __EVERYTHING_GOES_HERE__` with the file body. `Edit` preserves the BOM.
-
-When you must use `Write` to rewrite an existing `.cs` file in full, which also strips the BOM, prepend `0xEF 0xBB 0xBF` to the file afterwards.
-
-A scratch `.cs` file under `.claude/scratchpad/` needs neither the BOM nor the preamble. The `Common.props` there turns StyleCop off, and the `.editorconfig` sets `charset = utf-8`, so `Write` creates it directly.
+- Charset: UTF-8 without BOM, as for every other file.
+- A file that carries a BOM is valid too. Do not add one, and do not restore one that the `Write` tool stripped.
+- Every file opens with the copyright preamble whose text `stylecop.json` holds. SA1633, SA1634, and SA1636 check it.
+- A scratch `.cs` file under `.claude/scratchpad/` needs no preamble. The `Common.props` there turns StyleCop off.
 
 ## MSBuild XML files (`*.*proj`, `*.props`, `*.targets`)
 

@@ -19,10 +19,6 @@ charset = utf-8-bom
 indent_style = tab
 indent_size = 8
 
-# C# files
-[*.{cs,csx,cake}]
-charset = utf-8-bom
-
 # Visual Basic files
 [*.{vb,vbx}]
 end_of_line = crlf

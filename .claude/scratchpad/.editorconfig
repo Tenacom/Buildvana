@@ -1,8 +1,0 @@
-# Scratchpad-specific .editorconfig file
-
-root = false
-
-[*.cs]
-
-# No BOM: StyleCop, whose SA1412 demands one, is off here (see Common.props), and a tool that cannot write one can then create a scratch file.
-charset = utf-8

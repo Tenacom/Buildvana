@@ -276,8 +276,8 @@ internal sealed class AppDirectiveEditorTests
         await Assert.That(rewritten).IsEqualTo(expected);
     }
 
-    // Hook files carry a byte order mark (StyleCop insists on one for C# sources); the rewrite must not
-    // strip it — nor add one to a file that has none.
+    // A hook file carries a byte order mark or not, according to the editor that wrote it. The rewrite
+    // leaves the file as it found it: it strips no mark, and adds none.
     [Test]
     [Arguments(true)]
     [Arguments(false)]

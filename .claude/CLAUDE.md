@@ -16,16 +16,15 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `rules/workflow.md`: how Ric and I work together: issues, PRs, reviews, sanity checks, out-of-scope fixes, commit messages.
 - `rules/design-principles.md`: scope, abstraction completeness, portability, conformance with the surrounding toolchain, LLM-automation stance.
 - `rules/csharp-style-guide.md`: C# style beyond what `.editorconfig` and `.globalconfig` can express.
-- `rules/file-formats.md`: encoding, indentation, and per-format conventions, including the BOM workflow for new `.cs` files.
+- `rules/file-formats.md`: encoding, indentation, and per-format conventions.
 - `rules/powershell.md`: Windows PowerShell 5.1 pitfalls and shell-usage rules.
 - `rules/testing.md`: test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
 - `rules/dotnet.md`: build commands and tooling. Assumes the project is built with Buildvana.
 - `rules/documentation.md`: what counts as user documentation, the register, the structure of `docs/`, the changelog bullet format, and the checks. The names it relies on are in `rules/terminology.md`, and the inventory it applies to is in `rules/architecture.md`.
 - `output-styles/simple-tech.md`: the register for every kind of prose, from chat to commit messages. Select it with `/output-style`.
-- `templates/Default.cs`: new-file template carrying the BOM and the copyright preamble. The preamble names Tenacom. Change it for a project under different ownership.
 - `tools/lint-commit.cs`: commit-message check, run on the draft before every commit. Its `bannedWords` and `announcingVerbs` arrays come from this repository's past commits. They apply anywhere, and a copy may extend them.
 - `tools/lint-docs.cs`: documentation check, the first phase of `inspect.cs`. Its `fenceTags` array is the list in `rules/documentation.md`. Its `todoExemptFiles` and `sentenceExemptFiles` arrays are empty here, and a copy may name the files its TODO check and its sentence check leave alone.
-- `scratchpad/`: scratch directory for temporary files, commit messages included. Its `Common.props` turns StyleCop and code style enforcement off for scratch code, and its `.editorconfig` drops the BOM, so `Write` can create a scratch `.cs` file. Both files state every property they rely on. Everything else in the directory is gitignored.
+- `scratchpad/`: scratch directory for temporary files, commit messages included. Its `Common.props` turns StyleCop and code style enforcement off for scratch code, and states every property it relies on. Everything else in the directory is gitignored.
 - `settings.json`: MCP servers and tool permissions. Nothing repo-specific in it.
 - `.gitignore`: keeps `settings.local.json`, `worktrees/`, `agent-memory-local/`, `handoff/`, and the contents of `scratchpad/` out of git. Nothing repo-specific in it.
 

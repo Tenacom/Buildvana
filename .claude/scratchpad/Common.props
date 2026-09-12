@@ -8,7 +8,7 @@
   <PropertyGroup>
 
     <!--
-      Scratch code is verified by running it, not by reading it. No StyleCop, so no BOM, header, file name, or
+      Scratch code is verified by running it, not by reading it. No StyleCop, so no header, file name, or
       comment layout rule, and no code style enforcement.
     -->
     <UseStyleCopAnalyzers>false</UseStyleCopAnalyzers>
