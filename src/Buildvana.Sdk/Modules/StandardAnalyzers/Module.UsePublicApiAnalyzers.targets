@@ -35,4 +35,37 @@
                      Include="PublicAPI\$(TargetFramework)\PublicAPI.Unshipped.txt" />
   </ItemGroup>
 
+  <!--
+    The analyzers add no internal API file, in either layout.
+    Each include follows a remove, so that a project that lists a file itself gets no duplicate.
+    https://github.com/dotnet/roslyn/blob/main/src/RoslynAnalyzers/PublicApiAnalyzers/PublicApiAnalyzers.Help.md#internal-api-tracking-and-internalsvisibleto
+  -->
+  <PropertyGroup>
+    <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' == '' And '$(TargetFrameworks)' == ''">false</UseTfmSpecificInternalApiFiles>
+    <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' == '' And '$(TargetFrameworks)' != ''">true</UseTfmSpecificInternalApiFiles>
+    <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' != 'true'">false</UseTfmSpecificInternalApiFiles>
+  </PropertyGroup>
+  <ItemGroup Condition="!$(UseTfmSpecificInternalApiFiles)">
+    <AdditionalFiles Remove="InternalAPI.Shipped.txt" />
+    <AdditionalFiles Remove="InternalAPI.Unshipped.txt" />
+    <AdditionalFiles Condition="Exists('$(MSBuildProjectDirectory)\InternalAPI.Shipped.txt')"
+                     Include="InternalAPI.Shipped.txt" />
+    <AdditionalFiles Condition="Exists('$(MSBuildProjectDirectory)\InternalAPI.Unshipped.txt')"
+                     Include="InternalAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup Condition="$(UseTfmSpecificInternalApiFiles) And '$(TargetFrameworks)' != ''">
+    <None Include="InternalAPI\*\InternalAPI.Shipped.txt" />
+    <None Include="InternalAPI\*\InternalAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup Condition="$(UseTfmSpecificInternalApiFiles) And '$(TargetFramework)' != ''">
+    <None Remove="InternalAPI\$(TargetFramework)\InternalAPI.Shipped.txt" />
+    <None Remove="InternalAPI\$(TargetFramework)\InternalAPI.Unshipped.txt" />
+    <AdditionalFiles Remove="InternalAPI\$(TargetFramework)\InternalAPI.Shipped.txt" />
+    <AdditionalFiles Remove="InternalAPI\$(TargetFramework)\InternalAPI.Unshipped.txt" />
+    <AdditionalFiles Condition="Exists('$(MSBuildProjectDirectory)\InternalAPI\$(TargetFramework)\InternalAPI.Shipped.txt')"
+                     Include="InternalAPI\$(TargetFramework)\InternalAPI.Shipped.txt" />
+    <AdditionalFiles Condition="Exists('$(MSBuildProjectDirectory)\InternalAPI\$(TargetFramework)\InternalAPI.Unshipped.txt')"
+                     Include="InternalAPI\$(TargetFramework)\InternalAPI.Unshipped.txt" />
+  </ItemGroup>
+
 </Project>
