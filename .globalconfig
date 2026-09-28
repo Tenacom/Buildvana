@@ -457,6 +457,32 @@ dotnet_diagnostic.SA1651.severity = warning # Do not use placeholder elements
 # Rule SA1652 superseded by SA0001
 
 # ==============================================================================================
+#                                    PUBLIC API ANALYZERS
+# ----------------------------------------------------------------------------------------------
+# This is the single source of truth for Public API Analyzer severities.
+# DO NOT set severities in .DotSettings files, as precedence rules are unclear.
+# We only list non-default severities here.
+# See https://github.com/dotnet/roslyn/blob/main/src/RoslynAnalyzers/PublicApiAnalyzers/Microsoft.CodeAnalysis.PublicApiAnalyzers.md
+# ----------------------------------------------------------------------------------------------
+# Last updated: 2026-09-21 (PublicApiAnalyzers 5.6.0)
+# ==============================================================================================
+
+# Report nothing on a project that has no API file of a kind:
+#   - with neither PublicAPI.Shipped.txt nor PublicAPI.Unshipped.txt, report no public API
+#   - with neither InternalAPI.Shipped.txt nor InternalAPI.Unshipped.txt, report no internal API
+# A project that has one file of a pair still gets RS0048, or RS0058 for the internal pair.
+dotnet_public_api_analyzer.require_api_files = true
+
+dotnet_diagnostic.RS0051.severity = warning # Add internal types and members to the declared API
+dotnet_diagnostic.RS0052.severity = warning # Remove deleted types and members from the declared internal API
+dotnet_diagnostic.RS0053.severity = warning # The contents of the internal API files are invalid
+dotnet_diagnostic.RS0054.severity = warning # Do not duplicate symbols in internal API files
+dotnet_diagnostic.RS0055.severity = warning # Annotate nullability of internal types and members in the declared API
+dotnet_diagnostic.RS0056.severity = warning # Enable tracking of nullability of reference types in the declared API
+dotnet_diagnostic.RS0057.severity = warning # Internal members should not use oblivious types
+dotnet_diagnostic.RS0058.severity = warning # Missing shipped or unshipped internal API file
+
+# ==============================================================================================
 #                                    RESHARPER INSPECTIONS
 # ----------------------------------------------------------------------------------------------
 # ReSharper inspection severities are configured in .editorconfig, not here.
