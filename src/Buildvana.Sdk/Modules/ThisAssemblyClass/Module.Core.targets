@@ -4,9 +4,13 @@
     <ThisAssemblyClassName Condition="'$(ThisAssemblyClassName)' == ''">ThisAssembly</ThisAssemblyClassName>
   </PropertyGroup>
 
-  <!-- Coalesce EnableDefaultThisAssemblyConstants to a boolean value, defaulting to true. -->
+  <!--
+    Coalesce EnableDefaultThisAssemblyConstants to a boolean value, defaulting to true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
   <PropertyGroup>
     <EnableDefaultThisAssemblyConstants Condition="'$(EnableDefaultThisAssemblyConstants)' == ''">true</EnableDefaultThisAssemblyConstants>
+    <EnableDefaultThisAssemblyConstants Condition="'$(EnableDefaultThisAssemblyConstants)' == 'true'">true</EnableDefaultThisAssemblyConstants>
     <EnableDefaultThisAssemblyConstants Condition="'$(EnableDefaultThisAssemblyConstants)' != 'true'">false</EnableDefaultThisAssemblyConstants>
   </PropertyGroup>
 

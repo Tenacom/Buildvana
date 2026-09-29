@@ -28,6 +28,7 @@
     <AssemblyMetadata Include="RealSdkTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\Sdk.targets'))" />
     <AssemblyMetadata Include="RealBeforeNETSdkTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Sdk\BeforeNETSdk.targets'))" />
     <AssemblyMetadata Include="RealModulesDirectory" Value="$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules'))" />
+    <AssemblyMetadata Include="RealAdditionalAssemblyInfoModuleCoreTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AdditionalAssemblyInfo\Module.Core.targets'))" />
     <AssemblyMetadata Include="RealAlternatePackInnoSetupTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AlternatePack\Module.Core.InnoSetup.targets'))" />
     <AssemblyMetadata Include="RealAlternatePackPublishToFoldersTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AlternatePack\Module.Core.PublishToFolders.targets'))" />
     <AssemblyMetadata Include="RealAssemblySigningModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\AssemblySigning\Module.targets'))" />

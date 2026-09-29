@@ -51,6 +51,38 @@ internal sealed class StandardAnalyzersModuleTests
         await Assert.That(result.InternalLayout).IsEqualTo("false");
     }
 
+    // A single-targeting project defaults both layouts to false, so a value that stores 'true' is the one set.
+    [Test]
+    [Arguments("yes")]
+    [Arguments("On")]
+    [Arguments("!false")]
+    public async Task Evaluate_LayoutsMSBuildReadsAsTrue_StoreTrue(string value)
+    {
+        using var home = new TempHome();
+        var properties = SingleTarget
+            + $"<UseTfmSpecificPublicApiFiles>{value}</UseTfmSpecificPublicApiFiles>"
+            + $"<UseTfmSpecificInternalApiFiles>{value}</UseTfmSpecificInternalApiFiles>";
+        var result = Evaluate(home, properties, string.Empty, null);
+        await Assert.That(result.PublicLayout).IsEqualTo("true");
+        await Assert.That(result.InternalLayout).IsEqualTo("true");
+    }
+
+    // A multi-targeting project defaults both layouts to true, so a value that stores 'false' is the one set.
+    [Test]
+    [Arguments("no")]
+    [Arguments("Off")]
+    [Arguments("!true")]
+    public async Task Evaluate_LayoutsMSBuildReadsAsFalse_StoreFalse(string value)
+    {
+        using var home = new TempHome();
+        var properties = MultiTarget
+            + $"<UseTfmSpecificPublicApiFiles>{value}</UseTfmSpecificPublicApiFiles>"
+            + $"<UseTfmSpecificInternalApiFiles>{value}</UseTfmSpecificInternalApiFiles>";
+        var result = Evaluate(home, properties, string.Empty, null);
+        await Assert.That(result.PublicLayout).IsEqualTo("false");
+        await Assert.That(result.InternalLayout).IsEqualTo("false");
+    }
+
     [Test]
     public async Task Evaluate_FlatInternalLayout_AddsTheInternalApiFiles()
     {

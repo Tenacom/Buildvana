@@ -1,6 +1,8 @@
 <Project>
   
   <PropertyGroup>
+    <!-- Store 'false' for any value MSBuild compares equal to it, such as 'no'. -->
+    <IncludeNuGetPackSupport Condition="'$(IncludeNuGetPackSupport)' == 'false'">false</IncludeNuGetPackSupport>
     <IncludeNuGetPackSupport Condition="'$(IncludeNuGetPackSupport)' != 'false'">true</IncludeNuGetPackSupport>
   </PropertyGroup>
   

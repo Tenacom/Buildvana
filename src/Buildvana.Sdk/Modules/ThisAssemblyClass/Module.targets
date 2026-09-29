@@ -16,6 +16,8 @@
   <PropertyGroup>
     <GenerateThisAssemblyClass Condition="'$(Language)' != 'C#'">false</GenerateThisAssemblyClass>
     <GenerateThisAssemblyClass Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">false</GenerateThisAssemblyClass>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <GenerateThisAssemblyClass Condition="'$(GenerateThisAssemblyClass)' == 'true'">true</GenerateThisAssemblyClass>
     <GenerateThisAssemblyClass Condition="'$(GenerateThisAssemblyClass)' != 'true'">false</GenerateThisAssemblyClass>
   </PropertyGroup>
 

@@ -6,7 +6,13 @@
     <GenerateReleaseAssetList Condition="$(BV_IsLibraryProject) Or $(BV_IsTestProject) Or $(BV_IsFileBasedAppProject)">false</GenerateReleaseAssetList>
   </PropertyGroup>
 
-  <!-- Coalesce GenerateReleaseAssetList to a boolean value, defaulting to false -->
+  <!--
+    Coalesce GenerateReleaseAssetList to a boolean value, defaulting to false.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
+  <PropertyGroup Condition="'$(GenerateReleaseAssetList)' == 'true'">
+    <GenerateReleaseAssetList>true</GenerateReleaseAssetList>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(GenerateReleaseAssetList)' != 'true'">
     <GenerateReleaseAssetList>false</GenerateReleaseAssetList>
   </PropertyGroup>

@@ -5,6 +5,10 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <EnableNETAnalyzers Condition="$(BV_IsNoTargetsProject)">false</EnableNETAnalyzers>
   </PropertyGroup>
+  <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+  <PropertyGroup Condition="'$(EnableNETAnalyzers)' == 'true'">
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(EnableNETAnalyzers)' != 'true'">
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
   </PropertyGroup>
@@ -13,6 +17,8 @@
   <PropertyGroup>
     <AnalysisLevel Condition="'$(AnalysisLevel)' == ''">latest</AnalysisLevel>
     <AnalysisMode Condition="'$(AnalysisMode)' == ''">All</AnalysisMode>
+    <!-- Store 'false' for any value MSBuild compares equal to it, such as 'no'. -->
+    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == 'false'">false</EnforceCodeStyleInBuild>
     <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' != 'false'">true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
@@ -20,6 +26,10 @@
   <PropertyGroup Condition="'$(UseStyleCopAnalyzers)' == ''">
     <UseStyleCopAnalyzers>true</UseStyleCopAnalyzers>
     <UseStyleCopAnalyzers Condition="$(BV_IsNoTargetsProject)">false</UseStyleCopAnalyzers>
+  </PropertyGroup>
+  <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+  <PropertyGroup Condition="'$(UseStyleCopAnalyzers)' == 'true'">
+    <UseStyleCopAnalyzers>true</UseStyleCopAnalyzers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(UseStyleCopAnalyzers)' != 'true'">
     <UseStyleCopAnalyzers>false</UseStyleCopAnalyzers>
@@ -32,6 +42,10 @@
   <PropertyGroup Condition="'$(UsePublicApiAnalyzers)' == ''">
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
     <UsePublicApiAnalyzers Condition="$(BV_IsLibraryProject)">true</UsePublicApiAnalyzers>
+  </PropertyGroup>
+  <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+  <PropertyGroup Condition="'$(UsePublicApiAnalyzers)' == 'true'">
+    <UsePublicApiAnalyzers>true</UsePublicApiAnalyzers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(UsePublicApiAnalyzers)' != 'true'">
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
