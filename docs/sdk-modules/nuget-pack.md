@@ -40,7 +40,7 @@ With the module off, `dotnet pack` reads the NuGet properties alone, and `IsPack
 
 `dotnet pack` packs the project when it is `true`, and skips it otherwise.
 The default is `true` for a [library project](../internal-use-properties.md#project-type) and `false` for every other project, where NuGet defaults it to `true` for every project.
-Any value other than `true` counts as `false`.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
 A packable project needs a README, a license, a third-party notice, and an icon, as the four sections below say.
 Set it to `false` on a library that is not published.
@@ -124,7 +124,7 @@ The module sets the defaults of these properties, which the [`pack` target](http
 | `PackageTitle`                    | `$(AssemblyTitle)` | The title of the package.                                                                                                      |
 | `SourceRevisionId`                | `0`                | The source control revision the package was built from.                                                                        |
 
-Any `PackageRequireLicenseAcceptance` value other than `true` counts as `false`.
+A `PackageRequireLicenseAcceptance` value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 The module forces it to `false` when there is neither a license expression nor a license file, because there is no license to accept.
 `Owners`, `PackageTitle`, and `SourceRevisionId` reach the package through a `.nuspec` file alone, because the `pack` target reads none of them.
 

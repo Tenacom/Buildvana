@@ -41,7 +41,7 @@ The default is `true`.
 
 The value of the `CLSCompliant` attribute.
 The default is `true`.
-Any value other than `true` counts as `false`.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
 ### `GenerateAssemblyComVisibleAttribute` property
 
@@ -52,7 +52,7 @@ The default is `true`.
 
 The value of the `ComVisible` attribute.
 The default is `false`.
-Any value other than `true` counts as `false`.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
 ---
 

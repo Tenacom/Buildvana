@@ -41,27 +41,28 @@ The module sets the defaults of four properties of the .NET SDK.
 The .NET SDK alone runs the code quality analyzers for .NET 5 and later, in `Default` mode.
 It applies the rule set of the target framework, and leaves the code style analyzers out of a build.
 
-`EnableNETAnalyzers` is `false` for a project that uses the `Microsoft.Build.NoTargets` SDK, and any value other than `true` counts as `false`.
-Any `EnforceCodeStyleInBuild` value other than `false` counts as `true`.
+`EnableNETAnalyzers` is `false` for a project that uses the `Microsoft.Build.NoTargets` SDK.
+An `EnableNETAnalyzers` value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
+An `EnforceCodeStyleInBuild` value MSBuild reads as false, such as `no`, counts as `false`, and any other value counts as `true`.
 The [code analysis properties](https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props#code-analysis-properties) section of the .NET SDK reference describes each property, and lists the values `AnalysisLevel` and `AnalysisMode` accept.
 
 ### `UseStyleCopAnalyzers` property
 
 Set it to `false` to leave StyleCop out of a project.
 The default is `true`, except for a project that uses the `Microsoft.Build.NoTargets` SDK.
-Any value other than `true` counts as `false`.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
 ### `UsePublicApiAnalyzers` property
 
 Set it to `true` to run the public API analyzers in a project, or to `false` to leave them out.
 The default is `true` for a [library project](../internal-use-properties.md#project-type), and `false` for every other project.
-Any value other than `true` counts as `false`.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
 ### `UseTfmSpecificPublicApiFiles` property
 
 Set it to `true` to keep one pair of [public API files](#public-api-files) per target framework, or to `false` to keep one pair for the project.
 The default is `true` for a project that sets `TargetFrameworks`, and `false` otherwise.
-Any value other than `true` counts as `false`.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
 ---
 
