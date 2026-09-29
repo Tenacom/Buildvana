@@ -98,6 +98,7 @@
     <Project Path="tests/Buildvana.Core.HomeDirectory.Tests/Buildvana.Core.HomeDirectory.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.IO.Tests/Buildvana.Core.IO.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.Json.Tests/Buildvana.Core.Json.Tests.csproj" />
+    <Project Path="tests/Buildvana.Core.MSBuild.Tests/Buildvana.Core.MSBuild.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.Process.Tests/Buildvana.Core.Process.Tests.csproj" />
     <Project Path="tests/Buildvana.Core.Versioning.Tests/Buildvana.Core.Versioning.Tests.csproj" />
     <Project Path="tests/Buildvana.Runtime.Tests/Buildvana.Runtime.Tests.csproj" />
