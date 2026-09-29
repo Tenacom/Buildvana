@@ -1,6 +1,9 @@
 <Project>
 
-  <!-- UseAlternatePack default to false. -->
+  <!-- UseAlternatePack default to false. Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+  <PropertyGroup Condition="'$(UseAlternatePack)' == 'true'">
+    <UseAlternatePack>true</UseAlternatePack>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(UseAlternatePack)' != 'true'">
     <UseAlternatePack>false</UseAlternatePack>
   </PropertyGroup>

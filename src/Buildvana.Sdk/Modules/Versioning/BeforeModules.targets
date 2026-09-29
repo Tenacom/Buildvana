@@ -2,9 +2,12 @@
 
   <!--
     UseVersioning may be 'true', 'false', or not specified (empty).
+    Store 'true' or 'false' for any value MSBuild compares equal to it, such as 'yes' or 'no'.
     Coalesce any other value to empty.
   -->
   <PropertyGroup>
+    <UseVersioning Condition="'$(UseVersioning)' == 'true'">true</UseVersioning>
+    <UseVersioning Condition="'$(UseVersioning)' == 'false'">false</UseVersioning>
     <UseVersioning Condition="'$(UseVersioning)' != 'true' And '$(UseVersioning)' != 'false'" />
   </PropertyGroup>
 

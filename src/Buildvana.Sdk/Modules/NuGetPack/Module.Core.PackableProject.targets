@@ -15,13 +15,20 @@
   <!-- Coalesce PackageRequireLicenseAcceptance to a boolean value. Default is false. -->
   <PropertyGroup>
     <PackageRequireLicenseAcceptance Condition="'$(PackageLicenseExpression)' == '' And !$(LicenseFileInPackage)">false</PackageRequireLicenseAcceptance>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <PackageRequireLicenseAcceptance Condition="'$(PackageRequireLicenseAcceptance)' == 'true'">true</PackageRequireLicenseAcceptance>
     <PackageRequireLicenseAcceptance Condition="'$(PackageRequireLicenseAcceptance)' != 'true'">false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
-  <!-- Coalesce other properties. -->
+  <!--
+    Coalesce other properties.
+    Store 'true' or 'false' for any value MSBuild compares equal to it, such as 'yes' or 'no'.
+  -->
   <PropertyGroup>
+    <DevelopmentDependency Condition="'$(DevelopmentDependency)' == 'true'">true</DevelopmentDependency>
     <DevelopmentDependency Condition="'$(DevelopmentDependency)' != 'true'">false</DevelopmentDependency>
     <PackageType Condition="'$(PackageType)' == ''">Dependency</PackageType>
+    <Serviceable Condition="'$(Serviceable)' == 'false'">false</Serviceable>
     <Serviceable Condition="'$(Serviceable)' != 'false'">true</Serviceable>
   </PropertyGroup>
 

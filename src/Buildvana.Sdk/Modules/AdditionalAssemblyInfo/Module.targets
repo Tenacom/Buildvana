@@ -17,6 +17,8 @@
     <GenerateAdditionalAssemblyInfo Condition="'$(Language)' != 'C#'">false</GenerateAdditionalAssemblyInfo>
     <GenerateAdditionalAssemblyInfo Condition="'$(UsingMicrosoftNoTargetsSdk)' == 'true'">false</GenerateAdditionalAssemblyInfo>
     <GenerateAdditionalAssemblyInfo Condition="'$(GenerateAdditionalAssemblyInfo)' == ''">true</GenerateAdditionalAssemblyInfo>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <GenerateAdditionalAssemblyInfo Condition="'$(GenerateAdditionalAssemblyInfo)' == 'true'">true</GenerateAdditionalAssemblyInfo>
     <GenerateAdditionalAssemblyInfo Condition="'$(GenerateAdditionalAssemblyInfo)' != 'true'">false</GenerateAdditionalAssemblyInfo>
   </PropertyGroup>
 

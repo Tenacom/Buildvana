@@ -1,8 +1,12 @@
 <Project>
 
-  <!-- Coalesce IconInPackage to a boolean value. Default is true. -->
+  <!--
+    Coalesce IconInPackage to a boolean value. Default is true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
   <PropertyGroup>
     <IconInPackage Condition="'$(IconInPackage)' == ''">true</IconInPackage>
+    <IconInPackage Condition="'$(IconInPackage)' == 'true'">true</IconInPackage>
     <IconInPackage Condition="'$(IconInPackage)' != 'true'">false</IconInPackage>
   </PropertyGroup>
 

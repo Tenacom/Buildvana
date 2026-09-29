@@ -6,6 +6,8 @@
     force to false for any other language and for no-targets projects.
   -->
   <PropertyGroup>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <ExportJetBrainsAnnotations Condition="'$(ExportJetBrainsAnnotations)' == 'true'">true</ExportJetBrainsAnnotations>
     <ExportJetBrainsAnnotations Condition="'$(ExportJetBrainsAnnotations)' != 'true'">false</ExportJetBrainsAnnotations>
     <ExportJetBrainsAnnotations Condition="'$(Language)' != 'C#'">false</ExportJetBrainsAnnotations>
     <ExportJetBrainsAnnotations Condition="$(BV_IsNoTargetsProject)">false</ExportJetBrainsAnnotations>

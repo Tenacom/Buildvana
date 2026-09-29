@@ -1,14 +1,22 @@
 <Project>
 
-  <!-- Coalesce GenerateAssemblyCLSCompliantAttribute to a boolean value, defaulting to true. -->
+  <!--
+    Coalesce GenerateAssemblyCLSCompliantAttribute to a boolean value, defaulting to true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
   <PropertyGroup>
     <GenerateAssemblyCLSCompliantAttribute Condition="'$(GenerateAssemblyCLSCompliantAttribute)' == ''">true</GenerateAssemblyCLSCompliantAttribute>
+    <GenerateAssemblyCLSCompliantAttribute Condition="'$(GenerateAssemblyCLSCompliantAttribute)' == 'true'">true</GenerateAssemblyCLSCompliantAttribute>
     <GenerateAssemblyCLSCompliantAttribute Condition="'$(GenerateAssemblyCLSCompliantAttribute)' != 'true'">false</GenerateAssemblyCLSCompliantAttribute>
   </PropertyGroup>
 
-  <!-- Coalesce CLSCompliant to a boolean value, defaulting to true. -->
+  <!--
+    Coalesce CLSCompliant to a boolean value, defaulting to true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes': the code generator reads the literal.
+  -->
   <PropertyGroup Condition="$(GenerateAssemblyCLSCompliantAttribute)">
     <CLSCompliant Condition="'$(CLSCompliant)' == ''">true</CLSCompliant>
+    <CLSCompliant Condition="'$(CLSCompliant)' == 'true'">true</CLSCompliant>
     <CLSCompliant Condition="'$(CLSCompliant)' != 'true'">false</CLSCompliant>
   </PropertyGroup>
 
@@ -17,15 +25,23 @@
     <CompilerVisibleProperty Include="CLSCompliant" />
   </ItemGroup>
 
-  <!-- Coalesce GenerateAssemblyComVisibleAttribute to a boolean value, defaulting to true. -->
+  <!--
+    Coalesce GenerateAssemblyComVisibleAttribute to a boolean value, defaulting to true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
   <PropertyGroup>
     <GenerateAssemblyComVisibleAttribute Condition="'$(GenerateAssemblyComVisibleAttribute)' == ''">true</GenerateAssemblyComVisibleAttribute>
+    <GenerateAssemblyComVisibleAttribute Condition="'$(GenerateAssemblyComVisibleAttribute)' == 'true'">true</GenerateAssemblyComVisibleAttribute>
     <GenerateAssemblyComVisibleAttribute Condition="'$(GenerateAssemblyComVisibleAttribute)' != 'true'">false</GenerateAssemblyComVisibleAttribute>
   </PropertyGroup>
 
-  <!-- Coalesce ComVisible to a boolean value, defaulting to false. -->
+  <!--
+    Coalesce ComVisible to a boolean value, defaulting to false.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes': the code generator reads the literal.
+  -->
   <PropertyGroup Condition="$(GenerateAssemblyComVisibleAttribute)">
     <ComVisible Condition="'$(ComVisible)' == ''">false</ComVisible>
+    <ComVisible Condition="'$(ComVisible)' == 'true'">true</ComVisible>
     <ComVisible Condition="'$(ComVisible)' != 'true'">false</ComVisible>
   </PropertyGroup>
 

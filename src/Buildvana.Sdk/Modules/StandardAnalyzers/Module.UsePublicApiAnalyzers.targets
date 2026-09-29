@@ -14,6 +14,8 @@
   <PropertyGroup>
     <UseTfmSpecificPublicApiFiles Condition="'$(UseTfmSpecificPublicApiFiles)' == '' And '$(TargetFrameworks)' == ''">false</UseTfmSpecificPublicApiFiles>
     <UseTfmSpecificPublicApiFiles Condition="'$(UseTfmSpecificPublicApiFiles)' == '' And '$(TargetFrameworks)' != ''">true</UseTfmSpecificPublicApiFiles>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <UseTfmSpecificPublicApiFiles Condition="'$(UseTfmSpecificPublicApiFiles)' == 'true'">true</UseTfmSpecificPublicApiFiles>
     <UseTfmSpecificPublicApiFiles Condition="'$(UseTfmSpecificPublicApiFiles)' != 'true'">false</UseTfmSpecificPublicApiFiles>
   </PropertyGroup>
   <ItemGroup Condition="$(UseTfmSpecificPublicApiFiles)">
@@ -43,6 +45,8 @@
   <PropertyGroup>
     <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' == '' And '$(TargetFrameworks)' == ''">false</UseTfmSpecificInternalApiFiles>
     <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' == '' And '$(TargetFrameworks)' != ''">true</UseTfmSpecificInternalApiFiles>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' == 'true'">true</UseTfmSpecificInternalApiFiles>
     <UseTfmSpecificInternalApiFiles Condition="'$(UseTfmSpecificInternalApiFiles)' != 'true'">false</UseTfmSpecificInternalApiFiles>
   </PropertyGroup>
   <ItemGroup Condition="!$(UseTfmSpecificInternalApiFiles)">

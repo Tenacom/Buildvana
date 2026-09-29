@@ -1,8 +1,12 @@
 <Project>
 
-  <!-- Coalesce ReadmeFileInPackage to a boolean value. Default is true. -->
+  <!--
+    Coalesce ReadmeFileInPackage to a boolean value. Default is true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
   <PropertyGroup>
     <ReadmeFileInPackage Condition="'$(ReadmeFileInPackage)' == ''">true</ReadmeFileInPackage>
+    <ReadmeFileInPackage Condition="'$(ReadmeFileInPackage)' == 'true'">true</ReadmeFileInPackage>
     <ReadmeFileInPackage Condition="'$(ReadmeFileInPackage)' != 'true'">false</ReadmeFileInPackage>
   </PropertyGroup>
 

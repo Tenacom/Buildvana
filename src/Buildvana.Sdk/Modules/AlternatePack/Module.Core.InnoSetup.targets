@@ -257,9 +257,13 @@
 
     <!--
       IsReleaseAsset defaults to true.
+      Store 'false' for any value MSBuild compares equal to it, such as 'no'.
       Note that there is no need for a default ReleaseAssetDescription here, as it is provided by the ReleaseAssetList module.
     -->
     <ItemGroup>
+      <InnoSetup Update="$(_Identity_)"
+                 Condition="'$(_IsReleaseAsset_)' == 'false'"
+                 IsReleaseAsset="false" />
       <InnoSetup Update="$(_Identity_)"
                  Condition="'$(_IsReleaseAsset_)' != 'false'"
                  IsReleaseAsset="true" />

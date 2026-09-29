@@ -8,8 +8,10 @@
   <!--
     If Sdk.props has not been imported, BV_IsConfigured will be empty.
     Set it to false to skip importing modules and common targets.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
   -->
   <PropertyGroup>
+    <BV_IsConfigured Condition="'$(BV_IsConfigured)' == 'true'">true</BV_IsConfigured>
     <BV_IsConfigured Condition="'$(BV_IsConfigured)' != 'true'">false</BV_IsConfigured>
   </PropertyGroup>
 

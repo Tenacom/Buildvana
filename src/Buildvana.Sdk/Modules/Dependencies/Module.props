@@ -15,6 +15,8 @@
   -->
 
   <PropertyGroup>
+    <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+    <BV_SuppressTransitiveOverrides Condition="'$(BV_SuppressTransitiveOverrides)' == 'true'">true</BV_SuppressTransitiveOverrides>
     <BV_SuppressTransitiveOverrides Condition="'$(BV_SuppressTransitiveOverrides)' != 'true'">false</BV_SuppressTransitiveOverrides>
     <_BV_CentralTransitiveOverridesFile>$(HomeDirectory)Directory.TransitiveOverrides.props</_BV_CentralTransitiveOverridesFile>
     <_BV_ProjectTransitiveOverridesFile>$(MSBuildProjectDirectory)\$(MSBuildProjectName).TransitiveOverrides.props</_BV_ProjectTransitiveOverridesFile>

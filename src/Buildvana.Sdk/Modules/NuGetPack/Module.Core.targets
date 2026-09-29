@@ -4,6 +4,10 @@
   <PropertyGroup Condition="'$(IsPackable)' == ''">
     <IsPackable Condition="'$(BV_IsLibraryProject)' == 'true'">true</IsPackable>
   </PropertyGroup>
+  <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(IsPackable)' != 'true'">
     <IsPackable>false</IsPackable>
   </PropertyGroup>

@@ -81,21 +81,28 @@
       <_ReleaseAssetMimeType_>%(PublishFolder.ReleaseAssetMimeType)</_ReleaseAssetMimeType_>
     </PropertyGroup>
 
+    <!--
+      Below, each boolean metadata value is coalesced to 'true' or 'false'.
+      A value MSBuild compares equal to one of them, such as 'yes' or 'no', is stored as that literal.
+    -->
     <PropertyGroup>
 
       <!-- PublishDir defaults to {artifacts directory}\{configuration}\{project name}\{publish folder}. -->
       <_PublishDir_ Condition="'$(_PublishDir_)' == ''">$(ArtifactsDirectory)$(Configuration)\$(MSBuildProjectName)\$(_Identity_)\</_PublishDir_>
 
       <!-- Temporary defaults to false. -->
+      <_Temporary_ Condition="'$(_Temporary_)' == 'true'">true</_Temporary_>
       <_Temporary_ Condition="'$(_Temporary_)' != 'true'">false</_Temporary_>
 
       <!-- CreateZipFile is true if ZipFileName is specified. -->
       <_CreateZipFile_ Condition="'$(_ZipFileName_)' != ''">true</_CreateZipFile_>
 
       <!-- CreateZipFile is otherwise false by default. -->
+      <_CreateZipFile_ Condition="'$(_CreateZipFile_)' == 'true'">true</_CreateZipFile_>
       <_CreateZipFile_ Condition="'$(_CreateZipFile_)' != 'true'">false</_CreateZipFile_>
 
       <!-- Coalesce UniqueZipFileName, which InitializePublishFoldersMetadata has defaulted. -->
+      <_UniqueZipFileName_ Condition="$(_CreateZipFile_) And '$(_UniqueZipFileName_)' == 'true'">true</_UniqueZipFileName_>
       <_UniqueZipFileName_ Condition="$(_CreateZipFile_) And '$(_UniqueZipFileName_)' != 'true'">false</_UniqueZipFileName_>
 
     </PropertyGroup>
@@ -116,6 +123,7 @@
     <PropertyGroup>
 
       <!-- IsReleaseAsset is true by default for zipped folders, always false otherwise. -->
+      <_IsReleaseAsset_ Condition="$(_CreateZipFile_) And '$(_IsReleaseAsset_)' == 'false'">false</_IsReleaseAsset_>
       <_IsReleaseAsset_ Condition="$(_CreateZipFile_) And '$(_IsReleaseAsset_)' != 'false'">true</_IsReleaseAsset_>
       <_IsReleaseAsset_ Condition="!$(_CreateZipFile_)">false</_IsReleaseAsset_>
 

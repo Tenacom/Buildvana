@@ -1,8 +1,12 @@
 <Project>
 
-  <!-- Coalesce ThirdPartyNoticeInPackage to a boolean value. Default is true. -->
+  <!--
+    Coalesce ThirdPartyNoticeInPackage to a boolean value. Default is true.
+    Store 'true' for any value MSBuild compares equal to it, such as 'yes'.
+  -->
   <PropertyGroup>
     <ThirdPartyNoticeInPackage Condition="'$(ThirdPartyNoticeInPackage)' == ''">true</ThirdPartyNoticeInPackage>
+    <ThirdPartyNoticeInPackage Condition="'$(ThirdPartyNoticeInPackage)' == 'true'">true</ThirdPartyNoticeInPackage>
     <ThirdPartyNoticeInPackage Condition="'$(ThirdPartyNoticeInPackage)' != 'true'">false</ThirdPartyNoticeInPackage>
   </PropertyGroup>
 

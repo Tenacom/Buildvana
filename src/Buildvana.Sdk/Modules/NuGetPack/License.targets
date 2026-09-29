@@ -1,10 +1,12 @@
 <Project>
 
   <!-- Coalesce LicenseFileInPackage to a boolean value.
-       Default is true, unless PackageLicenseExpression is defined. -->
+       Default is true, unless PackageLicenseExpression is defined.
+       Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
   <PropertyGroup>
     <LicenseFileInPackage Condition="'$(PackageLicenseExpression)' != ''">false</LicenseFileInPackage>
     <LicenseFileInPackage Condition="'$(LicenseFileInPackage)' == ''">true</LicenseFileInPackage>
+    <LicenseFileInPackage Condition="'$(LicenseFileInPackage)' == 'true'">true</LicenseFileInPackage>
     <LicenseFileInPackage Condition="'$(LicenseFileInPackage)' != 'true'">false</LicenseFileInPackage>
   </PropertyGroup>
 
