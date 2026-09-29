@@ -12,12 +12,12 @@ using Buildvana.Core.IO;
 using CommunityToolkit.Diagnostics;
 using Louis.Collections;
 
-namespace Buildvana.Tool.Services.PublicApiFiles;
+namespace Buildvana.Tool.Services.DeclaredApiFiles;
 
 /// <summary>
 /// Manages pairs of <c>PublicAPI.Shipped.txt</c> and <c>PublicAPI.Unshipped.txt</c> files throughout the repository.
 /// </summary>
-internal sealed class PublicApiFilesService
+internal sealed class DeclaredApiFilesService
 {
     private const string RemovedPrefix = "*REMOVED*";
 
@@ -25,9 +25,9 @@ internal sealed class PublicApiFilesService
     private readonly IReporter _reporter;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PublicApiFilesService"/> class.
+    /// Initializes a new instance of the <see cref="DeclaredApiFilesService"/> class.
     /// </summary>
-    public PublicApiFilesService(IHomeDirectoryProvider home, IReporter reporter)
+    public DeclaredApiFilesService(IHomeDirectoryProvider home, IReporter reporter)
     {
         Guard.IsNotNull(home);
         Guard.IsNotNull(reporter);

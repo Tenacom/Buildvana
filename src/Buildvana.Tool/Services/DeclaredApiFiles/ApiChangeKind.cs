@@ -1,7 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-namespace Buildvana.Tool.Services.PublicApiFiles;
+namespace Buildvana.Tool.Services.DeclaredApiFiles;
 
 /// <summary>
 /// Represents the kind of changes public APIs have undergone between an older and a newer version.

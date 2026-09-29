@@ -5,8 +5,8 @@ using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Versioning;
+using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Git;
-using Buildvana.Tool.Services.PublicApiFiles;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
@@ -21,7 +21,7 @@ internal sealed partial class VersionService
 {
     private readonly IReporter _reporter;
     private readonly VersionCalculator _calculator;
-    private readonly PublicApiFilesService _publicApiFiles;
+    private readonly DeclaredApiFilesService _declaredApiFiles;
 
     private VersionInfo _current;
 
@@ -33,15 +33,15 @@ internal sealed partial class VersionService
         IHomeDirectoryProvider home,
         VersioningSettings settings,
         GitService git,
-        PublicApiFilesService publicApiFiles)
+        DeclaredApiFilesService declaredApiFiles)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(home);
         Guard.IsNotNull(settings);
         Guard.IsNotNull(git);
-        Guard.IsNotNull(publicApiFiles);
+        Guard.IsNotNull(declaredApiFiles);
         _reporter = reporter;
-        _publicApiFiles = publicApiFiles;
+        _declaredApiFiles = declaredApiFiles;
         _calculator = new(home, settings, new GitHeightCalculator(VersionFile.FileName));
         _current = _calculator.Calculate();
         Current = SemanticVersion.Parse(_current.SemVer);
@@ -142,7 +142,7 @@ internal sealed partial class VersionService
         _reporter.Info($"Current version increment: {currentVersionIncrement}");
 
         // Determine the kind of change in public API
-        var publicApiChangeKind = checkPublicApiFiles ? _publicApiFiles.GetApiChangeKind() : ApiChangeKind.None;
+        var publicApiChangeKind = checkPublicApiFiles ? _declaredApiFiles.GetApiChangeKind() : ApiChangeKind.None;
         var notCheckedSuffix = checkPublicApiFiles ? string.Empty : " (not checked)";
         _reporter.Info($"Public API change kind: {publicApiChangeKind}{notCheckedSuffix}");
 

@@ -19,9 +19,9 @@ using Buildvana.Tool.Build;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
-using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
@@ -52,7 +52,7 @@ internal sealed class ReleaseCommand(
         var dotnet = services.GetRequiredService<DotNetService>();
         var git = services.GetRequiredService<GitService>();
         var changelog = services.GetRequiredService<ChangelogService>();
-        var publicApiFiles = services.GetRequiredService<PublicApiFilesService>();
+        var declaredApiFiles = services.GetRequiredService<DeclaredApiFilesService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
         var hookRunner = services.GetRequiredService<HookRunner>();
         var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
@@ -139,7 +139,7 @@ internal sealed class ReleaseCommand(
             }
             else
             {
-                var modified = publicApiFiles.TransferAllPublicApisToShipped().ToArray();
+                var modified = declaredApiFiles.TransferAllPublicApisToShipped().ToArray();
 
                 // Never one: the transfer yields both files of every pair it modifies, so there is no
                 // singular case to report.

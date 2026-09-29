@@ -13,10 +13,10 @@ using Buildvana.Tool.Build;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
-using Buildvana.Tool.Services.PublicApiFiles;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
@@ -77,7 +77,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
                 .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
                 .AddSingleton<GitService>()
-                .AddSingleton<PublicApiFilesService>()
+                .AddSingleton<DeclaredApiFilesService>()
                 .AddSingleton(ServerAdapter.Create)
                 .AddSingleton<VersioningSettings>()
                 .AddSingleton<VersionService>()
