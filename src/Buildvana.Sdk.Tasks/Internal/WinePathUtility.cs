@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Buildvana.Core.MSBuild;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -42,7 +43,7 @@ internal static class WinePathUtility
     }
 
     private static bool OptionallyFilterByMetadata(ITaskItem item, string? onlyIfMetadata)
-        => string.IsNullOrEmpty(onlyIfMetadata) || item.GetMetadata(onlyIfMetadata).Equals("true", StringComparison.OrdinalIgnoreCase);
+        => string.IsNullOrEmpty(onlyIfMetadata) || MSBuildBoolean.IsTrue(item.GetMetadata(onlyIfMetadata));
 
     private static string ConvertToWinePathCore(string hostPath, string basePath)
     {

@@ -126,6 +126,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) generates the file when a project sets `GenerateDocumentationFile` to `true`, where an Exe project got none.
 - The [`AlternatePack` module](docs/sdk-modules/alternate-pack.md#innosetup-items) leaves `_<version>` out of the default `OutputName` of an `InnoSetup` item when `AssemblyInformationalVersion` is empty, where the name ended in `_`.
 - The [`AdditionalAssemblyInfo` module](docs/sdk-modules/additional-assembly-info.md#clscompliant-property) generates `CLSCompliant(true)` and `ComVisible(true)` for any value MSBuild reads as true, such as `yes`, where it generated `false`.
+- [`bv test`](docs/tool-commands/build-pipeline.md#bv-test) runs the tests of a project that sets `IsTestingPlatformApplication` to a value MSBuild reads as true, such as `yes`, where it skipped the project.
 
 ### Known problems introduced by this release
 

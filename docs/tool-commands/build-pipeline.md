@@ -100,7 +100,7 @@ bv test [-- <ARGS FORWARDED TO DOTNET>]
 `bv test` cleans, restores, builds, then runs the tests of the solution.
 
 Microsoft.Testing.Platform is the only test runner `bv` supports.
-A test project is a project whose `IsTestingPlatformApplication` property is `true`.
+A test project is a project whose `IsTestingPlatformApplication` property MSBuild reads as true, such as `true` or `yes`.
 The test frameworks built on Microsoft.Testing.Platform set the property through their SDK, so a project rarely sets it itself.
 A project whose name ends in `.Tests` is not a test project for that reason, and `bv` does not read `IsTestProject`, the property of VSTest.
 A VSTest project fails at test time.

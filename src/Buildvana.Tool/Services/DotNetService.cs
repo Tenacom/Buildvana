@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
+using Buildvana.Core.MSBuild;
 using Buildvana.Core.Process;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure;
@@ -190,7 +191,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
                 outputStreaming: OutputStreaming.Disabled,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            if (string.Equals(probe.StandardOutput.Trim(), "true", StringComparison.OrdinalIgnoreCase))
+            if (MSBuildBoolean.IsTrue(probe.StandardOutput.Trim()))
             {
                 _reporter.Detail($"Project '{projectPath}' is a test project, will run tests.");
                 hasTestProjects = true;
