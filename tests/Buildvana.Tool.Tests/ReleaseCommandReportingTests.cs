@@ -43,7 +43,7 @@ internal sealed class ReleaseCommandReportingTests
         await Assert.That(harness.ReadFile("VERSION").Trim()).IsEqualTo("2.3-");
     }
 
-    // Public API files are shipped in pairs - the unshipped file is emptied into the shipped one - so the
+    // Declared API files are shipped in pairs - the unshipped file is emptied into the shipped one - so each
     // count is always even, and the singular case the other counted lines have does not exist here.
     [Test]
     public async Task Release_ShippingPublicApis_CountsBothFilesOfThePair()
@@ -59,16 +59,44 @@ internal sealed class ReleaseCommandReportingTests
         _ = await harness.RunAsync().ConfigureAwait(false);
 
         await Assert.That(harness.Notices).Contains("2 public API files were modified.");
+        await Assert.That(harness.Notices).Contains("No internal API files were modified.");
     }
 
     [Test]
-    public async Task Release_WithoutPublicApis_RecordsThatNoneWereModified()
+    public async Task Release_ShippingInternalApis_CountsBothFilesOfThePair()
+    {
+        using var harness = new ReleaseHarness(new()
+        {
+            VersionSpec = "2.3",
+            Dogfood = false,
+            UnshippedInternalApi = "#nullable enable\nTest.Helper\n",
+        });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(harness.Notices).Contains("No public API files were modified.");
+        await Assert.That(harness.Notices).Contains("2 internal API files were modified.");
+    }
+
+    [Test]
+    public async Task Release_WithoutDeclaredApis_RecordsThatNoneWereModified()
     {
         using var harness = new ReleaseHarness(new() { VersionSpec = "2.3", Dogfood = false });
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
         await Assert.That(harness.Notices).Contains("No public API files were modified.");
+        await Assert.That(harness.Notices).Contains("No internal API files were modified.");
+    }
+
+    [Test]
+    public async Task Release_OnPrerelease_RecordsThatDeclaredApisWereSkipped()
+    {
+        using var harness = new ReleaseHarness(new() { Dogfood = false });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(harness.Notices).Contains("Declared API update skipped: not needed on prerelease.");
     }
 
     // A hook that changes nothing is not a hook that did not run, and the two have to look different:

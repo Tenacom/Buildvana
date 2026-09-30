@@ -15,11 +15,14 @@ using Louis.Collections;
 namespace Buildvana.Tool.Services.DeclaredApiFiles;
 
 /// <summary>
-/// Manages pairs of <c>PublicAPI.Shipped.txt</c> and <c>PublicAPI.Unshipped.txt</c> files throughout the repository.
+/// Manages the declared API files throughout the repository: pairs of <c>PublicAPI.Shipped.txt</c> and
+/// <c>PublicAPI.Unshipped.txt</c> files, and pairs of <c>InternalAPI.Shipped.txt</c> and <c>InternalAPI.Unshipped.txt</c> files.
 /// </summary>
 internal sealed class DeclaredApiFilesService
 {
     private const string RemovedPrefix = "*REMOVED*";
+    private const string PublicApiPrefix = "PublicAPI";
+    private const string InternalApiPrefix = "InternalAPI";
 
     private readonly IHomeDirectoryProvider _home;
     private readonly IReporter _reporter;
@@ -48,7 +51,7 @@ internal sealed class DeclaredApiFilesService
     {
         _reporter.Info("Computing API change kind according to unshipped public API files...");
         var result = ApiChangeKind.None;
-        foreach (var unshippedPath in GetAllPublicApiFilePairs().Select(pair => pair.UnshippedPath))
+        foreach (var unshippedPath in GetAllApiFilePairs(PublicApiPrefix).Select(pair => pair.UnshippedPath))
         {
             var fileResult = GetApiChangeKind(unshippedPath);
             _reporter.Detail($"{unshippedPath} -> {fileResult}");
@@ -71,21 +74,14 @@ internal sealed class DeclaredApiFilesService
     /// in all directories of the repository where both files exist.
     /// </summary>
     /// <returns>An enumeration of the modified files.</returns>
-    public IEnumerable<string> TransferAllPublicApisToShipped()
-    {
-        _reporter.Info("Updating public API files...");
-        foreach (var (unshippedPath, shippedPath) in GetAllPublicApiFilePairs())
-        {
-            _reporter.Detail($"Updating {shippedPath}...");
-            if (!TransferPublicApisToShipped(unshippedPath, shippedPath))
-            {
-                continue;
-            }
+    public IEnumerable<string> TransferAllPublicApisToShipped() => TransferAllApisToShipped(PublicApiPrefix, "public");
 
-            yield return shippedPath;
-            yield return unshippedPath;
-        }
-    }
+    /// <summary>
+    /// Transfers unshipped internal API definitions from <c>InternalAPI.Unshipped.txt</c> to <c>InternalAPI.Shipped.txt</c>
+    /// in all directories of the repository where both files exist.
+    /// </summary>
+    /// <returns>An enumeration of the modified files.</returns>
+    public IEnumerable<string> TransferAllInternalApisToShipped() => TransferAllApisToShipped(InternalApiPrefix, "internal");
 
     private static ApiChangeKind GetApiChangeKind(string unshippedPath)
     {
@@ -107,7 +103,7 @@ internal sealed class DeclaredApiFilesService
         static bool IsEmptyOrStartsWithHash(string s) => s.Length == 0 || s[0] == '#';
     }
 
-    private static bool TransferPublicApisToShipped(string unshippedPath, string shippedPath)
+    private static bool TransferApisToShipped(string unshippedPath, string shippedPath)
     {
         var utf8 = new UTF8Encoding(false);
         var unshippedLines = UserFile.ReadAllLines(unshippedPath, utf8);
@@ -145,16 +141,33 @@ internal sealed class DeclaredApiFilesService
         static bool IsNotPresent(string[] lines, string s) => Array.BinarySearch(lines, s, StringComparer.Ordinal) < 0;
     }
 
-    private IEnumerable<(string UnshippedPath, string ShippedPath)> GetAllPublicApiFilePairs()
+    private IEnumerable<string> TransferAllApisToShipped(string prefix, string kind)
     {
+        _reporter.Info($"Updating {kind} API files...");
+        foreach (var (unshippedPath, shippedPath) in GetAllApiFilePairs(prefix))
+        {
+            _reporter.Detail($"Updating {shippedPath}...");
+            if (!TransferApisToShipped(unshippedPath, shippedPath))
+            {
+                continue;
+            }
+
+            yield return shippedPath;
+            yield return unshippedPath;
+        }
+    }
+
+    private IEnumerable<(string UnshippedPath, string ShippedPath)> GetAllApiFilePairs(string prefix)
+    {
+        var unshippedFileName = $"{prefix}.Unshipped.txt";
         return UserDirectory
-            .EnumerateFiles(_home.HomeDirectory, "**/PublicAPI.Shipped.txt", caseSensitive: true)
+            .EnumerateFiles(_home.HomeDirectory, $"**/{prefix}.Shipped.txt", caseSensitive: true)
             .Select(GetPair)
             .WhereNotNull();
 
-        static (string UnshippedPath, string ShippedPath)? GetPair(string shippedPath)
+        (string UnshippedPath, string ShippedPath)? GetPair(string shippedPath)
         {
-            var unshippedPath = Path.Combine(Path.GetDirectoryName(shippedPath)!, "PublicAPI.Unshipped.txt");
+            var unshippedPath = Path.Combine(Path.GetDirectoryName(shippedPath)!, unshippedFileName);
             return UserFile.Exists(unshippedPath) ? (unshippedPath, shippedPath) : null;
         }
     }

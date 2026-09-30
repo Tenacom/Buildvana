@@ -40,10 +40,10 @@ internal sealed class ReleaseHarness : IDisposable
     public const string PreviousVersion = "2.3.0-preview";
 
     /// <summary>
-    /// The directory the public API files live in, relative to the repository's root. A subdirectory,
+    /// The directory the declared API files live in, relative to the repository's root. A subdirectory,
     /// like in a real repository, where the files belong to a project rather than to the repository.
     /// </summary>
-    public const string PublicApiDirectory = "src/Test.Lib";
+    public const string ApiFilesDirectory = "src/Test.Lib";
 
     private const string ApiKeyEnvVar = "BV_TEST_NUGET_API_KEY";
     private const string BranchName = "release";
@@ -319,10 +319,16 @@ internal sealed class ReleaseHarness : IDisposable
             Repo.WriteFile("CHANGELOG.md", changelog);
         }
 
-        if (_options.UnshippedPublicApi is { } unshipped)
+        if (_options.UnshippedPublicApi is { } unshippedPublic)
         {
-            WriteFile($"{PublicApiDirectory}/PublicAPI.Unshipped.txt", unshipped);
-            WriteFile($"{PublicApiDirectory}/PublicAPI.Shipped.txt", "#nullable enable\n");
+            WriteFile($"{ApiFilesDirectory}/PublicAPI.Unshipped.txt", unshippedPublic);
+            WriteFile($"{ApiFilesDirectory}/PublicAPI.Shipped.txt", "#nullable enable\n");
+        }
+
+        if (_options.UnshippedInternalApi is { } unshippedInternal)
+        {
+            WriteFile($"{ApiFilesDirectory}/InternalAPI.Unshipped.txt", unshippedInternal);
+            WriteFile($"{ApiFilesDirectory}/InternalAPI.Shipped.txt", "#nullable enable\n");
         }
 
         if (_options.WithHook)

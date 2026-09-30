@@ -132,23 +132,18 @@ internal sealed class ReleaseCommand(
                 }
             }
 
-            // Update public API files only when releasing a stable version
+            // Update declared API files only when releasing a stable version
             if (version.IsPrerelease)
             {
-                reporter.Notice("Public API update skipped: not needed on prerelease.");
+                reporter.Notice("Declared API update skipped: not needed on prerelease.");
             }
             else
             {
-                var modified = declaredApiFiles.TransferAllPublicApisToShipped().ToArray();
-
-                // Never one: the transfer yields both files of every pair it modifies, so there is no
-                // singular case to report.
-                reporter.Notice(modified.Length switch
-                {
-                    0 => "No public API files were modified.",
-                    var count => string.Create(CultureInfo.InvariantCulture, $"{count} public API files were modified."),
-                });
-
+                var modifiedPublic = declaredApiFiles.TransferAllPublicApisToShipped().ToArray();
+                reporter.Notice(DescribeModifiedApiFiles(modifiedPublic.Length, "public"));
+                var modifiedInternal = declaredApiFiles.TransferAllInternalApisToShipped().ToArray();
+                reporter.Notice(DescribeModifiedApiFiles(modifiedInternal.Length, "internal"));
+                string[] modified = [.. modifiedPublic, .. modifiedInternal];
                 if (modified.Length > 0)
                 {
                     release.UpdateRepository(modified);
@@ -224,7 +219,7 @@ internal sealed class ReleaseCommand(
             // Build, test, and pack the tree of the release commit, in the one pipeline run of the release.
             // The run comes after the commit, so that the artifacts carry the version that is tagged and
             // published. A run before the commit would test a tree that differs from this one only by the
-            // version file, the public API files, and the changelog, at the cost of a second build. A
+            // version file, the declared API files, and the changelog, at the cost of a second build. A
             // failure here rolls back the release commit and the draft release, like any later failure.
             await pipeline.RunThroughAsync(BuildStep.Pack, configuration, cancellationToken).ConfigureAwait(false);
 
@@ -372,4 +367,11 @@ internal sealed class ReleaseCommand(
         activity.Complete();
         return 0;
     }
+
+    // Never one: a transfer yields both files of every pair it modifies, so there is no singular case to report.
+    private static string DescribeModifiedApiFiles(int count, string kind) => count switch
+    {
+        0 => $"No {kind} API files were modified.",
+        _ => string.Create(CultureInfo.InvariantCulture, $"{count} {kind} API files were modified."),
+    };
 }
