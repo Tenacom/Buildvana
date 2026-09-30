@@ -1,7 +1,7 @@
 # `StandardAnalyzers` module
 
 This module turns on the code quality and code style analyzers of the .NET SDK, StyleCop, and the public API analyzers.
-It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file and the public API files to the compilation.
+It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file and the public and internal API files to the compilation.
 
 ---
 
@@ -14,10 +14,12 @@ It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file a
   - [`UseStyleCopAnalyzers` property](#usestylecopanalyzers-property)
   - [`UsePublicApiAnalyzers` property](#usepublicapianalyzers-property)
   - [`UseTfmSpecificPublicApiFiles` property](#usetfmspecificpublicapifiles-property)
+  - [`UseTfmSpecificInternalApiFiles` property](#usetfmspecificinternalapifiles-property)
 - [Usage](#usage)
   - [Package references](#package-references)
   - [`stylecop.json` file](#stylecopjson-file)
   - [Public API files](#public-api-files)
+  - [Internal API files](#internal-api-files)
 - [Diagnostics](#diagnostics)
 
 ---
@@ -26,6 +28,8 @@ It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file a
 
 The module is active in every project, and each of the three analyzer sets has a switch of its own.
 Configure the rules of every set in an `.editorconfig` file or a `.globalconfig` file, as the [.NET documentation](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files) describes.
+A severity in an `.editorconfig` file reaches only a diagnostic located in a source file.
+So configure RS0052, RS0053, RS0054, and RS0058 in a `.globalconfig` file, because they report a line of an internal API file, or no location.
 
 ### Code analysis properties
 
@@ -64,6 +68,12 @@ Set it to `true` to keep one pair of [public API files](#public-api-files) per t
 The default is `true` for a project that sets `TargetFrameworks`, and `false` otherwise.
 A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
+### `UseTfmSpecificInternalApiFiles` property
+
+Set it to `true` to keep one pair of [internal API files](#internal-api-files) per target framework, or to `false` to keep one pair for the project.
+The default is `true` for a project that sets `TargetFrameworks`, and `false` otherwise.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
+
 ---
 
 ## Usage
@@ -96,6 +106,47 @@ The analyzer package reads the two files from the project directory.
 When `UseTfmSpecificPublicApiFiles` is `true`, the public API may differ between target frameworks.
 Put one pair of files in `PublicAPI/<TargetFramework>/` for each target framework, as in `PublicAPI/net10.0/PublicAPI.Shipped.txt`.
 The module passes the pair of each target framework to the compilation of that framework.
+
+### Internal API files
+
+The public API analyzers can also compare the internal types and members of an assembly with `InternalAPI.Shipped.txt` and `InternalAPI.Unshipped.txt`.
+The analyzer package does not read these two files, so the module passes them to the compilation.
+When `UseTfmSpecificInternalApiFiles` is `false`, the module passes the pair in the project directory.
+When `UseTfmSpecificInternalApiFiles` is `true`, put one pair of files in `InternalAPI/<TargetFramework>/` for each target framework, as in `InternalAPI/net10.0/InternalAPI.Shipped.txt`.
+The module passes the pair of each target framework to the compilation of that framework.
+
+Eight rules check the internal API files, and each is off by default.
+Buildvana SDK does not turn them on.
+
+| Rule   | Title                                                                  |
+| ------ | ---------------------------------------------------------------------- |
+| RS0051 | Add internal types and members to the declared API                     |
+| RS0052 | Remove deleted types and members from the declared internal API        |
+| RS0053 | The contents of the internal API files are invalid                     |
+| RS0054 | Do not duplicate symbols in internal API files                         |
+| RS0055 | Annotate nullability of internal types and members in the declared API |
+| RS0056 | Enable tracking of nullability of reference types in the declared API  |
+| RS0057 | Internal members should not use oblivious types                        |
+| RS0058 | Missing shipped or unshipped internal API file                         |
+
+To turn the eight rules on, add these lines to a `.globalconfig` file, as [Configuration](#configuration) says:
+
+```text
+dotnet_public_api_analyzer.require_api_files = true
+
+dotnet_diagnostic.RS0051.severity = warning
+dotnet_diagnostic.RS0052.severity = warning
+dotnet_diagnostic.RS0053.severity = warning
+dotnet_diagnostic.RS0054.severity = warning
+dotnet_diagnostic.RS0055.severity = warning
+dotnet_diagnostic.RS0056.severity = warning
+dotnet_diagnostic.RS0057.severity = warning
+dotnet_diagnostic.RS0058.severity = warning
+```
+
+Without `require_api_files`, RS0051 reports every internal type and member of a project that has no internal API file.
+With `require_api_files` set to `true`, a project with neither file of a pair gets no diagnostic for that kind of API.
+A project with one file of the internal pair still gets RS0058.
 
 ---
 
