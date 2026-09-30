@@ -39,8 +39,8 @@ internal sealed class DeclaredApiFilesService
     }
 
     /// <summary>
-    /// Gets the kind of change public APIs underwent, according to the presence of new public APIs and/or the removal of existing public APIs
-    /// in all <c>PublicAPI.Unshipped.txt</c> files of the repository.
+    /// Gets the kind of change public APIs underwent, according to the presence of new public APIs
+    /// and/or the removal of existing public APIs in all <c>PublicAPI.Unshipped.txt</c> files of the repository.
     /// </summary>
     /// <returns>
     /// <para>If at least one public API was removed, <see cref="ApiChangeKind.Breaking"/>.</para>
