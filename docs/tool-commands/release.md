@@ -57,8 +57,9 @@ With `actions/checkout`, that is `fetch-depth: 0`.
 
 1. Create a provisional draft release on GitHub, named `<version> [provisional]`, so that a token without permission fails the release early.
 2. Rewrite `VERSION` when the version spec change is not `none`, with the tag `versioning.prereleaseTag` names.
-3. For a stable version, move the unshipped public API into the shipped one.
+3. For a stable version, move the unshipped public and internal API into the shipped one.
    Every `PublicAPI.Unshipped.txt` next to a `PublicAPI.Shipped.txt` is emptied into it, and a line starting with `*REMOVED*` removes its API from the shipped file.
+   Every `InternalAPI.Unshipped.txt` next to an `InternalAPI.Shipped.txt` is emptied into it the same way.
 4. Update the changelog, as [The changelog](#the-changelog) says.
 5. Create the release commit, whether or not a file changed, as [The release commit](#the-release-commit) says.
 6. Check the versions once more.

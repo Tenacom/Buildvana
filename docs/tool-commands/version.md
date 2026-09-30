@@ -93,6 +93,7 @@ An increment is one of `none`, `minor`, and `major`.
    It is `major` when `MAJOR` is greater, `minor` when `MINOR` is greater, and `none` otherwise.
    Without a stable version, it is `none`.
 2. The required increment is what Semantic Versioning asks for the changes in the `PublicAPI.Unshipped.txt` files of the repository.
+   The `InternalAPI.Unshipped.txt` files take no part, because a change to the internal API breaks no consumer.
    A removed API, written as a line starting with `*REMOVED*`, requires `major`.
    An added API requires `minor`, and no change requires `none`.
    When the latest stable version has `MAJOR` 0, a removed API requires `minor`, and an added API requires `none`.

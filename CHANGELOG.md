@@ -46,6 +46,8 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - [`bv dependencies`](docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
 - An apply run of `bv dependencies update` writes [transitive overrides](docs/tool-commands/dependencies.md#transitive-overrides), which lift the transitive dependencies of the repository out of the versions security advisories cover.
 - Buildvana SDK [contributes two things to `bv dependencies`](docs/tool-commands/dependencies.md#what-buildvana-sdk-contributes): the target that dumps the package items of a project, and the import of the transitive override files.
+- The `StandardAnalyzers` module passes the [internal API files](docs/sdk-modules/standard-analyzers.md#internal-api-files) to the compilation, one pair per target framework when `UseTfmSpecificInternalApiFiles` is `true`.
+- On a stable version, `bv release` [moves the unshipped internal API](docs/tool-commands/release.md#the-steps) into the shipped one, as it does for the public API.
 
 ### Changes to existing features
 
