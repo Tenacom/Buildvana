@@ -373,28 +373,69 @@ internal sealed class ReleaseCommandTests
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
-        await Assert.That(harness.ReadFile($"{ReleaseHarness.PublicApiDirectory}/PublicAPI.Shipped.txt")).Contains("Test.Thing");
-        await Assert.That(harness.ReadFile($"{ReleaseHarness.PublicApiDirectory}/PublicAPI.Unshipped.txt")).DoesNotContain("Test.Thing");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Shipped.txt")).Contains("Test.Thing");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Unshipped.txt")).DoesNotContain("Test.Thing");
         var commit = harness.Repo.GetCommits(1)[0];
         await Assert.That(commit.ChangedFiles).IsEquivalentTo([
-            $"{ReleaseHarness.PublicApiDirectory}/PublicAPI.Shipped.txt",
-            $"{ReleaseHarness.PublicApiDirectory}/PublicAPI.Unshipped.txt",
+            $"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Shipped.txt",
+            $"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Unshipped.txt",
         ]);
     }
 
     [Test]
-    public async Task Release_OnPrerelease_LeavesPublicApisUnshipped()
+    public async Task Release_OnStableRelease_ShipsInternalApis()
+    {
+        using var harness = new ReleaseHarness(new()
+        {
+            VersionSpec = "2.3",
+            Dogfood = false,
+            UnshippedInternalApi = "#nullable enable\nTest.Helper\n",
+        });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/InternalAPI.Shipped.txt")).Contains("Test.Helper");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/InternalAPI.Unshipped.txt")).DoesNotContain("Test.Helper");
+        var commit = harness.Repo.GetCommits(1)[0];
+        await Assert.That(commit.ChangedFiles).IsEquivalentTo([
+            $"{ReleaseHarness.ApiFilesDirectory}/InternalAPI.Shipped.txt",
+            $"{ReleaseHarness.ApiFilesDirectory}/InternalAPI.Unshipped.txt",
+        ]);
+    }
+
+    // A removed public API forces a version bump. A removed internal API breaks no consumer, so the version
+    // spec stays as it is, and the release stays stable and ships the internal API files.
+    [Test]
+    public async Task Release_WithRemovedInternalApi_LeavesVersionSpecUnchanged()
+    {
+        using var harness = new ReleaseHarness(new()
+        {
+            VersionSpec = "2.3",
+            Dogfood = false,
+            UnshippedInternalApi = "#nullable enable\n*REMOVED*Test.Helper\n",
+        });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(harness.ReadFile("VERSION").Trim()).IsEqualTo("2.3");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/InternalAPI.Unshipped.txt")).DoesNotContain("Test.Helper");
+    }
+
+    [Test]
+    public async Task Release_OnPrerelease_LeavesDeclaredApisUnshipped()
     {
         using var harness = new ReleaseHarness(new()
         {
             Dogfood = false,
             CheckPublicApi = false,
             UnshippedPublicApi = "#nullable enable\nTest.Thing\n",
+            UnshippedInternalApi = "#nullable enable\nTest.Helper\n",
         });
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
-        await Assert.That(harness.ReadFile($"{ReleaseHarness.PublicApiDirectory}/PublicAPI.Unshipped.txt")).Contains("Test.Thing");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Unshipped.txt")).Contains("Test.Thing");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/InternalAPI.Unshipped.txt")).Contains("Test.Helper");
         await Assert.That(harness.Repo.GetCommits(1)[0].ChangedFiles.Count).IsEqualTo(0);
     }
 
@@ -414,7 +455,7 @@ internal sealed class ReleaseCommandTests
         _ = await harness.RunAsync().ConfigureAwait(false);
 
         await Assert.That(harness.ReadFile("VERSION").Trim()).IsEqualTo("2.4-preview");
-        await Assert.That(harness.ReadFile($"{ReleaseHarness.PublicApiDirectory}/PublicAPI.Unshipped.txt")).Contains("Test.Thing");
+        await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Unshipped.txt")).Contains("Test.Thing");
         await Assert.That(harness.Repo.GetCommits(1)[0].ChangedFiles).IsEquivalentTo(["VERSION"]);
     }
 }

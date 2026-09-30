@@ -61,6 +61,13 @@ internal sealed record ReleaseHarnessOptions
     public string? UnshippedPublicApi { get; init; }
 
     /// <summary>
+    /// Gets the content of the unshipped internal API file, or <see langword="null"/> for a repository with
+    /// no internal API files. When set, a shipped file is written alongside it, in the directory of the
+    /// public API files.
+    /// </summary>
+    public string? UnshippedInternalApi { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether the repository has a <c>release/post-release</c> hook file.
     /// </summary>
     public bool WithHook { get; init; }
