@@ -192,7 +192,7 @@ With `MetadataName`, the task converts the named metadata of each item instead o
 </ItemGroup>
 ```
 
-With `OnlyIfMetadata`, the task converts the items whose named metadata is `true`, ignoring case, and leaves the others as they are:
+With `OnlyIfMetadata`, the task converts the items whose named metadata MSBuild reads as true, such as `true` or `yes`, and leaves the others as they are:
 
 ```xml
 <ConvertToWinePaths Condition="$(UseWine)"
