@@ -3,6 +3,7 @@
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
+    <File Path=".globalconfig" />
     <File Path=".markdownlint-cli2.jsonc" />
     <File Path="buildvana.example.jsonc" />
     <File Path="buildvana.jsonc" />
