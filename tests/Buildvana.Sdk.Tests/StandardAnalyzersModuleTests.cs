@@ -46,7 +46,7 @@ internal sealed class StandardAnalyzersModuleTests
     public async Task Evaluate_InternalLayoutOtherThanTrue_CountsAsFalse()
     {
         using var home = new TempHome();
-        var properties = MultiTarget + "<UseTfmSpecificInternalApiFiles>maybe</UseTfmSpecificInternalApiFiles>";
+        const string properties = MultiTarget + "<UseTfmSpecificInternalApiFiles>maybe</UseTfmSpecificInternalApiFiles>";
         var result = Evaluate(home, properties, string.Empty, null);
         await Assert.That(result.InternalLayout).IsEqualTo("false");
     }
@@ -143,7 +143,7 @@ internal sealed class StandardAnalyzersModuleTests
         using var home = new TempHome();
         WritePair(home, ProjectDirectory, "InternalAPI");
         WritePair(home, $"{ProjectDirectory}/PublicAPI/net10.0", "PublicAPI");
-        var properties = MultiTarget + "<UseTfmSpecificInternalApiFiles>false</UseTfmSpecificInternalApiFiles>";
+        const string properties = MultiTarget + "<UseTfmSpecificInternalApiFiles>false</UseTfmSpecificInternalApiFiles>";
         var result = Evaluate(home, properties, string.Empty, InnerBuild);
         string[] expected = [
             "InternalAPI.Shipped.txt",
