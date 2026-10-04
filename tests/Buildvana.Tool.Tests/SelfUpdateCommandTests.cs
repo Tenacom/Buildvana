@@ -75,8 +75,8 @@ internal sealed class SelfUpdateCommandTests
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
     }
 
-    // The sources list 2.1.43-preview, and the running bv is 2.1.41-preview: the summary says which one the
-    // command asked the service for.
+    // The manifest pins a stable version, and the running bv is the one prerelease above it: a default run
+    // would stay on the stable pin and hand off, and only --preview makes this bv the target.
     [Test]
     public async Task ExecuteAsync_ForwardsPreviewToTheUpdate()
     {
@@ -84,23 +84,23 @@ internal sealed class SelfUpdateCommandTests
         WriteGlobalJson(home, "2.1.40");
         WriteToolManifest(home, "2.1.40");
         var console = new TestConsole();
-        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.40", "2.1.43-preview"]);
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.40", OwnVersion]);
         var service = CreateService(home, new FakeProcessRunner(), versionSource);
         var command = new SelfUpdateCommand(service, new SelfUpdateSettings { Preview = true }, console);
 
         _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
-        await Assert.That(console.Output).Contains("bv: 2.1.40 -> 2.1.43-preview (tool manifest)");
+        await Assert.That(console.Output).Contains("bv: 2.1.40 -> 2.1.41-preview (tool manifest)");
     }
 
-    // The sources list 2.1.43-preview, and the manifest pins 2.1.42-preview: a run that asks no source stays
-    // on the manifest pin.
+    // The sources list 2.1.43-preview, so a default run would hand off to it: a repair stays on the manifest
+    // pin, which is the running bv, and asks no source.
     [Test]
     public async Task ExecuteAsync_ForwardsRepairToTheUpdate()
     {
         using var home = new TempHome();
-        WriteGlobalJson(home, OwnVersion);
-        WriteToolManifest(home, "2.1.42-preview");
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, OwnVersion);
         var console = new TestConsole();
         var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.43-preview"]);
         var service = CreateService(home, new FakeProcessRunner(), versionSource);
@@ -109,25 +109,27 @@ internal sealed class SelfUpdateCommandTests
         _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
         await Assert.That(versionSource.Asked.Count).IsEqualTo(0);
-        await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.41-preview -> 2.1.42-preview (global.json)");
+        await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.40-preview -> 2.1.41-preview (global.json)");
     }
 
-    // The stamped version appearing in the summary is the observable proof that --to reached the service.
+    // The sources list 2.1.43-preview, so a default run would hand off to it and print nothing here. The
+    // summary of an in-place update is the observable proof that --to reached the service.
     [Test]
     public async Task ExecuteAsync_ForwardsToVersionToTheUpdate()
     {
         using var home = new TempHome();
-        WriteGlobalJson(home, OwnVersion);
-        WriteToolManifest(home, OwnVersion);
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, "2.1.40-preview");
         var console = new TestConsole();
-        var settings = new SelfUpdateSettings { To = "2.1.43-preview" };
-        var command = new SelfUpdateCommand(CreateService(home, new FakeProcessRunner()), settings, console);
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.40-preview", "2.1.43-preview"]);
+        var settings = new SelfUpdateSettings { To = OwnVersion };
+        var command = new SelfUpdateCommand(CreateService(home, new FakeProcessRunner(), versionSource), settings, console);
 
         var exitCode = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
         await Assert.That(exitCode).IsEqualTo(0);
-        await Assert.That(console.Output).Contains("bv: 2.1.41-preview -> 2.1.43-preview (tool manifest)");
-        await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.41-preview -> 2.1.43-preview (global.json)");
+        await Assert.That(console.Output).Contains("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
+        await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.40-preview -> 2.1.41-preview (global.json)");
     }
 
     [Test]
@@ -148,16 +150,38 @@ internal sealed class SelfUpdateCommandTests
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
 
+    // The summary belongs to the run that updated the files: a handed-off run prints nothing of its own, and
+    // the exit code is the child's.
+    [Test]
+    public async Task ExecuteAsync_WhenHandedOff_PrintsNothing_AndReturnsTheChildExitCode()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, OwnVersion);
+        WriteToolManifest(home, OwnVersion);
+        var console = new TestConsole();
+        var runner = new FakeProcessRunner { OnRunWithInheritedStdio = static (_, _) => 3 };
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.43-preview"]);
+        var command = new SelfUpdateCommand(CreateService(home, runner, versionSource), new SelfUpdateSettings(), console);
+
+        var exitCode = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(3);
+        await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(1);
+        await Assert.That(console.Output).IsEmpty();
+    }
+
     private static SelfVersionService CreateService(
         TempHome home,
         FakeProcessRunner? processRunner = null,
         FakePackageVersionSource? versionSource = null)
-        => new(
+    {
+        var runner = processRunner ?? new FakeProcessRunner();
+        return new SelfVersionService(
             NullReporter.Instance,
             home.Provider,
             new BuildvanaJsonConfigProvider(home.Provider),
             new JsonHelper(),
-            processRunner ?? new FakeProcessRunner(),
+            runner,
             new FamilyPinUpdater(
                 home.Provider,
                 new Lazy<BuildvanaConfig>(static () => new BuildvanaConfig()),
@@ -165,7 +189,9 @@ internal sealed class SelfUpdateCommandTests
             new SelfUpdateTargetResolver(
                 versionSource ?? new FakePackageVersionSource().Knows("bv", [OwnVersion]),
                 NuGetVersion.Parse(OwnVersion)),
+            new SelfUpdateHandoff(NullReporter.Instance, home.Provider, runner, []),
             NuGetVersion.Parse(OwnVersion));
+    }
 
     private static void WriteGlobalJson(TempHome home, string pin)
     {

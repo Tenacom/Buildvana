@@ -25,7 +25,12 @@ internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpda
             Repair = settings.Repair,
             Force = settings.Force,
         };
-        var summary = await selfVersion.UpdateRepositoryAsync(request, cancellationToken).ConfigureAwait(false);
+        var (exitCode, summary) = await selfVersion.UpdateRepositoryAsync(request, cancellationToken).ConfigureAwait(false);
+        if (summary is null)
+        {
+            // Handed off: the target version printed the summary, and its exit code is the outcome.
+            return exitCode;
+        }
 
         // The summary is the command's deliverable, not narration: it goes to the console unconditionally,
         // regardless of verbosity, like the report of `bv version show`.
@@ -41,6 +46,6 @@ internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpda
             console.WriteLine(summary.ConfigFileLine);
         }
 
-        return 0;
+        return exitCode;
     }
 }

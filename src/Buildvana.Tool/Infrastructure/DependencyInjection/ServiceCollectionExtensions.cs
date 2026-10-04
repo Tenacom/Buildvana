@@ -120,6 +120,11 @@ internal static class ServiceCollectionExtensions
                     sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => new EffectivePolicyResolver(sp.GetRequiredService<BuildvanaConfig>().Dependencies))
                 .AddSingleton(static sp => new SelfUpdateTargetResolver(sp.GetRequiredService<IPackageVersionSource>(), OwnVersion.Value))
+                .AddSingleton(static sp => new SelfUpdateHandoff(
+                    sp.GetRequiredService<IReporter>(),
+                    sp.GetRequiredService<IHomeDirectoryProvider>(),
+                    sp.GetRequiredService<IProcessRunner>(),
+                    sp.GetRequiredService<GlobalSettings>().ToTokens()))
                 .AddSingleton(static sp => new SelfVersionService(
                     sp.GetRequiredService<IReporter>(),
                     sp.GetRequiredService<IHomeDirectoryProvider>(),
@@ -128,7 +133,9 @@ internal static class ServiceCollectionExtensions
                     sp.GetRequiredService<IProcessRunner>(),
                     sp.GetRequiredService<FamilyPinUpdater>(),
                     sp.GetRequiredService<SelfUpdateTargetResolver>(),
-                    OwnVersion.Value));
+                    sp.GetRequiredService<SelfUpdateHandoff>(),
+                    OwnVersion.Value,
+                    Environment.GetEnvironmentVariable(SelfUpdateHandoff.FromEnvVar)));
 
             foreach (var registration in CommandRegistry.Commands)
             {

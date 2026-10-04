@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.ComponentModel;
 using Buildvana.Tool.CommandLine;
 
@@ -41,4 +42,35 @@ internal sealed record GlobalSettings(
     bool SkipDelegation,
     [property: BvOption("--version")]
     [property: Description("Print the bv version and exit.")]
-    bool Version);
+    bool Version)
+{
+    /// <summary>
+    /// Renders the options back into command-line tokens, for a <c>bv</c> run spawned on behalf of this one.
+    /// <see cref="Version"/> is left out: it ends a run instead of configuring one.
+    /// </summary>
+    /// <returns>The tokens, in the order of the options in <c>bv</c>'s help; empty when no option was passed.</returns>
+    public IReadOnlyList<string> ToTokens()
+    {
+        var tokens = new List<string>();
+        if (Verbosity is not null)
+        {
+            tokens.Add("--verbosity");
+            tokens.Add(Verbosity);
+        }
+
+        AddFlag(Color, "--color");
+        AddFlag(NoColor, "--no-color");
+        AddFlag(Nologo, "--nologo");
+        AddFlag(SkipSdkCheck, "--skip-sdk-check");
+        AddFlag(SkipDelegation, "--skip-delegation");
+        return tokens;
+
+        void AddFlag(bool present, string token)
+        {
+            if (present)
+            {
+                tokens.Add(token);
+            }
+        }
+    }
+}
