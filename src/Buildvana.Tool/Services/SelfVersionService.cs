@@ -49,7 +49,9 @@ internal sealed partial class SelfVersionService
     private readonly IProcessRunner _processRunner;
     private readonly FamilyPinUpdater _familyPins;
     private readonly SelfUpdateTargetResolver _targetResolver;
+    private readonly SelfUpdateHandoff _handoff;
     private readonly NuGetVersion _ownVersion;
+    private readonly string? _handedOffFrom;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SelfVersionService"/> class.
@@ -61,7 +63,11 @@ internal sealed partial class SelfVersionService
     /// <param name="processRunner">The process runner used to invoke <c>dotnet tool update</c>.</param>
     /// <param name="familyPins">The finder and stamper of the family pins declared in the repository's own files.</param>
     /// <param name="targetResolver">The picker of the version an update moves the repository to.</param>
+    /// <param name="handoff">The runner of the target version, for an update whose target is not this bv.</param>
     /// <param name="ownVersion">The version of the running bv.</param>
+    /// <param name="handedOffFrom">The value of <see cref="SelfUpdateHandoff.FromEnvVar"/>, when this run is
+    /// one another bv handed off: the bv version the tool manifest pinned before that bv moved it, or an empty
+    /// string when the manifest had no bv entry. <see langword="null"/> when this run was not handed off.</param>
     public SelfVersionService(
         IReporter reporter,
         IHomeDirectoryProvider home,
@@ -70,7 +76,9 @@ internal sealed partial class SelfVersionService
         IProcessRunner processRunner,
         FamilyPinUpdater familyPins,
         SelfUpdateTargetResolver targetResolver,
-        NuGetVersion ownVersion)
+        SelfUpdateHandoff handoff,
+        NuGetVersion ownVersion,
+        string? handedOffFrom = null)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(home);
@@ -79,6 +87,7 @@ internal sealed partial class SelfVersionService
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(familyPins);
         Guard.IsNotNull(targetResolver);
+        Guard.IsNotNull(handoff);
         Guard.IsNotNull(ownVersion);
         _reporter = reporter;
         _home = home;
@@ -87,7 +96,9 @@ internal sealed partial class SelfVersionService
         _processRunner = processRunner;
         _familyPins = familyPins;
         _targetResolver = targetResolver;
+        _handoff = handoff;
         _ownVersion = ownVersion;
+        _handedOffFrom = handedOffFrom;
     }
 
     // The well-known shape of the configuration file's schema reference: the version segment between the
@@ -161,14 +172,19 @@ internal sealed partial class SelfVersionService
     /// fails the update with the repository untouched.</para>
     /// <para>When an existing pin is newer than the target version, the update would be a downgrade and fails
     /// unless the request allows one.</para>
+    /// <para>When the target version is not this bv's own, the steps after the tool manifest are handed to
+    /// the target version, through <see cref="SelfUpdateHandoff"/>: it knows its own configuration model and
+    /// its own family pin rules, and this bv may predate both. The result then carries the handed-off run's
+    /// exit code and no summary, because that run prints its own.</para>
     /// </remarks>
     /// <param name="request">What the invocation asks for: the target version, and whether a downgrade is allowed.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing operation.</param>
-    /// <returns>The per-target summary of what changed, for the command to print.</returns>
+    /// <returns>The exit code of the run, and the per-target summary of what changed when this bv performed
+    /// the update itself.</returns>
     /// <exception cref="BuildFailedException">The update failed — e.g. a file could not be read or written,
     /// no target could be picked, <c>dotnet tool update</c> failed, or an existing pin is newer than the target
     /// version and the request allows no downgrade; the message names the failure.</exception>
-    public async Task<SelfUpdateSummary> UpdateRepositoryAsync(
+    public async Task<SelfUpdateResult> UpdateRepositoryAsync(
         SelfUpdateRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -192,10 +208,18 @@ internal sealed partial class SelfVersionService
         // there leaves the repository untouched. A failed file write after it leaves the manifest already
         // pinned — a state a rerun reports as "unchanged" while retrying the writes, so the window self-heals.
         var toolManifestLine = await PinToolManifestAsync(manifestPin, target, cancellationToken).ConfigureAwait(false);
+        if (!VersionComparer.VersionRelease.Equals(target, _ownVersion))
+        {
+            var exitCode = await _handoff
+                .RunAsync(target, request.Force, manifestPin.Version, cancellationToken)
+                .ConfigureAwait(false);
+            return SelfUpdateResult.HandedOff(exitCode);
+        }
+
         var globalJsonLine = UpdateGlobalJson(sdkPinText, sdkPin, target);
         var familyPinLines = _familyPins.StampPins(familyPins, target);
         var configFileLine = UpdateConfigSchemaReference(target);
-        return new SelfUpdateSummary(toolManifestLine, globalJsonLine, familyPinLines, configFileLine);
+        return SelfUpdateResult.InPlace(new SelfUpdateSummary(toolManifestLine, globalJsonLine, familyPinLines, configFileLine));
     }
 
     // The dotnet CLI reads the manifest with the same version parser bv uses, so an entry whose version bv
@@ -335,8 +359,31 @@ internal sealed partial class SelfVersionService
             : ["tool", "install", ToolPackageId, "--version", targetText];
         await RunDotNetAsync([.. args, "--tool-manifest", ToolManifest.FileName], cancellationToken).ConfigureAwait(false);
         return !hasEntry ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
-            : isUnchanged ? $"{ToolPackageId}: {targetText} (tool manifest, unchanged)"
+            : isUnchanged ? ManifestLineWhenUnchanged(target)
             : $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)";
+    }
+
+    // A handed-off run finds the manifest already at the target, because the bv that handed off moved it
+    // there: the summary line reports that move, from the pin that bv found, instead of "unchanged". An
+    // empty value says the manifest had no bv entry, and a value that is not a version is ignored.
+    private string ManifestLineWhenUnchanged(NuGetVersion target)
+    {
+        var targetText = target.ToNormalizedString();
+        if (_handedOffFrom is null)
+        {
+            return $"{ToolPackageId}: {targetText} (tool manifest, unchanged)";
+        }
+
+        if (_handedOffFrom.Length == 0)
+        {
+            return $"{ToolPackageId}: {targetText} (tool manifest, added)";
+        }
+
+        var isMove = NuGetVersion.TryParse(_handedOffFrom, out var previousPin)
+            && !VersionComparer.VersionRelease.Equals(previousPin, target);
+        return isMove
+            ? $"{ToolPackageId}: {previousPin!.ToNormalizedString()} -> {targetText} (tool manifest)"
+            : $"{ToolPackageId}: {targetText} (tool manifest, unchanged)";
     }
 
     private async Task RunDotNetAsync(string[] args, CancellationToken cancellationToken)
