@@ -10,6 +10,7 @@ using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.SelfUpdate;
 using NuGet.Versioning;
+using TUnit.Assertions.Enums;
 
 internal sealed class SelfVersionServiceTests
 {
@@ -111,7 +112,8 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(summary.ToolManifestLine).Contains("tool manifest, unchanged");
         await Assert.That(summary.GlobalJsonLine).Contains("global.json, unchanged");
         await Assert.That(summary.ConfigFileLine).IsNull();
@@ -132,7 +134,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.43-preview (tool manifest, unchanged)");
         await Assert.That(summary.GlobalJsonLine).IsEqualTo("Buildvana.Sdk: 2.1.41-preview -> 2.1.43-preview (global.json)");
     }
@@ -152,7 +155,8 @@ internal sealed class SelfVersionServiceTests
         var (executable, args, workingDirectory) = runner.Runs[0];
         await Assert.That(executable).IsNotNull();
         await Assert.That(args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(workingDirectory).IsEqualTo(home.RootPath);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
@@ -182,10 +186,11 @@ internal sealed class SelfVersionServiceTests
         var summary = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(2);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["new", "tool-manifest"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["new", "tool-manifest"], CollectionOrdering.Matching);
         await Assert.That(runner.Runs[0].WorkingDirectory).IsEqualTo(home.RootPath);
         await Assert.That(runner.Runs[1].Args).IsEquivalentTo(
-            ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
     }
 
@@ -222,7 +227,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "install", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, added)");
     }
 
@@ -244,7 +250,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
 
@@ -443,7 +450,8 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (_, args, _) = runner.Runs[0];
         await Assert.That(args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.41-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.42-preview -> 2.1.41-preview (tool manifest)");
     }
@@ -463,7 +471,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.41-preview (tool manifest)");
     }
 
@@ -481,7 +490,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.43-preview"));
         await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(SchemaConfigText("2.1.43-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview -> 2.1.43-preview (tool manifest)");
@@ -522,7 +532,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.40-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.40-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.40-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview -> 2.1.40-preview (tool manifest)");
     }
@@ -545,11 +556,13 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(versionSource.Asked).IsEquivalentTo(["bv"]);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.45-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.45-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(1);
         var handoff = runner.InheritedStdioRuns[0];
         await Assert.That(handoff.Args).IsEquivalentTo(
-            ["tool", "run", "bv", "--", "--nologo", "self-update", "--to", "2.1.45-preview"]);
+            ["tool", "run", "bv", "--", "--nologo", "self-update", "--to", "2.1.45-preview"],
+            CollectionOrdering.Matching);
         await Assert.That(handoff.Environment).IsNotNull();
         await Assert.That(handoff.Environment!["BV_SELF_UPDATE_FROM"]).IsEqualTo("2.1.40-preview");
         await Assert.That(handoff.WorkingDirectory).IsEqualTo(home.RootPath);
@@ -573,7 +586,8 @@ internal sealed class SelfVersionServiceTests
         _ = await service.UpdateRepositoryAsync(new SelfUpdateRequest { Force = true }).ConfigureAwait(false);
 
         await Assert.That(runner.InheritedStdioRuns[0].Args).IsEquivalentTo(
-            ["tool", "run", "bv", "--", "--verbosity", "detailed", "--nologo", "self-update", "--to", "2.1.45-preview", "--force"]);
+            ["tool", "run", "bv", "--", "--verbosity", "detailed", "--nologo", "self-update", "--to", "2.1.45-preview", "--force"],
+            CollectionOrdering.Matching);
     }
 
     [Test]
@@ -607,7 +621,8 @@ internal sealed class SelfVersionServiceTests
         _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "install", "bv", "--version", "2.1.45-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "install", "bv", "--version", "2.1.45-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(runner.InheritedStdioRuns[0].Environment!["BV_SELF_UPDATE_FROM"]).IsEqualTo(string.Empty);
     }
 
@@ -665,7 +680,8 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(versionSource.Asked.Count).IsEqualTo(0);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
-            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"]);
+            ["tool", "update", "bv", "--version", "2.1.41-preview", "--tool-manifest", "dotnet-tools.json"],
+            CollectionOrdering.Matching);
         await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(0);
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview (tool manifest, unchanged)");
         await Assert.That(summary.GlobalJsonLine).IsEqualTo("Buildvana.Sdk: 2.1.40-preview -> 2.1.41-preview (global.json)");
