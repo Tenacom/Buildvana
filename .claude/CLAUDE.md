@@ -9,7 +9,7 @@ Buildvana is an MSBuild-based build system. `.claude/rules/` holds the project i
 
 ## Rules index
 
-The `.claude` directory is meant to be copied whole into other projects. This index says what survives the copy unchanged and what has to be rewritten on arrival.
+The `.claude` directory is meant to be copied whole into other projects. This index says what survives the copy unchanged and what has to be rewritten on arrival. Each Markdown file under `.claude` says the same of itself in its first paragraph, so that the information survives a copy without this index.
 
 ### Portable: copy verbatim
 

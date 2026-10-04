@@ -1,5 +1,7 @@
 # Dependency management
 
+This file is specific to Buildvana in its baseline-dependency list and in the `Buildvana.Runtime` carve-out. Review both when `.claude` is copied to another repository. The rest is the same in every repository that copies `.claude`.
+
 ## Baseline dependencies
 
 `Louis`, our own general-purpose library, and `CommunityToolkit.Diagnostics` rank alongside the BCL in this repository. Any other general-purpose, dependency-light utility library we adopt ranks the same. Where `architecture.md` calls for a BCL-only dependency closure, or for BCL-only types in public signatures, types from these libraries do not count against the rule.

@@ -1,5 +1,7 @@
 # C# style guide
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 `.editorconfig` and `.globalconfig` configure most of the coding style. The editor and the build both enforce it, and every style warning is an error.
 
 The rules below are the ones those files cannot express.

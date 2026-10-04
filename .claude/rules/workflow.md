@@ -1,5 +1,7 @@
 # Workflow rules
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 ## General rules
 
 - Start by understanding the problem and its context, then work out the best solution with me. Do not take a request as a specification to execute.

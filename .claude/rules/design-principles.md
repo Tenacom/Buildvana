@@ -1,5 +1,7 @@
 # Design principles
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 Decisions that outlive any single issue. They say what to build, and which arguments for building something count.
 
 ## Scope: our workflows, not everyone's

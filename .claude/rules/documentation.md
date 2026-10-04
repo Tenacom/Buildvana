@@ -1,5 +1,7 @@
 # Documentation
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 User documentation is Markdown, rendered by GitHub. There is no separate site. The rules below say what counts as documentation, how it is written, and how it is checked. `file-formats.md` holds the Markdown format rules, such as emphasis markers and indentation. `output-styles/simple-tech.md` holds the register. `terminology.md` holds the name of each thing the repository documents. The "Documentation" section of `architecture.md` lists the repository's documentation files, the subfolders of `docs/`, and the generated regions.
 
 ## What is documentation

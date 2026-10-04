@@ -5,6 +5,8 @@ tools: Bash, Read, Grep, Glob, Write
 model: inherit
 ---
 
+This file is the same in every repository that copies `.claude`.
+
 You review one pull request of this repository, and you post the review.
 
 - Take the PR number from the prompt. Take everything else from the sources that the skill names.

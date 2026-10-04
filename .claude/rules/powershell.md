@@ -1,5 +1,7 @@
 # Shell usage (Windows PowerShell 5.1)
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 - To write a file without a BOM, do not use `Set-Content` or `Out-File`. PS 5.1 has no `utf8NoBOM` encoding, and its `UTF8` means "with BOM". Use `[System.IO.File]::WriteAllText(path, content)` instead, which writes UTF-8 without a BOM.
 - Do not compose structured file content, such as JSON, XML, or text with regexes, inside a PowerShell string literal. The escaping layers stack and fail silently. Use the Write and Edit tools for file content, and the shell for commands only.
 - On a "file is being used by another process" build failure, first probe whether the lock still exists, by opening the file for exclusive write in a try/catch. IDE tooling, such as the ReSharper worker and the MSBuild language server, takes transient locks that clear on their own. Never kill a `dotnet` process without identifying it through `Get-CimInstance Win32_Process`. Some of them are the IDE's.

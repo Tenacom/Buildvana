@@ -1,5 +1,7 @@
 # Build and tooling
 
+This file is the same in every repository that copies `.claude`, and it assumes a repository built with Buildvana SDK and `bv`. A fact specific to one repository lives in another rule file.
+
 ## Build commands
 
 Run `dotnet tool restore` first, to install the local tools. Then use these commands:

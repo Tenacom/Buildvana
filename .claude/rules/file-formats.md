@@ -1,5 +1,7 @@
 # File formats
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 `.editorconfig` configures the file format rules. The rules below are the ones it cannot express, or the ones better known in advance.
 
 ## Common defaults for all files

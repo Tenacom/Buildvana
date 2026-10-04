@@ -1,5 +1,7 @@
 # Architecture
 
+This file is specific to Buildvana. Rewrite it when `.claude` is copied to another repository.
+
 Buildvana is a build system for .NET projects, built on MSBuild and Roslyn. It has two parts. One is an MSBuild SDK that works alongside the SDK a project specifies. The other is `bv`, a .NET CLI global tool that wraps common MSBuild targets and higher-level build operations.
 
 ## Project structure

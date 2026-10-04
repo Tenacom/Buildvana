@@ -1,5 +1,7 @@
 # Session rules
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 These rules hold in every session, whether or not it follows a workflow of `workflow.md`.
 
 ## Scratchpad

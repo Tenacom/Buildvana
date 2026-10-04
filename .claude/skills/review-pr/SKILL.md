@@ -8,6 +8,9 @@ allowed-tools: Bash(gh *) Bash(git *) Bash(sleep *)
 
 # Review rules
 
+This file is the same in every repository that copies `.claude`, except the section "What the
+gate and CI already cover", which names the checks of this repository.
+
 These rules govern a review of a pull request in this repository.
 
 ## Rounds

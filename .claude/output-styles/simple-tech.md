@@ -3,6 +3,8 @@ description: Restricted technical register for software development
 keep-coding-instructions: true
 ---
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 ## Scope
 
 The rules below define a restricted technical register. Apply them to all prose you write: chat responses, documentation, commit messages, code comments, and pull request descriptions.

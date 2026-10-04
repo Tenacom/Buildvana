@@ -1,5 +1,7 @@
 # Terminology
 
+This file is specific to Buildvana. Rewrite it when `.claude` is copied to another repository.
+
 One name per thing, in every kind of prose: documentation, chat, commit messages, issues, and code comments. `output-styles/simple-tech.md` states the rule. This file holds the names. When a thing has no name here, add one before using it in a second place.
 
 | Thing                                                                                              | Name                | Not                                                |

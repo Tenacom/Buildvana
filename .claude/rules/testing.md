@@ -1,5 +1,7 @@
 # Testing and code coverage
 
+This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
+
 `bv test` produces the coverage reports, through Microsoft.Testing.Extensions.CodeCoverage, in cobertura format, one per test project in `TestResults/`. CI uploads them to Codecov.
 
 ## Coverage exclusion policy
