@@ -3,6 +3,7 @@
 
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Subcommands;
+using TUnit.Assertions.Enums;
 
 internal sealed class GlobalSettingsTests
 {
@@ -21,7 +22,8 @@ internal sealed class GlobalSettingsTests
         var settings = new GlobalSettings("detailed", true, true, true, true, true, true);
 
         await Assert.That(settings.ToTokens()).IsEquivalentTo(
-            ["--verbosity", "detailed", "--color", "--no-color", "--nologo", "--skip-sdk-check", "--skip-delegation"]);
+            ["--verbosity", "detailed", "--color", "--no-color", "--nologo", "--skip-sdk-check", "--skip-delegation"],
+            CollectionOrdering.Matching);
     }
 
     [Test]
@@ -29,6 +31,8 @@ internal sealed class GlobalSettingsTests
     {
         var parsed = CliArgSplitter.Split(["-v", "quiet", "--nologo", "build", "--skip-sdk-check"]);
 
-        await Assert.That(parsed.Globals.ToTokens()).IsEquivalentTo(["--verbosity", "quiet", "--nologo", "--skip-sdk-check"]);
+        await Assert.That(parsed.Globals.ToTokens()).IsEquivalentTo(
+            ["--verbosity", "quiet", "--nologo", "--skip-sdk-check"],
+            CollectionOrdering.Matching);
     }
 }

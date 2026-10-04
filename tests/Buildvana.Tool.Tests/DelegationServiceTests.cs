@@ -8,6 +8,7 @@ using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
 using Buildvana.Tool.Infrastructure.Delegation;
 using NuGet.Versioning;
+using TUnit.Assertions.Enums;
 
 internal sealed class DelegationServiceTests
 {
@@ -249,7 +250,7 @@ internal sealed class DelegationServiceTests
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (restoreExecutable, restoreArgs, restoreDirectory) = runner.Runs[0];
         await Assert.That(restoreExecutable).IsNotNull();
-        await Assert.That(restoreArgs).IsEquivalentTo(["tool", "restore"]);
+        await Assert.That(restoreArgs).IsEquivalentTo(["tool", "restore"], CollectionOrdering.Matching);
 
         // Home-directory discovery reports the home path with a trailing separator, per its contract.
         await Assert.That(Path.TrimEndingDirectorySeparator(restoreDirectory!)).IsEqualTo(home.RootPath);
@@ -259,7 +260,9 @@ internal sealed class DelegationServiceTests
 
         // Restore and the delegated run must go through the same dotnet muxer.
         await Assert.That(run.Executable).IsEqualTo(restoreExecutable);
-        await Assert.That(run.Args).IsEquivalentTo(["tool", "run", "bv", "--", "build", "--verbosity", "detailed", "--", "/p:Answer=42"]);
+        await Assert.That(run.Args).IsEquivalentTo(
+            ["tool", "run", "bv", "--", "build", "--verbosity", "detailed", "--", "/p:Answer=42"],
+            CollectionOrdering.Matching);
         await Assert.That(Path.TrimEndingDirectorySeparator(run.WorkingDirectory!)).IsEqualTo(home.RootPath);
         await Assert.That(run.Environment).IsNotNull();
         await Assert.That(run.Environment!["BV_DELEGATED"]).IsEqualTo(OwnVersion);
@@ -292,7 +295,7 @@ internal sealed class DelegationServiceTests
         _ = await service.TryDelegateAsync(Context(home)).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
-        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "restore"]);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["tool", "restore"], CollectionOrdering.Matching);
     }
 
     // The restore's streamed output reaches the delegation writer, so a cold download is visible instead of
