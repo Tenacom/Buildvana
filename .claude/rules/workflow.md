@@ -84,7 +84,7 @@ Claude Code runs in auto mode, so a classifier model reviews each tool call befo
    - For each PR, state what makes it independently mergeable.
 3. We review the plan together.
 4. You open a branch on my fork for the pull request.
-5. You write the code, and I review before every commit. A code change after my approval needs a new approval. A push needs no approval, unless I ask you to hold it. Always ensure code builds with zero errors and zero warnings, and that all tests pass. The message of each commit follows "Commit messages" below. Write it in a file in the issue scratchpad and give me the link. Do not paste it in chat. List in chat the files of the commit and anything I have not seen yet.
+5. You write the code, and I review before every commit. A code change after my approval needs a new approval. A push needs no approval, unless I ask you to hold it. Always ensure code builds with zero errors and zero warnings, and that all tests pass. The message of each commit follows "Commit messages" below. Write it in a file in the issue scratchpad and give me the link. Do not paste it in chat. List in chat the files of the commit and anything I have not seen yet. After the commit, stop at a compaction point, as "Compaction points" says. Do not start the next commit in the same turn.
 6. Sanity check. It gates every push to the PR branch, follow-up commits included:
    1. Execute `dotnet run .claude/tools/inspect.cs --gate`. It runs `lint-docs.cs` on the documentation (if any), then `dotnet bv pack` for build, tests, and build artifacts. When the build reports nothing, the tool analyzes the whole solution with ReSharper at WARNING severity and above. All three phases report every diagnostic as `path(line,col): severity ID: message`, and the tool exits non-zero when there is any.
    2. Address every reported diagnostic, then repeat from step 1 until it exits zero. Ask me when you have any doubt, when a diagnostic looks like a false positive, or when a diagnostic does not go away.
@@ -129,15 +129,16 @@ A self-review is a review, and gets the same treatment as any other. Answer ever
 
 ### Compaction points
 
-I compact the context at two points of the cycle. You cannot compact it, because `/compact` is my command. The two compaction points are:
+I compact the context at three kinds of point. You cannot compact it, because `/compact` is my command. The compaction points are:
 
+- each commit of the work on the issue, once it is made, as step 5 of "Solving an issue" says;
 - the start of the cycle, after the PR is open and before the first self-review;
 - the end of each reaction to a review, as "Reacting to reviews" says.
 
 At a compaction point:
 
-1. Update the handoff. State the PR, the round, and the next step. List every boundary I stated in conversation that still holds, because compaction can lose it.
-2. Ask me to compact, and end the turn.
+1. Update the handoff. State the PR when there is one, the round, and the next step. List every boundary I stated in conversation that still holds, because compaction can lose it.
+2. Ask me to compact, and end the turn. Whether to compact is my call, so the turn ends either way.
 3. When I tell you to continue, read the handoff in full. Then take the next step.
 
 A review without new findings produces no reaction, so no compaction point follows it.
