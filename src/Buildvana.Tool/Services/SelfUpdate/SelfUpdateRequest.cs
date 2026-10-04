@@ -3,7 +3,7 @@
 
 using NuGet.Versioning;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// What an invocation of <c>bv self-update</c> asks of the update: which version the repository moves to, and

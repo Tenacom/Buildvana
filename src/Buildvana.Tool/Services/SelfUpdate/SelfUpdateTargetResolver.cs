@@ -10,7 +10,7 @@ using Buildvana.Tool.Services.Dependencies;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// Picks the version <c>bv self-update</c> moves the repository to.

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// The per-target outcome of <see cref="SelfVersionService.UpdateRepositoryAsync"/>, one display line per

@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Tool.Infrastructure.Execution;
-using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.SelfUpdate;
 using Spectre.Console;
 
 namespace Buildvana.Tool.Subcommands;

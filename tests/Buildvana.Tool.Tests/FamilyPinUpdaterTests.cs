@@ -6,7 +6,7 @@ using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
-using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.SelfUpdate;
 using NuGet.Versioning;
 
 internal sealed class FamilyPinUpdaterTests

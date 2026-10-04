@@ -16,6 +16,7 @@ using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Infrastructure.Execution;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.SelfUpdate;
 using Buildvana.Tool.Subcommands;
 using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;

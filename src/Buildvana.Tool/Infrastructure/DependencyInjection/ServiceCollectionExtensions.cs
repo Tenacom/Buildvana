@@ -17,6 +17,7 @@ using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.SelfUpdate;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
