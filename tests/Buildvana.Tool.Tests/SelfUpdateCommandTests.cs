@@ -7,7 +7,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.Json;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
-using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.SelfUpdate;
 using Buildvana.Tool.Subcommands;
 using NuGet.Versioning;
 using Spectre.Console.Testing;

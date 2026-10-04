@@ -3,6 +3,7 @@
 
 using Buildvana.Core;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.SelfUpdate;
 using NuGet.Versioning;
 
 internal sealed class SelfUpdateTargetResolverTests

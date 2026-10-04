@@ -19,7 +19,7 @@ using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// Compares bv's own version with the repository's pinned Buildvana SDK version (the <c>Buildvana.Sdk</c> entry

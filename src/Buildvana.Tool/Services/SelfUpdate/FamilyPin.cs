@@ -3,7 +3,7 @@
 
 using NuGet.Versioning;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// A family pin found by <see cref="FamilyPinUpdater"/> in one of the repository's own files: where it is

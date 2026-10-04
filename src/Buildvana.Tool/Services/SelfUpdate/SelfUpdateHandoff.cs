@@ -14,7 +14,7 @@ using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// Hands the rest of a <c>bv self-update</c> run to the target version, once the tool manifest pins it.

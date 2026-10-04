@@ -13,7 +13,7 @@ using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
-namespace Buildvana.Tool.Services;
+namespace Buildvana.Tool.Services.SelfUpdate;
 
 /// <summary>
 /// Finds and stamps the family pins declared in the repository's own files: package items in MSBuild-syntax
