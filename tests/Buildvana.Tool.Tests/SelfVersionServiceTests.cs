@@ -40,7 +40,7 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(exception!.Message).Contains(pin);
         await Assert.That(exception.Message).Contains("2.1.41-preview");
-        await Assert.That(exception.Message).Contains("bv self-update");
+        await Assert.That(exception.Message).Contains("dotnet bv self-update --repair");
     }
 
     [Test]
@@ -52,7 +52,7 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("global.json");
-        await Assert.That(exception.Message).Contains("bv self-update");
+        await Assert.That(exception.Message).Contains("dotnet bv self-update --repair");
     }
 
     [Test]
@@ -375,6 +375,7 @@ internal sealed class SelfVersionServiceTests
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("downgrade");
+        await Assert.That(exception.Message).Contains("dotnet bv self-update --to <version>");
         await Assert.That(exception.Message).Contains("--force");
         await Assert.That(exception.Message).Contains(offender);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);

@@ -115,33 +115,37 @@ internal sealed partial class SelfVersionService
     /// <summary>
     /// Ensures that the repository's pinned Buildvana SDK version matches this bv's version.
     /// </summary>
+    /// <remarks>
+    /// The fix every failure suggests is <c>dotnet bv self-update --repair</c>, which moves every pin to the bv
+    /// version the tool manifest pins: the version a delegated run is, and the one the repository committed to.
+    /// A plain <c>bv self-update</c> would move the repository to the latest version instead.
+    /// </remarks>
     /// <exception cref="BuildFailedException">The check failed — e.g. <c>global.json</c> could not be read,
     /// does not pin the SDK version, or pins a version different from this bv's; the message names the
     /// failure.</exception>
     public void EnsureSdkVersionMatch()
     {
+        const string fix = $"Run 'dotnet {ToolPackageId} self-update --repair' to move every Buildvana pin to the "
+            + $"{ToolPackageId} version the tool manifest pins, or pass --skip-sdk-check to skip this check.";
         var (pin, missingReason) = ReadPin();
         if (pin is null)
         {
             throw new BuildFailedException(
-                $"SDK version check failed: {missingReason}. This bv is version {OwnVersionText}. "
-                + $"Run 'bv self-update' to pin {SdkPackageId} {OwnVersionText}, or pass --skip-sdk-check to skip this check.");
+                $"SDK version check failed: {missingReason}. This bv is version {OwnVersionText}. {fix}");
         }
 
         if (!NuGetVersion.TryParse(pin, out var pinnedVersion))
         {
             throw new BuildFailedException(
                 $"SDK version check failed: the {SdkPackageId} version pinned in {GlobalJsonFileName} ('{pin}') is not a valid version. "
-                + $"This bv is version {OwnVersionText}. Run 'bv self-update' to repin {SdkPackageId} {OwnVersionText}, "
-                + "or pass --skip-sdk-check to skip this check.");
+                + $"This bv is version {OwnVersionText}. {fix}");
         }
 
         if (!VersionComparer.VersionRelease.Equals(pinnedVersion, _ownVersion))
         {
             throw new BuildFailedException(
                 $"SDK version check failed: {GlobalJsonFileName} pins {SdkPackageId} {pinnedVersion.ToNormalizedString()}, "
-                + $"but this bv is version {OwnVersionText}. Run 'bv self-update' to update this repository's pins "
-                + "to a single version, or pass --skip-sdk-check to skip this check.");
+                + $"but this bv is version {OwnVersionText}. {fix}");
         }
 
         _reporter.Detail($"SDK version check passed: {GlobalJsonFileName} pins {SdkPackageId} {pin}.");
@@ -259,14 +263,15 @@ internal sealed partial class SelfVersionService
     private static bool IsPinPath(IReadOnlyList<string> propertyPath)
         => propertyPath is [MsbuildSdksPropertyName, SdkPackageId];
 
-    // The update never downgrades silently: an old bv run by habit in a newer repository must not roll the
-    // repository back. `dotnet bv self-update` runs the repository's own pinned bv (the self-update command is
-    // exempt from delegation, so a plain `bv self-update` runs the invoked binary), and --force covers the deliberate
-    // downgrade (e.g. bisecting a regression). Pins are compared to the target version, and the message opens
-    // with the resolver's own account of where that version came from. The guard covers every version pin the
-    // update can parse: the tool manifest, global.json, and the literal-versioned family pins. What it skips
-    // cannot trip it by construction: the $schema reference is cosmetic metadata, and a non-literal family pin
-    // is never stamped. When any covered pin is newer the update throws right here, before anything is touched.
+    // The update never downgrades silently: a --to or --repair run in a repository whose pins went past the
+    // target, or a default run whose sources list nothing as new as the pins, must not roll the repository
+    // back. Pins are compared to the target version, and the message opens with the resolver's own account of
+    // where that version came from, then offers the two ways out: --to with a version every pin is at or
+    // below, or --force for the deliberate downgrade (e.g. bisecting a regression). The guard covers every
+    // version pin the update can parse: the tool manifest, global.json, and the literal-versioned family pins.
+    // What it skips cannot trip it by construction: the $schema reference is cosmetic metadata, and a
+    // non-literal family pin is never stamped. When any covered pin is newer the update throws right here,
+    // before anything is touched.
     private static void EnsureNoUnforcedDowngrade(
         NuGetVersion? manifestPin,
         NuGetVersion? sdkPin,
@@ -311,7 +316,7 @@ internal sealed partial class SelfVersionService
             : $"{string.Join(", ", newerPins.GetRange(0, newerPins.Count - 1))}, and {newerPins[^1]}";
         throw new BuildFailedException(
             $"{targetDescription}, but {offenders}: updating would be a downgrade. "
-            + $"Run 'dotnet {ToolPackageId} self-update' to update the repository to its own pinned {ToolPackageId}, "
+            + $"Run 'dotnet {ToolPackageId} self-update --to <version>' with a version at or above every pin, "
             + $"or pass --force to downgrade to {targetText}.");
     }
 
