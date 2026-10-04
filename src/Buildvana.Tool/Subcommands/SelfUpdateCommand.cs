@@ -12,7 +12,8 @@ namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("self-update", settingsType: typeof(SelfUpdateSettings))]
 [Description("Update the repository's Buildvana pins (tool manifest, global.json, package pins, app directives, "
-    + "configuration schema reference) to a single version: this bv's own, or the one --to names. "
+    + "configuration schema reference) to a single version: the latest version on the package sources, "
+    + "or the one --preview, --repair, or --to picks. "
     + "Unlike a canonical self-update, it changes the repository, never this binary.")]
 internal sealed class SelfUpdateCommand(SelfVersionService selfVersion, SelfUpdateSettings settings, IAnsiConsole console) : IBvCommand
 {

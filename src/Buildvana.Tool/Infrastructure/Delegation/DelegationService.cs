@@ -54,8 +54,10 @@ internal sealed class DelegationService(
     /// </summary>
     public const string DelegatedEnvVar = "BV_DELEGATED";
 
-    // Subcommands that always run on the invoked bv. `self-update` re-pins the repository to the running bv's own
-    // version ("bring this repository to me"); delegating it to the version already pinned would make it a no-op.
+    // Commands that always run on the invoked bv. `self-update` picks the target version itself and, once the
+    // tool manifest pins it, hands the rest of the run to that version (see SelfUpdateHandoff). That handoff is
+    // the one transfer of the run: delegating first would let the pinned version, which may predate the
+    // command's options, pick the target instead, and a handed-off run would face this decision again.
     private const string SelfUpdateCommandName = "self-update";
 
     /// <summary>
