@@ -106,7 +106,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, ownVersion, runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
@@ -128,9 +128,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service
-            .UpdateRepositoryAsync(NuGetVersion.Parse("2.1.43-preview"), force: false)
-            .ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(To("2.1.43-preview")).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
@@ -148,7 +146,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (executable, args, workingDirectory) = runner.Runs[0];
@@ -181,7 +179,7 @@ internal sealed class SelfVersionServiceTests
         };
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(2);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(["new", "tool-manifest"]);
@@ -203,7 +201,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("'dotnet new tool-manifest' did not create dotnet-tools.json");
@@ -220,7 +218,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
@@ -242,7 +240,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
@@ -260,7 +258,7 @@ internal sealed class SelfVersionServiceTests
         WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.41-preview"));
         await Assert.That(summary.GlobalJsonLine).IsEqualTo($"Buildvana.Sdk: {pin} -> 2.1.41-preview (global.json)");
@@ -282,7 +280,7 @@ internal sealed class SelfVersionServiceTests
         WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(
             """
@@ -313,7 +311,7 @@ internal sealed class SelfVersionServiceTests
         WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(
             """
@@ -336,7 +334,7 @@ internal sealed class SelfVersionServiceTests
         WriteToolManifest(home, "2.1.41-preview");
         var service = CreateService(home, "2.1.41-preview");
 
-        _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("global.json")).IsEqualTo("{\n  \"msbuild-sdks\": {\n    \"Buildvana.Sdk\": \"2.1.41-preview\"\n  }\n}\n");
     }
@@ -352,7 +350,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview");
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("Could not write to");
@@ -373,7 +371,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(To("2.1.41-preview")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("downgrade");
@@ -381,6 +379,26 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(exception.Message).Contains(offender);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
+    }
+
+    // The default target is at or above the manifest pin, so only another pin can be newer than it. The
+    // message then opens with where the target came from.
+    [Test]
+    public async Task UpdateRepository_ByDefault_WithNewerSdkPin_FailsWithoutForce()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.42-preview");
+        WriteToolManifest(home, "2.1.41-preview");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).StartsWith("The latest bv on the package sources is 2.1.41-preview, but ");
+        await Assert.That(exception.Message).Contains("global.json pins Buildvana.Sdk 2.1.42-preview");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
 
     // Three or more newer pins are listed with commas and a final "and", so the message stays readable
@@ -402,7 +420,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview");
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(To("2.1.41-preview")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains(
@@ -419,7 +437,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: true).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(To("2.1.41-preview", force: true)).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         var (_, args, _) = runner.Runs[0];
@@ -440,7 +458,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: true).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(new SelfUpdateRequest { Force = true }).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
@@ -458,9 +476,7 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service
-            .UpdateRepositoryAsync(NuGetVersion.Parse("2.1.43-preview"), force: false)
-            .ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(To("2.1.43-preview")).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
@@ -483,9 +499,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var exception = await Assert
-            .That(async () => _ = await service
-                .UpdateRepositoryAsync(NuGetVersion.Parse("2.1.40-preview"), force: false)
-                .ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(To("2.1.40-preview")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("--to");
@@ -503,15 +517,73 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var summary = await service
-            .UpdateRepositoryAsync(NuGetVersion.Parse("2.1.40-preview"), force: true)
-            .ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(To("2.1.40-preview", force: true)).ConfigureAwait(false);
 
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
             ["tool", "update", "bv", "--version", "2.1.40-preview", "--allow-downgrade", "--tool-manifest", "dotnet-tools.json"]);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.40-preview"));
         await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.41-preview -> 2.1.40-preview (tool manifest)");
+    }
+
+    // Without an option naming the target, the sources decide: the manifest pin is the reference, and the
+    // running bv's own version plays no part.
+    [Test]
+    public async Task UpdateRepository_ByDefault_MovesToTheLatestListedVersion()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, "2.1.40-preview");
+        var runner = new FakeProcessRunner();
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.40-preview", "2.1.41-preview", "2.1.45-preview"]);
+        var service = CreateService(home, "2.1.41-preview", runner, versionSource: versionSource);
+
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
+
+        await Assert.That(versionSource.Asked).IsEquivalentTo(["bv"]);
+        await Assert.That(runner.Runs.Count).IsEqualTo(1);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.45-preview", "--tool-manifest", "dotnet-tools.json"]);
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.45-preview"));
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.40-preview -> 2.1.45-preview (tool manifest)");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithRepair_MovesToTheManifestPin_AndAsksNoSource()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteToolManifest(home, "2.1.43-preview");
+        var runner = new FakeProcessRunner();
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.45-preview"]);
+        var service = CreateService(home, "2.1.41-preview", runner, versionSource: versionSource);
+
+        var summary = await service.UpdateRepositoryAsync(new SelfUpdateRequest { Repair = true }).ConfigureAwait(false);
+
+        await Assert.That(versionSource.Asked.Count).IsEqualTo(0);
+        await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
+            ["tool", "update", "bv", "--version", "2.1.43-preview", "--tool-manifest", "dotnet-tools.json"]);
+        await Assert.That(summary.ToolManifestLine).IsEqualTo("bv: 2.1.43-preview (tool manifest, unchanged)");
+        await Assert.That(summary.GlobalJsonLine).IsEqualTo("Buildvana.Sdk: 2.1.40-preview -> 2.1.43-preview (global.json)");
+    }
+
+    [Test]
+    public async Task UpdateRepository_WithRepair_AndNoManifestEntry_FailsBeforeChangingAnything()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40-preview");
+        WriteRawToolManifest(home, """{ "version": 1, "isRoot": true, "tools": { } }""");
+        var before = home.ReadFile("global.json");
+        var runner = new FakeProcessRunner();
+        var service = CreateService(home, "2.1.41-preview", runner);
+
+        var exception = await Assert
+            .That(async () => _ = await service.UpdateRepositoryAsync(new SelfUpdateRequest { Repair = true }).ConfigureAwait(false))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(exception!.Message).Contains("--repair");
+        await Assert.That(runner.Runs.Count).IsEqualTo(0);
+        await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
 
     // One line per found family pin, the left-alone one included: the summary is how the user checks that
@@ -541,7 +613,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile(hookPath, hook);
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("App.csproj")).IsEqualTo(project.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
         await Assert.That(home.ReadFile(hookPath)).IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
@@ -571,7 +643,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview");
@@ -595,7 +667,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains(expectedDetail);
@@ -617,7 +689,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
@@ -638,7 +710,7 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview", runner);
 
         await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
     }
 
@@ -653,7 +725,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile(configFileName, SchemaConfigText("2.1.40-preview"));
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile(configFileName)).IsEqualTo(SchemaConfigText("2.1.41-preview"));
         await Assert.That(summary.ConfigFileLine).IsEqualTo($"{configFileName}: schema reference updated");
@@ -678,7 +750,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("buildvana.jsonc", content);
         var service = CreateService(home, "2.1.41-preview");
 
-        _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(content.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
     }
@@ -693,7 +765,7 @@ internal sealed class SelfVersionServiceTests
         var before = home.ReadFile("buildvana.jsonc");
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(before);
         await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: schema reference unchanged");
@@ -714,7 +786,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("buildvana.jsonc", content);
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(content);
         await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: schema reference not recognized, left unchanged");
@@ -729,7 +801,7 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("buildvana.jsonc", "{}\n");
         var service = CreateService(home, "2.1.41-preview");
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: no schema reference found");
     }
@@ -744,7 +816,7 @@ internal sealed class SelfVersionServiceTests
         var reporter = new CaptureReporter();
         var service = CreateService(home, "2.1.41-preview", reporter: reporter);
 
-        var summary = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        var summary = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(summary.ConfigFileLine).IsEqualTo("buildvana.jsonc: no schema reference found");
         var warnings = WarningsOf(reporter);
@@ -762,7 +834,7 @@ internal sealed class SelfVersionServiceTests
         var reporter = new CaptureReporter();
         var service = CreateService(home, "2.1.41-preview", reporter: reporter);
 
-        _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false);
+        _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false);
 
         await Assert.That(WarningsOf(reporter).Count).IsEqualTo(0);
     }
@@ -778,17 +850,20 @@ internal sealed class SelfVersionServiceTests
         var service = CreateService(home, "2.1.41-preview");
 
         var exception = await Assert
-            .That(async () => _ = await service.UpdateRepositoryAsync(toVersion: null, force: false).ConfigureAwait(false))
+            .That(async () => _ = await service.UpdateRepositoryAsync(SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
 
         await Assert.That(exception!.Message).Contains("Multiple");
     }
 
+    // The sources list the running bv's own version and nothing else, unless a test scripts them: the default
+    // target is then the own version for every pin at or below it, as it was before the sources had a say.
     private static SelfVersionService CreateService(
         TempHome home,
         string ownVersion,
         FakeProcessRunner? processRunner = null,
-        IReporter? reporter = null)
+        IReporter? reporter = null,
+        FakePackageVersionSource? versionSource = null)
         => new(
             reporter ?? NullReporter.Instance,
             home.Provider,
@@ -799,7 +874,13 @@ internal sealed class SelfVersionServiceTests
                 home.Provider,
                 new Lazy<BuildvanaConfig>(static () => new BuildvanaConfig()),
                 reporter ?? NullReporter.Instance),
+            new SelfUpdateTargetResolver(
+                versionSource ?? new FakePackageVersionSource().Knows("bv", [ownVersion]),
+                NuGetVersion.Parse(ownVersion)),
             NuGetVersion.Parse(ownVersion));
+
+    private static SelfUpdateRequest To(string version, bool force = false)
+        => new() { To = NuGetVersion.Parse(version), Force = force };
 
     private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);
 

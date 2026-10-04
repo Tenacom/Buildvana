@@ -24,10 +24,25 @@ internal sealed class SelfUpdateSettings
     public bool Force { get; init; }
 
     /// <summary>
-    /// Gets the version to stamp instead of this bv's own, or <see langword="null"/> to stamp this bv's own version.
+    /// Gets a value indicating whether the target is the latest version the package sources list, prereleases
+    /// included.
+    /// </summary>
+    [BvOption("--preview")]
+    [Description("Update to the latest version on the package sources, prereleases included.")]
+    public bool Preview { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the target is the version the tool manifest pins, with no package source asked.
+    /// </summary>
+    [BvOption("--repair")]
+    [Description("Update the repository to the bv version the tool manifest pins, without asking the package sources.")]
+    public bool Repair { get; init; }
+
+    /// <summary>
+    /// Gets the version to stamp, or <see langword="null"/> when the command line names none.
     /// </summary>
     [BvOption("--to <VERSION>")]
-    [Description("Version to stamp into the repository's pins. Defaults to this bv's own version.")]
+    [Description("Update the repository to this version, without asking the package sources.")]
     public string? To { get; init; }
 
     /// <summary>
@@ -36,15 +51,22 @@ internal sealed class SelfUpdateSettings
     /// </summary>
     /// <param name="options">The option tokens for the <c>self-update</c> command (from <c>CommandParameters.Options</c>).</param>
     /// <returns>The parsed settings.</returns>
+    /// <exception cref="BuildFailedException">More than one of <c>--preview</c>, <c>--repair</c>, and <c>--to</c>
+    /// was given.</exception>
     public static SelfUpdateSettings Parse(IReadOnlyList<string> options)
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new SelfUpdateSettings
+        var settings = new SelfUpdateSettings
         {
             Force = reader.ReadFlag("--force"),
+            Preview = reader.ReadFlag("--preview"),
+            Repair = reader.ReadFlag("--repair"),
             To = reader.ReadValue("--to"),
         };
+
+        Validate(settings);
+        return settings;
     }
 
     /// <summary>
@@ -65,5 +87,33 @@ internal sealed class SelfUpdateSettings
             : throw new BuildFailedException(
                 ExitCodes.Usage,
                 $"Invalid value '{To}' for --to. Expected a version, e.g. 2.1.0 or 2.1.0-preview.");
+    }
+
+    // Each of the three names the target version, and no two answers agree.
+    private static void Validate(SelfUpdateSettings settings)
+    {
+        var given = new List<string>(3);
+        if (settings.Preview)
+        {
+            given.Add("--preview");
+        }
+
+        if (settings.Repair)
+        {
+            given.Add("--repair");
+        }
+
+        if (settings.To is not null)
+        {
+            given.Add("--to");
+        }
+
+        if (given.Count < 2)
+        {
+            return;
+        }
+
+        var names = given.Count == 2 ? $"{given[0]} and {given[1]}" : $"{given[0]}, {given[1]}, and {given[2]}";
+        throw new BuildFailedException(ExitCodes.Usage, $"{names} each name the target version, so they do not go together.");
     }
 }

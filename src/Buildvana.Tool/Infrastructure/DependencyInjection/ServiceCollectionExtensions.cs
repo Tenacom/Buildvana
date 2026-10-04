@@ -119,6 +119,7 @@ internal static class ServiceCollectionExtensions
                     sp.GetRequiredService<CommandParameters>().Positionals,
                     sp.GetRequiredService<CommandParameters>().Options))
                 .AddSingleton(static sp => new EffectivePolicyResolver(sp.GetRequiredService<BuildvanaConfig>().Dependencies))
+                .AddSingleton(static sp => new SelfUpdateTargetResolver(sp.GetRequiredService<IPackageVersionSource>(), OwnVersion.Value))
                 .AddSingleton(static sp => new SelfVersionService(
                     sp.GetRequiredService<IReporter>(),
                     sp.GetRequiredService<IHomeDirectoryProvider>(),
@@ -126,6 +127,7 @@ internal static class ServiceCollectionExtensions
                     sp.GetRequiredService<IJsonHelper>(),
                     sp.GetRequiredService<IProcessRunner>(),
                     sp.GetRequiredService<FamilyPinUpdater>(),
+                    sp.GetRequiredService<SelfUpdateTargetResolver>(),
                     OwnVersion.Value));
 
             foreach (var registration in CommandRegistry.Commands)

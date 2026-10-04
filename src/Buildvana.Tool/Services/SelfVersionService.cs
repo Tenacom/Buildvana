@@ -48,6 +48,7 @@ internal sealed partial class SelfVersionService
     private readonly IJsonHelper _jsonHelper;
     private readonly IProcessRunner _processRunner;
     private readonly FamilyPinUpdater _familyPins;
+    private readonly SelfUpdateTargetResolver _targetResolver;
     private readonly NuGetVersion _ownVersion;
 
     /// <summary>
@@ -59,6 +60,7 @@ internal sealed partial class SelfVersionService
     /// <param name="jsonHelper">The JSON helper used to read and rewrite pins.</param>
     /// <param name="processRunner">The process runner used to invoke <c>dotnet tool update</c>.</param>
     /// <param name="familyPins">The finder and stamper of the family pins declared in the repository's own files.</param>
+    /// <param name="targetResolver">The picker of the version an update moves the repository to.</param>
     /// <param name="ownVersion">The version of the running bv.</param>
     public SelfVersionService(
         IReporter reporter,
@@ -67,6 +69,7 @@ internal sealed partial class SelfVersionService
         IJsonHelper jsonHelper,
         IProcessRunner processRunner,
         FamilyPinUpdater familyPins,
+        SelfUpdateTargetResolver targetResolver,
         NuGetVersion ownVersion)
     {
         Guard.IsNotNull(reporter);
@@ -75,6 +78,7 @@ internal sealed partial class SelfVersionService
         Guard.IsNotNull(jsonHelper);
         Guard.IsNotNull(processRunner);
         Guard.IsNotNull(familyPins);
+        Guard.IsNotNull(targetResolver);
         Guard.IsNotNull(ownVersion);
         _reporter = reporter;
         _home = home;
@@ -82,6 +86,7 @@ internal sealed partial class SelfVersionService
         _jsonHelper = jsonHelper;
         _processRunner = processRunner;
         _familyPins = familyPins;
+        _targetResolver = targetResolver;
         _ownVersion = ownVersion;
     }
 
@@ -134,8 +139,8 @@ internal sealed partial class SelfVersionService
     /// <summary>
     /// Updates the repository's Buildvana pins — the bv entry in the tool manifest, the Buildvana SDK entry in
     /// <c>global.json</c>, the family pins declared in the repository's own files, and the configuration
-    /// file's schema reference — to the target version: this bv's own, or the one
-    /// <paramref name="toVersion"/> names.
+    /// file's schema reference — to the target version <see cref="SelfUpdateTargetResolver"/> picks for
+    /// <paramref name="request"/>.
     /// </summary>
     /// <remarks>
     /// <para>The tool manifest is updated through <c>dotnet tool update</c> (or <c>dotnet tool install</c> when
@@ -149,29 +154,30 @@ internal sealed partial class SelfVersionService
     /// <c>Tenacom/Buildvana/&lt;version&gt;/schemas/</c> URL shape; afterwards the configuration file is
     /// loaded against this bv's model, and any problems are reported as warnings — the file keeps working for
     /// the commands that do not read it, and the user decides how to migrate it.</para>
-    /// <para>No source is consulted about <paramref name="toVersion"/>: the <c>dotnet tool update</c> step is
-    /// the existence check. That step always runs, even when the manifest already pins the target — a matching
-    /// pin proves neither that the version is obtainable nor that it is downloaded — and it runs before any
-    /// file is written, so a version no configured source knows fails the update with the repository
-    /// untouched.</para>
+    /// <para>A target the request states, with <c>--to</c> or <c>--repair</c>, is not checked against any
+    /// source: the <c>dotnet tool update</c> step is the existence check. That step always runs, even when the
+    /// manifest already pins the target — a matching pin proves neither that the version is obtainable nor
+    /// that it is downloaded — and it runs before any file is written, so a version no configured source knows
+    /// fails the update with the repository untouched.</para>
     /// <para>When an existing pin is newer than the target version, the update would be a downgrade and fails
-    /// unless <paramref name="force"/> is <see langword="true"/>.</para>
+    /// unless the request allows one.</para>
     /// </remarks>
-    /// <param name="toVersion">The version to stamp, or <see langword="null"/> to stamp this bv's own version.</param>
-    /// <param name="force">Whether to update even when an existing pin is newer than the target version.</param>
+    /// <param name="request">What the invocation asks for: the target version, and whether a downgrade is allowed.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the ongoing operation.</param>
     /// <returns>The per-target summary of what changed, for the command to print.</returns>
     /// <exception cref="BuildFailedException">The update failed — e.g. a file could not be read or written,
-    /// <c>dotnet tool update</c> failed, or an existing pin is newer than the target version and
-    /// <paramref name="force"/> is <see langword="false"/>; the message names the failure.</exception>
+    /// no target could be picked, <c>dotnet tool update</c> failed, or an existing pin is newer than the target
+    /// version and the request allows no downgrade; the message names the failure.</exception>
     public async Task<SelfUpdateSummary> UpdateRepositoryAsync(
-        NuGetVersion? toVersion,
-        bool force,
+        SelfUpdateRequest request,
         CancellationToken cancellationToken = default)
     {
-        var target = toVersion ?? _ownVersion;
+        Guard.IsNotNull(request);
         var manifestPin = ToolManifest.ReadBvPin(_jsonHelper, _home.HomeDirectory);
         EnsureUsableManifestEntry(manifestPin);
+        var (target, targetDescription) = await _targetResolver
+            .ResolveAsync(request, manifestPin, cancellationToken)
+            .ConfigureAwait(false);
         var (sdkPinText, _) = ReadPin();
         NuGetVersion? sdkPin = null;
         if (sdkPinText is not null && NuGetVersion.TryParse(sdkPinText, out var parsedSdkPin))
@@ -180,13 +186,7 @@ internal sealed partial class SelfVersionService
         }
 
         var familyPins = _familyPins.DiscoverPins();
-        EnsureNoUnforcedDowngrade(
-            manifestPin.Version,
-            sdkPin,
-            familyPins,
-            target,
-            targetIsExplicit: toVersion is not null,
-            force);
+        EnsureNoUnforcedDowngrade(manifestPin.Version, sdkPin, familyPins, target, targetDescription, request.Force);
 
         // Manifest first: pinning it spawns the dotnet CLI, the one step with an external actor, so a failure
         // there leaves the repository untouched. A failed file write after it leaves the manifest already
@@ -238,17 +238,17 @@ internal sealed partial class SelfVersionService
     // The update never downgrades silently: an old bv run by habit in a newer repository must not roll the
     // repository back. `dotnet bv self-update` runs the repository's own pinned bv (the self-update command is
     // exempt from delegation, so a plain `bv self-update` runs the invoked binary), and --force covers the deliberate
-    // downgrade (e.g. bisecting a regression). Pins are compared to the target version — this bv's own, or the
-    // one --to names, in which case the message says so. The guard covers every version pin the update can
-    // parse: the tool manifest, global.json, and the literal-versioned family pins. What it skips cannot
-    // trip it by construction: the $schema reference is cosmetic metadata, and a non-literal family pin is
-    // never stamped. When any covered pin is newer the update throws right here, before anything is touched.
+    // downgrade (e.g. bisecting a regression). Pins are compared to the target version, and the message opens
+    // with the resolver's own account of where that version came from. The guard covers every version pin the
+    // update can parse: the tool manifest, global.json, and the literal-versioned family pins. What it skips
+    // cannot trip it by construction: the $schema reference is cosmetic metadata, and a non-literal family pin
+    // is never stamped. When any covered pin is newer the update throws right here, before anything is touched.
     private static void EnsureNoUnforcedDowngrade(
         NuGetVersion? manifestPin,
         NuGetVersion? sdkPin,
         IReadOnlyList<FamilyPin> familyPins,
         NuGetVersion target,
-        bool targetIsExplicit,
+        string targetDescription,
         bool force)
     {
         if (force)
@@ -285,11 +285,8 @@ internal sealed partial class SelfVersionService
         var offenders = newerPins.Count <= 2
             ? string.Join(" and ", newerPins)
             : $"{string.Join(", ", newerPins.GetRange(0, newerPins.Count - 1))}, and {newerPins[^1]}";
-        var targetPhrase = targetIsExplicit
-            ? $"The version given with --to is {targetText}"
-            : $"This bv is version {targetText}";
         throw new BuildFailedException(
-            $"{targetPhrase}, but {offenders}: updating would be a downgrade. "
+            $"{targetDescription}, but {offenders}: updating would be a downgrade. "
             + $"Run 'dotnet {ToolPackageId} self-update' to update the repository to its own pinned {ToolPackageId}, "
             + $"or pass --force to downgrade to {targetText}.");
     }

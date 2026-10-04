@@ -57,7 +57,7 @@ internal sealed class SelfUpdateCommandTests
         await Assert.That(console.Lines.Count).IsEqualTo(2);
     }
 
-    // With pins newer than the running bv, the update succeeds only when --force reaches the service — the
+    // With pins newer than the --to version, the update succeeds only when --force reaches the service — the
     // performed downgrade is the observable proof of the wiring.
     [Test]
     public async Task ExecuteAsync_ForwardsForceToTheUpdate()
@@ -66,12 +66,50 @@ internal sealed class SelfUpdateCommandTests
         WriteGlobalJson(home, "2.1.42-preview");
         WriteToolManifest(home, "2.1.42-preview");
         var runner = new FakeProcessRunner();
-        var command = new SelfUpdateCommand(CreateService(home, runner), new SelfUpdateSettings { Force = true }, new TestConsole());
+        var settings = new SelfUpdateSettings { Force = true, To = OwnVersion };
+        var command = new SelfUpdateCommand(CreateService(home, runner), settings, new TestConsole());
 
         var exitCode = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
         await Assert.That(exitCode).IsEqualTo(0);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
+    }
+
+    // The sources list 2.1.43-preview, and the running bv is 2.1.41-preview: the summary says which one the
+    // command asked the service for.
+    [Test]
+    public async Task ExecuteAsync_ForwardsPreviewToTheUpdate()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, "2.1.40");
+        WriteToolManifest(home, "2.1.40");
+        var console = new TestConsole();
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.40", "2.1.43-preview"]);
+        var service = CreateService(home, new FakeProcessRunner(), versionSource);
+        var command = new SelfUpdateCommand(service, new SelfUpdateSettings { Preview = true }, console);
+
+        _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+
+        await Assert.That(console.Output).Contains("bv: 2.1.40 -> 2.1.43-preview (tool manifest)");
+    }
+
+    // The sources list 2.1.43-preview, and the manifest pins 2.1.42-preview: a run that asks no source stays
+    // on the manifest pin.
+    [Test]
+    public async Task ExecuteAsync_ForwardsRepairToTheUpdate()
+    {
+        using var home = new TempHome();
+        WriteGlobalJson(home, OwnVersion);
+        WriteToolManifest(home, "2.1.42-preview");
+        var console = new TestConsole();
+        var versionSource = new FakePackageVersionSource().Knows("bv", ["2.1.43-preview"]);
+        var service = CreateService(home, new FakeProcessRunner(), versionSource);
+        var command = new SelfUpdateCommand(service, new SelfUpdateSettings { Repair = true }, console);
+
+        _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+
+        await Assert.That(versionSource.Asked.Count).IsEqualTo(0);
+        await Assert.That(console.Output).Contains("Buildvana.Sdk: 2.1.41-preview -> 2.1.42-preview (global.json)");
     }
 
     // The stamped version appearing in the summary is the observable proof that --to reached the service.
@@ -110,7 +148,10 @@ internal sealed class SelfUpdateCommandTests
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
 
-    private static SelfVersionService CreateService(TempHome home, FakeProcessRunner? processRunner = null)
+    private static SelfVersionService CreateService(
+        TempHome home,
+        FakeProcessRunner? processRunner = null,
+        FakePackageVersionSource? versionSource = null)
         => new(
             NullReporter.Instance,
             home.Provider,
@@ -121,6 +162,9 @@ internal sealed class SelfUpdateCommandTests
                 home.Provider,
                 new Lazy<BuildvanaConfig>(static () => new BuildvanaConfig()),
                 NullReporter.Instance),
+            new SelfUpdateTargetResolver(
+                versionSource ?? new FakePackageVersionSource().Knows("bv", [OwnVersion]),
+                NuGetVersion.Parse(OwnVersion)),
             NuGetVersion.Parse(OwnVersion));
 
     private static void WriteGlobalJson(TempHome home, string pin)

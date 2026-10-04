@@ -137,10 +137,12 @@ Without the flag, the .NET CLI refuses to lower a tool version.
 
 ## Options
 
-| Option           | Meaning                                                                  |
-| ---------------- | ------------------------------------------------------------------------ |
-| `--force`        | Update the pins even when one is above the target, which is a downgrade. |
-| `--to <VERSION>` | The version to pin. Defaults to the version of the invoked `bv`.         |
+| Option           | Meaning                                                                                       |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `--force`        | Update the pins even when one is above the target, which is a downgrade.                      |
+| `--preview`      | Update to the latest version on the package sources, prereleases included.                    |
+| `--repair`       | Update the repository to the `bv` version the tool manifest pins, without asking the sources. |
+| `--to <VERSION>` | Update the repository to this version, without asking the sources.                            |
 
 ---
 

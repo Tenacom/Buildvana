@@ -50,6 +50,10 @@ internal sealed class UsageExitCodeTests
         => AssertUsageExitCode(() => SelfUpdateSettings.Parse(["--to", "bogus"]).ResolveTo());
 
     [Test]
+    public Task TwoSelfUpdateTargetOptions_ExitsWithUsageCode()
+        => AssertUsageExitCode(() => SelfUpdateSettings.Parse(["--preview", "--repair"]));
+
+    [Test]
     public Task InvalidChangeArgument_ExitsWithUsageCode()
         => AssertUsageExitCode(() => VersionAdvanceSettings.Parse(["bogus"], []).ResolveChange());
 
