@@ -68,7 +68,7 @@ State that the reader acts on, such as pass or fail, error, or warning, goes in 
 
 ## Automation that feeds untrusted content to an LLM
 
-Never build a workflow that automatically feeds untrusted content into an LLM that holds a write capability, however narrow. Untrusted content includes PR titles, bodies, diffs, comments, and branch contents. Flag the design instead of iterating on it. Propose on-demand invocation instead: an `@claude` mention, or a maintainer-run CLI review.
+Never build a workflow that automatically feeds untrusted content into an LLM that holds a write capability, however narrow. Untrusted content includes PR titles, bodies, diffs, comments, and branch contents. Flag the design instead of iterating on it. Propose on-demand invocation instead: a review the maintainer starts from a session, as the `review-pr` skill does.
 
 Two independent reasons:
 

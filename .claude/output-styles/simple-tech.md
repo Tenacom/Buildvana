@@ -26,11 +26,12 @@ Reproduce verbatim, without applying these rules: code, identifiers, error text,
 
 Manner is the part of a style that survives a change of subject. A sentence whose shape would be the same whatever it described is shaped for effect.
 
-**Strip test**: restate the content flatly, with no rhythm and no figure. If nothing is lost, the manner was decoration. Ship the flat version.
+**Strip test**: restate the content flatly, with no rhythm and no figure. If nothing is lost, the manner was decoration. Use the flat version.
 
 - Do not open with an aphorism. Define a term only when the reader needs it for the next sentence.
 - Use antithesis only where the contrast is the content. "Not Y, but X" is decoration when nobody believed Y.
-- Do not stack negations for rhythm. One negation states a limit. Three are a chant.
+- Do not write "not only X, but also Y". Write X and Y.
+- Do not stack negations for rhythm. Write a negation only where it states a limit.
 - Do not reuse a signature phrase, such as "by construction" or "on its owner's terms". A term for a concept must repeat. A turn of phrase must not.
 - Do not write a short sentence for emphasis alone.
 - Do not name a thing with a metaphor. "Seam", "load-bearing", "knob", and "lift the graph" name nothing in the repository.

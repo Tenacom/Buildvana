@@ -4,7 +4,7 @@ Buildvana is an MSBuild-based build system. `.claude/rules/` holds the project i
 
 ## Repository
 
-- Upstream: `Tenacom/Buildvana`. Issues, PRs, and releases live there. It is the default target of `gh` and `mcp__github__*` calls.
+- Upstream: `Tenacom/Buildvana`. Issues, PRs, and releases live there. It is the default target of `gh` calls.
 - PR branches go to the contributor's own fork, the `origin` remote. Run `git remote -v` once per session when you need its name. Do not assume it.
 
 ## Rules index
@@ -13,7 +13,10 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 
 ### Portable: copy verbatim
 
-- `rules/workflow.md`: how Ric and I work together: issues, PRs, reviews, sanity checks, out-of-scope fixes, commit messages.
+- `rules/workflow.md`: how Ric and I work together: issues, PRs, the self-review cycle, sanity checks, out-of-scope fixes, commit messages.
+- `rules/session.md`: scratchpad and handoff rules, for every session, with or without an issue.
+- `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. Its "What the gate and CI already cover" section names `inspect.cs` and the workflows under `.github/workflows/`, and a copy names its own checks there.
+- `agents/pr-reviewer.md`: the subagent that runs the skill for the self-review cycle. Nothing repo-specific in it.
 - `rules/design-principles.md`: scope, abstraction completeness, portability, conformance with the surrounding toolchain, LLM-automation stance.
 - `rules/csharp-style-guide.md`: C# style beyond what `.editorconfig` and `.globalconfig` can express.
 - `rules/file-formats.md`: encoding, indentation, and per-format conventions.
@@ -25,7 +28,7 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `tools/lint-commit.cs`: commit-message check, run on the draft before every commit. Its `bannedWords` and `announcingVerbs` arrays come from this repository's past commits. They apply anywhere, and a copy may extend them.
 - `tools/lint-docs.cs`: documentation check, the first phase of `inspect.cs`. Its `fenceTags` array is the list in `rules/documentation.md`. Its `todoExemptFiles` and `sentenceExemptFiles` arrays are empty here, and a copy may name the files its TODO check and its sentence check leave alone.
 - `scratchpad/`: scratch directory for temporary files, commit messages included. Its `Common.props` turns StyleCop and code style enforcement off for scratch code, and states every property it relies on. Everything else in the directory is gitignored.
-- `settings.json`: MCP servers and tool permissions. Nothing repo-specific in it.
+- `settings.json`: the output style and the tool permissions that apply before the classifier. Nothing repo-specific in it.
 - `.gitignore`: keeps `settings.local.json`, `worktrees/`, `agent-memory-local/`, `handoff/`, and the contents of `scratchpad/` out of git. Nothing repo-specific in it.
 
 ### Project-specific: rewrite when copied

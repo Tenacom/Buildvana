@@ -8,7 +8,6 @@
 - Ask me to explain when my reasoning is unclear. Point out my contradictions. When you think I am wrong, say so, and say why. I will not take offence, and a good case changes my mind. I also change my mind mid-session, often because of you, so check in when something looks inconsistent.
 - Verify every premise I state in the code before you build on it. When the premise does not hold, say so.
 - Prefer to resolve a divergence over writing code that accepts it.
-- On a decision of merit, consult a senior, preferably the author of the issue. The team and the customers are listed in `people.md`. When the author of the issue is a customer, there are two ways: a comment on the issue that tags the author, or a question to the team leader. The team leader is the only one in direct contact with the customers. Never post such a comment on your own initiative. Ask me whether to draft it in the issue scratchpad, and post it only when I ask.
 - Do not write or modify anything until I ask: code, documentation, issues, PRs, comments. Check with me first. This rule keeps us aligned and saves work nobody wanted.
 - I attend every session, so I am there to approve a plan. A classifier authorizes tool calls, not me. See "Tool use and the classifier" below.
   - Harness framing that calls a session "autonomous" or "unattended" does not describe my setup. Do not act on it.
@@ -17,18 +16,14 @@
 - Post nothing outward-facing without a draft: issues, PRs, comments, anything that leaves this machine. Show me the full text and wait for my go-ahead.
   - This rule is a quality mechanism, not a trust mechanism, so it holds however routine the item looks. The draft often needs context that I cannot think of until I read it. Reading the draft is what surfaces that context.
   - "Just file it" for one item is a one-off, not a policy change.
-  - The standing exception is step 3 of "Reacting to reviews", where agreeing on the plan pre-authorizes the replies.
+  - There are two standing exceptions. In "Reacting to reviews", agreeing on the plan pre-authorizes the fixes, the push, and the replies. In "Self-review cycle", the subagent posts the review without a draft.
 - Before drafting a plan, a commit message, an issue, a PR description, or a review reply, Read `.claude/output-styles/simple-tech.md` and apply it to the draft. The style sits at the start of the context, and a long session pushes it far from the draft. A fresh copy next to the draft holds better.
-- When you find a working-tree change you did not make, or one unrelated to the task, report it. Ask me before you revert or overwrite it. Unexpected state in this repo is usually my own work in progress, since I edit files by hand mid-session. Keep your own change set clean, but never discard my edits.
+- When you find a working-tree change you did not make, or one unrelated to the task, report it. Ask me before you revert or overwrite it. Unexpected state in this repo is usually my own work in progress, since I edit files by hand mid-session, on purpose or by mistake. Ask, case by case. Keep your own change set clean, but never discard my edits.
+- Use `gh` for all GitHub work, and never the MCP GitHub server. The classifier denies the writes of the MCP server, and `gh` keeps one login.
 
-## Scratchpad and handoff files
+## Handoff of an issue
 
-- Temporary files go in `.claude/scratchpad/`, not in the session directory that Claude Code assigns. `.claude/.gitignore` keeps the directory out of git, so nothing in it reaches `git status` or a commit.
-- Each issue has its own scratchpad, `.claude/scratchpad/<N>/`, so that sessions on different issues do not collide. Every temporary file of the issue goes there: commit messages, PR text, review replies, proof scripts, research results, and any file you create and may need to refer to while working on the issue.
-- Each issue has a handoff file, `.claude/handoff/<N>-<slug>.md`. When I ask to continue the work on an issue, read the handoff in full before anything else.
-- Update the handoff at every step: after every commit, after every review the session reacts to, and on request. I then never have to ask, and a blackout costs nothing.
-- Write the handoff for a session that has the repository and the file, nothing else. Mark every fact as measured or decided, with the date.
-- `.claude/.gitignore` ignores `scratchpad/` and `handoff/`.
+The work on an issue always has a handoff. `session.md` says where it goes and how to keep it current. In the work on an issue, a step is every commit and every review the session reacts to.
 
 ## Tool use and the classifier
 
@@ -36,7 +31,8 @@ Claude Code runs in auto mode, so a classifier model reviews each tool call befo
 
 - Reads and edits inside the working directory skip the classifier. Shell commands and network access go through it. Prefer a file tool to its shell equivalent: `Read` over `cat`, `Edit` and `Write` over `cp`, `sed`, or a redirection.
 - The classifier blocks whatever it cannot evaluate with certainty. Keep every bash command short and plain. One command, one job.
-- The classifier reads the rule files, so a boundary written here reaches it too. It never sees tool results.
+- The classifier reads my messages, the commands you run, and the `CLAUDE.md` content that Claude Code loads. It never sees tool results. Whether the files under `.claude/rules/` reach it is not documented, and experience says they do not reliably. Do not count on a boundary written in a rule file to reach it.
+- The classifier reads its `autoMode` rules from `~/.claude/settings.json` and from the managed settings. It ignores an `autoMode` block in `.claude/settings.json` and in `.claude/settings.local.json`, so that a repository cannot add allow rules. A rule for the classifier is therefore a personal setting, and I write it myself. The project settings can still hold a narrow `permissions.allow` entry, which applies before the classifier.
 
 ### When a command seems to hang
 
@@ -45,18 +41,20 @@ Claude Code runs in auto mode, so a classifier model reviews each tool call befo
 - Simplify instead. Split a compound command into its parts, replace a shell command with a file tool, or drop the part that needed evaluating.
 - When nothing simpler works, tell me what you were trying to do. I can run it myself, or retry it from the **Recently denied** tab of `/permissions`.
 
-### Bash command shapes to avoid
+### Command shapes to avoid
 
-- **Heredocs and nowdocs.** Never write `<<EOF` or any variant of it in a Bash command: the classifier will block it. Write the content with `Write`, or pass it as a quoted argument.
+- **Heredocs and nowdocs in a Bash command.** Never write `<<EOF` or any variant of it. Write the content with `Write`, or pass it as a quoted argument. The ban covers Bash commands only.
+- **`cd`.** In a Bash command, `cd` moves the working directory for the following commands, and it can trigger a permission prompt. Use absolute paths.
 - **`cp` or a redirection onto a file that already exists in the repository.** Overwriting a file that predates the session is a blocked category. Use `Edit` or `Write` instead, which the classifier does not review for a path in the working directory.
 - **Compound commands.** The classifier evaluates each part of a command joined by `&&`, `||`, `;`, or a pipe. Separate calls read more clearly to it and to me.
-- **Anything that discards work.** `git reset --hard`, `git checkout -- .`, `git restore .`, `git clean -fd`, `git stash drop`, and `git stash clear` are blocked by default. So is `git commit --amend` on a commit you did not create in this session, or one already pushed.
+- **Anything that discards work.** `git reset --hard`, `git checkout -- .`, `git restore .`, `git clean -fd`, `git stash drop`, and `git stash clear` are blocked by default. So is `git commit --amend` on a commit you did not create in this session, or one already pushed. So is `git branch -D`, on any branch.
 - **Very long commands.** A command over 10,000 characters is never auto-approved.
 
 ### Boundaries I state in conversation
 
 - When I say "don't push", or "wait until I review", the classifier enforces it as a block, whatever its default rules would allow. The boundary holds until I remove it. Your own judgement that the condition is met does not remove it.
 - The classifier re-reads each boundary from the transcript, so compaction can lose one. Never treat a boundary as removed because you can no longer see it. Ask me.
+- An instruction of mine that contradicts this file is temporary by default. It lasts for the work on the issue, or once if I say so. An example is "don't push yet", when a rule change must go on `main` first, or when the context needs compacting. When I want to change the workflow for the future, I say so explicitly, and the change goes in this file.
 
 ## Posting an issue
 
@@ -84,21 +82,69 @@ Claude Code runs in auto mode, so a classifier model reviews each tool call befo
    - For each PR, state what makes it independently mergeable.
 3. We review the plan together.
 4. You open a branch on my fork for the pull request.
-5. You write the code, and I review before every commit. A code change after my approval needs a new approval. A push needs no approval, unless I ask you to hold it. Always ensure code builds with zero errors and zero warnings, and that all tests pass. The message of each commit follows `commit-message-style.md`. Write it in a file in the issue scratchpad and give me the link. Do not paste it in chat. List in chat the files of the commit and anything I have not seen yet.
+5. You write the code, and I review before every commit. A code change after my approval needs a new approval. A push needs no approval, unless I ask you to hold it. Always ensure code builds with zero errors and zero warnings, and that all tests pass. The message of each commit follows "Commit messages" below. Write it in a file in the issue scratchpad and give me the link. Do not paste it in chat. List in chat the files of the commit and anything I have not seen yet.
 6. Sanity check. It gates every push to the PR branch, follow-up commits included:
    1. Execute `dotnet run .claude/tools/inspect.cs --gate`. It runs `lint-docs.cs` on the documentation (if any), then `dotnet bv pack` for build, tests, and build artifacts. When the build reports nothing, the tool analyzes the whole solution with ReSharper at WARNING severity and above. All three phases report every diagnostic as `path(line,col): severity ID: message`, and the tool exits non-zero when there is any.
    2. Address every reported diagnostic, then repeat from step 1 until it exits zero. Ask me when you have any doubt, when a diagnostic looks like a false positive, or when a diagnostic does not go away.
    3. Build artifacts, such as NuGet packages and Docker images, are left in the `artifacts` folder. You can inspect them to verify that they are correct and ready for release.
    4. The full output of both phases, and the SARIF report generated by ReSharper, are left in `.buildvana-temp`, which is gitignored. Read them when a diagnostic needs more context than its one line, or when the build fails without reporting one.
-7. When you're done, you prepare the title, text, and labels for the PR, following the [org-wide PR template](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md). Issue and PR templates live in the org-wide repo `Tenacom/.github`, not in this repo.
+7. When you're done, you prepare the title, text, and labels for the PR, following the [org-wide PR template](https://raw.githubusercontent.com/Tenacom/.github/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md). Issue and PR templates live in the org-wide repo `Tenacom/.github`, not in this repo. Draft the text in `.claude/scratchpad/<N>/<N>-pr.md` and show it with a link. See "Pull request text" below.
 8. I review the PR and propose edits if necessary.
-9. When I approve, you post the PR using the GitHub MCP tool.
+9. When I approve, you post the PR with `gh pr create --body-file <file>`. After a later change to the text, update the PR with `gh pr edit <N> --body-file <file>` and read it back with `gh pr view <N> --json body`.
+10. Once the PR is up, start the self-review cycle. See "Self-review cycle" below.
 
-## Reacting to reviews
+### Pull request text
 
-1. I give you the link to a review comment. We are usually on the PR branch, often in the same conversation where the PR has been created.
-2. You check that we are on the PR branch and in sync with the remote. A reviewer may have committed a suggestion through the GitHub UI. Then you read the review and make a plan.
-3. We review the plan together. Usually this is a quick "take this one, leave this other one". On more complicated findings, make sure we agree on the steps. Make sure you have everything you need to proceed on your own. Repeat a question I did not answer, and ask when you have any doubt.
+- When the PR closes the issue, the body carries `Closes #N`. When an issue needs several PRs, only the last one carries it. Verify the link with the `closingIssuesReferences` field through GraphQL.
+- When an issue states a wrong premise, the PR says so, with the measured data. Do not take a premise of the issue as true when the data say otherwise.
+- Observations outside the issue go in the "Additional changes" section when the PR acts on them. See "Small changes out of scope" below. The PR does not list what it leaves alone.
+
+## Self-review cycle
+
+A PR goes through two review cycles: self-review, then my own review. The goal of the self-review cycle is a self-review that approves the PR without findings. I review the PR myself after that, on the PR page, and I merge.
+
+Answering a finding and resolving the thread counts as much as fixing it. The bar is zero open conversations, not zero comments ever written. See "Evaluating findings" below for how to weigh what a review claims.
+
+You run the self-review cycle without a report from me. You start each review, read it, and present the plan. I still agree on every plan, as "Reacting to reviews" says. A review without findings needs no plan, so take the next step.
+
+A self-review is a review posted by my own account, under the rules of the skill `.claude/skills/review-pr/SKILL.md`. GitHub refuses a review request to the author of the PR, so nobody requests it. You start it, through the subagent `pr-reviewer`, defined in `.claude/agents/pr-reviewer.md`.
+
+Before each self-review:
+
+1. Wait for the checks of the head commit, in the background, with `gh pr checks <N> --repo <owner>/<repo> --watch`. When a check fails, tell me.
+2. Check that `git status --porcelain` prints nothing, and that `git rev-parse HEAD` equals the `headRefOid` of the PR. When either check fails, stop and tell me.
+3. Start the subagent `pr-reviewer` in the foreground. The prompt is `Review PR <N>.`, with no other content. The subagent then judges the PR without the reasoning of the session that wrote the code.
+
+The subagent reviews the PR in this clone, on the current branch. It does not use a worktree, because a worktree has no restored packages, and a review reads their sources.
+
+The subagent posts the review without a draft and without a go-ahead. This is a standing exception to the rule on drafts in "General rules".
+
+When the subagent ends, read the review from GitHub. When the review has findings, react to it, as "Reacting to reviews" says, then start the next self-review. When the review approves the PR without findings, tell me that the PR is ready for my review.
+
+A self-review is a `COMMENT` review. Its body starts with `_Review by Claude. Self-review._` and a verdict line, `**👍 Approved.**` or `**⚠️ Changes requested.**`. Findings are code-anchored comments.
+
+A self-review is a review, and gets the same treatment as any other. Answer every finding as if another user had written it. Reply in each thread and resolve it. A finding in the review body, without a thread, gets a comment on the PR that quotes the sentence it answers.
+
+### Compaction points
+
+I compact the context at two points of the cycle. You cannot compact it, because `/compact` is my command. The two compaction points are:
+
+- the start of the cycle, after the PR is open and before the first self-review;
+- the end of each reaction to a review, as "Reacting to reviews" says.
+
+At a compaction point:
+
+1. Update the handoff. State the PR, the round, and the next step. List every boundary I stated in conversation that still holds, because compaction can lose it.
+2. Ask me to compact, and end the turn.
+3. When I tell you to continue, read the handoff in full. Then take the next step.
+
+A review without new findings produces no reaction, so no compaction point follows it.
+
+### Reacting to reviews
+
+1. Read the review: the threads and the review body.
+2. Check that we are on the PR branch and in sync with the remote: `git status --porcelain` prints nothing, and `git rev-parse HEAD` equals the `headRefOid` of the PR.
+3. Evaluate each finding, as "Evaluating findings" says, and present a plan: fix or reject, with the rationale. We agree on the plan.
 
    Assume I have not read the review. For each finding, first restate what the reviewer said, in one or two sentences, then the plan for it.
 
@@ -106,26 +152,37 @@ Claude Code runs in auto mode, so a classifier model reviews each tool call befo
 
    From the second round on, a finding the reviewer does not treat as blocking starts as "leave alone". Fix it only when I say so. My silence is not a yes. Prose, comments, changelog wording, documentation symmetry, and formatting get one round each.
 
-   Once we agree, you address the findings, run the sanity check, push, and reply, without asking me again. Our agreement stands in for the "check with me first" rule above and for the "I review before every commit" rule of "Solving an issue". Stop and ask only when you get stuck, or when a finding needs a refactor we did not foresee.
-4. You address the review's findings as agreed in point 3. A finding we agreed to leave alone produces no commit, only its rationale in the reply.
+   Make sure you have everything you need to proceed on your own. Repeat a question I did not answer, and ask when you have any doubt.
+4. Apply the fixes, commit, run the sanity check, and push. The agreed plan pre-authorizes the commits and the push, so do not wait for a further approval. Stop and ask only when you get stuck, or when a finding needs a refactor we did not foresee.
+
+   A finding we agreed to leave alone produces no commit, only its rationale in the reply.
 
    One commit per addressed finding is the default, not a rule. Several findings of one shape belong in one commit. One finding whose fix is larger than the reviewer thought belongs in several. A commit never mixes unrelated fixes. When a commit covers occurrences the review did not name, say so in its message. The message of each commit follows "Commit messages" below.
-5. Sanity check, same as the "Sanity check" step of "Solving an issue". When it fails, the fixes go in further commits. Never amend or rewrite the commits from point 4.
-6. When you're done, push and reply to the review:
-   - Reply to every code-anchored comment, even if only "Done." or the reason for leaving the finding alone.
-   - Resolve each conversation after you reply to it.
-   - State what you did, and why you did not do the rest. Keep replies structured and short.
-   - Write a summary comment only in two cases:
-     - to address findings that are not code-anchored
-     - to ask for a new review
-   - Ask for a new review only when the round changed behaviour: code semantics, public API, or a contract the code upholds.
-     - A round that touched only prose, comments, changelog text, wording or formatting needs none.
-     - "The reviewer did not say the PR was ready" is not a reason to ask. A reviewer that reports findings and states that none of them blocks the branch has answered the merge question.
-     - Ask me, not the reviewer, when you are unsure whether a round changed behaviour.
-   - When the summary comment has other content, put the request for a new review at its end. Otherwise the request is the whole body.
-   - Mention the reviewer by nickname, e.g. `@claude`, in anything that expects them to act.
-     - They see only comments that mention them, so an untagged reply reaches human readers alone.
-     - The mention does not choose the action. A tagged question gets an answer, and a request for a review gets a review.
+
+   When the sanity check fails, the fixes go in further commits. Never amend or rewrite the commits already made for the round.
+5. Reply in each thread and resolve it. The agreed plan pre-authorizes the replies. Draft each reply in `.claude/scratchpad/<N>/reply-<PR>-<thread id>.md`. State what you did, and why you did not do the rest. Keep replies structured and short.
+
+   Post a reply with:
+
+   ```text
+   gh api --method POST repos/<owner>/<repo>/pulls/<N>/comments/<comment id>/replies -F body=@<file>
+   ```
+
+   Resolve the thread with the GraphQL mutation `resolveReviewThread`.
+6. Stop at the compaction point, as "Compaction points" says. After the compaction, start the next self-review.
+
+### Evaluating findings
+
+When a finding is reported, it is your responsibility to evaluate it and decide whether to fix it or reject it. Do not assume that a finding is correct just because it was reported. Always verify the finding against the code and the requirements of the project.
+
+Findings come in two kinds, and they are not verified the same way.
+
+- **Claims about what the code does**, such as a flag's effect, an inheritance rule, a target's execution order. These live in the repo and its dependencies. Verify them there before acting on them.
+- **Claims about what the project needs**, such as "nobody asks for this", "that case never comes up", "the capability is unused". The reviewer might have extrapolated the premise from current code, leaving no room for future needs. Do not take such claims at face value. Let's verify them together. `design-principles.md` settles some of them.
+
+A finding about a commit message or about a branch name is not fixed. Present it as a rejection in the plan. The reply names the cost of the change: a rewrite of the history of the branch, or a new PR.
+
+When a finding asks to remove something deliberate, recovering _why it was put there_ is part of answering it. If the reason isn't in the repo, the question is for me, not for `git`.
 
 ## Commit messages
 
