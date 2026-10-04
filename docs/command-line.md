@@ -260,7 +260,7 @@ A manifest that cannot be read is reported the same way.
 Three things keep the invoked `bv` in place:
 
 - `--skip-delegation`.
-- The `self-update` command, whose job is to pin the repository to the invoked `bv`.
+- The `self-update` command, which picks the target version itself and [hands the rest of the run](tool-commands/self-update.md#which-bv-runs) to that version.
 - The [`BV_DELEGATED`](environment-variables.md#bv_delegated) environment variable, which `bv` sets on the delegated run, so that a delegated run never delegates again.
 
 A `bv` invoked outside a repository finds no manifest, and runs in place.
@@ -333,10 +333,11 @@ To build a repository against another version of Buildvana SDK, edit the `Buildv
 bv build --skip-sdk-check
 ```
 
-To move the whole repository to a version, `bv`, Buildvana SDK, and `Buildvana.Runtime` at once, run [`bv self-update`](tool-commands/self-update.md) from that version:
+To move the whole repository to a version, `bv`, Buildvana SDK, and `Buildvana.Runtime` at once, run [`bv self-update`](tool-commands/self-update.md) with `--to`.
+Add `--force` when the version is below the pins:
 
 ```shell
-dnx bv@2.1.0 self-update
+dotnet bv self-update --to 2.1.0 --force
 ```
 
 ---
@@ -346,13 +347,13 @@ dnx bv@2.1.0 self-update
 ### The SDK version check fails
 
 ```text
-error: SDK version check failed: global.json pins Buildvana.Sdk 2.1.500-preview, but this bv is version 2.1.538-preview. Run 'bv self-update' to update this repository's pins to a single version, or pass --skip-sdk-check to skip this check.
+error: SDK version check failed: global.json pins Buildvana.Sdk 2.1.500-preview, but this bv is version 2.1.538-preview. Run 'dotnet bv self-update --repair' to move every Buildvana pin to the bv version the tool manifest pins, or pass --skip-sdk-check to skip this check.
 ```
 
 The message names the pinned version and the running one.
 Three remedies exist:
 
-- When the repository is half updated, run `bv self-update` from the version it should be at, which pins every file to that version.
+- When the repository is half updated, run `dotnet bv self-update --repair`, which pins every file to the version the tool manifest holds.
 - When the invoked `bv` is the wrong one, run the right version with `dotnet bv <command>` or `dnx bv@<version> <command>`.
 - When the mismatch is deliberate, pass `--skip-sdk-check`.
 

@@ -11,6 +11,7 @@ The variables that the .NET SDK, MSBuild, and NuGet read are out of scope, and t
 
 - [Variables read by `bv`](#variables-read-by-bv)
   - [`BV_DELEGATED`](#bv_delegated)
+  - [`BV_SELF_UPDATE_FROM`](#bv_self_update_from)
   - [`CI_SERVER_HOST`](#ci_server_host)
   - [`DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`](#dotnet_cli_console_use_default_encoding)
   - [`DOTNET_CLI_HOME`](#dotnet_cli_home)
@@ -40,6 +41,16 @@ To keep `bv` from delegating, pass `--skip-delegation`.
 `bv` removes the variable from the environment of every child process it starts, such as a `dotnet` invocation or a [hook](hooks.md).
 A `bv` that one of them starts then makes its own delegation decision.
 A hook that needs to know whether the run was delegated reads the `RuntimeInfo.DelegatingVersion` member of its args.
+
+### `BV_SELF_UPDATE_FROM`
+
+The `bv` version the tool manifest pinned before a [handed-off](tool-commands/self-update.md#which-bv-runs) `bv self-update` run.
+When `bv self-update` hands the rest of the run to the target version, it sets the variable on the child.
+The value is the previous pin, or empty when the manifest had no `bv` entry.
+The handed-off run reads it to report the manifest move in its summary, in place of `unchanged`.
+A value that is not a version is ignored.
+
+Do not set the variable by hand.
 
 ### `CI_SERVER_HOST`
 
@@ -127,5 +138,6 @@ The [configuration file](configuration-file.md) names the environment variable t
 
 - `BV_DELEGATED`, on the delegated `bv`, as described above.
   `bv` removes it from the environment of its other child processes.
+- `BV_SELF_UPDATE_FROM`, on the handed-off `bv self-update` run, as described above.
 - The variables under `dotnet.all.env` and under the per-command `dotnet.<command>.env` sections of the configuration file, on the matching child `dotnet` invocations.
   A `null` value removes the variable from the environment of the child.

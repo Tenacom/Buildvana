@@ -75,7 +75,7 @@ From here on, `dotnet bv <command>` runs that version.
 ## Pin Buildvana SDK in `global.json`
 
 Every project reads Buildvana SDK at the version that `global.json` pins.
-`bv self-update` pins it at the version of the running `bv`, and creates the file when it is missing:
+`bv self-update` pins it at the [target version](tool-commands/self-update.md#the-target-version), here the version the tool manifest pins, and creates the file when it is missing:
 
 ```shell
 dotnet bv self-update

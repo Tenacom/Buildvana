@@ -41,7 +41,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`FileBasedApps` module](docs/sdk-modules/file-based-apps.md) pins `Buildvana.Runtime` to the version of Buildvana SDK in a file-based app, and suppresses SA1402 and SA1649 there.
 - Before running a command that uses Buildvana SDK, `bv` runs [the SDK version check](docs/command-line.md#the-sdk-version-check), which `--skip-sdk-check` skips.
 - When `dotnet-tools.json` pins `bv`, the pinned `bv` [runs in place of the invoked one](docs/command-line.md#delegation), unless `--skip-delegation` is passed.
-- [`bv self-update`](docs/tool-commands/self-update.md) moves every Buildvana pin of the repository to one version: the version of the invoked `bv`, or the one `--to` names.
+- [`bv self-update`](docs/tool-commands/self-update.md) moves every Buildvana pin of the repository to one version: the latest on the package sources, or the one `--preview`, `--repair`, or `--to` picks.
 - [`bv version show`](docs/tool-commands/version.md#bv-version-show) prints the current and published versions, and [`bv version advance`](docs/tool-commands/version.md#bv-version-advance) applies a version spec change to `VERSION`.
 - [`bv dependencies`](docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
 - An apply run of `bv dependencies update` writes [transitive overrides](docs/tool-commands/dependencies.md#transitive-overrides), which lift the transitive dependencies of the repository out of the versions security advisories cover.

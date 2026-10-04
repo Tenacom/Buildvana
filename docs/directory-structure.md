@@ -362,7 +362,7 @@ The file also pins the version of the .NET SDK, under the `sdk` key, and the two
 
 Before running, a command that uses Buildvana SDK checks that the file pins `Buildvana.Sdk` at the version of the running `bv`.
 [The SDK version check](command-line.md#the-sdk-version-check) says which commands check, and how to skip the check.
-[`bv self-update`](tool-commands/self-update.md) re-pins the file to the version of the running `bv`.
+[`bv self-update`](tool-commands/self-update.md#the-target-version) moves the pin, with every other Buildvana pin of the repository, to the version it picks.
 
 ---
 
