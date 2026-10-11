@@ -3,7 +3,7 @@
 
 /*
  * Checks a commit message against the rules that a tool can measure. The rules come from the "Commit messages"
- * section of `.claude/rules/workflow.md` and from `.claude/output-styles/simple-tech.md`.
+ * section of `.claude/rules/common/workflow.md` and from `.claude/output-styles/simple-tech.md`.
  *
  * Run from the repo root, on the file that `git commit -F` will read:
  *   `dotnet run .claude/tools/lint-commit.cs <message-file>`

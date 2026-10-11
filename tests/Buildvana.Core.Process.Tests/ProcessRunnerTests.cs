@@ -32,7 +32,7 @@ internal sealed class ProcessRunnerTests
         await Assert.That(exitCode).IsEqualTo(5);
     }
 
-    // Mutates the process-global environment; must not run alongside other tests (see .claude/rules/testing.md).
+    // Mutates the process-global environment; must not run alongside other tests (see .claude/rules/common/testing.md).
     [Test]
     [NotInParallel]
     public async Task RunWithInheritedStdio_RemovesNullEnvironmentEntries()
@@ -61,7 +61,7 @@ internal sealed class ProcessRunnerTests
 
     // Twin of the test above for the CliWrap-backed path: there the "null removes the variable" contract is
     // CliWrap's to honor, not this code's, and this test is what locks it in when CliWrap is updated.
-    // Mutates the process-global environment; must not run alongside other tests (see .claude/rules/testing.md).
+    // Mutates the process-global environment; must not run alongside other tests (see .claude/rules/common/testing.md).
     [Test]
     [NotInParallel]
     public async Task Run_RemovesNullEnvironmentEntries()

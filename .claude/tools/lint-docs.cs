@@ -2,7 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 /*
- * Checks the user documentation against the rules of `.claude/rules/documentation.md` that a tool can measure.
+ * Checks the user documentation against the rules of `.claude/rules/common/documentation.md` that a tool can measure.
  *
  * Run from the repo root:
  *   `dotnet run .claude/tools/lint-docs.cs [<root>]`
@@ -53,7 +53,7 @@ const string UnreleasedHeading = "Unreleased changes";
 const string BreakingChangePrefix = "- **BREAKING CHANGE**:";
 const int MaxSentenceWords = 25;
 
-// The language tags `.claude/rules/documentation.md` admits on a fenced block.
+// The language tags `.claude/rules/common/documentation.md` admits on a fenced block.
 string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shell", "text", "xml", "yaml"];
 
 // Files the TODO check leaves alone. None here; a copy of this tool may name some.

@@ -36,7 +36,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-const string SolutionFileName = "Buildvana.slnx";
 const int TailLineCount = 40;
 
 const string Usage = "Usage: dotnet run .claude/tools/inspect.cs [--gate | --all]";
@@ -69,10 +68,18 @@ if (gate && all)
     return 2;
 }
 
-var repoRoot = FindRepoRoot(Environment.CurrentDirectory, SolutionFileName);
+var repoRoot = FindHomeDirectory(Environment.CurrentDirectory);
 if (repoRoot.Length == 0)
 {
-    Console.Error.WriteLine($"Cannot find {SolutionFileName} in the current directory or any of its ancestors.");
+    Console.Error.WriteLine(
+        $"Cannot find buildvana.json[c], .git, or .git/HEAD in '{Environment.CurrentDirectory}' or any of its ancestors.");
+    return 2;
+}
+
+var solutionFileName = FindSolutionFileName(repoRoot);
+if (solutionFileName.Length == 0)
+{
+    Console.Error.WriteLine($"Cannot find a solution file in '{repoRoot}'.");
     return 2;
 }
 
@@ -210,7 +217,7 @@ string[] inspectArguments = [
     "--format=Sarif",
     "--properties:Configuration=Release",
     "--no-build",
-    SolutionFileName,
+    solutionFileName,
     "--yes",
 ];
 
@@ -316,17 +323,41 @@ if (gatePassed)
 
 return gate && !gatePassed ? 1 : 0;
 
-static string FindRepoRoot(string startDirectory, string solutionFileName)
+// Finds the home directory, which `bv` builds from, as "Location of the home directory" in the Buildvana
+// documentation describes it: the nearest directory, the start directory included, that holds any of the
+// markers below.
+static string FindHomeDirectory(string startDirectory)
 {
     for (var directory = new DirectoryInfo(startDirectory); directory is not null; directory = directory.Parent)
     {
-        if (File.Exists(Path.Combine(directory.FullName, solutionFileName)))
+        var path = directory.FullName;
+        var hasConfigFile = File.Exists(Path.Combine(path, "buildvana.json"))
+            || File.Exists(Path.Combine(path, "buildvana.jsonc"));
+
+        // A regular repository has a .git directory containing HEAD. A worktree or submodule has a .git file.
+        var hasGitMarker = File.Exists(Path.Combine(path, ".git", "HEAD"))
+            || File.Exists(Path.Combine(path, ".git"));
+
+        if (hasConfigFile || hasGitMarker)
         {
-            return directory.FullName;
+            return path;
         }
     }
 
     return string.Empty;
+}
+
+// The solution file `bv` builds: a `*.slnx` in the home directory, or a `*.sln` when there is no `*.slnx`.
+// Buildvana supports one solution file per home directory, so the first match is the only one.
+static string FindSolutionFileName(string homeDirectory)
+{
+    var candidates = Directory.GetFiles(homeDirectory, "*.slnx");
+    if (candidates.Length == 0)
+    {
+        candidates = Directory.GetFiles(homeDirectory, "*.sln");
+    }
+
+    return candidates.Length > 0 ? Path.GetFileName(candidates[0]) : string.Empty;
 }
 
 static (int ExitCode, List<string> Lines) Run(
