@@ -2,7 +2,9 @@
 // See the LICENSE file in the project root for full license information.
 
 // ProjectType holds the five BV_Is*Project properties by name, as evaluated.
+// PackageReferences holds the PackageReference items, as evaluated.
 internal sealed record SdkEvaluationResult(
     string HomeDirectory,
     IReadOnlyList<SdkEvaluationError> Errors,
-    IReadOnlyDictionary<string, string> ProjectType);
+    IReadOnlyDictionary<string, string> ProjectType,
+    IReadOnlyList<SdkPackageReference> PackageReferences);
