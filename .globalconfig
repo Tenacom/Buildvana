@@ -239,7 +239,7 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 # Ordering and grouping follows the categories listed in the official documentation.
 # See https://github.com/DotNetAnalyzers/StyleCopAnalyzers/tree/master/documentation
 # ----------------------------------------------------------------------------------------------
-# Last update: 2026-06-21 (StyleCop.Analyzers v1.2.0-beta.556)
+# Last update: 2026-10-15 (StyleCop.Analyzers v1.3.79-beta)
 # ==============================================================================================
 
 # StyleCop Analyzers - Special rules
@@ -279,7 +279,7 @@ dotnet_diagnostic.SA1028.severity = warning # Code should not contain trailing w
 
 # StyleCop Analyzers - Readability rules
 dotnet_diagnostic.SA1100.severity = warning # Do not prefix calls with base unless local implementation exists
-dotnet_diagnostic.SA1101.severity = none # Prefix local calls with this
+dotnet_diagnostic.SA1101.severity = none # Prefix local calls with this # SX1101 is enabled instead
 dotnet_diagnostic.SX1101.severity = warning # Do not prefix local calls with this
 dotnet_diagnostic.SA1102.severity = warning # Query clause should follow previous clause
 dotnet_diagnostic.SA1103.severity = warning # Query clauses should be on separate lines or all on one line
@@ -318,6 +318,8 @@ dotnet_diagnostic.SA1136.severity = warning # Enum values should be on separate 
 dotnet_diagnostic.SA1137.severity = warning # Elements should have the same indentation
 # There is no SA1138 rule - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/2034
 dotnet_diagnostic.SA1139.severity = warning # Use literal suffix notation instead of casting
+dotnet_diagnostic.SA1141.severity = warning # Use tuple syntax
+dotnet_diagnostic.SA1142.severity = warning # Refer to tuple elements by name
 
 # StyleCop Analyzers - Ordering rules
 dotnet_diagnostic.SA1200.severity = warning # Using directives should be placed correctly
@@ -325,7 +327,7 @@ dotnet_diagnostic.SA1201.severity = warning # Elements should appear in the corr
 dotnet_diagnostic.SA1202.severity = warning # Elements should be ordered by access
 dotnet_diagnostic.SA1203.severity = warning # Constants should appear before fields
 dotnet_diagnostic.SA1204.severity = warning # Static elements should appear before instance elements
-dotnet_diagnostic.SA1205.severity = none # Partial elements should declare access
+dotnet_diagnostic.SA1205.severity = none # Partial elements should declare access # Declaring access more than once for the same type violates single source of truth
 dotnet_diagnostic.SA1206.severity = warning # Declaration keywords should follow order
 dotnet_diagnostic.SA1207.severity = warning # Protected should come before internal
 dotnet_diagnostic.SA1208.severity = warning # System using directives should be placed before other using directives
@@ -345,13 +347,13 @@ dotnet_diagnostic.SA1301.severity = warning # Element should begin with lower-ca
 dotnet_diagnostic.SA1302.severity = warning # Interface names should begin with I
 dotnet_diagnostic.SA1303.severity = warning # Const field names should begin with upper-case letter
 dotnet_diagnostic.SA1304.severity = warning # Non-private readonly fields should begin with upper-case letter
-dotnet_diagnostic.SA1305.severity = none # Field names should not use Hungarian notation
+dotnet_diagnostic.SA1305.severity = none # Field names should not use Hungarian notation # Nobody uses Hungarian notation anymore; this rule would flag names that are most probably prefixed for valid reasons
 dotnet_diagnostic.SA1306.severity = warning # Field names should begin with lower-case letter
 dotnet_diagnostic.SA1307.severity = warning # Accessible fields should begin with upper-case letter
 dotnet_diagnostic.SA1308.severity = warning # Variable names should not be prefixed
-dotnet_diagnostic.SA1309.severity = none # Private instance field names should not begin with underscore
+dotnet_diagnostic.SA1309.severity = none # Private instance field names should not begin with underscore # SX1309 is enabled instead
 dotnet_diagnostic.SX1309.severity = warning # Private instance field names should begin with underscore
-dotnet_diagnostic.SX1309S.severity = none # Static field names should begin with underscore
+dotnet_diagnostic.SX1309S.severity = none # Static field names should begin with underscore # SX1309 is enabled instead
 dotnet_diagnostic.SA1310.severity = warning # Field names should not contain underscore
 dotnet_diagnostic.SA1311.severity = warning # Static readonly fields should begin with upper-case letter
 dotnet_diagnostic.SA1312.severity = warning # Variable names should begin with lower-case letter
@@ -359,6 +361,7 @@ dotnet_diagnostic.SA1313.severity = warning # Parameter names should begin with 
 dotnet_diagnostic.SA1314.severity = warning # Type parameter names should begin with T
 # Rule SA1315 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1949
 dotnet_diagnostic.SA1316.severity = warning # Tuple element names should use correct casing
+dotnet_diagnostic.SA1317.severity = warning # Identifier should be named only with Latin letters
 
 # StyleCop Analyzers - Maintainability rules
 dotnet_diagnostic.SA1119.severity = warning # Statement should not use unnecessary parenthesis
@@ -369,12 +372,12 @@ dotnet_diagnostic.SA1403.severity = warning # File may only contain a single nam
 dotnet_diagnostic.SA1404.severity = warning # Code analysis suppression should have justification
 dotnet_diagnostic.SA1405.severity = warning # Debug.Assert should provide message text
 dotnet_diagnostic.SA1406.severity = warning # Debug.Fail should provide message text
-dotnet_diagnostic.SA1407.severity = none # Arithmetic expressions should declare precedence
+dotnet_diagnostic.SA1407.severity = none # Arithmetic expressions should declare precedence # Conflicts with ReSharper's RedundantParentheses inspection
 dotnet_diagnostic.SA1408.severity = warning # Conditional expressions should declare precedence
 # Rule SA1409 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1058
 dotnet_diagnostic.SA1410.severity = warning # Remove delegate parenthesis when possible
 dotnet_diagnostic.SA1411.severity = warning # Attribute constructor should not use unnecessary parenthesis
-dotnet_diagnostic.SA1412.severity = none # Store files as UTF-8 with byte order mark
+dotnet_diagnostic.SA1412.severity = none # Store files as UTF-8 with byte order mark # Practically all IDEs and editors save source code as UTF-8 anyway; Claude Code's Write tool does not add a BOM
 dotnet_diagnostic.SA1413.severity = warning # Use trailing comma in multi-line initializers
 dotnet_diagnostic.SA1414.severity = warning # Tuple types in signatures should have element names
 
@@ -395,7 +398,7 @@ dotnet_diagnostic.SA1512.severity = warning # Single-line comments should not be
 dotnet_diagnostic.SA1513.severity = warning # Closing brace should be followed by blank line
 dotnet_diagnostic.SA1514.severity = warning # Element documentation header should be preceded by blank line
 dotnet_diagnostic.SA1515.severity = warning # Single-line comment should be preceded by blank line
-dotnet_diagnostic.SA1516.severity = none # Elements should be separated by blank line
+dotnet_diagnostic.SA1516.severity = warning # Elements should be separated by blank line
 dotnet_diagnostic.SA1517.severity = warning # Code should not contain blank lines at start of file
 dotnet_diagnostic.SA1518.severity = warning # Use line endings correctly at end of file
 dotnet_diagnostic.SA1519.severity = warning # Braces should not be omitted from multi-line child statement
@@ -403,7 +406,7 @@ dotnet_diagnostic.SA1520.severity = warning # Use braces consistently
 
 # StyleCop Analyzers - Documentation rules
 dotnet_diagnostic.SA1600.severity = warning # Elements should be documented
-dotnet_diagnostic.SA1601.severity = none # Partial elements should be documented
+dotnet_diagnostic.SA1601.severity = none # Partial elements should be documented # Elements should be documented once (single source of truth)
 dotnet_diagnostic.SA1602.severity = warning # Enumeration items should be documented
 # Rule SA1603 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1291
 dotnet_diagnostic.SA1604.severity = warning # Element documentation should have summary
@@ -411,8 +414,8 @@ dotnet_diagnostic.SA1605.severity = warning # Partial element documentation shou
 dotnet_diagnostic.SA1606.severity = warning # Element documentation should have summary text
 dotnet_diagnostic.SA1607.severity = warning # Partial element documentation should have summary text
 dotnet_diagnostic.SA1608.severity = warning # Element documentation should not have default summary
-dotnet_diagnostic.SA1609.severity = none # Property documentation should have value
-dotnet_diagnostic.SA1610.severity = none # Property documentation should have value text
+dotnet_diagnostic.SA1609.severity = none # Property documentation should have value # Would add very little value in practice
+dotnet_diagnostic.SA1610.severity = none # Property documentation should have value text # Would add very little value in practice
 dotnet_diagnostic.SA1611.severity = warning # Element parameters should be documented
 dotnet_diagnostic.SA1612.severity = warning # Element parameter documentation should match element parameters
 dotnet_diagnostic.SA1613.severity = warning # Element parameter documentation should declare parameter name
@@ -455,6 +458,7 @@ dotnet_diagnostic.SA1649.severity = warning # File name should match first type 
 # Rule SA1650 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1057
 dotnet_diagnostic.SA1651.severity = warning # Do not use placeholder elements
 # Rule SA1652 superseded by SA0001
+dotnet_diagnostic.SA1653.severity = warning # Only one partial declaration should contain summary documentation
 
 # ==============================================================================================
 #                                    PUBLIC API ANALYZERS
