@@ -53,6 +53,26 @@ internal sealed class PackageInjectionTests
         await Assert.That(reference.IsImplicitlyDefined).IsNotEqualTo("true");
     }
 
+    // A module may declare IsImplicitlyDefined metadata on its BV_PackageReference item. The metadata must not reach
+    // a reference whose version a PackageVersion item states.
+    [Test]
+    public async Task Evaluate_ImplicitlyDefinedPackageWithAPackageVersion_AddsAnOrdinaryReferenceWithoutVersion()
+    {
+        using var fixture = new SdkPropsFixture();
+        fixture.WriteFile(".git/HEAD");
+        const string properties = "<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>";
+        const string items = """
+            <BV_PackageReference Include="Some.Analyzers" PrivateAssets="All" IsImplicitlyDefined="true" />
+            <BV_PackageVersion Include="Some.Analyzers" Version="1.0.0" />
+            <PackageVersion Include="Some.Analyzers" Version="2.0.0" />
+            """;
+        var result = fixture.EvaluateNetSdkProject(properties, items);
+        await Assert.That(result.Errors).IsEmpty();
+        var reference = result.PackageReferences.Single(static item => item.Id == "Some.Analyzers");
+        await Assert.That(reference.Version).IsEmpty();
+        await Assert.That(reference.IsImplicitlyDefined).IsNotEqualTo("true");
+    }
+
     // Without central package management, a PackageVersion item is an ordinary item that NuGet ignores.
     [Test]
     public async Task Evaluate_InjectedPackageWithAPackageVersionAndNoCentralManagement_KeepsThePinnedVersion()

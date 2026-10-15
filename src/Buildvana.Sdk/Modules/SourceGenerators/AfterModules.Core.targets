@@ -29,8 +29,7 @@
   <ItemGroup>
     <BV_PackageReference Include="Buildvana.Sdk"
                          PrivateAssets="all"
-                         IncludeAssets="analyzers"
-                         IsImplicitlyDefined="true" />
+                         IncludeAssets="analyzers" />
 
   </ItemGroup>
 
