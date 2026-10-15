@@ -63,8 +63,18 @@
     <!-- Let PackageReference items override corresponding BV_PackageReference items -->
     <BV_PackageReference Remove="@(PackageReference)" />
 
-    <!-- Let PackageVersion items override Version metadata in corresponding BV_PackageVersion items -->
-    <BV_PackageVersion Update="@(PackageVersion)" Version="%(PackageVersion.Version)" Condition="'$(ManagePackageVersionsCentrally)' == 'true'" />
+    <!--
+      Under central package management, a PackageVersion item sets the version of the corresponding
+      BV_PackageReference item, as it does for any PackageReference item. NuGet rejects a PackageVersion item
+      for an implicitly defined reference (NU1009), so such a reference becomes an ordinary PackageReference
+      item, with no Version metadata of its own.
+      MSBuild allows no custom metadata in a condition outside a target, so the items with a PackageVersion
+      are found by removal: copy every item, remove the ones with a PackageVersion from the original,
+      then remove what is left of the original from the copy.
+    -->
+    <BV_CentrallyVersionedPackageReference Include="@(BV_PackageReference)" Condition="'$(ManagePackageVersionsCentrally)' == 'true'" />
+    <BV_PackageReference Remove="@(PackageVersion)" Condition="'$(ManagePackageVersionsCentrally)' == 'true'" />
+    <BV_CentrallyVersionedPackageReference Remove="@(BV_PackageReference)" />
 
     <!-- Use BV_PackageVersion items to define Version metadata for BV_PackageReference items -->
     <BV_PackageReference Update="@(BV_PackageVersion)" Version="%(BV_PackageVersion.Version)" />
@@ -75,6 +85,7 @@
     -->
     <PackageReference Include="@(BV_PackageReference)"
                       IsImplicitlyDefined="true" />
+    <PackageReference Include="@(BV_CentrallyVersionedPackageReference)" />
 
   </ItemGroup>
 

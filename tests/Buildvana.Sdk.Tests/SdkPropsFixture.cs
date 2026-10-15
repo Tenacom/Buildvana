@@ -66,8 +66,8 @@ internal sealed class SdkPropsFixture : IDisposable
     }
 
     // A Microsoft.NET.Sdk project under the scaffold of a repository, Directory.Build.props importing Sdk.props
-    // and Directory.Build.targets importing Sdk.targets, with the given properties in its body.
-    public SdkEvaluationResult EvaluateNetSdkProject(string properties)
+    // and Directory.Build.targets importing Sdk.targets, with the given properties and items in its body.
+    public SdkEvaluationResult EvaluateNetSdkProject(string properties, string items = "")
     {
         WriteFile("Directory.Build.props", $"""<Project><Import Project="{_sdkPropsPath}" /></Project>""");
         WriteFile("Directory.Build.targets", $"""<Project><Import Project="{_sdkTargetsPath}" /></Project>""");
@@ -77,6 +77,9 @@ internal sealed class SdkPropsFixture : IDisposable
                 <TargetFramework>net10.0</TargetFramework>
                 {properties}
               </PropertyGroup>
+              <ItemGroup>
+                {items}
+              </ItemGroup>
             </Project>
             """;
         WriteFile("src/Test/Test.csproj", projectText);
@@ -135,6 +138,12 @@ internal sealed class SdkPropsFixture : IDisposable
             .Select(static item => new SdkEvaluationError(item.EvaluatedInclude, item.GetMetadataValue("Text")))
             .ToList();
         var projectType = ProjectTypeProperties.ToDictionary(static name => name, project.GetPropertyValue);
-        return new SdkEvaluationResult(project.GetPropertyValue("HomeDirectory"), errors, projectType);
+        var packageReferences = project.GetItems("PackageReference")
+            .Select(static item => new SdkPackageReference(
+                item.EvaluatedInclude,
+                item.GetMetadataValue("Version"),
+                item.GetMetadataValue("IsImplicitlyDefined")))
+            .ToList();
+        return new SdkEvaluationResult(project.GetPropertyValue("HomeDirectory"), errors, projectType, packageReferences);
     }
 }
