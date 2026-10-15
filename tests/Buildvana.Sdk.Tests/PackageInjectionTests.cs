@@ -25,7 +25,7 @@ internal sealed class PackageInjectionTests
     }
 
     [Test]
-    public async Task Evaluate_InjectedPackageUnderCentralManagement_AddsAnImplicitlyDefinedReferenceAtThePinnedVersion()
+    public async Task Evaluate_CentrallyManagedInjectedPackage_AddsAnImplicitlyDefinedReferenceAtThePinnedVersion()
     {
         using var fixture = new SdkPropsFixture();
         fixture.WriteFile(".git/HEAD");
