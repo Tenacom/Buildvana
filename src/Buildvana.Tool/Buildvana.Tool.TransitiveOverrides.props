@@ -1,0 +1,14 @@
+<Project>
+
+  <!--
+    This file is generated and managed by `bv dependencies`.
+    DO NOT EDIT. Do not ignore in source control.
+
+    For more information see https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/dependencies.md
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
