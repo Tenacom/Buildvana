@@ -43,8 +43,7 @@ internal abstract class HookArgsFactory<TArgs>(
     protected RuntimeInfo CreateRuntimeInfo(string artifactsPath)
     {
         Guard.IsNotNullOrEmpty(artifactsPath);
-        return new()
-        {
+        return new() {
             Version = OwnVersion.Value.ToNormalizedString(),
             DelegatingVersion = Environment.GetEnvironmentVariable(DelegationService.DelegatedEnvVar),
 

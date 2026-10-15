@@ -29,8 +29,7 @@ namespace Buildvana.Core.Configuration;
 /// </remarks>
 public sealed class BuildvanaJsonConfigProvider
 {
-    private static readonly JsonDocumentOptions DocumentOptions = new()
-    {
+    private static readonly JsonDocumentOptions DocumentOptions = new() {
         CommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
     };
@@ -117,8 +116,7 @@ public sealed class BuildvanaJsonConfigProvider
     // holds, so no two callers can answer differently.
     private static string? FindFile(IHomeDirectoryProvider home)
     {
-        string[] candidatePaths =
-        [
+        string[] candidatePaths = [
             System.IO.Path.Combine(home.HomeDirectory, BuildvanaJsonConfig.JsonFileName),
             System.IO.Path.Combine(home.HomeDirectory, BuildvanaJsonConfig.JsoncFileName),
         ];
@@ -244,8 +242,7 @@ public sealed class BuildvanaJsonConfigProvider
     }
 
     private static string CodeFor(JsonSchemaErrorKind kind)
-        => kind switch
-        {
+        => kind switch {
             JsonSchemaErrorKind.TypeMismatch => DiagnosticCodes.TypeMismatch,
             JsonSchemaErrorKind.DisallowedValue => DiagnosticCodes.DisallowedValue,
             JsonSchemaErrorKind.UnknownProperty => DiagnosticCodes.UnknownProperty,

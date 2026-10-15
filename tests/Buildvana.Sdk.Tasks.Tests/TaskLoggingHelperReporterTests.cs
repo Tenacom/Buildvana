@@ -233,8 +233,7 @@ internal sealed class TaskLoggingHelperReporterTests
     private static (IReporter Reporter, RecordingBuildEngine Engine) CreateReporter(
         MessageImportance? minimumImportance)
     {
-        var engine = new RecordingBuildEngine10
-        {
+        var engine = new RecordingBuildEngine10 {
             EngineServices = new StubEngineServices { MinimumImportance = minimumImportance },
         };
         var task = new ReporterProbeTask { BuildEngine = engine };

@@ -10,8 +10,7 @@ internal sealed class AdvisoryIndexTests
     [Test]
     public async Task For_AnIdWithAdvisories_HasThemAll()
     {
-        var index = new AdvisoryIndex(
-        [
+        var index = new AdvisoryIndex([
             ("Newtonsoft.Json", Advisory("(, 12.0.3)")),
             ("Serilog", Advisory("(, 2.0.0)")),
             ("Newtonsoft.Json", Advisory("(, 13.0.1)")),

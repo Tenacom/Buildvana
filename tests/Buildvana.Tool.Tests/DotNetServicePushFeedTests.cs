@@ -10,14 +10,12 @@ using Buildvana.Tool.Services;
 // both. What is left to resolve is which channel a version pushes to.
 internal sealed class DotNetServicePushFeedTests
 {
-    private static readonly NuGetFeedConfig PrereleaseFeed = new()
-    {
+    private static readonly NuGetFeedConfig PrereleaseFeed = new() {
         Source = "https://prerelease.example/v3/index.json",
         ApiKeyEnv = "BV_TEST_PRERELEASE_API_KEY",
     };
 
-    private static readonly NuGetFeedConfig ReleaseFeed = new()
-    {
+    private static readonly NuGetFeedConfig ReleaseFeed = new() {
         Source = "https://release.example/v3/index.json",
         ApiKeyEnv = "BV_TEST_RELEASE_API_KEY",
     };

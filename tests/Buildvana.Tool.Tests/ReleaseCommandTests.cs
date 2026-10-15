@@ -239,8 +239,7 @@ internal sealed class ReleaseCommandTests
     [Test]
     public async Task Release_UsesConfiguredIdentity_OverBotAndRepositoryIdentities()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             ConfiguredIdentity = new("Configured Bot", "configured@example.invalid"),
         });
         harness.Repo.SetCommitterIdentity("Local Committer", "local@example.invalid");
@@ -363,8 +362,7 @@ internal sealed class ReleaseCommandTests
     [Test]
     public async Task Release_OnStableRelease_ShipsPublicApis()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             Dogfood = false,
             CheckPublicApi = false,
@@ -385,8 +383,7 @@ internal sealed class ReleaseCommandTests
     [Test]
     public async Task Release_OnStableRelease_ShipsInternalApis()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             Dogfood = false,
             UnshippedInternalApi = "#nullable enable\nTest.Helper\n",
@@ -408,8 +405,7 @@ internal sealed class ReleaseCommandTests
     [Test]
     public async Task Release_WithRemovedInternalApi_LeavesVersionSpecUnchanged()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             Dogfood = false,
             UnshippedInternalApi = "#nullable enable\n*REMOVED*Test.Helper\n",
@@ -424,8 +420,7 @@ internal sealed class ReleaseCommandTests
     [Test]
     public async Task Release_OnPrerelease_LeavesDeclaredApisUnshipped()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             Dogfood = false,
             CheckPublicApi = false,
             UnshippedPublicApi = "#nullable enable\nTest.Thing\n",
@@ -445,8 +440,7 @@ internal sealed class ReleaseCommandTests
     [Test]
     public async Task Release_WithAdditivePublicApi_BumpsMinor_AndLeavesApisUnshipped()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             Dogfood = false,
             UnshippedPublicApi = "#nullable enable\nTest.Thing\n",

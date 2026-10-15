@@ -10,8 +10,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
 {
     private const string ConstantsFilePath = "/obj/Test.ThisAssemblyConstants.txt";
 
-    private static readonly IReadOnlyDictionary<string, string> ConstantsFileMetadata = new Dictionary<string, string>
-    {
+    private static readonly IReadOnlyDictionary<string, string> ConstantsFileMetadata = new Dictionary<string, string> {
         ["build_metadata.AdditionalFiles.BV_ItemType"] = "ThisAssemblyConstants",
     };
 
@@ -86,8 +85,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
     [Test]
     public async Task CustomClassNameAndNamespace_AreHonored()
     {
-        var globalOptions = new Dictionary<string, string>
-        {
+        var globalOptions = new Dictionary<string, string> {
             ["build_property.ThisAssemblyClassName"] = "MyAssemblyInfo",
             ["build_property.ThisAssemblyClassNamespace"] = "Some.Name.Space",
         };

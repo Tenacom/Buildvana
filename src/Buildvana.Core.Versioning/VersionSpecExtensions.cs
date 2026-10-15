@@ -115,8 +115,7 @@ public static partial class VersionSpecExtensions
         /// <param name="change">A <see cref="VersionSpecChange"/> constant representing the kind of change to apply.</param>
         /// <returns>A tuple of the result of applying <paramref name="change"/> to this instance, and a
         /// value indicating whether the result differs from this instance.</returns>
-        public (VersionSpec Result, bool Changed) ApplyChange(VersionSpecChange change) => change switch
-        {
+        public (VersionSpec Result, bool Changed) ApplyChange(VersionSpecChange change) => change switch {
             VersionSpecChange.Unstable => @this.Prerelease ? (@this, false) : (@this.Unstable(), true),
             VersionSpecChange.Stable => @this.Prerelease ? (@this.Stable(), true) : (@this, false),
             VersionSpecChange.Minor => (@this.NextMinor(), true),

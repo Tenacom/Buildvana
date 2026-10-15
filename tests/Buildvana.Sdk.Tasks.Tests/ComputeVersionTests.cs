@@ -137,8 +137,7 @@ internal sealed class ComputeVersionTests
 
     private static ComputeVersion RunTask(TempGitRepo repo, RecordingBuildEngine? engine = null)
     {
-        var task = new ComputeVersion
-        {
+        var task = new ComputeVersion {
             BuildEngine = engine ?? new RecordingBuildEngine(),
             HomeDirectory = repo.RootPath,
         };

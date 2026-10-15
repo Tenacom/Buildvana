@@ -137,8 +137,7 @@ internal sealed class AdditionalGroupPinReader(
             return null;
         }
 
-        var pin = DependencyPin.Create(DependencyScope.Packages, id, versionText, declaringRelativePath) with
-        {
+        var pin = DependencyPin.Create(DependencyScope.Packages, id, versionText, declaringRelativePath) with {
             ItemType = group.Items,
             MetadataPolicy = ReadMetadata(item, "UpdatePolicy"),
             GroupCaption = group.Caption,

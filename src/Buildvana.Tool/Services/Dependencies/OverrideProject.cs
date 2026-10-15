@@ -63,8 +63,7 @@ internal sealed record OverrideProject
         Guard.IsNotNull(removed);
         var moved = MovedCentralPins(packages);
         var gone = RemovedCentralPins(removed);
-        return
-        [
+        return [
             .. evaluations
                 .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
                 .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
@@ -129,8 +128,7 @@ internal sealed record OverrideProject
             AddCentralPins(home, centralPins, evaluation, moved, gone);
         }
 
-        return new OverrideProject
-        {
+        return new OverrideProject {
             ProjectFullPath = evaluations.Key,
             AssetsFilePath = evaluations.First().ProjectAssetsFile!,
             AuditLevel = auditLevel,

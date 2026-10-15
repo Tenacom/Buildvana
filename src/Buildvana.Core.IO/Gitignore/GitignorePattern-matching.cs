@@ -134,8 +134,7 @@ partial class GitignorePattern
         return tokenIndex == tokens.Length;
     }
 
-    private static bool MatchesChar(GitignoreToken token, char c, bool ignoreCase) => token.Kind switch
-    {
+    private static bool MatchesChar(GitignoreToken token, char c, bool ignoreCase) => token.Kind switch {
         GitignoreTokenKind.Literal => CharsEqual(token.Value, c, ignoreCase),
         GitignoreTokenKind.AnyChar => true,
         GitignoreTokenKind.CharClass => token.CharClass!.Matches(c, ignoreCase),

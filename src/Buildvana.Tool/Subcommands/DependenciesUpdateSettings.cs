@@ -110,8 +110,7 @@ internal sealed class DependenciesUpdateSettings
         Guard.IsNotNull(positionals);
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        var settings = new DependenciesUpdateSettings
-        {
+        var settings = new DependenciesUpdateSettings {
             Filters = [.. positionals],
             NetSdk = reader.ReadFlag("--netsdk"),
             Sdks = reader.ReadFlag("--sdks"),

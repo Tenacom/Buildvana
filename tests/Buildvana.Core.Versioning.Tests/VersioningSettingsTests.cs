@@ -19,11 +19,9 @@ internal sealed class VersioningSettingsTests
     [Test]
     public async Task Constructor_ReadsConfiguredValues()
     {
-        var config = new BuildvanaConfig
-        {
+        var config = new BuildvanaConfig {
             Release = new ReleaseConfig { Branches = ["^main$"] },
-            Versioning = new VersioningConfig
-            {
+            Versioning = new VersioningConfig {
                 PrereleaseTag = "preview",
                 AssemblyVersionPrecision = AssemblyVersionPrecision.Build,
             },

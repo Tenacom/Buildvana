@@ -45,8 +45,7 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
                                               Namespace: p.GetMSBuildProperty("ThisAssemblyClassNamespace")));
 
         var finalProvider = constantsTextsProvider.Combine(optionsProvider);
-        context.RegisterSourceOutput(finalProvider, static (spc, data) =>
-        {
+        context.RegisterSourceOutput(finalProvider, static (spc, data) => {
             var (constantsTexts, options) = data;
             GenerateThisAssemblyClass(spc, constantsTexts, options.ClassName, options.Namespace);
         });

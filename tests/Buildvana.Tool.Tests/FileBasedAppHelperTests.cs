@@ -77,8 +77,7 @@ internal sealed class FileBasedAppHelperTests
         {
             // --getProperty with no explicit target puts the CLI in evaluation-only mode; `dotnet clean`
             // would instead forward -t:Clean and actually run the target.
-            var startInfo = new ProcessStartInfo("dotnet")
-            {
+            var startInfo = new ProcessStartInfo("dotnet") {
                 ArgumentList = { "build", appPath, "--getProperty:ArtifactsPath" },
                 WorkingDirectory = Path.GetTempPath(),
                 RedirectStandardOutput = true,

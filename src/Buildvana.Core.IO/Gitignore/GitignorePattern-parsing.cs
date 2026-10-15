@@ -315,8 +315,7 @@ partial class GitignorePattern
         return true;
     }
 
-    private static GitignoreNamedClass? GetNamedClass(string name) => name switch
-    {
+    private static GitignoreNamedClass? GetNamedClass(string name) => name switch {
         "alnum" => GitignoreNamedClass.Alnum,
         "alpha" => GitignoreNamedClass.Alpha,
         "blank" => GitignoreNamedClass.Blank,

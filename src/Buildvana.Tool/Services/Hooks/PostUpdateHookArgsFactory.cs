@@ -39,16 +39,14 @@ internal sealed class PostUpdateHookArgsFactory(
     public PostUpdateHookArgs Create(DependencyResolution resolution, bool check)
     {
         Guard.IsNotNull(resolution);
-        return new()
-        {
+        return new() {
             RuntimeInfo = CreateRuntimeInfo(CommonPaths.AllArtifacts),
             Check = check,
             NetSdk = resolution.NetSdk is { } netSdk ? ResultOf(netSdk) : null,
             Sdks = ResultsOf(resolution.Sdks),
             Tools = ResultsOf(resolution.Tools),
             Packages = ResultsOf(resolution.Packages.Where(static pin => pin.Pin.GroupCaption is null)),
-            AdditionalPackages =
-            [
+            AdditionalPackages = [
                 .. resolution.Packages
                     .Where(static pin => pin.Pin.GroupCaption is not null)
                     .GroupBy(static pin => pin.Pin.GroupCaption!)
@@ -62,8 +60,7 @@ internal sealed class PostUpdateHookArgsFactory(
     }
 
     private static IReadOnlyList<TransitiveOverride> OverridesOf(IReadOnlyList<TransitiveOverrideEntry> entries)
-        => [.. entries.Select(static entry => new TransitiveOverride
-        {
+        => [.. entries.Select(static entry => new TransitiveOverride {
             PackageId = entry.PackageId,
             Version = entry.Version,
             DeclaringFile = entry.DeclaringFile,
@@ -72,8 +69,7 @@ internal sealed class PostUpdateHookArgsFactory(
     private static IReadOnlyList<DependencyResult> ResultsOf(IEnumerable<PinResolution> pins) => [.. pins.Select(ResultOf)];
 
     private static DependencyResult ResultOf(PinResolution pin)
-        => new()
-        {
+        => new() {
             Id = pin.Pin.Id,
             DeclaringFile = pin.Pin.DeclaringFile,
             CurrentVersion = pin.Pin.VersionText,
@@ -85,8 +81,7 @@ internal sealed class PostUpdateHookArgsFactory(
         };
 
     private static DependencyResult ResultOf(NetSdkResolution netSdk)
-        => new()
-        {
+        => new() {
             DeclaringFile = GlobalJsonPinReader.RelativePath,
             CurrentVersion = netSdk.Pin.VersionText,
             Target = Text(netSdk.Target),
@@ -99,8 +94,7 @@ internal sealed class PostUpdateHookArgsFactory(
     private static string? Text(NuGetVersion? version) => version?.ToNormalizedString();
 
     private static DependencyResultState StateOf(PinResolutionState state)
-        => state switch
-        {
+        => state switch {
             PinResolutionState.UpToDate => DependencyResultState.UpToDate,
             PinResolutionState.Updated => DependencyResultState.Updated,
             PinResolutionState.Disabled => DependencyResultState.Disabled,

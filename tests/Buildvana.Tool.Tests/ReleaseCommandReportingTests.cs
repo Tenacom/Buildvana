@@ -48,8 +48,7 @@ internal sealed class ReleaseCommandReportingTests
     [Test]
     public async Task Release_ShippingPublicApis_CountsBothFilesOfThePair()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             Dogfood = false,
             CheckPublicApi = false,
@@ -65,8 +64,7 @@ internal sealed class ReleaseCommandReportingTests
     [Test]
     public async Task Release_ShippingInternalApis_CountsBothFilesOfThePair()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             Dogfood = false,
             UnshippedInternalApi = "#nullable enable\nTest.Helper\n",

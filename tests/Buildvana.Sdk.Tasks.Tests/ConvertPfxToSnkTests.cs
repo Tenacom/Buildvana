@@ -16,8 +16,7 @@ internal sealed class ConvertPfxToSnkTests
     [Test]
     public async Task Execute_WritesThePrivateKeyOfThePfx()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var (pfxPath, key) = WriteRsaPfx(directory, Password);
             var outputPath = Path.Combine(directory, "key.snk");
             await Assert.That(CreateTask(engine, pfxPath, Password, outputPath).Execute()).IsTrue();
@@ -28,8 +27,7 @@ internal sealed class ConvertPfxToSnkTests
     [Test]
     public async Task Execute_WithNoPassword_WritesThePrivateKeyOfThePfx()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var (pfxPath, key) = WriteRsaPfx(directory, null);
             var outputPath = Path.Combine(directory, "key.snk");
             await Assert.That(CreateTask(engine, pfxPath, string.Empty, outputPath).Execute()).IsTrue();
@@ -40,8 +38,7 @@ internal sealed class ConvertPfxToSnkTests
     [Test]
     public async Task Execute_WithWrongPassword_LogsBVSDK1201()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var (pfxPath, _) = WriteRsaPfx(directory, Password);
             var outputPath = Path.Combine(directory, "key.snk");
             await Assert.That(CreateTask(engine, pfxPath, "wrong", outputPath).Execute()).IsFalse();
@@ -53,8 +50,7 @@ internal sealed class ConvertPfxToSnkTests
     [Test]
     public async Task Execute_WithEcdsaKey_LogsBVSDK1202()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var pfxPath = WriteEcdsaPfx(directory);
             var outputPath = Path.Combine(directory, "key.snk");
             await Assert.That(CreateTask(engine, pfxPath, Password, outputPath).Execute()).IsFalse();
@@ -73,8 +69,7 @@ internal sealed class ConvertPfxToSnkTests
     }
 
     private static ConvertPfxToSnk CreateTask(IBuildEngine engine, string pfxPath, string password, string outputPath)
-        => new()
-        {
+        => new() {
             BuildEngine = engine,
             PfxPath = pfxPath,
             PfxPassword = password,

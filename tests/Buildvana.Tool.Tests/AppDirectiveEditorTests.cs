@@ -181,8 +181,7 @@ internal sealed class AppDirectiveEditorTests
             Console.WriteLine("#:package Fake@9.9.9");
             """;
         var path = WriteFile(home, content);
-        var newVersions = new Dictionary<string, string>
-        {
+        var newVersions = new Dictionary<string, string> {
             ["Buildvana.Sdk"] = "1.0.1",
             ["Buildvana.Runtime"] = "1.0.1",
             ["Fake"] = "0.0.1",
@@ -215,8 +214,7 @@ internal sealed class AppDirectiveEditorTests
         var path = WriteFile(home, content);
         var offered = new List<AppDirective>();
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, d =>
-        {
+        var changed = AppDirectiveEditor.RewriteVersions(path, d => {
             offered.Add(d);
             return null;
         });

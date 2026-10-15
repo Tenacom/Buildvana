@@ -138,8 +138,7 @@ internal sealed class AdditionalGroupPinReaderTests
     {
         using var home = new TempHome();
         Write(home, GroupFile, GroupFileContent);
-        var runner = new FakeProcessRunner
-        {
+        var runner = new FakeProcessRunner {
             OnRun = static (executable, _)
                 => new ProcessResult(executable, 1, "error MSB4025: no.", string.Empty, TimeSpan.Zero),
         };
@@ -155,14 +154,10 @@ internal sealed class AdditionalGroupPinReaderTests
 
     private static AdditionalGroupPinReader CreateReader(TempHome home, IProcessRunner runner)
     {
-        var config = new BuildvanaConfig
-        {
-            Dependencies = new DependenciesConfig
-            {
-                AdditionalPackages =
-                [
-                    new AdditionalPackagesConfig
-                    {
+        var config = new BuildvanaConfig {
+            Dependencies = new DependenciesConfig {
+                AdditionalPackages = [
+                    new AdditionalPackagesConfig {
                         Caption = "SDK package injections",
                         Files = "src/Sdk/PackageVersions.props",
                         Items = "BV_PackageVersion",
@@ -195,8 +190,7 @@ internal sealed class AdditionalGroupPinReaderTests
                        { "Items": { "BV_PackageVersion": [ {{string.Join(",", elements)}} ] } }
                        """;
 
-        return new FakeProcessRunner
-        {
+        return new FakeProcessRunner {
             OnRun = (executable, _) => new ProcessResult(executable, 0, output, string.Empty, TimeSpan.Zero),
         };
     }

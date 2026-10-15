@@ -30,8 +30,7 @@ internal sealed class OverrideSelectorTests
     [Test]
     public async Task Select_IgnoresAnAdvisoryBelowTheProjectsAuditLevel()
     {
-        var request = Request("12.0.1", ["12.0.1", "12.0.3"], Advisory("(, 12.0.2]", PackageVulnerabilitySeverity.Low)) with
-        {
+        var request = Request("12.0.1", ["12.0.1", "12.0.3"], Advisory("(, 12.0.2]", PackageVulnerabilitySeverity.Low)) with {
             AuditLevel = PackageVulnerabilitySeverity.High,
         };
 
@@ -103,8 +102,7 @@ internal sealed class OverrideSelectorTests
     [Test]
     public async Task Select_ACentralPinBelowTheResolvedVersion_IsBlocked()
     {
-        var request = Request("12.0.2", ["12.0.1", "12.0.2", "12.0.3"], Advisory("(, 12.0.2]")) with
-        {
+        var request = Request("12.0.2", ["12.0.1", "12.0.2", "12.0.3"], Advisory("(, 12.0.2]")) with {
             CentralPin = NuGetVersion.Parse("12.0.1"),
         };
 
@@ -132,8 +130,7 @@ internal sealed class OverrideSelectorTests
     }
 
     private static OverrideRequest Request(string resolved, string[] candidates, params PackageAdvisory[] advisories)
-        => new()
-        {
+        => new() {
             ResolvedVersion = NuGetVersion.Parse(resolved),
             Candidates = [.. candidates.Select(NuGetVersion.Parse)],
             Advisories = advisories,

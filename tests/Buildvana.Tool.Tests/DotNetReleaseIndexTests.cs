@@ -142,8 +142,7 @@ internal sealed class DotNetReleaseIndexTests
     }
 
     private static StubHttpMessageHandler NewHandler()
-        => new(new Dictionary<string, string>
-        {
+        => new(new Dictionary<string, string> {
             [DotNetReleaseIndex.IndexUrl] = Index,
             [ChannelUrl11] = Channel11,
             [ChannelUrl10] = Channel10,

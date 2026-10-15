@@ -91,8 +91,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         _repositoryUpdated = true;
         NameReleaseCommit();
 
-        OnRollback(() =>
-        {
+        OnRollback(() => {
             // This lambda rolls back the release commit, any post-release commits added on top,
             // and (if appropriate) the push that carried them to the remote.
             var commitsToUndo = 1 + _postReleaseCommits;
@@ -103,8 +102,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
             // The whole set of commits is one undoing, recorded once: a notice per commit would read
             // as a repeated line rather than as the several commits it actually walks back.
-            _reporter.Notice(_postReleaseCommits switch
-            {
+            _reporter.Notice(_postReleaseCommits switch {
                 0 => "Undid the release commit.",
                 1 => "Undid the release commit and 1 post-release commit.",
                 var count => string.Create(CultureInfo.InvariantCulture, $"Undid the release commit and {count} post-release commits."),
@@ -245,8 +243,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         // The record of the publication comes last, once nothing can undo it any more: OnPublishedAsync
         // is the final step that can still fail, and its failure rolls the whole release back - deleting
         // the release and the tag that a notice printed any earlier would already have claimed.
-        _reporter.Notice(_assets.Count switch
-        {
+        _reporter.Notice(_assets.Count switch {
             0 => $"Published release {_version.CurrentStr} with no assets.",
             1 => $"Published release {_version.CurrentStr} with 1 asset.",
             var count => string.Create(CultureInfo.InvariantCulture, $"Published release {_version.CurrentStr} with {count} assets."),
@@ -283,8 +280,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
 
     protected virtual Task OnPublishedAsync() => Task.CompletedTask;
 
-    protected void OnRollback(Action action) => OnRollback(() =>
-    {
+    protected void OnRollback(Action action) => OnRollback(() => {
         action();
         return ValueTask.CompletedTask;
     });

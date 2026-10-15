@@ -148,8 +148,7 @@ partial class AppDirectiveEditor
             k++;
         }
 
-        AppDirectiveKind? kind = text[start..k] switch
-        {
+        AppDirectiveKind? kind = text[start..k] switch {
             "package" => AppDirectiveKind.Package,
             "sdk" => AppDirectiveKind.Sdk,
             _ => null,

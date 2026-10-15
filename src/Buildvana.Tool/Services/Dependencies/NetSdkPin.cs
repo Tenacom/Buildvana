@@ -43,8 +43,7 @@ internal sealed record NetSdkPin
     public static NetSdkPin Create(string versionText, bool? allowPrerelease)
     {
         var management = PinVersion.Read(versionText, out var version);
-        return new NetSdkPin
-        {
+        return new NetSdkPin {
             VersionText = versionText,
             Management = management,
             Version = version,

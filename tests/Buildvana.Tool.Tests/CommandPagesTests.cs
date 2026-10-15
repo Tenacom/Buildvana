@@ -19,8 +19,7 @@ internal sealed class CommandPagesTests
 
     // The page under docs/tool-commands of each top-level command name. A group page holds one "Options" table
     // for all of its subcommands, with a "Subcommand" column.
-    private static readonly Dictionary<string, string> Pages = new(StringComparer.Ordinal)
-    {
+    private static readonly Dictionary<string, string> Pages = new(StringComparer.Ordinal) {
         ["clean"] = "build-pipeline.md",
         ["restore"] = "build-pipeline.md",
         ["build"] = "build-pipeline.md",

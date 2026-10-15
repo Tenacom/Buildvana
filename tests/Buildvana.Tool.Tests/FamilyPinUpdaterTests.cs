@@ -50,8 +50,7 @@ internal sealed class FamilyPinUpdaterTests
         // Walk order: depth-first, each directory's entries ordinally sorted. The versionless directive and
         // the non-family ids contribute nothing.
         var rendered = pins.Select(static p => $"{p.RelativePath}|{p.Id}|{p.VersionText}|{p.Version?.ToNormalizedString()}");
-        await Assert.That(rendered).IsEquivalentTo(
-        [
+        await Assert.That(rendered).IsEquivalentTo([
             ".buildvana/hooks/hook.cs|Buildvana.Sdk|2.1.40-preview|2.1.40-preview",
             ".buildvana/hooks/hook.cs|Buildvana.Runtime|2.1.40-preview|2.1.40-preview",
             "Directory.Packages.props|Buildvana.Runtime|2.1.40-preview|2.1.40-preview",
@@ -184,8 +183,7 @@ internal sealed class FamilyPinUpdaterTests
         var lines = updater.StampPins(pins, NuGetVersion.Parse("2.1.41-preview"));
 
         await Assert.That(home.ReadFile("Directory.Packages.props")).IsEqualTo(before);
-        await Assert.That(lines).IsEquivalentTo(
-        [
+        await Assert.That(lines).IsEquivalentTo([
             "Buildvana.Runtime: $(BuildvanaVersion) (Directory.Packages.props, left alone)",
             "Buildvana.Sdk: 2.1.41-preview (Directory.Packages.props, unchanged)",
         ]);
@@ -219,8 +217,7 @@ internal sealed class FamilyPinUpdaterTests
             Console.WriteLine("2.1.40-preview");
             """;
         await Assert.That(home.ReadFile(Path.Combine(".buildvana", "hooks", "hook.cs"))).IsEqualTo(after);
-        await Assert.That(lines).IsEquivalentTo(
-        [
+        await Assert.That(lines).IsEquivalentTo([
             "Buildvana.Sdk: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
             "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
         ]);
@@ -386,12 +383,9 @@ internal sealed class FamilyPinUpdaterTests
 
     private static BuildvanaConfig ConfigWithGroupItemName(string itemName)
     {
-        var json = new BuildvanaJsonConfig
-        {
-            Dependencies = new()
-            {
-                AdditionalPackages =
-                [
+        var json = new BuildvanaJsonConfig {
+            Dependencies = new() {
+                AdditionalPackages = [
                     new() { Caption = "SDK-injected packages", Files = "PackageVersions.props", Items = itemName },
                 ],
             },

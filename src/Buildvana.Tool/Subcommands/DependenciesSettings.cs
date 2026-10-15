@@ -78,8 +78,7 @@ internal sealed class DependenciesSettings
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new DependenciesSettings
-        {
+        return new DependenciesSettings {
             NetSdk = reader.ReadFlag("--netsdk"),
             Sdks = reader.ReadFlag("--sdks"),
             Tools = reader.ReadFlag("--tools"),

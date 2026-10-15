@@ -26,8 +26,7 @@ internal sealed class ConfigurationPageTests
 
     // The settings that fall back to another setting, as the "Resolution" section of the page names them. The
     // schema states no default for them, because BuildvanaConfigFactory resolves the fallback at run time.
-    private static readonly Dictionary<string, string> Fallbacks = new(StringComparer.Ordinal)
-    {
+    private static readonly Dictionary<string, string> Fallbacks = new(StringComparer.Ordinal) {
         ["release.configuration"] = "dotnet.configuration",
         ["nuget.feeds.prerelease.source"] = "nuget.feeds.release.source",
         ["nuget.feeds.prerelease.apiKeyEnv"] = "nuget.feeds.release.apiKeyEnv",
@@ -94,8 +93,7 @@ internal sealed class ConfigurationPageTests
 
     // A default as the page writes it: the text of a string, and the JSON of anything else.
     private static string? RenderDefault(JsonNode? node)
-        => node switch
-        {
+        => node switch {
             null => null,
             JsonValue value when value.TryGetValue<string>(out var text) => text,
             _ => node.ToJsonString(),

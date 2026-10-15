@@ -189,8 +189,7 @@ internal sealed class PackagePinWriterTests
     }
 
     private static PinResolution Moving(string id, string from, string to, string file, string? itemType = "PackageVersion")
-        => new()
-        {
+        => new() {
             Pin = DependencyPin.Create(DependencyScope.Packages, id, from, file) with { ItemType = itemType },
             Policy = Policy(),
             State = PinResolutionState.Updated,

@@ -80,8 +80,7 @@ internal sealed class VersionCalculatorTests
         repo.WriteFile("VERSION", "2.3-x\n");
         repo.CommitAll();
         repo.CheckoutNewBranch("rel");
-        var config = new BuildvanaConfig
-        {
+        var config = new BuildvanaConfig {
             Release = new ReleaseConfig { Branches = ["^rel$"] },
             Versioning = new VersioningConfig { PrereleaseTag = "preview" },
         };

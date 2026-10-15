@@ -143,8 +143,7 @@ internal sealed partial class OverrideLifecycle(
             foreach (var (packageId, resolved) in FindingsOf(projectAssets))
             {
                 var known = await versions.GetVersionsAsync(packageId, cancellationToken).ConfigureAwait(false);
-                var request = new OverrideRequest
-                {
+                var request = new OverrideRequest {
                     ResolvedVersion = resolved,
                     Candidates = known.Listed,
                     Advisories = advisories.For(packageId),

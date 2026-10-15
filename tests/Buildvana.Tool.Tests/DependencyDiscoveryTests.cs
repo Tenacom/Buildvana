@@ -105,18 +105,14 @@ internal sealed class DependencyDiscoveryTests
     }
 
     private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDump(TempHome home)
-        => (executable, args) =>
-        {
+        => (executable, args) => {
             const string prefix = "-property:BV_PinDumpDirectory=";
             var directory = args.Single(arg => arg.StartsWith(prefix, StringComparison.Ordinal))[prefix.Length..];
             var projectPath = home.GetFullPath("src/App/App.csproj");
-            var dump = new PackagePinDump
-            {
+            var dump = new PackagePinDump {
                 ProjectFullPath = projectPath,
-                Items =
-                [
-                    new PackagePinDumpItem
-                    {
+                Items = [
+                    new PackagePinDumpItem {
                         ItemType = "PackageReference",
                         Id = "Serilog",
                         Version = "4.0.0",

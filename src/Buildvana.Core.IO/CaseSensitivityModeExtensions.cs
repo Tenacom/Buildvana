@@ -28,8 +28,7 @@ public static class CaseSensitivityModeExtensions
         /// </remarks>
         public bool IgnoresCase()
         {
-            return @this switch
-            {
+            return @this switch {
                 CaseSensitivityMode.SystemDefault => OperatingSystem.IsWindows() || OperatingSystem.IsMacOS(),
                 CaseSensitivityMode.CaseSensitive => false,
                 CaseSensitivityMode.CaseInsensitive => true,

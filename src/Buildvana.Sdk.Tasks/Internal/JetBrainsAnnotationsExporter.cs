@@ -24,8 +24,7 @@ internal static class JetBrainsAnnotationsExporter
     private const string JetBrainsAnnotationsNamespace = "JetBrains.Annotations";
 
     // Attributes that ReSharper does not read from external-annotation files.
-    private static readonly string[] NonExportableAttributeNames =
-    [
+    private static readonly string[] NonExportableAttributeNames = [
         "AspMvcSuppressViewErrorAttribute",
         "LocalizationRequiredAttribute",
         "MeansImplicitUseAttribute",
@@ -165,8 +164,7 @@ internal static class JetBrainsAnnotationsExporter
     }
 
     private static XElement? MemberToXml(ISymbol member)
-        => member switch
-        {
+        => member switch {
             IMethodSymbol method => BuildMember(
                 method,
                 [.. GetAnnotations(method), .. GetTypeParameters(method.TypeParameters), .. GetParameters(method.Parameters)]),
@@ -251,8 +249,7 @@ internal static class JetBrainsAnnotationsExporter
             return (argument.Value as ITypeSymbol)?.ToDisplayString() ?? string.Empty;
         }
 
-        return argument.Value switch
-        {
+        return argument.Value switch {
             null => string.Empty,
             bool boolean => boolean ? bool.TrueString : bool.FalseString,
             string text => text,

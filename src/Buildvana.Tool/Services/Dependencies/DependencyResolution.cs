@@ -62,8 +62,7 @@ internal sealed record DependencyResolution
         Guard.IsNotNull(policies);
         Guard.IsNotNull(removed);
         var gone = new HashSet<DependencyPin>(removed);
-        return new DependencyResolution
-        {
+        return new DependencyResolution {
             NetSdk = inventory.NetSdk is { } netSdk ? Skipping(netSdk, policies) : null,
             Sdks = Skipping(inventory.Sdks, policies),
             Tools = Skipping(inventory.Tools, policies),
@@ -72,8 +71,7 @@ internal sealed record DependencyResolution
     }
 
     private static NetSdkResolution Skipping(NetSdkPin pin, EffectivePolicyResolver policies)
-        => new()
-        {
+        => new() {
             Pin = pin,
             Policy = policies.ResolveNetSdk(),
             State = PinResolutionState.Skipped,
@@ -83,8 +81,7 @@ internal sealed record DependencyResolution
     private static IReadOnlyList<PinResolution> Skipping(
         IEnumerable<DependencyPin> pins,
         EffectivePolicyResolver policies)
-        => [.. pins.Select(pin => new PinResolution
-        {
+        => [.. pins.Select(pin => new PinResolution {
             Pin = pin,
             Policy = policies.Resolve(pin),
             State = PinResolutionState.Skipped,

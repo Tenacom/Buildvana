@@ -129,8 +129,7 @@ public abstract partial class TextWriterReporter(Verbosity verbosity, bool useCo
         }
     }
 
-    private static (ConsoleColor? Color, string Word) StyleFor(MessageLevel level) => level switch
-    {
+    private static (ConsoleColor? Color, string Word) StyleFor(MessageLevel level) => level switch {
         MessageLevel.Error => (ConsoleColor.Red, "error"),
         MessageLevel.Warning => (ConsoleColor.Yellow, "warning"),
         MessageLevel.Notice => (null, "notice"),

@@ -112,8 +112,7 @@ internal sealed class BuildPipeline
         configuration ??= _config.DotNet.Configuration;
         Guard.IsNotNullOrEmpty(configuration);
         using var activity = _reporter.BeginActivity(step.ToString());
-        var task = step switch
-        {
+        var task = step switch {
             BuildStep.Clean => CleanAsync(cancellationToken),
             BuildStep.Restore => RestoreAsync(cancellationToken),
             BuildStep.Build => BuildAsync(configuration, cancellationToken),

@@ -237,8 +237,7 @@ internal sealed class JsonKeyedObjectConverterTests
         // Default.Options is read-only, so the copy constructor is how a converter joins a generated context.
         // The copy carries the context's naming policy and unmapped-member handling; the resolver is the context,
         // so elements go through generated metadata, not reflection.
-        var options = new JsonSerializerOptions(KeyedSampleJsonContext.Default.Options)
-        {
+        var options = new JsonSerializerOptions(KeyedSampleJsonContext.Default.Options) {
             Converters = { new JsonKeyedObjectConverter() },
         };
 
@@ -258,8 +257,7 @@ internal sealed class JsonKeyedObjectConverterTests
         // source that knows the effective name; recomputing it from the naming policy would synthesize a document
         // the element deserializer rejects.
         var resolver = new DefaultJsonTypeInfoResolver();
-        resolver.Modifiers.Add(static typeInfo =>
-        {
+        resolver.Modifiers.Add(static typeInfo => {
             if (typeInfo.Type == typeof(KeyedGroupSample))
             {
                 foreach (var property in typeInfo.Properties)
@@ -271,8 +269,7 @@ internal sealed class JsonKeyedObjectConverterTests
                 }
             }
         });
-        var options = new JsonSerializerOptions
-        {
+        var options = new JsonSerializerOptions {
             TypeInfoResolver = resolver,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Converters = { new JsonKeyedObjectConverter() },
@@ -323,8 +320,7 @@ internal sealed class JsonKeyedObjectConverterTests
     }
 
     private static JsonSerializerOptions CreateOptions(bool allowDuplicateProperties = true)
-        => new()
-        {
+        => new() {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             AllowDuplicateProperties = allowDuplicateProperties,
             Converters = { new JsonKeyedObjectConverter() },

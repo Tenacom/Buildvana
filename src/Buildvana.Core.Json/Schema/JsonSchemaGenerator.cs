@@ -130,8 +130,7 @@ public static partial class JsonSchemaGenerator
         NullabilityInfoContext nullabilityContext,
         HashSet<Type> keyedTypesInProgress)
     {
-        var exporterOptions = new JsonSchemaExporterOptions
-        {
+        var exporterOptions = new JsonSchemaExporterOptions {
             TransformSchemaNode = (context, schema)
                 => TransformSchemaNode(context, schema, nullabilityContext, keyedTypesInProgress),
         };
@@ -291,16 +290,14 @@ public static partial class JsonSchemaGenerator
     private static bool SchemaTypeIncludesNull(JsonObject schema) => SchemaTypeIncludes(schema, "null");
 
     private static bool SchemaTypeIncludes(JsonObject schema, string typeName)
-        => schema["type"] switch
-        {
+        => schema["type"] switch {
             JsonValue value => value.GetValue<string>() == typeName,
             JsonArray array => array.Any(t => t?.GetValue<string>() == typeName),
             _ => false,
         };
 
     private static NullabilityInfo? CreateNullabilityInfo(NullabilityInfoContext context, MemberInfo member)
-        => member switch
-        {
+        => member switch {
             PropertyInfo property => context.Create(property),
             FieldInfo field => context.Create(field),
             _ => null,

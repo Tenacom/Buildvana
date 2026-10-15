@@ -78,8 +78,7 @@ internal sealed record DependencyPin
     public static DependencyPin Create(DependencyScope scope, string id, string versionText, string declaringFile)
     {
         var management = PinVersion.Read(versionText, out var version);
-        return new DependencyPin
-        {
+        return new DependencyPin {
             Scope = scope,
             Id = id,
             VersionText = versionText.Trim(),

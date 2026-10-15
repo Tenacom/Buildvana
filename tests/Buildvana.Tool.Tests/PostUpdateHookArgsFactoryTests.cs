@@ -15,10 +15,8 @@ internal sealed class PostUpdateHookArgsFactoryTests
     public async Task Create_StatesWhatTheRunMadeOfEveryScope()
     {
         using var home = new TempHome();
-        var resolution = new DependencyResolution
-        {
-            NetSdk = new NetSdkResolution
-            {
+        var resolution = new DependencyResolution {
+            NetSdk = new NetSdkResolution {
                 Pin = NetSdkPin.Create("10.0.100", allowPrerelease: false),
                 Policy = NetSdkPolicy(),
                 State = PinResolutionState.Updated,
@@ -49,10 +47,8 @@ internal sealed class PostUpdateHookArgsFactoryTests
     {
         using var home = new TempHome();
         var grouped = Moving("StyleCop.Analyzers", "1.2.0", "1.3.0", DependencyScope.Packages);
-        var resolution = new DependencyResolution
-        {
-            Packages =
-            [
+        var resolution = new DependencyResolution {
+            Packages = [
                 Moving("Serilog", "3.0.0", "3.1.0", DependencyScope.Packages),
                 grouped with { Pin = grouped.Pin with { GroupCaption = "SDK package injections" } },
             ],
@@ -120,8 +116,7 @@ internal sealed class PostUpdateHookArgsFactoryTests
     }
 
     private static PinResolution Moving(string id, string from, string to, DependencyScope scope)
-        => new()
-        {
+        => new() {
             Pin = DependencyPin.Create(scope, id, from, "Directory.Packages.props"),
             Policy = Policy(),
             State = PinResolutionState.Updated,

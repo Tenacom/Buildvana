@@ -49,8 +49,7 @@ internal sealed class ReleaseCommandFailureTests
     [Test]
     public async Task Release_WhenPublicationFails_ResetsAndForcePushesTheBranch()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             OnPublishing = () => throw new BuildFailedException("The server said no."),
         });
         var initialSha = harness.Repo.HeadSha;

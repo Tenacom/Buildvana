@@ -37,8 +37,7 @@ internal static partial class ProjectAssetsReader
         Guard.IsNotNullOrEmpty(projectFullPath);
         Guard.IsNotNullOrEmpty(assetsFilePath);
         var lockFile = ReadLockFile(projectFullPath, assetsFilePath);
-        return new ProjectAssets
-        {
+        return new ProjectAssets {
             ProjectFullPath = projectFullPath,
             Packages = ReadPackages(lockFile),
             DirectReferences = ReadDirectReferences(lockFile),

@@ -112,8 +112,7 @@ internal static class UpdatePolicyEngine
     // NuGetVersion.Revision is the fourth field of x.y.z.R, and reads zero on a version that has none, so a
     // three-field pin and a three-field candidate compare equal there.
     private static bool IsInWindow(NuGetVersion current, NuGetVersion candidate, PackageUpdatePolicyKind kind)
-        => kind switch
-        {
+        => kind switch {
             PackageUpdatePolicyKind.Exact => IsSameMajorMinorPatch(current, candidate) && candidate.Revision == current.Revision,
             PackageUpdatePolicyKind.Revision => IsSameMajorMinorPatch(current, candidate),
             PackageUpdatePolicyKind.Patch => IsSameMajorMinor(current, candidate),
@@ -124,8 +123,7 @@ internal static class UpdatePolicyEngine
 
     // Lts widens to everything here, having already narrowed the candidate set to LTS releases.
     private static bool IsInWindow(NuGetVersion current, NuGetVersion candidate, NetSdkUpdatePolicyKind kind)
-        => kind switch
-        {
+        => kind switch {
             NetSdkUpdatePolicyKind.Patch => IsSameMajorMinor(current, candidate) && FeatureBand(candidate) == FeatureBand(current),
             NetSdkUpdatePolicyKind.Feature => IsSameMajorMinor(current, candidate),
             NetSdkUpdatePolicyKind.Minor => candidate.Major == current.Major,
@@ -164,8 +162,7 @@ internal static class UpdatePolicyEngine
     {
         var latestStable = Highest(candidates.Where(candidate => !candidate.IsPrerelease));
         var latestPreview = Highest(candidates.Where(candidate => candidate.IsPrerelease && IsAbove(candidate, latestStable)));
-        return new()
-        {
+        return new() {
             Outcome = outcome,
             Target = target,
             LatestStable = latestStable,

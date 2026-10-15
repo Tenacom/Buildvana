@@ -10,16 +10,14 @@ using Buildvana.Core.Json.Schema;
 
 internal sealed class JsonSchemaGeneratorTests
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
+    private static readonly JsonSerializerOptions Options = new() {
         TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new JsonKeyedObjectConverter() },
     };
 
     // Deliberately lacking JsonKeyedObjectConverter, to prove the keyed rendering is gated on its registration.
-    private static readonly JsonSerializerOptions KeyedConverterlessOptions = new()
-    {
+    private static readonly JsonSerializerOptions KeyedConverterlessOptions = new() {
         TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };

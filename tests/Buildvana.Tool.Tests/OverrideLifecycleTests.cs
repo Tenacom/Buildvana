@@ -148,8 +148,7 @@ internal sealed class OverrideLifecycleTests
     {
         using var home = NewHome(Finding("12.0.1"));
         var restorer = new FakeDependencyRestorer();
-        restorer.OnRestore = suppressed =>
-        {
+        restorer.OnRestore = suppressed => {
             if (suppressed)
             {
                 return 0;
@@ -224,10 +223,8 @@ internal sealed class OverrideLifecycleTests
     {
         using var home = NewHome(NeverSettling(1));
         var pass = 1;
-        var restorer = new FakeDependencyRestorer
-        {
-            OnRestore = suppressed =>
-            {
+        var restorer = new FakeDependencyRestorer {
+            OnRestore = suppressed => {
                 if (suppressed)
                 {
                     return 0;
@@ -331,8 +328,7 @@ internal sealed class OverrideLifecycleTests
             return [];
         }
 
-        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, CentralPinFileName) with
-        {
+        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, CentralPinFileName) with {
             ItemType = "PackageVersion",
         };
 
@@ -348,13 +344,11 @@ internal sealed class OverrideLifecycleTests
             return [];
         }
 
-        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, movedIn) with
-        {
+        var pin = DependencyPin.Create(DependencyScope.Packages, Vulnerable, centralPin, movedIn) with {
             ItemType = "PackageVersion",
         };
 
-        var resolution = new PinResolution
-        {
+        var resolution = new PinResolution {
             Pin = pin,
             Policy = new PackageUpdatePolicy(PackageUpdatePolicyKind.Minor, AllowPrerelease: false),
             State = PinResolutionState.Updated,
@@ -366,16 +360,14 @@ internal sealed class OverrideLifecycleTests
 
     private static PackagePinDump Evaluation(TempHome home, bool managesCentrally, string? centralPin)
     {
-        var pin = new PackagePinDumpItem
-        {
+        var pin = new PackagePinDumpItem {
             ItemType = "PackageVersion",
             Id = Vulnerable,
             Version = centralPin,
             DefiningProjectFullPath = home.GetFullPath(CentralPinFileName),
         };
 
-        return new PackagePinDump
-        {
+        return new PackagePinDump {
             ProjectFullPath = home.GetFullPath(ProjectPath),
             ProjectAssetsFile = home.GetFullPath(AssetsPath),
             TargetFramework = "net10.0",

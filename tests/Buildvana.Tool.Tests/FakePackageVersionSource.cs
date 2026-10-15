@@ -26,8 +26,7 @@ internal sealed class FakePackageVersionSource : IPackageVersionSource
     /// <returns>This instance, for chaining.</returns>
     public FakePackageVersionSource Knows(string id, string[] listed, string[]? unlisted = null)
     {
-        _catalogs[id] = new PackageVersionCatalog
-        {
+        _catalogs[id] = new PackageVersionCatalog {
             Listed = [.. listed.Select(NuGetVersion.Parse)],
             Unlisted = [.. (unlisted ?? []).Select(NuGetVersion.Parse)],
         };

@@ -30,8 +30,7 @@ public static class MessageLevelExtensions
         /// </remarks>
         public Verbosity MinimumVerbosity()
         {
-            return @this switch
-            {
+            return @this switch {
                 MessageLevel.Error => Verbosity.Quiet,
                 MessageLevel.Warning or MessageLevel.Notice => Verbosity.Minimal,
                 MessageLevel.Info => Verbosity.Normal,

@@ -50,11 +50,9 @@ internal sealed class PostReleaseHookArgsFactory(
         Guard.IsNotNullOrEmpty(simpleVersion);
         Guard.IsNotNullOrEmpty(semVer);
         Guard.IsNotNull(producedPackages);
-        return new()
-        {
+        return new() {
             RuntimeInfo = CreateRuntimeInfo(artifactsPath),
-            Release = new()
-            {
+            Release = new() {
                 Version = simpleVersion,
                 SemVer = semVer,
                 PreviousVersion = latest?.ToString(),

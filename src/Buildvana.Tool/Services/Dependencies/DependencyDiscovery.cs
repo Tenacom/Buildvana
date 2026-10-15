@@ -55,8 +55,7 @@ internal sealed class DependencyDiscovery(
             ? await ReadPackagesAsync(directivePins.Pins, cancellationToken).ConfigureAwait(false)
             : ([], []);
 
-        return new DependencyInventory
-        {
+        return new DependencyInventory {
             NetSdk = scopes.Contains(DependencyScope.NetSdk) ? globalJsonPins.NetSdk : null,
             Sdks = wantsSdks ? [.. globalJsonPins.Sdks, .. OfScope(directivePins.Pins, DependencyScope.Sdks)] : [],
             Tools = scopes.Contains(DependencyScope.Tools) ? tools.Read() : [],
@@ -95,8 +94,7 @@ internal sealed class DependencyDiscovery(
         var dumps = await solutionPins.ReadAsync(projectPaths, cancellationToken).ConfigureAwait(false);
         var solutionPackagePins = packages.Read(dumps);
         var groupPins = await groups.ReadAsync(cancellationToken).ConfigureAwait(false);
-        IReadOnlyList<DependencyPin> pins =
-        [
+        IReadOnlyList<DependencyPin> pins = [
             .. solutionPackagePins,
             .. WithoutDuplicates(groupPins, solutionPackagePins),
             .. OfScope(directivePins, DependencyScope.Packages),

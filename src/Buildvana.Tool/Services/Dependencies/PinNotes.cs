@@ -77,8 +77,7 @@ internal static class PinNotes
     /// <param name="management">What the pin's version text makes of it.</param>
     /// <returns>The note, or an empty string for a pin <c>bv</c> manages.</returns>
     public static string Unmanaged(PinManagement management)
-        => management switch
-        {
+        => management switch {
             PinManagement.Managed => string.Empty,
             PinManagement.BracketExactVersion => "not managed: one version in brackets; write it without them to have bv move it",
             PinManagement.VersionRange => "not managed: a version range decides what resolves",

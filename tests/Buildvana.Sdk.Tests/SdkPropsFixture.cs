@@ -12,8 +12,7 @@ using Microsoft.Build.Evaluation;
 // directory is empty. Evaluation-only: no targets are executed, so assertions are limited to properties and items.
 internal sealed class SdkPropsFixture : IDisposable
 {
-    private static readonly string[] StubFileNames =
-    [
+    private static readonly string[] StubFileNames = [
         "SdkVersion.props",
         "ImportConfiguration.props",
         "PackageVersions.props",
@@ -25,8 +24,7 @@ internal sealed class SdkPropsFixture : IDisposable
         "Import.AfterCommon.targets.proj",
     ];
 
-    private static readonly string[] ProjectTypeProperties =
-    [
+    private static readonly string[] ProjectTypeProperties = [
         "BV_IsFileBasedAppProject",
         "BV_IsNoTargetsProject",
         "BV_IsTestProject",

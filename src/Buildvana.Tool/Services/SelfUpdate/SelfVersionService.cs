@@ -428,8 +428,7 @@ internal sealed partial class SelfVersionService
         var targetText = target.ToNormalizedString();
         var fileName = Path.GetFileName(path);
         string? schemaReference = null;
-        var changed = _jsonHelper.RewriteStringValues(path, (propertyPath, value) =>
-        {
+        var changed = _jsonHelper.RewriteStringValues(path, (propertyPath, value) => {
             if (propertyPath is not [SchemaPropertyName])
             {
                 return null;

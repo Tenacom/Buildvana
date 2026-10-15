@@ -14,15 +14,11 @@ internal sealed class BuildvanaJsonConfigExampleTests
     [Test]
     public async Task Generate_Schema_WalksItIntoAnObject()
     {
-        var root = new JsonObject
-        {
-            ["properties"] = new JsonObject
-            {
+        var root = new JsonObject {
+            ["properties"] = new JsonObject {
                 ["flag"] = new JsonObject { ["description"] = "Whether the thing is on.", ["default"] = true },
-                ["section"] = new JsonObject
-                {
-                    ["properties"] = new JsonObject
-                    {
+                ["section"] = new JsonObject {
+                    ["properties"] = new JsonObject {
                         ["name"] = new JsonObject { ["examples"] = new JsonArray { "value" } },
                     },
                 },
@@ -47,10 +43,8 @@ internal sealed class BuildvanaJsonConfigExampleTests
     [Test]
     public async Task Generate_EmptyContainers_WriteTheirShape()
     {
-        var root = new JsonObject
-        {
-            ["properties"] = new JsonObject
-            {
+        var root = new JsonObject {
+            ["properties"] = new JsonObject {
                 ["list"] = new JsonObject { ["type"] = "array" },
                 ["map"] = new JsonObject { ["type"] = "object" },
             },
@@ -70,8 +64,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     [Test]
     public async Task Generate_Reference_WritesWhatItPointsAt()
     {
-        var root = new JsonObject
-        {
+        var root = new JsonObject {
             ["$defs"] = new JsonObject { ["shared"] = new JsonObject { ["default"] = 42 } },
             ["properties"] = new JsonObject { ["value"] = new JsonObject { ["$ref"] = "#/$defs/shared" } },
         };
@@ -92,8 +85,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     {
         var root = SchemaOf(
             "section",
-            new JsonObject
-            {
+            new JsonObject {
                 ["examples"] = new JsonArray { "whole section" },
                 ["properties"] = new JsonObject { ["member"] = new JsonObject { ["default"] = true } },
             });
@@ -113,8 +105,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     {
         var root = SchemaOf(
             "groups",
-            new JsonObject
-            {
+            new JsonObject {
                 ["examples"] = new JsonArray { "whole section" },
                 ["propertyNames"] = new JsonObject { ["examples"] = new JsonArray { "My group" } },
                 ["additionalProperties"] = new JsonObject { ["type"] = "object" },
@@ -133,19 +124,14 @@ internal sealed class BuildvanaJsonConfigExampleTests
     [Test]
     public async Task Generate_ExampleOnAReferenceToASection_Throws()
     {
-        var root = new JsonObject
-        {
-            ["$defs"] = new JsonObject
-            {
-                ["shared"] = new JsonObject
-                {
+        var root = new JsonObject {
+            ["$defs"] = new JsonObject {
+                ["shared"] = new JsonObject {
                     ["properties"] = new JsonObject { ["member"] = new JsonObject { ["default"] = true } },
                 },
             },
-            ["properties"] = new JsonObject
-            {
-                ["section"] = new JsonObject
-                {
+            ["properties"] = new JsonObject {
+                ["section"] = new JsonObject {
                     ["examples"] = new JsonArray { "whole section" },
                     ["$ref"] = "#/$defs/shared",
                 },
@@ -167,8 +153,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     {
         var root = SchemaOf(
             "env",
-            new JsonObject
-            {
+            new JsonObject {
                 ["type"] = "object",
                 ["examples"] = new JsonArray { new JsonObject { ["KEY"] = "value" } },
                 ["additionalProperties"] = new JsonObject { ["type"] = "string" },
@@ -188,8 +173,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     {
         var root = SchemaOf(
             "groups",
-            new JsonObject
-            {
+            new JsonObject {
                 ["propertyNames"] = new JsonObject { ["type"] = "string" },
                 ["additionalProperties"] = new JsonObject { ["type"] = "object" },
             });
@@ -210,8 +194,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     {
         var root = SchemaOf(
             "groups",
-            new JsonObject
-            {
+            new JsonObject {
                 ["type"] = "object",
                 ["additionalProperties"] = new JsonObject { ["type"] = "object" },
                 ["propertyNames"] = new JsonObject(),
@@ -398,10 +381,8 @@ internal sealed class BuildvanaJsonConfigExampleTests
 
     private static JsonObject Reference(string pointer) => new() { ["$ref"] = pointer };
 
-    private static JsonObject SampleSchema() => new()
-    {
-        ["properties"] = new JsonObject
-        {
+    private static JsonObject SampleSchema() => new() {
+        ["properties"] = new JsonObject {
             ["args"] = new JsonObject { ["type"] = "array" },
             ["a/b"] = new JsonObject { ["type"] = "string" },
             ["c~d"] = new JsonObject { ["type"] = "boolean" },
