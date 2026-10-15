@@ -25,7 +25,8 @@
  *
  * Both modes write one `path(line,col): severity ID: message` per diagnostic to standard output and nothing
  * else, which is what the `$msCompile` problem matcher consumes; progress and failure context go to standard
- * error. The raw output of the three child processes, and the SARIF report, are left in `.buildvana-temp`.
+ * error. The raw output of the three child processes, the SARIF report, and the inspectcode caches are left in
+ * `.buildvana-temp`. The caches start empty on every run.
  */
 
 using System;
@@ -85,6 +86,7 @@ if (solutionFileName.Length == 0)
 
 var scratchPath = Path.Combine(repoRoot, ".buildvana-temp");
 var sarifPath = Path.Combine(scratchPath, "inspect.sarif");
+var cachesPath = Path.Combine(scratchPath, "inspectcode-caches");
 
 // bv's own narration: leveled lines (`info: ...`) and activity lines (`[1] Build: starting...`). Everything else
 // a child writes is MSBuild's, which is far too verbose to echo.
@@ -206,12 +208,21 @@ if (!buildIsClean)
 // --all has to name the lowest severity rather than leave the option out: inspectcode's own default is
 // WARNING, so omitting it would silently produce exactly what the gate produces.
 var severity = all ? "HINT" : gate ? "WARNING" : "SUGGESTION";
+
+// inspectcode reuses its cached results for files that have not changed, so a change to the inspection
+// settings would reach only the changed files. An empty cache on every run reports every file afresh.
+if (Directory.Exists(cachesPath))
+{
+    Directory.Delete(cachesPath, recursive: true);
+}
+
 Console.Error.WriteLine($"info: running inspectcode at severity {severity} (this takes a while)...");
 string[] inspectArguments = [
     "dnx",
     "JetBrains.ReSharper.GlobalTools",
     "inspectcode",
     "--swea",
+    $"--caches-home={cachesPath}",
     $"--severity={severity}",
     $"--output={sarifPath}",
     "--format=Sarif",
