@@ -101,6 +101,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv release` rewrites each relative file link of the changelog section it releases into a permalink to the release tag.
 - `bv release` runs the [build pipeline](docs/tool-commands/release.md#the-steps) once, from `clean` through `pack`, after the release commit, and no longer runs `clean` through `test` before it.
 - [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
+- The `StandardAnalyzers` module adds [`StyleCop.Analyzers` 1.3.79-beta](docs/sdk-modules/standard-analyzers.md#package-references), which supports C# 8 to 15 and introduces SA1317 and SA1653.
 
 ### Bugs fixed in this release
 
