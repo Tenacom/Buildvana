@@ -41,7 +41,7 @@ public static partial class VirtualTerminal
         }
 
         var handle = GetStdHandle(StdErrorHandle);
-        if (handle == IntPtr.Zero || handle == -1)
+        if (handle is 0 or -1)
         {
             return false;
         }
@@ -78,17 +78,17 @@ public static partial class VirtualTerminal
     [ExcludeFromCodeCoverage(Justification = "P/Invoke wrapper; behavior is owned by the Win32 console subsystem.")]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    private static partial IntPtr GetStdHandle(int nStdHandle);
+    private static partial nint GetStdHandle(int nStdHandle);
 
     [ExcludeFromCodeCoverage(Justification = "P/Invoke wrapper; behavior is owned by the Win32 console subsystem.")]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    private static partial bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
 
     [ExcludeFromCodeCoverage(Justification = "P/Invoke wrapper; behavior is owned by the Win32 console subsystem.")]
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+    private static partial bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
 }
