@@ -85,6 +85,9 @@ resharper_property_can_be_made_init_only_global_highlighting = warning
 # Entity Framework
 
 # Formatting
+resharper_bad_declaration_braces_line_breaks_highlighting = warning
+resharper_bad_control_braces_line_breaks_highlighting = warning
+resharper_bad_expression_braces_line_breaks_highlighting = warning
 
 # Grammar Issues
 
@@ -138,3 +141,7 @@ resharper_class_never_instantiated_global_highlighting = none
 resharper_unused_type_global_highlighting = none
 resharper_unused_member_global_highlighting = none
 resharper_member_can_be_private_global_highlighting = none
+
+# A formatter setting, not a severity. BadDeclarationBracesLineBreaks splits every auto-property without it.
+# The same setting in Buildvana.slnx.DotSettings has no effect.
+resharper_csharp_place_abstract_accessorholder_on_single_line = true
