@@ -10,8 +10,7 @@ internal sealed class ExceptionExtensionsTests
     [Test]
     public async Task IsIORelatedException_IsTrueForEnvironmentDrivenIOFailures()
     {
-        Exception[] exceptions =
-        [
+        Exception[] exceptions = [
             new IOException(),
             new FileNotFoundException(),
             new DirectoryNotFoundException(),
@@ -77,8 +76,7 @@ internal sealed class ExceptionExtensionsTests
     [Test]
     public async Task IsCriticalException_IsTrueForCriticalExceptions()
     {
-        Exception[] exceptions =
-        [
+        Exception[] exceptions = [
             new AppDomainUnloadedException(),
             new BadImageFormatException(),
             new CannotUnloadAppDomainException(),

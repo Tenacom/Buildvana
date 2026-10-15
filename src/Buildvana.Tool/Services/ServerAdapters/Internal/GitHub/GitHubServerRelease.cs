@@ -45,8 +45,7 @@ internal sealed class GitHubServerRelease : ServerRelease
         _gitHubRelease = gitHubRelease;
         _actionsStepOutputFile = actionsStepOutputFile;
 
-        OnRollback(async () =>
-        {
+        OnRollback(async () => {
             // Do this only if the release has not been previously deleted by rolling back its publication
             if (!_gitHubReleaseDeleted)
             {

@@ -102,8 +102,7 @@ internal sealed class NetSdkPinWriterTests
     {
         _ = NetSdkUpdatePolicy.TryParse(policy, out var parsed);
         var pin = NetSdkPin.Create(version, stated);
-        return new NetSdkResolution
-        {
+        return new NetSdkResolution {
             Pin = pin,
             Policy = parsed,
             State = target is null ? PinResolutionState.UpToDate : PinResolutionState.Updated,

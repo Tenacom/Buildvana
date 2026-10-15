@@ -57,11 +57,9 @@ internal sealed partial class OverrideLifecycle
         // Every project of the solution is in the plan, including the ones with nothing to promote: that is
         // what removes a file an earlier run left behind.
         public TransitiveOverridePlan ToPlan(IReadOnlyList<OverrideProject> projects)
-            => new()
-            {
+            => new() {
                 Central = [.. _central.Select(static entry => new PackageOverride(entry.Key, entry.Value))],
-                Projects = [.. projects.Select(project => new ProjectOverrides
-                {
+                Projects = [.. projects.Select(project => new ProjectOverrides {
                     ProjectFullPath = project.ProjectFullPath,
                     Promotions = PromotionsOf(project.ProjectFullPath),
                 })],

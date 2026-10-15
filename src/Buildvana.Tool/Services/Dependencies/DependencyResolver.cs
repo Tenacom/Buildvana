@@ -54,8 +54,7 @@ internal sealed class DependencyResolver(
         var sdks = await ResolveAllAsync(inventory.Sdks, request, errors, cancellationToken).ConfigureAwait(false);
         var tools = await ResolveAllAsync(inventory.Tools, request, errors, cancellationToken).ConfigureAwait(false);
         var packages = await ResolveAllAsync(inventory.Packages, request, errors, cancellationToken).ConfigureAwait(false);
-        var resolution = new DependencyResolution
-        {
+        var resolution = new DependencyResolution {
             NetSdk = netSdk,
             Sdks = sdks,
             Tools = tools,
@@ -101,8 +100,7 @@ internal sealed class DependencyResolver(
     }
 
     private static PinResolutionState StateOf(TargetSelectionOutcome outcome)
-        => outcome switch
-        {
+        => outcome switch {
             TargetSelectionOutcome.Update => PinResolutionState.Updated,
             TargetSelectionOutcome.UpToDate => PinResolutionState.UpToDate,
             TargetSelectionOutcome.Disabled => PinResolutionState.Disabled,
@@ -110,8 +108,7 @@ internal sealed class DependencyResolver(
         };
 
     private static PinResolution NewResolution(DependencyPin pin, PackageUpdatePolicy policy, PinResolutionState state, string note)
-        => new()
-        {
+        => new() {
             Pin = pin,
             Policy = policy,
             State = state,
@@ -124,8 +121,7 @@ internal sealed class DependencyResolver(
         PinResolutionState state,
         bool writesAllowPrerelease,
         string note)
-        => new()
-        {
+        => new() {
             Pin = pin,
             Policy = policy,
             State = state,
@@ -206,8 +202,7 @@ internal sealed class DependencyResolver(
         // A delisted pin is resolved like any other. Delisting often means the version is vulnerable, so
         // moving away from it is the remedy, and refusing to would be perverse.
         var selection = UpdatePolicyEngine.Select(current, catalog.Listed, window);
-        return new PinResolution
-        {
+        return new PinResolution {
             Pin = pin,
             Policy = policy,
             State = StateOf(selection.Outcome),
@@ -259,8 +254,7 @@ internal sealed class DependencyResolver(
         }
 
         var selection = UpdatePolicyEngine.Select(current, releases, window);
-        return new NetSdkResolution
-        {
+        return new NetSdkResolution {
             Pin = pin,
             Policy = policy,
             State = StateOf(selection.Outcome),

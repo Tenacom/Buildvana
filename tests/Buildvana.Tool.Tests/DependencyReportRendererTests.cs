@@ -13,8 +13,7 @@ internal sealed class DependencyReportRendererTests
     [Test]
     public async Task Write_StatesEveryPinWithItsPolicy()
     {
-        var inventory = new DependencyInventory
-        {
+        var inventory = new DependencyInventory {
             NetSdk = NetSdkPin.Create("10.0.100", allowPrerelease: false),
             Tools = [DependencyPin.Create(DependencyScope.Tools, "ngbv", "0.5.1", "dotnet-tools.json")],
             Packages = [DependencyPin.Create(DependencyScope.Packages, "Serilog", "4.0.0", "Directory.Packages.props")],
@@ -95,8 +94,9 @@ internal sealed class DependencyReportRendererTests
     [Test]
     public async Task Write_StatesAGroupsPinsUnderItsCaption()
     {
-        var pin = DependencyPin.Create(DependencyScope.Packages, "StyleCop.Analyzers", "1.2.0", "src/Sdk/PackageVersions.props")
-            with { GroupCaption = "SDK package injections" };
+        var pin = DependencyPin.Create(DependencyScope.Packages, "StyleCop.Analyzers", "1.2.0", "src/Sdk/PackageVersions.props") with {
+            GroupCaption = "SDK package injections",
+        };
         var output = Render(new DependencyInventory { Packages = [pin] }, [DependencyScope.Packages]);
         await Assert.That(output).Contains("NuGet packages: SDK package injections");
         await Assert.That(output).Contains("StyleCop.Analyzers");
@@ -108,8 +108,7 @@ internal sealed class DependencyReportRendererTests
     [Test]
     public async Task WriteOverrides_StatesEachEntryUnderTheFileThatHoldsIt()
     {
-        var output = RenderOverrides(
-        [
+        var output = RenderOverrides([
             new TransitiveOverrideEntry("Newtonsoft.Json", "13.0.3", "Directory.TransitiveOverrides.props"),
             new TransitiveOverrideEntry("Serilog", null, "src/Test/Test.TransitiveOverrides.props"),
         ]);
@@ -128,8 +127,7 @@ internal sealed class DependencyReportRendererTests
     [Test]
     public async Task WritePrune_StatesEveryOrphanUnderItsFile()
     {
-        var orphans = new[]
-        {
+        var orphans = new[] {
             DependencyPin.Create(DependencyScope.Packages, "Serilog", "3.0.0", "Directory.Packages.props"),
             DependencyPin.Create(DependencyScope.Packages, "Newtonsoft.Json", "13.0.3", "Directory.Packages.props"),
         };

@@ -170,8 +170,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
     // What the arrow points at: the version a pin moves to, or the words that say why it moves nowhere. The
     // last state is Held, which is resolution finding nothing the policy allows.
     private static string Outcome(PinResolutionState state, NuGetVersion? target)
-        => state switch
-        {
+        => state switch {
             PinResolutionState.Updated => VersionText(target),
             PinResolutionState.UpToDate => "up to date",
             PinResolutionState.Disabled => "disabled",
@@ -182,8 +181,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
 
     // What the sources have beyond the pin, stable first, and nothing at all where they have nothing to add.
     private static string Latest(NuGetVersion? stable, NuGetVersion? preview)
-        => (stable, preview) switch
-        {
+        => (stable, preview) switch {
             (null, null) => string.Empty,
             (not null, null) => $" (latest: {VersionText(stable)})",
             (null, not null) => $" (latest: {VersionText(preview)})",
@@ -193,8 +191,7 @@ internal sealed class DependencyReportRenderer(IAnsiConsole console, EffectivePo
     private static string VersionText(NuGetVersion? version) => version?.ToNormalizedString() ?? string.Empty;
 
     private static string Pins(int count)
-        => count switch
-        {
+        => count switch {
             0 => "No pin",
             1 => "1 pin",
             _ => $"{count} pins",

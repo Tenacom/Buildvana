@@ -30,8 +30,7 @@ internal static class DependencyScopeNames
     /// <returns>The scope's name.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="scope"/> is not a scope.</exception>
     public static string Of(DependencyScope scope)
-        => scope switch
-        {
+        => scope switch {
             DependencyScope.NetSdk => NetSdk,
             DependencyScope.Sdks => Sdks,
             DependencyScope.Tools => Tools,

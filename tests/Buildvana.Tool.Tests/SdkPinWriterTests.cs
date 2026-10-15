@@ -83,8 +83,7 @@ internal sealed class SdkPinWriterTests
     }
 
     private static PinResolution Moving(string id, string from, string to, string file)
-        => new()
-        {
+        => new() {
             Pin = DependencyPin.Create(DependencyScope.Sdks, id, from, file),
             Policy = Policy(),
             State = PinResolutionState.Updated,

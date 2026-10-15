@@ -127,14 +127,12 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         => await GitHubServerRelease.CreateAsync(
             server: this,
             services: _services,
-            createGitHubReleaseAsync: () =>
-            {
+            createGitHubReleaseAsync: () => {
                 // Create the release as a draft first, so if the token has no permissions we can bail out early
                 var tag = _version.CurrentStr;
                 var client = CreateGitHubClient();
                 _reporter.Info("Creating a provisional draft release...");
-                var newRelease = new NewRelease(tag)
-                {
+                var newRelease = new NewRelease(tag) {
                     Name = $"{tag} [provisional]",
                     TargetCommitish = _git.CurrentBranch,
                     Prerelease = _version.IsPrerelease,
@@ -159,8 +157,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var tag = _version.CurrentStr;
         var client = CreateGitHubClient();
         _reporter.Info($"Generating release notes for {tag}...");
-        var releaseNotesRequest = new GenerateReleaseNotesRequest(tag)
-        {
+        var releaseNotesRequest = new GenerateReleaseNotesRequest(tag) {
             TargetCommitish = targetCommitish,
         };
 
@@ -242,8 +239,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         var assetContents = UserFile.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
         {
-            var upload = new ReleaseAssetUpload
-            {
+            var upload = new ReleaseAssetUpload {
                 FileName = Path.GetFileName(path),
                 ContentType = mimeType,
                 RawData = assetContents,
@@ -267,8 +263,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 
     private GitHubClient CreateGitHubClient()
     {
-        var client = new GitHubClient(new ProductHeaderValue("Buildvana"))
-        {
+        var client = new GitHubClient(new ProductHeaderValue("Buildvana")) {
             Credentials = new(_token),
         };
 

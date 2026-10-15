@@ -12,8 +12,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task HasUnreleasedChanges_IsFalseWhenSectionIsEmpty()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -31,8 +30,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task HasUnreleasedChanges_IsTrueWhenSectionHasContent()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -52,8 +50,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task HasUnreleasedChanges_IsFalseWhenEmptySectionEndsTheFile()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -78,8 +75,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_MovesUnreleasedContentToNewSection()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -115,8 +111,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_RecreatesSubsectionsAndMovesOnlyNonEmptyOnes()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -159,8 +154,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_SubstitutesConfiguredTextForEmptySection()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -194,8 +188,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_SubstitutesConfiguredTextWhenNewSectionIsLast()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -221,8 +214,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_MovesEmptySectionVerbatimWithoutSubstitute()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -251,8 +243,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_IgnoresWhitespaceOnlySubstitute()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -280,8 +271,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_TrimsTrailingBlankLinesWhenNewSectionIsLast()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -311,8 +301,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task PrepareForRelease_UsesLineFeedAsLineSeparator()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -358,8 +347,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task FinalizeNewSection_ReplacesTitleOfSectionAfterUnreleasedChanges()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -398,8 +386,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task FinalizeNewSection_PinsRelativeFileLinksToTheReleaseTag()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -437,8 +424,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task FinalizeNewSection_LeavesUrlsAndAnchorsAlone()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -464,8 +450,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task FinalizeNewSection_PinsLinksOfTheNewSectionOnly()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -507,8 +492,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task FinalizeNewSection_PassesThePathWithoutItsAnchorToGetFileUrl()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -527,8 +511,7 @@ internal sealed class ChangelogUpdaterTests
     [Test]
     public async Task FinalizeNewSection_FailsWhenThereIsOnlyOneSection()
     {
-        string[] lines =
-        [
+        string[] lines = [
             "# Changelog",
             string.Empty,
             "## Unreleased changes",
@@ -612,8 +595,7 @@ internal sealed class ChangelogUpdaterTests
 
     // Records the path of each link the updater asks a URL for, so that a test can see what reached the callback.
     private static Func<string, Uri> RecordingGetFileUrl(List<string> paths)
-        => path =>
-        {
+        => path => {
             paths.Add(path);
             return GetFileUrl(path);
         };

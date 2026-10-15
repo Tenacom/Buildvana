@@ -64,8 +64,7 @@ internal sealed class VersionAdvanceSettings
         Guard.IsNotNull(positionals);
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new VersionAdvanceSettings
-        {
+        return new VersionAdvanceSettings {
             Change = positionals.Count > 0 ? positionals[0] : null,
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
             Force = reader.ReadFlag("--force"),

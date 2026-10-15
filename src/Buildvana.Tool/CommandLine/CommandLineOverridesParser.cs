@@ -38,8 +38,7 @@ internal static class CommandLineOverridesParser
         // compose, so the stream is stripped even when bv's own option surface supplies the configuration.
         var forwardedReader = new CliOptionReader(parameters.Forwarded);
         var forwardedConfiguration = forwardedReader.ReadValue("--configuration", "-c");
-        return new CommandLineOverrides
-        {
+        return new CommandLineOverrides {
             Configuration = reader.ReadValue("--configuration", "-c") ?? forwardedConfiguration,
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
             Dogfood = reader.ReadBoolValue("--dogfood"),

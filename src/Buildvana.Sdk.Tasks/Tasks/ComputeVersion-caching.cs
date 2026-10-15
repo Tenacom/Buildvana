@@ -73,8 +73,7 @@ partial class ComputeVersion
                 return null;
             }
 
-            string?[] parts =
-            [
+            string?[] parts = [
                 repositoryStateToken,
                 File.ReadAllText(versionPath),
                 ReadOptionalFile(Path.Combine(homeDirectory, BuildvanaJsonConfig.JsonFileName)),

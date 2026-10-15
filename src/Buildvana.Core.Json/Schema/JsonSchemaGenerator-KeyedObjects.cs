@@ -55,8 +55,7 @@ partial class JsonSchemaGenerator
                 ? LiftValueSchema(elementProperties, elementType, valueJsonName)
                 : PruneKeyProperty(elementSchema, elementProperties, keyJsonName);
             ThrowIfContainsReference(elementType, valuesSchema);
-            var keyedSchema = new JsonObject
-            {
+            var keyedSchema = new JsonObject {
                 ["type"] = "object",
                 ["additionalProperties"] = valuesSchema,
             };

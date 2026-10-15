@@ -304,8 +304,7 @@ internal sealed class DelegationServiceTests
     public async Task TryDelegate_StreamsRestoreOutput()
     {
         using var home = CreateDelegatableHome("2.1.40-preview");
-        var runner = new FakeProcessRunner
-        {
+        var runner = new FakeProcessRunner {
             OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 0, "Restored bv.\nRestored ngbv.", string.Empty, TimeSpan.Zero),
         };
         var output = new StringWriter();
@@ -324,8 +323,7 @@ internal sealed class DelegationServiceTests
     public async Task TryDelegate_WhenRestoreFails_WarnsAndRunsAnyway()
     {
         using var home = CreateDelegatableHome("2.1.40-preview");
-        var runner = new FakeProcessRunner
-        {
+        var runner = new FakeProcessRunner {
             OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 1, string.Empty, "simulated failure", TimeSpan.Zero),
             OnRunWithInheritedStdio = static (_, _) => 42,
         };

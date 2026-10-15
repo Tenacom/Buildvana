@@ -23,8 +23,7 @@ internal sealed class RepositoryConfigFilesTests
 
     // Comments and trailing commas are what the .jsonc extension advertises, and both configuration files use
     // them. The tool manifest uses neither, and accepting them there costs nothing.
-    private static readonly JsonDocumentOptions ReaderOptions = new()
-    {
+    private static readonly JsonDocumentOptions ReaderOptions = new() {
         CommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
     };

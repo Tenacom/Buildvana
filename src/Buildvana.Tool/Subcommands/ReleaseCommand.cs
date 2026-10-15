@@ -369,8 +369,7 @@ internal sealed class ReleaseCommand(
     }
 
     // Never one: a transfer yields both files of every pair it modifies, so there is no singular case to report.
-    private static string DescribeModifiedApiFiles(int count, string kind) => count switch
-    {
+    private static string DescribeModifiedApiFiles(int count, string kind) => count switch {
         0 => $"No {kind} API files were modified.",
         _ => string.Create(CultureInfo.InvariantCulture, $"{count} {kind} API files were modified."),
     };

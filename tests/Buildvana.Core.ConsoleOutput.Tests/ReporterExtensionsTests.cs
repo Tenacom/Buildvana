@@ -19,8 +19,7 @@ internal sealed class ReporterExtensionsTests
         reporter.Info("working");
         reporter.Detail("details");
         reporter.Trace("trace");
-        string[] expected =
-        [
+        string[] expected = [
             "error: boom",
             "warning: careful",
             "notice: noted",
@@ -42,8 +41,7 @@ internal sealed class ReporterExtensionsTests
         reporter.Info(Format, "working", 4);
         reporter.Detail(Format, "details", 5);
         reporter.Trace(Format, "trace", 6);
-        string[] expected =
-        [
+        string[] expected = [
             "error: boom in 1",
             "warning: careful in 2",
             "notice: noted in 3",

@@ -70,8 +70,7 @@ internal sealed class DependencyResolutionTests
     [Test]
     public async Task Skipping_StatesThePolicyGoverningEachPin()
     {
-        var config = new DependenciesConfig
-        {
+        var config = new DependenciesConfig {
             Policies = [new UpdatePolicyRule { Pattern = "Alpha", Policy = "patch" }],
         };
 
@@ -84,13 +83,11 @@ internal sealed class DependencyResolutionTests
     }
 
     private static DependencyInventory Inventory()
-        => new()
-        {
+        => new() {
             NetSdk = NetSdkPin.Create("10.0.100", allowPrerelease: false),
             Sdks = [Pin(DependencyScope.Sdks, "Contoso.Sdk", "global.json")],
             Tools = [Pin(DependencyScope.Tools, "ngbv", "dotnet-tools.json")],
-            Packages =
-            [
+            Packages = [
                 Pin(DependencyScope.Packages, "Alpha", CentralPinFileName),
                 Pin(DependencyScope.Packages, "Beta", CentralPinFileName),
             ],

@@ -31,8 +31,7 @@ internal static class CommandRegistry
     // Descriptions for tree nodes whose own command description does not fit the node (or that have no command
     // at all), keyed by full node path. Typically command-group nodes: a group aliased onto one of its
     // subcommands would otherwise inherit that subcommand's description.
-    private static readonly Dictionary<string, string> NodeDescriptions = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly Dictionary<string, string> NodeDescriptions = new(StringComparer.OrdinalIgnoreCase) {
         ["dependencies"] = "Show and manage the repository's dependencies.",
         ["version"] = "Show or advance the project's version spec.",
     };

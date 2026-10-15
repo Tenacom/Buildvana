@@ -205,8 +205,7 @@ public static class JsonSchemaValidator
                 .Replace("~1", "/", StringComparison.Ordinal)
                 .Replace("~0", "~", StringComparison.Ordinal);
 
-            var next = current switch
-            {
+            var next = current switch {
                 JsonObject obj => obj[token],
                 JsonArray array when int.TryParse(token, NumberStyles.None, CultureInfo.InvariantCulture, out var index)
                     && index < array.Count => array[index],
@@ -441,8 +440,7 @@ public static class JsonSchemaValidator
     private static bool TypeMatches(JsonNode? instance, string type)
     {
         var kind = instance?.GetValueKind() ?? JsonValueKind.Null;
-        return type switch
-        {
+        return type switch {
             "null" => kind is JsonValueKind.Null,
             "boolean" => kind is JsonValueKind.True or JsonValueKind.False,
             "object" => kind is JsonValueKind.Object,
@@ -466,8 +464,7 @@ public static class JsonSchemaValidator
     }
 
     private static string ActualType(JsonNode? instance)
-        => (instance?.GetValueKind() ?? JsonValueKind.Null) switch
-        {
+        => (instance?.GetValueKind() ?? JsonValueKind.Null) switch {
             JsonValueKind.Null => "null",
             JsonValueKind.True or JsonValueKind.False => "boolean",
             JsonValueKind.Object => "object",

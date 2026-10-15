@@ -365,8 +365,7 @@ internal sealed class MsBuildPinEditorTests
             </Project>
             """;
         var path = WriteFile(home, content);
-        var newVersions = new Dictionary<string, string>
-        {
+        var newVersions = new Dictionary<string, string> {
             ["Alpha"] = "1.0.1",
             ["Beta"] = "2.0.1",
             ["Gamma"] = "9.9.10",

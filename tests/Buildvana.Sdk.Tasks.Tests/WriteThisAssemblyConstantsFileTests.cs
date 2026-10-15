@@ -10,8 +10,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
     [Test]
     public async Task Execute_WritesEncodedConstants()
     {
-        await RunInTempDirectory(async (engine, outputPath) =>
-        {
+        await RunInTempDirectory(async (engine, outputPath) => {
             var task = CreateTask(engine, outputPath, ("Answer", "42"), ("My Constant", "string:Hello World"), ("Tricky", "a=b\nc;d"));
             await Assert.That(task.Execute()).IsTrue();
             var content = await File.ReadAllTextAsync(outputPath).ConfigureAwait(false);
@@ -22,8 +21,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
     [Test]
     public async Task Execute_TrimsNamesAndValues()
     {
-        await RunInTempDirectory(async (engine, outputPath) =>
-        {
+        await RunInTempDirectory(async (engine, outputPath) => {
             var task = CreateTask(engine, outputPath, ("  Answer  ", "  42  "));
             await Assert.That(task.Execute()).IsTrue();
             var content = await File.ReadAllTextAsync(outputPath).ConfigureAwait(false);
@@ -34,8 +32,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
     [Test]
     public async Task Execute_WithNoConstants_WritesEmptyFile()
     {
-        await RunInTempDirectory(async (engine, outputPath) =>
-        {
+        await RunInTempDirectory(async (engine, outputPath) => {
             var task = CreateTask(engine, outputPath);
             await Assert.That(task.Execute()).IsTrue();
             await Assert.That(File.Exists(outputPath)).IsTrue();
@@ -47,8 +44,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
     [Test]
     public async Task Execute_WithUnchangedContent_DoesNotRewriteFile()
     {
-        await RunInTempDirectory(async (engine, outputPath) =>
-        {
+        await RunInTempDirectory(async (engine, outputPath) => {
             await Assert.That(CreateTask(engine, outputPath, ("Answer", "42")).Execute()).IsTrue();
             var pastTime = DateTime.UtcNow.AddHours(-1);
             File.SetLastWriteTimeUtc(outputPath, pastTime);
@@ -60,8 +56,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
     [Test]
     public async Task Execute_WithChangedContent_RewritesFile()
     {
-        await RunInTempDirectory(async (engine, outputPath) =>
-        {
+        await RunInTempDirectory(async (engine, outputPath) => {
             await Assert.That(CreateTask(engine, outputPath, ("Answer", "42")).Execute()).IsTrue();
             await Assert.That(CreateTask(engine, outputPath, ("Answer", "13")).Execute()).IsTrue();
             var content = await File.ReadAllTextAsync(outputPath).ConfigureAwait(false);
@@ -83,8 +78,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
         IBuildEngine engine,
         string outputPath,
         params (string Name, string Value)[] constants)
-        => new()
-        {
+        => new() {
             BuildEngine = engine,
             OutputPath = outputPath,
             Constants = [.. constants.Select(c => new TaskItem(c.Name, new Dictionary<string, string> { ["Value"] = c.Value }))],

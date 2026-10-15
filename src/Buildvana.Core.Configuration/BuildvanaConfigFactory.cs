@@ -31,8 +31,7 @@ public static class BuildvanaConfigFactory
     public static BuildvanaConfig Create(BuildvanaJsonConfig? json, CommandLineOverrides? commandLine)
     {
         var dotNet = ComposeDotNet(json?.DotNet, commandLine);
-        return new BuildvanaConfig
-        {
+        return new BuildvanaConfig {
             Release = ComposeRelease(json?.Release, commandLine, dotNet),
             Versioning = ComposeVersioning(json?.Versioning),
             DotNet = dotNet,
@@ -55,8 +54,7 @@ public static class BuildvanaConfigFactory
         var defaults = new DotNetConfig();
         var all = ComposeInvocation(json?.All, common: null, forwardedArgs: null);
         var forwardedArgs = commandLine?.ForwardedArgs;
-        return new DotNetConfig
-        {
+        return new DotNetConfig {
             Configuration = NormalizeBlankToNull(commandLine?.Configuration)
                 ?? NormalizeBlankToNull(json?.Configuration)
                 ?? defaults.Configuration,
@@ -73,8 +71,7 @@ public static class BuildvanaConfigFactory
         DotNetInvocationJsonConfig? json,
         DotNetInvocationConfig? common,
         IReadOnlyList<string>? forwardedArgs)
-        => new()
-        {
+        => new() {
             Args = [.. common?.Args ?? [], .. json?.Args ?? [], .. forwardedArgs ?? []],
             Env = ComposeEnv(common?.Env, json?.Env),
         };
@@ -107,8 +104,7 @@ public static class BuildvanaConfigFactory
         DotNetConfig dotNet)
     {
         var defaults = new ReleaseConfig();
-        return new ReleaseConfig
-        {
+        return new ReleaseConfig {
             Branches = json?.Branches ?? defaults.Branches,
             Configuration = NormalizeBlankToNull(commandLine?.Configuration)
                 ?? NormalizeBlankToNull(json?.Configuration)
@@ -126,8 +122,7 @@ public static class BuildvanaConfigFactory
     private static VersioningConfig ComposeVersioning(VersioningJsonConfig? json)
     {
         var defaults = new VersioningConfig();
-        return new VersioningConfig
-        {
+        return new VersioningConfig {
             // A blank tag could never appear in a version, so it counts as not stated: prereleases are
             // not allowed.
             PrereleaseTag = NormalizeBlankToNull(json?.PrereleaseTag),
@@ -140,10 +135,8 @@ public static class BuildvanaConfigFactory
     private static NuGetConfig ComposeNuGet(NuGetJsonConfig? json)
     {
         var release = ComposeFeed(json?.Feeds?.Release);
-        return new NuGetConfig
-        {
-            Feeds = new NuGetFeedsConfig
-            {
+        return new NuGetConfig {
+            Feeds = new NuGetFeedsConfig {
                 Prerelease = ComposeFeed(json?.Feeds?.Prerelease) ?? release,
                 Release = release,
             },
@@ -155,8 +148,7 @@ public static class BuildvanaConfigFactory
     private static NuGetFeedConfig? ComposeFeed(NuGetFeedJsonConfig? json)
         => json is null
             ? null
-            : new NuGetFeedConfig
-            {
+            : new NuGetFeedConfig {
                 Source = json.Source,
                 ApiKeyEnv = json.ApiKeyEnv,
             };
@@ -165,8 +157,7 @@ public static class BuildvanaConfigFactory
     private static GitHubConfig ComposeGitHub(GitHubJsonConfig? json)
     {
         var defaults = new GitHubConfig();
-        return new GitHubConfig
-        {
+        return new GitHubConfig {
             TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
         };
     }
@@ -174,8 +165,7 @@ public static class BuildvanaConfigFactory
     // The schema requires name and email whenever git.identity is stated, and forbids blank values for
     // them, so a wire identity that reaches the factory carries both.
     private static GitConfig ComposeGit(GitJsonConfig? json)
-        => new()
-        {
+        => new() {
             Identity = json?.Identity is { } identity
                 ? new GitIdentityConfig { Name = identity.Name, Email = identity.Email }
                 : null,
@@ -184,8 +174,7 @@ public static class BuildvanaConfigFactory
     private static DependenciesConfig ComposeDependencies(DependenciesJsonConfig? json)
     {
         var scopes = ComposeDependencyScopes(json?.Scopes);
-        return new DependenciesConfig
-        {
+        return new DependenciesConfig {
             Scopes = scopes,
             Policies = ComposePolicies(json?.Policies),
             AdditionalPackages = ComposeAdditionalPackages(json?.AdditionalPackages, scopes.Packages),
@@ -195,8 +184,7 @@ public static class BuildvanaConfigFactory
     private static DependencyScopesConfig ComposeDependencyScopes(DependencyScopesJsonConfig? json)
     {
         var defaults = new DependencyScopesConfig();
-        return new DependencyScopesConfig
-        {
+        return new DependencyScopesConfig {
             NetSdk = NormalizeBlankToNull(json?.NetSdk) ?? defaults.NetSdk,
             Sdks = NormalizeBlankToNull(json?.Sdks) ?? defaults.Sdks,
             Tools = NormalizeBlankToNull(json?.Tools) ?? defaults.Tools,
@@ -222,8 +210,7 @@ public static class BuildvanaConfigFactory
     private static AdditionalPackagesConfig ComposeAdditionalPackageGroup(
         AdditionalPackagesJsonConfig json,
         string packagesPolicy)
-        => new()
-        {
+        => new() {
             Caption = json.Caption,
             Files = json.Files,
             Items = json.Items,

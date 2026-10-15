@@ -16,8 +16,7 @@ internal static class RepositoryFiles
 {
     // Exclusions on top of what .gitignore files dictate: bv's own outputs, anchored at the home directory,
     // plus the conventional build and dependency directories at any depth. The finder skips `.git` on its own.
-    private static readonly string[] ExclusionPatterns =
-    [
+    private static readonly string[] ExclusionPatterns = [
         "/" + CommonPaths.AllArtifacts + "/",
         "/" + CommonPaths.Scratch + "/",
         "bin/",

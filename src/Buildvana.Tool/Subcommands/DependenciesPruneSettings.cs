@@ -84,8 +84,7 @@ internal sealed class DependenciesPruneSettings
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new DependenciesPruneSettings
-        {
+        return new DependenciesPruneSettings {
             NetSdk = reader.ReadFlag("--netsdk"),
             Sdks = reader.ReadFlag("--sdks"),
             Tools = reader.ReadFlag("--tools"),

@@ -70,8 +70,7 @@ internal sealed class ReleaseHarness : IDisposable
     {
         _options = options ?? new ReleaseHarnessOptions();
         ProcessRunner = new FakeProcessRunner { OnRun = RunDotNet };
-        AppRunner.OnRun = (_, _, _) =>
-        {
+        AppRunner.OnRun = (_, _, _) => {
             Record("hook");
             HookBehavior?.Invoke();
         };
@@ -230,14 +229,12 @@ internal sealed class ReleaseHarness : IDisposable
             // The boundaries, faked. Registered last, so that they win over what AddBvServices registers.
             .AddSingleton<IProcessRunner>(ProcessRunner)
             .AddSingleton<IFileBasedAppRunner>(AppRunner)
-            .AddSingleton<ServerAdapter>(sp => new RecordingServerAdapter(sp)
-            {
+            .AddSingleton<ServerAdapter>(sp => new RecordingServerAdapter(sp) {
                 CloudBuild = _options.CloudBuild,
                 BotIdentity = _options.WithBotIdentity ? new("Buildvana Test Bot", "bot@buildvana.invalid") : null,
                 PushUser = _options.PushUser,
                 PushSecret = _options.PushSecret,
-                OnPublishing = () =>
-                {
+                OnPublishing = () => {
                     Record("publish");
                     _options.OnPublishing?.Invoke();
                 },
@@ -350,8 +347,7 @@ internal sealed class ReleaseHarness : IDisposable
             return;
         }
 
-        var globalJson = new JsonObject
-        {
+        var globalJson = new JsonObject {
             ["msbuild-sdks"] = new JsonObject { [ProducedPackageIds[0]] = PreviousVersion },
         };
         WriteFile("global.json", globalJson.ToJsonString(IndentedJson));
@@ -360,14 +356,11 @@ internal sealed class ReleaseHarness : IDisposable
             return;
         }
 
-        var toolManifest = new JsonObject
-        {
+        var toolManifest = new JsonObject {
             ["version"] = 1,
             ["isRoot"] = true,
-            ["tools"] = new JsonObject
-            {
-                [ProducedPackageIds[1]] = new JsonObject
-                {
+            ["tools"] = new JsonObject {
+                [ProducedPackageIds[1]] = new JsonObject {
                     ["version"] = PreviousVersion,
                     ["commands"] = new JsonArray("test-tool"),
                 },
@@ -392,8 +385,7 @@ internal sealed class ReleaseHarness : IDisposable
 
     private string BuildConfiguration()
     {
-        var release = new JsonObject
-        {
+        var release = new JsonObject {
             ["branches"] = new JsonArray($"^{BranchName}$"),
             ["checkPublicApi"] = _options.CheckPublicApi,
             ["changelogUpdates"] = _options.ChangelogUpdates,
@@ -404,13 +396,11 @@ internal sealed class ReleaseHarness : IDisposable
             release["emptyChangelog"] = emptyChangelog;
         }
 
-        var feed = new JsonObject
-        {
+        var feed = new JsonObject {
             ["source"] = "https://nuget.example.invalid/v3/index.json",
             ["apiKeyEnv"] = ApiKeyEnvVar,
         };
-        var root = new JsonObject
-        {
+        var root = new JsonObject {
             ["release"] = release,
             ["versioning"] = new JsonObject { ["prereleaseTag"] = "preview" },
             ["dotnet"] = new JsonObject { ["configuration"] = Configuration },
@@ -418,8 +408,7 @@ internal sealed class ReleaseHarness : IDisposable
         };
         if (_options.ConfiguredIdentity is { } identity)
         {
-            root["git"] = new JsonObject
-            {
+            root["git"] = new JsonObject {
                 ["identity"] = new JsonObject { ["name"] = identity.Name, ["email"] = identity.Email },
             };
         }

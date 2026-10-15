@@ -55,8 +55,7 @@ internal sealed class ToolPinUpdaterTests
     public async Task UpdateAsync_WhenAnUpdateFails_StopsThere()
     {
         using var home = new TempHome();
-        var runner = new FakeProcessRunner
-        {
+        var runner = new FakeProcessRunner {
             OnRun = static (_, args) => new ProcessResult(string.Join(' ', args), 1, string.Empty, "boom", TimeSpan.Zero),
         };
 
@@ -76,8 +75,7 @@ internal sealed class ToolPinUpdaterTests
     }
 
     private static PinResolution Moving(string id, string from, string to, string declaringFile = "dotnet-tools.json")
-        => new()
-        {
+        => new() {
             Pin = DependencyPin.Create(DependencyScope.Tools, id, from, declaringFile),
             Policy = Policy(),
             State = PinResolutionState.Updated,

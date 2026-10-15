@@ -29,8 +29,7 @@ internal sealed class NuGetFeedConfigExtensionsTests
         await Assert.That(() => Feed(name).GetApiKey()).Throws<BuildvanaRuntimeException>();
     }
 
-    private static NuGetFeedConfig Feed(string apiKeyEnv) => new()
-    {
+    private static NuGetFeedConfig Feed(string apiKeyEnv) => new() {
         Source = "https://nuget.example/v3/index.json",
         ApiKeyEnv = apiKeyEnv,
     };

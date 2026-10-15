@@ -75,8 +75,7 @@ internal sealed class ReleaseCommandChangelogTests
     [Arguments("stable", "2.3")]
     public async Task Release_WhenPolicyApplies_MovesUnreleasedChangesToNewSection(string policy, string versionSpec)
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = versionSpec,
             ChangelogUpdates = policy,
             Changelog = ChangelogWithChanges,
@@ -107,8 +106,7 @@ internal sealed class ReleaseCommandChangelogTests
     [Test]
     public async Task Release_WithNonePolicy_LeavesChangelogAlone_EvenOnStableRelease()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             VersionSpec = "2.3",
             ChangelogUpdates = "none",
             Changelog = ChangelogWithChanges,
@@ -151,8 +149,7 @@ internal sealed class ReleaseCommandChangelogTests
     [Test]
     public async Task Release_WithEmptySectionAndSubstitute_UsesTheSubstitute()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             ChangelogUpdates = "all",
             Changelog = EmptyChangelog,
             EmptyChangelog = "This release contains no user-visible changes.",
@@ -199,8 +196,7 @@ internal sealed class ReleaseCommandChangelogTests
     [Test]
     public async Task Release_WithLinkOutsideRepository_FailsNamingTheTarget()
     {
-        using var harness = new ReleaseHarness(new()
-        {
+        using var harness = new ReleaseHarness(new() {
             ChangelogUpdates = "all",
             Changelog = ChangelogWithOutsideLink,
             Dogfood = false,

@@ -240,8 +240,7 @@ internal sealed class PackagePinReaderTests
         // Derived from the home directory, never written out: a literal Windows path is a relative path on
         // Linux, and would resolve to a file inside the repository.
         var outside = Path.GetFullPath(Path.Combine(home.RootPath, "..", "elsewhere", "Directory.Packages.props"));
-        var dump = new PackagePinDump
-        {
+        var dump = new PackagePinDump {
             ProjectFullPath = home.GetFullPath(ProjectFileName),
             Items = [Item("PackageVersion", "Serilog", "4.0.0") with { DefiningProjectFullPath = outside }],
         };
@@ -253,8 +252,7 @@ internal sealed class PackagePinReaderTests
         => new PackagePinReader(home.Provider, NullReporter.Instance).Read(dumps);
 
     private static PackagePinDump Dump(TempHome home, params PackagePinDumpItem[] items)
-        => new()
-        {
+        => new() {
             ProjectFullPath = home.GetFullPath(ProjectFileName),
             Items = [.. items.Select(item => item with { DefiningProjectFullPath = home.GetFullPath(ProjectFileName) })],
         };
@@ -266,8 +264,7 @@ internal sealed class PackagePinReaderTests
         string? versionOverride = null,
         string? updatePolicy = null,
         bool isImplicitlyDefined = false)
-        => new()
-        {
+        => new() {
             ItemType = itemType,
             Id = id,
             Version = version,

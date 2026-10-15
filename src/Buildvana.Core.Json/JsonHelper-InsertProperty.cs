@@ -65,8 +65,7 @@ public sealed partial class JsonHelper
         {
             var reader = new Utf8JsonReader(
                 originalBytes.AsSpan(bomLength),
-                new JsonReaderOptions
-                {
+                new JsonReaderOptions {
                     AllowTrailingCommas = true,
                     CommentHandling = JsonCommentHandling.Skip,
                 });
@@ -268,8 +267,7 @@ public sealed partial class JsonHelper
 
     private static string SerializeValue(JsonNode value, string newline, string indent)
     {
-        var text = value.ToJsonString(new JsonSerializerOptions
-        {
+        var text = value.ToJsonString(new JsonSerializerOptions {
             WriteIndented = true,
             NewLine = newline,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,

@@ -60,8 +60,7 @@ public sealed class WritePackagePinDump : BuildvanaSdkTask
         AddItems(items, "PackageVersion", PackageVersions);
         AddItems(items, "GlobalPackageReference", GlobalPackageReferences);
         AddItems(items, "PackageReference", PackageReferences);
-        var dump = new PackagePinDump
-        {
+        var dump = new PackagePinDump {
             ProjectFullPath = ProjectFullPath,
             TargetFramework = NullIfEmpty(TargetFramework),
             ManagePackageVersionsCentrally = ManagePackageVersionsCentrally,
@@ -85,8 +84,7 @@ public sealed class WritePackagePinDump : BuildvanaSdkTask
     {
         foreach (var taskItem in taskItems)
         {
-            items.Add(new PackagePinDumpItem
-            {
+            items.Add(new PackagePinDumpItem {
                 ItemType = itemType,
                 Id = taskItem.ItemSpec,
                 Version = NullIfEmpty(taskItem.GetMetadata("Version")),

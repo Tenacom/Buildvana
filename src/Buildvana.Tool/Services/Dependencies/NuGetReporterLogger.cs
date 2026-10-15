@@ -64,8 +64,7 @@ internal sealed class NuGetReporterLogger(IReporter reporter) : ILogger
     }
 
     private static MessageLevel LevelOf(LogLevel level)
-        => level switch
-        {
+        => level switch {
             LogLevel.Error => MessageLevel.Error,
             LogLevel.Warning => MessageLevel.Warning,
             LogLevel.Debug => MessageLevel.Trace,

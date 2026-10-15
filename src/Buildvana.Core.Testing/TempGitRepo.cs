@@ -52,8 +52,7 @@ public sealed class TempGitRepo : IDisposable
         // the process may still open one: changing them again is the race this type initializer exists to
         // avoid. Process exit is therefore the first moment the directory can go, and the last one at which
         // anything of ours still runs to delete it.
-        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
-        {
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => {
             try
             {
                 Directory.Delete(path, recursive: true);
@@ -200,8 +199,7 @@ public sealed class TempGitRepo : IDisposable
     public IReadOnlyList<TempGitCommit> GetCommits(int count)
     {
         using var repository = new Repository(RootPath);
-        var filter = new CommitFilter
-        {
+        var filter = new CommitFilter {
             IncludeReachableFrom = repository.Head,
             SortBy = CommitSortStrategies.Topological,
         };

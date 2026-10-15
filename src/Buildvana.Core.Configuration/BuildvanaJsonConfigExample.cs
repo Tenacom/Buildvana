@@ -54,8 +54,7 @@ public static class BuildvanaJsonConfigExample
     // The default encoder escapes characters that are only dangerous in HTML, turning a regular expression
     // into a wall of \u sequences. This file is read by people and copied into a configuration file, so a
     // value has to appear as it will be written there.
-    private static readonly JsonSerializerOptions ValueOptions = new()
-    {
+    private static readonly JsonSerializerOptions ValueOptions = new() {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
@@ -352,8 +351,7 @@ public static class BuildvanaJsonConfigExample
     // The last resort: a container with nothing to show still has a shape to show. Anything else is a setting
     // whose value the schema cannot supply, which is a missing annotation on the model.
     private static string EmptyContainer(JsonObject schema, string path)
-        => schema["type"]?.GetValue<string>() switch
-        {
+        => schema["type"]?.GetValue<string>() switch {
             "array" => "[]",
             "object" => "{}",
             _ => throw new InvalidOperationException(
@@ -364,8 +362,7 @@ public static class BuildvanaJsonConfigExample
     // A value stays on one line however long it is, the $schema URL included: wrapping it would put JSON on a
     // continuation line, where an editor and a reader would have to reassemble it.
     private static string FormatValue(JsonNode? value)
-        => value switch
-        {
+        => value switch {
             null => "null",
             JsonArray items => "[" + string.Join(", ", items.Select(FormatValue)) + "]",
             JsonObject members => "{" + string.Join(", ", members.Select(FormatMember)) + "}",

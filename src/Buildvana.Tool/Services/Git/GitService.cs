@@ -182,8 +182,7 @@ internal sealed class GitService : IDisposable
     {
         var homeDirectory = _home.HomeDirectory;
         var scratchPrefix = Path.GetFullPath(CommonPaths.Scratch, homeDirectory) + Path.DirectorySeparatorChar;
-        var options = new StatusOptions
-        {
+        var options = new StatusOptions {
             IncludeIgnored = false,
             IncludeUntracked = true,
             RecurseUntrackedDirs = true,
@@ -206,8 +205,7 @@ internal sealed class GitService : IDisposable
         }
 
         var homeDirectory = _home.HomeDirectory;
-        var pathsInRepo = paths.Select(path =>
-        {
+        var pathsInRepo = paths.Select(path => {
             Guard.IsTrue(!string.IsNullOrEmpty(path), nameof(paths), "One or more paths are null or empty.");
             var absolutePath = Path.GetFullPath(path, homeDirectory);
             var pathInRepo = Path.GetRelativePath(homeDirectory, absolutePath);
@@ -226,8 +224,7 @@ internal sealed class GitService : IDisposable
         Commands.Stage(
             _repository,
             pathsInRepo,
-            new StageOptions
-            {
+            new StageOptions {
                 IncludeIgnored = false,
                 ExplicitPathsOptions = new() { ShouldFailOnUnmatchedPath = true },
             });
@@ -277,8 +274,7 @@ internal sealed class GitService : IDisposable
         var pushCredentialsFallback = PushCredentialsFallback;
         if (pushCredentialsFallback is not null)
         {
-            pushOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
-            {
+            pushOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials {
                 Username = pushCredentialsFallback.Username,
                 Password = pushCredentialsFallback.Password,
             };

@@ -40,18 +40,15 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_FileValues_OverrideDefaults()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            Release = new()
-            {
+        var json = new BuildvanaJsonConfig {
+            Release = new() {
                 Branches = ["^main$"],
                 CheckPublicApi = false,
                 ChangelogUpdates = ChangelogUpdates.All,
                 EmptyChangelog = "No changes.",
                 Dogfood = false,
             },
-            Versioning = new()
-            {
+            Versioning = new() {
                 PrereleaseTag = "preview",
                 AssemblyVersionPrecision = AssemblyVersionPrecision.Build,
             },
@@ -76,13 +73,11 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_CommandLine_BeatsFileAndDefaults()
     {
-        var json = new BuildvanaJsonConfig
-        {
+        var json = new BuildvanaJsonConfig {
             Release = new() { CheckPublicApi = true, Dogfood = true },
             DotNet = new() { Configuration = "Debug" },
         };
-        var commandLine = new CommandLineOverrides
-        {
+        var commandLine = new CommandLineOverrides {
             Configuration = "Custom",
             CheckPublicApi = false,
             Dogfood = false,
@@ -107,8 +102,7 @@ internal sealed class BuildvanaConfigFactoryTests
 
         // A release-specific configuration wins over dotnet.configuration.
         var both = BuildvanaConfigFactory.Create(
-            new BuildvanaJsonConfig
-            {
+            new BuildvanaJsonConfig {
                 Release = new() { Configuration = "ReleaseOnly" },
                 DotNet = new() { Configuration = "Debug" },
             },
@@ -160,10 +154,8 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_DotNetInvocations_FoldCommonTierIntoEachCommand()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            DotNet = new()
-            {
+        var json = new BuildvanaJsonConfig {
+            DotNet = new() {
                 All = new() { Args = ["-common"], Env = new Dictionary<string, string?> { ["A"] = "1" } },
                 Test = new() { Args = ["--coverage"], Env = new Dictionary<string, string?> { ["B"] = null } },
             },
@@ -186,10 +178,8 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_DotNetEnv_PerCommandOverridesCommonKey()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            DotNet = new()
-            {
+        var json = new BuildvanaJsonConfig {
+            DotNet = new() {
                 All = new() { Env = new Dictionary<string, string?> { ["KEY"] = "from-all", ["ONLY_ALL"] = "kept" } },
                 Build = new() { Env = new Dictionary<string, string?> { ["KEY"] = "from-build" } },
             },
@@ -208,10 +198,8 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_ForwardedArgs_AppendToPipelineCommandsOnly()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            DotNet = new()
-            {
+        var json = new BuildvanaJsonConfig {
+            DotNet = new() {
                 All = new() { Args = ["-common"] },
                 Pack = new() { Args = ["--pack-arg"] },
             },
@@ -231,12 +219,9 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_Feeds_MapVerbatim()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            NuGet = new()
-            {
-                Feeds = new()
-                {
+        var json = new BuildvanaJsonConfig {
+            NuGet = new() {
+                Feeds = new() {
                     Prerelease = new() { Source = "https://prerelease.example/v3/index.json", ApiKeyEnv = "PRE_KEY" },
                     Release = new() { Source = "https://nuget.example/v3/index.json", ApiKeyEnv = "KEY" },
                 },
@@ -256,12 +241,9 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_Feeds_PrereleaseFallsBackToReleaseFeed()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            NuGet = new()
-            {
-                Feeds = new()
-                {
+        var json = new BuildvanaJsonConfig {
+            NuGet = new() {
+                Feeds = new() {
                     Release = new() { Source = "https://nuget.example/v3/index.json", ApiKeyEnv = "KEY" },
                 },
             },
@@ -276,8 +258,7 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_GitIdentity_MapsNameAndEmail()
     {
-        var json = new BuildvanaJsonConfig
-        {
+        var json = new BuildvanaJsonConfig {
             Git = new() { Identity = new() { Name = "Buildvana Bot", Email = "bot@buildvana.invalid" } },
         };
 
@@ -314,12 +295,9 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_DependencyPolicies_KeepFileOrder()
     {
-        var json = new BuildvanaJsonConfig
-        {
-            Dependencies = new()
-            {
-                Policies =
-                [
+        var json = new BuildvanaJsonConfig {
+            Dependencies = new() {
+                Policies = [
                     new() { Pattern = "Microsoft.CodeAnalysis.*", Policy = "minor" },
                     new() { Pattern = "*", Policy = "patch" },
                 ],
@@ -341,13 +319,10 @@ internal sealed class BuildvanaConfigFactoryTests
     [Arguments("patch", "patch")]
     public async Task Create_AdditionalPackageGroup_ResolvesItsPolicy(string? stated, string expected)
     {
-        var json = new BuildvanaJsonConfig
-        {
-            Dependencies = new()
-            {
+        var json = new BuildvanaJsonConfig {
+            Dependencies = new() {
                 Scopes = new() { Packages = "major-" },
-                AdditionalPackages =
-                [
+                AdditionalPackages = [
                     new() { Caption = "Group", Files = "src/*.props", Items = "BV_PackageVersion", Policy = stated },
                 ],
             },

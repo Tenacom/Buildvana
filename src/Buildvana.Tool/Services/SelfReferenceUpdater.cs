@@ -47,8 +47,7 @@ internal sealed class SelfReferenceUpdater
         _reporter = reporter;
         _home = home;
         _jsonHelper = jsonHelper;
-        _targets =
-        [
+        _targets = [
             ("global.json", (p, produced) => UpdateJsonContainer(p, produced, container: "msbuild-sdks", versionPropertyName: null)),
             (ToolManifest.FileName, (p, produced) => UpdateJsonContainer(
                 p,
@@ -113,8 +112,7 @@ internal sealed class SelfReferenceUpdater
         IReadOnlyDictionary<string, string> produced,
         string container,
         string? versionPropertyName)
-        => _jsonHelper.RewriteStringValues(path, (propertyPath, currentValue) =>
-        {
+        => _jsonHelper.RewriteStringValues(path, (propertyPath, currentValue) => {
             if (versionPropertyName is null)
             {
                 if (propertyPath.Count != 2 || propertyPath[0] != container)
@@ -137,8 +135,7 @@ internal sealed class SelfReferenceUpdater
         });
 
     private bool UpdateMsBuildXml(string path, IReadOnlyDictionary<string, string> produced, string[] itemTypes)
-        => MsBuildPinEditor.RewritePins(path, itemTypes, pin =>
-        {
+        => MsBuildPinEditor.RewritePins(path, itemTypes, pin => {
             if (!produced.TryGetValue(pin.Id, out var newVersion))
             {
                 return null;

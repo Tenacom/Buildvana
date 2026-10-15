@@ -135,31 +135,25 @@ internal sealed class PostReleaseHookArgsTests
         }
     }
 
-    private static PostReleaseHookArgs SampleArgs(string home, bool withConfigFile = true) => new()
-    {
-        RuntimeInfo = new()
-        {
+    private static PostReleaseHookArgs SampleArgs(string home, bool withConfigFile = true) => new() {
+        RuntimeInfo = new() {
             Version = "1.2.3-preview",
             DelegatingVersion = "1.2.4",
             HomeDirectory = home,
             ArtifactsDirectory = Path.Combine(home, "artifacts", "Release"),
             ScratchDirectory = Path.Combine(home, WellKnownPaths.ScratchDirectory),
             ConfigFile = withConfigFile ? Path.Combine(home, "buildvana.jsonc") : null,
-            Configuration = new()
-            {
+            Configuration = new() {
                 Release = new() { Branches = ["^main$"] },
-                DotNet = new()
-                {
-                    Test = new()
-                    {
+                DotNet = new() {
+                    Test = new() {
                         Args = ["--coverage"],
                         Env = new Dictionary<string, string?> { ["RUNNER"] = null },
                     },
                 },
             },
         },
-        Release = new()
-        {
+        Release = new() {
             Version = "1.2.3",
             SemVer = "1.2.3-preview",
             PreviousVersion = null,

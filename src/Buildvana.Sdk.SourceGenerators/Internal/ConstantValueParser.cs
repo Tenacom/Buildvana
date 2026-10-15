@@ -15,8 +15,7 @@ namespace Buildvana.Sdk.SourceGenerators.Internal;
 /// </summary>
 internal static class ConstantValueParser
 {
-    private static readonly Dictionary<string, Type> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly Dictionary<string, Type> AllowedTypes = new(StringComparer.OrdinalIgnoreCase) {
         ["System.Byte"] = typeof(byte),
         ["byte"] = typeof(byte),
         ["uint8"] = typeof(byte),

@@ -20,8 +20,7 @@ internal sealed class EffectivePolicyResolverTests
     [Test]
     public async Task Resolve_TakesTheScopeOfThePin()
     {
-        var config = new DependenciesConfig
-        {
+        var config = new DependenciesConfig {
             Scopes = new DependencyScopesConfig { NetSdk = "lts", Sdks = "patch", Tools = "major-", Packages = "exact" },
         };
 
@@ -35,10 +34,8 @@ internal sealed class EffectivePolicyResolverTests
     [Test]
     public async Task Resolve_TakesTheFirstMatchingPattern()
     {
-        var config = new DependenciesConfig
-        {
-            Policies =
-            [
+        var config = new DependenciesConfig {
+            Policies = [
                 new UpdatePolicyRule { Pattern = "Serilog", Policy = "patch" },
                 new UpdatePolicyRule { Pattern = "Serilog*", Policy = "major" },
             ],
@@ -53,8 +50,7 @@ internal sealed class EffectivePolicyResolverTests
     [Test]
     public async Task Resolve_AppliesPatternsToEveryIdShapedScope()
     {
-        var config = new DependenciesConfig
-        {
+        var config = new DependenciesConfig {
             Policies = [new UpdatePolicyRule { Pattern = "*", Policy = "patch-" }],
         };
 
@@ -75,8 +71,7 @@ internal sealed class EffectivePolicyResolverTests
     [Test]
     public async Task Resolve_OfAGroupPinMatchedByAPattern_TakesThePattern()
     {
-        var config = GroupConfig("revision") with
-        {
+        var config = GroupConfig("revision") with {
             Policies = [new UpdatePolicyRule { Pattern = "Serilog", Policy = "exact" }],
         };
 
@@ -89,8 +84,7 @@ internal sealed class EffectivePolicyResolverTests
     [Test]
     public async Task Resolve_OfAPinStatingItsOwnPolicy_TakesIt()
     {
-        var config = GroupConfig("revision") with
-        {
+        var config = GroupConfig("revision") with {
             Policies = [new UpdatePolicyRule { Pattern = "*", Policy = "exact" }],
         };
 
@@ -118,12 +112,9 @@ internal sealed class EffectivePolicyResolverTests
         => DependencyPin.Create(scope, id, "4.0.0", "Directory.Packages.props");
 
     private static DependenciesConfig GroupConfig(string policy)
-        => new()
-        {
-            AdditionalPackages =
-            [
-                new AdditionalPackagesConfig
-                {
+        => new() {
+            AdditionalPackages = [
+                new AdditionalPackagesConfig {
                     Caption = "SDK package injections",
                     Files = "src/Sdk/PackageVersions.props",
                     Items = "BV_PackageVersion",

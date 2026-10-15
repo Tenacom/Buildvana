@@ -113,8 +113,7 @@ internal static class Program
             var verbosity = globals.Verbosity is null ? DefaultVerbosity : VerbosityParser.Parse(globals.Verbosity);
 
             // --color / --no-color win over auto-detection; neither (or both) leaves the reporter to auto-detect.
-            bool? colorOverride = (globals.Color, globals.NoColor) switch
-            {
+            bool? colorOverride = (globals.Color, globals.NoColor) switch {
                 (true, false) => true,
                 (false, true) => false,
                 _ => null,

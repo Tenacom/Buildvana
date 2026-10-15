@@ -112,8 +112,7 @@ internal sealed class HookRunnerTests
     {
         using var home = new TempHome();
         _ = WriteHookFile(home, "release", "post-release");
-        var appRunner = new FakeFileBasedAppRunner
-        {
+        var appRunner = new FakeFileBasedAppRunner {
             OnRun = (_, _, _) => throw new BuildFailedException("Hook failed."),
         };
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
@@ -231,10 +230,8 @@ internal sealed class HookRunnerTests
     private static string ArgsPath(TempHome home)
         => Path.GetFullPath(WellKnownPaths.GetHookArgsFile("release", "post-release"), home.RootPath);
 
-    private static PostReleaseHookArgs SampleArgs(TempHome home) => new()
-    {
-        RuntimeInfo = new()
-        {
+    private static PostReleaseHookArgs SampleArgs(TempHome home) => new() {
+        RuntimeInfo = new() {
             Version = "1.2.3-preview",
             DelegatingVersion = null,
             HomeDirectory = home.RootPath,
@@ -243,8 +240,7 @@ internal sealed class HookRunnerTests
             ConfigFile = null,
             Configuration = new(),
         },
-        Release = new()
-        {
+        Release = new() {
             Version = "1.2.3",
             SemVer = "1.2.3-preview",
             PreviousVersion = null,

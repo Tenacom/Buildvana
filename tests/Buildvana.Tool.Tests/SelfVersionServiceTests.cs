@@ -169,10 +169,8 @@ internal sealed class SelfVersionServiceTests
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
         var manifestPath = Path.Combine(home.RootPath, "dotnet-tools.json");
-        var runner = new FakeProcessRunner
-        {
-            OnRun = (executable, args) =>
-            {
+        var runner = new FakeProcessRunner {
+            OnRun = (executable, args) => {
                 if (args is ["new", "tool-manifest"])
                 {
                     File.WriteAllText(manifestPath, """{ "version": 1, "isRoot": true, "tools": { } }""");
@@ -737,8 +735,7 @@ internal sealed class SelfVersionServiceTests
 
         await Assert.That(home.ReadFile("App.csproj")).IsEqualTo(project.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
         await Assert.That(home.ReadFile(hookPath)).IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
-        await Assert.That(summary.FamilyPinLines).IsEquivalentTo(
-        [
+        await Assert.That(summary.FamilyPinLines).IsEquivalentTo([
             "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
             "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (App.csproj)",
             "Buildvana.Sdk: $(BuildvanaVersion) (App.csproj, left alone)",
@@ -823,8 +820,7 @@ internal sealed class SelfVersionServiceTests
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.41-preview");
         WriteToolManifest(home, "2.1.40-preview");
-        var runner = new FakeProcessRunner
-        {
+        var runner = new FakeProcessRunner {
             OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 1, string.Empty, "simulated failure", TimeSpan.Zero),
         };
         var service = CreateService(home, "2.1.41-preview", runner);

@@ -57,8 +57,7 @@ internal sealed class SelfUpdateSettings
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        var settings = new SelfUpdateSettings
-        {
+        var settings = new SelfUpdateSettings {
             Force = reader.ReadFlag("--force"),
             Preview = reader.ReadFlag("--preview"),
             Repair = reader.ReadFlag("--repair"),

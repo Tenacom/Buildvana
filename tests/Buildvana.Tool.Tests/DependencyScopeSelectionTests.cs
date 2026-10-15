@@ -115,10 +115,8 @@ internal sealed class DependencyScopeSelectionTests
     [Test]
     public async Task Resolve_WithAllScopesDisabled_TakesNone()
     {
-        var config = new DependenciesConfig
-        {
-            Scopes = new DependencyScopesConfig
-            {
+        var config = new DependenciesConfig {
+            Scopes = new DependencyScopesConfig {
                 NetSdk = "disable",
                 Sdks = "disable",
                 Tools = "disable",

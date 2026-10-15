@@ -34,8 +34,7 @@ public static class BuildvanaJsonConfigSerialization
 
     private static JsonSerializerOptions CreateOptions()
     {
-        var options = new JsonSerializerOptions
-        {
+        var options = new JsonSerializerOptions {
             // Required by JsonSchemaExporter, which validates the options before generating a schema.
             TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

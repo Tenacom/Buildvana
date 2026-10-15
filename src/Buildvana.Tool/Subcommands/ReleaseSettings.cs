@@ -67,8 +67,7 @@ internal sealed class ReleaseSettings
     {
         Guard.IsNotNull(options);
         var reader = new CliOptionReader(options);
-        return new ReleaseSettings
-        {
+        return new ReleaseSettings {
             Configuration = reader.ReadValue("--configuration", "-c"),
             Bump = reader.ReadValue("--bump"),
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),

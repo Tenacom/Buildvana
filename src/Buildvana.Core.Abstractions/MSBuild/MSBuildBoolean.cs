@@ -21,8 +21,7 @@ namespace Buildvana.Core.MSBuild;
 /// </remarks>
 public static class MSBuildBoolean
 {
-    private static readonly FrozenDictionary<string, bool> Keywords = new Dictionary<string, bool>
-    {
+    private static readonly FrozenDictionary<string, bool> Keywords = new Dictionary<string, bool> {
         ["true"] = true,
         ["on"] = true,
         ["yes"] = true,

@@ -9,8 +9,7 @@ using Buildvana.Core.Json.Schema;
 
 internal sealed class JsonSchemaValidatorTests
 {
-    private static readonly JsonSerializerOptions KeyedOptions = new()
-    {
+    private static readonly JsonSerializerOptions KeyedOptions = new() {
         TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         Converters = { new JsonKeyedObjectConverter() },

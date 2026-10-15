@@ -23,8 +23,7 @@ internal static class VerbosityParser
     public static Verbosity Parse(string raw)
     {
         Guard.IsNotNull(raw);
-        return raw.ToUpperInvariant() switch
-        {
+        return raw.ToUpperInvariant() switch {
             "QUIET" or "Q" => Verbosity.Quiet,
             "MINIMAL" or "M" => Verbosity.Minimal,
             "NORMAL" or "N" => Verbosity.Normal,

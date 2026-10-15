@@ -150,8 +150,7 @@ internal sealed partial class VersionService
         // When the major version is 0, "anything MAY change" according to SemVer;
         // by convention, we increment the minor version for breaking changes (0.x -> 0.(x+1))
         var isMajorVersionZero = LatestStable is { Major: 0 };
-        var semanticVersionIncrement = publicApiChangeKind switch
-        {
+        var semanticVersionIncrement = publicApiChangeKind switch {
             ApiChangeKind.Breaking => isMajorVersionZero ? VersionIncrement.Minor : VersionIncrement.Major,
             ApiChangeKind.Additive => isMajorVersionZero ? VersionIncrement.None : VersionIncrement.Minor,
             _ => VersionIncrement.None,
@@ -160,8 +159,7 @@ internal sealed partial class VersionService
 
         // Determine the requested version increment, if any.
         _reporter.Info($"Requested version spec change: {requestedChange}");
-        var requestedVersionIncrement = requestedChange switch
-        {
+        var requestedVersionIncrement = requestedChange switch {
             VersionSpecChange.Major => VersionIncrement.Major,
             VersionSpecChange.Minor => VersionIncrement.Minor,
             _ => VersionIncrement.None,
@@ -181,13 +179,11 @@ internal sealed partial class VersionService
         // Determine the actual version spec change to apply:
         //   - forget any increment-related change (already accounted for via requestedVersionIncrement)
         //   - set the change to the required increment if any, otherwise leave it as is (None, Unstable, Stable)
-        var actualChange = requestedChange switch
-        {
+        var actualChange = requestedChange switch {
             VersionSpecChange.Major or VersionSpecChange.Minor => VersionSpecChange.None,
             _ => requestedChange,
         };
-        actualChange = actualVersionIncrement switch
-        {
+        actualChange = actualVersionIncrement switch {
             VersionIncrement.Major => VersionSpecChange.Major,
             VersionIncrement.Minor => VersionSpecChange.Minor,
             _ => actualChange,

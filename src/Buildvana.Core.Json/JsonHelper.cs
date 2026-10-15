@@ -31,8 +31,7 @@ public sealed partial class JsonHelper : IJsonHelper
             node = JsonNode.Parse(
                 str,
                 new JsonNodeOptions { PropertyNameCaseInsensitive = false },
-                new JsonDocumentOptions
-                {
+                new JsonDocumentOptions {
                     AllowTrailingCommas = true,
                     CommentHandling = JsonCommentHandling.Skip,
                 });
@@ -61,8 +60,7 @@ public sealed partial class JsonHelper : IJsonHelper
             node = JsonNode.Parse(
                 stream,
                 new JsonNodeOptions { PropertyNameCaseInsensitive = false },
-                new JsonDocumentOptions
-                {
+                new JsonDocumentOptions {
                     AllowTrailingCommas = true,
                     CommentHandling = JsonCommentHandling.Skip,
                 });
@@ -89,8 +87,7 @@ public sealed partial class JsonHelper : IJsonHelper
         Guard.IsNotNull(json);
         Guard.IsNotNullOrEmpty(path);
 
-        var writerOptions = new JsonWriterOptions
-        {
+        var writerOptions = new JsonWriterOptions {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             Indented = true,
         };
@@ -199,8 +196,7 @@ public sealed partial class JsonHelper : IJsonHelper
     {
         var reader = new Utf8JsonReader(
             jsonSpan,
-            new JsonReaderOptions
-            {
+            new JsonReaderOptions {
                 AllowTrailingCommas = true,
                 CommentHandling = JsonCommentHandling.Skip,
             });

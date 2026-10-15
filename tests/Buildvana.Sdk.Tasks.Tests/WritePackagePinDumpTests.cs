@@ -14,8 +14,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_WritesOneItemPerGivenItem()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var task = CreateTask(engine, directory);
             task.PackageVersions = [Item("Newtonsoft.Json", ("Version", "13.0.3"))];
             task.GlobalPackageReferences = [Item("Nerdbank.GitVersioning", ("Version", "3.6.0"))];
@@ -33,11 +32,9 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_ReadsTheMetadataThatDecidesAPin()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var task = CreateTask(engine, directory);
-            task.PackageVersions =
-            [
+            task.PackageVersions = [
                 Item(
                     "Serilog",
                     ("Version", "4.0.0"),
@@ -58,8 +55,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_WithMetadataUnstated_WritesNothingForIt()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var task = CreateTask(engine, directory);
             task.PackageVersions = [Item("Serilog", ("Version", "4.0.0"))];
             await Assert.That(task.Execute()).IsTrue();
@@ -75,8 +71,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_WritesTheEvaluationItDescribes()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var task = CreateTask(engine, directory);
             task.TargetFramework = "net10.0";
             task.ManagePackageVersionsCentrally = true;
@@ -95,8 +90,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_WithNoTargetFramework_WritesNoneInTheDump()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             await Assert.That(CreateTask(engine, directory).Execute()).IsTrue();
             var dump = await ReadDumpAsync(directory).ConfigureAwait(false);
             await Assert.That(dump.TargetFramework).IsNull();
@@ -108,8 +102,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_WithNoAssetsFileAndNoAuditLevel_WritesNoneForEither()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             await Assert.That(CreateTask(engine, directory).Execute()).IsTrue();
             var dump = await ReadDumpAsync(directory).ConfigureAwait(false);
             await Assert.That(dump.ProjectAssetsFile).IsNull();
@@ -120,8 +113,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_ForTwoTargetFrameworks_WritesTwoFiles()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var first = CreateTask(engine, directory);
             first.TargetFramework = "net9.0";
             var second = CreateTask(engine, directory);
@@ -135,8 +127,7 @@ internal sealed class WritePackagePinDumpTests
     [Test]
     public async Task Execute_ForTwoProjectsOfOneName_WritesTwoFiles()
     {
-        await RunInTempDirectory(async (engine, directory) =>
-        {
+        await RunInTempDirectory(async (engine, directory) => {
             var first = CreateTask(engine, directory);
             var second = CreateTask(engine, directory);
             second.ProjectFullPath = @"C:\repo\other\Test.csproj";
@@ -157,8 +148,7 @@ internal sealed class WritePackagePinDumpTests
     }
 
     private static WritePackagePinDump CreateTask(IBuildEngine engine, string outputDirectory)
-        => new()
-        {
+        => new() {
             BuildEngine = engine,
             OutputDirectory = outputDirectory,
             ProjectFullPath = ProjectFullPath,

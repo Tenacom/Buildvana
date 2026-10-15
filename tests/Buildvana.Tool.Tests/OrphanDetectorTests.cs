@@ -203,8 +203,7 @@ internal sealed class OrphanDetectorTests
         IReadOnlyList<string>? directiveReferences = null,
         string itemType = "PackageVersion",
         bool evaluated = true)
-        => new()
-        {
+        => new() {
             Packages = [.. pinnedIds.Select(id => Pin(id, itemType))],
             DirectiveReferences = directiveReferences ?? [],
             Evaluations = evaluated ? [Evaluation(home)] : [],
@@ -214,8 +213,7 @@ internal sealed class OrphanDetectorTests
         => DependencyPin.Create(DependencyScope.Packages, id, "1.0.0", CentralPinFileName) with { ItemType = itemType };
 
     private static PackagePinDump Evaluation(TempHome home)
-        => new()
-        {
+        => new() {
             ProjectFullPath = home.GetFullPath(ProjectPath),
             ProjectAssetsFile = home.GetFullPath(AssetsPath),
             TargetFramework = "net10.0",

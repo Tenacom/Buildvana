@@ -66,8 +66,7 @@ public sealed class GitignoreCharClass
         return IsNegated ? !isInSet : isInSet;
     }
 
-    private static bool MatchesNamedClass(GitignoreNamedClass namedClass, char c) => namedClass switch
-    {
+    private static bool MatchesNamedClass(GitignoreNamedClass namedClass, char c) => namedClass switch {
         GitignoreNamedClass.Alnum => char.IsAsciiLetterOrDigit(c),
         GitignoreNamedClass.Alpha => char.IsAsciiLetter(c),
         GitignoreNamedClass.Blank => c is ' ' or '\t',

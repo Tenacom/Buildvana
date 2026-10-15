@@ -56,8 +56,7 @@ public sealed partial class JsonSourceMap
         var lineStarts = BuildLineStarts(utf8Json);
         var reader = new Utf8JsonReader(
             utf8Json,
-            new JsonReaderOptions
-            {
+            new JsonReaderOptions {
                 CommentHandling = JsonCommentHandling.Skip,
                 AllowTrailingCommas = true,
             });

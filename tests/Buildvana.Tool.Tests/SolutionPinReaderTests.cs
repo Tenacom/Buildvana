@@ -79,8 +79,7 @@ internal sealed class SolutionPinReaderTests
     public async Task ReadAsync_WhenEvaluationFails_ReportsAFailedStep()
     {
         using var home = new TempHome();
-        var runner = new FakeProcessRunner
-        {
+        var runner = new FakeProcessRunner {
             OnRun = static (executable, _)
                 => new ProcessResult(executable, 1, "A.csproj(1,2): error MSB4025: no.", string.Empty, TimeSpan.Zero),
         };
@@ -106,13 +105,11 @@ internal sealed class SolutionPinReaderTests
         => new(home.Provider, runner, NullReporter.Instance);
 
     private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDumps(string projectName, params string[] targetFrameworks)
-        => (executable, args) =>
-        {
+        => (executable, args) => {
             var directory = DumpDirectoryOf(args);
             foreach (var targetFramework in targetFrameworks)
             {
-                var dump = new PackagePinDump
-                {
+                var dump = new PackagePinDump {
                     ProjectFullPath = $@"C:\repo\src\{projectName}\{projectName}.csproj",
                     TargetFramework = targetFramework,
                 };
@@ -124,8 +121,7 @@ internal sealed class SolutionPinReaderTests
         };
 
     private static Func<string, IReadOnlyList<string>, ProcessResult> WriteText(string fileName, string content)
-        => (executable, args) =>
-        {
+        => (executable, args) => {
             Write(DumpDirectoryOf(args), fileName, content);
             return new ProcessResult(executable, 0, string.Empty, string.Empty, TimeSpan.Zero);
         };

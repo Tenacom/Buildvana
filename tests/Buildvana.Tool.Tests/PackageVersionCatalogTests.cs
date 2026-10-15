@@ -37,8 +37,7 @@ internal sealed class PackageVersionCatalogTests
     }
 
     private static PackageVersionCatalog NewCatalog(string[] listed, string[] unlisted)
-        => new()
-        {
+        => new() {
             Listed = [.. listed.Select(NuGetVersion.Parse)],
             Unlisted = [.. unlisted.Select(NuGetVersion.Parse)],
         };

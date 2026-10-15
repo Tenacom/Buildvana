@@ -29,8 +29,7 @@ internal sealed class DependencyUpdateReportTests
     public async Task WriteUpdate_AtEightyColumns_BreaksNoNameAndNoVersion()
     {
         var pin = DependencyPin.Create(DependencyScope.Packages, "Microsoft.Build.NoTargets", "3.7.134", "Directory.Packages.props");
-        var resolution = Packages(new PinResolution
-        {
+        var resolution = Packages(new PinResolution {
             Pin = pin,
             Policy = Policy("minor"),
             State = PinResolutionState.UpToDate,
@@ -75,8 +74,7 @@ internal sealed class DependencyUpdateReportTests
     public async Task WriteUpdate_StatesWhyAPinDoesNotMove()
     {
         var pin = DependencyPin.Create(DependencyScope.Packages, "Serilog", "[3.0.0]", "Directory.Packages.props");
-        var resolution = Packages(new PinResolution
-        {
+        var resolution = Packages(new PinResolution {
             Pin = pin,
             Policy = Policy("minor"),
             State = PinResolutionState.Unmanaged,
@@ -92,10 +90,8 @@ internal sealed class DependencyUpdateReportTests
     [Test]
     public async Task WriteUpdate_ListsTheNetSdkWhenOnlyAllowPrereleaseWouldChange()
     {
-        var resolution = new DependencyResolution
-        {
-            NetSdk = new NetSdkResolution
-            {
+        var resolution = new DependencyResolution {
+            NetSdk = new NetSdkResolution {
                 Pin = NetSdkPin.Create("10.0.100", allowPrerelease: null),
                 Policy = NetSdkPolicy("major"),
                 State = PinResolutionState.UpToDate,
@@ -139,10 +135,8 @@ internal sealed class DependencyUpdateReportTests
     [Test]
     public async Task WriteUpdate_OfEveryScope_StatesThemAll()
     {
-        var resolution = new DependencyResolution
-        {
-            NetSdk = new NetSdkResolution
-            {
+        var resolution = new DependencyResolution {
+            NetSdk = new NetSdkResolution {
                 Pin = NetSdkPin.Create("10.0.100", allowPrerelease: false),
                 Policy = NetSdkPolicy("major"),
                 State = PinResolutionState.Updated,
@@ -174,8 +168,7 @@ internal sealed class DependencyUpdateReportTests
     }
 
     private static PinResolution Moving(string id, string from, string to, string? latestStable = null)
-        => new()
-        {
+        => new() {
             Pin = DependencyPin.Create(DependencyScope.Packages, id, from, "Directory.Packages.props"),
             Policy = Policy("minor"),
             State = PinResolutionState.Updated,
@@ -184,8 +177,7 @@ internal sealed class DependencyUpdateReportTests
         };
 
     private static PinResolution UpToDate(string id, string version)
-        => new()
-        {
+        => new() {
             Pin = DependencyPin.Create(DependencyScope.Packages, id, version, "Directory.Packages.props"),
             Policy = Policy("minor"),
             State = PinResolutionState.UpToDate,

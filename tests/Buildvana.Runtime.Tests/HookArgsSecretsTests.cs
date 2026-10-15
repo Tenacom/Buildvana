@@ -31,29 +31,23 @@ internal sealed class HookArgsSecretsTests
         }
     }
 
-    private static PostReleaseHookArgs SampleArgs(string credentialEnvVar) => new()
-    {
-        RuntimeInfo = new()
-        {
+    private static PostReleaseHookArgs SampleArgs(string credentialEnvVar) => new() {
+        RuntimeInfo = new() {
             Version = "1.2.3",
             HomeDirectory = "/repo",
             ArtifactsDirectory = "/repo/artifacts/Release",
             ScratchDirectory = "/repo/.buildvana-temp",
             ConfigFile = null,
-            Configuration = new()
-            {
+            Configuration = new() {
                 GitHub = new() { TokenEnv = credentialEnvVar },
-                NuGet = new()
-                {
-                    Feeds = new()
-                    {
+                NuGet = new() {
+                    Feeds = new() {
                         Release = new() { Source = "https://nuget.example/v3/index.json", ApiKeyEnv = credentialEnvVar },
                     },
                 },
             },
         },
-        Release = new()
-        {
+        Release = new() {
             Version = "1.2.3",
             SemVer = "1.2.3",
             PreviousVersion = null,

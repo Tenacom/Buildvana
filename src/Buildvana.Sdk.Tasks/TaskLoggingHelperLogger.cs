@@ -32,8 +32,7 @@ internal sealed class TaskLoggingHelperLogger : ILogger
         where TState : notnull
         => NullLogger.Instance.BeginScope(state);
 
-    public bool IsEnabled(LogLevel logLevel) => logLevel switch
-    {
+    public bool IsEnabled(LogLevel logLevel) => logLevel switch {
         LogLevel.Trace or LogLevel.Debug => LogsMessagesOfImportance(MessageImportance.Low),
         LogLevel.Information => LogsMessagesOfImportance(MessageImportance.Normal),
         LogLevel.Warning => true,

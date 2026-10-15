@@ -28,8 +28,7 @@ public static class BuildvanaJsonConfigSchema
     /// </remarks>
     public static string Generate()
     {
-        var json = GenerateNode().ToJsonString(new JsonSerializerOptions
-        {
+        var json = GenerateNode().ToJsonString(new JsonSerializerOptions {
             WriteIndented = true,
             IndentCharacter = ' ',
             IndentSize = 2,

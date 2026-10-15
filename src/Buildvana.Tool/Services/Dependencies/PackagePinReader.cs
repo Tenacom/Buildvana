@@ -100,8 +100,7 @@ internal sealed class PackagePinReader(IHomeDirectoryProvider home, IReporter re
             return;
         }
 
-        var pin = DependencyPin.Create(DependencyScope.Packages, item.Id, versionText, declaringFile) with
-        {
+        var pin = DependencyPin.Create(DependencyScope.Packages, item.Id, versionText, declaringFile) with {
             ItemType = item.ItemType,
             MetadataPolicy = EvaluatedMetadata.Stated(item.UpdatePolicy),
         };

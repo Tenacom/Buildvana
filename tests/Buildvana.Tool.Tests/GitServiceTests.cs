@@ -79,8 +79,7 @@ internal sealed class GitServiceTests
         using var git = CreateGitService(repo);
         var rootPath = repo.RootPath;
 
-        var (_, changedFiles) = await git.TrackChangesAsync(async () =>
-        {
+        var (_, changedFiles) = await git.TrackChangesAsync(async () => {
             await File.WriteAllTextAsync(Path.Combine(rootPath, "b.txt"), "new file").ConfigureAwait(false);
             await File.WriteAllTextAsync(Path.Combine(rootPath, "c.txt"), "another new file").ConfigureAwait(false);
             return true;
@@ -100,8 +99,7 @@ internal sealed class GitServiceTests
         var rootPath = repo.RootPath;
         repo.WriteFile("a.txt", "dirty before the operation");
 
-        var (_, changedFiles) = await git.TrackChangesAsync(async () =>
-        {
+        var (_, changedFiles) = await git.TrackChangesAsync(async () => {
             await File.WriteAllTextAsync(Path.Combine(rootPath, "a.txt"), "dirty again during the operation").ConfigureAwait(false);
             await File.WriteAllTextAsync(Path.Combine(rootPath, "b.txt"), "new file").ConfigureAwait(false);
             return true;

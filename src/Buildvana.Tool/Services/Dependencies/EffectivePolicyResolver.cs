@@ -117,8 +117,7 @@ internal sealed class EffectivePolicyResolver
         => pin.GroupCaption is { } caption && _groupPolicies.TryGetValue(caption, out var policy) ? policy : null;
 
     private string ScopeDefault(DependencyScope scope)
-        => scope switch
-        {
+        => scope switch {
             DependencyScope.Sdks => _config.Scopes.Sdks,
             DependencyScope.Tools => _config.Scopes.Tools,
             _ => _config.Scopes.Packages,
