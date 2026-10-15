@@ -19,7 +19,7 @@ internal sealed class SidecarWriterTests
         var content = home.ReadFile(CentralFileName);
         await Assert.That(content).Contains("""<PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />""");
         await Assert.That(content).Contains("""<PackageVersion Include="Serilog" Version="4.0.0" />""");
-        await Assert.That(content).Contains("Do not edit");
+        await Assert.That(content).Contains("DO NOT EDIT");
     }
 
     // Two runs finding the same vulnerabilities must write the same bytes, whatever order the graph was read in.
