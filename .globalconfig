@@ -382,7 +382,7 @@ dotnet_diagnostic.SA1413.severity = warning # Use trailing comma in multi-line i
 dotnet_diagnostic.SA1414.severity = warning # Tuple types in signatures should have element names
 
 # StyleCop Analyzers - Layout rules
-dotnet_diagnostic.SA1500.severity = warning # Braces for multi-line statements should not share line
+dotnet_diagnostic.SA1500.severity = none # Braces for multi-line statements should not share line # Replaced by ReSharper's brace line break inspections, which put expression braces at end of line
 dotnet_diagnostic.SA1501.severity = warning # Statement should not be on a single line
 dotnet_diagnostic.SA1502.severity = warning # Element should not be on a single line
 dotnet_diagnostic.SA1503.severity = warning # Braces should not be omitted
