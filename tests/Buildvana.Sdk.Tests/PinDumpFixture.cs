@@ -52,9 +52,7 @@ internal sealed class PinDumpFixture : IDisposable
         Run(WriteFile("Test.proj", content));
         return [
             .. Directory.EnumerateFiles(DumpDirectory)
-                .Select(static path => JsonSerializer.Deserialize(
-                    File.ReadAllText(path),
-                    PackagePinDumpJsonContext.Default.PackagePinDump)!)
+                .Select(ReadDump)
                 .OrderBy(static dump => dump.TargetFramework, StringComparer.Ordinal),
         ];
     }
@@ -66,6 +64,10 @@ internal sealed class PinDumpFixture : IDisposable
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .First(attribute => attribute.Key == key)
             .Value!;
+
+    private static PackagePinDump ReadDump(string path)
+        => JsonSerializer.Deserialize(File.ReadAllText(path), PackagePinDumpJsonContext.Default.PackagePinDump)
+            ?? throw new InvalidOperationException($"The pin dump '{path}' reads as null.");
 
     private void Run(string projectPath)
     {

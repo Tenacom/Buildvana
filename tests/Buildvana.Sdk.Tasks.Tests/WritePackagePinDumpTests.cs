@@ -159,8 +159,10 @@ internal sealed class WritePackagePinDumpTests
 
     private static async Task<PackagePinDump> ReadDumpAsync(string directory)
     {
-        var content = await File.ReadAllTextAsync(Directory.GetFiles(directory).Single()).ConfigureAwait(false);
-        return JsonSerializer.Deserialize(content, PackagePinDumpJsonContext.Default.PackagePinDump)!;
+        var path = Directory.GetFiles(directory).Single();
+        var content = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+        return JsonSerializer.Deserialize(content, PackagePinDumpJsonContext.Default.PackagePinDump)
+            ?? throw new InvalidOperationException($"The pin dump '{path}' reads as null.");
     }
 
     private static async Task RunInTempDirectory(Func<RecordingBuildEngine, string, Task> test)
