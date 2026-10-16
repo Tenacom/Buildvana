@@ -121,10 +121,14 @@ internal sealed class OrphanDetector(
     // A project is evaluated once per target framework, and one assets file answers for all of them.
     private static IReadOnlyList<(string ProjectFullPath, string AssetsFilePath)> ProjectsOf(
         IReadOnlyList<PackagePinDump> evaluations)
-        => [.. evaluations
-            .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
-            .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
-            .Select(static grouped => (grouped.Key, grouped.First().ProjectAssetsFile!))];
+    {
+        return [
+            .. evaluations
+                .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
+                .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
+                .Select(static grouped => (grouped.Key, grouped.First().ProjectAssetsFile!)),
+        ];
+    }
 
     // Vulnerability data is no concern of orphan detection: what a project references does not depend on it.
     // NU1900, which stops the override lifecycle, therefore does not stop a prune.

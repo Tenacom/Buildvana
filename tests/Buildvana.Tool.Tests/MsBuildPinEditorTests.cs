@@ -27,7 +27,8 @@ internal sealed class MsBuildPinEditorTests
 
         await Assert.That(pins).IsEquivalentTo([
             new MsBuildPin("PackageVersion", "Alpha", "1.0.0"),
-            new MsBuildPin("PackageVersion", "Beta", "2.0.0-preview.3")]);
+            new MsBuildPin("PackageVersion", "Beta", "2.0.0-preview.3"),
+        ]);
     }
 
     // dotnet package preserves reversed attribute order, so files it wrote must stay readable.
@@ -322,7 +323,8 @@ internal sealed class MsBuildPinEditorTests
 
         await Assert.That(pins).IsEquivalentTo([
             new MsBuildPin("PackageVersion", "Alpha", "2.0.0"),
-            new MsBuildPin("PackageVersion", "Alpha", "1.0.0")]);
+            new MsBuildPin("PackageVersion", "Alpha", "1.0.0"),
+        ]);
     }
 
     // Malformed content never throws: what cannot be parsed is skipped. The unclosed quote swallows the

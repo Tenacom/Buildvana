@@ -60,11 +60,15 @@ internal sealed class PostUpdateHookArgsFactory(
     }
 
     private static IReadOnlyList<TransitiveOverride> OverridesOf(IReadOnlyList<TransitiveOverrideEntry> entries)
-        => [.. entries.Select(static entry => new TransitiveOverride {
-            PackageId = entry.PackageId,
-            Version = entry.Version,
-            DeclaringFile = entry.DeclaringFile,
-        })];
+    {
+        return [
+            .. entries.Select(static entry => new TransitiveOverride {
+                PackageId = entry.PackageId,
+                Version = entry.Version,
+                DeclaringFile = entry.DeclaringFile,
+            }),
+        ];
+    }
 
     private static IReadOnlyList<DependencyResult> ResultsOf(IEnumerable<PinResolution> pins) => [.. pins.Select(ResultOf)];
 

@@ -187,9 +187,11 @@ internal sealed class GitService : IDisposable
             IncludeUntracked = true,
             RecurseUntrackedDirs = true,
         };
-        return [.. _repository.RetrieveStatus(options)
-            .Select(x => Path.GetFullPath(x.FilePath, homeDirectory))
-            .Where(x => !x.StartsWith(scratchPrefix, StringComparison.Ordinal))];
+        return [
+            .. _repository.RetrieveStatus(options)
+                .Select(x => Path.GetFullPath(x.FilePath, homeDirectory))
+                .Where(x => !x.StartsWith(scratchPrefix, StringComparison.Ordinal)),
+        ];
     }
 
     /// <summary>

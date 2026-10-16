@@ -81,9 +81,13 @@ internal sealed record DependencyResolution
     private static IReadOnlyList<PinResolution> Skipping(
         IEnumerable<DependencyPin> pins,
         EffectivePolicyResolver policies)
-        => [.. pins.Select(pin => new PinResolution {
-            Pin = pin,
-            Policy = policies.Resolve(pin),
-            State = PinResolutionState.Skipped,
-        })];
+    {
+        return [
+            .. pins.Select(pin => new PinResolution {
+                Pin = pin,
+                Policy = policies.Resolve(pin),
+                State = PinResolutionState.Skipped,
+            }),
+        ];
+    }
 }
