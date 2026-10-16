@@ -19,6 +19,5 @@ namespace Buildvana.Tool.CommandLine;
 internal sealed record CommandParameters(
     IReadOnlyList<string> Options,
     IReadOnlyList<string> Positionals,
-
     // ReSharper disable once NotAccessedPositionalProperty.Global -- false positive: Forwarded is read by CommandLineOverridesParser
     IReadOnlyList<string> Forwarded);
