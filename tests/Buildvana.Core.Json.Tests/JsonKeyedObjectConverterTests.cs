@@ -31,7 +31,8 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         var json = Serialize<KeyedValueSample>([
             new() { Pattern = "Louis*", Policy = "minor" },
-            new() { Pattern = "*", Policy = "latest" }]);
+            new() { Pattern = "*", Policy = "latest" },
+        ]);
         await Assert.That(json).IsEqualTo("""{"Louis*":"minor","*":"latest"}""");
     }
 
@@ -142,7 +143,8 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static string Act() => Serialize<KeyedValueSample>([
             new() { Pattern = "a", Policy = "one" },
-            new() { Pattern = "a", Policy = "two" }]);
+            new() { Pattern = "a", Policy = "two" },
+        ]);
 
         var exception = await Assert.That(Act).Throws<JsonException>();
         await Assert.That(exception!.Message).Contains("Duplicate key 'a'");

@@ -91,10 +91,12 @@ internal static class CommandArgumentValidator
             return [];
         }
 
-        return [..command.SettingsType
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-            .Select(static p => p.GetCustomAttribute<BvArgumentAttribute>())
-            .OfType<BvArgumentAttribute>()];
+        return [
+            .. command.SettingsType
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Select(static p => p.GetCustomAttribute<BvArgumentAttribute>())
+                .OfType<BvArgumentAttribute>(),
+        ];
     }
 
     private static void ConsumeDeclaredOptions(CliOptionReader reader, CommandRegistration command)

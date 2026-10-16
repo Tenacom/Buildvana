@@ -59,10 +59,12 @@ internal sealed partial class OverrideLifecycle
         public TransitiveOverridePlan ToPlan(IReadOnlyList<OverrideProject> projects)
             => new() {
                 Central = [.. _central.Select(static entry => new PackageOverride(entry.Key, entry.Value))],
-                Projects = [.. projects.Select(project => new ProjectOverrides {
-                    ProjectFullPath = project.ProjectFullPath,
-                    Promotions = PromotionsOf(project.ProjectFullPath),
-                })],
+                Projects = [
+                    .. projects.Select(project => new ProjectOverrides {
+                        ProjectFullPath = project.ProjectFullPath,
+                        Promotions = PromotionsOf(project.ProjectFullPath),
+                    }),
+                ],
             };
 
         private IReadOnlyList<PackageOverride> PromotionsOf(string projectFullPath)

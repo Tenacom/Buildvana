@@ -52,8 +52,10 @@ internal sealed class PackagePinReader(IHomeDirectoryProvider home, IReporter re
         }
 
         ReportItemsOutsideHome(outsideHome);
-        return [.. pins.Values.OrderBy(static pin => pin.DeclaringFile, StringComparer.Ordinal)
-            .ThenBy(static pin => pin.Id, StringComparer.OrdinalIgnoreCase)];
+        return [
+            .. pins.Values.OrderBy(static pin => pin.DeclaringFile, StringComparer.Ordinal)
+                .ThenBy(static pin => pin.Id, StringComparer.OrdinalIgnoreCase),
+        ];
     }
 
     // A pin lives where it is declared, so an item declared outside the repository is nobody's to edit: a

@@ -29,7 +29,8 @@ internal sealed class AppDirectiveEditorTests
         await Assert.That(directives).IsEquivalentTo([
             new AppDirective(AppDirectiveKind.Sdk, "Buildvana.Sdk", "1.0.0"),
             new AppDirective(AppDirectiveKind.Package, "Buildvana.Runtime", "1.0.0-preview.2"),
-            new AppDirective(AppDirectiveKind.Package, "Newtonsoft.Json", null)]);
+            new AppDirective(AppDirectiveKind.Package, "Newtonsoft.Json", null),
+        ]);
     }
 
     [Test]
@@ -115,7 +116,8 @@ internal sealed class AppDirectiveEditorTests
 
         await Assert.That(directives).IsEquivalentTo([
             new AppDirective(AppDirectiveKind.Package, "Alpha", "1.0.0"),
-            new AppDirective(AppDirectiveKind.Package, "Beta", "2.0.0")]);
+            new AppDirective(AppDirectiveKind.Package, "Beta", "2.0.0"),
+        ]);
     }
 
     // The SDK's own parser matches directive kinds case-sensitively; so does the editor. The line is still

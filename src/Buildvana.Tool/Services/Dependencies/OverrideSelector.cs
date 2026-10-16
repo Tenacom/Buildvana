@@ -76,10 +76,12 @@ internal static class OverrideSelector
 
     private static OverrideDecision SelectVersion(OverrideRequest request, List<PackageAdvisory> advisories)
     {
-        List<NuGetVersion> safe = [.. request.Candidates
-            .Where(candidate => VersionComparer.VersionRelease.Compare(candidate, request.ResolvedVersion) >= 0)
-            .Where(candidate => !IsCovered(advisories, candidate))
-            .OrderBy(static candidate => candidate, VersionComparer.VersionRelease)];
+        List<NuGetVersion> safe = [
+            .. request.Candidates
+                .Where(candidate => VersionComparer.VersionRelease.Compare(candidate, request.ResolvedVersion) >= 0)
+                .Where(candidate => !IsCovered(advisories, candidate))
+                .OrderBy(static candidate => candidate, VersionComparer.VersionRelease),
+        ];
 
         if (safe.Count == 0)
         {

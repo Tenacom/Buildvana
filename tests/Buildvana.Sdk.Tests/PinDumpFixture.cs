@@ -50,9 +50,13 @@ internal sealed class PinDumpFixture : IDisposable
                        </Project>
                        """;
         Run(WriteFile("Test.proj", content));
-        return [.. Directory.EnumerateFiles(DumpDirectory)
-            .Select(static path => JsonSerializer.Deserialize(File.ReadAllText(path), PackagePinDumpJsonContext.Default.PackagePinDump)!)
-            .OrderBy(static dump => dump.TargetFramework, StringComparer.Ordinal)];
+        return [
+            .. Directory.EnumerateFiles(DumpDirectory)
+                .Select(static path => JsonSerializer.Deserialize(
+                    File.ReadAllText(path),
+                    PackagePinDumpJsonContext.Default.PackagePinDump)!)
+                .OrderBy(static dump => dump.TargetFramework, StringComparer.Ordinal),
+        ];
     }
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
