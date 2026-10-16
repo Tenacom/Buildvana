@@ -74,6 +74,7 @@ internal sealed class GitService : IDisposable
             var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
             return signature is null ? null : new(signature.Name, signature.Email);
         }
+
         set
         {
             Guard.IsNotNull(value);
