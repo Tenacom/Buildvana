@@ -60,7 +60,10 @@ internal static class OverrideSelector
     private static bool IsCovered(List<PackageAdvisory> advisories, NuGetVersion version)
         => advisories.Exists(advisory => advisory.AffectedVersions.Satisfies(version));
 
-    private static OverrideDecision SelectForCentralPin(OverrideRequest request, List<PackageAdvisory> advisories, NuGetVersion pin)
+    private static OverrideDecision SelectForCentralPin(
+        OverrideRequest request,
+        List<PackageAdvisory> advisories,
+        NuGetVersion pin)
     {
         if (VersionComparer.VersionRelease.Compare(pin, request.ResolvedVersion) < 0)
         {
