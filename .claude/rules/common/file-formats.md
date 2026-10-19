@@ -17,7 +17,6 @@ A section below overrides them for its own file type.
 ## C# source files (`*.cs`)
 
 - Charset: UTF-8 without BOM, as for every other file.
-- A file that carries a BOM is valid too. Do not add one, and do not restore one that the `Write` tool stripped.
 - Every file opens with the copyright preamble whose text `stylecop.json` holds. SA1633, SA1634, and SA1636 check it.
 - A scratch `.cs` file under `.claude/scratchpad/` needs no preamble. The `Common.props` there turns StyleCop off.
 
