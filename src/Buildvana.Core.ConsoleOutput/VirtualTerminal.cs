@@ -30,7 +30,9 @@ public static partial class VirtualTerminal
     /// </summary>
     /// <returns><see langword="true"/> if escape sequences written to standard error will be interpreted;
     /// <see langword="false"/> otherwise (including when standard error is not attached to a console).</returns>
-    [ExcludeFromCodeCoverage(Justification = "Environment-owned plumbing: reads TERM off Windows, manipulates the attached console on Windows. The decision logic is tested via IsNonWindowsTerminalCapable.")]
+    [ExcludeFromCodeCoverage(
+        Justification = "Environment-owned plumbing: reads TERM off Windows, manipulates the attached console on Windows. "
+            + "The decision logic is tested via IsNonWindowsTerminalCapable.")]
     public static bool TryEnableOnStandardError()
     {
         if (!OperatingSystem.IsWindows())

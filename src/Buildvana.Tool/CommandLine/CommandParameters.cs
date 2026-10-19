@@ -11,7 +11,8 @@ namespace Buildvana.Tool.CommandLine;
 /// splits the command line, and <see cref="Buildvana.Tool.Infrastructure.Execution.CommandArgumentValidator"/>
 /// tells the command's options from its positionals, which takes the command's own declarations.
 /// </summary>
-/// <param name="Options">The non-global, non-positional tokens before <c>--</c>, for the command to parse. Empty when none were given.</param>
+/// <param name="Options">The non-global, non-positional tokens before <c>--</c>, for the command to parse.
+/// Empty when none were given.</param>
 /// <param name="Positionals">The positional tokens for the command to bind: those left over after subcommand
 /// resolution, plus every operand written after an option. Empty when none were given.</param>
 /// <param name="Forwarded">The tokens after the first <c>--</c>, as typed; the overrides parser consumes the
