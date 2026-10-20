@@ -113,25 +113,32 @@ and tell the user why.
 - Read the state of the PR checks.
 
   ```bash
-  gh pr checks <n> --repo <owner>/<repo>
+  gh pr checks <n> --repo <owner>/<repo> --json name,bucket
   ```
 
-- The command exits 0 when every check passed, 8 when at least one check has not
-  finished, and 1 when a check failed.
-- While the exit code is 8, wait and read the state again.
+- `bucket` holds `pass`, `fail`, `pending`, `skipping`, or `cancel` for each check. Read
+  `cancel` as `fail`, and `skipping` as `pass`.
+- While a check is in `pending`, wait and read the state again.
 
   ```bash
   sleep 90
-  gh pr checks <n> --repo <owner>/<repo>
+  gh pr checks <n> --repo <owner>/<repo> --json name,bucket
   ```
 
 - Give up after twenty waits. Tell the user the checks are still running, and do not
   review.
-- When a check fails, stop and tell the user which check failed. Do not review a PR whose
-  checks fail. The author fixes the failure and pushes a new head commit, and the review
-  starts again from the beginning.
-- Do not diagnose the failure, and do not read the logs. The failure belongs to the
-  author. See "What the gate and CI already cover".
+- `rules/project/pr-checks.md` has one section per check whose failure does not stop a
+  review by itself. The section says what to read, and which of three outcomes to pick:
+  ignore the failure, report a finding, or stop.
+- When a check is in `fail` and the file has no section for it, stop and tell the user
+  which check failed. Do not review a PR whose checks fail. The author fixes the failure
+  and pushes a new head commit, and the review starts again from the beginning.
+- When the file has a section for the check, follow the section. A finding the section
+  produces follows "What to report" like any other finding, and comes after the
+  correctness findings.
+- Read about a failure what its section names, and nothing else. Do not read the logs of
+  a check, and do not diagnose a failure the file does not cover. The failure belongs to
+  the author. See "What the gate and CI already cover".
 - When the repository reports no checks at all, the command prints `no checks reported`
   and exits 1, as for a failed check. That output is not a failure. This repository has
   CI, so that output means the checks have not started yet. Wait and read the state
@@ -207,7 +214,10 @@ and tell the user why.
   passing check is a fact about the code. Do not confirm it.
 - Do not build the code. Do not run the tests. Do not run a linter, a formatter, or a
   static analysis tool. Do not run the code.
-- A review runs `git`, `gh`, and `sleep`. No other command belongs in a review.
+- A review runs `git`, `gh`, and `sleep`. No other command belongs in a review, with one
+  exception. A section of `rules/project/pr-checks.md` may name a read-only request to a
+  service it names, with `curl`, and may name a filter on the response. It never names
+  anything that runs the code or the toolchain.
 - The review adds what the gate cannot produce: a judgement about the outcome the code
   produces and about the contracts it holds. Reading gives you that judgement. Running
   the toolchain does not.
@@ -231,6 +241,8 @@ and tell the user why.
   package cache that `dotnet nuget locals global-packages --list` prints.
 - What GitHub holds about the PR includes a PR deployed together with it. See "Pull
   requests deployed together".
+- A section of `rules/project/pr-checks.md` may name a fourth source for the failed
+  check it covers, such as the service that posts the check.
 - To list the files of the repository, run `git ls-files`. The command prints the
   tracked files, and a PR can change no other file.
 

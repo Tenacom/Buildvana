@@ -15,7 +15,7 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 
 - `rules/common/workflow.md`: how Ric and I work together: issues, PRs, the self-review cycle, sanity checks, out-of-scope fixes, commit messages.
 - `rules/common/session.md`: scratchpad and handoff rules, for every session, with or without an issue.
-- `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. Its "What the gate and CI already cover" section names `inspect.cs` and the workflows under `.github/workflows/`, and a copy names its own checks there.
+- `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. Its "What the gate and CI already cover" section names `inspect.cs` and the workflows under `.github/workflows/`, and a copy names its own checks there. What a review does when a check fails comes from `rules/project/pr-checks.md`.
 - `agents/pr-reviewer.md`: the subagent that runs the skill for the self-review cycle. Nothing repo-specific in it.
 - `rules/common/design-principles.md`: scope, abstraction completeness, portability, conformance with the surrounding toolchain, LLM-automation stance.
 - `rules/common/csharp-style-guide.md`: C# style beyond what `.editorconfig` and `.globalconfig` can express.
@@ -38,4 +38,5 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `rules/project/architecture.md`: Buildvana's own structure, project tiers, target platforms, self-hosting, tool portability, and the documentation inventory: files, subfolders of `docs/`, generated regions. Entirely about this repo.
 - `rules/project/dependency-management.md`: the baseline dependencies, the `Buildvana.Runtime` strictly-BCL carve-out, the packages Buildvana SDK injects, the toolchain floors, and why the Buildvana family is never updated here. Entirely about this repo.
 - `rules/project/terminology.md`: the one name for each thing the repository documents. Entirely about this repo.
+- `rules/project/pr-checks.md`: the checks of this repository whose failure does not stop a PR review, and what a review does with each. Entirely about this repo.
 - this file: repository coordinates, and the index itself.

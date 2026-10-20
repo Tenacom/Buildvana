@@ -113,7 +113,7 @@ A self-review is a review posted by my own account, under the rules of the skill
 
 Before each self-review:
 
-1. Wait for the checks of the head commit, in the background, with `gh pr checks <N> --repo <owner>/<repo> --watch`. When a check fails, tell me.
+1. Wait for the checks of the head commit, in the background, with `gh pr checks <N> --repo <owner>/<repo> --watch`. When a check fails and `pr-checks.md` has no section for it, tell me. The reviewer handles a check that has a section.
 2. Check that `git status --porcelain` prints nothing, and that `git rev-parse HEAD` equals the `headRefOid` of the PR. When either check fails, stop and tell me.
 3. Start the subagent `pr-reviewer` in the foreground. The prompt is `Review PR <N>.`, with no other content. The subagent then judges the PR without the reasoning of the session that wrote the code.
 
