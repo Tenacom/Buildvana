@@ -90,12 +90,12 @@
       "Louis.*": "minor-",
       "StyleCop.Analyzers": "minor-",
       "Microsoft.CodeAnalysis.*": "patch",
-      // Microsoft.Build.Locator has versions of its own. This entry keeps it
-      // out of the pattern below.
-      "Microsoft.Build.Locator": "minor",
       // The MSBuild packages stay at BV_MinMSBuildVersion, the MSBuild floor.
       // Move them with --to when the floor moves.
-      "Microsoft.Build*": "patch",
+      "Microsoft.Build": "patch",
+      "Microsoft.Build.Framework": "patch",
+      "Microsoft.Build.Tasks.Core": "patch",
+      "Microsoft.Build.Utilities.Core": "patch",
     },
     "additionalPackages": {
       "SDK package injections": {
