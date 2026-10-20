@@ -17,7 +17,6 @@ THIRD-PARTY-NOTICES @rdeago
 Directory.Build.* @rdeago
 .editorconfig @rdeago
 .globalconfig @rdeago
-stylecop.json @rdeago
 *.DotSettings @rdeago
 NuGet.config @rdeago
 /.buildvana/ @rdeago

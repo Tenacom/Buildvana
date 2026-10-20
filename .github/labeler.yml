@@ -20,7 +20,6 @@
     - any-glob-to-any-file:
       - '**/.editorconfig'
       - '**/.globalconfig'
-      - '**/stylecop.json'
       - '**/*.DotSettings'
 
 'area:repo':

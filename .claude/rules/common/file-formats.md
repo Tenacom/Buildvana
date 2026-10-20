@@ -17,7 +17,7 @@ A section below overrides them for its own file type.
 ## C# source files (`*.cs`)
 
 - Charset: UTF-8 without BOM, as for every other file.
-- Every file opens with the copyright preamble whose text `stylecop.json` holds. SA1633, SA1634, and SA1636 check it.
+- Every file opens with the copyright preamble whose text the StyleCop `copyrightText` setting holds. SA1633, SA1634, and SA1636 check it.
 - A scratch `.cs` file under `.claude/scratchpad/` needs no preamble. The `Common.props` there turns StyleCop off.
 
 ## MSBuild XML files (`*.*proj`, `*.props`, `*.targets`)
