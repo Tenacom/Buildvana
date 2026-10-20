@@ -14,7 +14,6 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="nuget.config" />
-    <File Path="stylecop.json" />
     <File Path="VERSION" />
   </Folder>
   <Folder Name="/- Dependencies/">

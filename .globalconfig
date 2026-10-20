@@ -242,6 +242,55 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 # Last update: 2026-10-20 (StyleCop.Analyzers v1.3.133-beta)
 # ==============================================================================================
 
+# StyleCop Analyzers - Settings
+# Every setting is listed, defaults included, in the order of the settings reference:
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/Configuration.md#settings-reference
+# A value cannot contain '#' or ';', because the compiler reads the rest of the line as a comment.
+# StyleCop.Analyzers reads these settings from standard keys, set elsewhere:
+# - indentation from indent_size, tab_width, and indent_style (.editorconfig);
+# - systemUsingDirectivesFirst from dotnet_sort_system_directives_first;
+# - usingDirectivesPlacement from csharp_using_directive_placement;
+# - newlineAtEndOfFile from insert_final_newline (.editorconfig).
+
+# Readability
+stylecop.readability.allowBuiltInTypeAliases = true
+
+# Ordering
+stylecop.ordering.elementOrder = kind, accessibility, constant, static, readonly
+# Setting memberKindOrder omitted: no value states its default, the predefined SA1201 order.
+# The standard key dotnet_separate_import_directive_groups = false would read as "allow", not "omit".
+stylecop.ordering.blankLinesBetweenUsingGroups = omit
+
+# Naming
+stylecop.naming.allowCommonHungarianPrefixes = true
+stylecop.naming.allowedHungarianPrefixes = db, id, x
+stylecop.naming.allowedNamespaceComponents =
+stylecop.naming.includeInferredTupleElementNames = false
+stylecop.naming.tupleElementNameCasing = pascalCase
+
+# Maintainability
+stylecop.maintainability.topLevelTypes = class, interface, struct, enum, delegate
+
+# Layout
+stylecop.layout.allowConsecutiveUsings = true
+stylecop.layout.allowBracelessIfStatements = off
+stylecop.layout.allowDoWhileOnClosingBrace = true
+
+# Documentation
+stylecop.documentation.documentExposedElements = true
+stylecop.documentation.documentInternalElements = false
+stylecop.documentation.documentPrivateElements = false
+stylecop.documentation.documentPrivateFields = false
+stylecop.documentation.documentInterfaces = all
+stylecop.documentation.companyName = Tenacom
+stylecop.documentation.copyrightText = Copyright (C) Tenacom and Contributors. Licensed under the MIT license.\nSee the LICENSE file in the project root for full license information.
+# Settings stylecop.documentation.variables.* omitted: copyrightText uses no variables.
+stylecop.documentation.headerDecoration =
+stylecop.documentation.xmlHeader = false
+stylecop.documentation.fileNamingConvention = metadata
+stylecop.documentation.documentationCulture = en-US
+stylecop.documentation.excludeFromPunctuationCheck = exception, seealso
+
 # StyleCop Analyzers - Special rules
 dotnet_diagnostic.SA0001.severity = warning # XML comment analysis disabled
 dotnet_diagnostic.SA0002.severity = warning # Invalid settings file
