@@ -239,7 +239,7 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 # Ordering and grouping follows the categories listed in the official documentation.
 # See https://github.com/DotNetAnalyzers/StyleCopAnalyzers/tree/master/documentation
 # ----------------------------------------------------------------------------------------------
-# Last update: 2026-10-15 (StyleCop.Analyzers v1.3.79-beta)
+# Last update: 2026-10-20 (StyleCop.Analyzers v1.3.133-beta)
 # ==============================================================================================
 
 # StyleCop Analyzers - Special rules
@@ -320,6 +320,7 @@ dotnet_diagnostic.SA1137.severity = warning # Elements should have the same inde
 dotnet_diagnostic.SA1139.severity = warning # Use literal suffix notation instead of casting
 dotnet_diagnostic.SA1141.severity = warning # Use tuple syntax
 dotnet_diagnostic.SA1142.severity = warning # Refer to tuple elements by name
+dotnet_diagnostic.SA1143.severity = none # Conditional expressions should be formatted consistently # Its chain layout puts operators at line ends, against our concatenated ternaries layout
 
 # StyleCop Analyzers - Ordering rules
 dotnet_diagnostic.SA1200.severity = warning # Using directives should be placed correctly
@@ -359,7 +360,7 @@ dotnet_diagnostic.SA1311.severity = warning # Static readonly fields should begi
 dotnet_diagnostic.SA1312.severity = warning # Variable names should begin with lower-case letter
 dotnet_diagnostic.SA1313.severity = warning # Parameter names should begin with lower-case letter
 dotnet_diagnostic.SA1314.severity = warning # Type parameter names should begin with T
-# Rule SA1315 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1949
+dotnet_diagnostic.SA1315.severity = warning # Parameter names should match inherited names
 dotnet_diagnostic.SA1316.severity = warning # Tuple element names should use correct casing
 dotnet_diagnostic.SA1317.severity = warning # Identifier should be named only with Latin letters
 
@@ -377,7 +378,8 @@ dotnet_diagnostic.SA1408.severity = warning # Conditional expressions should dec
 # Rule SA1409 omitted in StyleCop Analyzers - https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/1058
 dotnet_diagnostic.SA1410.severity = warning # Remove delegate parenthesis when possible
 dotnet_diagnostic.SA1411.severity = warning # Attribute constructor should not use unnecessary parenthesis
-dotnet_diagnostic.SA1412.severity = none # Store files as UTF-8 with byte order mark # Practically all IDEs and editors save source code as UTF-8 anyway; Claude Code's Write tool does not add a BOM
+dotnet_diagnostic.SA1412.severity = none # Store files as UTF-8 with byte order mark # SX1412 is enabled instead
+dotnet_diagnostic.SX1412.severity = warning # Store files as UTF-8 without byte order mark
 dotnet_diagnostic.SA1413.severity = warning # Use trailing comma in multi-line initializers
 dotnet_diagnostic.SA1414.severity = warning # Tuple types in signatures should have element names
 
@@ -459,6 +461,7 @@ dotnet_diagnostic.SA1649.severity = warning # File name should match first type 
 dotnet_diagnostic.SA1651.severity = warning # Do not use placeholder elements
 # Rule SA1652 superseded by SA0001
 dotnet_diagnostic.SA1653.severity = warning # Only one partial declaration should contain summary documentation
+dotnet_diagnostic.SA1654.severity = warning # Properly encode generic brackets
 
 # ==============================================================================================
 #                                    PUBLIC API ANALYZERS
