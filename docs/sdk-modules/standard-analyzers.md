@@ -95,7 +95,8 @@ It looks for `stylecop.json` from the project directory upward, and for `.stylec
 A file above the home directory does not count.
 The nearest file wins, so a file in the home directory serves every project, and a file nearer a project replaces it for that project.
 The file does not show in the project tree of an IDE.
-A project with no such file runs StyleCop with its default settings.
+StyleCop also reads each setting from a key of `.editorconfig` or `.globalconfig`, and a value in the file wins over the key.
+A project with no such file takes its settings from those keys, and the defaults for the rest.
 
 ### Public API files
 
