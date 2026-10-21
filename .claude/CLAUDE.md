@@ -19,6 +19,7 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `agents/pr-reviewer.md`: the subagent that runs the skill for the self-review cycle. Nothing repo-specific in it.
 - `rules/common/design-principles.md`: scope, abstraction completeness, portability, conformance with the surrounding toolchain, LLM-automation stance.
 - `rules/common/csharp-style-guide.md`: C# style beyond what `.editorconfig` and `.globalconfig` can express.
+- `rules/common/dependency-injection.md`: service contracts, disposability as an implementation detail, and which services need a contract.
 - `rules/common/file-formats.md`: encoding, indentation, and per-format conventions.
 - `rules/common/powershell.md`: Windows PowerShell 5.1 pitfalls and shell-usage rules.
 - `rules/common/testing.md`: test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
