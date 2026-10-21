@@ -167,6 +167,11 @@ The release assets are collected from two sources:
 
 A line with the wrong shape, or one naming a file that does not exist, is a warning, and the asset is skipped.
 
+`bv` reaches the GitHub API of the host of the `origin` remote.
+For `github.com`, the API is at `https://api.github.com`.
+`bv` takes any other host for a GitHub Enterprise Server, whose API is at `https://<host>/api/v3`.
+An asset upload goes to the address that GitHub states in the answer to the creation of the draft release.
+
 `bv` then uploads the assets, and turns the draft into the release.
 The release is named after the version, its tag names the release commit, and the prerelease flag follows the version.
 Its description is a link to `CHANGELOG.md` on the release branch, followed by the notes GitHub generates.
