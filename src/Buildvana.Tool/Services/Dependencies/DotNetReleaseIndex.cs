@@ -182,6 +182,7 @@ internal sealed class DotNetReleaseIndex : INetSdkReleaseSource, IDisposable
 
     private async Task<JsonDocument> ReadJsonAsync(Uri url, CancellationToken cancellationToken)
     {
+        JsonDocument document;
         try
         {
             using var response = await _http.GetAsync(url, cancellationToken).ConfigureAwait(false);
@@ -189,7 +190,7 @@ internal sealed class DotNetReleaseIndex : INetSdkReleaseSource, IDisposable
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             await using (stream.ConfigureAwait(false))
             {
-                return await JsonDocument.ParseAsync(stream, default, cancellationToken).ConfigureAwait(false);
+                document = await JsonDocument.ParseAsync(stream, default, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (HttpRequestException exception)
@@ -204,5 +205,7 @@ internal sealed class DotNetReleaseIndex : INetSdkReleaseSource, IDisposable
         {
             throw new BuildFailedException($"The .NET release index at {url} states something bv cannot read: {exception.Message}", exception);
         }
+
+        return document;
     }
 }
