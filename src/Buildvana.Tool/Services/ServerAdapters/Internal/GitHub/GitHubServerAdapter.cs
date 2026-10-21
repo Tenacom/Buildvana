@@ -26,7 +26,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private readonly IServiceProvider _services;
     private readonly IReporter _reporter;
     private readonly VersionService _version;
-    private readonly GitService _git;
+    private readonly IGitService _git;
     private readonly GitHubRepositoryUrls _urls;
     private readonly string _token;
 
@@ -35,7 +35,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         _services = services;
         _reporter = services.GetRequiredService<IReporter>();
         _version = services.GetRequiredService<VersionService>();
-        _git = services.GetRequiredService<GitService>();
+        _git = services.GetRequiredService<IGitService>();
         BuildFailedException.ThrowIfNot(
             GitUrlInfo.TryCreate(_git.OriginUrl, out var originInfo),
             $"Couldn't get information from origin URL '{_git.OriginUrl}'.");

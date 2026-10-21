@@ -25,7 +25,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     private const string ProvisionalMessage = "Prepare release [skip ci]";
 
     private readonly IReporter _reporter;
-    private readonly GitService _git;
+    private readonly IGitService _git;
     private readonly VersionService _version;
     private readonly Stack<Func<ValueTask>> _rollbackActions = new();
     private readonly List<AssetData> _assets = [];
@@ -40,7 +40,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         Guard.IsNotNull(services);
 
         _reporter = services.GetRequiredService<IReporter>();
-        _git = services.GetRequiredService<GitService>();
+        _git = services.GetRequiredService<IGitService>();
         _version = services.GetRequiredService<VersionService>();
     }
 
@@ -271,7 +271,6 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         }
 
         _rollbackActions.Clear();
-        _git.Dispose();
     }
 
     protected abstract Task DoPublishAsync(IReadOnlyList<AssetData> assets);

@@ -50,7 +50,7 @@ internal sealed class ReleaseCommand(
         var server = services.GetRequiredService<ServerAdapter>();
         var version = services.GetRequiredService<VersionService>();
         var dotnet = services.GetRequiredService<DotNetService>();
-        var git = services.GetRequiredService<GitService>();
+        var git = services.GetRequiredService<IGitService>();
         var changelog = services.GetRequiredService<ChangelogService>();
         var declaredApiFiles = services.GetRequiredService<DeclaredApiFilesService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();

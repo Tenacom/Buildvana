@@ -32,7 +32,7 @@ internal sealed partial class VersionService
         IReporter reporter,
         IHomeDirectoryProvider home,
         VersioningSettings settings,
-        GitService git,
+        IGitService git,
         DeclaredApiFilesService declaredApiFiles)
     {
         Guard.IsNotNull(reporter);
