@@ -62,7 +62,7 @@ internal sealed class GitHubApiClient : IDisposable
         Guard.IsNotNull(handler);
 
         BaseUrl = GetBaseUrl(hostName);
-        _http = new HttpClient(handler) { BaseAddress = BaseUrl };
+        _http = new HttpClient(handler);
         var headers = _http.DefaultRequestHeaders;
         headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubMediaType));
         headers.Add("X-GitHub-Api-Version", ApiVersion);
@@ -86,7 +86,7 @@ internal sealed class GitHubApiClient : IDisposable
         string owner,
         string name,
         CancellationToken cancellationToken = default)
-        => SendAsync(HttpMethod.Get, RepositoryPath(owner, name), null, GitHubJsonContext.Default.GitHubRepository, cancellationToken);
+        => SendAsync(HttpMethod.Get, ApiUrl(RepositoryPath(owner, name)), null, GitHubJsonContext.Default.GitHubRepository, cancellationToken);
 
     /// <summary>
     /// Asynchronously creates a release.
@@ -105,7 +105,7 @@ internal sealed class GitHubApiClient : IDisposable
         Guard.IsNotNull(release);
         return SendAsync(
             HttpMethod.Post,
-            RepositoryPath(owner, name) + "/releases",
+            ApiUrl(RepositoryPath(owner, name) + "/releases"),
             JsonBody(release, GitHubJsonContext.Default.GitHubNewRelease),
             GitHubJsonContext.Default.GitHubRelease,
             cancellationToken);
@@ -128,7 +128,7 @@ internal sealed class GitHubApiClient : IDisposable
         Guard.IsNotNull(request);
         return SendAsync(
             HttpMethod.Post,
-            RepositoryPath(owner, name) + "/releases/generate-notes",
+            ApiUrl(RepositoryPath(owner, name) + "/releases/generate-notes"),
             JsonBody(request, GitHubJsonContext.Default.GitHubReleaseNotesRequest),
             GitHubJsonContext.Default.GitHubReleaseNotes,
             cancellationToken);
@@ -153,7 +153,7 @@ internal sealed class GitHubApiClient : IDisposable
         Guard.IsNotNull(update);
         return SendAsync(
             HttpMethod.Patch,
-            ReleasePath(owner, name, releaseId),
+            ApiUrl(ReleasePath(owner, name, releaseId)),
             JsonBody(update, GitHubJsonContext.Default.GitHubReleaseUpdate),
             cancellationToken);
     }
@@ -171,7 +171,7 @@ internal sealed class GitHubApiClient : IDisposable
         string name,
         long releaseId,
         CancellationToken cancellationToken = default)
-        => SendAsync(HttpMethod.Delete, ReleasePath(owner, name, releaseId), null, cancellationToken);
+        => SendAsync(HttpMethod.Delete, ApiUrl(ReleasePath(owner, name, releaseId)), null, cancellationToken);
 
     /// <summary>
     /// Asynchronously gets a value indicating whether a tag exists.
@@ -193,14 +193,15 @@ internal sealed class GitHubApiClient : IDisposable
         string tagName,
         CancellationToken cancellationToken = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, RepositoryPath(owner, name) + "/git/ref/tags/" + EscapeRefName(tagName));
-        using var response = await SendCoreAsync(request, cancellationToken).ConfigureAwait(false);
+        var url = ApiUrl(RepositoryPath(owner, name) + "/git/ref/tags/" + EscapeRefName(tagName));
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return false;
         }
 
-        await EnsureSuccessAsync(request, response, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessAsync(HttpMethod.Get, url, response, cancellationToken).ConfigureAwait(false);
         return true;
     }
 
@@ -213,7 +214,11 @@ internal sealed class GitHubApiClient : IDisposable
     /// <param name="cancellationToken">A token that cancels the operation.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     public Task DeleteTagAsync(string owner, string name, string tagName, CancellationToken cancellationToken = default)
-        => SendAsync(HttpMethod.Delete, RepositoryPath(owner, name) + "/git/refs/tags/" + EscapeRefName(tagName), null, cancellationToken);
+        => SendAsync(
+            HttpMethod.Delete,
+            ApiUrl(RepositoryPath(owner, name) + "/git/refs/tags/" + EscapeRefName(tagName)),
+            null,
+            cancellationToken);
 
     /// <summary>
     /// Asynchronously uploads an asset of a release.
@@ -245,7 +250,7 @@ internal sealed class GitHubApiClient : IDisposable
 
         var content = new StreamContent(contents);
         content.Headers.ContentType = mediaType;
-        return SendAsync(HttpMethod.Post, url.AbsoluteUri, content, cancellationToken);
+        return SendAsync(HttpMethod.Post, url, content, cancellationToken);
     }
 
     /// <inheritdoc cref="IDisposable.Dispose"/>
@@ -298,7 +303,8 @@ internal sealed class GitHubApiClient : IDisposable
         => new(JsonSerializer.Serialize(value, typeInfo), Encoding.UTF8, "application/json");
 
     private static async Task EnsureSuccessAsync(
-        HttpRequestMessage request,
+        HttpMethod method,
+        Uri url,
         HttpResponseMessage response,
         CancellationToken cancellationToken)
     {
@@ -310,8 +316,8 @@ internal sealed class GitHubApiClient : IDisposable
         var message = await ReadErrorMessageAsync(response, cancellationToken).ConfigureAwait(false);
         var status = string.Create(CultureInfo.InvariantCulture, $"{(int)response.StatusCode} {response.ReasonPhrase}");
         throw new BuildFailedException(message is null
-            ? $"The GitHub API answered {Describe(request)} with {status}."
-            : $"The GitHub API answered {Describe(request)} with {status}: {message}");
+            ? $"The GitHub API answered {Describe(method, url)} with {status}."
+            : $"The GitHub API answered {Describe(method, url)} with {status}: {message}");
     }
 
     // A GitHub error answer is JSON with a "message" member. A proxy in front of a server may answer with
@@ -340,7 +346,8 @@ internal sealed class GitHubApiClient : IDisposable
 
     // The client buffers every answer before SendAsync returns, so reading the body here meets no network.
     private static async Task<T> ReadAsync<T>(
-        HttpRequestMessage request,
+        HttpMethod method,
+        Uri url,
         HttpResponseMessage response,
         JsonTypeInfo<T> typeInfo,
         CancellationToken cancellationToken)
@@ -358,18 +365,22 @@ internal sealed class GitHubApiClient : IDisposable
         catch (JsonException exception)
         {
             throw new BuildFailedException(
-                $"The GitHub API answered {Describe(request)} with something bv cannot read: {exception.Message}",
+                $"The GitHub API answered {Describe(method, url)} with something bv cannot read: {exception.Message}",
                 exception);
         }
 
-        return result ?? throw new BuildFailedException($"The GitHub API answered {Describe(request)} with null.");
+        return result ?? throw new BuildFailedException($"The GitHub API answered {Describe(method, url)} with null.");
     }
 
-    private static string Describe(HttpRequestMessage request) => $"{request.Method} {request.RequestUri?.AbsoluteUri}";
+    private static string Describe(HttpMethod method, Uri url) => $"{method} {url.AbsoluteUri}";
+
+    // Every request goes to an absolute URL that this type holds and passes along with the request, so that a
+    // diagnostic names the URL without reading back the nullable HttpRequestMessage.RequestUri.
+    private Uri ApiUrl(string path) => new(BaseUrl, path);
 
     private async Task<T> SendAsync<T>(
         HttpMethod method,
-        string url,
+        Uri url,
         HttpContent? content,
         JsonTypeInfo<T> typeInfo,
         CancellationToken cancellationToken)
@@ -377,25 +388,26 @@ internal sealed class GitHubApiClient : IDisposable
     {
         using var request = new HttpRequestMessage(method, url);
         request.Content = content;
-        using var response = await SendCoreAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(request, response, cancellationToken).ConfigureAwait(false);
-        return await ReadAsync(request, response, typeInfo, cancellationToken).ConfigureAwait(false);
+        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessAsync(method, url, response, cancellationToken).ConfigureAwait(false);
+        return await ReadAsync(method, url, response, typeInfo, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task SendAsync(
         HttpMethod method,
-        string url,
+        Uri url,
         HttpContent? content,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(method, url);
         request.Content = content;
-        using var response = await SendCoreAsync(request, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(request, response, cancellationToken).ConfigureAwait(false);
+        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessAsync(method, url, response, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<HttpResponseMessage> SendCoreAsync(
         HttpRequestMessage request,
+        Uri url,
         CancellationToken cancellationToken)
     {
         try
@@ -404,11 +416,13 @@ internal sealed class GitHubApiClient : IDisposable
         }
         catch (HttpRequestException exception)
         {
-            throw new BuildFailedException($"The GitHub API could not be reached for {Describe(request)}: {exception.Message}", exception);
+            throw new BuildFailedException(
+                $"The GitHub API could not be reached for {Describe(request.Method, url)}: {exception.Message}",
+                exception);
         }
         catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new BuildFailedException($"The GitHub API did not answer {Describe(request)} in time.", exception);
+            throw new BuildFailedException($"The GitHub API did not answer {Describe(request.Method, url)} in time.", exception);
         }
     }
 }
