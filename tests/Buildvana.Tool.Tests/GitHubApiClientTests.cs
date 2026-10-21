@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Net;
-using System.Text;
 using Buildvana.Core;
 using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 using Buildvana.Tool.Utilities;
@@ -167,6 +166,7 @@ internal sealed class GitHubApiClientTests
         var handler = Answering();
         using var client = NewClient(handler);
         _ = await client.TagExistsAsync(Owner, Repo, "release/1.0 beta").ConfigureAwait(false);
+        await Assert.That(handler.Requests[0].Method).IsEqualTo(HttpMethod.Get);
         await Assert.That(handler.Requests[0].Url).IsEqualTo(ApiRepositoryUrl + "/git/ref/tags/release/1.0%20beta");
     }
 
@@ -182,7 +182,7 @@ internal sealed class GitHubApiClientTests
     [Test]
     public async Task UploadReleaseAssetAsync_PostsTheContentsToTheUploadUrl()
     {
-        var url = UploadUrl + "?name=Foo.1.0.0.nupkg&label=Foo%20package";
+        const string url = UploadUrl + "?name=Foo.1.0.0.nupkg&label=Foo%20package";
         var handler = Answering((HttpMethod.Post, url), """{"id":7}""", HttpStatusCode.Created);
         using var client = NewClient(handler);
         await UploadAsync(client, Release, "application/zip", "Foo package").ConfigureAwait(false);
@@ -337,5 +337,5 @@ internal sealed class GitHubApiClientTests
             "Foo.1.0.0.nupkg",
             contentType,
             label,
-            new MemoryStream(Encoding.ASCII.GetBytes("asset contents")));
+            new MemoryStream("asset contents"u8.ToArray()));
 }
