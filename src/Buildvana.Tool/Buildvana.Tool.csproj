@@ -47,7 +47,6 @@
     <PackageReference Include="NuGet.ProjectModel" />
     <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="NuGet.Versioning" />
-    <PackageReference Include="Octokit" />
     <PackageReference Include="Spectre.Console" />
   </ItemGroup>
 

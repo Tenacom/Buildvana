@@ -3,6 +3,8 @@
 
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -14,14 +16,13 @@ using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Octokit;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 
 /// <summary>
 /// Continuous Integration adapter for GitHub.
 /// </summary>
-internal sealed class GitHubServerAdapter : ServerAdapter
+internal sealed class GitHubServerAdapter : ServerAdapter, IDisposable
 {
     private readonly IServiceProvider _services;
     private readonly IReporter _reporter;
@@ -29,6 +30,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     private readonly IGitService _git;
     private readonly GitHubRepositoryUrls _urls;
     private readonly string _token;
+    private readonly GitHubApiClient _client;
 
     private GitHubServerAdapter(IServiceProvider services)
     {
@@ -45,6 +47,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
         RepositoryName = originInfo.PathSegments[1];
         _urls = new GitHubRepositoryUrls(HostName, RepositoryOwner, RepositoryName);
         _token = RuntimeAccess.Translate(services.GetRequiredService<BuildvanaConfig>().GitHub.GetToken);
+        _client = new GitHubApiClient(HostName, _token, new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All });
     }
 
     /// <inheritdoc/>
@@ -111,8 +114,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     public override async Task<bool> IsPrivateRepositoryAsync()
     {
         _reporter.Info("Fetching repository information...");
-        var client = CreateGitHubClient();
-        var repository = await client.Repository.Get(RepositoryOwner, RepositoryName).ConfigureAwait(false);
+        var repository = await _client.GetRepositoryAsync(RepositoryOwner, RepositoryName).ConfigureAwait(false);
         return repository.Private;
     }
 
@@ -130,16 +132,16 @@ internal sealed class GitHubServerAdapter : ServerAdapter
             createGitHubReleaseAsync: () => {
                 // Create the release as a draft first, so if the token has no permissions we can bail out early
                 var tag = _version.CurrentStr;
-                var client = CreateGitHubClient();
                 _reporter.Info("Creating a provisional draft release...");
-                var newRelease = new NewRelease(tag) {
+                var newRelease = new GitHubNewRelease {
+                    TagName = tag,
                     Name = $"{tag} [provisional]",
                     TargetCommitish = _git.CurrentBranch,
                     Prerelease = _version.IsPrerelease,
                     Draft = true,
                 };
 
-                return client.Repository.Release.Create(RepositoryOwner, RepositoryName, newRelease);
+                return _client.CreateReleaseAsync(RepositoryOwner, RepositoryName, newRelease);
             }).ConfigureAwait(false);
 
     /// <summary>
@@ -150,34 +152,35 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// release commit so the tag is anchored to it regardless of any post-release commits that may
     /// have been pushed on top of the branch.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task PublishReleaseAsync(Release release, string targetCommitish)
+    public async Task PublishReleaseAsync(GitHubRelease release, string targetCommitish)
     {
         Guard.IsNotNull(release);
         Guard.IsNotNullOrEmpty(targetCommitish);
         var tag = _version.CurrentStr;
-        var client = CreateGitHubClient();
         _reporter.Info($"Generating release notes for {tag}...");
-        var releaseNotesRequest = new GenerateReleaseNotesRequest(tag) {
+        var releaseNotesRequest = new GitHubReleaseNotesRequest {
+            TagName = tag,
             TargetCommitish = targetCommitish,
         };
 
-        var generateNotesResponse = await client.Repository.Release.GenerateReleaseNotes(
+        var generatedNotes = await _client.GenerateReleaseNotesAsync(
             RepositoryOwner,
             RepositoryName,
             releaseNotesRequest).ConfigureAwait(false);
         var body = $"We also have a [human-curated changelog]({GetFileUrl("CHANGELOG.md", _git.CurrentBranch)}).\n\n---\n\n"
-                + generateNotesResponse.Body;
+                + generatedNotes.Body;
 
         _reporter.Info($"Publishing the previously created release as {tag} (target {targetCommitish})...");
-        var update = release.ToUpdate();
-        update.TagName = tag;
-        update.Name = tag;
-        update.TargetCommitish = targetCommitish;
-        update.Body = body;
-        update.Prerelease = _version.IsPrerelease;
-        update.Draft = false;
+        var update = new GitHubReleaseUpdate {
+            TagName = tag,
+            Name = tag,
+            TargetCommitish = targetCommitish,
+            Body = body,
+            Prerelease = _version.IsPrerelease,
+            Draft = false,
+        };
 
-        _ = await client.Repository.Release.Edit(RepositoryOwner, RepositoryName, release.Id, update).ConfigureAwait(false);
+        await _client.UpdateReleaseAsync(RepositoryOwner, RepositoryName, release.Id, update).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -187,17 +190,16 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <param name="tagName">The tag name, or <see langword="null"/> to not delete a tag.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     /// <remarks>
-    /// <para>A deleted release is named after <paramref name="tagName"/>, never after
-    /// <see cref="Release.TagName"/>: the draft is created before the release commit exists, and that commit
+    /// <para>A deleted release is named after <paramref name="tagName"/>, never after the tag name of
+    /// <paramref name="release"/>: the draft is created before the release commit exists, and that commit
     /// always moves the version, so the tag name the draft carries is never the one the release is published
     /// under. A draft, having no tag of its own, is reported as the draft it is.</para>
     /// </remarks>
-    public async Task DeleteReleaseAsync(Release release, string? tagName)
+    public async Task DeleteReleaseAsync(GitHubRelease release, string? tagName)
     {
         Guard.IsNotNull(release);
         _reporter.Info("Deleting the previously created release...");
-        var client = CreateGitHubClient();
-        await client.Repository.Release.Delete(RepositoryOwner, RepositoryName, release.Id).ConfigureAwait(false);
+        await _client.DeleteReleaseAsync(RepositoryOwner, RepositoryName, release.Id).ConfigureAwait(false);
         if (string.IsNullOrEmpty(tagName))
         {
             _reporter.Notice("Deleted the provisional draft release.");
@@ -206,20 +208,15 @@ internal sealed class GitHubServerAdapter : ServerAdapter
 
         _reporter.Notice($"Deleted release {tagName}.");
 
-        var reference = "refs/tags/" + tagName;
-        _reporter.Info($"Looking for reference '{reference}' in GitHub repository...");
-        try
+        _reporter.Info($"Looking for tag {tagName} in GitHub repository...");
+        if (!await _client.TagExistsAsync(RepositoryOwner, RepositoryName, tagName).ConfigureAwait(false))
         {
-            _ = await client.Git.Reference.Get(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
-        }
-        catch (NotFoundException)
-        {
-            _reporter.Info($"Reference '{reference}' not found in GitHub repository.");
+            _reporter.Info($"Tag {tagName} not found in GitHub repository.");
             return;
         }
 
-        _reporter.Info($"Deleting reference '{reference}' in GitHub repository...");
-        await client.Git.Reference.Delete(RepositoryOwner, RepositoryName, reference).ConfigureAwait(false);
+        _reporter.Info($"Deleting tag {tagName} in GitHub repository...");
+        await _client.DeleteTagAsync(RepositoryOwner, RepositoryName, tagName).ConfigureAwait(false);
         _reporter.Notice($"Deleted tag {tagName}.");
     }
 
@@ -229,44 +226,23 @@ internal sealed class GitHubServerAdapter : ServerAdapter
     /// <param name="release">An object representing the release.</param>
     /// <param name="path">The full path of the asset file.</param>
     /// <param name="mimeType">The MIME type of the asset.</param>
-    /// <param name="description">A short textual description of the asset.</param>
+    /// <param name="description">A short textual description of the asset, which becomes its label.</param>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public async Task UploadReleaseAssetAsync(Release release, string path, string mimeType, string description)
+    public async Task UploadReleaseAssetAsync(GitHubRelease release, string path, string mimeType, string description)
     {
-        var client = CreateGitHubClient();
         _reporter.Detail($"Uploading asset {path}...");
-        ReleaseAsset asset;
         var assetContents = UserFile.OpenRead(path);
         await using (assetContents.ConfigureAwait(false))
         {
-            var upload = new ReleaseAssetUpload {
-                FileName = Path.GetFileName(path),
-                ContentType = mimeType,
-                RawData = assetContents,
-            };
-
-            asset = await client.Repository.Release.UploadAsset(release, upload).ConfigureAwait(false);
-        }
-
-        if (!string.IsNullOrEmpty(description))
-        {
-            _reporter.Detail("Updating asset label...");
-            var update = asset.ToUpdate();
-            update.Label = description;
-            _ = await client.Repository.Release.EditAsset(RepositoryOwner, RepositoryName, asset.Id, update).ConfigureAwait(false);
-        }
-        else
-        {
-            _reporter.Detail("Skipping label update: asset has no description.");
+            await _client.UploadReleaseAssetAsync(
+                release,
+                Path.GetFileName(path),
+                mimeType,
+                string.IsNullOrEmpty(description) ? null : description,
+                assetContents).ConfigureAwait(false);
         }
     }
 
-    private GitHubClient CreateGitHubClient()
-    {
-        var client = new GitHubClient(new ProductHeaderValue("Buildvana")) {
-            Credentials = new(_token),
-        };
-
-        return client;
-    }
+    /// <inheritdoc cref="IDisposable.Dispose"/>
+    public void Dispose() => _client.Dispose();
 }

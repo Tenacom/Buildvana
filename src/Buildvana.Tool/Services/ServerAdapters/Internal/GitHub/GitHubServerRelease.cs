@@ -11,7 +11,6 @@ using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Octokit;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 
@@ -23,7 +22,7 @@ internal sealed class GitHubServerRelease : ServerRelease
     private readonly GitHubServerAdapter _server;
     private readonly IReporter _reporter;
     private readonly VersionService _version;
-    private readonly Release _gitHubRelease;
+    private readonly GitHubRelease _gitHubRelease;
     private readonly string _actionsStepOutputFile;
 
     private bool _gitHubReleaseDeleted;
@@ -31,7 +30,7 @@ internal sealed class GitHubServerRelease : ServerRelease
     private GitHubServerRelease(
         GitHubServerAdapter server,
         IServiceProvider services,
-        Release gitHubRelease,
+        GitHubRelease gitHubRelease,
         string actionsStepOutputFile)
         : base(services)
     {
@@ -57,7 +56,7 @@ internal sealed class GitHubServerRelease : ServerRelease
     public static async Task<GitHubServerRelease> CreateAsync(
         GitHubServerAdapter server,
         IServiceProvider services,
-        Func<Task<Release>> createGitHubReleaseAsync)
+        Func<Task<GitHubRelease>> createGitHubReleaseAsync)
     {
         Guard.IsNotNull(server);
         Guard.IsNotNull(services);
