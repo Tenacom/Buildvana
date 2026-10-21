@@ -373,7 +373,8 @@ internal sealed class GitHubApiClient : IDisposable
         CancellationToken cancellationToken)
         where T : class
     {
-        using var request = new HttpRequestMessage(method, url) { Content = content };
+        using var request = new HttpRequestMessage(method, url);
+        request.Content = content;
         using var response = await SendCoreAsync(request, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(request, response, cancellationToken).ConfigureAwait(false);
         return await ReadAsync(request, response, typeInfo, cancellationToken).ConfigureAwait(false);
@@ -385,7 +386,8 @@ internal sealed class GitHubApiClient : IDisposable
         HttpContent? content,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(method, url) { Content = content };
+        using var request = new HttpRequestMessage(method, url);
+        request.Content = content;
         using var response = await SendCoreAsync(request, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(request, response, cancellationToken).ConfigureAwait(false);
     }
