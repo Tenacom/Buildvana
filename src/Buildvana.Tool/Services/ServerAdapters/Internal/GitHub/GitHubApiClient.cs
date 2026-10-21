@@ -320,20 +320,22 @@ internal sealed class GitHubApiClient : IDisposable
         HttpResponseMessage response,
         CancellationToken cancellationToken)
     {
+        GitHubErrorBody? body;
         try
         {
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             await using (stream.ConfigureAwait(false))
             {
-                var body = await JsonSerializer.DeserializeAsync(stream, GitHubJsonContext.Default.GitHubErrorBody, cancellationToken)
+                body = await JsonSerializer.DeserializeAsync(stream, GitHubJsonContext.Default.GitHubErrorBody, cancellationToken)
                     .ConfigureAwait(false);
-                return body?.Message is { Length: > 0 } message ? message : null;
             }
         }
         catch (JsonException)
         {
             return null;
         }
+
+        return body?.Message is { Length: > 0 } message ? message : null;
     }
 
     // The client buffers every answer before SendAsync returns, so reading the body here meets no network.
