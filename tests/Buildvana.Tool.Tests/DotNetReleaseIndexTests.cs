@@ -85,7 +85,7 @@ internal sealed class DotNetReleaseIndexTests
         var handler = NewHandler();
         using var index = new DotNetReleaseIndex(handler);
         _ = await index.GetReleasesAsync(NuGetVersion.Parse("10.0.100")).ConfigureAwait(false);
-        await Assert.That(handler.Requests[0]).IsEqualTo(DotNetReleaseIndex.IndexUrl);
+        await Assert.That(handler.Requests[0].Url).IsEqualTo(DotNetReleaseIndex.IndexUrl);
     }
 
     [Test]
@@ -94,9 +94,10 @@ internal sealed class DotNetReleaseIndexTests
         var handler = NewHandler();
         using var index = new DotNetReleaseIndex(handler);
         _ = await index.GetReleasesAsync(NuGetVersion.Parse("10.0.100")).ConfigureAwait(false);
-        await Assert.That(handler.Requests).Contains(ChannelUrl10);
-        await Assert.That(handler.Requests).Contains(ChannelUrl11);
-        await Assert.That(handler.Requests).DoesNotContain(ChannelUrl9);
+        var urls = handler.Requests.Select(static request => request.Url).ToList();
+        await Assert.That(urls).Contains(ChannelUrl10);
+        await Assert.That(urls).Contains(ChannelUrl11);
+        await Assert.That(urls).DoesNotContain(ChannelUrl9);
     }
 
     [Test]
