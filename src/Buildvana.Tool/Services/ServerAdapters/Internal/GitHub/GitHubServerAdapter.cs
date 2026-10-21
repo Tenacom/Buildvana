@@ -66,7 +66,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter, IDisposable
     public override Uri RepositoryUrl => _urls.Repository;
 
     /// <inheritdoc/>
-    /// <value>Always <see langword="false"/>.</value>
+    /// <value>Always <see langword="true"/>.</value>
     public override bool IsCloudBuild => true;
 
     /// <inheritdoc/>
