@@ -20,10 +20,10 @@ using NuGet.Versioning;
 namespace Buildvana.Tool.Services.Git;
 
 /// <summary>
-/// Provides shortcut methods to use Git.
+/// Implements <see cref="IGitService"/> over LibGit2Sharp.
 /// </summary>
 [PublicAPI]
-internal sealed class GitService : IDisposable
+internal sealed class GitService : IGitService, IDisposable
 {
     private readonly IReporter _reporter;
     private readonly IHomeDirectoryProvider _home;
@@ -47,25 +47,16 @@ internal sealed class GitService : IDisposable
         CurrentBranch = headName.StartsWith("refs/heads/", StringComparison.Ordinal) ? _repository.Head.FriendlyName : string.Empty;
     }
 
-    /// <summary>
-    /// Gets the name of the origin remote, i.e. either "origin" if such remote exists, or the name of the only remote if there is only one.
-    /// </summary>
+    /// <inheritdoc/>
     public string Origin { get; }
 
-    /// <summary>
-    /// Gets the fetch URL of the origin remote.
-    /// </summary>
+    /// <inheritdoc/>
     public Uri OriginUrl { get; }
 
-    /// <summary>
-    /// Gets the name of the current Git branch.
-    /// </summary>
-    /// <value>If HEAD is on a branch, the name of the branch; otherwise, the empty string.</value>
+    /// <inheritdoc/>
     public string CurrentBranch { get; }
 
-    /// <summary>
-    /// Gets or sets the identity of the Git committer.
-    /// </summary>
+    /// <inheritdoc/>
     [DisallowNull]
     public GitIdentity? CommitterIdentity
     {
@@ -84,45 +75,23 @@ internal sealed class GitService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Gets or sets the credentials used for pushing to the Git repository if ambient credentials are not sufficient.
-    /// </summary>
-    /// <remarks>
-    /// <para>Set this property when ambient mechanisms (`http.extraheader` written by CI checkout actions,
-    /// URL-embedded credentials, OS credential helpers) are absent or insufficient.</para>
-    /// <para>The provided credentials are tried only after the server returns a 401 challenge to the initial push request.</para>
-    /// </remarks>
+    /// <inheritdoc/>
     public GitCredentials? PushCredentialsFallback { get; set; }
 
-    /// <summary>
-    /// Gets the SHA of the current <c>HEAD</c> commit.
-    /// </summary>
+    /// <inheritdoc/>
     public string HeadSha => _repository.Head.Tip.Sha;
 
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose() => _repository.Dispose();
 
-    /// <summary>
-    /// Tells whether a tag exists in the local Git repository.
-    /// </summary>
-    /// <param name="tag">The tag to check for.</param>
-    /// <returns>If a tag whose name is equal to <paramref name="tag"/> exists in the repository, <see langword="true"/>;
-    /// otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc/>
     public bool TagExists(string tag)
     {
         Guard.IsNotNullOrEmpty(tag);
         return _repository.Tags.Any(x => string.Equals(x.FriendlyName, tag, StringComparison.Ordinal));
     }
 
-    /// <summary>
-    /// Gets the latest version and the latest stable version in commit history.
-    /// </summary>
-    /// <returns>A tuple of the latest version and the latest stable version.</returns>
-    /// <remarks>
-    /// <para>If no version tag is found in commit history, this method returns a tuple of two <see langword="null"/>s.</para>
-    /// <para>If no stable version tag is found in commit history, this method returns a tuple of the latest
-    /// version and <see langword="null"/>.</para>
-    /// </remarks>
+    /// <inheritdoc/>
     public (SemanticVersion? Latest, SemanticVersion? LatestStable) GetLatestVersions()
     {
         var versions = _repository.Tags
@@ -154,15 +123,7 @@ internal sealed class GitService : IDisposable
         return (latest, latestStable);
     }
 
-    /// <summary>
-    /// Runs an operation and detects the files it modified, by comparing working-tree snapshots
-    /// (as per <see cref="GetDirtyFiles"/>) taken before and after the operation.
-    /// </summary>
-    /// <typeparam name="T">The type of the operation's result.</typeparam>
-    /// <param name="operation">The operation to run.</param>
-    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is a tuple
-    /// of the operation's result and the absolute paths of the files the operation modified. Files that
-    /// were already dirty before the operation are not reported, even if the operation modified them again.</returns>
+    /// <inheritdoc/>
     public async Task<(T Result, IReadOnlyList<string> ChangedFiles)> TrackChangesAsync<T>(Func<Task<T>> operation)
     {
         Guard.IsNotNull(operation);
@@ -172,13 +133,7 @@ internal sealed class GitService : IDisposable
         return (result, changedFiles);
     }
 
-    /// <summary>
-    /// Gets the files that are new, modified, or otherwise different between the working directory
-    /// (including the index) and the current <c>HEAD</c> commit. Ignored files are not considered;
-    /// neither are files under bv's scratch directory (<see cref="CommonPaths.Scratch"/>),
-    /// whether or not the repository ignores it.
-    /// </summary>
-    /// <returns>The absolute paths of the differing files.</returns>
+    /// <inheritdoc/>
     public IReadOnlyList<string> GetDirtyFiles()
     {
         var homeDirectory = _home.HomeDirectory;
@@ -195,10 +150,7 @@ internal sealed class GitService : IDisposable
         ];
     }
 
-    /// <summary>
-    /// Adds one or more files to the Git index.
-    /// </summary>
-    /// <param name="paths">The paths of the files to add.</param>
+    /// <inheritdoc/>
     public void Stage(params string[] paths)
     {
         Guard.IsNotNull(paths);
@@ -233,12 +185,7 @@ internal sealed class GitService : IDisposable
             });
     }
 
-    /// <summary>
-    /// Commits staged changes, or amends last commit.
-    /// </summary>
-    /// <param name="message">The commit message.</param>
-    /// <param name="amend">If <see langword="true"/>, amends last commit instead of creating a new commit.</param>
-    /// <param name="allowEmpty">If <see langword="true"/>, allows creating (or amending into) an empty commit.</param>
+    /// <inheritdoc/>
     public void Commit(string message, bool amend = false, bool allowEmpty = false)
     {
         var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
@@ -247,16 +194,7 @@ internal sealed class GitService : IDisposable
         _ = _repository.Commit(message, signature, signature, options);
     }
 
-    /// <summary>
-    /// Undoes the most recent commit.
-    /// </summary>
-    /// <remarks>
-    /// <para>This method's purpose is to undo a commit that was just generated by code and is not a merge commit.</para>
-    /// <para>If the current <c>HEAD</c> has multiple parents, the behavior of this method is undefined.</para>
-    /// <para>If the repository has no commits, or the current <c>HEAD</c> has no parents, this method will fail.</para>
-    /// <para>Undoing a commit is not an outcome in itself: callers undo a whole set of commits at once, and only
-    /// the caller knows what that set was, so the record of the undoing belongs to it. This method only narrates.</para>
-    /// </remarks>
+    /// <inheritdoc/>
     public void UndoLastCommit()
     {
         _reporter.Info("Undoing last commit...");
@@ -265,9 +203,7 @@ internal sealed class GitService : IDisposable
         _repository.Reset(ResetMode.Hard, previousCommit);
     }
 
-    /// <summary>
-    /// Pushes changes made to HEAD to the tracked remote. Fails if HEAD is not tracking any remote.
-    /// </summary>
+    /// <inheritdoc/>
     public void Push(bool force = false)
     {
         var head = _repository.Head;

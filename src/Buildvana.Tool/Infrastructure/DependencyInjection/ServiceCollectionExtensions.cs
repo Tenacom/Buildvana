@@ -77,7 +77,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<IProcessRunner, ProcessRunner>()
                 .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
                 .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
-                .AddSingleton<GitService>()
+                .AddSingleton<IGitService, GitService>()
                 .AddSingleton<DeclaredApiFilesService>()
                 .AddSingleton(ServerAdapter.Create)
                 .AddSingleton<VersioningSettings>()

@@ -13,7 +13,7 @@ namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("version show | version")]
 [Description("Show current and published version information.")]
-internal sealed class VersionShowCommand(VersionService version, GitService git, IAnsiConsole console) : IBvCommand
+internal sealed class VersionShowCommand(VersionService version, IGitService git, IAnsiConsole console) : IBvCommand
 {
     public Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
