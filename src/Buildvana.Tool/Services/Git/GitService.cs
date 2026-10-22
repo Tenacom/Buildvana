@@ -15,6 +15,7 @@ using Buildvana.Tool.Infrastructure;
 using CommunityToolkit.Diagnostics;
 using JetBrains.Annotations;
 using LibGit2Sharp;
+using LibGit2Sharp.Handlers;
 using NuGet.Versioning;
 
 namespace Buildvana.Tool.Services.Git;
@@ -62,21 +63,18 @@ internal sealed class GitService : IGitService, IDisposable
     {
         get
         {
-            var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
-            return signature is null ? null : new(signature.Name, signature.Email);
+            return field ?? GetConfiguredIdentity();
         }
 
         set
         {
             Guard.IsNotNull(value);
-
-            _repository.Config.Set("user.name", value.Name);
-            _repository.Config.Set("user.email", value.Email);
+            field = value;
         }
     }
 
     /// <inheritdoc/>
-    public GitCredentials? PushCredentialsFallback { get; set; }
+    public GitCredentials? RemoteCredentialsFallback { get; set; }
 
     /// <inheritdoc/>
     public string HeadSha => _repository.Head.Tip.Sha;
@@ -188,8 +186,9 @@ internal sealed class GitService : IGitService, IDisposable
     /// <inheritdoc/>
     public void Commit(string message, bool amend = false, bool allowEmpty = false)
     {
-        var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
-        BuildFailedException.ThrowIf(signature is null, "Git: committer identity not set.");
+        var identity = CommitterIdentity;
+        BuildFailedException.ThrowIf(identity is null, "Git: committer identity not set.");
+        var signature = new Signature(identity.Name, identity.Email, DateTimeOffset.Now);
         var options = new CommitOptions { AmendPreviousCommit = amend, AllowEmptyCommit = allowEmpty };
         _ = _repository.Commit(message, signature, signature, options);
     }
@@ -204,37 +203,94 @@ internal sealed class GitService : IGitService, IDisposable
     }
 
     /// <inheritdoc/>
-    public void Push(bool force = false)
+    public void PushBranch(string remote, bool force = false)
     {
+        Guard.IsNotNullOrEmpty(remote);
         var head = _repository.Head;
-        var remote = head.RemoteName;
-        BuildFailedException.ThrowIf(string.IsNullOrEmpty(remote), "Git: cannot push, HEAD is not tracking any remote.");
-        var pushOptions = new PushOptions();
-        var pushCredentialsFallback = PushCredentialsFallback;
-        if (pushCredentialsFallback is not null)
-        {
-            pushOptions.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials {
-                Username = pushCredentialsFallback.Username,
-                Password = pushCredentialsFallback.Password,
-            };
-        }
-
+        var isOnBranch = head.CanonicalName.StartsWith("refs/heads/", StringComparison.Ordinal);
+        BuildFailedException.ThrowIfNot(isOnBranch, "Git: cannot push, HEAD is not on a branch.");
         if (force)
         {
             // https://stackoverflow.com/a/47295101/5753412
             // https://github.com/libgit2/libgit2sharp/blob/5085a0c617/LibGit2Sharp.Tests/PushFixture.cs#L183-L187
             // https://github.com/libgit2/libgit2sharp/issues/104#issuecomment-1553347893
-            _reporter.Info($"Force pushing changes to '{remote}'...");
-            var pushRefSpec = string.Format(CultureInfo.InvariantCulture, "+{0}:{0}", _repository.Head.CanonicalName);
-            _repository.Network.Push(_repository.Network.Remotes[remote], pushRefSpec, pushOptions);
+            _reporter.Info($"Force pushing '{head.FriendlyName}' to '{remote}'...");
+            Push(remote, $"+{head.CanonicalName}:{head.CanonicalName}");
             _reporter.Notice($"Force-pushed '{head.FriendlyName}' to '{remote}'.");
         }
         else
         {
-            _reporter.Info($"Pushing changes to '{remote}'...");
-            _repository.Network.Push(head, pushOptions);
+            _reporter.Info($"Pushing '{head.FriendlyName}' to '{remote}'...");
+            Push(remote, $"{head.CanonicalName}:{head.CanonicalName}");
             _reporter.Notice($"Pushed '{head.FriendlyName}' to '{remote}'.");
         }
+    }
+
+    /// <inheritdoc/>
+    public void CreateTag(string tag, string sha)
+    {
+        Guard.IsNotNullOrEmpty(tag);
+        Guard.IsNotNullOrEmpty(sha);
+        _ = _repository.Tags.Add(tag, sha);
+        _reporter.Notice($"Created tag '{tag}' at {sha}.");
+    }
+
+    /// <inheritdoc/>
+    public void PushTag(string remote, string tag)
+    {
+        Guard.IsNotNullOrEmpty(remote);
+        Guard.IsNotNullOrEmpty(tag);
+        var tagRef = $"refs/tags/{tag}";
+        var localTarget = _repository.Refs[tagRef]?.TargetIdentifier;
+        BuildFailedException.ThrowIf(localTarget is null, $"Git: cannot push tag '{tag}', because it does not exist.");
+
+        // LibGit2Sharp moves a remote tag forward as if it were a branch, where Git refuses to update a tag without
+        // force. Asking the remote first gives a tag the treatment Git gives it.
+        _reporter.Info($"Looking for tag '{tag}' on '{remote}'...");
+        var remoteTarget = ListRemoteReferences(remote)
+            .FirstOrDefault(x => string.Equals(x.CanonicalName, tagRef, StringComparison.Ordinal))
+            ?.TargetIdentifier;
+        if (remoteTarget is not null)
+        {
+            BuildFailedException.ThrowIfNot(
+                string.Equals(remoteTarget, localTarget, StringComparison.Ordinal),
+                $"Git: cannot push tag '{tag}', because '{remote}' has a tag of the same name at {remoteTarget}.");
+            _reporter.Notice($"Tag '{tag}' is already on '{remote}'.");
+            return;
+        }
+
+        _reporter.Info($"Pushing tag '{tag}' to '{remote}'...");
+        Push(remote, $"{tagRef}:{tagRef}");
+        _reporter.Notice($"Pushed tag '{tag}' to '{remote}'.");
+    }
+
+    /// <inheritdoc/>
+    public void DeleteRemoteTag(string remote, string tag)
+    {
+        Guard.IsNotNullOrEmpty(remote);
+        Guard.IsNotNullOrEmpty(tag);
+        _reporter.Info($"Deleting tag '{tag}' from '{remote}'...");
+        Push(remote, $":refs/tags/{tag}");
+        _reporter.Notice($"Deleted tag '{tag}' from '{remote}'.");
+    }
+
+    /// <inheritdoc/>
+    public void DeleteTag(string tag)
+    {
+        Guard.IsNotNullOrEmpty(tag);
+        _repository.Tags.Remove(tag);
+        _reporter.Notice($"Deleted local tag '{tag}'.");
+    }
+
+    /// <inheritdoc/>
+    public void FetchTags(string remote)
+    {
+        Guard.IsNotNullOrEmpty(remote);
+        using var gitRemote = GetRemote(remote);
+        _reporter.Info($"Fetching tags from '{remote}'...");
+        var options = new FetchOptions { CredentialsProvider = CreateCredentialsProvider() };
+        Commands.Fetch(_repository, gitRemote.Name, ["refs/tags/*:refs/tags/*"], options, logMessage: null);
+        _reporter.Notice($"Fetched tags from '{remote}'.");
     }
 
     private bool TryGetOriginInfo([MaybeNullWhen(false)] out string name, [MaybeNullWhen(false)] out string url)
@@ -291,5 +347,56 @@ internal sealed class GitService : IGitService, IDisposable
 
         _reporter.Detail($"Origin remote is '{name}' ({url})");
         return true;
+    }
+
+    private GitIdentity? GetConfiguredIdentity()
+    {
+        var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
+        return signature is null ? null : new(signature.Name, signature.Email);
+    }
+
+    private void Push(string remote, string refSpec)
+    {
+        using var gitRemote = GetRemote(remote);
+
+        // LibGit2Sharp reports a reference the remote refused through OnPushStatusError, and nowhere else:
+        // without the handler, a push that the server rejects returns as if it had succeeded.
+        // The handler only collects, because an exception thrown from it would have to cross native code.
+        var rejections = new List<PushStatusError>();
+        var options = new PushOptions {
+            CredentialsProvider = CreateCredentialsProvider(),
+            OnPushStatusError = rejections.Add,
+        };
+        _repository.Network.Push(gitRemote, refSpec, options);
+        if (rejections.Count > 0)
+        {
+            var details = string.Join("; ", rejections.Select(x => $"{x.Reference}: {x.Message}"));
+            throw new BuildFailedException($"Git: '{remote}' rejected the push. {details}");
+        }
+    }
+
+    private IReadOnlyList<Reference> ListRemoteReferences(string remote)
+    {
+        using var gitRemote = GetRemote(remote);
+        var credentialsProvider = CreateCredentialsProvider();
+        var references = credentialsProvider is null
+            ? _repository.Network.ListReferences(gitRemote)
+            : _repository.Network.ListReferences(gitRemote, credentialsProvider);
+        return [.. references];
+    }
+
+    private Remote GetRemote(string name)
+    {
+        var remote = _repository.Network.Remotes[name];
+        BuildFailedException.ThrowIf(remote is null, $"Git: there is no remote named '{name}'.");
+        return remote;
+    }
+
+    private CredentialsHandler? CreateCredentialsProvider()
+    {
+        var credentials = RemoteCredentialsFallback;
+        return credentials is null
+            ? null
+            : (_, _, _) => new UsernamePasswordCredentials { Username = credentials.Username, Password = credentials.Password };
     }
 }

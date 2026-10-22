@@ -226,6 +226,45 @@ public sealed class TempGitRepo : IDisposable
     }
 
     /// <summary>
+    /// Gets the SHA of the commit a tag points to on a remote added by <see cref="AddBareRemote"/>.
+    /// </summary>
+    /// <param name="tag">The name of the tag.</param>
+    /// <param name="name">The name of the remote.</param>
+    /// <returns>The SHA of the commit, or <see langword="null"/> if the remote has no such tag.</returns>
+    public string? GetRemoteTagSha(string tag, string name = "origin")
+    {
+        using var remote = new Repository(_remotePaths[name]);
+        return remote.Tags[tag]?.Target.Sha;
+    }
+
+    /// <summary>
+    /// Creates a lightweight tag on a remote added by <see cref="AddBareRemote"/>, at the tip of the branch
+    /// homonymous to the current one.
+    /// </summary>
+    /// <param name="tag">The name of the tag.</param>
+    /// <param name="name">The name of the remote.</param>
+    /// <remarks>
+    /// <para>The branch must already have been pushed to the remote.</para>
+    /// </remarks>
+    public void CreateRemoteTag(string tag, string name = "origin")
+    {
+        var branchName = CurrentBranchName;
+        using var remote = new Repository(_remotePaths[name]);
+        _ = remote.Tags.Add(tag, remote.Branches[branchName].Tip);
+    }
+
+    /// <summary>
+    /// Gets a value from the repository's local configuration.
+    /// </summary>
+    /// <param name="key">The configuration key, such as <c>user.name</c>.</param>
+    /// <returns>The value, or <see langword="null"/> if the local configuration does not hold the key.</returns>
+    public string? GetLocalConfigValue(string key)
+    {
+        using var repository = new Repository(RootPath);
+        return repository.Config.Get<string>(key, ConfigurationLevel.Local)?.Value;
+    }
+
+    /// <summary>
     /// Stages all changes and creates a commit, which may be empty.
     /// </summary>
     /// <param name="message">The commit message.</param>

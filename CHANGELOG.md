@@ -95,6 +95,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv clean` no longer deletes the `TestResults` directory of each test project.
 - `bv release` moves the self-reference rewrites out of the release commit into a [post-release commit](docs/tool-commands/release.md#the-post-release-commit), so the release tag names the source state that was built.
 - `bv release` takes the [identity of its commits](docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity, then from the Git configuration.
+- `bv release` no longer writes `user.name` and `user.email` to the Git configuration of the repository, and keeps [its committer identity](docs/tool-commands/release.md#preconditions) in memory.
 - `bv` renders a message as a [level label and a colored line](docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
 - `bv` streams the [output of `dotnet`](docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
 - The build pipeline commands and `bv release` [observe cancellation](docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
@@ -133,6 +134,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`AdditionalAssemblyInfo` module](docs/sdk-modules/additional-assembly-info.md#clscompliant-property) generates `CLSCompliant(true)` and `ComVisible(true)` for any value MSBuild reads as true, such as `yes`, where it generated `false`.
 - [`bv test`](docs/tool-commands/build-pipeline.md#bv-test) runs the tests of a project that sets `IsTestingPlatformApplication` to a value MSBuild reads as true, such as `yes`, where it skipped the project.
 - The [`ConvertToWinePaths` task](docs/sdk-modules/wine.md#converttowinepaths-task) converts an item when MSBuild reads the metadata named by `OnlyIfMetadata` as true, such as `yes`, where it skipped the item.
+- `bv release` fails when the remote rejects the [push of its commits](docs/tool-commands/release.md#publishing), where it used to go on as if the push had succeeded.
 - When a `PackageVersion` item versions a package Buildvana SDK injects, the reference [is an ordinary `PackageReference`](docs/sdk-modules/standard-analyzers.md#package-references), where NuGet rejected the item with NU1009.
 
 ### Known problems introduced by this release
