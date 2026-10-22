@@ -128,7 +128,7 @@ On Windows, a console mode answers the question, and `bv` does not read `TERM`.
 `bv` stores no secret.
 The [configuration file](configuration-file.md) names the environment variable that carries each one, and `bv` reads the value where it uses it.
 
-- `github.tokenEnv` names the variable holding the GitHub token of the release operations.
+- `hosts.github.tokenEnv` names the variable holding the GitHub token of the release operations.
   The default name is `GITHUB_TOKEN`.
 - `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys of the NuGet push feeds.
 

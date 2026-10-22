@@ -15,6 +15,7 @@ internal sealed class ReleaseSettingsTests
         await Assert.That(settings.Bump).IsNull();
         await Assert.That(settings.CheckPublicApi).IsNull();
         await Assert.That(settings.Dogfood).IsNull();
+        await Assert.That(settings.AllowUnknownHost).IsNull();
         await Assert.That(settings.ResolveBump()).IsEqualTo(VersionSpecChange.None);
     }
 
@@ -41,9 +42,10 @@ internal sealed class ReleaseSettingsTests
     [Test]
     public async Task Parse_ReadsBoolOptions_SpaceAndInlineForms()
     {
-        var settings = ReleaseSettings.Parse(["--check-public-api", "false", "--dogfood=false"]);
+        var settings = ReleaseSettings.Parse(["--check-public-api", "false", "--dogfood=false", "--allow-unknown-host", "true"]);
         await Assert.That(settings.CheckPublicApi).IsFalse();
         await Assert.That(settings.Dogfood).IsFalse();
+        await Assert.That(settings.AllowUnknownHost).IsTrue();
     }
 
     [Test]

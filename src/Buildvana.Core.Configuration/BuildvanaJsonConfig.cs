@@ -49,6 +49,10 @@ public sealed record BuildvanaJsonConfig
     [Description("URI of the JSON schema describing this file. Pin the bv version you use.")]
     public string? Schema { get; init; }
 
+    /// <summary>Gets the <c>repository</c> section.</summary>
+    [Description("The repository that releases go to.")]
+    public RepositoryJsonConfig? Repository { get; init; }
+
     /// <summary>Gets the <c>release</c> section.</summary>
     [Description("Configuration for the bv release workflow.")]
     public ReleaseJsonConfig? Release { get; init; }
@@ -67,10 +71,9 @@ public sealed record BuildvanaJsonConfig
     [Description("Configuration for NuGet package publishing.")]
     public NuGetJsonConfig? NuGet { get; init; }
 
-    /// <summary>Gets the <c>github</c> section.</summary>
-    [JsonPropertyName("github")]
-    [Description("Configuration for GitHub integration.")]
-    public GitHubJsonConfig? GitHub { get; init; }
+    /// <summary>Gets the <c>hosts</c> section.</summary>
+    [Description("Configuration for each kind of Git host.")]
+    public HostsJsonConfig? Hosts { get; init; }
 
     /// <summary>Gets the <c>git</c> section.</summary>
     [Description("Configuration for Git-related behavior.")]

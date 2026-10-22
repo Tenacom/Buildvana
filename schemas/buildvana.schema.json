@@ -10,6 +10,28 @@
       ],
       "type": "string"
     },
+    "repository": {
+      "description": "The repository that releases go to.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "description": "URL of the repository that releases go to. Required by bv release.",
+          "examples": [
+            "https://github.com/Tenacom/Buildvana"
+          ],
+          "type": "string"
+        },
+        "host": {
+          "description": "Kind of Git host of the repository.",
+          "enum": [
+            "auto",
+            "github"
+          ],
+          "default": "auto"
+        }
+      },
+      "additionalProperties": false
+    },
     "release": {
       "description": "Configuration for the bv release workflow.",
       "type": "object",
@@ -59,6 +81,11 @@
           "description": "Whether self-references are updated (dogfooding) during a release.",
           "type": "boolean",
           "default": true
+        },
+        "allowUnknownHost": {
+          "description": "Whether a release tags and pushes on an unknown Git host, without a release page.",
+          "type": "boolean",
+          "default": false
         }
       },
       "additionalProperties": false
@@ -329,14 +356,21 @@
       },
       "additionalProperties": false
     },
-    "github": {
-      "description": "Configuration for GitHub integration.",
+    "hosts": {
+      "description": "Configuration for each kind of Git host.",
       "type": "object",
       "properties": {
-        "tokenEnv": {
-          "description": "Name of the environment variable that holds the GitHub access token.",
-          "type": "string",
-          "default": "GITHUB_TOKEN"
+        "github": {
+          "description": "Configuration for the GitHub host.",
+          "type": "object",
+          "properties": {
+            "tokenEnv": {
+              "description": "Name of the environment variable that holds the GitHub access token.",
+              "type": "string",
+              "default": "GITHUB_TOKEN"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

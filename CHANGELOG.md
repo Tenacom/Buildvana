@@ -30,7 +30,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `release.checkPublicApi` and `release.dogfood` set the defaults of [`--check-public-api` and `--dogfood`](docs/tool-commands/release.md#options).
 - A setting with an option [resolves](docs/configuration-file.md#resolution) as the option, then `buildvana.jsonc`, then the built-in default, and a blank string counts as not stated.
 - `nuget.feeds.release` and `nuget.feeds.prerelease` name the [push feeds of `bv release`](docs/tool-commands/release.md#publishing), each with a `source` and an `apiKeyEnv`.
-- `github.tokenEnv` names the [environment variable holding the GitHub token](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file), `GITHUB_TOKEN` by default, and `buildvana.jsonc` holds no secret.
+- `hosts.github.tokenEnv` names the [environment variable holding the GitHub token](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file), `GITHUB_TOKEN` by default, and `buildvana.jsonc` holds no secret.
 - `git.identity` names the [author of the commits of `bv release`](docs/tool-commands/release.md#preconditions), with `name` and `email` both required.
 - `buildvana.jsonc` accepts a [`dependencies` section](docs/tool-commands/dependencies.md#update-policies), which sets the update policy of each dependency and names the files that hold additional package pins.
 - The [`ThisAssemblyClass` module](docs/sdk-modules/this-assembly-class.md) generates a `ThisAssembly` class in a C# project that sets `GenerateThisAssemblyClass` to `true`.

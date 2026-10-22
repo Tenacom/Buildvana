@@ -46,7 +46,7 @@ internal sealed class GitHubServerAdapter : ServerAdapter, IDisposable
         RepositoryOwner = originInfo.PathSegments[0];
         RepositoryName = originInfo.PathSegments[1];
         _urls = new GitHubRepositoryUrls(HostName, RepositoryOwner, RepositoryName);
-        _token = RuntimeAccess.Translate(services.GetRequiredService<BuildvanaConfig>().GitHub.GetToken);
+        _token = RuntimeAccess.Translate(services.GetRequiredService<BuildvanaConfig>().Hosts.GitHub.GetToken);
         _client = new GitHubApiClient(HostName, _token, new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All });
     }
 

@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 namespace Buildvana.Core.Configuration;
 
 /// <summary>
-/// Models the <c>github</c> section of a Buildvana configuration file.
+/// Models the <c>hosts.github</c> section of a Buildvana configuration file.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record GitHubJsonConfig

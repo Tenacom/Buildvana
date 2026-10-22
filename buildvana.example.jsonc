@@ -12,6 +12,15 @@
   // URI of the JSON schema describing this file. Pin the bv version you use.
   "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/main/schemas/buildvana.schema.json",
 
+  // The repository that releases go to.
+  "repository": {
+    // URL of the repository that releases go to. Required by bv release.
+    "url": "https://github.com/Tenacom/Buildvana",
+
+    // Kind of Git host of the repository.
+    "host": "auto",
+  },
+
   // Configuration for the bv release workflow.
   "release": {
     // Anchored regular expressions matching public-release branches.
@@ -31,6 +40,10 @@
 
     // Whether self-references are updated (dogfooding) during a release.
     "dogfood": true,
+
+    // Whether a release tags and pushes on an unknown Git host, without a
+    // release page.
+    "allowUnknownHost": false,
   },
 
   // Configuration for version computation.
@@ -126,10 +139,13 @@
     },
   },
 
-  // Configuration for GitHub integration.
-  "github": {
-    // Name of the environment variable that holds the GitHub access token.
-    "tokenEnv": "GITHUB_TOKEN",
+  // Configuration for each kind of Git host.
+  "hosts": {
+    // Configuration for the GitHub host.
+    "github": {
+      // Name of the environment variable that holds the GitHub access token.
+      "tokenEnv": "GITHUB_TOKEN",
+    },
   },
 
   // Configuration for Git-related behavior.

@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 namespace Buildvana.Runtime;
 
 /// <summary>
-/// The resolved GitHub integration configuration.
+/// The resolved configuration of the GitHub host, from the <c>hosts.github</c> section.
 /// </summary>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record GitHubConfig

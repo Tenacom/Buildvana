@@ -15,7 +15,7 @@ namespace Buildvana.Tool.Subcommands;
 /// Options for the <c>release</c> command, parsed from the command-line option tokens by <see cref="Parse"/>.
 /// Decorated with <see cref="BvOptionAttribute"/>/<see cref="DescriptionAttribute"/> for the help renderer and
 /// the argument validator. The configuration-overriding flags (<c>--configuration</c>, <c>--check-public-api</c>,
-/// <c>--dogfood</c>) reach resolution through <c>CommandLineOverridesParser</c> and the configuration factory,
+/// <c>--dogfood</c>, <c>--allow-unknown-host</c>) reach resolution through <c>CommandLineOverridesParser</c> and the configuration factory,
 /// so commands read their effective values from the resolved <c>BuildvanaConfig</c>; only <see cref="Bump"/>,
 /// which is not configuration, is consumed from here.
 /// </summary>
@@ -57,6 +57,13 @@ internal sealed class ReleaseSettings
     public bool? Dogfood { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the release proceeds on a Git host <c>bv</c> does not know.
+    /// </summary>
+    [BvOption("--allow-unknown-host <BOOL>")]
+    [Description("Tag and push on an unknown Git host, without a release page. Defaults to false.")]
+    public bool? AllowUnknownHost { get; init; }
+
+    /// <summary>
     /// Parses the command's option tokens into a <see cref="ReleaseSettings"/>. Unknown options have already
     /// been rejected by <c>CommandArgumentValidator</c>, so every option token is one the command declares.
     /// </summary>
@@ -72,6 +79,7 @@ internal sealed class ReleaseSettings
             Bump = reader.ReadValue("--bump"),
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
             Dogfood = reader.ReadBoolValue("--dogfood"),
+            AllowUnknownHost = reader.ReadBoolValue("--allow-unknown-host"),
         };
     }
 

@@ -19,7 +19,7 @@ jobs:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
       DOTNET_CLI_UI_LANGUAGE: 'en-US'
       FEEDZ_IO_PRIVATE_TOKEN: ${{ secrets.FEEDZ_IO_PRIVATE_TOKEN }}
-      # bv reads its GitHub token from the environment variable named by github.tokenEnv in buildvana.jsonc.
+      # bv reads its GitHub token from the environment variable named by hosts.github.tokenEnv in buildvana.jsonc.
       # The automatic token is enough here: no release operation is performed.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:

@@ -35,12 +35,14 @@ Buildvana.Runtime.BuildvanaConfig.FileBasedApps.get -> System.Collections.Generi
 Buildvana.Runtime.BuildvanaConfig.FileBasedApps.init -> void
 Buildvana.Runtime.BuildvanaConfig.Git.get -> Buildvana.Runtime.GitConfig!
 Buildvana.Runtime.BuildvanaConfig.Git.init -> void
-Buildvana.Runtime.BuildvanaConfig.GitHub.get -> Buildvana.Runtime.GitHubConfig!
-Buildvana.Runtime.BuildvanaConfig.GitHub.init -> void
+Buildvana.Runtime.BuildvanaConfig.Hosts.get -> Buildvana.Runtime.HostsConfig!
+Buildvana.Runtime.BuildvanaConfig.Hosts.init -> void
 Buildvana.Runtime.BuildvanaConfig.NuGet.get -> Buildvana.Runtime.NuGetConfig!
 Buildvana.Runtime.BuildvanaConfig.NuGet.init -> void
 Buildvana.Runtime.BuildvanaConfig.Release.get -> Buildvana.Runtime.ReleaseConfig!
 Buildvana.Runtime.BuildvanaConfig.Release.init -> void
+Buildvana.Runtime.BuildvanaConfig.Repository.get -> Buildvana.Runtime.RepositoryConfig!
+Buildvana.Runtime.BuildvanaConfig.Repository.init -> void
 Buildvana.Runtime.BuildvanaConfig.Versioning.get -> Buildvana.Runtime.VersioningConfig!
 Buildvana.Runtime.BuildvanaConfig.Versioning.init -> void
 Buildvana.Runtime.BuildvanaJsonContext
@@ -157,6 +159,15 @@ Buildvana.Runtime.HookArgs.HookArgs() -> void
 Buildvana.Runtime.HookArgs.HookArgs(Buildvana.Runtime.HookArgs! original) -> void
 Buildvana.Runtime.HookArgs.RuntimeInfo.get -> Buildvana.Runtime.RuntimeInfo!
 Buildvana.Runtime.HookArgs.RuntimeInfo.init -> void
+Buildvana.Runtime.HostKind
+Buildvana.Runtime.HostKind.Auto = 0 -> Buildvana.Runtime.HostKind
+Buildvana.Runtime.HostKind.GitHub = 1 -> Buildvana.Runtime.HostKind
+Buildvana.Runtime.HostsConfig
+Buildvana.Runtime.HostsConfig.<Clone>$() -> Buildvana.Runtime.HostsConfig!
+Buildvana.Runtime.HostsConfig.Equals(Buildvana.Runtime.HostsConfig? other) -> bool
+Buildvana.Runtime.HostsConfig.GitHub.get -> Buildvana.Runtime.GitHubConfig!
+Buildvana.Runtime.HostsConfig.GitHub.init -> void
+Buildvana.Runtime.HostsConfig.HostsConfig() -> void
 Buildvana.Runtime.IHookEvent
 Buildvana.Runtime.IHookEvent.Context.get -> string!
 Buildvana.Runtime.IHookEvent.Event.get -> string!
@@ -213,6 +224,8 @@ Buildvana.Runtime.PostUpdateHookArgs.Tools.get -> System.Collections.Generic.IRe
 Buildvana.Runtime.PostUpdateHookArgs.Tools.init -> void
 Buildvana.Runtime.ReleaseConfig
 Buildvana.Runtime.ReleaseConfig.<Clone>$() -> Buildvana.Runtime.ReleaseConfig!
+Buildvana.Runtime.ReleaseConfig.AllowUnknownHost.get -> bool
+Buildvana.Runtime.ReleaseConfig.AllowUnknownHost.init -> void
 Buildvana.Runtime.ReleaseConfig.Branches.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Buildvana.Runtime.ReleaseConfig.Branches.init -> void
 Buildvana.Runtime.ReleaseConfig.ChangelogUpdates.get -> Buildvana.Runtime.ChangelogUpdates
@@ -241,6 +254,14 @@ Buildvana.Runtime.ReleaseInfo.SemVer.get -> string!
 Buildvana.Runtime.ReleaseInfo.SemVer.init -> void
 Buildvana.Runtime.ReleaseInfo.Version.get -> string!
 Buildvana.Runtime.ReleaseInfo.Version.init -> void
+Buildvana.Runtime.RepositoryConfig
+Buildvana.Runtime.RepositoryConfig.<Clone>$() -> Buildvana.Runtime.RepositoryConfig!
+Buildvana.Runtime.RepositoryConfig.Equals(Buildvana.Runtime.RepositoryConfig? other) -> bool
+Buildvana.Runtime.RepositoryConfig.Host.get -> Buildvana.Runtime.HostKind
+Buildvana.Runtime.RepositoryConfig.Host.init -> void
+Buildvana.Runtime.RepositoryConfig.RepositoryConfig() -> void
+Buildvana.Runtime.RepositoryConfig.Url.get -> string?
+Buildvana.Runtime.RepositoryConfig.Url.init -> void
 Buildvana.Runtime.RuntimeInfo
 Buildvana.Runtime.RuntimeInfo.<Clone>$() -> Buildvana.Runtime.RuntimeInfo!
 Buildvana.Runtime.RuntimeInfo.ArtifactsDirectory.get -> string!
@@ -332,6 +353,9 @@ override Buildvana.Runtime.GitIdentityConfig.ToString() -> string!
 override Buildvana.Runtime.HookArgs.Equals(object? obj) -> bool
 override Buildvana.Runtime.HookArgs.GetHashCode() -> int
 override Buildvana.Runtime.HookArgs.ToString() -> string!
+override Buildvana.Runtime.HostsConfig.Equals(object? obj) -> bool
+override Buildvana.Runtime.HostsConfig.GetHashCode() -> int
+override Buildvana.Runtime.HostsConfig.ToString() -> string!
 override Buildvana.Runtime.NuGetConfig.Equals(object? obj) -> bool
 override Buildvana.Runtime.NuGetConfig.GetHashCode() -> int
 override Buildvana.Runtime.NuGetConfig.ToString() -> string!
@@ -355,6 +379,9 @@ override Buildvana.Runtime.ReleaseConfig.ToString() -> string!
 override Buildvana.Runtime.ReleaseInfo.Equals(object? obj) -> bool
 override Buildvana.Runtime.ReleaseInfo.GetHashCode() -> int
 override Buildvana.Runtime.ReleaseInfo.ToString() -> string!
+override Buildvana.Runtime.RepositoryConfig.Equals(object? obj) -> bool
+override Buildvana.Runtime.RepositoryConfig.GetHashCode() -> int
+override Buildvana.Runtime.RepositoryConfig.ToString() -> string!
 override Buildvana.Runtime.RuntimeInfo.Equals(object? obj) -> bool
 override Buildvana.Runtime.RuntimeInfo.GetHashCode() -> int
 override Buildvana.Runtime.RuntimeInfo.ToString() -> string!
@@ -396,6 +423,8 @@ static Buildvana.Runtime.GitIdentityConfig.operator ==(Buildvana.Runtime.GitIden
 static Buildvana.Runtime.HookArgs.Load<TArgs>(System.Text.Json.Serialization.Metadata.JsonTypeInfo<TArgs!>! jsonTypeInfo, string? homeDirectory) -> TArgs!
 static Buildvana.Runtime.HookArgs.operator !=(Buildvana.Runtime.HookArgs? left, Buildvana.Runtime.HookArgs? right) -> bool
 static Buildvana.Runtime.HookArgs.operator ==(Buildvana.Runtime.HookArgs? left, Buildvana.Runtime.HookArgs? right) -> bool
+static Buildvana.Runtime.HostsConfig.operator !=(Buildvana.Runtime.HostsConfig? left, Buildvana.Runtime.HostsConfig? right) -> bool
+static Buildvana.Runtime.HostsConfig.operator ==(Buildvana.Runtime.HostsConfig? left, Buildvana.Runtime.HostsConfig? right) -> bool
 static Buildvana.Runtime.NuGetConfig.operator !=(Buildvana.Runtime.NuGetConfig? left, Buildvana.Runtime.NuGetConfig? right) -> bool
 static Buildvana.Runtime.NuGetConfig.operator ==(Buildvana.Runtime.NuGetConfig? left, Buildvana.Runtime.NuGetConfig? right) -> bool
 static Buildvana.Runtime.NuGetFeedConfig.operator !=(Buildvana.Runtime.NuGetFeedConfig? left, Buildvana.Runtime.NuGetFeedConfig? right) -> bool
@@ -413,6 +442,8 @@ static Buildvana.Runtime.ReleaseConfig.operator !=(Buildvana.Runtime.ReleaseConf
 static Buildvana.Runtime.ReleaseConfig.operator ==(Buildvana.Runtime.ReleaseConfig? left, Buildvana.Runtime.ReleaseConfig? right) -> bool
 static Buildvana.Runtime.ReleaseInfo.operator !=(Buildvana.Runtime.ReleaseInfo? left, Buildvana.Runtime.ReleaseInfo? right) -> bool
 static Buildvana.Runtime.ReleaseInfo.operator ==(Buildvana.Runtime.ReleaseInfo? left, Buildvana.Runtime.ReleaseInfo? right) -> bool
+static Buildvana.Runtime.RepositoryConfig.operator !=(Buildvana.Runtime.RepositoryConfig? left, Buildvana.Runtime.RepositoryConfig? right) -> bool
+static Buildvana.Runtime.RepositoryConfig.operator ==(Buildvana.Runtime.RepositoryConfig? left, Buildvana.Runtime.RepositoryConfig? right) -> bool
 static Buildvana.Runtime.RuntimeInfo.operator !=(Buildvana.Runtime.RuntimeInfo? left, Buildvana.Runtime.RuntimeInfo? right) -> bool
 static Buildvana.Runtime.RuntimeInfo.operator ==(Buildvana.Runtime.RuntimeInfo? left, Buildvana.Runtime.RuntimeInfo? right) -> bool
 static Buildvana.Runtime.TransitiveOverride.operator !=(Buildvana.Runtime.TransitiveOverride? left, Buildvana.Runtime.TransitiveOverride? right) -> bool
@@ -441,6 +472,8 @@ virtual Buildvana.Runtime.HookArgs.PrintMembers(System.Text.StringBuilder! build
 ~Buildvana.Runtime.BuildvanaJsonContext.GitConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.GitHubConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitHubConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.GitIdentityConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitIdentityConfig>
+~Buildvana.Runtime.BuildvanaJsonContext.HostKind.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.HostKind>
+~Buildvana.Runtime.BuildvanaJsonContext.HostsConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.HostsConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyDictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, string>>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListAdditionalPackagesConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.AdditionalPackagesConfig>>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListAdditionalPackagesResult.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.AdditionalPackagesResult>>
@@ -455,6 +488,7 @@ virtual Buildvana.Runtime.HookArgs.PrintMembers(System.Text.StringBuilder! build
 ~Buildvana.Runtime.BuildvanaJsonContext.PostUpdateHookArgs.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.PostUpdateHookArgs>
 ~Buildvana.Runtime.BuildvanaJsonContext.ReleaseConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ReleaseConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.ReleaseInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ReleaseInfo>
+~Buildvana.Runtime.BuildvanaJsonContext.RepositoryConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.RepositoryConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.RuntimeInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.RuntimeInfo>
 ~Buildvana.Runtime.BuildvanaJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
 ~Buildvana.Runtime.BuildvanaJsonContext.TransitiveOverride.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.TransitiveOverride>

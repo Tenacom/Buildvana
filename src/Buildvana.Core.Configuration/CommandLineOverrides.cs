@@ -30,6 +30,9 @@ public sealed record CommandLineOverrides
     /// <summary>Gets the dogfooding override (<c>--dogfood</c>).</summary>
     public bool? Dogfood { get; init; }
 
+    /// <summary>Gets the unknown-host override (<c>--allow-unknown-host</c>).</summary>
+    public bool? AllowUnknownHost { get; init; }
+
     /// <summary>
     /// Gets the arguments forwarded after the <c>--</c> separator, or <see langword="null"/> when none were.
     /// The factory appends them to the resolved arguments of the pipeline commands (<c>restore</c>,
