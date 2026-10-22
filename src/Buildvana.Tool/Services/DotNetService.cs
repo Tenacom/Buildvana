@@ -15,7 +15,7 @@ using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Services.Dependencies;
-using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Platforms;
 using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
@@ -30,7 +30,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
 {
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
-    private readonly ServerAdapter _server;
+    private readonly CIPlatform _platform;
 
     // Resolved on first use, which is the NuGet push alone. Constructing the version service opens the Git
     // repository and reads its origin remote, and a build needs neither: the SDK computes the version itself.
@@ -43,18 +43,18 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
     public DotNetService(
         IReporter reporter,
         IProcessRunner processRunner,
-        ServerAdapter server,
+        CIPlatform platform,
         Lazy<VersionService> version,
         BuildvanaConfig config)
     {
         Guard.IsNotNull(reporter);
         Guard.IsNotNull(processRunner);
-        Guard.IsNotNull(server);
+        Guard.IsNotNull(platform);
         Guard.IsNotNull(version);
         Guard.IsNotNull(config);
         _reporter = reporter;
         _processRunner = processRunner;
-        _server = server;
+        _platform = platform;
         _version = version;
         _config = config;
     }
@@ -412,7 +412,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
     private string ContinuousIntegrationBuildArg(bool asMSBuildPassthrough)
     {
         var prefix = asMSBuildPassthrough ? "-p:" : "--property:";
-        return $"{prefix}ContinuousIntegrationBuild={(_server.IsCloudBuild ? "true" : "false")}";
+        return $"{prefix}ContinuousIntegrationBuild={(_platform.IsCI ? "true" : "false")}";
     }
 
     /// <summary>

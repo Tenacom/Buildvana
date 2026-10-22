@@ -22,6 +22,7 @@ using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.Platforms;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
@@ -47,6 +48,7 @@ internal sealed class ReleaseCommand(
 
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
         var versioningSettings = services.GetRequiredService<VersioningSettings>();
+        var platform = services.GetRequiredService<CIPlatform>();
         var server = services.GetRequiredService<ServerAdapter>();
         var version = services.GetRequiredService<VersionService>();
         var dotnet = services.GetRequiredService<DotNetService>();
@@ -62,17 +64,17 @@ internal sealed class ReleaseCommand(
         // repository's version history, and the public API files. A build changes none of them, so it
         // all runs first: a release that cannot succeed is refused at once, before there is anything
         // to build or to roll back.
-        BuildFailedException.ThrowIfNot(server.IsCloudBuild, "A release can only be created on a known cloud build platform.");
+        BuildFailedException.ThrowIfNot(platform.IsCI, "A release can only be created on a CI runner.");
         BuildFailedException.ThrowIf(string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
         BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
 
-        // Resolve the committer identity for release commits: the configured git.identity outranks the CI
-        // bot identity supplied by the server adapter, which outranks whatever the repository's own Git
-        // configuration happens to state; with none of the three, the release cannot commit.
+        // Resolve the committer identity for release commits: the configured git.identity outranks the bot
+        // identity of the CI platform, which outranks whatever the repository's own Git configuration
+        // happens to state; with none of the three, the release cannot commit.
         var configuredIdentity = config.Git.Identity;
         var identity = configuredIdentity is not null
             ? new GitIdentity(configuredIdentity.Name, configuredIdentity.Email)
-            : server.CIBotIdentity;
+            : platform.BotIdentity;
         if (identity is not null)
         {
             git.CommitterIdentity = identity;

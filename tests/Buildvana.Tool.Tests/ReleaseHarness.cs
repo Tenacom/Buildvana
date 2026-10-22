@@ -14,6 +14,7 @@ using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Platforms;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,8 @@ using Spectre.Console.Testing;
 /// <summary>
 /// Runs <c>bv release</c> end to end over a real Git repository in a temporary directory, with only the
 /// process and platform boundaries faked: child processes (<see cref="FakeProcessRunner"/>), hooks
-/// (<see cref="FakeFileBasedAppRunner"/>), and the server (<see cref="RecordingServerAdapter"/>). Everything
+/// (<see cref="FakeFileBasedAppRunner"/>), the CI platform (<see cref="FakeCIPlatform"/>), and the server
+/// (<see cref="RecordingServerAdapter"/>). Everything
 /// else — the service graph, the versioning, the changelog, the commits, and the push — is the real thing.
 /// </summary>
 /// <remarks>
@@ -229,9 +231,11 @@ internal sealed class ReleaseHarness : IDisposable
             // The boundaries, faked. Registered last, so that they win over what AddBvServices registers.
             .AddSingleton<IProcessRunner>(ProcessRunner)
             .AddSingleton<IFileBasedAppRunner>(AppRunner)
+            .AddSingleton<CIPlatform>(new FakeCIPlatform {
+                RunsOnCI = _options.IsCI,
+                Identity = _options.WithBotIdentity ? new("Buildvana Test Bot", "bot@buildvana.invalid") : null,
+            })
             .AddSingleton<ServerAdapter>(sp => new RecordingServerAdapter(sp) {
-                CloudBuild = _options.CloudBuild,
-                BotIdentity = _options.WithBotIdentity ? new("Buildvana Test Bot", "bot@buildvana.invalid") : null,
                 PushUser = _options.PushUser,
                 PushSecret = _options.PushSecret,
                 OnPublishing = () => {

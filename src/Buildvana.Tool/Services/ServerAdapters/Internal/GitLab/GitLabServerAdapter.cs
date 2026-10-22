@@ -4,7 +4,6 @@
 using System;
 using System.Threading.Tasks;
 using Buildvana.Core;
-using Buildvana.Tool.Services.Git;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitLab;
@@ -16,7 +15,6 @@ internal sealed class GitLabServerAdapter : ServerAdapter
 {
     private GitLabServerAdapter()
     {
-        CIBotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{Environment.GetEnvironmentVariable("CI_SERVER_HOST")}");
     }
 
     /// <inheritdoc/>
@@ -33,13 +31,6 @@ internal sealed class GitLabServerAdapter : ServerAdapter
 
     /// <inheritdoc/>
     public override Uri RepositoryUrl => BuildFailedException.ThrowOnUnsupportedProperty<Uri>();
-
-    /// <inheritdoc/>
-    /// <value>Always <see langword="true"/>.</value>
-    public override bool IsCloudBuild => true;
-
-    /// <inheritdoc/>
-    public override GitIdentity? CIBotIdentity { get; }
 
     /// <inheritdoc/>
     public override string PushUsername => "oauth2";

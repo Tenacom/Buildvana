@@ -75,13 +75,13 @@ internal sealed class ReleaseCommandFailureTests
     [Test]
     public async Task Release_OnLocalBuild_Fails()
     {
-        using var harness = new ReleaseHarness(new() { CloudBuild = false });
+        using var harness = new ReleaseHarness(new() { IsCI = false });
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("cloud build");
+        await Assert.That(exception!.Message).Contains("CI runner");
 
         // The preliminary checks run before the pipeline, so a release that can never succeed costs
         // nothing: no clean, no build, no test run.

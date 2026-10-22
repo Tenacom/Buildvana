@@ -48,6 +48,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - Buildvana SDK [contributes two things to `bv dependencies`](docs/tool-commands/dependencies.md#what-buildvana-sdk-contributes): the target that dumps the package items of a project, and the import of the transitive override files.
 - The `StandardAnalyzers` module passes the [internal API files](docs/sdk-modules/standard-analyzers.md#internal-api-files) to the compilation, one pair per target framework when `UseTfmSpecificInternalApiFiles` is `true`.
 - On a stable version, `bv release` [moves the unshipped internal API](docs/tool-commands/release.md#the-steps) into the shipped one, as it does for the public API.
+- `bv` recognizes a CI runner [as the .NET CLI does](docs/environment-variables.md#variables-that-mark-a-ci-runner), and passes `ContinuousIntegrationBuild=true` to the build pipeline on every one.
 
 ### Changes to existing features
 
@@ -117,7 +118,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv` reports a failed or denied file access as one error line naming the operation, the path, and the reason, not as an unhandled exception.
 - The release date `bv release` writes in a changelog section title uses the Gregorian calendar and the invariant format, whatever the culture of the machine.
 - The `Wine` module [sets `UseWine`](docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
-- Outside GitHub Actions, `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](docs/command-line.md#home-directory) has no `origin` remote.
+- `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](docs/command-line.md#home-directory) has no `origin` remote.
 - The [`NuGetPack` module](docs/sdk-modules/nuget-pack.md#readme) finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
 - The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) reads the RSA private key of a `.pfx` file from any key provider, where [BVSDK1202](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) fired on most keys.
 - The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) converts the `.pfx` file before `ResolveKeySource` reads `AssemblyOriginatorKeyFile`, where `dotnet build` failed with `PFX signing not supported on .NET Core`.

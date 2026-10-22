@@ -4,15 +4,13 @@
 using System;
 using System.Threading.Tasks;
 using Buildvana.Core;
-using Buildvana.Tool.Services.Git;
 
 namespace Buildvana.Tool.Services.ServerAdapters.Internal;
 
 /// <summary>
 /// <para>Implements a dummy Continuous Integration adapter for unknown system / local build.</para>
-/// <para>Members that answer a question a local build has an honest answer to (<see cref="IsCloudBuild"/>,
-/// <see cref="CIBotIdentity"/>, <see cref="PushUsername"/>, <see cref="PushPassword"/>) answer it;
-/// every other property and method fails the build when called.</para>
+/// <para>Members that answer a question a local build has an honest answer to (<see cref="PushUsername"/>,
+/// <see cref="PushPassword"/>) answer it; every other property and method fails the build when called.</para>
 /// </summary>
 internal sealed class UnknownServerAdapter : ServerAdapter
 {
@@ -44,18 +42,10 @@ internal sealed class UnknownServerAdapter : ServerAdapter
     public override Uri RepositoryUrl => BuildFailedException.ThrowOnUnsupportedProperty<Uri>();
 
     /// <inheritdoc/>
-    /// <value>Always <see langword="null"/>: a local build has no CI bot.</value>
-    public override GitIdentity? CIBotIdentity => null;
-
-    /// <inheritdoc/>
     public override string? PushUsername => null;
 
     /// <inheritdoc/>
     public override string? PushPassword => null;
-
-    /// <inheritdoc/>
-    /// <value>Always <see langword="false"/>.</value>
-    public override bool IsCloudBuild => false;
 
     /// <inheritdoc/>
     /// <summary>

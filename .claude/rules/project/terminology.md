@@ -11,6 +11,7 @@ One name per thing, in every kind of prose: documentation, chat, commit messages
 | The CLI tool                                                                                       | `bv`                | the tool, Buildvana CLI tool, the Buildvana tool   |
 | The shared library package                                                                         | `Buildvana.Runtime` | the runtime                                        |
 | The directory Buildvana works from                                                                 | home directory      | repository root, solution directory                |
+| Where `bv` runs, as `CIPlatform` detects it: GitHub Actions, GitLab CI, Generic CI, or Local       | CI platform         | build platform, cloud build, CI provider           |
 | The configuration file, in either spelling                                                         | `buildvana.jsonc`   | `buildvana.json`, the configuration file           |
 | A `.buildvana/hooks/<context>/<event>.cs` file                                                     | hook                |                                                    |
 | A program the .NET CLI runs from a single `.cs` file, a hook included                              | file-based app      | file-based program, single-file app                |
