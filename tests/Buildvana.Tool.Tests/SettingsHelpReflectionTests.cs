@@ -18,7 +18,7 @@ internal sealed class SettingsHelpReflectionTests
     public async Task ReleaseSettings_ExposesOptionsInHelpOrder()
     {
         var names = OptionLongNames(typeof(ReleaseSettings));
-        await Assert.That(names).IsEqualTo("--configuration,--bump,--check-public-api,--dogfood");
+        await Assert.That(names).IsEqualTo("--configuration,--bump,--check-public-api,--dogfood,--allow-unknown-host");
     }
 
     [Test]

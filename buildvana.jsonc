@@ -73,15 +73,7 @@
     },
   },
 
-  "github": {
-    // Also the default. The release workflow points it at a PAT that can push
-    // to a protected branch; the build workflow leaves it at the automatic
-    // token, which pull requests from forks also get.
-    "tokenEnv": "GITHUB_TOKEN",
-  },
-
-  // No "git": automated commits use the CI bot identity supplied by the
-  // server adapter.
+  // No "git": automated commits use the bot identity of the CI platform.
 
   "dependencies": {
     // No "scopes": the built-in defaults are the ones this repository wants.

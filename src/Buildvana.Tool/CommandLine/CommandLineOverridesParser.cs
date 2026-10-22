@@ -42,6 +42,7 @@ internal static class CommandLineOverridesParser
             Configuration = reader.ReadValue("--configuration", "-c") ?? forwardedConfiguration,
             CheckPublicApi = reader.ReadBoolValue("--check-public-api"),
             Dogfood = reader.ReadBoolValue("--dogfood"),
+            AllowUnknownHost = reader.ReadBoolValue("--allow-unknown-host"),
             ForwardedArgs = forwardedReader.Remaining is { Count: > 0 } remaining ? remaining : null,
         };
     }

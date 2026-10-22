@@ -25,6 +25,12 @@
   // buildvana.next.jsonc, main: the version it describes does not exist yet.
   "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/main/schemas/buildvana.schema.json",
 
+  "repository": {
+    "url": "https://github.com/Tenacom/Buildvana",
+
+    // No "host": the default, "auto", recognizes github.com.
+  },
+
   "release": {
     "branches": ["^main$", "^v\\d+\\.\\d+$"],
 
@@ -73,15 +79,16 @@
     },
   },
 
-  "github": {
-    // Also the default. The release workflow points it at a PAT that can push
-    // to a protected branch; the build workflow leaves it at the automatic
-    // token, which pull requests from forks also get.
-    "tokenEnv": "GITHUB_TOKEN",
+  "hosts": {
+    "github": {
+      // Also the default. The release workflow points it at a PAT that can
+      // push to a protected branch; the build workflow leaves it at the
+      // automatic token, which pull requests from forks also get.
+      "tokenEnv": "GITHUB_TOKEN",
+    },
   },
 
-  // No "git": automated commits use the CI bot identity supplied by the
-  // server adapter.
+  // No "git": automated commits use the bot identity of the CI platform.
 
   "dependencies": {
     // No "scopes": the built-in defaults are the ones this repository wants.

@@ -42,7 +42,7 @@ jobs:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
       DOTNET_CLI_UI_LANGUAGE: 'en-US'
       # Secrets consumed by bv. Which environment variable carries each one is named in buildvana.jsonc:
-      # - github.tokenEnv (implicitly GITHUB_TOKEN) holds the token used for release operations and Git pushes;
+      # - hosts.github.tokenEnv (implicitly GITHUB_TOKEN) holds the token used for release operations and Git pushes;
       #   here it is the release PAT, which - unlike the automatic token - can push to a protected branch.
       # - nuget.feeds.prerelease.apiKeyEnv is FEEDZ_IO_PRIVATE_TOKEN (public Feedz.io preview feed);
       # - nuget.feeds.release.apiKeyEnv is NUGET_DEPLOYMENT_KEY (nuget.org).

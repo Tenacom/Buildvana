@@ -39,4 +39,10 @@ public sealed record ReleaseConfig
 
     /// <summary>Gets a value indicating whether self-references are updated (dogfooding) during a release.</summary>
     public bool Dogfood { get; init; } = true;
+
+    /// <summary>
+    /// Gets a value indicating whether a release proceeds on a Git host <c>bv</c> does not know, where it tags
+    /// and pushes but publishes no release page.
+    /// </summary>
+    public bool AllowUnknownHost { get; init; }
 }

@@ -42,7 +42,7 @@ Before building anything, `bv release` checks what a build cannot change:
    On GitHub Actions, the bot identity is `github-actions[bot]`.
    On GitLab CI, it is `GitLab CI`, with the address `gitlab-ci@noreply.<host>` built from [`CI_SERVER_HOST`](../environment-variables.md#ci_server_host).
 3. The platform supplies push credentials.
-   On GitHub Actions, they are the token that [`github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
+   On GitHub Actions, they are the token that [`hosts.github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
    Without them, `bv` warns that the push may fail, and goes on.
 4. The published versions are consistent: the latest tag is not below the latest stable tag, and the current version is below neither.
 5. The version spec change is computed from `--bump` and the public API files, as [`bv version advance`](version.md#bv-version-advance) computes it.
@@ -201,6 +201,7 @@ Once the release is published and the step output is written, nothing is undone.
 | `--bump <CHANGE>`              | The version spec change to request: `none`, `unstable`, `stable`, `minor`, or `major`.                   |
 | `--check-public-api <BOOL>`    | Whether the public API files take part in the version spec change. Defaults to `release.checkPublicApi`. |
 | `--dogfood <BOOL>`             | Whether the self-references are rewritten. Defaults to `release.dogfood`.                                |
+| `--allow-unknown-host <BOOL>`  | Whether a release proceeds on an unknown Git host. Defaults to `release.allowUnknownHost`.               |
 
 `bv release` refuses a `--` separator and everything after it, because it forwards nothing.
 

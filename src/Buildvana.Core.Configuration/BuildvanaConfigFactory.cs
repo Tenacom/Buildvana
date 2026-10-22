@@ -32,11 +32,12 @@ public static class BuildvanaConfigFactory
     {
         var dotNet = ComposeDotNet(json?.DotNet, commandLine);
         return new BuildvanaConfig {
+            Repository = ComposeRepository(json?.Repository),
             Release = ComposeRelease(json?.Release, commandLine, dotNet),
             Versioning = ComposeVersioning(json?.Versioning),
             DotNet = dotNet,
             NuGet = ComposeNuGet(json?.NuGet),
-            GitHub = ComposeGitHub(json?.GitHub),
+            Hosts = ComposeHosts(json?.Hosts),
             Git = ComposeGit(json?.Git),
             Dependencies = ComposeDependencies(json?.Dependencies),
             FileBasedApps = ComposeFileBasedApps(json?.FileBasedApps),
@@ -96,6 +97,17 @@ public static class BuildvanaConfigFactory
         return result;
     }
 
+    // A blank URL names no repository, so it counts as not stated: bv release refuses to run, as it does when
+    // the section is missing.
+    private static RepositoryConfig ComposeRepository(RepositoryJsonConfig? json)
+    {
+        var defaults = new RepositoryConfig();
+        return new RepositoryConfig {
+            Url = NormalizeBlankToNull(json?.Url),
+            Host = json?.Host ?? defaults.Host,
+        };
+    }
+
     // release.configuration falls back to the resolved dotnet.configuration, so a release builds with the
     // general build configuration unless one is stated for releases specifically.
     private static ReleaseConfig ComposeRelease(
@@ -116,6 +128,7 @@ public static class BuildvanaConfigFactory
             // release with the same actionable message as a missing release.emptyChangelog.
             EmptyChangelog = NormalizeBlankToNull(json?.EmptyChangelog),
             Dogfood = commandLine?.Dogfood ?? json?.Dogfood ?? defaults.Dogfood,
+            AllowUnknownHost = commandLine?.AllowUnknownHost ?? json?.AllowUnknownHost ?? defaults.AllowUnknownHost,
         };
     }
 
@@ -152,6 +165,11 @@ public static class BuildvanaConfigFactory
                 Source = json.Source,
                 ApiKeyEnv = json.ApiKeyEnv,
             };
+
+    private static HostsConfig ComposeHosts(HostsJsonConfig? json)
+        => new() {
+            GitHub = ComposeGitHub(json?.GitHub),
+        };
 
     // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
     private static GitHubConfig ComposeGitHub(GitHubJsonConfig? json)

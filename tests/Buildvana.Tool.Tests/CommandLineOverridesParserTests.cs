@@ -14,6 +14,7 @@ internal sealed class CommandLineOverridesParserTests
         await Assert.That(overrides.Configuration).IsNull();
         await Assert.That(overrides.CheckPublicApi).IsNull();
         await Assert.That(overrides.Dogfood).IsNull();
+        await Assert.That(overrides.AllowUnknownHost).IsNull();
         await Assert.That(overrides.ForwardedArgs).IsNull();
     }
 
@@ -21,11 +22,12 @@ internal sealed class CommandLineOverridesParserTests
     public async Task Parse_ReadsFlags_FromOptionTokens()
     {
         var overrides = CommandLineOverridesParser.Parse(
-            Parameters(options: ["-c", "Debug", "--check-public-api", "false", "--dogfood=true"]));
+            Parameters(options: ["-c", "Debug", "--check-public-api", "false", "--dogfood=true", "--allow-unknown-host", "true"]));
 
         await Assert.That(overrides.Configuration).IsEqualTo("Debug");
         await Assert.That(overrides.CheckPublicApi).IsFalse();
         await Assert.That(overrides.Dogfood).IsTrue();
+        await Assert.That(overrides.AllowUnknownHost).IsTrue();
     }
 
     // A configuration stated among the forwarded arguments decides the actual build, so it must drive

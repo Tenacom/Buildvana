@@ -42,4 +42,8 @@ public sealed record ReleaseJsonConfig
     /// <summary>Gets a value indicating whether self-references are updated (dogfooding) during a release.</summary>
     [Description("Whether self-references are updated (dogfooding) during a release.")]
     public bool? Dogfood { get; init; }
+
+    /// <summary>Gets a value indicating whether a release proceeds on a Git host <c>bv</c> does not know.</summary>
+    [Description("Whether a release tags and pushes on an unknown Git host, without a release page.")]
+    public bool? AllowUnknownHost { get; init; }
 }

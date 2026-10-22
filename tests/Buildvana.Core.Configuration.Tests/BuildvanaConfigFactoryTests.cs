@@ -13,12 +13,15 @@ internal sealed class BuildvanaConfigFactoryTests
     {
         var config = BuildvanaConfigFactory.Create(null, null);
 
+        await Assert.That(config.Repository.Url).IsNull();
+        await Assert.That(config.Repository.Host).IsEqualTo(HostKind.Auto);
         await Assert.That(config.Release.Branches.Count).IsEqualTo(0);
         await Assert.That(config.Release.Configuration).IsEqualTo("Release");
         await Assert.That(config.Release.CheckPublicApi).IsTrue();
         await Assert.That(config.Release.ChangelogUpdates).IsEqualTo(ChangelogUpdates.Stable);
         await Assert.That(config.Release.EmptyChangelog).IsNull();
         await Assert.That(config.Release.Dogfood).IsTrue();
+        await Assert.That(config.Release.AllowUnknownHost).IsFalse();
         await Assert.That(config.Versioning.PrereleaseTag).IsNull();
         await Assert.That(config.Versioning.AssemblyVersionPrecision).IsEqualTo(AssemblyVersionPrecision.Major);
         await Assert.That(config.DotNet.Configuration).IsEqualTo("Release");
@@ -26,7 +29,7 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(config.DotNet.All.Env.Count).IsEqualTo(0);
         await Assert.That(config.NuGet.Feeds.Prerelease).IsNull();
         await Assert.That(config.NuGet.Feeds.Release).IsNull();
-        await Assert.That(config.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+        await Assert.That(config.Hosts.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
         await Assert.That(config.Git.Identity).IsNull();
         await Assert.That(config.Dependencies.Scopes.NetSdk).IsEqualTo("major");
         await Assert.That(config.Dependencies.Scopes.Sdks).IsEqualTo("minor");
@@ -41,46 +44,52 @@ internal sealed class BuildvanaConfigFactoryTests
     public async Task Create_FileValues_OverrideDefaults()
     {
         var json = new BuildvanaJsonConfig {
+            Repository = new() { Url = "https://github.com/Tenacom/Buildvana", Host = HostKind.GitHub },
             Release = new() {
                 Branches = ["^main$"],
                 CheckPublicApi = false,
                 ChangelogUpdates = ChangelogUpdates.All,
                 EmptyChangelog = "No changes.",
                 Dogfood = false,
+                AllowUnknownHost = true,
             },
             Versioning = new() {
                 PrereleaseTag = "preview",
                 AssemblyVersionPrecision = AssemblyVersionPrecision.Build,
             },
             DotNet = new() { Configuration = "Debug" },
-            GitHub = new() { TokenEnv = "MY_TOKEN" },
+            Hosts = new() { GitHub = new() { TokenEnv = "MY_TOKEN" } },
         };
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
+        await Assert.That(config.Repository.Url).IsEqualTo("https://github.com/Tenacom/Buildvana");
+        await Assert.That(config.Repository.Host).IsEqualTo(HostKind.GitHub);
         await Assert.That(config.Release.Branches.Count).IsEqualTo(1);
         await Assert.That(config.Release.Branches[0]).IsEqualTo("^main$");
         await Assert.That(config.Release.CheckPublicApi).IsFalse();
         await Assert.That(config.Release.ChangelogUpdates).IsEqualTo(ChangelogUpdates.All);
         await Assert.That(config.Release.EmptyChangelog).IsEqualTo("No changes.");
         await Assert.That(config.Release.Dogfood).IsFalse();
+        await Assert.That(config.Release.AllowUnknownHost).IsTrue();
         await Assert.That(config.Versioning.PrereleaseTag).IsEqualTo("preview");
         await Assert.That(config.Versioning.AssemblyVersionPrecision).IsEqualTo(AssemblyVersionPrecision.Build);
         await Assert.That(config.DotNet.Configuration).IsEqualTo("Debug");
-        await Assert.That(config.GitHub.TokenEnv).IsEqualTo("MY_TOKEN");
+        await Assert.That(config.Hosts.GitHub.TokenEnv).IsEqualTo("MY_TOKEN");
     }
 
     [Test]
     public async Task Create_CommandLine_BeatsFileAndDefaults()
     {
         var json = new BuildvanaJsonConfig {
-            Release = new() { CheckPublicApi = true, Dogfood = true },
+            Release = new() { CheckPublicApi = true, Dogfood = true, AllowUnknownHost = false },
             DotNet = new() { Configuration = "Debug" },
         };
         var commandLine = new CommandLineOverrides {
             Configuration = "Custom",
             CheckPublicApi = false,
             Dogfood = false,
+            AllowUnknownHost = true,
         };
 
         var config = BuildvanaConfigFactory.Create(json, commandLine);
@@ -89,6 +98,7 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(config.Release.Configuration).IsEqualTo("Custom");
         await Assert.That(config.Release.CheckPublicApi).IsFalse();
         await Assert.That(config.Release.Dogfood).IsFalse();
+        await Assert.That(config.Release.AllowUnknownHost).IsTrue();
     }
 
     [Test]
@@ -144,11 +154,19 @@ internal sealed class BuildvanaConfigFactoryTests
     [Test]
     public async Task Create_TokenEnv_BlankFallsBackToDefault()
     {
-        var empty = new BuildvanaJsonConfig { GitHub = new() { TokenEnv = string.Empty } };
-        await Assert.That(BuildvanaConfigFactory.Create(empty, null).GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+        var empty = new BuildvanaJsonConfig { Hosts = new() { GitHub = new() { TokenEnv = string.Empty } } };
+        await Assert.That(BuildvanaConfigFactory.Create(empty, null).Hosts.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
 
-        var whitespace = new BuildvanaJsonConfig { GitHub = new() { TokenEnv = " \t " } };
-        await Assert.That(BuildvanaConfigFactory.Create(whitespace, null).GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+        var whitespace = new BuildvanaJsonConfig { Hosts = new() { GitHub = new() { TokenEnv = " \t " } } };
+        await Assert.That(BuildvanaConfigFactory.Create(whitespace, null).Hosts.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+    }
+
+    // A blank URL names no repository, so it counts as not stated, and bv release refuses to run.
+    [Test]
+    public async Task Create_RepositoryUrl_BlankCountsAsNotStated()
+    {
+        var json = new BuildvanaJsonConfig { Repository = new() { Url = " " } };
+        await Assert.That(BuildvanaConfigFactory.Create(json, null).Repository.Url).IsNull();
     }
 
     [Test]

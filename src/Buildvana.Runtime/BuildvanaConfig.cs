@@ -21,6 +21,9 @@ namespace Buildvana.Runtime;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record BuildvanaConfig
 {
+    /// <summary>Gets the resolved configuration of the repository that the releases go to.</summary>
+    public RepositoryConfig Repository { get; init; } = new();
+
     /// <summary>Gets the resolved release-workflow configuration.</summary>
     public ReleaseConfig Release { get; init; } = new();
 
@@ -35,9 +38,8 @@ public sealed record BuildvanaConfig
     [JsonPropertyName("nuget")]
     public NuGetConfig NuGet { get; init; } = new();
 
-    /// <summary>Gets the resolved GitHub integration configuration.</summary>
-    [JsonPropertyName("github")]
-    public GitHubConfig GitHub { get; init; } = new();
+    /// <summary>Gets the resolved configuration of the Git hosts.</summary>
+    public HostsConfig Hosts { get; init; } = new();
 
     /// <summary>Gets the resolved Git configuration.</summary>
     public GitConfig Git { get; init; } = new();
