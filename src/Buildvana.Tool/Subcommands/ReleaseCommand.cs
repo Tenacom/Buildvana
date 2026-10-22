@@ -94,7 +94,7 @@ internal sealed class ReleaseCommand(
         if (pushUsername is not null && pushPassword is not null)
         {
             reporter.Info($"Fallback push credentials provided by the server adapter (protocol username: '{pushUsername}').");
-            git.PushCredentialsFallback = new(pushUsername, pushPassword);
+            git.RemoteCredentialsFallback = new(pushUsername, pushPassword);
         }
         else
         {

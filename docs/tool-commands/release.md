@@ -41,6 +41,7 @@ Before building anything, `bv release` checks what a build cannot change:
    The three are the `git.identity` setting of `buildvana.jsonc`, the bot identity of the CI platform, and the `user.name` and `user.email` of the Git configuration.
    On GitHub Actions, the bot identity is `github-actions[bot]`.
    On GitLab CI, it is `GitLab CI`, with the address `gitlab-ci@noreply.<host>` built from [`CI_SERVER_HOST`](../environment-variables.md#ci_server_host).
+   `bv` commits with that identity, and writes nothing to the Git configuration.
 3. The platform supplies push credentials.
    On GitHub Actions, they are the token that [`hosts.github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
    Without them, `bv` warns that the push may fail, and goes on.
@@ -154,6 +155,7 @@ When neither the hook nor the rewrites changed a file, there is no post-release 
 ## Publishing
 
 `bv release` pushes the commits, then every `.nupkg` file of `artifacts\<configuration>\`, with `dotnet nuget push --skip-duplicate`.
+When the remote rejects the push of the commits, the release fails.
 `dotnet nuget push` gets the arguments and environment variables of the `dotnet.all` and `dotnet.nugetPush` sections of `buildvana.jsonc`, and no forwarded argument.
 A prerelease goes to the `nuget.feeds.prerelease` feed, and a stable version to the `nuget.feeds.release` feed.
 A repository that states no prerelease feed pushes prereleases to the release feed.

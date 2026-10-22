@@ -36,18 +36,23 @@ internal interface IGitService
     /// <summary>
     /// Gets or sets the identity of the Git committer.
     /// </summary>
+    /// <value>The identity last set on this instance, if any; otherwise, the identity that the Git configuration
+    /// states, or <see langword="null"/> if it states none.</value>
+    /// <remarks>
+    /// <para>A set identity lives in this instance alone, and nothing writes it to the Git configuration.</para>
+    /// </remarks>
     [DisallowNull]
     GitIdentity? CommitterIdentity { get; set; }
 
     /// <summary>
-    /// Gets or sets the credentials used for pushing to the Git repository if ambient credentials are not sufficient.
+    /// Gets or sets the credentials used for fetching from and pushing to a remote if ambient credentials are not sufficient.
     /// </summary>
     /// <remarks>
     /// <para>Set this property when ambient mechanisms (`http.extraheader` written by CI checkout actions,
     /// URL-embedded credentials, OS credential helpers) are absent or insufficient.</para>
-    /// <para>The provided credentials are tried only after the server returns a 401 challenge to the initial push request.</para>
+    /// <para>The provided credentials are tried only after the server returns a 401 challenge to the initial request.</para>
     /// </remarks>
-    GitCredentials? PushCredentialsFallback { get; set; }
+    GitCredentials? RemoteCredentialsFallback { get; set; }
 
     /// <summary>
     /// Gets the SHA of the current <c>HEAD</c> commit.
@@ -120,8 +125,51 @@ internal interface IGitService
     void UndoLastCommit();
 
     /// <summary>
-    /// Pushes changes made to HEAD to the tracked remote. Fails if HEAD is not tracking any remote.
+    /// Pushes the current branch to the branch of the same name on a remote.
     /// </summary>
-    /// <param name="force">If <see langword="true"/>, force-pushes HEAD to the tracked remote.</param>
-    void Push(bool force = false);
+    /// <param name="remote">The name of the remote.</param>
+    /// <param name="force">If <see langword="true"/>, replaces the remote branch even if the push is not a fast-forward.</param>
+    /// <remarks>
+    /// <para>This method fails if <c>HEAD</c> is not on a branch, and if the remote rejects the push.
+    /// The tracking information of the branch plays no part in the push.</para>
+    /// </remarks>
+    void PushBranch(string remote, bool force = false);
+
+    /// <summary>
+    /// Creates a lightweight tag in the local Git repository.
+    /// </summary>
+    /// <param name="tag">The name of the tag.</param>
+    /// <param name="sha">The SHA of the commit the tag points to.</param>
+    void CreateTag(string tag, string sha);
+
+    /// <summary>
+    /// Pushes a tag of the local Git repository to a remote.
+    /// </summary>
+    /// <param name="remote">The name of the remote.</param>
+    /// <param name="tag">The name of the tag.</param>
+    /// <remarks>
+    /// <para>As Git does, this method never moves a tag of the remote. When the remote has a tag of the same name,
+    /// this method does nothing if the two tags point to the same object, and fails otherwise.</para>
+    /// <para>This method also fails if the local repository has no such tag, and if the remote rejects the push.</para>
+    /// </remarks>
+    void PushTag(string remote, string tag);
+
+    /// <summary>
+    /// Deletes a tag from a remote.
+    /// </summary>
+    /// <param name="remote">The name of the remote.</param>
+    /// <param name="tag">The name of the tag.</param>
+    void DeleteRemoteTag(string remote, string tag);
+
+    /// <summary>
+    /// Deletes a tag from the local Git repository.
+    /// </summary>
+    /// <param name="tag">The name of the tag.</param>
+    void DeleteTag(string tag);
+
+    /// <summary>
+    /// Fetches every tag of a remote into the local Git repository.
+    /// </summary>
+    /// <param name="remote">The name of the remote.</param>
+    void FetchTags(string remote);
 }

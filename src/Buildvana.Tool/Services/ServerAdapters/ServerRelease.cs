@@ -113,7 +113,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             {
                 // "Undo" the push by force pushing the previous commit
                 // (to which we have just reset).
-                _git.Push(force: true);
+                _git.PushBranch(_git.Origin, force: true);
             }
         });
     }
@@ -204,7 +204,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             return;
         }
 
-        _git.Push();
+        _git.PushBranch(_git.Origin);
         _updatesPushed = true;
 
         // The rollback action is defined in EnsureReleaseCommit, because
