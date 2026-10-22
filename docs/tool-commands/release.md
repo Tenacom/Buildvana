@@ -30,15 +30,15 @@ bv release [OPTIONS]
 ```
 
 `bv release` creates releases on GitHub, from a GitHub Actions runner.
-On GitLab CI, `bv` recognizes the runner and fails when it creates the release, because the GitLab adapter creates none.
-On any other machine, the command fails at once with `A release can only be created on a known cloud build platform.`
+On GitLab CI and on Generic CI, `bv` fails when it creates the release.
+On the Local [CI platform](../introduction.md#ci-platforms), the command fails at once with `A release can only be created on a CI runner.`
 
 Before building anything, `bv release` checks what a build cannot change:
 
 1. `HEAD` is on a branch, and the branch produces [public releases](../sdk-modules/versioning.md#public-releases) under `release.branches`.
 2. A committer identity exists for the commits of the release.
    `bv` takes the first of three that exists.
-   The three are the `git.identity` setting of `buildvana.jsonc`, the CI bot identity of the platform, and the `user.name` and `user.email` of the Git configuration.
+   The three are the `git.identity` setting of `buildvana.jsonc`, the bot identity of the CI platform, and the `user.name` and `user.email` of the Git configuration.
    On GitHub Actions, the bot identity is `github-actions[bot]`.
    On GitLab CI, it is `GitLab CI`, with the address `gitlab-ci@noreply.<host>` built from [`CI_SERVER_HOST`](../environment-variables.md#ci_server_host).
 3. The platform supplies push credentials.

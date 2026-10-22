@@ -9,36 +9,93 @@ using Buildvana.Core.Testing;
 using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Services;
-using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Platforms;
+using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Spectre.Console.Testing;
 
+// A build pipeline command needs no Git repository: Buildvana SDK computes the version itself, and the one member
+// of DotNetService that reads the version is the NuGet push. The home directory of these tests is not a Git
+// repository, so VersionService cannot be constructed, and the build pipeline resolves all the same.
 internal sealed class DotNetServiceResolutionTests
 {
-    // Outside GitHub Actions, a build pipeline command needs no Git repository: Buildvana SDK computes the version
-    // itself, and the one member of DotNetService that reads the version is the NuGet push. The home directory
-    // below is not a Git repository, so VersionService cannot be constructed, and DotNetService resolves all the
-    // same. RecordingServerAdapter replaces ServerAdapter.Create, whose GitHubServerAdapter opens the repository
-    // in its constructor, so the test covers the Lazy<VersionService> dependency alone, and not what a GitHub
-    // Actions runner resolves.
+    private static readonly string[] PlatformVariables = ["GITHUB_ACTIONS", "GITLAB_CI"];
+
     [Test]
-    public async Task GetRequiredService_HomeDirectoryIsNotGitRepository_ResolvesDotNetService()
+    public async Task GetRequiredService_OnLocalPlatform_ResolvesBuildPipelineWithoutGitRepository()
     {
-        using var home = new TempHome();
+        using var home = CreateHome();
         using var console = new TestConsole();
-        var services = BuildServiceProvider(home, console);
+        var processRunner = new FakeProcessRunner();
+        var services = BuildServiceProvider(home, console, processRunner, new LocalPlatform());
         await using (services.ConfigureAwait(false))
         {
             await Assert.That(services.GetRequiredService<VersionService>).Throws<BuildFailedException>();
-            await Assert.That(services.GetRequiredService<DotNetService>()).IsNotNull();
+            await Assert.That(services.GetRequiredService<BuildCommand>()).IsNotNull();
+
+            await BuildAsync(services).ConfigureAwait(false);
+            await Assert.That(processRunner.Runs[0].Args).Contains("-p:ContinuousIntegrationBuild=false");
         }
     }
 
-    private static ServiceProvider BuildServiceProvider(TempHome home, IAnsiConsole console)
-        => new ServiceCollection()
+    // GitHubServerAdapter, which ServerAdapter.Create selects on GitHub Actions, opens the Git repository in its
+    // constructor. The build pipeline depends on CIPlatform alone, so no adapter is ever constructed.
+    [Test]
+    [NotInParallel]
+    public async Task GetRequiredService_OnGitHubActions_ResolvesBuildPipelineWithoutGitRepository()
+    {
+        var originals = PlatformVariables.ToDictionary(x => x, Environment.GetEnvironmentVariable);
+        Environment.SetEnvironmentVariable("GITHUB_ACTIONS", "true");
+        Environment.SetEnvironmentVariable("GITLAB_CI", null);
+        try
+        {
+            using var home = CreateHome();
+            using var console = new TestConsole();
+            var processRunner = new FakeProcessRunner();
+            var services = BuildServiceProvider(home, console, processRunner, platform: null);
+            await using (services.ConfigureAwait(false))
+            {
+                await Assert.That(services.GetRequiredService<CIPlatform>()).IsTypeOf<GitHubActionsPlatform>();
+                await Assert.That(services.GetRequiredService<VersionService>).Throws<BuildFailedException>();
+                await Assert.That(services.GetRequiredService<BuildCommand>()).IsNotNull();
+
+                await BuildAsync(services).ConfigureAwait(false);
+                await Assert.That(processRunner.Runs[0].Args).Contains("-p:ContinuousIntegrationBuild=true");
+            }
+        }
+        finally
+        {
+            foreach (var (name, value) in originals)
+            {
+                Environment.SetEnvironmentVariable(name, value);
+            }
+        }
+    }
+
+    private static TempHome CreateHome()
+    {
+        var home = new TempHome();
+        home.WriteFile("Test.slnx", "<Solution />\n");
+        return home;
+    }
+
+    private static Task BuildAsync(ServiceProvider services)
+        => services.GetRequiredService<DotNetService>().BuildSolutionAsync(
+            services.GetRequiredService<SolutionContext>(),
+            "Release",
+            restore: false);
+
+    // A null platform leaves the detection of AddBvServices in place.
+    private static ServiceProvider BuildServiceProvider(
+        TempHome home,
+        IAnsiConsole console,
+        FakeProcessRunner processRunner,
+        CIPlatform? platform)
+    {
+        var collection = new ServiceCollection()
             .AddSingleton(console)
             .AddSingleton<IReporter>(new CaptureReporter())
             .AddSingleton(new GlobalSettings(null, false, false, true, true, true, false))
@@ -47,7 +104,12 @@ internal sealed class DotNetServiceResolutionTests
             .AddBvServices()
 
             // The boundaries, faked. Registered last, so that they win over what AddBvServices registers.
-            .AddSingleton<IProcessRunner>(new FakeProcessRunner())
-            .AddSingleton<ServerAdapter>(static sp => new RecordingServerAdapter(sp) { CloudBuild = false })
-            .BuildServiceProvider();
+            .AddSingleton<IProcessRunner>(processRunner);
+        if (platform is not null)
+        {
+            _ = collection.AddSingleton(platform);
+        }
+
+        return collection.BuildServiceProvider();
+    }
 }

@@ -21,6 +21,7 @@ The variables that the .NET SDK, MSBuild, and NuGet read are out of scope, and t
   - [`GITLAB_CI`](#gitlab_ci)
   - [`NO_COLOR`](#no_color)
   - [`TERM`](#term)
+  - [Variables that mark a CI runner](#variables-that-mark-a-ci-runner)
   - [Secret-carrying variables named by the configuration file](#secret-carrying-variables-named-by-the-configuration-file)
 - [Variables set by `bv`](#variables-set-by-bv)
 
@@ -89,7 +90,7 @@ The variable is unset when `bv` runs through the native shim of a global tool.
 ### `GITHUB_ACTIONS`
 
 GitHub Actions sets it to `true` on every step.
-`bv` reads it to recognize a GitHub Actions run and act through the GitHub adapter.
+`bv` reads it to recognize the GitHub Actions [CI platform](introduction.md#ci-platforms), and to act through the GitHub adapter.
 Releases then go to the GitHub API, and the step output goes to the file `GITHUB_OUTPUT` names.
 The `github-actions[bot]` identity authors the commits of `bv release`, unless `buildvana.jsonc` states a `git.identity`.
 The comparison ignores case, so `TRUE` and `True` count too.
@@ -122,6 +123,22 @@ Each convention follows the rules of whoever defined it.
 An unset, empty, or `dumb` value says that the terminal does not interpret ANSI escape sequences, so color detection turns color off.
 `--color` still forces color on.
 On Windows, a console mode answers the question, and `bv` does not read `TERM`.
+
+### Variables that mark a CI runner
+
+`bv` recognizes a CI runner as the .NET CLI does.
+When neither `GITLAB_CI` nor `GITHUB_ACTIONS` selects a [CI platform](introduction.md#ci-platforms), any of these makes the run a Generic CI run:
+
+- `TF_BUILD`, `GITHUB_ACTIONS`, `APPVEYOR`, `CI`, `TRAVIS`, or `CIRCLECI`, set to `1`, `true`, `yes`, or `on`, in any case;
+- `CODEBUILD_BUILD_ID` and `AWS_REGION`, both non-empty;
+- `BUILD_ID` and `BUILD_URL`, both non-empty;
+- `BUILD_ID` and `PROJECT_ID`, both non-empty;
+- `TEAMCITY_VERSION` or `JB_SPACE_API_URL`, non-empty.
+
+On Generic CI, the build pipeline passes `ContinuousIntegrationBuild=true` to `dotnet`.
+Generic CI has no bot identity and no step outputs.
+A runner that sets `CI` to any other value, such as its own name, is not recognized.
+To have it recognized, set `CI` to `true` in its environment.
 
 ### Secret-carrying variables named by the configuration file
 

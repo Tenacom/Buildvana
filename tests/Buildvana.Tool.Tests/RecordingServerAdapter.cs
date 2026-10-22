@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 
@@ -11,9 +10,8 @@ using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
 /// </summary>
 /// <param name="services">The service provider handed to the created release.</param>
 /// <remarks>
-/// <para>The fake deliberately carries no logic. <c>ServerAdapter</c> is to be split into a CI-platform adapter
-/// and a Git-host adapter; the knobs below are grouped by the side each one will end up on, so that the split
-/// can cut this class in two without rewriting what it answers.</para>
+/// <para>The fake deliberately carries no logic. <see cref="FakeCIPlatform"/> answers what the CI platform
+/// answers.</para>
 /// <para>The URLs come from <see cref="GitHubRepositoryUrls"/>, so that a release over the fake sees the same
 /// rejections a release on GitHub does: a file URL for a path outside the repository is an error, not a URL.</para>
 /// </remarks>
@@ -21,26 +19,11 @@ internal sealed class RecordingServerAdapter(IServiceProvider services) : Server
 {
     private static readonly GitHubRepositoryUrls Urls = new("git.example.invalid", "tenacom", "test-repo");
 
-    // --- Platform side ---
-
-    /// <summary>
-    /// Gets a value indicating whether the build is a cloud build (<see cref="IsCloudBuild"/>).
-    /// </summary>
-    public bool CloudBuild { get; init; } = true;
-
-    /// <summary>
-    /// Gets the identity the CI bot commits with (<see cref="CIBotIdentity"/>), or <see langword="null"/>
-    /// for a platform that has none.
-    /// </summary>
-    public GitIdentity? BotIdentity { get; init; } = new("Buildvana Test Bot", "bot@buildvana.invalid");
-
     /// <summary>
     /// Gets the secret half of the push credentials (<see cref="PushPassword"/>), or <see langword="null"/>
     /// for a platform that provides none.
     /// </summary>
     public string? PushSecret { get; init; } = "test-token";
-
-    // --- Host side ---
 
     /// <summary>
     /// Gets the username half of the push credentials (<see cref="PushUsername"/>), or <see langword="null"/>
@@ -72,12 +55,6 @@ internal sealed class RecordingServerAdapter(IServiceProvider services) : Server
 
     /// <inheritdoc/>
     public override Uri RepositoryUrl => Urls.Repository;
-
-    /// <inheritdoc/>
-    public override bool IsCloudBuild => CloudBuild;
-
-    /// <inheritdoc/>
-    public override GitIdentity? CIBotIdentity => BotIdentity;
 
     /// <inheritdoc/>
     public override string? PushUsername => PushUser;

@@ -36,7 +36,7 @@ Every `dotnet` command of a step gets these arguments:
 - `-nologo`, except `dotnet test`;
 - the build configuration, as [The build configuration](#the-build-configuration) says, except `dotnet restore`, which rejects it;
 - the arguments of the `dotnet.all` section of `buildvana.jsonc`, then the arguments of the `dotnet.<command>` section, then the [forwarded arguments](#forwarded-arguments);
-- `ContinuousIntegrationBuild=true` on GitHub Actions and GitLab CI, and `ContinuousIntegrationBuild=false` elsewhere;
+- `ContinuousIntegrationBuild=false` on the Local [CI platform](../introduction.md#ci-platforms), and `ContinuousIntegrationBuild=true` on every other;
 - the verbosity of `bv`, as `--verbosity`.
 
 The last two come last, so that no configured or forwarded argument overrides them.

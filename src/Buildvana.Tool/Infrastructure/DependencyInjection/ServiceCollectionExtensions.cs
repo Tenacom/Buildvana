@@ -17,6 +17,7 @@ using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.Platforms;
 using Buildvana.Tool.Services.SelfUpdate;
 using Buildvana.Tool.Services.ServerAdapters;
 using Buildvana.Tool.Services.Solution;
@@ -79,6 +80,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
                 .AddSingleton<IGitService, GitService>()
                 .AddSingleton<DeclaredApiFilesService>()
+                .AddSingleton(static _ => CIPlatform.Detect(Environment.GetEnvironmentVariable))
                 .AddSingleton(ServerAdapter.Create)
                 .AddSingleton<VersioningSettings>()
                 .AddSingleton<VersionService>()

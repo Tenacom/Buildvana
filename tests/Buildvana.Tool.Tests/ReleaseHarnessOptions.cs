@@ -5,7 +5,7 @@ using Buildvana.Tool.Services.Git;
 
 /// <summary>
 /// The knobs of a <see cref="ReleaseHarness"/>: what the repository contains and how the configuration file,
-/// the server adapter, and the hook are set up. Every one of them has the value a plain prerelease release
+/// the CI platform, the server adapter, and the hook are set up. Every one of them has the value a plain prerelease release
 /// needs, so a test only names what its own scenario changes.
 /// </summary>
 internal sealed record ReleaseHarnessOptions
@@ -73,9 +73,9 @@ internal sealed record ReleaseHarnessOptions
     public bool WithHook { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the build is a cloud build.
+    /// Gets a value indicating whether the release runs on a CI runner.
     /// </summary>
-    public bool CloudBuild { get; init; } = true;
+    public bool IsCI { get; init; } = true;
 
     /// <summary>
     /// Gets the identity stated as <c>git.identity</c> in the configuration file, or <see langword="null"/>
@@ -84,7 +84,7 @@ internal sealed record ReleaseHarnessOptions
     public GitIdentity? ConfiguredIdentity { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether the server adapter provides a CI bot identity.
+    /// Gets a value indicating whether the CI platform provides a bot identity.
     /// </summary>
     public bool WithBotIdentity { get; init; } = true;
 

@@ -16,6 +16,7 @@ This page says what Buildvana is made of, what it does for a project, and what i
   - [Project types](#project-types)
   - [Programming languages](#programming-languages)
   - [Git servers](#git-servers)
+  - [CI platforms](#ci-platforms)
   - [Toolchain](#toolchain)
 
 ---
@@ -92,6 +93,19 @@ Each table below states a status for every item.
 | ---------------------------- | --------------------- | -------------------------------------------- |
 | GitHub and GitHub Enterprise | Supported             |                                              |
 | Other servers                | Supported with limits | Buildvana SDK does not configure SourceLink. |
+
+### CI platforms
+
+`bv` detects the CI platform it runs on from the environment.
+Generic CI is any other runner that the .NET CLI recognizes as one.
+Local is a machine where `bv` recognizes no CI runner, such as a developer machine.
+
+| CI platform                                                            | Status                | Limits              |
+| ---------------------------------------------------------------------- | --------------------- | ------------------- |
+| GitHub Actions                                                         | Supported             |                     |
+| GitLab CI                                                              | Supported with limits | `bv release` fails. |
+| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported with limits | `bv release` fails. |
+| Local                                                                  | Supported with limits | `bv release` fails. |
 
 ### Toolchain
 
