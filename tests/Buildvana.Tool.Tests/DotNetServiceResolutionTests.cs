@@ -41,8 +41,8 @@ internal sealed class DotNetServiceResolutionTests
         }
     }
 
-    // GitHubServerAdapter, which ServerAdapter.Create selects on GitHub Actions, opens the Git repository in its
-    // constructor. The build pipeline depends on CIPlatform alone, so no adapter is ever constructed.
+    // The build pipeline depends on CIPlatform alone, which reads the environment and nothing else, so neither
+    // the Git repository nor the Git host is ever opened.
     [Test]
     [NotInParallel]
     public async Task GetRequiredService_OnGitHubActions_ResolvesBuildPipelineWithoutGitRepository()

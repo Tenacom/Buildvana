@@ -22,6 +22,7 @@ internal sealed partial class VersionService
     private readonly IReporter _reporter;
     private readonly VersionCalculator _calculator;
     private readonly DeclaredApiFilesService _declaredApiFiles;
+    private readonly IGitService _git;
 
     private VersionInfo _current;
 
@@ -42,6 +43,7 @@ internal sealed partial class VersionService
         Guard.IsNotNull(declaredApiFiles);
         _reporter = reporter;
         _declaredApiFiles = declaredApiFiles;
+        _git = git;
         _calculator = new(home, settings, new GitHeightCalculator(VersionFile.FileName));
         _current = _calculator.Calculate();
         Current = SemanticVersion.Parse(_current.SemVer);
@@ -78,12 +80,12 @@ internal sealed partial class VersionService
     /// <summary>
     /// Gets the latest published version, if any, as a SemanticVersion object.
     /// </summary>
-    public SemanticVersion? Latest { get; }
+    public SemanticVersion? Latest { get; private set; }
 
     /// <summary>
     /// Gets the latest published stable version, if any, as a SemanticVersion object.
     /// </summary>
-    public SemanticVersion? LatestStable { get; }
+    public SemanticVersion? LatestStable { get; private set; }
 
     /// <summary>
     /// Checks the consistency of the current version with respect to latest versions and fails the build if an inconsistency is found.
@@ -200,4 +202,9 @@ internal sealed partial class VersionService
         _current = _calculator.Calculate();
         Current = SemanticVersion.Parse(_current.SemVer);
     }
+
+    /// <summary>
+    /// Reads <see cref="Latest"/> and <see cref="LatestStable"/> from the tags again, typically after fetching them.
+    /// </summary>
+    public void RefreshLatestVersions() => (Latest, LatestStable) = _git.GetLatestVersions();
 }

@@ -13,11 +13,13 @@ The variables that the .NET SDK, MSBuild, and NuGet read are out of scope, and t
   - [`BV_DELEGATED`](#bv_delegated)
   - [`BV_SELF_UPDATE_FROM`](#bv_self_update_from)
   - [`CI_SERVER_HOST`](#ci_server_host)
+  - [`CI_SERVER_URL`](#ci_server_url)
   - [`DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`](#dotnet_cli_console_use_default_encoding)
   - [`DOTNET_CLI_HOME`](#dotnet_cli_home)
   - [`DOTNET_HOST_PATH`](#dotnet_host_path)
   - [`GITHUB_ACTIONS`](#github_actions)
   - [`GITHUB_OUTPUT`](#github_output)
+  - [`GITHUB_SERVER_URL`](#github_server_url)
   - [`GITLAB_CI`](#gitlab_ci)
   - [`NO_COLOR`](#no_color)
   - [`TERM`](#term)
@@ -58,7 +60,13 @@ Do not set the variable by hand.
 GitLab CI sets it to the host name of the GitLab instance that runs the job.
 `bv` reads it to build the e-mail address of the CI bot identity, `gitlab-ci@noreply.<host>`.
 That identity authors the commits of `bv release`, unless `buildvana.jsonc` states a `git.identity`.
-The variable matters only together with `GITLAB_CI`, which is what selects the GitLab adapter.
+The variable matters only together with `GITLAB_CI`, which is what selects the GitLab CI platform.
+
+### `CI_SERVER_URL`
+
+GitLab CI sets it to the URL of the GitLab instance that runs the job.
+`bv` reads it as the server of the GitLab CI platform.
+`bv` knows no GitLab host, so the variable has no effect on a release.
 
 ### `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`
 
@@ -90,8 +98,8 @@ The variable is unset when `bv` runs through the native shim of a global tool.
 ### `GITHUB_ACTIONS`
 
 GitHub Actions sets it to `true` on every step.
-`bv` reads it to recognize the GitHub Actions [CI platform](introduction.md#ci-platforms), and to act through the GitHub adapter.
-Releases then go to the GitHub API, and the step output goes to the file `GITHUB_OUTPUT` names.
+`bv` reads it to recognize the GitHub Actions [CI platform](introduction.md#ci-platforms).
+The step output of `bv release` then goes to the file `GITHUB_OUTPUT` names.
 The `github-actions[bot]` identity authors the commits of `bv release`, unless `buildvana.jsonc` states a `git.identity`.
 The comparison ignores case, so `TRUE` and `True` count too.
 Any other value, or no value, means no GitHub Actions.
@@ -103,10 +111,17 @@ GitHub Actions sets it to the path of the file that collects the outputs of a st
 When the variable is unset, the release fails before creating anything.
 `bv` never sets the variable.
 
+### `GITHUB_SERVER_URL`
+
+GitHub Actions sets it to the URL of the GitHub instance that runs the job, such as `https://github.com`.
+When `repository.url` names a repository on the host of that URL, `bv release` takes the host for GitHub.
+A GitHub Enterprise Server is recognized this way on its own runners.
+The variable matters only together with `GITHUB_ACTIONS`.
+
 ### `GITLAB_CI`
 
 GitLab CI sets it on every job.
-Its presence, whatever the value, makes `bv` recognize a GitLab CI run and act through the GitLab adapter, with the bot identity built from `CI_SERVER_HOST`.
+Its presence, whatever the value, makes `bv` recognize a GitLab CI run, with the bot identity built from `CI_SERVER_HOST`.
 
 ### `NO_COLOR`
 
@@ -146,6 +161,7 @@ To have it recognized, set `CI` to `true` in its environment.
 The [configuration file](configuration-file.md) names the environment variable that carries each one, and `bv` reads the value where it uses it.
 
 - `hosts.github.tokenEnv` names the variable holding the GitHub token of the release operations.
+  The token is also the password of the fetch and the push of `bv release`.
   The default name is `GITHUB_TOKEN`.
 - `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys of the NuGet push feeds.
 

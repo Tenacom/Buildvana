@@ -3,7 +3,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
+namespace Buildvana.Tool.Services.Hosts.GitHub;
 
 /// <summary>
 /// The source-generated serializer context for the requests and answers of the GitHub REST API.

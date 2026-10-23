@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using CommunityToolkit.Diagnostics;
 
-namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
+namespace Buildvana.Tool.Services.Hosts.GitHub;
 
 /// <summary>
 /// Builds the URLs of a GitHub repository and of the resources it contains.

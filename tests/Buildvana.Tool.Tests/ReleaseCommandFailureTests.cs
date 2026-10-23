@@ -65,28 +65,61 @@ internal sealed class ReleaseCommandFailureTests
         await Assert.That(head.Sha).IsEqualTo(initialSha);
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(initialSha);
 
-        // What the repository did is undone; what the server did is not, because it never got that far:
-        // the publication rollback is only armed once the publication itself has succeeded.
-        var release = harness.Adapter.Release!;
-        await Assert.That(release.IsPublished).IsFalse();
-        await Assert.That(release.IsPublishUndone).IsFalse();
+        // The tag is gone too, locally and on the remote, and the host is asked to undo what it created.
+        await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(0);
+        await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
+        var publisher = harness.Publisher!;
+        await Assert.That(publisher.IsPublished).IsFalse();
+        await Assert.That(publisher.IsUndone).IsTrue();
     }
 
     [Test]
-    public async Task Release_OnLocalBuild_Fails()
+    public async Task Release_WithoutRepositoryUrl_FailsBeforeBuilding()
     {
-        using var harness = new ReleaseHarness(new() { IsCI = false });
+        using var harness = new ReleaseHarness(new() { RepositoryUrl = null });
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("CI runner");
+        await Assert.That(exception!.Message).Contains("repository.url");
 
         // The preliminary checks run before the pipeline, so a release that can never succeed costs
         // nothing: no clean, no build, no test run.
         await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Events.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Release_OnAnUnknownHost_WithoutAllowUnknownHost_FailsBeforeBuilding()
+    {
+        using var harness = new ReleaseHarness(new() { UnknownHost = true });
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("release.allowUnknownHost");
+        await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
+    }
+
+    // A clone that lacks a tag of the release remote would check the versions against an incomplete history.
+    // The fetch brings the tag in, and the check sees it.
+    [Test]
+    public async Task Release_WhenTheReleaseRemoteHasAHigherTag_FailsBeforeBuilding()
+    {
+        using var harness = new ReleaseHarness();
+        harness.Repo.PushCurrentBranch();
+        harness.Repo.CreateRemoteTag("2.4.0");
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("lower than latest");
+        await Assert.That(harness.Repo.TagNames).IsEquivalentTo(["2.4.0"]);
+        await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
     }
 
     [Test]

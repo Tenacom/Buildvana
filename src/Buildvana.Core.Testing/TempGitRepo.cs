@@ -226,6 +226,17 @@ public sealed class TempGitRepo : IDisposable
     }
 
     /// <summary>
+    /// Pushes the current branch to a remote added by <see cref="AddBareRemote"/>.
+    /// </summary>
+    /// <param name="name">The name of the remote.</param>
+    public void PushCurrentBranch(string name = "origin")
+    {
+        using var repository = new Repository(RootPath);
+        var refSpec = $"{repository.Head.CanonicalName}:{repository.Head.CanonicalName}";
+        repository.Network.Push(repository.Network.Remotes[name], refSpec);
+    }
+
+    /// <summary>
     /// Gets the SHA of the commit a tag points to on a remote added by <see cref="AddBareRemote"/>.
     /// </summary>
     /// <param name="tag">The name of the tag.</param>

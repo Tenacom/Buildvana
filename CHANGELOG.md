@@ -49,8 +49,14 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The `StandardAnalyzers` module passes the [internal API files](docs/sdk-modules/standard-analyzers.md#internal-api-files) to the compilation, one pair per target framework when `UseTfmSpecificInternalApiFiles` is `true`.
 - On a stable version, `bv release` [moves the unshipped internal API](docs/tool-commands/release.md#the-steps) into the shipped one, as it does for the public API.
 - `bv` recognizes a CI runner [as the .NET CLI does](docs/environment-variables.md#variables-that-mark-a-ci-runner), and passes `ContinuousIntegrationBuild=true` to the build pipeline on every one.
+- `bv release` runs [on any machine](docs/tool-commands/release.md#preconditions), with `repository.url` naming the repository the release goes to.
+- `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
+- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing) on a server `bv` does not know.
 
 ### Changes to existing features
+
+- **BREAKING CHANGE**: `bv release` no longer runs without [`repository.url`](docs/configuration-file.md#settings) in `buildvana.jsonc`.
+- **BREAKING CHANGE**: `bv release` no longer leaves the release tag to the host, and [creates and pushes it](docs/tool-commands/release.md#the-release-tag) before it publishes the release.
 
 - **BREAKING CHANGE**: `BV_MinRoslynVersion` moves from 5.3 to 5.9, so Buildvana SDK raises BVSDK1101 on [Roslyn older than 5.9](docs/sdk-diagnostics.md#source-generators-1100-1199).
 - **BREAKING CHANGE**: `BV_MinMSBuildVersion` moves from 17.4 to 18.9, so Buildvana SDK raises BVSDK1004 on [MSBuild older than 18.9](docs/introduction.md#toolchain).
@@ -105,6 +111,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
 - The `StandardAnalyzers` module adds [`StyleCop.Analyzers` 1.3.133-beta](docs/sdk-modules/standard-analyzers.md#package-references), which supports C# 8 to 15 and adds several new rules.
 - `bv release` reaches the [GitHub API of the host of the repository](docs/tool-commands/release.md#publishing), `api.github.com` or `<host>/api/v3`, where it reached `api.github.com` alone.
+- `bv release` passes `ContinuousIntegrationBuild=true` to [its pipeline run](docs/tool-commands/release.md#the-steps) on every platform.
 
 ### Bugs fixed in this release
 

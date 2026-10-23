@@ -70,14 +70,55 @@ internal sealed class ReleaseCommandTests
     }
 
     [Test]
-    public async Task Release_TagsNothing_AndLeavesTaggingToTheServer()
+    public async Task Release_TagsTheReleaseCommit_PushesTheTag_AndPublishesOnIt()
     {
         using var harness = new ReleaseHarness();
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
-        // The release object publishes the tag on the server; bv never creates one locally.
-        await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(0);
+        // The tag names the release commit, under the post-release commit at the tip of the branch.
+        var releaseCommit = harness.Repo.GetCommits(2)[1];
+        await Assert.That(releaseCommit.Message).IsEqualTo(ReleaseCommitMessage);
+        await Assert.That(harness.Repo.TagNames).IsEquivalentTo([ReleasedVersion]);
+        await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsEqualTo(releaseCommit.Sha);
+        var publisher = harness.Publisher!;
+        await Assert.That(publisher.PublishedTag).IsEqualTo(ReleasedVersion);
+        await Assert.That(publisher.PublishedSha).IsEqualTo(releaseCommit.Sha);
+    }
+
+    // A release from a developer machine is a peer of a release from a runner, and its artifacts are built as
+    // deterministically as a runner builds them.
+    [Test]
+    public async Task Release_OnTheLocalPlatform_Releases_WithContinuousIntegrationBuild()
+    {
+        using var harness = new ReleaseHarness(new() { IsCI = false });
+
+        var exitCode = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+        var pipelineRuns = harness.ProcessRunner.Runs
+            .Where(x => x.Args.Count > 0 && x.Args[0] is "restore" or "build" or "pack")
+            .ToArray();
+        await Assert.That(pipelineRuns.Length).IsEqualTo(3);
+        foreach (var run in pipelineRuns)
+        {
+            await Assert.That(run.Args).Contains("-p:ContinuousIntegrationBuild=true");
+        }
+    }
+
+    // On a host bv does not know, the release does everything that needs Git alone, and nothing that needs the host.
+    [Test]
+    public async Task Release_OnAnUnknownHost_WithAllowUnknownHost_TagsAndPushes_WithoutAReleasePage()
+    {
+        using var harness = new ReleaseHarness(new() { UnknownHost = true, AllowUnknownHost = true });
+
+        var exitCode = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+        await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNotNull();
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(harness.Repo.HeadSha);
+        await Assert.That(harness.Events.Count(x => x.Name == "nuget-push")).IsEqualTo(3);
+        await Assert.That(harness.Notices.Any(x => x.StartsWith("No release page created", StringComparison.Ordinal))).IsTrue();
     }
 
     [Test]
@@ -160,9 +201,9 @@ internal sealed class ReleaseCommandTests
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
-        var release = harness.Adapter.Release!;
-        await Assert.That(release.IsPublished).IsTrue();
-        var assets = release.PublishedAssets;
+        var publisher = harness.Publisher!;
+        await Assert.That(publisher.IsPublished).IsTrue();
+        var assets = publisher.PublishedAssets;
         var names = assets.Select(x => Path.GetFileName(x.Path)).ToArray();
         await Assert.That(names).IsEquivalentTo([
             "setup.exe",
@@ -266,12 +307,11 @@ internal sealed class ReleaseCommandTests
         await Assert.That(commit.CommitterEmail).IsEqualTo("local@example.invalid");
     }
 
-    // Push credentials are a fallback: without them the push relies on whatever the checkout left in the
-    // repository's configuration, which may well work. So this is a warning and the release goes on.
+    // Git credentials are a fallback: without them the fetch and the push rely on whatever the checkout left
+    // in the repository's configuration, which may well work. So this is a warning and the release goes on.
     // Half a credential is none: a username with no secret has nothing to authenticate with, and the
-    // credential object built from it would carry a null password into libgit2. That case is not
-    // hypothetical - it is the shape GitLab CI's adapter has today - so it is exercised alongside the
-    // others, and the warning is what says the pair was required rather than either half of it.
+    // credential object built from it would carry a null password into libgit2. So that case is exercised
+    // alongside the others, and the warning is what says the pair was required rather than either half of it.
     [Test]
     [Arguments(null, null)]
     [Arguments("x-access-token", null)]
@@ -284,7 +324,7 @@ internal sealed class ReleaseCommandTests
 
         await Assert.That(exitCode).IsEqualTo(0);
         var warnings = harness.Reporter.Messages.Where(x => x.Level == MessageLevel.Warning).Select(x => x.Message).ToArray();
-        await Assert.That(warnings.Any(x => x.Contains("No push credentials", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(warnings.Any(x => x.Contains("No Git credentials", StringComparison.Ordinal))).IsTrue();
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(harness.Repo.HeadSha);
     }
 

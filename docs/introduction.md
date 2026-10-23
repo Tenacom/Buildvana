@@ -89,23 +89,24 @@ Each table below states a status for every item.
 
 ### Git servers
 
-| Server                       | Status                | Limits                                       |
-| ---------------------------- | --------------------- | -------------------------------------------- |
-| GitHub and GitHub Enterprise | Supported             |                                              |
-| Other servers                | Supported with limits | Buildvana SDK does not configure SourceLink. |
+| Server                       | Status                | Limits                                                                                                                                                                      |
+| ---------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub and GitHub Enterprise | Supported             |                                                                                                                                                                             |
+| Other servers                | Supported with limits | Buildvana SDK does not configure SourceLink.<br>`bv release` creates no release page, and runs only with [`release.allowUnknownHost`](tool-commands/release.md#publishing). |
 
 ### CI platforms
 
 `bv` detects the CI platform it runs on from the environment.
 Generic CI is any other runner that the .NET CLI recognizes as one.
 Local is a machine where `bv` recognizes no CI runner, such as a developer machine.
+Every CI platform runs every command, `bv release` included.
 
-| CI platform                                                            | Status                | Limits              |
-| ---------------------------------------------------------------------- | --------------------- | ------------------- |
-| GitHub Actions                                                         | Supported             |                     |
-| GitLab CI                                                              | Supported with limits | `bv release` fails. |
-| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported with limits | `bv release` fails. |
-| Local                                                                  | Supported with limits | `bv release` fails. |
+| CI platform                                                            | Status    |
+| ---------------------------------------------------------------------- | --------- |
+| GitHub Actions                                                         | Supported |
+| GitLab CI                                                              | Supported |
+| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported |
+| Local                                                                  | Supported |
 
 ### Toolchain
 

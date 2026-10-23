@@ -17,7 +17,7 @@ using Buildvana.Core;
 using Buildvana.Tool.Utilities;
 using CommunityToolkit.Diagnostics;
 
-namespace Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
+namespace Buildvana.Tool.Services.Hosts.GitHub;
 
 /// <summary>
 /// Performs the operations of the GitHub REST API that <c>bv</c> needs.

@@ -2,14 +2,14 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Globalization;
-using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Release;
 
 /// <summary>
 /// Tests of <see cref="ServerRelease"/> driven directly, over the same repository and service graph a real
 /// release runs on (see <see cref="ReleaseHarness"/>).
 /// </summary>
 /// <remarks>
-/// <para>The release command walks one path through this class; the class is a contract for every adapter,
+/// <para>The release command walks one path through this class; the class is a contract for every host,
 /// so what it refuses and what it records are asserted here rather than through the one caller that exists
 /// today. The order its methods may be called in is part of that contract: a commit after a push, or a
 /// post-release commit before the release commit, would leave a release the rollback cannot undo, and each
@@ -107,21 +107,81 @@ internal sealed class ServerReleaseTests
         }
     }
 
-    // Nothing to push is not an error - a release may legitimately change no file at all - so it is recorded
-    // and the release goes on. The line matters because the push is otherwise invisible: without it, a run
-    // that pushed nothing and a run that pushed the release commit read exactly alike.
+    // The release tag names the release commit, so there is nothing to tag before the commit exists.
     [Test]
-    public async Task PushUpdates_WithoutAReleaseCommit_RecordsThatThereIsNothingToPush()
+    public async Task PushUpdates_WithoutAReleaseCommit_Throws()
     {
         using var harness = new ReleaseHarness();
         var release = await StartReleaseAsync(harness).ConfigureAwait(false);
         await using (release.ConfigureAwait(false))
         {
-            release.PushUpdates();
+            void Act() => release.PushUpdates();
+
+            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
+            await Assert.That(exception!.Message).Contains("before the release commit");
         }
 
-        await Assert.That(harness.Notices).Contains("Repository unchanged, no commit to push.");
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
+    }
+
+    // The tag names the release commit, not the post-release commit that the branch tip carries.
+    [Test]
+    public async Task PushUpdates_TagsTheReleaseCommit_AndPushesTheTag()
+    {
+        using var harness = new ReleaseHarness();
+        var release = await StartReleaseAsync(harness).ConfigureAwait(false);
+        await using (release.ConfigureAwait(false))
+        {
+            release.EnsureReleaseCommit();
+            var releaseCommitSha = release.ReleaseCommitSha;
+            var tag = harness.ComputeVersion();
+            AddPostReleaseCommit(harness, release, 1);
+
+            release.PushUpdates();
+
+            await Assert.That(harness.Repo.TagNames).IsEquivalentTo([tag]);
+            await Assert.That(harness.Repo.GetRemoteTagSha(tag)).IsEqualTo(releaseCommitSha);
+            await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(harness.Repo.HeadSha);
+        }
+    }
+
+    [Test]
+    public async Task PublishAsync_BeforePushingUpdates_Throws()
+    {
+        using var harness = new ReleaseHarness();
+        var release = await StartReleaseAsync(harness).ConfigureAwait(false);
+        await using (release.ConfigureAwait(false))
+        {
+            release.EnsureReleaseCommit();
+
+            Task Act() => release.PublishAsync();
+
+            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
+            await Assert.That(exception!.Message).Contains("before pushing updates");
+            await Assert.That(harness.Publisher!.IsPublished).IsFalse();
+        }
+    }
+
+    [Test]
+    public async Task PublishAsync_PublishesOnTheTag_AtTheReleaseCommit()
+    {
+        using var harness = new ReleaseHarness();
+        var release = await StartReleaseAsync(harness).ConfigureAwait(false);
+        await using (release.ConfigureAwait(false))
+        {
+            release.EnsureReleaseCommit();
+            release.PushUpdates();
+            await release.PublishAsync().ConfigureAwait(false);
+
+            var publisher = harness.Publisher!;
+            await Assert.That(publisher.IsBegun).IsTrue();
+            await Assert.That(publisher.PublishedTag).IsEqualTo(harness.ComputeVersion());
+            await Assert.That(publisher.PublishedSha).IsEqualTo(release.ReleaseCommitSha);
+        }
+
+        // A published release is final: disposing it undoes nothing.
+        await Assert.That(harness.Publisher!.IsUndone).IsFalse();
+        await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -134,6 +194,8 @@ internal sealed class ServerReleaseTests
         var release = await StartReleaseAsync(harness).ConfigureAwait(false);
         await using (release.ConfigureAwait(false))
         {
+            release.EnsureReleaseCommit();
+            release.PushUpdates();
             for (var i = 0; i < assetCount; i++)
             {
                 release.AddAsset(string.Create(CultureInfo.InvariantCulture, $"artifacts/asset-{i}.bin"));
@@ -143,6 +205,30 @@ internal sealed class ServerReleaseTests
         }
 
         await Assert.That(harness.Notices).Contains($"Published release {harness.ComputeVersion()} {expectedEnding}");
+    }
+
+    // The tag goes before the commits it names, locally and on the remote, and the host-side release goes last.
+    [Test]
+    public async Task DisposeAsync_AfterPushingUpdates_DeletesTheTag_AndUndoesThePublisher()
+    {
+        using var harness = new ReleaseHarness();
+        var initialSha = harness.Repo.HeadSha;
+        var release = await StartReleaseAsync(harness).ConfigureAwait(false);
+        string tag;
+        await using (release.ConfigureAwait(false))
+        {
+            release.EnsureReleaseCommit();
+            tag = harness.ComputeVersion();
+            release.PushUpdates();
+        }
+
+        await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(0);
+        await Assert.That(harness.Repo.GetRemoteTagSha(tag)).IsNull();
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(initialSha);
+        await Assert.That(harness.Publisher!.IsUndone).IsTrue();
+        var notices = harness.Notices.ToArray();
+        await Assert.That(Array.IndexOf(notices, $"Deleted tag '{tag}' from 'origin'."))
+            .IsLessThan(Array.IndexOf(notices, "Undid the release commit."));
     }
 
     // Every commit the release made is walked back by one rollback action, and recorded by one line naming
@@ -172,11 +258,11 @@ internal sealed class ServerReleaseTests
     }
 
     // A release object over the harness's repository, with a committer identity for the commits it makes:
-    // the command sets one from the server adapter before creating the release, and nothing else does.
+    // the command sets one before beginning the release, and nothing else does.
     private static async Task<ServerRelease> StartReleaseAsync(ReleaseHarness harness)
     {
         harness.Repo.SetCommitterIdentity("Buildvana Test Bot", "bot@buildvana.invalid");
-        return await harness.Adapter.CreateReleaseAsync().ConfigureAwait(false);
+        return await harness.BeginReleaseAsync().ConfigureAwait(false);
     }
 
     private static void AddPostReleaseCommit(ReleaseHarness harness, ServerRelease release, int ordinal)

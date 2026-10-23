@@ -39,20 +39,27 @@ internal sealed class GitService : IGitService, IDisposable
         var homeDirectory = home.HomeDirectory;
         BuildFailedException.ThrowIfNot(Repository.IsValid(homeDirectory), $"There is no Git repository at {homeDirectory}");
         _repository = new Repository(homeDirectory);
-        BuildFailedException.ThrowIfNot(
-            TryGetOriginInfo(out var origin, out var originUrl),
-            "No origin remote found in the Git repository.");
-        Origin = origin;
-        OriginUrl = new(originUrl);
         var headName = _repository.Head.CanonicalName;
         CurrentBranch = headName.StartsWith("refs/heads/", StringComparison.Ordinal) ? _repository.Head.FriendlyName : string.Empty;
     }
 
     /// <inheritdoc/>
-    public string Origin { get; }
+    public IReadOnlyList<GitRemoteInfo> Remotes
+    {
+        get
+        {
+            var result = new List<GitRemoteInfo>();
+            foreach (var remote in _repository.Network.Remotes)
+            {
+                using (remote)
+                {
+                    result.Add(new(remote.Name, remote.Url));
+                }
+            }
 
-    /// <inheritdoc/>
-    public Uri OriginUrl { get; }
+            return result;
+        }
+    }
 
     /// <inheritdoc/>
     public string CurrentBranch { get; }
@@ -291,62 +298,6 @@ internal sealed class GitService : IGitService, IDisposable
         var options = new FetchOptions { CredentialsProvider = CreateCredentialsProvider() };
         Commands.Fetch(_repository, gitRemote.Name, ["refs/tags/*:refs/tags/*"], options, logMessage: null);
         _reporter.Notice($"Fetched tags from '{remote}'.");
-    }
-
-    private bool TryGetOriginInfo([MaybeNullWhen(false)] out string name, [MaybeNullWhen(false)] out string url)
-    {
-        name = null!;
-        url = null!;
-        string? originName = null;
-        string? originUrl = null;
-        string? onlyRemoteName = null;
-        string? onlyRemoteUrl = null;
-        var isFirst = true;
-        _reporter.Detail("Looking for origin remote...");
-        foreach (var remote in _repository.Network.Remotes)
-        {
-            using (remote)
-            {
-                _reporter.Detail($"  '{remote.Name}' ({remote.Url})");
-                if (remote.Name == "origin")
-                {
-                    originName = remote.Name;
-                    originUrl = remote.Url;
-                    break;
-                }
-
-                if (isFirst)
-                {
-                    onlyRemoteName = remote.Name;
-                    onlyRemoteUrl = remote.Url;
-                    isFirst = false;
-                }
-                else
-                {
-                    onlyRemoteName = null;
-                    onlyRemoteUrl = null;
-                }
-            }
-        }
-
-        // Name and URL of "origin" if present; otherwise, name and URL of the _only_ remote.
-        name = originName ?? onlyRemoteName;
-        url = originUrl ?? onlyRemoteUrl;
-        if (name is null || url is null)
-        {
-            _reporter.Detail("Origin remote not found.");
-            return false;
-        }
-
-        // Remove trailing slashes and optional ".git" suffix
-        url = url.TrimEnd('/');
-        if (url.EndsWith(".git", StringComparison.Ordinal))
-        {
-            url = url[..^4];
-        }
-
-        _reporter.Detail($"Origin remote is '{name}' ({url})");
-        return true;
     }
 
     private GitIdentity? GetConfiguredIdentity()

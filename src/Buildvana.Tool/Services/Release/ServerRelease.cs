@@ -8,17 +8,19 @@ using System.IO;
 using System.Threading.Tasks;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Tool.Services.Git;
+using Buildvana.Tool.Services.Hosts;
+using Buildvana.Tool.Services.Platforms;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 using Louis.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace Buildvana.Tool.Services.ServerAdapters;
+namespace Buildvana.Tool.Services.Release;
 
 /// <summary>
-/// Represents a release in a server-independent way.
+/// Represents a release in a host-independent way: the commits, the tag, the push, and the rollback of all of
+/// them, with the host side left to a <see cref="ReleasePublisher"/>.
 /// </summary>
-internal abstract partial class ServerRelease : IAsyncDisposable
+internal sealed class ServerRelease : IAsyncDisposable
 {
     // The message the release commit carries between being made and being named after the version
     // computed from it. See NameReleaseCommit.
@@ -27,21 +29,34 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     private readonly IReporter _reporter;
     private readonly IGitService _git;
     private readonly VersionService _version;
+    private readonly ReleasePublisher _publisher;
+    private readonly string _remote;
+    private readonly StepOutputWriter? _stepOutputs;
     private readonly Stack<Func<ValueTask>> _rollbackActions = new();
-    private readonly List<AssetData> _assets = [];
+    private readonly List<ReleaseAsset> _assets = [];
 
     private bool _published;
     private bool _repositoryUpdated;
     private int _postReleaseCommits;
     private bool _updatesPushed;
 
-    private protected ServerRelease(IServiceProvider services)
-    {
-        Guard.IsNotNull(services);
+    // The release tag, once it has been pushed to the release remote.
+    private string? _tag;
 
-        _reporter = services.GetRequiredService<IReporter>();
-        _git = services.GetRequiredService<IGitService>();
-        _version = services.GetRequiredService<VersionService>();
+    private ServerRelease(
+        IReporter reporter,
+        IGitService git,
+        VersionService version,
+        ReleasePublisher publisher,
+        string remote,
+        StepOutputWriter? stepOutputs)
+    {
+        _reporter = reporter;
+        _git = git;
+        _version = version;
+        _publisher = publisher;
+        _remote = remote;
+        _stepOutputs = stepOutputs;
     }
 
     public bool IsDisposed { get; private set; }
@@ -50,12 +65,50 @@ internal abstract partial class ServerRelease : IAsyncDisposable
     /// Gets the SHA of the "Prepare release" commit, once it has been created.
     /// </summary>
     /// <remarks>
-    /// <para>This is the commit the release tag should point to, regardless of any post-release commits
+    /// <para>This is the commit the release tag points to, regardless of any post-release commits
     /// (e.g. self-reference dogfooding) that may be pushed on top of it.</para>
     /// <para>Returns the empty string before <see cref="EnsureReleaseCommit"/> (or any method that calls it,
     /// such as <see cref="UpdateRepository"/>) has run.</para>
     /// </remarks>
-    protected string ReleaseCommitSha { get; private set; } = string.Empty;
+    public string ReleaseCommitSha { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Asynchronously begins a release.
+    /// </summary>
+    /// <param name="reporter">The reporter to report to.</param>
+    /// <param name="git">The Git service.</param>
+    /// <param name="version">The version service.</param>
+    /// <param name="publisher">The host side of the release.</param>
+    /// <param name="remote">The name of the release remote, which the commits and the tag are pushed to.</param>
+    /// <param name="stepOutputs">The writer of the step outputs of the platform, or <see langword="null"/> on a
+    /// platform that has none.</param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is the release.</returns>
+    /// <remarks>
+    /// <para>The step outputs are opened by the caller before the release begins, and kept for the whole life of
+    /// the release. Opening them where they are used, after publication, would let a variable that was never set
+    /// fail a release that had otherwise succeeded, and roll back everything it had just done.</para>
+    /// </remarks>
+    public static async Task<ServerRelease> BeginAsync(
+        IReporter reporter,
+        IGitService git,
+        VersionService version,
+        ReleasePublisher publisher,
+        string remote,
+        StepOutputWriter? stepOutputs)
+    {
+        Guard.IsNotNull(reporter);
+        Guard.IsNotNull(git);
+        Guard.IsNotNull(version);
+        Guard.IsNotNull(publisher);
+        Guard.IsNotNullOrEmpty(remote);
+        await publisher.BeginAsync().ConfigureAwait(false);
+        var release = new ServerRelease(reporter, git, version, publisher, remote, stepOutputs);
+
+        // The publisher undoes what it created, the draft or the published release alike. This action is the
+        // first one in, so it is the last one out: the tag and the commits go before the host-side release does.
+        release.OnRollback(async () => await publisher.UndoAsync().ConfigureAwait(false));
+        return release;
+    }
 
     /// <summary>
     /// Ensures that a "Prepare release" commit exists, creating one if necessary.
@@ -113,7 +166,7 @@ internal abstract partial class ServerRelease : IAsyncDisposable
             {
                 // "Undo" the push by force pushing the previous commit
                 // (to which we have just reset).
-                _git.PushBranch(_git.Origin, force: true);
+                _git.PushBranch(_remote, force: true);
             }
         });
     }
@@ -194,22 +247,49 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         // a single, ordered rollback rather than per-commit rollbacks popped LIFO.
     }
 
+    /// <summary>
+    /// Tags the release commit, then pushes the branch and the tag to the release remote.
+    /// </summary>
+    /// <remarks>
+    /// <para>The tag is created here, and not with the release commit, because the release commit is amended
+    /// until the changelog is finalized after the build.</para>
+    /// </remarks>
     public void PushUpdates()
     {
         EnsurePending();
 
         if (!_repositoryUpdated)
         {
-            _reporter.Notice("Repository unchanged, no commit to push.");
-            return;
+            ThrowHelper.ThrowInvalidOperationException(
+                "Internal error: cannot push updates before the release commit has been created.");
         }
 
-        _git.PushBranch(_git.Origin);
+        if (_updatesPushed)
+        {
+            ThrowHelper.ThrowInvalidOperationException("Internal error: updates have already been pushed.");
+        }
+
+        var tag = _version.CurrentStr;
+        _git.CreateTag(tag, ReleaseCommitSha);
+        OnRollback(() => {
+            // The tag goes first: a tag left on the remote would name a commit the rollback removes.
+            // _tag is set once the tag has reached the remote.
+            if (_tag is not null)
+            {
+                _git.DeleteRemoteTag(_remote, tag);
+            }
+
+            _git.DeleteTag(tag);
+        });
+
+        _git.PushBranch(_remote);
         _updatesPushed = true;
 
-        // The rollback action is defined in EnsureReleaseCommit, because
+        // The rollback action of the push is defined in EnsureReleaseCommit, because
         // commit and push can't be undone in reverse order (as rollback actions are processed):
         // first we need to undo the commits (a.k.a. reset), then force push to "undo" the push.
+        _git.PushTag(_remote, tag);
+        _tag = tag;
     }
 
     public void AddAsset(string path, string? description = null, string? mimeType = null)
@@ -230,23 +310,29 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         _assets.Add(new(path, description, mimeType));
     }
 
+    /// <summary>
+    /// Asynchronously publishes the release on the tag <see cref="PushUpdates"/> pushed, and writes the
+    /// <c>version</c> step output.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     public async Task PublishAsync()
     {
         EnsurePending();
+        var tag = _tag ?? ThrowHelper.ThrowInvalidOperationException<string>(
+            "Internal error: cannot publish a release before pushing updates.");
 
-        await DoPublishAsync(_assets).ConfigureAwait(false);
-        OnRollback(async () => await UndoPublishAsync().ConfigureAwait(false));
-        await OnPublishedAsync().ConfigureAwait(false);
+        await _publisher.PublishAsync(tag, ReleaseCommitSha, _assets).ConfigureAwait(false);
+        _stepOutputs?.Write("version", tag);
         _published = true;
         _rollbackActions.Clear();
 
-        // The record of the publication comes last, once nothing can undo it any more: OnPublishedAsync
-        // is the final step that can still fail, and its failure rolls the whole release back - deleting
-        // the release and the tag that a notice printed any earlier would already have claimed.
+        // The record of the publication comes last, once nothing can undo it any more: the step output is the
+        // final step that can still fail, and its failure rolls the whole release back - deleting the release
+        // and the tag that a notice printed any earlier would already have claimed.
         _reporter.Notice(_assets.Count switch {
-            0 => $"Published release {_version.CurrentStr} with no assets.",
-            1 => $"Published release {_version.CurrentStr} with 1 asset.",
-            var count => string.Create(CultureInfo.InvariantCulture, $"Published release {_version.CurrentStr} with {count} assets."),
+            0 => $"Published release {tag} with no assets.",
+            1 => $"Published release {tag} with 1 asset.",
+            var count => string.Create(CultureInfo.InvariantCulture, $"Published release {tag} with {count} assets."),
         });
     }
 
@@ -273,28 +359,22 @@ internal abstract partial class ServerRelease : IAsyncDisposable
         _rollbackActions.Clear();
     }
 
-    protected abstract Task DoPublishAsync(IReadOnlyList<AssetData> assets);
-
-    protected abstract Task UndoPublishAsync();
-
-    protected virtual Task OnPublishedAsync() => Task.CompletedTask;
-
-    protected void OnRollback(Action action) => OnRollback(() => {
+    private void OnRollback(Action action) => OnRollback(() => {
         action();
         return ValueTask.CompletedTask;
     });
 
-    protected void OnRollback(Func<ValueTask> actionAsync)
+    private void OnRollback(Func<ValueTask> actionAsync)
     {
         EnsurePending();
         _rollbackActions.Push(actionAsync);
     }
 
-    protected void EnsurePending()
+    private void EnsurePending()
     {
         if (IsDisposed)
         {
-            ThrowHelper.ThrowObjectDisposedException(GetType().Name);
+            ThrowHelper.ThrowObjectDisposedException(nameof(ServerRelease));
         }
 
         if (_published)

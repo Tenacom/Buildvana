@@ -487,7 +487,7 @@ internal sealed class ChangelogUpdaterTests
             """.ReplaceLineEndings("\n"));
     }
 
-    // The callback gets the path as written, anchor excluded: a backslash is the server adapter's to normalize,
+    // The callback gets the path as written, anchor excluded: a backslash is the host's to normalize,
     // and the anchor is the updater's to put back after the URL.
     [Test]
     public async Task FinalizeNewSection_PassesThePathWithoutItsAnchorToGetFileUrl()
@@ -553,12 +553,50 @@ internal sealed class ChangelogUpdaterTests
         await Assert.That(titleMade).IsFalse();
     }
 
+    // A host with no URL scheme has no URL for a file: the link stays as it is, and the rest of the section is
+    // finalized all the same.
+    [Test]
+    public async Task FinalizeNewSection_LeavesALinkAlone_WhenThereIsNoUrlForTheFile()
+    {
+        string[] lines = [
+            "# Changelog",
+            string.Empty,
+            "## Unreleased changes",
+            string.Empty,
+            "## [1.2.3-preview.1](https://example.com/releases/tag/1.2.3-preview.1) (2026-01-01)",
+            string.Empty,
+            "- Released, see [the page](docs/released.md#anchor).",
+        ];
+
+        var result = ChangelogUpdater.FinalizeNewSection(lines, () => "1.2.3 (2026-01-01)", static _ => null);
+
+        await Assert.That(result).IsEqualTo(
+            """
+            # Changelog
+
+            ## Unreleased changes
+
+            ## 1.2.3 (2026-01-01)
+
+            - Released, see [the page](docs/released.md#anchor).
+
+            """.ReplaceLineEndings("\n"));
+    }
+
     [Test]
     public async Task MakeSectionTitle_ComposesVersionUrlAndDate()
     {
         var title = ComposeSectionTitle();
 
         await Assert.That(title).IsEqualTo(NewSectionTitle);
+    }
+
+    [Test]
+    public async Task MakeSectionTitle_WithoutAUrl_ComposesVersionAndDate()
+    {
+        var title = ChangelogUpdater.MakeSectionTitle("1.2.3", null, new DateTime(2026, 1, 1));
+
+        await Assert.That(title).IsEqualTo("1.2.3 (2026-01-01)");
     }
 
     // The title ends up in a file that is read, and released from, on every machine: the date must not follow
@@ -594,7 +632,7 @@ internal sealed class ChangelogUpdaterTests
         => ChangelogUpdater.FinalizeNewSection(lines, () => NewSectionTitle, GetFileUrl);
 
     // Records the path of each link the updater asks a URL for, so that a test can see what reached the callback.
-    private static Func<string, Uri> RecordingGetFileUrl(List<string> paths)
+    private static Func<string, Uri?> RecordingGetFileUrl(List<string> paths)
         => path => {
             paths.Add(path);
             return GetFileUrl(path);

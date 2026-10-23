@@ -3,6 +3,7 @@
 
 using Buildvana.Core;
 using Buildvana.Core.Testing;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services.Platforms;
 
 internal sealed class CIPlatformTests
@@ -135,9 +136,53 @@ internal sealed class CIPlatformTests
         await Assert.That(platform.OpenStepOutputs).Throws<InvalidOperationException>();
     }
 
+    [Test]
+    public async Task Detect_OnGitHubActions_TakesTheServerFromGitHubServerUrl()
+    {
+        var platform = Detect(("GITHUB_ACTIONS", "true"), ("GITHUB_SERVER_URL", "https://github.example.invalid"));
+
+        await Assert.That(platform.ServerUrl!.Host).IsEqualTo("github.example.invalid");
+        await Assert.That(platform.ServerKind).IsEqualTo(HostKind.GitHub);
+    }
+
+    [Test]
+    public async Task Detect_OnGitLabCI_TakesTheServerFromCIServerUrl()
+    {
+        var platform = Detect(("GITLAB_CI", "true"), ("CI_SERVER_URL", "https://gitlab.example.invalid"));
+
+        await Assert.That(platform.ServerUrl!.Host).IsEqualTo("gitlab.example.invalid");
+        await Assert.That(platform.ServerKind).IsNull();
+    }
+
+    // A value that is not an absolute URL names no server, and host detection then has no hint to go on.
+    [Test]
+    [Arguments(null)]
+    [Arguments("")]
+    [Arguments("github.example.invalid")]
+    public async Task Detect_OnGitHubActions_WithoutAnAbsoluteServerUrl_HasNoServerUrl(string? value)
+    {
+        var platform = Detect(("GITHUB_ACTIONS", "true"), ("GITHUB_SERVER_URL", value));
+
+        await Assert.That(platform.ServerUrl).IsNull();
+    }
+
+    [Test]
+    [Arguments("CI", "true")]
+    [Arguments("TEAMCITY_VERSION", "2025.1")]
+    public async Task Detect_OnOtherPlatforms_HasNoServer(string name, string value)
+    {
+        var platforms = new[] { Detect(), Detect((name, value)) };
+
+        foreach (var platform in platforms)
+        {
+            await Assert.That(platform.ServerUrl).IsNull();
+            await Assert.That(platform.ServerKind).IsNull();
+        }
+    }
+
     private static CIPlatform Detect(params (string Name, string? Value)[] variables)
     {
         var environment = variables.ToDictionary(x => x.Name, x => x.Value, StringComparer.Ordinal);
-        return CIPlatform.Detect(name => environment.GetValueOrDefault(name));
+        return CIPlatform.Detect(environment.GetValueOrDefault);
     }
 }

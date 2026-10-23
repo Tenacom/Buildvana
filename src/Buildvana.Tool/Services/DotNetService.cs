@@ -30,10 +30,9 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
 {
     private readonly IReporter _reporter;
     private readonly IProcessRunner _processRunner;
-    private readonly CIPlatform _platform;
 
     // Resolved on first use, which is the NuGet push alone. Constructing the version service opens the Git
-    // repository and reads its origin remote, and a build needs neither: the SDK computes the version itself.
+    // repository, and a build does not need it: the SDK computes the version itself.
     private readonly Lazy<VersionService> _version;
     private readonly BuildvanaConfig _config;
 
@@ -54,10 +53,21 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
         Guard.IsNotNull(config);
         _reporter = reporter;
         _processRunner = processRunner;
-        _platform = platform;
+        ContinuousIntegrationBuild = platform.IsCI;
         _version = version;
         _config = config;
     }
+
+    /// <summary>
+    /// Gets or sets the value of the <c>ContinuousIntegrationBuild</c> property that the restore, the build,
+    /// the test run, and the pack pass to MSBuild.
+    /// </summary>
+    /// <value>Initially, the <see cref="CIPlatform.IsCI"/> value of the platform <c>bv</c> runs on.</value>
+    /// <remarks>
+    /// <para><c>bv release</c> sets it to <see langword="true"/> on every platform, because release artifacts
+    /// are deterministic by definition.</para>
+    /// </remarks>
+    public bool ContinuousIntegrationBuild { get; set; }
 
     /// <summary>
     /// Asynchronously restores all NuGet packages for the solution.
@@ -412,7 +422,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
     private string ContinuousIntegrationBuildArg(bool asMSBuildPassthrough)
     {
         var prefix = asMSBuildPassthrough ? "-p:" : "--property:";
-        return $"{prefix}ContinuousIntegrationBuild={(_platform.IsCI ? "true" : "false")}";
+        return $"{prefix}ContinuousIntegrationBuild={(ContinuousIntegrationBuild ? "true" : "false")}";
     }
 
     /// <summary>

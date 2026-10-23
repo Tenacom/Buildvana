@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Platforms;
 
@@ -19,6 +20,16 @@ internal sealed class FakeCIPlatform : CIPlatform
     /// </summary>
     public GitIdentity? Identity { get; init; } = new("Buildvana Test Bot", "bot@buildvana.invalid");
 
+    /// <summary>
+    /// Gets the value of <see cref="ServerUrl"/>.
+    /// </summary>
+    public Uri? Server { get; init; }
+
+    /// <summary>
+    /// Gets the value of <see cref="ServerKind"/>.
+    /// </summary>
+    public HostKind? Kind { get; init; }
+
     /// <inheritdoc/>
     public override string Name => "Test CI platform";
 
@@ -27,4 +38,10 @@ internal sealed class FakeCIPlatform : CIPlatform
 
     /// <inheritdoc/>
     public override GitIdentity? BotIdentity => Identity;
+
+    /// <inheritdoc/>
+    public override Uri? ServerUrl => Server;
+
+    /// <inheritdoc/>
+    public override HostKind? ServerKind => Kind;
 }
