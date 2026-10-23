@@ -24,6 +24,8 @@ namespace Buildvana.Tool.Services.Hosts;
 /// checks the code before it calls <see cref="EnsureSuccessAsync"/>.</para>
 /// <para>Every diagnostic names the API after <see cref="ApiName"/>, with the method and the URL of the
 /// request.</para>
+/// <para>A request carries the credentials of the client when <see cref="CreateRequest"/> creates it. A request
+/// that a derived class creates otherwise carries none.</para>
 /// </remarks>
 internal abstract class HostApiClient : IDisposable
 {
@@ -109,7 +111,7 @@ internal abstract class HostApiClient : IDisposable
         CancellationToken cancellationToken)
         where T : class
     {
-        using var request = new HttpRequestMessage(method, url);
+        using var request = CreateRequest(method, url);
         request.Content = content;
         using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(method, url, response, cancellationToken).ConfigureAwait(false);
@@ -130,11 +132,30 @@ internal abstract class HostApiClient : IDisposable
         HttpContent? content,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(method, url);
+        using var request = CreateRequest(method, url);
         request.Content = content;
         using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(method, url, response, cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Creates a request that carries the credentials of the client.
+    /// </summary>
+    /// <param name="method">The method of the request.</param>
+    /// <param name="url">The URL of the request.</param>
+    /// <returns>A newly-created <see cref="HttpRequestMessage"/>.</returns>
+    protected HttpRequestMessage CreateRequest(HttpMethod method, Uri url)
+    {
+        var request = new HttpRequestMessage(method, url);
+        Authenticate(request);
+        return request;
+    }
+
+    /// <summary>
+    /// Adds the credentials of the client to a request.
+    /// </summary>
+    /// <param name="request">The request.</param>
+    protected abstract void Authenticate(HttpRequestMessage request);
 
     /// <summary>
     /// Asynchronously sends a request, and returns the answer whatever its status code.
@@ -207,21 +228,22 @@ internal abstract class HostApiClient : IDisposable
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Releases the resources of this instance.
+    /// Asynchronously reads the JSON answer of a request.
     /// </summary>
-    /// <param name="disposing"><see langword="true"/> when called from <see cref="Dispose()"/>.</param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _http.Dispose();
-        }
-    }
-
-    private static string Describe(HttpMethod method, Uri url) => $"{method} {url.AbsoluteUri}";
-
-    // The client buffers every answer before SendAsync returns, so reading the body here meets no network.
-    private async Task<T> ReadAsync<T>(
+    /// <typeparam name="T">The type of the answer.</typeparam>
+    /// <param name="method">The method of the request.</param>
+    /// <param name="url">The URL of the request.</param>
+    /// <param name="response">The answer.</param>
+    /// <param name="typeInfo">The serialization metadata of <typeparamref name="T"/>.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <returns>A <see cref="Task"/> whose result is the answer.</returns>
+    /// <exception cref="BuildFailedException">The answer is not JSON of type <typeparamref name="T"/>, or is
+    /// <c>null</c>.</exception>
+    /// <remarks>
+    /// <para>The client buffers every answer before <see cref="SendCoreAsync"/> returns, so reading the body
+    /// meets no network.</para>
+    /// </remarks>
+    protected async Task<T> ReadAsync<T>(
         HttpMethod method,
         Uri url,
         HttpResponseMessage response,
@@ -229,6 +251,7 @@ internal abstract class HostApiClient : IDisposable
         CancellationToken cancellationToken)
         where T : class
     {
+        Guard.IsNotNull(response);
         T? result;
         try
         {
@@ -247,4 +270,18 @@ internal abstract class HostApiClient : IDisposable
 
         return result ?? throw new BuildFailedException($"The {ApiName} API answered {Describe(method, url)} with null.");
     }
+
+    /// <summary>
+    /// Releases the resources of this instance.
+    /// </summary>
+    /// <param name="disposing"><see langword="true"/> when called from <see cref="Dispose()"/>.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _http.Dispose();
+        }
+    }
+
+    private static string Describe(HttpMethod method, Uri url) => $"{method} {url.AbsoluteUri}";
 }
