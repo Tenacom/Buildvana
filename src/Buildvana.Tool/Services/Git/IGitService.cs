@@ -125,7 +125,8 @@ internal interface IGitService
     /// <param name="remote">The name of the remote.</param>
     /// <param name="force">If <see langword="true"/>, replaces the remote branch even if the push is not a fast-forward.</param>
     /// <remarks>
-    /// <para>This method fails if <c>HEAD</c> is not on a branch, and if the remote rejects the push.
+    /// <para>This method fails if <c>HEAD</c> is not on a branch, if the push is not a fast-forward and
+    /// <paramref name="force"/> is <see langword="false"/>, and if the remote rejects the push.
     /// The tracking information of the branch plays no part in the push.</para>
     /// </remarks>
     void PushBranch(string remote, bool force = false);

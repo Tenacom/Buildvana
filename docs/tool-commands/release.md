@@ -149,6 +149,7 @@ The tag names the release commit, whatever commits follow it.
 A tag of the same name on the remote fails the release, unless it names the same commit.
 `bv` never moves a tag of the remote.
 When the remote rejects a push, the release fails.
+So does a push of the branch when the branch of the remote has commits that the local branch lacks.
 
 The host publishes the release on the tag that is already there.
 A workflow that the push of a tag triggers therefore runs before the release page exists.
@@ -277,6 +278,7 @@ The configuration selects the artifacts directory, `artifacts\<configuration>\`,
 `bv release` returns the [exit codes every `bv` command returns](../tool-diagnostics.md#exit-codes).
 
 Code 1 is a precondition that fails, a versioning anomaly, a tag that exists, an empty changelog with no substitute, or a missing feed.
+A fetch or a push that fails returns code 1 as well.
 Code 2 is a refusal of the command line: a `--` separator, an unknown option, or an unknown `--bump` value.
 Code 3 says that a program `bv` ran failed: a `dotnet` command, `dotnet nuget push`, or the hook.
 Code 130 is a run terminated with Ctrl-C.
