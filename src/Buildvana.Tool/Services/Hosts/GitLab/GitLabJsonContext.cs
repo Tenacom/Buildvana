@@ -16,7 +16,9 @@ namespace Buildvana.Tool.Services.Hosts.GitLab;
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
     RespectNullableAnnotations = true)]
+[JsonSerializable(typeof(GitLabUser))]
 [JsonSerializable(typeof(GitLabProject))]
+[JsonSerializable(typeof(GitLabMember))]
 [JsonSerializable(typeof(IReadOnlyList<GitLabRelease>))]
 [JsonSerializable(typeof(GitLabRelease))]
 [JsonSerializable(typeof(GitLabNewRelease))]
