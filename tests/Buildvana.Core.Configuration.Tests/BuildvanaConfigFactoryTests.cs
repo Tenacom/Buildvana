@@ -30,6 +30,7 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(config.NuGet.Feeds.Prerelease).IsNull();
         await Assert.That(config.NuGet.Feeds.Release).IsNull();
         await Assert.That(config.Hosts.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+        await Assert.That(config.Hosts.GitLab.TokenEnv).IsEqualTo("GITLAB_TOKEN");
         await Assert.That(config.Git.Identity).IsNull();
         await Assert.That(config.Dependencies.Scopes.NetSdk).IsEqualTo("major");
         await Assert.That(config.Dependencies.Scopes.Sdks).IsEqualTo("minor");
@@ -58,7 +59,10 @@ internal sealed class BuildvanaConfigFactoryTests
                 AssemblyVersionPrecision = AssemblyVersionPrecision.Build,
             },
             DotNet = new() { Configuration = "Debug" },
-            Hosts = new() { GitHub = new() { TokenEnv = "MY_TOKEN" } },
+            Hosts = new() {
+                GitHub = new() { TokenEnv = "MY_TOKEN" },
+                GitLab = new() { TokenEnv = "CI_JOB_TOKEN" },
+            },
         };
 
         var config = BuildvanaConfigFactory.Create(json, null);
@@ -76,6 +80,7 @@ internal sealed class BuildvanaConfigFactoryTests
         await Assert.That(config.Versioning.AssemblyVersionPrecision).IsEqualTo(AssemblyVersionPrecision.Build);
         await Assert.That(config.DotNet.Configuration).IsEqualTo("Debug");
         await Assert.That(config.Hosts.GitHub.TokenEnv).IsEqualTo("MY_TOKEN");
+        await Assert.That(config.Hosts.GitLab.TokenEnv).IsEqualTo("CI_JOB_TOKEN");
     }
 
     [Test]
@@ -159,6 +164,9 @@ internal sealed class BuildvanaConfigFactoryTests
 
         var whitespace = new BuildvanaJsonConfig { Hosts = new() { GitHub = new() { TokenEnv = " \t " } } };
         await Assert.That(BuildvanaConfigFactory.Create(whitespace, null).Hosts.GitHub.TokenEnv).IsEqualTo("GITHUB_TOKEN");
+
+        var gitLab = new BuildvanaJsonConfig { Hosts = new() { GitLab = new() { TokenEnv = " " } } };
+        await Assert.That(BuildvanaConfigFactory.Create(gitLab, null).Hosts.GitLab.TokenEnv).IsEqualTo("GITLAB_TOKEN");
     }
 
     // A blank URL names no repository, so it counts as not stated, and bv release refuses to run.

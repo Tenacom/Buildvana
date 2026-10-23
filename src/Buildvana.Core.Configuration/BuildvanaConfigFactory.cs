@@ -169,6 +169,7 @@ public static class BuildvanaConfigFactory
     private static HostsConfig ComposeHosts(HostsJsonConfig? json)
         => new() {
             GitHub = ComposeGitHub(json?.GitHub),
+            GitLab = ComposeGitLab(json?.GitLab),
         };
 
     // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
@@ -176,6 +177,15 @@ public static class BuildvanaConfigFactory
     {
         var defaults = new GitHubConfig();
         return new GitHubConfig {
+            TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
+        };
+    }
+
+    // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
+    private static GitLabConfig ComposeGitLab(GitLabJsonConfig? json)
+    {
+        var defaults = new GitLabConfig();
+        return new GitLabConfig {
             TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
         };
     }

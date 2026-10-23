@@ -154,6 +154,15 @@ Buildvana.Runtime.GitIdentityConfig.Equals(Buildvana.Runtime.GitIdentityConfig? 
 Buildvana.Runtime.GitIdentityConfig.GitIdentityConfig() -> void
 Buildvana.Runtime.GitIdentityConfig.Name.get -> string!
 Buildvana.Runtime.GitIdentityConfig.Name.init -> void
+Buildvana.Runtime.GitLabConfig
+Buildvana.Runtime.GitLabConfig.<Clone>$() -> Buildvana.Runtime.GitLabConfig!
+Buildvana.Runtime.GitLabConfig.Equals(Buildvana.Runtime.GitLabConfig? other) -> bool
+Buildvana.Runtime.GitLabConfig.GitLabConfig() -> void
+Buildvana.Runtime.GitLabConfig.TokenEnv.get -> string!
+Buildvana.Runtime.GitLabConfig.TokenEnv.init -> void
+Buildvana.Runtime.GitLabConfigExtensions
+Buildvana.Runtime.GitLabConfigExtensions.extension(Buildvana.Runtime.GitLabConfig!)
+Buildvana.Runtime.GitLabConfigExtensions.extension(Buildvana.Runtime.GitLabConfig!).GetToken() -> string!
 Buildvana.Runtime.HookArgs
 Buildvana.Runtime.HookArgs.HookArgs() -> void
 Buildvana.Runtime.HookArgs.HookArgs(Buildvana.Runtime.HookArgs! original) -> void
@@ -162,11 +171,14 @@ Buildvana.Runtime.HookArgs.RuntimeInfo.init -> void
 Buildvana.Runtime.HostKind
 Buildvana.Runtime.HostKind.Auto = 0 -> Buildvana.Runtime.HostKind
 Buildvana.Runtime.HostKind.GitHub = 1 -> Buildvana.Runtime.HostKind
+Buildvana.Runtime.HostKind.GitLab = 2 -> Buildvana.Runtime.HostKind
 Buildvana.Runtime.HostsConfig
 Buildvana.Runtime.HostsConfig.<Clone>$() -> Buildvana.Runtime.HostsConfig!
 Buildvana.Runtime.HostsConfig.Equals(Buildvana.Runtime.HostsConfig? other) -> bool
 Buildvana.Runtime.HostsConfig.GitHub.get -> Buildvana.Runtime.GitHubConfig!
 Buildvana.Runtime.HostsConfig.GitHub.init -> void
+Buildvana.Runtime.HostsConfig.GitLab.get -> Buildvana.Runtime.GitLabConfig!
+Buildvana.Runtime.HostsConfig.GitLab.init -> void
 Buildvana.Runtime.HostsConfig.HostsConfig() -> void
 Buildvana.Runtime.IHookEvent
 Buildvana.Runtime.IHookEvent.Context.get -> string!
@@ -350,6 +362,9 @@ override Buildvana.Runtime.GitHubConfig.ToString() -> string!
 override Buildvana.Runtime.GitIdentityConfig.Equals(object? obj) -> bool
 override Buildvana.Runtime.GitIdentityConfig.GetHashCode() -> int
 override Buildvana.Runtime.GitIdentityConfig.ToString() -> string!
+override Buildvana.Runtime.GitLabConfig.Equals(object? obj) -> bool
+override Buildvana.Runtime.GitLabConfig.GetHashCode() -> int
+override Buildvana.Runtime.GitLabConfig.ToString() -> string!
 override Buildvana.Runtime.HookArgs.Equals(object? obj) -> bool
 override Buildvana.Runtime.HookArgs.GetHashCode() -> int
 override Buildvana.Runtime.HookArgs.ToString() -> string!
@@ -420,6 +435,9 @@ static Buildvana.Runtime.GitHubConfig.operator ==(Buildvana.Runtime.GitHubConfig
 static Buildvana.Runtime.GitHubConfigExtensions.GetToken(this Buildvana.Runtime.GitHubConfig! this) -> string!
 static Buildvana.Runtime.GitIdentityConfig.operator !=(Buildvana.Runtime.GitIdentityConfig? left, Buildvana.Runtime.GitIdentityConfig? right) -> bool
 static Buildvana.Runtime.GitIdentityConfig.operator ==(Buildvana.Runtime.GitIdentityConfig? left, Buildvana.Runtime.GitIdentityConfig? right) -> bool
+static Buildvana.Runtime.GitLabConfig.operator !=(Buildvana.Runtime.GitLabConfig? left, Buildvana.Runtime.GitLabConfig? right) -> bool
+static Buildvana.Runtime.GitLabConfig.operator ==(Buildvana.Runtime.GitLabConfig? left, Buildvana.Runtime.GitLabConfig? right) -> bool
+static Buildvana.Runtime.GitLabConfigExtensions.GetToken(this Buildvana.Runtime.GitLabConfig! this) -> string!
 static Buildvana.Runtime.HookArgs.Load<TArgs>(System.Text.Json.Serialization.Metadata.JsonTypeInfo<TArgs!>! jsonTypeInfo, string? homeDirectory) -> TArgs!
 static Buildvana.Runtime.HookArgs.operator !=(Buildvana.Runtime.HookArgs? left, Buildvana.Runtime.HookArgs? right) -> bool
 static Buildvana.Runtime.HookArgs.operator ==(Buildvana.Runtime.HookArgs? left, Buildvana.Runtime.HookArgs? right) -> bool
@@ -472,6 +490,7 @@ virtual Buildvana.Runtime.HookArgs.PrintMembers(System.Text.StringBuilder! build
 ~Buildvana.Runtime.BuildvanaJsonContext.GitConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.GitHubConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitHubConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.GitIdentityConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitIdentityConfig>
+~Buildvana.Runtime.BuildvanaJsonContext.GitLabConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.GitLabConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.HostKind.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.HostKind>
 ~Buildvana.Runtime.BuildvanaJsonContext.HostsConfig.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.HostsConfig>
 ~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyDictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, string>>

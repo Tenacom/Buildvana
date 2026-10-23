@@ -25,7 +25,8 @@
           "description": "Kind of Git host of the repository.",
           "enum": [
             "auto",
-            "github"
+            "github",
+            "gitlab"
           ],
           "default": "auto"
         }
@@ -368,6 +369,18 @@
               "description": "Name of the environment variable that holds the GitHub access token.",
               "type": "string",
               "default": "GITHUB_TOKEN"
+            }
+          },
+          "additionalProperties": false
+        },
+        "gitlab": {
+          "description": "Configuration for the GitLab host.",
+          "type": "object",
+          "properties": {
+            "tokenEnv": {
+              "description": "Name of the environment variable that holds the GitLab access token.",
+              "type": "string",
+              "default": "GITLAB_TOKEN"
             }
           },
           "additionalProperties": false
