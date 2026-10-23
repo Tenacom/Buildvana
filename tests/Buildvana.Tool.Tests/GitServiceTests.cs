@@ -220,6 +220,24 @@ internal sealed class GitServiceTests
     }
 
     [Test]
+    public async Task PushBranch_WhenRemoteRefusesUpdate_Throws_AndLeavesRemoteBranchAlone()
+    {
+        using var repo = CreateRepoWithBareRemote();
+        using var git = CreateGitService(repo);
+        git.PushBranch("origin");
+        var remoteTip = repo.GetRemoteTipSha();
+        git.CommitterIdentity = new("Release Bot", "bot@example.invalid");
+        git.Commit("Refused commit", allowEmpty: true);
+        var branchRef = $"refs/heads/{repo.CurrentBranchName}";
+        repo.LockRemoteReference(branchRef);
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
+        var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains(branchRef);
+        await Assert.That(repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
+    }
+
+    [Test]
     public async Task PushBranch_WhenHeadIsDetached_Throws()
     {
         using var repo = CreateRepoWithBareRemote();
@@ -321,6 +339,21 @@ internal sealed class GitServiceTests
     }
 
     [Test]
+    public async Task PushTag_WhenRemoteRefusesUpdate_Throws()
+    {
+        using var repo = CreateRepoWithBareRemote();
+        using var git = CreateGitService(repo);
+        git.PushBranch("origin");
+        git.CreateTag("1.0.0", repo.HeadSha);
+        repo.LockRemoteReference("refs/tags/1.0.0");
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
+        var exception = await Assert.That(() => git.PushTag("origin", "1.0.0")).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("refs/tags/1.0.0");
+        await Assert.That(repo.GetRemoteTagSha("1.0.0")).IsNull();
+    }
+
+    [Test]
     public async Task DeleteRemoteTag_RemovesTagFromRemote_AndKeepsLocalTag()
     {
         using var repo = CreateRepoWithBareRemote();
@@ -333,6 +366,22 @@ internal sealed class GitServiceTests
 
         await Assert.That(repo.GetRemoteTagSha("1.0.0")).IsNull();
         await Assert.That(repo.TagNames).IsEquivalentTo(["1.0.0"]);
+    }
+
+    [Test]
+    public async Task DeleteRemoteTag_WhenRemoteRefusesUpdate_Throws_AndKeepsRemoteTag()
+    {
+        using var repo = CreateRepoWithBareRemote();
+        using var git = CreateGitService(repo);
+        git.PushBranch("origin");
+        git.CreateTag("1.0.0", repo.HeadSha);
+        git.PushTag("origin", "1.0.0");
+        repo.LockRemoteReference("refs/tags/1.0.0");
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
+        var exception = await Assert.That(() => git.DeleteRemoteTag("origin", "1.0.0")).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("refs/tags/1.0.0");
+        await Assert.That(repo.GetRemoteTagSha("1.0.0")).IsEqualTo(repo.HeadSha);
     }
 
     [Test]
