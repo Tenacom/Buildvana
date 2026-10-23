@@ -63,7 +63,7 @@ internal sealed class SelfReferenceUpdater
     /// </summary>
     /// <param name="producedPackages">The packages produced by the current build, as a map from package ID to version.</param>
     /// <returns>The list of files that were actually modified. Pass this to
-    /// <see cref="ServerAdapters.ServerRelease.AddPostReleaseCommit(string, string[])"/> to commit them
+    /// <see cref="Release.ServerRelease.AddPostReleaseCommit(string, string[])"/> to commit them
     /// into a separate post-release commit on top of the "Prepare release" commit.</returns>
     /// <exception cref="Buildvana.Core.BuildFailedException">The home directory keeps its tool manifest under
     /// <c>.config</c>, where the rewrite would miss it and the post-release commit would leave bv's own pin

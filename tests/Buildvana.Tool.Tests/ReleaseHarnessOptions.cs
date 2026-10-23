@@ -5,8 +5,8 @@ using Buildvana.Tool.Services.Git;
 
 /// <summary>
 /// The knobs of a <see cref="ReleaseHarness"/>: what the repository contains and how the configuration file,
-/// the CI platform, the server adapter, and the hook are set up. Every one of them has the value a plain prerelease release
-/// needs, so a test only names what its own scenario changes.
+/// the CI platform, the Git host, and the hook are set up. Every one of them has the value a plain prerelease
+/// release needs, so a test only names what its own scenario changes.
 /// </summary>
 internal sealed record ReleaseHarnessOptions
 {
@@ -89,18 +89,39 @@ internal sealed record ReleaseHarnessOptions
     public bool WithBotIdentity { get; init; } = true;
 
     /// <summary>
-    /// Gets the protocol username the server adapter provides for pushing, or <see langword="null"/> if it
-    /// provides none.
+    /// Gets the value of <c>repository.url</c>, or <see langword="null"/> to leave it unset.
+    /// </summary>
+    public string? RepositoryUrl { get; init; } = RecordingHost.Url;
+
+    /// <summary>
+    /// Gets a value indicating whether the Git host is one <c>bv</c> does not know. When <see langword="true"/>,
+    /// the release runs on a real <see cref="Buildvana.Tool.Services.Hosts.UnknownHost"/> instead of a
+    /// <see cref="RecordingHost"/>.
+    /// </summary>
+    public bool UnknownHost { get; init; }
+
+    /// <summary>
+    /// Gets the handler that answers the requests of a real <see cref="Buildvana.Tool.Services.Hosts.GitHub.GitHubHost"/>,
+    /// or <see langword="null"/> for a <see cref="RecordingHost"/>. Ignored when <see cref="UnknownHost"/> is
+    /// <see langword="true"/>.
+    /// </summary>
+    public StubHttpMessageHandler? GitHubApi { get; init; }
+
+    /// <summary>
+    /// Gets the value of <c>release.allowUnknownHost</c>.
+    /// </summary>
+    public bool AllowUnknownHost { get; init; }
+
+    /// <summary>
+    /// Gets the protocol username the host provides for pushing, or <see langword="null"/> if it provides none.
     /// </summary>
     public string? PushUser { get; init; } = "x-access-token";
 
     /// <summary>
-    /// Gets the secret the server adapter provides for pushing, or <see langword="null"/> if it provides none.
+    /// Gets the token the host provides for pushing, or <see langword="null"/> if it provides none.
     /// </summary>
     /// <remarks>
-    /// <para>Independent of <see cref="PushUser"/> on purpose: an adapter can provide one and not the other.
-    /// GitLab CI is that adapter today — a fixed protocol username, and no token until the configuration
-    /// file grows one.</para>
+    /// <para>Independent of <see cref="PushUser"/> on purpose: a host can provide one and not the other.</para>
     /// </remarks>
     public string? PushSecret { get; init; } = "test-token";
 

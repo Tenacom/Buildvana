@@ -1,7 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
+using Buildvana.Tool.Services.Hosts.GitHub;
 
 internal sealed class GitHubRepositoryUrlsTests
 {

@@ -70,6 +70,29 @@ internal sealed class ReleaseCommandChangelogTests
 
         """;
 
+    // A host with no URL scheme has no release page and no file URLs: the section gets a title without a link,
+    // its relative links stay as they are, and each of the two says so.
+    [Test]
+    public async Task Release_OnAnUnknownHost_LeavesTheNewSectionWithoutUrls()
+    {
+        using var harness = new ReleaseHarness(new() {
+            ChangelogUpdates = "all",
+            Changelog = ChangelogWithFileLink,
+            UnknownHost = true,
+            AllowUnknownHost = true,
+        });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        var changelog = harness.ReadFile("CHANGELOG.md");
+        await Assert.That(changelog).Contains($"## {ReleasedVersion} (");
+        await Assert.That(changelog).Contains("- A hook [runs from the home directory](docs/hooks.md#the-build-environment).");
+        await Assert.That(harness.Notices).Contains(
+            "CHANGELOG.md links 'docs/hooks.md', which stays relative: unknown host (git.example.invalid) has no URL for a file.");
+        await Assert.That(harness.Notices).Contains(
+            $"The changelog section of {ReleasedVersion} has no link: unknown host (git.example.invalid) has no release page.");
+    }
+
     [Test]
     [Arguments("all", "2.3-")]
     [Arguments("stable", "2.3")]

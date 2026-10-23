@@ -225,7 +225,8 @@ internal static partial class ChangelogUpdater
     /// <param name="makeSectionTitle">A callback that produces the new title of the section. It is called
     /// at most once, and only if a section heading is actually replaced.</param>
     /// <param name="getFileUrl">A callback that produces the URL, at the release tag, of the file at a path
-    /// relative to the home directory. It is called once per relative file link in the section.</param>
+    /// relative to the home directory. It is called once per relative file link in the section. A
+    /// <see langword="null"/> result leaves the link as it is.</param>
     /// <returns>The rewritten changelog, with lines separated by <c>"\n"</c>.</returns>
     /// <exception cref="BuildFailedException">The changelog contains no sections, or only one section.</exception>
     /// <remarks>
@@ -239,7 +240,7 @@ internal static partial class ChangelogUpdater
     public static string FinalizeNewSection(
         IReadOnlyList<string> lines,
         Func<string> makeSectionTitle,
-        Func<string, Uri> getFileUrl)
+        Func<string, Uri?> getFileUrl)
     {
         Guard.IsNotNull(lines);
         Guard.IsNotNull(makeSectionTitle);
@@ -321,18 +322,19 @@ internal static partial class ChangelogUpdater
     /// Composes the title of the changelog section for a release.
     /// </summary>
     /// <param name="version">The version being released.</param>
-    /// <param name="releaseUrl">The URL of the release.</param>
+    /// <param name="releaseUrl">The URL of the release, or <see langword="null"/> for a title without a link.</param>
     /// <param name="date">The date of the release.</param>
     /// <returns>The section title, without the leading <c>"## "</c>.</returns>
     /// <remarks>
     /// <para>The date ends up in the changelog's contents, so it is formatted with the invariant culture: it must
     /// come out the same on every machine, whatever calendar and date format the current culture prescribes.</para>
     /// </remarks>
-    public static string MakeSectionTitle(string version, Uri releaseUrl, DateTime date)
+    public static string MakeSectionTitle(string version, Uri? releaseUrl, DateTime date)
     {
         Guard.IsNotNull(version);
-        Guard.IsNotNull(releaseUrl);
-        return string.Create(CultureInfo.InvariantCulture, $"[{version}]({releaseUrl}) ({date:yyyy-MM-dd})");
+        return releaseUrl is null
+            ? string.Create(CultureInfo.InvariantCulture, $"{version} ({date:yyyy-MM-dd})")
+            : string.Create(CultureInfo.InvariantCulture, $"[{version}]({releaseUrl}) ({date:yyyy-MM-dd})");
     }
 
     // Reading past the last line yields null, just as TextReader.ReadLine does at end of file:
@@ -346,7 +348,7 @@ internal static partial class ChangelogUpdater
     // a target starting with '#' is an anchor in the changelog itself: both are left alone. Anything else is a
     // path relative to the home directory, followed by an optional anchor of its own, which is kept.
     // AbsoluteUri keeps the URL escaped, where ToString would turn "%20" back into a space and break the link.
-    private static string PinFileLinks(string line, Func<string, Uri> getFileUrl)
+    private static string PinFileLinks(string line, Func<string, Uri?> getFileUrl)
     {
         return GetInlineLinkTargetRegex().Replace(line, PinTarget);
 
@@ -361,7 +363,7 @@ internal static partial class ChangelogUpdater
             var anchorIndex = target.IndexOf('#', StringComparison.Ordinal);
             var path = anchorIndex < 0 ? target : target[..anchorIndex];
             var anchor = anchorIndex < 0 ? string.Empty : target[anchorIndex..];
-            return "](" + getFileUrl(path).AbsoluteUri + anchor;
+            return getFileUrl(path) is { } url ? "](" + url.AbsoluteUri + anchor : match.Value;
         }
     }
 

@@ -7,7 +7,7 @@ using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
-using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Hosts;
 using Buildvana.Tool.Services.Versioning;
 using CommunityToolkit.Diagnostics;
 
@@ -38,19 +38,19 @@ internal sealed class ChangelogService
     private static readonly Encoding FileEncoding = new UTF8Encoding(false, true);
 
     private readonly IReporter _reporter;
-    private readonly ServerAdapter _server;
+    private readonly GitHost _host;
     private readonly VersionService _version;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChangelogService"/> class.
     /// </summary>
-    public ChangelogService(IReporter reporter, ServerAdapter server, VersionService version)
+    public ChangelogService(IReporter reporter, GitHost host, VersionService version)
     {
         Guard.IsNotNull(reporter);
-        Guard.IsNotNull(server);
+        Guard.IsNotNull(host);
         Guard.IsNotNull(version);
         _reporter = reporter;
-        _server = server;
+        _host = host;
         _version = version;
         Exists = File.Exists(FileName);
     }
@@ -95,25 +95,39 @@ internal sealed class ChangelogService
     /// Finalizes the first section of the changelog after the "Unreleased changes" section, once the released
     /// version is known: updates its heading, and pins each relative file link in it to the release tag.
     /// </summary>
+    /// <remarks>
+    /// <para>On a host with no URL scheme, the heading has no link and the relative file links stay as they are,
+    /// each with a notice.</para>
+    /// </remarks>
     public void FinalizeNewSection()
     {
         _reporter.Info("Finalizing changelog's new release section...");
         var lines = UserFile.ReadAllLines(FileName, FileEncoding);
         var text = ChangelogUpdater.FinalizeNewSection(lines, MakeSectionTitle, GetFileUrl);
         UserFile.WriteAllText(FileName, text, FileEncoding);
+        if (_host.GetReleaseUrl(_version.CurrentStr) is null)
+        {
+            _reporter.Notice($"The changelog section of {_version.CurrentStr} has no link: {_host.Name} has no release page.");
+        }
     }
 
     private string MakeSectionTitle()
-        => ChangelogUpdater.MakeSectionTitle(_version.CurrentStr, _server.GetReleaseUrl(_version.CurrentStr), DateTime.Now);
+        => ChangelogUpdater.MakeSectionTitle(_version.CurrentStr, _host.GetReleaseUrl(_version.CurrentStr), DateTime.Now);
 
-    // The release tag is named after the version, so the version string is the commitish the links pin to.
-    // The adapter rejects a path that leaves the repository, or a rooted one, with an ArgumentException. The
+    // The release tag is named after the version, so the version string is the tag the links pin to.
+    // The host rejects a path that leaves the repository, or a rooted one, with an ArgumentException. The
     // path comes from a changelog bullet, so the rejection is reported as a build failure that names it.
-    private Uri GetFileUrl(string path)
+    private Uri? GetFileUrl(string path)
     {
         try
         {
-            return _server.GetFileUrl(path, _version.CurrentStr);
+            var url = _host.GetFileUrl(path, GitRef.Tag(_version.CurrentStr));
+            if (url is null)
+            {
+                _reporter.Notice($"{FileName} links '{path}', which stays relative: {_host.Name} has no URL for a file.");
+            }
+
+            return url;
         }
         catch (ArgumentException e)
         {

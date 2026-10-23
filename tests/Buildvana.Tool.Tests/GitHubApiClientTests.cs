@@ -3,7 +3,7 @@
 
 using System.Net;
 using Buildvana.Core;
-using Buildvana.Tool.Services.ServerAdapters.Internal.GitHub;
+using Buildvana.Tool.Services.Hosts.GitHub;
 using Buildvana.Tool.Utilities;
 
 // The answers are canned here: what the client is judged on is what it sends and what it makes of the shape

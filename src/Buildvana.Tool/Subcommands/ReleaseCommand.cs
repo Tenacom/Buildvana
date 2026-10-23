@@ -22,8 +22,9 @@ using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.DeclaredApiFiles;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.Hosts;
 using Buildvana.Tool.Services.Platforms;
-using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Release;
 using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +32,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Buildvana.Tool.Subcommands;
 
 [ImplementsCommand("release", settingsType: typeof(ReleaseSettings), usesSdk: true)]
-[Description("Publish a new public release (CI only).")]
+[Description("Publish a new public release.")]
 internal sealed class ReleaseCommand(
     IServiceProvider services,
     ReleaseSettings settings,
@@ -49,24 +50,39 @@ internal sealed class ReleaseCommand(
         var home = services.GetRequiredService<IHomeDirectoryProvider>();
         var versioningSettings = services.GetRequiredService<VersioningSettings>();
         var platform = services.GetRequiredService<CIPlatform>();
-        var server = services.GetRequiredService<ServerAdapter>();
-        var version = services.GetRequiredService<VersionService>();
-        var dotnet = services.GetRequiredService<DotNetService>();
         var git = services.GetRequiredService<IGitService>();
+
+        // Perform some preliminary checks.
+        // Everything from here to the draft release reads the configuration, the environment, the current
+        // branch, the repository's version history, and the public API files. A build changes none of them, so
+        // it all runs first: a release that cannot succeed is refused at once, before there is anything to
+        // build or to roll back.
+        reporter.Info($"Running on {platform.Name}.");
+        _ = GitHost.ParseRepositoryUrl(config.Repository);
+        var remote = services.GetRequiredService<ReleaseRemoteResolver>().Resolve();
+        var host = services.GetRequiredService<GitHost>();
+        if (host.Kind is null)
+        {
+            const string unknownHostRemedy = "Set repository.host, or set release.allowUnknownHost to release without a release page.";
+            BuildFailedException.ThrowIfNot(
+                config.Release.AllowUnknownHost,
+                $"bv does not know the Git host of repository.url '{config.Repository.Url}'. {unknownHostRemedy}");
+            reporter.Warning($"Releasing on an {host.Name}: bv tags and pushes, and creates no release page.");
+        }
+        else
+        {
+            reporter.Info($"The Git host is {host.Name} ({host.HostName}).");
+        }
+
+        BuildFailedException.ThrowIf(string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
+        var version = services.GetRequiredService<VersionService>();
+        BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
+        var dotnet = services.GetRequiredService<DotNetService>();
         var changelog = services.GetRequiredService<ChangelogService>();
         var declaredApiFiles = services.GetRequiredService<DeclaredApiFilesService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
         var hookRunner = services.GetRequiredService<HookRunner>();
         var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
-
-        // Perform some preliminary checks.
-        // Everything from here to the draft release reads the environment, the current branch, the
-        // repository's version history, and the public API files. A build changes none of them, so it
-        // all runs first: a release that cannot succeed is refused at once, before there is anything
-        // to build or to roll back.
-        BuildFailedException.ThrowIfNot(platform.IsCI, "A release can only be created on a CI runner.");
-        BuildFailedException.ThrowIf(string.IsNullOrEmpty(git.CurrentBranch), "A release can only be created from a branch.");
-        BuildFailedException.ThrowIfNot(version.IsPublicRelease, "Cannot create a release from the current branch.");
 
         // Resolve the committer identity for release commits: the configured git.identity outranks the bot
         // identity of the CI platform, which outranks whatever the repository's own Git configuration
@@ -88,20 +104,25 @@ internal sealed class ReleaseCommand(
 
         reporter.Notice($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
 
-        // Set fallback Git credentials if the server adapter can provide them.
-        var pushUsername = server.PushUsername;
-        var pushPassword = server.PushPassword;
+        // Set fallback Git credentials if the host can provide them.
+        var pushUsername = host.PushUsername;
+        var pushPassword = host.GetToken();
         if (pushUsername is not null && pushPassword is not null)
         {
-            reporter.Info($"Fallback push credentials provided by the server adapter (protocol username: '{pushUsername}').");
+            reporter.Info($"Fallback Git credentials provided by {host.Name} (protocol username: '{pushUsername}').");
             git.RemoteCredentialsFallback = new(pushUsername, pushPassword);
         }
         else
         {
             reporter.Warning(
-                "No push credentials provided by the server adapter. "
-                + "Push operations may fail if the repository is not already authenticated.");
+                $"No Git credentials provided by {host.Name}. "
+                + "Fetch and push operations may fail if the repository is not already authenticated.");
         }
+
+        // The version checks and the tag check have to see the tags the release remote has, which a shallow
+        // or stale clone may lack.
+        git.FetchTags(remote);
+        version.RefreshLatestVersions();
 
         // Perform an initial versioning consistency check.
         // This is a tad more relaxed than the final check, as it takes into account that we may still increment the current version
@@ -114,7 +135,18 @@ internal sealed class ReleaseCommand(
             requestedChange: settings.ResolveBump(),
             checkPublicApiFiles: config.Release.CheckPublicApi);
 
-        var release = await server.CreateReleaseAsync().ConfigureAwait(false);
+        var stepOutputs = platform.HasStepOutputs ? platform.OpenStepOutputs() : null;
+
+        // Release artifacts are deterministic by definition, whatever the platform.
+        dotnet.ContinuousIntegrationBuild = true;
+
+        var release = await ServerRelease.BeginAsync(
+            reporter,
+            git,
+            version,
+            host.CreateReleasePublisher(),
+            remote,
+            stepOutputs).ConfigureAwait(false);
         await using (release.ConfigureAwait(false))
         {
             // Modify version file if required.
@@ -207,9 +239,8 @@ internal sealed class ReleaseCommand(
             // Time for a final consistency check.
             version.EnsureConsistency(true);
 
-            // Ensure that the release tag doesn't already exist.
-            // This assumes that full repo history has been checked out;
-            // however, that is already a prerequisite for computing the Git height.
+            // Ensure that the release tag doesn't already exist, here or on the release remote, whose tags
+            // were fetched above.
             BuildFailedException.ThrowIf(git.TagExists(version.CurrentStr), $"Tag '{version.CurrentStr}' already exists in repository.");
 
             // The version is now final: everything that could still move it (the version spec change, the

@@ -18,14 +18,9 @@ namespace Buildvana.Tool.Services.Git;
 internal interface IGitService
 {
     /// <summary>
-    /// Gets the name of the origin remote, i.e. either "origin" if such remote exists, or the name of the only remote if there is only one.
+    /// Gets the remotes of the repository, in the order the Git configuration states them.
     /// </summary>
-    string Origin { get; }
-
-    /// <summary>
-    /// Gets the fetch URL of the origin remote.
-    /// </summary>
-    Uri OriginUrl { get; }
+    IReadOnlyList<GitRemoteInfo> Remotes { get; }
 
     /// <summary>
     /// Gets the name of the current Git branch.

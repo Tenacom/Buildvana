@@ -123,6 +123,31 @@ internal sealed class GitServiceTests
     }
 
     [Test]
+    public async Task Remotes_ListsEveryRemote_WithItsUrl()
+    {
+        using var repo = CreateRepoWithCommit();
+        repo.AddRemote("upstream", new Uri("https://example.com/upstream.git"));
+        using var git = CreateGitService(repo);
+
+        await Assert.That(git.Remotes).IsEquivalentTo([
+            new GitRemoteInfo("origin", "https://example.com/repo.git"),
+            new GitRemoteInfo("upstream", "https://example.com/upstream.git"),
+        ]);
+    }
+
+    // A clone with no remote is a repository all the same: commands that only read it work there.
+    [Test]
+    public async Task Constructor_WithoutRemotes_Succeeds()
+    {
+        using var repo = new TempGitRepo();
+        repo.WriteFile("a.txt", "content");
+        repo.CommitAll();
+        using var git = CreateGitService(repo);
+
+        await Assert.That(git.Remotes).IsEmpty();
+    }
+
+    [Test]
     public async Task CommitterIdentity_WhenSet_CommitsWithIt_AndWritesNothingToConfiguration()
     {
         using var repo = CreateRepoWithCommit();

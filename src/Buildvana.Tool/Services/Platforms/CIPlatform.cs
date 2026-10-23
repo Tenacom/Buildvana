@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using CommunityToolkit.Diagnostics;
 
@@ -45,6 +46,20 @@ internal abstract class CIPlatform
     public abstract GitIdentity? BotIdentity { get; }
 
     /// <summary>
+    /// Gets the URL of the server that runs the platform, or <see langword="null"/> if the platform states none.
+    /// </summary>
+    public virtual Uri? ServerUrl => null;
+
+    /// <summary>
+    /// Gets the kind of Git host of the server that runs the platform, or <see langword="null"/> if the platform
+    /// belongs to no host <c>bv</c> knows.
+    /// </summary>
+    /// <remarks>
+    /// <para>A repository whose URL has the host name of <see cref="ServerUrl"/> is on a host of this kind.</para>
+    /// </remarks>
+    public virtual HostKind? ServerKind => null;
+
+    /// <summary>
     /// Gets a value indicating whether the platform collects named outputs of a job step.
     /// </summary>
     /// <value>If <see cref="OpenStepOutputs"/> can be called, <see langword="true"/>;
@@ -83,4 +98,12 @@ internal abstract class CIPlatform
     /// </remarks>
     public virtual StepOutputWriter OpenStepOutputs()
         => ThrowHelper.ThrowInvalidOperationException<StepOutputWriter>($"Internal error: {Name} has no step outputs.");
+
+    /// <summary>
+    /// Parses the value of a variable that holds the URL of a server.
+    /// </summary>
+    /// <param name="value">The value of the variable, or <see langword="null"/> if it is not set.</param>
+    /// <returns>The URL, or <see langword="null"/> if <paramref name="value"/> is not an absolute URL.</returns>
+    private protected static Uri? ParseServerUrl(string? value)
+        => Uri.TryCreate(value, UriKind.Absolute, out var url) ? url : null;
 }

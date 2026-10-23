@@ -3,6 +3,7 @@
 
 using System;
 using Buildvana.Core;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using CommunityToolkit.Diagnostics;
 
@@ -17,9 +18,10 @@ internal sealed class GitHubActionsPlatform : CIPlatform
 
     private readonly string? _stepOutputsPath;
 
-    private GitHubActionsPlatform(string? stepOutputsPath)
+    private GitHubActionsPlatform(string? stepOutputsPath, Uri? serverUrl)
     {
         _stepOutputsPath = stepOutputsPath;
+        ServerUrl = serverUrl;
     }
 
     /// <inheritdoc/>
@@ -33,6 +35,14 @@ internal sealed class GitHubActionsPlatform : CIPlatform
     public override GitIdentity? BotIdentity { get; } = new(
         "github-actions[bot]",
         "41898282+github-actions[bot]@users.noreply.github.com");
+
+    /// <inheritdoc/>
+    /// <value>The value of <c>GITHUB_SERVER_URL</c>.</value>
+    public override Uri? ServerUrl { get; }
+
+    /// <inheritdoc/>
+    /// <value>Always <see cref="HostKind.GitHub"/>.</value>
+    public override HostKind? ServerKind => HostKind.GitHub;
 
     /// <inheritdoc/>
     /// <value>Always <see langword="true"/>.</value>
@@ -49,7 +59,9 @@ internal sealed class GitHubActionsPlatform : CIPlatform
     {
         Guard.IsNotNull(getEnvironmentVariable);
         return string.Equals(getEnvironmentVariable("GITHUB_ACTIONS"), "true", StringComparison.OrdinalIgnoreCase)
-            ? new GitHubActionsPlatform(getEnvironmentVariable(StepOutputsVariable))
+            ? new GitHubActionsPlatform(
+                getEnvironmentVariable(StepOutputsVariable),
+                ParseServerUrl(getEnvironmentVariable("GITHUB_SERVER_URL")))
             : null;
     }
 

@@ -1,6 +1,6 @@
 # Release
 
-`bv release` publishes a release of the repository from a CI runner: it builds, tags, pushes the packages, and creates the release on GitHub.
+`bv release` publishes a release of the repository: it builds, tags, pushes the packages, and creates the release on the Git host.
 This page says what the command checks, what it does step by step, and what it undoes when a step fails.
 
 ---
@@ -10,8 +10,10 @@ This page says what the command checks, what it does step by step, and what it u
 <!-- markdownlint-enable MD036 -->
 
 - [Preconditions](#preconditions)
+- [The release remote](#the-release-remote)
 - [The steps](#the-steps)
 - [The release commit](#the-release-commit)
+- [The release tag](#the-release-tag)
 - [The changelog](#the-changelog)
 - [The post-release commit](#the-post-release-commit)
 - [Publishing](#publishing)
@@ -29,34 +31,61 @@ This page says what the command checks, what it does step by step, and what it u
 bv release [OPTIONS]
 ```
 
-`bv release` creates releases on GitHub, from a GitHub Actions runner.
-On GitLab CI and on Generic CI, `bv` fails when it creates the release.
-On the Local [CI platform](../introduction.md#ci-platforms), the command fails at once with `A release can only be created on a CI runner.`
+`bv release` runs on every [CI platform](../introduction.md#ci-platforms), Local included.
+A release from a developer machine goes through the same steps as a release from a CI runner.
+The Git host decides where the release is published: GitHub, or a host `bv` does not know.
 
 Before building anything, `bv release` checks what a build cannot change:
 
-1. `HEAD` is on a branch, and the branch produces [public releases](../sdk-modules/versioning.md#public-releases) under `release.branches`.
-2. A committer identity exists for the commits of the release.
+1. `buildvana.jsonc` states [`repository.url`](../configuration-file.md#settings), the URL of the repository the releases go to.
+2. The clone has a remote that names that repository, as [The release remote](#the-release-remote) says.
+3. `bv` knows the Git host of `repository.url`, or `release.allowUnknownHost` is `true`.
+   `bv` takes `repository.host` when it is not `auto`.
+   Otherwise, `github.com` is GitHub.
+   Otherwise, a host whose name is the host name of [`GITHUB_SERVER_URL`](../environment-variables.md#github_server_url) is a GitHub Enterprise Server, on GitHub Actions.
+   Any other host is unknown.
+4. `HEAD` is on a branch, and the branch produces [public releases](../sdk-modules/versioning.md#public-releases) under `release.branches`.
+5. A committer identity exists for the commits of the release.
    `bv` takes the first of three that exists.
    The three are the `git.identity` setting of `buildvana.jsonc`, the bot identity of the CI platform, and the `user.name` and `user.email` of the Git configuration.
    On GitHub Actions, the bot identity is `github-actions[bot]`.
    On GitLab CI, it is `GitLab CI`, with the address `gitlab-ci@noreply.<host>` built from [`CI_SERVER_HOST`](../environment-variables.md#ci_server_host).
    `bv` commits with that identity, and writes nothing to the Git configuration.
-3. The platform supplies push credentials.
-   On GitHub Actions, they are the token that [`hosts.github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
-   Without them, `bv` warns that the push may fail, and goes on.
-4. The published versions are consistent: the latest tag is not below the latest stable tag, and the current version is below neither.
-5. The version spec change is computed from `--bump` and the public API files, as [`bv version advance`](version.md#bv-version-advance) computes it.
-6. [`GITHUB_OUTPUT`](../environment-variables.md#github_output) is set, on GitHub Actions.
+6. The host supplies Git credentials.
+   On GitHub, they are `x-access-token` and the token that [`hosts.github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
+   An unknown host supplies none.
+   Without them, `bv` warns that the fetch and the push may fail, and goes on.
+7. `bv` fetches the tags of the release remote.
+8. The published versions are consistent: the latest tag is not below the latest stable tag, and the current version is below neither.
+9. The version spec change is computed from `--bump` and the public API files, as [`bv version advance`](version.md#bv-version-advance) computes it.
+10. [`GITHUB_OUTPUT`](../environment-variables.md#github_output) is set, on GitHub Actions.
 
-`bv` reads the latest versions from the tags reachable from `HEAD`, so the runner needs the full history.
+`bv` reads the latest versions from the tags reachable from `HEAD`, so the clone needs the full history.
 With `actions/checkout`, that is `fetch-depth: 0`.
+
+---
+
+## The release remote
+
+The release remote is the remote of the clone that `bv release` fetches the tags from, and pushes the commits and the tag to.
+It is the remote whose URL names the repository that `repository.url` names.
+In CI, it is usually `origin`.
+In a clone of a fork, it is the remote that names the upstream repository, whatever its name.
+
+Two URLs name the same repository when their host names are equal and their paths are equal, both without regard to case.
+The scheme, the port, the user, and a `.git` suffix play no part.
+An SSH URL and an HTTPS URL of a repository therefore match.
+
+`bv` pushes over HTTP and HTTPS alone.
+When the only remote that matches has another URL, such as an SSH one, the release fails, and the message names the remote.
+Add a remote with the HTTPS URL of the repository.
+When no remote matches, the release fails, and the message names the remotes of the clone.
 
 ---
 
 ## The steps
 
-1. Create a provisional draft release on GitHub, named `<version> [provisional]`, so that a token without permission fails the release early.
+1. On GitHub, create a provisional draft release, named `<version> [provisional]`, so that a token without permission fails the release early.
 2. Rewrite `VERSION` when the version spec change is not `none`, with the tag `versioning.prereleaseTag` names.
 3. For a stable version, move the unshipped public and internal API into the shipped one.
    Every `PublicAPI.Unshipped.txt` next to a `PublicAPI.Shipped.txt` is emptied into it, and a line starting with `*REMOVED*` removes its API from the shipped file.
@@ -69,15 +98,16 @@ With `actions/checkout`, that is `fetch-depth: 0`.
 8. Print `notice: Releasing version <version>.`
    From here on, the version is final.
 9. Run the build pipeline from `clean` through `pack`, with the release configuration, to build, test, and produce the artifacts.
+   The run passes `ContinuousIntegrationBuild=true` to `dotnet` on every platform, Local included, because release artifacts are deterministic.
 10. Finalize the new changelog section with the released version, as [The changelog](#the-changelog) says.
 11. Find the produced packages: every `.nupkg` file in `artifacts\<configuration>\` whose name ends with `.<version>.nupkg`.
 12. Run the [`release/post-release` hook](../hooks.md#the-releasepost-release-hook), and record the files it changed.
 13. Rewrite the self-references when `release.dogfood` is `true`, as [The post-release commit](#the-post-release-commit) says.
 14. Create the post-release commit, when the hook or the rewrites changed a file.
-15. Push the commits.
+15. Create the release tag, push the commits, and push the tag, as [The release tag](#the-release-tag) says.
 16. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
 17. Collect the release assets, as [Publishing](#publishing) says.
-18. Publish the release, and write the `version` step output.
+18. Publish the release on the host, and write the `version` step output.
 
 Every step is undone when a later step fails, as [Rollback](#rollback) says.
 
@@ -89,7 +119,6 @@ Every step is undone when a later step fails, as [Rollback](#rollback) says.
 It creates the commit even when nothing changed, because the commit settles the version.
 The patch number is the [Git height](../sdk-modules/versioning.md#patch-number) of the version line, and a commit created after the build would move it.
 The artifacts, the tag, and the release would then disagree by one patch.
-The release tag names the release commit, whatever commits follow it.
 
 A version whose Git height is 0 is refused, because no commit in the history carries the version line.
 The usual cause is a `VERSION` file changed and not committed.
@@ -105,6 +134,22 @@ Two remedies exist:
   An empty "Unreleased changes" section then fails the release, so keep at least one entry between releases, or set `release.emptyChangelog`.
 
 When neither remedy fits, open an issue.
+
+---
+
+## The release tag
+
+`bv release` creates the release tag itself, as a lightweight tag named after the version.
+The tag names the release commit, whatever commits follow it.
+`bv` creates it after the build, because finalizing the changelog amends the release commit.
+
+`bv` pushes the branch to the release remote, then the tag.
+A tag of the same name on the remote fails the release, unless it names the same commit.
+`bv` never moves a tag of the remote.
+When the remote rejects a push, the release fails.
+
+The host publishes the release on the tag that is already there.
+A workflow that the push of a tag triggers therefore runs before the release page exists.
 
 ---
 
@@ -154,8 +199,7 @@ When neither the hook nor the rewrites changed a file, there is no post-release 
 
 ## Publishing
 
-`bv release` pushes the commits, then every `.nupkg` file of `artifacts\<configuration>\`, with `dotnet nuget push --skip-duplicate`.
-When the remote rejects the push of the commits, the release fails.
+After the commits and the tag, `bv release` pushes every `.nupkg` file of `artifacts\<configuration>\`, with `dotnet nuget push --skip-duplicate`.
 `dotnet nuget push` gets the arguments and environment variables of the `dotnet.all` and `dotnet.nugetPush` sections of `buildvana.jsonc`, and no forwarded argument.
 A prerelease goes to the `nuget.feeds.prerelease` feed, and a stable version to the `nuget.feeds.release` feed.
 A repository that states no prerelease feed pushes prereleases to the release feed.
@@ -169,14 +213,19 @@ The release assets are collected from two sources:
 
 A line with the wrong shape, or one naming a file that does not exist, is a warning, and the asset is skipped.
 
-`bv` reaches the GitHub API of the host of the `origin` remote.
+On GitHub, `bv` reaches the API of the host of `repository.url`.
 For `github.com`, the API is at `https://api.github.com`.
 `bv` takes any other host for a GitHub Enterprise Server, whose API is at `https://<host>/api/v3`.
 An asset upload goes to the address that GitHub states in the answer to the creation of the draft release.
 
 `bv` then uploads the assets, and turns the draft into the release.
-The release is named after the version, its tag names the release commit, and the prerelease flag follows the version.
+The release is named after the version, its tag is the release tag, and the prerelease flag follows the version.
 Its description is a link to `CHANGELOG.md` on the release branch, followed by the notes GitHub generates.
+
+On a host `bv` does not know, there is no release page, and `bv` says so with a notice.
+The tag, the commits, and the packages are pushed all the same.
+The new changelog section gets a heading without a link, and its relative file links stay as they are, each with a notice.
+
 On GitHub Actions, `bv` appends `version=<version>` to the file [`GITHUB_OUTPUT`](../environment-variables.md#github_output) names, for the later steps of the job.
 The last line of a release is `notice: Published release <version> with <count> assets.`
 
@@ -186,9 +235,10 @@ The last line of a release is `notice: Published release <version> with <count> 
 
 When a step fails after the draft release exists, `bv release` undoes what it did, in reverse order:
 
+- it deletes the release tag from the release remote, when it was pushed, and from the clone;
 - it resets the branch to the commit before the release commit, post-release commit included;
 - when the commits were pushed, it force-pushes the previous tip;
-- it deletes the release, and the tag when the release was published.
+- it deletes the release on the host, draft or published.
 
 A rollback action that fails is a warning, and the rollback goes on.
 Once the release is published and the step output is written, nothing is undone.

@@ -14,8 +14,12 @@ using Buildvana.Tool.CommandLine;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Services;
+using Buildvana.Tool.Services.Git;
+using Buildvana.Tool.Services.Hosts;
+using Buildvana.Tool.Services.Hosts.GitHub;
 using Buildvana.Tool.Services.Platforms;
-using Buildvana.Tool.Services.ServerAdapters;
+using Buildvana.Tool.Services.Release;
+using Buildvana.Tool.Services.Versioning;
 using Buildvana.Tool.Subcommands;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
@@ -24,14 +28,16 @@ using Spectre.Console.Testing;
 /// <summary>
 /// Runs <c>bv release</c> end to end over a real Git repository in a temporary directory, with only the
 /// process and platform boundaries faked: child processes (<see cref="FakeProcessRunner"/>), hooks
-/// (<see cref="FakeFileBasedAppRunner"/>), the CI platform (<see cref="FakeCIPlatform"/>), and the server
-/// (<see cref="RecordingServerAdapter"/>). Everything
-/// else — the service graph, the versioning, the changelog, the commits, and the push — is the real thing.
+/// (<see cref="FakeFileBasedAppRunner"/>), the CI platform (<see cref="FakeCIPlatform"/>), the Git host
+/// (<see cref="RecordingHost"/>), and the release remote (<see cref="FakeReleaseRemoteResolver"/>, naming
+/// the bare remote of the repository). Everything else — the service graph, the versioning, the changelog,
+/// the commits, the tag, and the push — is the real thing.
 /// </summary>
 /// <remarks>
 /// <para>The harness anchors the process's current directory to the repository, exactly like a real run does,
-/// and sets the environment variable the configured NuGet feed reads its API key from. Both are process-wide,
-/// so tests using this harness must be marked <c>[NotInParallel]</c>. Both are restored on disposal.</para>
+/// and sets the environment variables the configured NuGet feed and the host read their secrets from. All of
+/// them are process-wide, so tests using this harness must be marked <c>[NotInParallel]</c>. All of them are
+/// restored on disposal.</para>
 /// </remarks>
 internal sealed class ReleaseHarness : IDisposable
 {
@@ -48,6 +54,8 @@ internal sealed class ReleaseHarness : IDisposable
     public const string ApiFilesDirectory = "src/Test.Lib";
 
     private const string ApiKeyEnvVar = "BV_TEST_NUGET_API_KEY";
+    private const string TokenEnvVar = "BV_TEST_HOST_TOKEN";
+    private const string RemoteName = "origin";
     private const string BranchName = "release";
     private const string Configuration = "Release";
 
@@ -60,6 +68,7 @@ internal sealed class ReleaseHarness : IDisposable
     private readonly ServiceProvider _services;
     private readonly string _originalCurrentDirectory = Environment.CurrentDirectory;
     private readonly string? _originalApiKey = Environment.GetEnvironmentVariable(ApiKeyEnvVar);
+    private readonly string? _originalToken = Environment.GetEnvironmentVariable(TokenEnvVar);
 
     private IReadOnlyList<string> _commandOptions = [];
 
@@ -78,6 +87,7 @@ internal sealed class ReleaseHarness : IDisposable
         };
 
         Environment.SetEnvironmentVariable(ApiKeyEnvVar, "test-api-key");
+        Environment.SetEnvironmentVariable(TokenEnvVar, _options.PushSecret);
         Repo = new TempGitRepo();
         PopulateRepository();
         Repo.CommitAll("Initial commit");
@@ -147,9 +157,15 @@ internal sealed class ReleaseHarness : IDisposable
     public string ArtifactsPath => Path.Combine(Repo.RootPath, "artifacts", Configuration);
 
     /// <summary>
-    /// Gets the server adapter the release drives.
+    /// Gets the Git host the release drives.
     /// </summary>
-    public RecordingServerAdapter Adapter => (RecordingServerAdapter)_services.GetRequiredService<ServerAdapter>();
+    /// <exception cref="InvalidCastException">The harness runs on an unknown host (<see cref="ReleaseHarnessOptions.UnknownHost"/>).</exception>
+    public RecordingHost Host => (RecordingHost)_services.GetRequiredService<GitHost>();
+
+    /// <summary>
+    /// Gets the release publisher the release created, or <see langword="null"/> if no release began.
+    /// </summary>
+    public RecordingReleasePublisher? Publisher => Host.Publisher;
 
     /// <summary>
     /// Gets or sets a callback simulating what the hook does to the working tree. Only ever invoked when
@@ -168,6 +184,20 @@ internal sealed class ReleaseHarness : IDisposable
         _commandOptions = options;
         return _services.GetRequiredService<ReleaseCommand>().ExecuteAsync(CancellationToken.None);
     }
+
+    /// <summary>
+    /// Begins a release over the service graph of the harness, the way the <c>release</c> command does, with
+    /// no step outputs.
+    /// </summary>
+    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is the release.</returns>
+    public Task<ServerRelease> BeginReleaseAsync()
+        => ServerRelease.BeginAsync(
+            _services.GetRequiredService<IReporter>(),
+            _services.GetRequiredService<IGitService>(),
+            _services.GetRequiredService<VersionService>(),
+            _services.GetRequiredService<GitHost>().CreateReleasePublisher(),
+            RemoteName,
+            stepOutputs: null);
 
     /// <summary>
     /// Computes the version of the repository as it now stands, the way a build of it would: this is what
@@ -212,11 +242,15 @@ internal sealed class ReleaseHarness : IDisposable
         // The current directory has to leave the repository before the repository can be deleted.
         Environment.CurrentDirectory = _originalCurrentDirectory;
         Environment.SetEnvironmentVariable(ApiKeyEnvVar, _originalApiKey);
+        Environment.SetEnvironmentVariable(TokenEnvVar, _originalToken);
         Repo.Dispose();
     }
 
     private static ProcessResult Success(string executable, IReadOnlyList<string> args)
         => new($"{executable} {string.Join(' ', args)}", 0, string.Empty, string.Empty, TimeSpan.Zero);
+
+    private static GitUrlInfo ParseRepositoryUrl(IServiceProvider services)
+        => GitHost.ParseRepositoryUrl(services.GetRequiredService<BuildvanaConfig>().Repository);
 
     private ServiceProvider BuildServiceProvider()
         => new ServiceCollection()
@@ -235,15 +269,31 @@ internal sealed class ReleaseHarness : IDisposable
                 RunsOnCI = _options.IsCI,
                 Identity = _options.WithBotIdentity ? new("Buildvana Test Bot", "bot@buildvana.invalid") : null,
             })
-            .AddSingleton<ServerAdapter>(sp => new RecordingServerAdapter(sp) {
-                PushUser = _options.PushUser,
-                PushSecret = _options.PushSecret,
-                OnPublishing = () => {
-                    Record("publish");
-                    _options.OnPublishing?.Invoke();
-                },
-            })
+            .AddSingleton<ReleaseRemoteResolver>(new FakeReleaseRemoteResolver(RemoteName))
+            .AddSingleton(CreateHost)
             .BuildServiceProvider();
+
+    private GitHost CreateHost(IServiceProvider services)
+    {
+        if (_options.UnknownHost)
+        {
+            return new UnknownHost(ParseRepositoryUrl(services), Reporter);
+        }
+
+        if (_options.GitHubApi is { } gitHubApi)
+        {
+            return new GitHubHost(services, ParseRepositoryUrl(services), gitHubApi);
+        }
+
+        return new RecordingHost {
+            TokenVariable = TokenEnvVar,
+            PushUser = _options.PushUser,
+            OnPublishing = () => {
+                Record("publish");
+                _options.OnPublishing?.Invoke();
+            },
+        };
+    }
 
     // Every dotnet invocation is a no-op that succeeds, except `pack`, which leaves behind the artifacts
     // a real one would: the release reads them back to discover the produced packages and gather assets.
@@ -394,6 +444,7 @@ internal sealed class ReleaseHarness : IDisposable
             ["checkPublicApi"] = _options.CheckPublicApi,
             ["changelogUpdates"] = _options.ChangelogUpdates,
             ["dogfood"] = _options.Dogfood,
+            ["allowUnknownHost"] = _options.AllowUnknownHost,
         };
         if (_options.EmptyChangelog is { } emptyChangelog)
         {
@@ -409,7 +460,13 @@ internal sealed class ReleaseHarness : IDisposable
             ["versioning"] = new JsonObject { ["prereleaseTag"] = "preview" },
             ["dotnet"] = new JsonObject { ["configuration"] = Configuration },
             ["nuget"] = new JsonObject { ["feeds"] = new JsonObject { ["release"] = feed } },
+            ["hosts"] = new JsonObject { ["github"] = new JsonObject { ["tokenEnv"] = TokenEnvVar } },
         };
+        if (_options.RepositoryUrl is { } repositoryUrl)
+        {
+            root["repository"] = new JsonObject { ["url"] = repositoryUrl };
+        }
+
         if (_options.ConfiguredIdentity is { } identity)
         {
             root["git"] = new JsonObject {

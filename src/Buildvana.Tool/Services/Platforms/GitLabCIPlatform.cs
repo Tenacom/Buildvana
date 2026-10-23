@@ -12,9 +12,10 @@ namespace Buildvana.Tool.Services.Platforms;
 /// </summary>
 internal sealed class GitLabCIPlatform : CIPlatform
 {
-    private GitLabCIPlatform(string? serverHost)
+    private GitLabCIPlatform(string? serverHost, Uri? serverUrl)
     {
         BotIdentity = new("GitLab CI", $"gitlab-ci@noreply.{serverHost}");
+        ServerUrl = serverUrl;
     }
 
     /// <inheritdoc/>
@@ -27,6 +28,10 @@ internal sealed class GitLabCIPlatform : CIPlatform
     /// <inheritdoc/>
     public override GitIdentity? BotIdentity { get; }
 
+    /// <inheritdoc/>
+    /// <value>The value of <c>CI_SERVER_URL</c>.</value>
+    public override Uri? ServerUrl { get; }
+
     /// <summary>
     /// Creates and returns an instance of <see cref="GitLabCIPlatform"/> if <c>bv</c> runs in a GitLab CI runner.
     /// </summary>
@@ -38,7 +43,7 @@ internal sealed class GitLabCIPlatform : CIPlatform
     {
         Guard.IsNotNull(getEnvironmentVariable);
         return getEnvironmentVariable("GITLAB_CI") is not null
-            ? new GitLabCIPlatform(getEnvironmentVariable("CI_SERVER_HOST"))
+            ? new GitLabCIPlatform(getEnvironmentVariable("CI_SERVER_HOST"), ParseServerUrl(getEnvironmentVariable("CI_SERVER_URL")))
             : null;
     }
 }
