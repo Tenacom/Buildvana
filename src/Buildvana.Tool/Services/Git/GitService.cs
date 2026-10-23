@@ -296,7 +296,15 @@ internal sealed class GitService : IGitService, IDisposable
         using var gitRemote = GetRemote(remote);
         _reporter.Info($"Fetching tags from '{remote}'...");
         var options = new FetchOptions { CredentialsProvider = CreateCredentialsProvider() };
-        Commands.Fetch(_repository, gitRemote.Name, ["refs/tags/*:refs/tags/*"], options, logMessage: null);
+        try
+        {
+            Commands.Fetch(_repository, gitRemote.Name, ["refs/tags/*:refs/tags/*"], options, logMessage: null);
+        }
+        catch (LibGit2SharpException ex)
+        {
+            throw new BuildFailedException($"Git: cannot fetch tags from '{remote}': {ex.Message}", ex);
+        }
+
         _reporter.Notice($"Fetched tags from '{remote}'.");
     }
 
@@ -311,14 +319,30 @@ internal sealed class GitService : IGitService, IDisposable
         using var gitRemote = GetRemote(remote);
 
         // LibGit2Sharp reports a reference the remote refused through OnPushStatusError, and nowhere else:
-        // without the handler, a push that the server rejects returns as if it had succeeded.
+        // without the handler, a push that the remote rejects returns as if it had succeeded.
         // The handler only collects, because an exception thrown from it would have to cross native code.
         var rejections = new List<PushStatusError>();
         var options = new PushOptions {
             CredentialsProvider = CreateCredentialsProvider(),
             OnPushStatusError = rejections.Add,
         };
-        _repository.Network.Push(gitRemote, refSpec, options);
+        try
+        {
+            _repository.Network.Push(gitRemote, refSpec, options);
+        }
+        catch (NonFastForwardException ex)
+        {
+            // LibGit2Sharp refuses a push that is not a fast-forward before the remote sees it.
+            var destination = refSpec[(refSpec.IndexOf(':', StringComparison.Ordinal) + 1)..];
+            throw new BuildFailedException(
+                $"Git: cannot push '{destination}' to '{remote}', because the remote has commits that the local reference lacks.",
+                ex);
+        }
+        catch (LibGit2SharpException ex)
+        {
+            throw new BuildFailedException($"Git: cannot push to '{remote}': {ex.Message}", ex);
+        }
+
         if (rejections.Count > 0)
         {
             var details = string.Join("; ", rejections.Select(x => $"{x.Reference}: {x.Message}"));
@@ -330,10 +354,17 @@ internal sealed class GitService : IGitService, IDisposable
     {
         using var gitRemote = GetRemote(remote);
         var credentialsProvider = CreateCredentialsProvider();
-        var references = credentialsProvider is null
-            ? _repository.Network.ListReferences(gitRemote)
-            : _repository.Network.ListReferences(gitRemote, credentialsProvider);
-        return [.. references];
+        try
+        {
+            var references = credentialsProvider is null
+                ? _repository.Network.ListReferences(gitRemote)
+                : _repository.Network.ListReferences(gitRemote, credentialsProvider);
+            return [.. references];
+        }
+        catch (LibGit2SharpException ex)
+        {
+            throw new BuildFailedException($"Git: cannot list the references of '{remote}': {ex.Message}", ex);
+        }
     }
 
     private Remote GetRemote(string name)

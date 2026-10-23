@@ -202,7 +202,8 @@ internal sealed class GitServiceTests
             var remoteTip = repo.GetRemoteTipSha();
 
             // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-            _ = await Assert.That(() => git.PushBranch("origin")).ThrowsException();
+            var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
+            await Assert.That(exception!.Message).Contains($"'refs/heads/{repo.CurrentBranchName}'");
             await Assert.That(repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
         }
     }
@@ -235,6 +236,18 @@ internal sealed class GitServiceTests
         var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
         await Assert.That(exception!.Message).Contains(branchRef);
         await Assert.That(repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
+    }
+
+    [Test]
+    public async Task PushBranch_WhenRemoteIsUnreachable_Throws()
+    {
+        using var repo = CreateRepoWithUnreachableRemote();
+        using var git = CreateGitService(repo);
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
+        var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("'origin'");
+        await Assert.That(exception.InnerException).IsNotNull();
     }
 
     [Test]
@@ -354,6 +367,19 @@ internal sealed class GitServiceTests
     }
 
     [Test]
+    public async Task PushTag_WhenRemoteIsUnreachable_Throws()
+    {
+        using var repo = CreateRepoWithUnreachableRemote();
+        using var git = CreateGitService(repo);
+        git.CreateTag("1.0.0", repo.HeadSha);
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
+        var exception = await Assert.That(() => git.PushTag("origin", "1.0.0")).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("'origin'");
+        await Assert.That(exception.InnerException).IsNotNull();
+    }
+
+    [Test]
     public async Task DeleteRemoteTag_RemovesTagFromRemote_AndKeepsLocalTag()
     {
         using var repo = CreateRepoWithBareRemote();
@@ -411,6 +437,18 @@ internal sealed class GitServiceTests
         await Assert.That(repo.TagNames).IsEquivalentTo(["1.0.0"]);
     }
 
+    [Test]
+    public async Task FetchTags_WhenRemoteIsUnreachable_Throws()
+    {
+        using var repo = CreateRepoWithUnreachableRemote();
+        using var git = CreateGitService(repo);
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
+        var exception = await Assert.That(() => git.FetchTags("origin")).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("'origin'");
+        await Assert.That(exception.InnerException).IsNotNull();
+    }
+
     private static TempGitRepo CreateRepoWithCommit()
     {
         var repo = new TempGitRepo();
@@ -426,6 +464,17 @@ internal sealed class GitServiceTests
         repo.WriteFile("a.txt", "content");
         repo.CommitAll();
         _ = repo.AddBareRemote();
+        return repo;
+    }
+
+    // The URL of the remote names a directory that does not exist. A file URL keeps libgit2 from reading a Windows
+    // path as the host of an SSH URL, and from running ssh to reach it.
+    private static TempGitRepo CreateRepoWithUnreachableRemote()
+    {
+        var repo = new TempGitRepo();
+        repo.WriteFile("a.txt", "content");
+        repo.CommitAll();
+        repo.AddRemote("origin", new Uri(Path.Combine(repo.RootPath, "missing-remote")));
         return repo;
     }
 
