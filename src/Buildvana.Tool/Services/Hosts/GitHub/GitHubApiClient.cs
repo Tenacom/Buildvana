@@ -8,9 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -27,10 +25,10 @@ namespace Buildvana.Tool.Services.Hosts.GitHub;
 /// GitHub Enterprise Server, whose API is at <c>https://&lt;host&gt;/api/v3</c>.</para>
 /// <para>An asset upload goes to the address that the release states in its <c>upload_url</c> member, so this
 /// type derives no upload host.</para>
-/// <para>An answer outside the 2xx range fails the build, with the status code and the message of the answer.
-/// The one exception is a tag lookup, where a 404 means that the tag does not exist.</para>
+/// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The one exception
+/// is a tag lookup, where a 404 means that the tag does not exist.</para>
 /// </remarks>
-internal sealed class GitHubApiClient : IDisposable
+internal sealed class GitHubApiClient : HostApiClient
 {
     /// <summary>
     /// The version of the REST API that every request asks for.
@@ -46,8 +44,6 @@ internal sealed class GitHubApiClient : IDisposable
     private const string GitHubComHostName = "github.com";
     private const string GitHubMediaType = "application/vnd.github+json";
 
-    private readonly HttpClient _http;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="GitHubApiClient"/> class.
     /// </summary>
@@ -56,24 +52,16 @@ internal sealed class GitHubApiClient : IDisposable
     /// <param name="handler">The handler that sends the requests. It is disposed together with this
     /// instance.</param>
     public GitHubApiClient(string hostName, string token, HttpMessageHandler handler)
+        : base("GitHub", GetBaseUrl(hostName), handler)
     {
-        Guard.IsNotNullOrEmpty(hostName);
         Guard.IsNotNullOrEmpty(token);
-        Guard.IsNotNull(handler);
 
-        BaseUrl = GetBaseUrl(hostName);
-        _http = new HttpClient(handler);
-        var headers = _http.DefaultRequestHeaders;
+        var headers = DefaultRequestHeaders;
         headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubMediaType));
         headers.Add("X-GitHub-Api-Version", ApiVersion);
         headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         headers.UserAgent.Add(new ProductInfoHeaderValue("bv", OwnVersion.Value.ToNormalizedString()));
     }
-
-    /// <summary>
-    /// Gets the base URL of the API, with a trailing slash.
-    /// </summary>
-    public Uri BaseUrl { get; }
 
     /// <summary>
     /// Asynchronously gets a repository.
@@ -253,13 +241,39 @@ internal sealed class GitHubApiClient : IDisposable
         return SendAsync(HttpMethod.Post, url, content, cancellationToken);
     }
 
-    /// <inheritdoc cref="IDisposable.Dispose"/>
-    public void Dispose() => _http.Dispose();
+    /// <inheritdoc/>
+    protected override async Task<string?> ReadErrorMessageAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        // A GitHub error answer is JSON with a "message" member. A proxy in front of a server may answer with
+        // anything else, and then the status code is the whole report.
+        Guard.IsNotNull(response);
+        GitHubErrorBody? body;
+        try
+        {
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
+            {
+                body = await JsonSerializer.DeserializeAsync(stream, GitHubJsonContext.Default.GitHubErrorBody, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        return body?.Message is { Length: > 0 } message ? message : null;
+    }
 
     private static Uri GetBaseUrl(string hostName)
-        => string.Equals(hostName, GitHubComHostName, StringComparison.OrdinalIgnoreCase)
+    {
+        Guard.IsNotNullOrEmpty(hostName);
+        return string.Equals(hostName, GitHubComHostName, StringComparison.OrdinalIgnoreCase)
             ? new Uri("https://api.github.com/")
             : new Uri($"https://{hostName}/api/v3/");
+    }
 
     private static string ReleasePath(string owner, string name, long releaseId)
         => RepositoryPath(owner, name) + "/releases/" + releaseId.ToString(CultureInfo.InvariantCulture);
@@ -297,132 +311,5 @@ internal sealed class GitHubApiClient : IDisposable
             $"The upload URL of release {release.Id}, '{template}', is not an absolute URL.");
 
         return url;
-    }
-
-    private static StringContent JsonBody<T>(T value, JsonTypeInfo<T> typeInfo)
-        => new(JsonSerializer.Serialize(value, typeInfo), Encoding.UTF8, "application/json");
-
-    private static async Task EnsureSuccessAsync(
-        HttpMethod method,
-        Uri url,
-        HttpResponseMessage response,
-        CancellationToken cancellationToken)
-    {
-        if (response.IsSuccessStatusCode)
-        {
-            return;
-        }
-
-        var message = await ReadErrorMessageAsync(response, cancellationToken).ConfigureAwait(false);
-        var status = string.Create(CultureInfo.InvariantCulture, $"{(int)response.StatusCode} {response.ReasonPhrase}");
-        throw new BuildFailedException(message is null
-            ? $"The GitHub API answered {Describe(method, url)} with {status}."
-            : $"The GitHub API answered {Describe(method, url)} with {status}: {message}");
-    }
-
-    // A GitHub error answer is JSON with a "message" member. A proxy in front of a server may answer with
-    // anything else, and then the status code is the whole report.
-    private static async Task<string?> ReadErrorMessageAsync(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken)
-    {
-        GitHubErrorBody? body;
-        try
-        {
-            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            await using (stream.ConfigureAwait(false))
-            {
-                body = await JsonSerializer.DeserializeAsync(stream, GitHubJsonContext.Default.GitHubErrorBody, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-
-        return body?.Message is { Length: > 0 } message ? message : null;
-    }
-
-    // The client buffers every answer before SendAsync returns, so reading the body here meets no network.
-    private static async Task<T> ReadAsync<T>(
-        HttpMethod method,
-        Uri url,
-        HttpResponseMessage response,
-        JsonTypeInfo<T> typeInfo,
-        CancellationToken cancellationToken)
-        where T : class
-    {
-        T? result;
-        try
-        {
-            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            await using (stream.ConfigureAwait(false))
-            {
-                result = await JsonSerializer.DeserializeAsync(stream, typeInfo, cancellationToken).ConfigureAwait(false);
-            }
-        }
-        catch (JsonException exception)
-        {
-            throw new BuildFailedException(
-                $"The GitHub API answered {Describe(method, url)} with something bv cannot read: {exception.Message}",
-                exception);
-        }
-
-        return result ?? throw new BuildFailedException($"The GitHub API answered {Describe(method, url)} with null.");
-    }
-
-    private static string Describe(HttpMethod method, Uri url) => $"{method} {url.AbsoluteUri}";
-
-    // Every request goes to an absolute URL that this type holds and passes along with the request, so that a
-    // diagnostic names the URL without reading back the nullable HttpRequestMessage.RequestUri.
-    private Uri ApiUrl(string path) => new(BaseUrl, path);
-
-    private async Task<T> SendAsync<T>(
-        HttpMethod method,
-        Uri url,
-        HttpContent? content,
-        JsonTypeInfo<T> typeInfo,
-        CancellationToken cancellationToken)
-        where T : class
-    {
-        using var request = new HttpRequestMessage(method, url);
-        request.Content = content;
-        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(method, url, response, cancellationToken).ConfigureAwait(false);
-        return await ReadAsync(method, url, response, typeInfo, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task SendAsync(
-        HttpMethod method,
-        Uri url,
-        HttpContent? content,
-        CancellationToken cancellationToken)
-    {
-        using var request = new HttpRequestMessage(method, url);
-        request.Content = content;
-        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(method, url, response, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task<HttpResponseMessage> SendCoreAsync(
-        HttpRequestMessage request,
-        Uri url,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        }
-        catch (HttpRequestException exception)
-        {
-            throw new BuildFailedException(
-                $"The GitHub API could not be reached for {Describe(request.Method, url)}: {exception.Message}",
-                exception);
-        }
-        catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            throw new BuildFailedException($"The GitHub API did not answer {Describe(request.Method, url)} in time.", exception);
-        }
     }
 }
