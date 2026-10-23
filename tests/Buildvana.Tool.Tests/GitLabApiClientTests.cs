@@ -71,6 +71,16 @@ internal sealed class GitLabApiClientTests
     }
 
     [Test]
+    public async Task GetCurrentUserAsync_ReadsTheId()
+    {
+        var handler = Answering((HttpMethod.Get, "https://gitlab.com/api/v4/user"), """{"id":42,"username":"ric"}""");
+        using var client = NewClient(handler);
+        var user = await client.GetCurrentUserAsync().ConfigureAwait(false);
+        await Assert.That(user.Id).IsEqualTo(42);
+        await Assert.That(handler.Requests[0].Headers["PRIVATE-TOKEN"]).IsEqualTo(Token);
+    }
+
+    [Test]
     [Arguments("public")]
     [Arguments("internal")]
     [Arguments("private")]
@@ -111,6 +121,25 @@ internal sealed class GitLabApiClientTests
     {
         using var client = NewClient(Answering());
         await Assert.That(await client.GetProjectWithoutCredentialsAsync(Project).ConfigureAwait(false)).IsNull();
+    }
+
+    [Test]
+    public async Task GetProjectMemberAsync_ReadsTheAccessLevelOfEveryMembership()
+    {
+        var handler = Answering(
+            (HttpMethod.Get, ApiProjectUrl + "/members/all/42"),
+            """{"id":42,"username":"ric","access_level":40}""");
+        using var client = NewClient(handler);
+        var member = await client.GetProjectMemberAsync(Project, 42).ConfigureAwait(false);
+        await Assert.That(member).IsEqualTo(new GitLabMember { AccessLevel = 40 });
+        await Assert.That(handler.Requests[0].Headers["PRIVATE-TOKEN"]).IsEqualTo(Token);
+    }
+
+    [Test]
+    public async Task GetProjectMemberAsync_WhenTheApiAnswersNotFound_ReturnsNull()
+    {
+        using var client = NewClient(Answering());
+        await Assert.That(await client.GetProjectMemberAsync(Project, 42).ConfigureAwait(false)).IsNull();
     }
 
     [Test]
@@ -233,8 +262,10 @@ internal sealed class GitLabApiClientTests
     }
 
     [Test]
+    [Arguments("GetCurrentUser")]
     [Arguments("GetProject")]
     [Arguments("GetProjectWithoutCredentials")]
+    [Arguments("GetProjectMember")]
     [Arguments("GetReleases")]
     [Arguments("CreateRelease")]
     [Arguments("DeleteRelease")]
@@ -322,8 +353,10 @@ internal sealed class GitLabApiClientTests
 
     private static Task InvokeAsync(GitLabApiClient client, string operation)
         => operation switch {
+            "GetCurrentUser" => client.GetCurrentUserAsync(),
             "GetProject" => client.GetProjectAsync(Project),
             "GetProjectWithoutCredentials" => client.GetProjectWithoutCredentialsAsync(Project),
+            "GetProjectMember" => client.GetProjectMemberAsync(Project, 42),
             "GetReleases" => client.GetReleasesAsync(Project, 1),
             "CreateRelease" => client.CreateReleaseAsync(Project, NewRelease),
             "DeleteRelease" => client.DeleteReleaseAsync(Project, "1.0.0-preview"),

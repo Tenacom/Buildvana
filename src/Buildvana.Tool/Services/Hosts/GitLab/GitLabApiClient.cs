@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -26,8 +27,9 @@ namespace Buildvana.Tool.Services.Hosts.GitLab;
 /// instance alike.</para>
 /// <para>Every operation addresses a project by its path, such as <c>group/subgroup/project</c>. The client
 /// escapes the path as one segment of the URL, as the API expects.</para>
-/// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The one exception
-/// is <see cref="GetProjectWithoutCredentialsAsync"/>, where a 404 means that the project is not public.</para>
+/// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The exceptions
+/// are <see cref="GetProjectWithoutCredentialsAsync"/>, where a 404 means that the project is not public, and
+/// <see cref="GetProjectMemberAsync"/>, where a 404 means that the user is not a member.</para>
 /// </remarks>
 internal sealed class GitLabApiClient : HostApiClient
 {
@@ -83,6 +85,17 @@ internal sealed class GitLabApiClient : HostApiClient
     }
 
     /// <summary>
+    /// Asynchronously gets the user the token belongs to.
+    /// </summary>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <returns>A <see cref="Task"/> whose result is the user.</returns>
+    /// <remarks>
+    /// <para>A job token cannot read a user.</para>
+    /// </remarks>
+    public Task<GitLabUser> GetCurrentUserAsync(CancellationToken cancellationToken = default)
+        => SendAsync(HttpMethod.Get, ApiUrl("user"), null, GitLabJsonContext.Default.GitLabUser, cancellationToken);
+
+    /// <summary>
     /// Asynchronously gets a project.
     /// </summary>
     /// <param name="projectPath">The path of the project.</param>
@@ -111,14 +124,34 @@ internal sealed class GitLabApiClient : HostApiClient
     {
         var url = ApiUrl(ProjectPath(projectPath));
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            return null;
-        }
+        return await SendOrNullAsync(request, url, GitLabJsonContext.Default.GitLabProject, cancellationToken)
+            .ConfigureAwait(false);
+    }
 
-        await EnsureSuccessAsync(HttpMethod.Get, url, response, cancellationToken).ConfigureAwait(false);
-        return await ReadAsync(HttpMethod.Get, url, response, GitLabJsonContext.Default.GitLabProject, cancellationToken)
+    /// <summary>
+    /// Asynchronously gets the membership of a user in a project.
+    /// </summary>
+    /// <param name="projectPath">The path of the project.</param>
+    /// <param name="userId">The identifier of the user.</param>
+    /// <param name="cancellationToken">A token that cancels the operation.</param>
+    /// <returns>A <see cref="Task"/> whose result is the membership, or <see langword="null"/> when the API answers
+    /// 404.</returns>
+    /// <remarks>
+    /// <para>The endpoint is <c>members/all</c>, which counts a direct membership, a membership of a parent group,
+    /// and a membership of a group the project or a parent group is shared with. The access level it states is
+    /// the one GitLab enforces on the project.</para>
+    /// <para>GitLab answers 404 for a user with no membership, such as an instance administrator, and for a
+    /// project the token cannot see.</para>
+    /// <para>A job token cannot read a membership.</para>
+    /// </remarks>
+    public async Task<GitLabMember?> GetProjectMemberAsync(
+        string projectPath,
+        long userId,
+        CancellationToken cancellationToken = default)
+    {
+        var url = ApiUrl(ProjectPath(projectPath) + "/members/all/" + userId.ToString(CultureInfo.InvariantCulture));
+        using var request = CreateRequest(HttpMethod.Get, url);
+        return await SendOrNullAsync(request, url, GitLabJsonContext.Default.GitLabMember, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -321,5 +354,22 @@ internal sealed class GitLabApiClient : HostApiClient
         };
 
         return text is { Length: > 0 } ? text : null;
+    }
+
+    private async Task<T?> SendOrNullAsync<T>(
+        HttpRequestMessage request,
+        Uri url,
+        JsonTypeInfo<T> typeInfo,
+        CancellationToken cancellationToken)
+        where T : class
+    {
+        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        await EnsureSuccessAsync(request.Method, url, response, cancellationToken).ConfigureAwait(false);
+        return await ReadAsync(request.Method, url, response, typeInfo, cancellationToken).ConfigureAwait(false);
     }
 }
