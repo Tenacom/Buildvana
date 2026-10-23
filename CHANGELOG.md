@@ -58,7 +58,6 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 
 - **BREAKING CHANGE**: `bv release` no longer runs without [`repository.url`](docs/configuration-file.md#settings) in `buildvana.jsonc`.
 - **BREAKING CHANGE**: `bv release` no longer leaves the release tag to the host, and [creates and pushes it](docs/tool-commands/release.md#the-release-tag) before it publishes the release.
-
 - **BREAKING CHANGE**: `BV_MinRoslynVersion` moves from 5.3 to 5.9, so Buildvana SDK raises BVSDK1101 on [Roslyn older than 5.9](docs/sdk-diagnostics.md#source-generators-1100-1199).
 - **BREAKING CHANGE**: `BV_MinMSBuildVersion` moves from 17.4 to 18.9, so Buildvana SDK raises BVSDK1004 on [MSBuild older than 18.9](docs/introduction.md#toolchain).
 - **BREAKING CHANGE**: The `AlternatePack` module no longer adds `Tools.InnoDownloadPlugin` to an Inno Setup project, and the built-in [`download` and `issigverify` flags](https://jrsoftware.org/ishelp/topic_filessection.htm) replace it.
