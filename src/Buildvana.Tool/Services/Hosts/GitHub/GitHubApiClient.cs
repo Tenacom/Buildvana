@@ -74,7 +74,12 @@ internal sealed class GitHubApiClient : HostApiClient
         string owner,
         string name,
         CancellationToken cancellationToken = default)
-        => SendAsync(HttpMethod.Get, ApiUrl(RepositoryPath(owner, name)), null, GitHubJsonContext.Default.GitHubRepository, cancellationToken);
+        => SendAsync(
+            HttpMethod.Get,
+            ApiUrl(RepositoryPath(owner, name)),
+            null,
+            GitHubJsonContext.Default.GitHubRepository,
+            cancellationToken);
 
     /// <summary>
     /// Asynchronously creates a release.
