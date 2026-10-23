@@ -52,6 +52,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv release` runs [on any machine](docs/tool-commands/release.md#preconditions), with `repository.url` naming the repository the release goes to.
 - `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
 - `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing) on a server `bv` does not know.
+- [`bv info`](docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
 
 ### Changes to existing features
 
