@@ -17,4 +17,8 @@ public enum HostKind
     /// <summary>The host is GitHub: <c>github.com</c>, or a GitHub Enterprise Server.</summary>
     [JsonStringEnumMemberName("github")]
     GitHub,
+
+    /// <summary>The host is GitLab: <c>gitlab.com</c>, or a self-managed GitLab instance.</summary>
+    [JsonStringEnumMemberName("gitlab")]
+    GitLab,
 }

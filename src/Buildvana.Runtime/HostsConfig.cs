@@ -18,4 +18,8 @@ public sealed record HostsConfig
     /// <summary>Gets the resolved GitHub configuration.</summary>
     [JsonPropertyName("github")]
     public GitHubConfig GitHub { get; init; } = new();
+
+    /// <summary>Gets the resolved GitLab configuration.</summary>
+    [JsonPropertyName("gitlab")]
+    public GitLabConfig GitLab { get; init; } = new();
 }

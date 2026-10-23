@@ -39,7 +39,10 @@ internal sealed class HookArgsSecretsTests
             ScratchDirectory = "/repo/.buildvana-temp",
             ConfigFile = null,
             Configuration = new() {
-                Hosts = new() { GitHub = new() { TokenEnv = credentialEnvVar } },
+                Hosts = new() {
+                    GitHub = new() { TokenEnv = credentialEnvVar },
+                    GitLab = new() { TokenEnv = credentialEnvVar },
+                },
                 NuGet = new() {
                     Feeds = new() {
                         Release = new() { Source = "https://nuget.example/v3/index.json", ApiKeyEnv = credentialEnvVar },

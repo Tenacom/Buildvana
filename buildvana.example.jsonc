@@ -146,6 +146,12 @@
       // Name of the environment variable that holds the GitHub access token.
       "tokenEnv": "GITHUB_TOKEN",
     },
+
+    // Configuration for the GitLab host.
+    "gitlab": {
+      // Name of the environment variable that holds the GitLab access token.
+      "tokenEnv": "GITLAB_TOKEN",
+    },
   },
 
   // Configuration for Git-related behavior.

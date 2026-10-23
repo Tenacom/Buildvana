@@ -17,4 +17,9 @@ public sealed record HostsJsonConfig
     [JsonPropertyName("github")]
     [Description("Configuration for the GitHub host.")]
     public GitHubJsonConfig? GitHub { get; init; }
+
+    /// <summary>Gets the <c>hosts.gitlab</c> section.</summary>
+    [JsonPropertyName("gitlab")]
+    [Description("Configuration for the GitLab host.")]
+    public GitLabJsonConfig? GitLab { get; init; }
 }
