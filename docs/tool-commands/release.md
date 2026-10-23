@@ -235,12 +235,12 @@ The last line of a release is `notice: Published release <version> with <count> 
 
 ## Rollback
 
-When a step fails after the draft release exists, `bv release` undoes what it did, in reverse order:
+When a step fails, `bv release` undoes what the earlier steps did, in reverse order:
 
 - it deletes the release tag from the release remote, when it was pushed, and from the clone;
 - it resets the branch to the commit before the release commit, post-release commit included;
 - when the commits were pushed, it force-pushes the previous tip;
-- it deletes the release on the host, draft or published.
+- on GitHub, it deletes the release, draft or published.
 
 A rollback action that fails is a warning, and the rollback goes on.
 Once the release is published and the step output is written, nothing is undone.
