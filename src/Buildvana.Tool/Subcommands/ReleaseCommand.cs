@@ -84,25 +84,13 @@ internal sealed class ReleaseCommand(
         var hookRunner = services.GetRequiredService<HookRunner>();
         var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
 
-        // Resolve the committer identity for release commits: the configured git.identity outranks the bot
-        // identity of the CI platform, which outranks whatever the repository's own Git configuration
-        // happens to state; with none of the three, the release cannot commit.
-        var configuredIdentity = config.Git.Identity;
-        var identity = configuredIdentity is not null
-            ? new GitIdentity(configuredIdentity.Name, configuredIdentity.Email)
-            : platform.BotIdentity;
-        if (identity is not null)
-        {
-            git.CommitterIdentity = identity;
-        }
-        else if (git.CommitterIdentity is null)
-        {
-            throw new BuildFailedException(
+        // With no committer identity, the release cannot commit.
+        var identity = ReleaseCommitterIdentity.Resolve(config.Git, platform, git.CommitterIdentity)?.Identity
+            ?? throw new BuildFailedException(
                 "Cannot determine a committer identity for release commits. "
                 + "Set git.identity in the configuration file, or configure git config user.name/user.email.");
-        }
-
-        reporter.Notice($"Using committer identity: {git.CommitterIdentity.Name} <{git.CommitterIdentity.Email}>");
+        git.CommitterIdentity = identity;
+        reporter.Notice($"Using committer identity: {identity.Name} <{identity.Email}>");
 
         // Set fallback Git credentials if the host can provide them.
         var pushUsername = host.PushUsername;

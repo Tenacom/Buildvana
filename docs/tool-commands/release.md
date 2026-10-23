@@ -60,6 +60,8 @@ Before building anything, `bv release` checks what a build cannot change:
 9. The version spec change is computed from `--bump` and the public API files, as [`bv version advance`](version.md#bv-version-advance) computes it.
 10. [`GITHUB_OUTPUT`](../environment-variables.md#github_output) is set, on GitHub Actions.
 
+[`bv info`](info.md) reports the release remote, the Git host, the token, and the committer identity, without releasing.
+
 `bv` reads the latest versions from the tags reachable from `HEAD`, so the clone needs the full history.
 With `actions/checkout`, that is `fetch-depth: 0`.
 

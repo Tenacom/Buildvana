@@ -26,6 +26,7 @@ internal sealed class CommandPagesTests
         ["test"] = "build-pipeline.md",
         ["pack"] = "build-pipeline.md",
         ["dependencies"] = "dependencies.md",
+        ["info"] = "info.md",
         ["release"] = "release.md",
         ["self-update"] = "self-update.md",
         ["version"] = "version.md",

@@ -62,6 +62,7 @@ A command line holds a command, the arguments and options of the command, and th
 | `dependencies show`   | `dependencies`, `deps show`, `deps` | yes               | [Dependency management](tool-commands/dependencies.md) |
 | `dependencies update` | `deps update`                       | yes               | [Dependency management](tool-commands/dependencies.md) |
 | `dependencies prune`  | `deps prune`                        | yes               | [Dependency management](tool-commands/dependencies.md) |
+| `info`                |                                     | no                | [Info](tool-commands/info.md)                          |
 | `release`             |                                     | yes               | [Release](tool-commands/release.md)                    |
 | `self-update`         |                                     | no                | [Self-update](tool-commands/self-update.md)            |
 | `version show`        | `version`                           | no                | [Version](tool-commands/version.md)                    |
@@ -158,7 +159,7 @@ A message logged by a task and one printed by `bv` therefore appear together.
 
 `bv` writes its narration to standard error, and keeps standard output for the result of a command.
 The narration is the leveled lines, the activity lines, and the startup logo.
-The result is the report of `bv version show`, the report of `bv dependencies`, or the summary of `bv self-update`.
+The result is the report of `bv version show`, `bv info`, or `bv dependencies`, or the summary of `bv self-update`.
 A child `dotnet` process is streamed live, each of its streams to the same stream of `bv`.
 The output of `dotnet` is the result of a build pipeline command.
 
