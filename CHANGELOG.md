@@ -51,7 +51,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv` recognizes a CI runner [as the .NET CLI does](docs/environment-variables.md#variables-that-mark-a-ci-runner), and passes `ContinuousIntegrationBuild=true` to the build pipeline on every one.
 - `bv release` runs [on any machine](docs/tool-commands/release.md#preconditions), with `repository.url` naming the repository the release goes to.
 - `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
-- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing) on a server `bv` does not know.
+- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing) on a Git host `bv` does not know.
 - [`bv info`](docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
 
 ### Changes to existing features
@@ -146,7 +146,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 
 ### Known problems introduced by this release
 
-- When no file changes before the build, [the release commit](docs/tool-commands/release.md#the-release-commit) is empty, which a `pre-receive` hook of a self-hosted Git server may reject.
+- When no file changes before the build, [the release commit](docs/tool-commands/release.md#the-release-commit) is empty, which a `pre-receive` hook of a self-hosted Git host may reject.
 
 ## [1.1.10](https://github.com/Tenacom/Buildvana/releases/tag/1.1.10) (2026-04-27)
 
