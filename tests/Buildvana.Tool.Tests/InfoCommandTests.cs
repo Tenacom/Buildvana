@@ -143,7 +143,7 @@ internal sealed class InfoCommandTests
     private static async Task<string> RunAsync(string homePath, CIPlatform platform)
     {
         using var console = new TestConsole();
-        using var services = new ServiceCollection()
+        var services = new ServiceCollection()
             .AddSingleton<IAnsiConsole>(console)
             .AddSingleton<IReporter>(NullReporter.Instance)
             .AddSingleton(new GlobalSettings(null, false, false, true, true, true, false))
@@ -152,11 +152,13 @@ internal sealed class InfoCommandTests
             .AddBvServices()
             .AddSingleton(platform)
             .BuildServiceProvider();
+        await using (services.ConfigureAwait(false))
+        {
+            var exitCode = await services.GetRequiredService<InfoCommand>().ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
 
-        var exitCode = await services.GetRequiredService<InfoCommand>().ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
-
-        await Assert.That(exitCode).IsEqualTo(0);
-        return console.Output.ReplaceLineEndings("\n").TrimEnd('\n');
+            await Assert.That(exitCode).IsEqualTo(0);
+            return console.Output.ReplaceLineEndings("\n").TrimEnd('\n');
+        }
     }
 
     // The report, keyed by the label of each line, without the colon.
