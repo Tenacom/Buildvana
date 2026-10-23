@@ -44,6 +44,8 @@ internal sealed class GitHubApiClient : HostApiClient
     private const string GitHubComHostName = "github.com";
     private const string GitHubMediaType = "application/vnd.github+json";
 
+    private readonly AuthenticationHeaderValue _authorization;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GitHubApiClient"/> class.
     /// </summary>
@@ -56,10 +58,10 @@ internal sealed class GitHubApiClient : HostApiClient
     {
         Guard.IsNotNullOrEmpty(token);
 
+        _authorization = new AuthenticationHeaderValue("Bearer", token);
         var headers = DefaultRequestHeaders;
         headers.Accept.Add(new MediaTypeWithQualityHeaderValue(GitHubMediaType));
         headers.Add("X-GitHub-Api-Version", ApiVersion);
-        headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         headers.UserAgent.Add(new ProductInfoHeaderValue("bv", OwnVersion.Value.ToNormalizedString()));
     }
 
@@ -187,7 +189,7 @@ internal sealed class GitHubApiClient : HostApiClient
         CancellationToken cancellationToken = default)
     {
         var url = ApiUrl(RepositoryPath(owner, name) + "/git/ref/tags/" + EscapeRefName(tagName));
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var request = CreateRequest(HttpMethod.Get, url);
         using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -244,6 +246,13 @@ internal sealed class GitHubApiClient : HostApiClient
         var content = new StreamContent(contents);
         content.Headers.ContentType = mediaType;
         return SendAsync(HttpMethod.Post, url, content, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    protected override void Authenticate(HttpRequestMessage request)
+    {
+        Guard.IsNotNull(request);
+        request.Headers.Authorization = _authorization;
     }
 
     /// <inheritdoc/>
