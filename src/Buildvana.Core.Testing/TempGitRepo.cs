@@ -265,6 +265,24 @@ public sealed class TempGitRepo : IDisposable
     }
 
     /// <summary>
+    /// Makes a remote added by <see cref="AddBareRemote"/> refuse every update of a reference, its deletion included.
+    /// </summary>
+    /// <param name="canonicalName">The canonical name of the reference, such as <c>refs/tags/1.0.0</c>.</param>
+    /// <param name="name">The name of the remote.</param>
+    /// <remarks>
+    /// <para>The method creates the lock file of the reference, as a Git process does while it updates one. The remote
+    /// then fails to take the lock, and reports the reference as rejected at the end of a push, as a server reports a
+    /// reference its hooks or its protection rules refuse.</para>
+    /// </remarks>
+    public void LockRemoteReference(string canonicalName, string name = "origin")
+    {
+        ArgumentException.ThrowIfNullOrEmpty(canonicalName);
+        var lockPath = Path.Combine([_remotePaths[name], .. $"{canonicalName}.lock".Split('/')]);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(lockPath)!);
+        File.WriteAllBytes(lockPath, []);
+    }
+
+    /// <summary>
     /// Gets a value from the repository's local configuration.
     /// </summary>
     /// <param name="key">The configuration key, such as <c>user.name</c>.</param>
