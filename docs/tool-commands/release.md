@@ -128,10 +128,10 @@ A build of the tagged commit would compute another version, so the release stops
 
 When no file changes before the build, the release commit is empty.
 The major public Git hosts accept an empty commit.
-A self-hosted server with a `pre-receive` hook of its own may reject it.
+A self-hosted Git host with a `pre-receive` hook of its own may reject it.
 Two remedies exist:
 
-- allow empty commits on the server;
+- allow empty commits on the Git host;
 - set `release.changelogUpdates` to `all`, so that every release updates the changelog, and its commit holds at least that change.
   An empty "Unreleased changes" section then fails the release, so keep at least one entry between releases, or set `release.emptyChangelog`.
 
