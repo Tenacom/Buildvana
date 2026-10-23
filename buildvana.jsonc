@@ -23,7 +23,13 @@
 {
   // In buildvana.jsonc, the version pinned in dotnet-tools.json. In
   // buildvana.next.jsonc, main: the version it describes does not exist yet.
-  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.813-preview/schemas/buildvana.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.827-preview/schemas/buildvana.schema.json",
+
+  "repository": {
+    "url": "https://github.com/Tenacom/Buildvana",
+
+    // No "host": the default, "auto", recognizes github.com.
+  },
 
   "release": {
     "branches": ["^main$", "^v\\d+\\.\\d+$"],
@@ -70,6 +76,15 @@
         "source": "https://api.nuget.org/v3/index.json",
         "apiKeyEnv": "NUGET_DEPLOYMENT_KEY",
       },
+    },
+  },
+
+  "hosts": {
+    "github": {
+      // Also the default. The release workflow points it at a PAT that can
+      // push to a protected branch; the build workflow leaves it at the
+      // automatic token, which pull requests from forks also get.
+      "tokenEnv": "GITHUB_TOKEN",
     },
   },
 
