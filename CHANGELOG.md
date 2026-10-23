@@ -141,7 +141,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - The [`AdditionalAssemblyInfo` module](docs/sdk-modules/additional-assembly-info.md#clscompliant-property) generates `CLSCompliant(true)` and `ComVisible(true)` for any value MSBuild reads as true, such as `yes`, where it generated `false`.
 - [`bv test`](docs/tool-commands/build-pipeline.md#bv-test) runs the tests of a project that sets `IsTestingPlatformApplication` to a value MSBuild reads as true, such as `yes`, where it skipped the project.
 - The [`ConvertToWinePaths` task](docs/sdk-modules/wine.md#converttowinepaths-task) converts an item when MSBuild reads the metadata named by `OnlyIfMetadata` as true, such as `yes`, where it skipped the item.
-- `bv release` fails when the remote rejects the [push of its commits](docs/tool-commands/release.md#publishing), where it used to go on as if the push had succeeded.
+- `bv release` fails when the remote rejects the [push of its commits](docs/tool-commands/release.md#the-release-tag), where it used to go on as if the push had succeeded.
 - When a `PackageVersion` item versions a package Buildvana SDK injects, the reference [is an ordinary `PackageReference`](docs/sdk-modules/standard-analyzers.md#package-references), where NuGet rejected the item with NU1009.
 
 ### Known problems introduced by this release
