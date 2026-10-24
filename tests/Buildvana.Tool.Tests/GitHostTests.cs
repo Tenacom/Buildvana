@@ -8,6 +8,7 @@ using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hosts;
 using Buildvana.Tool.Services.Hosts.GitHub;
+using Buildvana.Tool.Services.Hosts.GitLab;
 using Buildvana.Tool.Services.Platforms;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +24,15 @@ internal sealed class GitHostTests
     }
 
     [Test]
+    [Arguments("https://gitlab.com/tenacom/tools/buildvana")]
+    [Arguments("https://GitLab.com/tenacom/buildvana.git")]
+    [Arguments("git@gitlab.com:tenacom/buildvana.git")]
+    public async Task DetectKind_ForGitLabCom_IsGitLab(string url)
+    {
+        await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.GitLab);
+    }
+
+    [Test]
     public async Task DetectKind_WhenTheConfigurationStatesTheHost_IsThatHost()
     {
         const string url = "https://git.example.invalid/tenacom/test-repo";
@@ -31,15 +41,20 @@ internal sealed class GitHostTests
         await Assert.That(GitHost.DetectKind(repository, Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.GitHub);
     }
 
-    // A GitHub Enterprise Server is recognized on its own runners, which name it in GITHUB_SERVER_URL.
+    // A GitHub Enterprise Server is recognized on its own runners, which name it in GITHUB_SERVER_URL, and a
+    // self-managed GitLab instance on its own, which name it in CI_SERVER_URL.
     [Test]
-    [Arguments("https://git.example.invalid", HostKind.GitHub)]
-    [Arguments("https://GIT.example.invalid/", HostKind.GitHub)]
-    [Arguments("https://elsewhere.example.invalid", null)]
-    public async Task DetectKind_OnAPlatformWithAServer_IsThePlatformKind_WhenTheHostNamesMatch(string serverUrl, HostKind? expected)
+    [Arguments("https://git.example.invalid", HostKind.GitHub, HostKind.GitHub)]
+    [Arguments("https://GIT.example.invalid/", HostKind.GitHub, HostKind.GitHub)]
+    [Arguments("https://git.example.invalid", HostKind.GitLab, HostKind.GitLab)]
+    [Arguments("https://elsewhere.example.invalid", HostKind.GitHub, null)]
+    public async Task DetectKind_OnAPlatformWithAServer_IsThePlatformKind_WhenTheHostNamesMatch(
+        string serverUrl,
+        HostKind serverKind,
+        HostKind? expected)
     {
         const string url = "https://git.example.invalid/tenacom/test-repo";
-        var platform = new FakeCIPlatform { Server = new Uri(serverUrl), Kind = HostKind.GitHub };
+        var platform = new FakeCIPlatform { Server = new Uri(serverUrl), Kind = serverKind };
 
         await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), platform)).IsEqualTo(expected);
     }
@@ -75,6 +90,16 @@ internal sealed class GitHostTests
         await using (services.ConfigureAwait(false))
         {
             await Assert.That(GitHost.Create(services)).IsTypeOf<GitHubHost>();
+        }
+    }
+
+    [Test]
+    public async Task Create_ForGitLabCom_CreatesAGitLabHost()
+    {
+        var services = Services("https://gitlab.com/tenacom/tools/buildvana");
+        await using (services.ConfigureAwait(false))
+        {
+            await Assert.That(GitHost.Create(services)).IsTypeOf<GitLabHost>();
         }
     }
 

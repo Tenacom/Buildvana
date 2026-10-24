@@ -17,6 +17,7 @@ using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hosts;
 using Buildvana.Tool.Services.Hosts.GitHub;
+using Buildvana.Tool.Services.Hosts.GitLab;
 using Buildvana.Tool.Services.Platforms;
 using Buildvana.Tool.Services.Release;
 using Buildvana.Tool.Services.Versioning;
@@ -54,7 +55,6 @@ internal sealed class ReleaseHarness : IDisposable
     public const string ApiFilesDirectory = "src/Test.Lib";
 
     private const string ApiKeyEnvVar = "BV_TEST_NUGET_API_KEY";
-    private const string TokenEnvVar = "BV_TEST_HOST_TOKEN";
     private const string RemoteName = "origin";
     private const string BranchName = "release";
     private const string Configuration = "Release";
@@ -68,7 +68,7 @@ internal sealed class ReleaseHarness : IDisposable
     private readonly ServiceProvider _services;
     private readonly string _originalCurrentDirectory = Environment.CurrentDirectory;
     private readonly string? _originalApiKey = Environment.GetEnvironmentVariable(ApiKeyEnvVar);
-    private readonly string? _originalToken = Environment.GetEnvironmentVariable(TokenEnvVar);
+    private readonly string? _originalToken;
 
     private IReadOnlyList<string> _commandOptions = [];
 
@@ -87,7 +87,8 @@ internal sealed class ReleaseHarness : IDisposable
         };
 
         Environment.SetEnvironmentVariable(ApiKeyEnvVar, "test-api-key");
-        Environment.SetEnvironmentVariable(TokenEnvVar, _options.PushSecret);
+        _originalToken = Environment.GetEnvironmentVariable(_options.HostTokenEnv);
+        Environment.SetEnvironmentVariable(_options.HostTokenEnv, _options.PushSecret);
         Repo = new TempGitRepo();
         PopulateRepository();
         Repo.CommitAll("Initial commit");
@@ -242,7 +243,7 @@ internal sealed class ReleaseHarness : IDisposable
         // The current directory has to leave the repository before the repository can be deleted.
         Environment.CurrentDirectory = _originalCurrentDirectory;
         Environment.SetEnvironmentVariable(ApiKeyEnvVar, _originalApiKey);
-        Environment.SetEnvironmentVariable(TokenEnvVar, _originalToken);
+        Environment.SetEnvironmentVariable(_options.HostTokenEnv, _originalToken);
         Repo.Dispose();
     }
 
@@ -285,8 +286,13 @@ internal sealed class ReleaseHarness : IDisposable
             return new GitHubHost(services, ParseRepositoryUrl(services), gitHubApi);
         }
 
+        if (_options.GitLabApi is { } gitLabApi)
+        {
+            return new GitLabHost(services, ParseRepositoryUrl(services), gitLabApi);
+        }
+
         return new RecordingHost {
-            TokenVariable = TokenEnvVar,
+            TokenVariable = _options.HostTokenEnv,
             PushUser = _options.PushUser,
             OnPublishing = () => {
                 Record("publish");
@@ -460,7 +466,10 @@ internal sealed class ReleaseHarness : IDisposable
             ["versioning"] = new JsonObject { ["prereleaseTag"] = "preview" },
             ["dotnet"] = new JsonObject { ["configuration"] = Configuration },
             ["nuget"] = new JsonObject { ["feeds"] = new JsonObject { ["release"] = feed } },
-            ["hosts"] = new JsonObject { ["github"] = new JsonObject { ["tokenEnv"] = TokenEnvVar } },
+            ["hosts"] = new JsonObject {
+                ["github"] = new JsonObject { ["tokenEnv"] = _options.HostTokenEnv },
+                ["gitlab"] = new JsonObject { ["tokenEnv"] = _options.HostTokenEnv },
+            },
         };
         if (_options.RepositoryUrl is { } repositoryUrl)
         {

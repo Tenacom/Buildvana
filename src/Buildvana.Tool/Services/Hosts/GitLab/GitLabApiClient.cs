@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Buildvana.Core;
@@ -31,10 +32,11 @@ namespace Buildvana.Tool.Services.Hosts.GitLab;
 /// are <see cref="GetProjectWithoutCredentialsAsync"/>, where a 404 means that the project is not public, and
 /// <see cref="GetProjectMemberAsync"/>, where a 404 means that the user is not a member.</para>
 /// </remarks>
-internal sealed class GitLabApiClient : HostApiClient
+internal sealed partial class GitLabApiClient : HostApiClient
 {
     private const string AccessTokenHeader = "PRIVATE-TOKEN";
     private const string JobTokenHeader = "JOB-TOKEN";
+    private const int DirectAssetPathMaxLength = 128;
 
     private readonly string _tokenHeader;
     private readonly string _token;
@@ -82,6 +84,23 @@ internal sealed class GitLabApiClient : HostApiClient
             && fileName[0] is not ('~' or '@')
             && fileName[^1] is not ('~' or '@')
             && fileName.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-' or '+' or '~' or '@');
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a path is valid as the <c>direct_asset_path</c> of a release link.
+    /// </summary>
+    /// <param name="path">The path, such as <c>/Foo.1.0.0.nupkg</c>.</param>
+    /// <returns><see langword="true"/> when <paramref name="path"/> is at most 128 characters long, starts
+    /// with a single <c>/</c>, holds only ASCII letters, digits, and <c>. _ - /</c> after its second character,
+    /// holds no <c>//</c>, and ends with a letter or a digit; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// <para>The rule is <c>FILEPATH_REGEX</c> and <c>FILEPATH_MAX_LENGTH</c> in
+    /// <c>app/models/releases/link.rb</c> of GitLab.</para>
+    /// </remarks>
+    public static bool IsValidDirectAssetPath(string path)
+    {
+        Guard.IsNotNull(path);
+        return path.Length <= DirectAssetPathMaxLength && GetDirectAssetPathRegex().IsMatch(path);
     }
 
     /// <summary>
@@ -325,6 +344,10 @@ internal sealed class GitLabApiClient : HostApiClient
             return Quote(root, "message") ?? Quote(root, "error");
         }
     }
+
+    // FILEPATH_REGEX of GitLab, with the ASCII class Ruby gives \w spelled out.
+    [GeneratedRegex(@"\A/[^/](?!.*//)[-.A-Za-z0-9_/]+[0-9A-Za-z]+\z", RegexOptions.CultureInvariant)]
+    private static partial Regex GetDirectAssetPathRegex();
 
     private static Uri GetBaseUrl(string hostName)
     {

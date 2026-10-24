@@ -9,6 +9,7 @@ using Buildvana.Core.ConsoleOutput;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hosts.GitHub;
+using Buildvana.Tool.Services.Hosts.GitLab;
 using Buildvana.Tool.Services.Platforms;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -90,6 +91,7 @@ internal abstract class GitHost
         var url = ParseRepositoryUrl(config.Repository);
         return DetectKind(config.Repository, url, services.GetRequiredService<CIPlatform>()) switch {
             HostKind.GitHub => new GitHubHost(services, url),
+            HostKind.GitLab => new GitLabHost(services, url),
             _ => new UnknownHost(url, services.GetRequiredService<IReporter>()),
         };
     }
@@ -137,7 +139,13 @@ internal abstract class GitHost
             return HostKind.GitHub;
         }
 
-        // A GitHub Enterprise Server, or a self-hosted server of another kind, is recognized on its own runners.
+        if (string.Equals(url.Host, "gitlab.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return HostKind.GitLab;
+        }
+
+        // A self-hosted server, such as a GitHub Enterprise Server or a self-managed GitLab instance, is recognized
+        // on its own runners.
         var isPlatformServer = string.Equals(platform.ServerUrl?.Host, url.Host, StringComparison.OrdinalIgnoreCase);
         return isPlatformServer ? platform.ServerKind : null;
     }
