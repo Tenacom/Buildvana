@@ -32,7 +32,7 @@ Every command below runs in the directory you clone into, which becomes the [hom
 
 ## Create the repository
 
-Create an empty repository on your Git server, clone it, and enter the directory:
+Create an empty repository on your Git host, clone it, and enter the directory:
 
 ```shell
 git clone <url> MyProduct
