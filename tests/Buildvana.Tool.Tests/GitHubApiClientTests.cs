@@ -45,6 +45,18 @@ internal sealed class GitHubApiClientTests
     }
 
     [Test]
+    [Arguments("octocorp.ghe.com")]
+    [Arguments("OctoCorp.GHE.com")]
+    public async Task BaseUrl_ForAGheComHost_IsTheApiSubdomainOfTheHost(string hostName)
+    {
+        var handler = Answering((HttpMethod.Get, "https://api.octocorp.ghe.com/repos/Tenacom/Buildvana"), """{"private":false}""");
+        using var client = new GitHubApiClient(hostName, Token, handler);
+        _ = await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false);
+        await Assert.That(client.BaseUrl.AbsoluteUri).IsEqualTo("https://api.octocorp.ghe.com/");
+        await Assert.That(handler.Requests[0].Url).IsEqualTo("https://api.octocorp.ghe.com/repos/Tenacom/Buildvana");
+    }
+
+    [Test]
     public async Task BaseUrl_ForAnotherHost_IsApiV3OfTheHost()
     {
         var handler = Answering((HttpMethod.Get, "https://github.example.com/api/v3/repos/Tenacom/Buildvana"), """{"private":false}""");

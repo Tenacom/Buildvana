@@ -14,7 +14,9 @@ public enum HostKind
     [JsonStringEnumMemberName("auto")]
     Auto,
 
-    /// <summary>The host is GitHub: <c>github.com</c>, or a GitHub Enterprise Server.</summary>
+    /// <summary>
+    /// The host is GitHub: <c>github.com</c>, GitHub Enterprise Cloud with data residency, or a GitHub Enterprise Server.
+    /// </summary>
     [JsonStringEnumMemberName("github")]
     GitHub,
 

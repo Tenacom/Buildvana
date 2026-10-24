@@ -23,6 +23,16 @@ internal sealed class GitHostTests
         await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.GitHub);
     }
 
+    // GitHub Enterprise Cloud with data residency is recognized on any CI platform, as github.com is.
+    [Test]
+    [Arguments("https://octocorp.ghe.com/Tenacom/Buildvana")]
+    [Arguments("https://OctoCorp.GHE.com/Tenacom/Buildvana.git")]
+    [Arguments("git@octocorp.ghe.com:Tenacom/Buildvana.git")]
+    public async Task DetectKind_ForAGheComHost_IsGitHub(string url)
+    {
+        await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.GitHub);
+    }
+
     [Test]
     [Arguments("https://gitlab.com/tenacom/tools/buildvana")]
     [Arguments("https://GitLab.com/tenacom/buildvana.git")]

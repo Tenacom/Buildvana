@@ -17,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Buildvana.Tool.Services.Hosts.GitHub;
 
 /// <summary>
-/// The GitHub host: <c>github.com</c>, or a GitHub Enterprise Server.
+/// The GitHub host: <c>github.com</c>, GitHub Enterprise Cloud with data residency, or a GitHub Enterprise Server.
 /// </summary>
 internal sealed class GitHubHost : GitHost, IDisposable
 {
