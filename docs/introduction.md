@@ -89,10 +89,11 @@ Each table below states a status for every item.
 
 ### Git servers
 
-| Server                       | Status                | Limits                                                                                                                                                                      |
-| ---------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub and GitHub Enterprise | Supported             |                                                                                                                                                                             |
-| Other servers                | Supported with limits | Buildvana SDK does not configure SourceLink.<br>`bv release` creates no release page, and runs only with [`release.allowUnknownHost`](tool-commands/release.md#publishing). |
+| Server                         | Status                | Limits                                                                                                                                                                                         |
+| ------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub and GitHub Enterprise   | Supported             |                                                                                                                                                                                                |
+| GitLab and self-managed GitLab | Untested              | A self-managed instance needs a `SourceLinkGitLabHost` item for [SourceLink](https://github.com/dotnet/sourcelink).                                                                            |
+| Other servers                  | Supported with limits | Buildvana SDK does not configure SourceLink.<br>`bv release` creates no release page, and runs only with [`release.allowUnknownHost`](tool-commands/release.md#publishing-on-an-unknown-host). |
 
 ### CI platforms
 

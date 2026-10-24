@@ -17,6 +17,9 @@ This page says what the command checks, what it does step by step, and what it u
 - [The changelog](#the-changelog)
 - [The post-release commit](#the-post-release-commit)
 - [Publishing](#publishing)
+  - [Publishing on GitHub](#publishing-on-github)
+  - [Publishing on GitLab](#publishing-on-gitlab)
+  - [Publishing on an unknown host](#publishing-on-an-unknown-host)
 - [Rollback](#rollback)
 - [Options](#options)
   - [The build configuration](#the-build-configuration)
@@ -33,7 +36,7 @@ bv release [OPTIONS]
 
 `bv release` runs on every [CI platform](../introduction.md#ci-platforms), Local included.
 A release from a developer machine goes through the same steps as a release from a CI runner.
-The Git host decides where the release is published: GitHub, or a host `bv` does not know.
+The Git host decides where the release is published: GitHub, GitLab, or a host `bv` does not know.
 
 Before building anything, `bv release` checks what a build cannot change:
 
@@ -41,8 +44,9 @@ Before building anything, `bv release` checks what a build cannot change:
 2. The clone has a remote that names that repository, as [The release remote](#the-release-remote) says.
 3. `bv` knows the Git host of `repository.url`, or `release.allowUnknownHost` is `true`.
    `bv` takes `repository.host` when it is not `auto`.
-   Otherwise, `github.com` is GitHub.
+   Otherwise, `github.com` is GitHub, and `gitlab.com` is GitLab.
    Otherwise, a host whose name is the host name of [`GITHUB_SERVER_URL`](../environment-variables.md#github_server_url) is a GitHub Enterprise Server, on GitHub Actions.
+   Otherwise, a host whose name is the host name of [`CI_SERVER_URL`](../environment-variables.md#ci_server_url) is a self-managed GitLab instance, on GitLab CI.
    Any other host is unknown.
 4. `HEAD` is on a branch, and the branch produces [public releases](../sdk-modules/versioning.md#public-releases) under `release.branches`.
 5. A committer identity exists for the commits of the release.
@@ -53,6 +57,7 @@ Before building anything, `bv release` checks what a build cannot change:
    `bv` commits with that identity, and writes nothing to the Git configuration.
 6. The host supplies Git credentials.
    On GitHub, they are `x-access-token` and the token that [`hosts.github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
+   On GitLab, they are a username and the token that `hosts.gitlab.tokenEnv` names, as [Publishing on GitLab](#publishing-on-gitlab) says.
    An unknown host supplies none.
    Without them, `bv` warns that the fetch and the push may fail, and goes on.
 7. `bv` fetches the tags of the release remote.
@@ -87,7 +92,9 @@ When no remote matches, the release fails, and the message names the remotes of 
 
 ## The steps
 
-1. On GitHub, create a provisional draft release, named `<version> [provisional]`, so that a token without permission fails the release early.
+1. Check that the token can publish on the host, so that a token without permission fails the release early.
+   On GitHub, create a provisional draft release, named `<version> [provisional]`.
+   On GitLab, read the releases of the project, and check the role of the token, as [Publishing on GitLab](#publishing-on-gitlab) says.
 2. Rewrite `VERSION` when the version spec change is not `none`, with the tag `versioning.prereleaseTag` names.
 3. For a stable version, move the unshipped public and internal API into the shipped one.
    Every `PublicAPI.Unshipped.txt` next to a `PublicAPI.Shipped.txt` is emptied into it, and a line starting with `*REMOVED*` removes its API from the shipped file.
@@ -106,9 +113,9 @@ When no remote matches, the release fails, and the message names the remotes of 
 12. Run the [`release/post-release` hook](../hooks.md#the-releasepost-release-hook), and record the files it changed.
 13. Rewrite the self-references when `release.dogfood` is `true`, as [The post-release commit](#the-post-release-commit) says.
 14. Create the post-release commit, when the hook or the rewrites changed a file.
-15. Create the release tag, push the commits, and push the tag, as [The release tag](#the-release-tag) says.
-16. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
-17. Collect the release assets, as [Publishing](#publishing) says.
+15. Collect the release assets, and have the host check them, as [Publishing](#publishing) says.
+16. Create the release tag, push the commits, and push the tag, as [The release tag](#the-release-tag) says.
+17. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
 18. Publish the release on the host, and write the `version` step output.
 
 Every step is undone when a later step fails, as [Rollback](#rollback) says.
@@ -215,8 +222,15 @@ The release assets are collected from two sources:
 - every `.nupkg` file, and the `.snupkg` file next to it, when one exists.
 
 A line with the wrong shape, or one naming a file that does not exist, is a warning, and the asset is skipped.
+`bv` collects the assets before it pushes the commits, so that an asset the host refuses fails the release before anything leaves the clone.
 
-On GitHub, `bv` reaches the API of the host of `repository.url`.
+`bv` then publishes the release on the Git host, as the sections below say.
+On GitHub Actions, `bv` appends `version=<version>` to the file [`GITHUB_OUTPUT`](../environment-variables.md#github_output) names, for the later steps of the job.
+The last line of a release is `notice: Published release <version> with <count> assets.`
+
+### Publishing on GitHub
+
+`bv` reaches the API of the host of `repository.url`.
 For `github.com`, the API is at `https://api.github.com`.
 `bv` takes any other host for a GitHub Enterprise Server, whose API is at `https://<host>/api/v3`.
 An asset upload goes to the address that GitHub states in the answer to the creation of the draft release.
@@ -225,12 +239,56 @@ An asset upload goes to the address that GitHub states in the answer to the crea
 The release is named after the version, its tag is the release tag, and the prerelease flag follows the version.
 Its description is a link to `CHANGELOG.md` on the release branch, followed by the notes GitHub generates.
 
+### Publishing on GitLab
+
+`bv` reaches the API of the host of `repository.url` at `https://<host>/api/v4`, on `gitlab.com` and on a self-managed instance alike.
+`bv` recognizes a self-managed instance on its own GitLab CI runners.
+On any other CI platform, set `repository.host` to `gitlab`.
+
+The token that `hosts.gitlab.tokenEnv` names is one of two kinds:
+
+- a personal, project, or group access token, which pushes with the username `oauth2`;
+- the job token of GitLab CI, when `hosts.gitlab.tokenEnv` is `CI_JOB_TOKEN`, which pushes with the username `gitlab-ci-token`.
+
+GitLab exposes the job token through `CI_JOB_TOKEN` alone, so the name of the variable decides the kind.
+The comparison is case-sensitive.
+A job token copied into a variable of another name counts as an access token, and GitLab refuses it.
+
+The token needs the Maintainer role on the project, because a rollback deletes the generic package of the release.
+With an access token, `bv` reads the role of the user of the token before the release commit.
+A role below Maintainer fails the release.
+A user who is not a member of the project passes the check, such as an administrator of the instance.
+Such a user either can delete the package, or lacks push access and fails at the push of the release commit.
+GitLab states no role for a job token, so `bv` checks none.
+
+A job token has the access of the user who started the job.
+It pushes only when the project enables "Allow Git push requests to the repository".
+The setting is under **Settings > CI/CD > Job token permissions**, and is generally available from GitLab 18.4.
+
+`bv` uploads each asset to the generic package registry of the project, as one file of one package.
+The package is named after the repository, the last segment of the path of `repository.url`.
+Its version is the release tag.
+`bv` then creates the release, named after the version, on the release tag.
+Each asset gets a release link of type `package`, which points at the package file.
+The name of the link is the description of the asset, and its direct asset path is `/<file name>`.
+
+GitLab has no prerelease flag, so a prerelease looks like any other release.
+GitLab generates no release notes, so the description of the release is a link to `CHANGELOG.md` on the release branch.
+
+GitLab accepts an asset only when its file name meets the rules of the generic package registry and of release links:
+
+- the file name holds only ASCII letters, digits, `.`, `_`, and `-`, and its first character may also be `+`;
+- the last character is a letter or a digit;
+- the file name has 3 to 127 characters.
+
+Two assets of a release also differ in file name and in description.
+An asset that breaks a rule fails the release before the push of the commits.
+
+### Publishing on an unknown host
+
 On a host `bv` does not know, there is no release page, and `bv` says so with a notice.
 The tag, the commits, and the packages are pushed all the same.
 The new changelog section gets a heading without a link, and its relative file links stay as they are, each with a notice.
-
-On GitHub Actions, `bv` appends `version=<version>` to the file [`GITHUB_OUTPUT`](../environment-variables.md#github_output) names, for the later steps of the job.
-The last line of a release is `notice: Published release <version> with <count> assets.`
 
 ---
 
@@ -241,7 +299,8 @@ When a step fails, `bv release` undoes what the earlier steps did, in reverse or
 - it deletes the release tag from the release remote, when it was pushed, and from the clone;
 - it resets the branch to the commit before the release commit, post-release commit included;
 - when the commits were pushed, it force-pushes the previous tip;
-- on GitHub, it deletes the release, draft or published.
+- on GitHub, it deletes the release, draft or published;
+- on GitLab, it deletes the release, then the generic package, each when it exists.
 
 A rollback action that fails is a warning, and the rollback goes on.
 Once the release is published and the step output is written, nothing is undone.
