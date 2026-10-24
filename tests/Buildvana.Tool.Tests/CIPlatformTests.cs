@@ -151,7 +151,7 @@ internal sealed class CIPlatformTests
         var platform = Detect(("GITLAB_CI", "true"), ("CI_SERVER_URL", "https://gitlab.example.invalid"));
 
         await Assert.That(platform.ServerUrl!.Host).IsEqualTo("gitlab.example.invalid");
-        await Assert.That(platform.ServerKind).IsNull();
+        await Assert.That(platform.ServerKind).IsEqualTo(HostKind.GitLab);
     }
 
     // A value that is not an absolute URL names no server, and host detection then has no hint to go on.

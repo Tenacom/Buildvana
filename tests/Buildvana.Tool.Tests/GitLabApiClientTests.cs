@@ -261,6 +261,32 @@ internal sealed class GitLabApiClientTests
         await Assert.That(GitLabApiClient.IsValidPackageFileName(fileName)).IsEqualTo(expected);
     }
 
+    // The rule wants a character after the slash, then at least one more of the class, then a letter or a digit,
+    // so the shortest valid path holds three characters after the slash.
+    [Test]
+    [Arguments("/Foo.1.0.0.nupkg", true)]
+    [Arguments("/bin/Foo_Bar-1.0.zip", true)]
+    [Arguments("/abc", true)]
+    [Arguments("/ab", false)]
+    [Arguments("Foo.nupkg", false)]
+    [Arguments("//Foo.nupkg", false)]
+    [Arguments("/bin//Foo.nupkg", false)]
+    [Arguments("/Foo+build.nupkg", false)]
+    [Arguments("/Foo.nupkg.", false)]
+    [Arguments("/Föö.nupkg", false)]
+    public async Task IsValidDirectAssetPath_FollowsTheRuleOfReleaseLinks(string path, bool expected)
+    {
+        await Assert.That(GitLabApiClient.IsValidDirectAssetPath(path)).IsEqualTo(expected);
+    }
+
+    [Test]
+    [Arguments(127, true)]
+    [Arguments(128, false)]
+    public async Task IsValidDirectAssetPath_AcceptsAtMost128Characters(int nameLength, bool expected)
+    {
+        await Assert.That(GitLabApiClient.IsValidDirectAssetPath("/" + new string('a', nameLength))).IsEqualTo(expected);
+    }
+
     [Test]
     [Arguments("GetCurrentUser")]
     [Arguments("GetProject")]

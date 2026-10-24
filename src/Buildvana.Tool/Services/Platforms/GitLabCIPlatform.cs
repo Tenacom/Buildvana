@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using CommunityToolkit.Diagnostics;
 
@@ -31,6 +32,10 @@ internal sealed class GitLabCIPlatform : CIPlatform
     /// <inheritdoc/>
     /// <value>The value of <c>CI_SERVER_URL</c>.</value>
     public override Uri? ServerUrl { get; }
+
+    /// <inheritdoc/>
+    /// <value>Always <see cref="HostKind.GitLab"/>.</value>
+    public override HostKind? ServerKind => HostKind.GitLab;
 
     /// <summary>
     /// Creates and returns an instance of <see cref="GitLabCIPlatform"/> if <c>bv</c> runs in a GitLab CI runner.
