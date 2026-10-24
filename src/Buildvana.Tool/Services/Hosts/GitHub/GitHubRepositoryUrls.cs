@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
-using System.IO;
 using CommunityToolkit.Diagnostics;
 
 namespace Buildvana.Tool.Services.Hosts.GitHub;
@@ -62,26 +61,11 @@ internal sealed class GitHubRepositoryUrls
     /// <param name="path">The path to the file, relative to the repository root.</param>
     /// <param name="commitish">The SHA or reference to which the file belongs.</param>
     /// <returns>The URL of the file.</returns>
+    /// <exception cref="ArgumentException"><paramref name="path"/> is rooted, or leaves the repository, as
+    /// <see cref="RepositoryFilePath.ToUrlPath"/> says.</exception>
     public Uri File(string path, string commitish)
     {
-        Guard.IsNotNullOrEmpty(path);
         Guard.IsNotNullOrEmpty(commitish);
-
-        // Normalize to forward slashes for the URL, then reject paths that are rooted or escape the repo.
-        // A rooted path is checked after normalization, so that a leading slash of either kind is rejected on
-        // every platform: Path.IsPathFullyQualified is true for "/docs/x.md" on Linux and false on Windows,
-        // where a fully qualified path needs a drive or a UNC share, and a backslash is a separator only there.
-        // Every ".." segment must go, not just a leading one: Uri collapses parent segments as it parses,
-        // so enough of them anywhere in the path walk out of the repository and even out of the owner
-        // (".../blob/main/docs/../../../../../../etc/passwd" parses to "https://github.com/etc/passwd").
-        var remotePath = path.Replace('\\', '/');
-        Guard.IsTrue(!Path.IsPathRooted(remotePath), nameof(path), "A path must be relative to be converted to a file URL.");
-        var hasParentSegment = remotePath == ".."
-            || remotePath.StartsWith("../", StringComparison.Ordinal)
-            || remotePath.EndsWith("/..", StringComparison.Ordinal)
-            || remotePath.Contains("/../", StringComparison.Ordinal);
-        Guard.IsTrue(!hasParentSegment, nameof(path), "Only a path to a file in the repository can be converted to a file URL.");
-
-        return new Uri($"{_repository}/blob/{commitish}/{remotePath}");
+        return new Uri($"{_repository}/blob/{commitish}/{RepositoryFilePath.ToUrlPath(path)}");
     }
 }
