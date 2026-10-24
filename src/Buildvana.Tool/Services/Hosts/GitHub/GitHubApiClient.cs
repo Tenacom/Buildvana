@@ -21,8 +21,10 @@ namespace Buildvana.Tool.Services.Hosts.GitHub;
 /// Performs the operations of the GitHub REST API that <c>bv</c> needs.
 /// </summary>
 /// <remarks>
-/// <para>The API of <c>github.com</c> is at <c>https://api.github.com</c>. Any other host is taken for a
-/// GitHub Enterprise Server, whose API is at <c>https://&lt;host&gt;/api/v3</c>.</para>
+/// <para>The API of <c>github.com</c> is at <c>https://api.github.com</c>. A host whose name ends in
+/// <c>.ghe.com</c> belongs to GitHub Enterprise Cloud with data residency, and its API is at
+/// <c>https://api.&lt;host&gt;</c>. Any other host is taken for a GitHub Enterprise Server, whose API is at
+/// <c>https://&lt;host&gt;/api/v3</c>.</para>
 /// <para>An asset upload goes to the address that the release states in its <c>upload_url</c> member, so this
 /// type derives no upload host.</para>
 /// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The one exception
@@ -42,6 +44,7 @@ internal sealed class GitHubApiClient : HostApiClient
     public const string ApiVersion = "2022-11-28";
 
     private const string GitHubComHostName = "github.com";
+    private const string GheComHostSuffix = ".ghe.com";
     private const string GitHubMediaType = "application/vnd.github+json";
 
     private readonly AuthenticationHeaderValue _authorization;
@@ -284,8 +287,8 @@ internal sealed class GitHubApiClient : HostApiClient
     private static Uri GetBaseUrl(string hostName)
     {
         Guard.IsNotNullOrEmpty(hostName);
-        return string.Equals(hostName, GitHubComHostName, StringComparison.OrdinalIgnoreCase)
-            ? new Uri("https://api.github.com/")
+        return string.Equals(hostName, GitHubComHostName, StringComparison.OrdinalIgnoreCase) ? new Uri("https://api.github.com/")
+            : hostName.EndsWith(GheComHostSuffix, StringComparison.OrdinalIgnoreCase) ? new Uri($"https://api.{hostName}/")
             : new Uri($"https://{hostName}/api/v3/");
     }
 

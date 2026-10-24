@@ -121,7 +121,8 @@ internal abstract class GitHost
     /// <param name="url">The parsed URL of the repository.</param>
     /// <param name="platform">The CI platform <c>bv</c> runs on.</param>
     /// <returns>The first of these that applies: <see cref="RepositoryConfig.Host"/> when it is not
-    /// <see cref="HostKind.Auto"/>; the kind of a public host that <paramref name="url"/> names; the
+    /// <see cref="HostKind.Auto"/>; the kind of a host that GitHub or GitLab runs, such as <c>github.com</c>, when
+    /// <paramref name="url"/> names it; the
     /// <see cref="CIPlatform.ServerKind"/> of a platform whose <see cref="CIPlatform.ServerUrl"/> has the host
     /// name of <paramref name="url"/>; otherwise, <see langword="null"/>.</returns>
     public static HostKind? DetectKind(RepositoryConfig repository, GitUrlInfo url, CIPlatform platform)
@@ -134,7 +135,10 @@ internal abstract class GitHost
             return repository.Host;
         }
 
-        if (string.Equals(url.Host, "github.com", StringComparison.OrdinalIgnoreCase))
+        // A host whose name ends in .ghe.com belongs to GitHub Enterprise Cloud with data residency.
+        var isGitHub = string.Equals(url.Host, "github.com", StringComparison.OrdinalIgnoreCase)
+            || url.Host.EndsWith(".ghe.com", StringComparison.OrdinalIgnoreCase);
+        if (isGitHub)
         {
             return HostKind.GitHub;
         }
