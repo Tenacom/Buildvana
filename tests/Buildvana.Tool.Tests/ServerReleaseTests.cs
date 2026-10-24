@@ -145,6 +145,41 @@ internal sealed class ServerReleaseTests
         }
     }
 
+    // The publisher checks the assets before the push, so an asset added after it would go unchecked.
+    [Test]
+    public async Task AddAsset_AfterPushingUpdates_Throws()
+    {
+        using var harness = new ReleaseHarness();
+        var release = await StartReleaseAsync(harness).ConfigureAwait(false);
+        await using (release.ConfigureAwait(false))
+        {
+            release.EnsureReleaseCommit();
+            release.PushUpdates();
+
+            void Act() => release.AddAsset("artifacts/late.bin");
+
+            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
+            await Assert.That(exception!.Message).Contains("already been pushed");
+        }
+    }
+
+    [Test]
+    public async Task PushUpdates_HasThePublisherCheckTheAssets()
+    {
+        using var harness = new ReleaseHarness();
+        var release = await StartReleaseAsync(harness).ConfigureAwait(false);
+        await using (release.ConfigureAwait(false))
+        {
+            release.EnsureReleaseCommit();
+            release.AddAsset("artifacts/setup.exe", "Setup program", "application/vnd.microsoft.portable-executable");
+
+            release.PushUpdates();
+
+            ReleaseAsset[] expected = [new("artifacts/setup.exe", "Setup program", "application/vnd.microsoft.portable-executable")];
+            await Assert.That(harness.Publisher!.CheckedAssets).IsEquivalentTo(expected);
+        }
+    }
+
     [Test]
     public async Task PublishAsync_BeforePushingUpdates_Throws()
     {
@@ -195,12 +230,12 @@ internal sealed class ServerReleaseTests
         await using (release.ConfigureAwait(false))
         {
             release.EnsureReleaseCommit();
-            release.PushUpdates();
             for (var i = 0; i < assetCount; i++)
             {
                 release.AddAsset(string.Create(CultureInfo.InvariantCulture, $"artifacts/asset-{i}.bin"));
             }
 
+            release.PushUpdates();
             await release.PublishAsync().ConfigureAwait(false);
         }
 

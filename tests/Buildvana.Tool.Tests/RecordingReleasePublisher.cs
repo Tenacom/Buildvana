@@ -44,6 +44,11 @@ internal sealed class RecordingReleasePublisher : ReleasePublisher
     public IReadOnlyList<ReleaseAsset> PublishedAssets => _publishedAssets;
 
     /// <summary>
+    /// Gets the assets the release had checked, or <see langword="null"/> until they are checked.
+    /// </summary>
+    public IReadOnlyList<ReleaseAsset>? CheckedAssets { get; private set; }
+
+    /// <summary>
     /// Gets a callback invoked while publishing, after the assets have been recorded, simulating the
     /// host's behavior. Exceptions thrown by the callback propagate to the caller, simulating a failed
     /// publication.
@@ -56,6 +61,9 @@ internal sealed class RecordingReleasePublisher : ReleasePublisher
         IsBegun = true;
         return Task.CompletedTask;
     }
+
+    /// <inheritdoc/>
+    public override void CheckAssets(IReadOnlyList<ReleaseAsset> assets) => CheckedAssets = [.. assets];
 
     /// <inheritdoc/>
     public override Task PublishAsync(string tag, string sha, IReadOnlyList<ReleaseAsset> assets)
