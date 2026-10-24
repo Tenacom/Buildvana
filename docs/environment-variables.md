@@ -64,9 +64,10 @@ The variable matters only together with `GITLAB_CI`, which is what selects the G
 
 ### `CI_SERVER_URL`
 
-GitLab CI sets it to the URL of the GitLab instance that runs the job.
-`bv` reads it as the server of the GitLab CI platform.
-`bv` knows no GitLab host, so the variable has no effect on a release.
+GitLab CI sets it to the URL of the GitLab instance that runs the job, such as `https://gitlab.com`.
+When `repository.url` names a repository on the host of that URL, `bv release` takes the host for GitLab.
+A self-managed GitLab instance is recognized this way on its own runners.
+The variable matters only together with `GITLAB_CI`.
 
 ### `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING`
 
@@ -163,6 +164,10 @@ The [configuration file](configuration-file.md) names the environment variable t
 - `hosts.github.tokenEnv` names the variable holding the GitHub token of the release operations.
   The token is also the password of the fetch and the push of `bv release`.
   The default name is `GITHUB_TOKEN`.
+- `hosts.gitlab.tokenEnv` names the variable holding the GitLab token of the release operations.
+  The token is also the password of the fetch and the push of `bv release`.
+  The default name is `GITLAB_TOKEN`.
+  The name `CI_JOB_TOKEN` selects the job token of GitLab CI, as [Publishing on GitLab](tool-commands/release.md#publishing-on-gitlab) says.
 - `nuget.feeds.release.apiKeyEnv` and `nuget.feeds.prerelease.apiKeyEnv` name the variables holding the API keys of the NuGet push feeds.
 
 ---

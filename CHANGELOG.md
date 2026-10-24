@@ -51,7 +51,8 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv` recognizes a CI runner [as the .NET CLI does](docs/environment-variables.md#variables-that-mark-a-ci-runner), and passes `ContinuousIntegrationBuild=true` to the build pipeline on every one.
 - `bv release` runs [on any machine](docs/tool-commands/release.md#preconditions), with `repository.url` naming the repository the release goes to.
 - `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
-- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing) on a Git host `bv` does not know.
+- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing-on-an-unknown-host) on a Git host `bv` does not know.
+- `bv release` [publishes on GitLab](docs/tool-commands/release.md#publishing-on-gitlab), with the assets in the generic package registry of the project, and `hosts.gitlab.tokenEnv` names the token variable.
 - [`bv info`](docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
 
 ### Changes to existing features
@@ -110,7 +111,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv release` runs the [build pipeline](docs/tool-commands/release.md#the-steps) once, from `clean` through `pack`, after the release commit, and no longer runs `clean` through `test` before it.
 - [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
 - The `StandardAnalyzers` module adds [`StyleCop.Analyzers` 1.3.133-beta](docs/sdk-modules/standard-analyzers.md#package-references), which supports C# 8 to 15 and adds several new rules.
-- `bv release` reaches the [GitHub API of the host of the repository](docs/tool-commands/release.md#publishing), `api.github.com` or `<host>/api/v3`, where it reached `api.github.com` alone.
+- `bv release` reaches the [GitHub API of the host of the repository](docs/tool-commands/release.md#publishing-on-github), `api.github.com` or `<host>/api/v3`, where it reached `api.github.com` alone.
 - `bv release` passes `ContinuousIntegrationBuild=true` to [its pipeline run](docs/tool-commands/release.md#the-steps) on every platform.
 
 ### Bugs fixed in this release
