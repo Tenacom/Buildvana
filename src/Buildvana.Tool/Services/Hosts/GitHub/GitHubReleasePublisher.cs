@@ -4,7 +4,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.IO;
 using Buildvana.Tool.Services.Git;
@@ -44,6 +46,23 @@ internal sealed class GitHubReleasePublisher : ReleasePublisher
         _reporter = reporter;
         _version = version;
         _git = git;
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="BuildFailedException">Two assets have the same file name.</exception>
+    /// <remarks>
+    /// <para>GitHub names an asset after its file, and refuses two assets of a release with the same name.</para>
+    /// </remarks>
+    public override void CheckAssets(IReadOnlyList<ReleaseAsset> assets)
+    {
+        Guard.IsNotNull(assets);
+        var problems = Duplicates(assets.Select(static x => Path.GetFileName(x.Path)))
+            .Select(static x => $"More than one asset has the file name '{x}'.")
+            .ToList();
+
+        BuildFailedException.ThrowIf(
+            problems.Count > 0,
+            "GitHub refuses the release assets:" + string.Concat(problems.Select(static x => "\n- " + x)));
     }
 
     /// <inheritdoc/>

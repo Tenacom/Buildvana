@@ -49,6 +49,36 @@ internal sealed class ReleaseCommandGitHubTests
         await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsEqualTo(releaseCommitSha);
     }
 
+    // The assets are checked before the push, so a refused asset reaches neither the remote nor the feed.
+    [Test]
+    public async Task Release_WithTwoAssetsOfTheSameFileName_FailsBeforeThePush()
+    {
+        var api = Answering(new StubHttpAnswer(HttpStatusCode.Created, """{"id":7}"""));
+        using var harness = new ReleaseHarness(new() { GitHubApi = api, WithHook = true });
+        var remoteTip = harness.Repo.GetRemoteTipSha();
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
+        harness.HookBehavior = () => {
+            var directory = Directory.CreateDirectory(Path.Combine(harness.ArtifactsPath, "other")).FullName;
+            var path = Path.Combine(directory, "setup.exe");
+            File.WriteAllText(path, "fake setup");
+            File.WriteAllText(
+                Path.Combine(harness.ArtifactsPath, "Other.assets.txt"),
+                $"{path}\tapplication/vnd.microsoft.portable-executable\tOther setup program\n");
+        };
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).IsEqualTo(
+            "GitHub refuses the release assets:\n- More than one asset has the file name 'setup.exe'.");
+        await Assert.That(harness.Events.Select(static x => x.Name)).DoesNotContain("nuget-push");
+        await Assert.That(api.Requests.Any(static x => x.Url.StartsWith(UploadUrl, StringComparison.Ordinal))).IsFalse();
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
+        await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
+    }
+
     // The uploads get the fallback answer, which refuses them, so the release fails after the tag is pushed.
     [Test]
     public async Task Release_WhenAnUploadFails_DeletesTheDraft_AndTheTag()
