@@ -119,21 +119,6 @@ internal sealed class GitLabReleasePublisherTests
             $$"""{"name":"Setup program","url":"{{setupUrl}}","direct_asset_path":"/setup.exe","link_type":"package"}""");
     }
 
-    [Test]
-    public async Task PublishAsync_WithAnAssetGitLabRefuses_UploadsNothing()
-    {
-        using var api = Answering();
-
-        static Task Publish(ReleasePublisher publisher, IReadOnlyList<ReleaseAsset> assets)
-            => publisher.PublishAsync(Tag, "abc123", [.. assets, new("dir/Foo 2.zip", "Bad", "x")]);
-
-        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before api is disposed
-        var exception = await Assert.That(() => RunAsync(api, Publish)).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("'Foo 2.zip'");
-        await Assert.That(api.Requests).IsEmpty();
-    }
-
     // The release goes first, because its links point at the files of the package.
     [Test]
     public async Task UndoAsync_AfterPublishAsync_DeletesTheRelease_ThenThePackage()
@@ -195,8 +180,13 @@ internal sealed class GitLabReleasePublisherTests
             new("two/Bar.zip", "Bar", "application/zip"),
         ];
 
-        var exception = await Assert.That(() => GitLabReleasePublisher.CheckAssets(assets)).Throws<BuildFailedException>();
+        using var api = Answering();
 
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before api is disposed
+        var exception = await Assert.That(() => RunAsync(api, (publisher, _) => CheckAssetsAsync(publisher, assets)))
+            .Throws<BuildFailedException>();
+
+        await Assert.That(api.Requests).IsEmpty();
         await Assert.That(exception!.Message).IsEqualTo(
             "GitLab refuses the release assets:"
             + "\n- 'Foo 1.zip' is not a valid file name in the generic package registry."
@@ -213,7 +203,16 @@ internal sealed class GitLabReleasePublisherTests
             new("out/setup.exe", "Setup program", "application/vnd.microsoft.portable-executable"),
         ];
 
-        await Assert.That(() => GitLabReleasePublisher.CheckAssets(assets)).ThrowsNothing();
+        using var api = Answering();
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before api is disposed
+        await Assert.That(() => RunAsync(api, (publisher, _) => CheckAssetsAsync(publisher, assets))).ThrowsNothing();
+    }
+
+    private static Task CheckAssetsAsync(ReleasePublisher publisher, IReadOnlyList<ReleaseAsset> assets)
+    {
+        publisher.CheckAssets(assets);
+        return Task.CompletedTask;
     }
 
     private static StubHttpAnswer Member(int accessLevel)

@@ -253,6 +253,8 @@ internal sealed class ServerRelease : IAsyncDisposable
     /// <remarks>
     /// <para>The tag is created here, and not with the release commit, because the release commit is amended
     /// until the changelog is finalized after the build.</para>
+    /// <para>The publisher checks the assets first, so that an asset the host refuses fails the release before
+    /// the push, and before the caller pushes the packages to a feed that nothing can delete them from.</para>
     /// </remarks>
     public void PushUpdates()
     {
@@ -269,6 +271,7 @@ internal sealed class ServerRelease : IAsyncDisposable
             ThrowHelper.ThrowInvalidOperationException("Internal error: updates have already been pushed.");
         }
 
+        _publisher.CheckAssets(_assets);
         var tag = _version.CurrentStr;
         _git.CreateTag(tag, ReleaseCommitSha);
         OnRollback(() => {
@@ -292,10 +295,26 @@ internal sealed class ServerRelease : IAsyncDisposable
         _tag = tag;
     }
 
+    /// <summary>
+    /// Adds a file to attach to the release.
+    /// </summary>
+    /// <param name="path">The path of the file.</param>
+    /// <param name="description">The description of the asset, or <see langword="null"/> for the file name.</param>
+    /// <param name="mimeType">The MIME type of the asset, or <see langword="null"/> for
+    /// <c>application/octet-stream</c>.</param>
+    /// <remarks>
+    /// <para>An asset is added before <see cref="PushUpdates"/>, which has the publisher check every asset.</para>
+    /// </remarks>
     public void AddAsset(string path, string? description = null, string? mimeType = null)
     {
         EnsurePending();
         Guard.IsNotNullOrEmpty(path);
+
+        if (_updatesPushed)
+        {
+            ThrowHelper.ThrowInvalidOperationException(
+                "Internal error: cannot add an asset when updates have already been pushed.");
+        }
 
         if (string.IsNullOrEmpty(description))
         {

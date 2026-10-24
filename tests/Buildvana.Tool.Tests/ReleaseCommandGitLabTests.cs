@@ -85,6 +85,32 @@ internal sealed class ReleaseCommandGitLabTests
             .Contains("Fallback Git credentials provided by GitLab (protocol username: 'gitlab-ci-token').");
     }
 
+    // The assets are checked before the push, so a refused asset reaches neither the remote nor the feed.
+    [Test]
+    public async Task Release_WithAnAssetGitLabRefuses_FailsBeforeThePush()
+    {
+        var api = Answering(accessLevel: 40);
+        using var harness = new ReleaseHarness(new() { GitLabApi = api, WithHook = true });
+        var remoteTip = harness.Repo.GetRemoteTipSha();
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
+        harness.HookBehavior = () => {
+            var path = Path.Combine(harness.ArtifactsPath, "Foo 1.zip");
+            File.WriteAllText(path, "fake zip");
+            File.WriteAllText(Path.Combine(harness.ArtifactsPath, "Bad.assets.txt"), $"{path}\tapplication/zip\tBad zip\n");
+        };
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        var exception = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("'Foo 1.zip' is not a valid file name in the generic package registry.");
+        await Assert.That(harness.Events.Select(static x => x.Name)).DoesNotContain("nuget-push");
+        await Assert.That(api.Requests.Any(static x => x.Method == HttpMethod.Put)).IsFalse();
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
+        await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
+    }
+
     // The uploads succeed and the release creation fails, so the release fails after the tag is pushed.
     [Test]
     public async Task Release_WhenTheReleaseCannotBeCreated_DeletesThePackage_AndTheTag()

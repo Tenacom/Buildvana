@@ -30,6 +30,18 @@ internal abstract class ReleasePublisher
     public abstract Task BeginAsync();
 
     /// <summary>
+    /// Checks that the host accepts a list of release assets, and fails the build when it does not.
+    /// </summary>
+    /// <param name="assets">The files to attach to the release.</param>
+    /// <remarks>
+    /// <para><see cref="ServerRelease"/> calls this before it pushes the commits and the tag, so that a refusal
+    /// fails the release while nothing has left the clone. This implementation accepts every list.</para>
+    /// </remarks>
+    public virtual void CheckAssets(IReadOnlyList<ReleaseAsset> assets)
+    {
+    }
+
+    /// <summary>
     /// Asynchronously publishes the release on a tag that already exists on the host.
     /// </summary>
     /// <param name="tag">The name of the release tag.</param>

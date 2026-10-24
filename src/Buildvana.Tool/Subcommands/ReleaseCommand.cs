@@ -335,12 +335,8 @@ internal sealed class ReleaseCommand(
                 release.AddPostReleaseCommit($"Post-release updates for {version.CurrentStr} [skip ci]", postReleaseUpdates);
             }
 
-            release.PushUpdates();
-
-            // Publish NuGet packages
-            await dotnet.NuGetPushAllAsync(artifactsPath, cancellationToken).ConfigureAwait(false);
-
-            // Gather build assets from Buildvana.Sdk release asset lists
+            // Gather build assets from Buildvana.Sdk release asset lists.
+            // Must happen before the push, which has the host check the assets while nothing has left the clone.
             reporter.Info("Reading release asset lists...");
             foreach (var path in UserDirectory.EnumerateFiles(artifactsPath, "*.assets.txt"))
             {
@@ -380,6 +376,11 @@ internal sealed class ReleaseCommand(
                     release.AddAsset(snupkgPath);
                 }
             }
+
+            release.PushUpdates();
+
+            // Publish NuGet packages
+            await dotnet.NuGetPushAllAsync(artifactsPath, cancellationToken).ConfigureAwait(false);
 
             // Last but not least, publish the release.
             await release.PublishAsync().ConfigureAwait(false);

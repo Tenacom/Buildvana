@@ -53,17 +53,14 @@ internal sealed class GitLabReleasePublisher : ReleasePublisher
         _git = git;
     }
 
-    /// <summary>
-    /// Checks that GitLab accepts a list of release assets, and fails the build when it does not.
-    /// </summary>
-    /// <param name="assets">The release assets.</param>
+    /// <inheritdoc/>
     /// <exception cref="BuildFailedException">A file name is not valid in the generic package registry, or as the
     /// direct asset path of a release link; or two assets have the same file name, or the same description.</exception>
     /// <remarks>
     /// <para>A release link takes its name from the description of the asset, and GitLab refuses two links of a
     /// release with the same name or the same direct asset path.</para>
     /// </remarks>
-    public static void CheckAssets(IReadOnlyList<ReleaseAsset> assets)
+    public override void CheckAssets(IReadOnlyList<ReleaseAsset> assets)
     {
         Guard.IsNotNull(assets);
         var problems = new List<string>();
@@ -140,8 +137,6 @@ internal sealed class GitLabReleasePublisher : ReleasePublisher
         Guard.IsNotNullOrEmpty(tag);
         Guard.IsNotNullOrEmpty(sha);
         Guard.IsNotNull(assets);
-        CheckAssets(assets);
-
         var assetCount = assets.Count;
         if (assetCount == 0)
         {
