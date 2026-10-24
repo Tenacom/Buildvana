@@ -239,6 +239,9 @@ An asset upload goes to the address that GitHub states in the answer to the crea
 The release is named after the version, its tag is the release tag, and the prerelease flag follows the version.
 Its description is a link to `CHANGELOG.md` on the release branch, followed by the notes GitHub generates.
 
+GitHub names each asset after its file, so two assets of a release differ in file name.
+Two assets with the same file name fail the release before the push of the commits.
+
 ### Publishing on GitLab
 
 `bv` reaches the API of the host of `repository.url` at `https://<host>/api/v4`, on `gitlab.com` and on a self-managed instance alike.

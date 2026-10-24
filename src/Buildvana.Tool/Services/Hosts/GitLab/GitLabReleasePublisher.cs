@@ -189,9 +189,6 @@ internal sealed class GitLabReleasePublisher : ReleasePublisher
         }
     }
 
-    private static IEnumerable<string> Duplicates(IEnumerable<string> values)
-        => values.GroupBy(static x => x, StringComparer.Ordinal).Where(static x => x.Count() > 1).Select(static x => x.Key);
-
     private async Task<GitLabReleaseLink> UploadAssetAsync(string tag, ReleaseAsset asset)
     {
         _reporter.Detail($"Uploading asset {asset.Path}...");

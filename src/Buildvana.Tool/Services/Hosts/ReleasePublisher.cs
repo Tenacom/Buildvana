@@ -1,7 +1,9 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Buildvana.Tool.Services.Release;
 
@@ -55,4 +57,12 @@ internal abstract class ReleasePublisher
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
     public abstract Task UndoAsync();
+
+    /// <summary>
+    /// Finds the values that occur more than once in a sequence, compared ordinally.
+    /// </summary>
+    /// <param name="values">The values to search.</param>
+    /// <returns>Each value that occurs more than once, once, in the order of its first occurrence.</returns>
+    private protected static IEnumerable<string> Duplicates(IEnumerable<string> values)
+        => values.CountBy(static x => x, StringComparer.Ordinal).Where(static x => x.Value > 1).Select(static x => x.Key);
 }

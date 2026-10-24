@@ -96,6 +96,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: A file-based app is a [project type of its own](docs/internal-use-properties.md#project-type), `BV_IsFileBasedAppProject`, so `BV_IsExeProject` is `false` for it.
 - **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](docs/directory-structure.md#migration-from-configdotnet-toolsjson) when the home directory holds one.
 - The [`ReleaseAssetList` module](docs/sdk-modules/release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for a file-based app.
+- On GitHub, `bv release` refuses [two assets with the same file name](docs/tool-commands/release.md#publishing-on-github) before it pushes the commits.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
 - The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
 - `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
