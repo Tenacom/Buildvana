@@ -13,6 +13,7 @@ using Buildvana.Core.IO;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Release;
 using CommunityToolkit.Diagnostics;
+using Louis.Diagnostics;
 
 namespace Buildvana.Tool.Services.Hosts.GitLab;
 
@@ -169,15 +170,15 @@ internal sealed class GitLabReleasePublisher : ReleasePublisher
     /// <inheritdoc/>
     /// <remarks>
     /// <para>The release goes first, because its links point at the files of the package.</para>
+    /// <para>A release deletion that fails is a warning, and the package deletion goes on. A rollback deletes the
+    /// release tag before this method runs, and GitLab deletes the release with it, so a missing release is no
+    /// failure.</para>
     /// </remarks>
     public override async Task UndoAsync()
     {
         if (_releaseTag is { } tag)
         {
-            _reporter.Info("Deleting the previously created release...");
-            await _host.Client.DeleteReleaseAsync(_host.ProjectPath, tag).ConfigureAwait(false);
-            _reporter.Notice($"Deleted release {tag}.");
-            _releaseTag = null;
+            await DeleteReleaseAsync(tag).ConfigureAwait(false);
         }
 
         if (_packageId is { } packageId)
@@ -210,5 +211,31 @@ internal sealed class GitLabReleasePublisher : ReleasePublisher
             DirectAssetPath = "/" + fileName,
             LinkType = "package",
         };
+    }
+
+    private async Task DeleteReleaseAsync(string tag)
+    {
+        _reporter.Info("Deleting the previously created release...");
+        bool deleted;
+        try
+        {
+            deleted = await _host.Client.DeleteReleaseAsync(_host.ProjectPath, tag).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (!ex.IsCriticalError())
+        {
+            _reporter.Warning($"{ex.GetType().Name} while deleting release {tag}: {ex.Message}");
+            return;
+        }
+
+        if (deleted)
+        {
+            _reporter.Notice($"Deleted release {tag}.");
+        }
+        else
+        {
+            _reporter.Info($"Release {tag} not found: GitLab deleted it with its tag.");
+        }
+
+        _releaseTag = null;
     }
 }

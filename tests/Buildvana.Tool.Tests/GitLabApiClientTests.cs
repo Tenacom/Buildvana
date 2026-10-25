@@ -196,8 +196,21 @@ internal sealed class GitLabApiClientTests
     {
         var handler = Answering((HttpMethod.Delete, ApiProjectUrl + "/releases/release%2F1.0"), """{"tag_name":"release/1.0"}""");
         using var client = NewClient(handler);
-        await client.DeleteReleaseAsync(Project, "release/1.0").ConfigureAwait(false);
+        var deleted = await client.DeleteReleaseAsync(Project, "release/1.0").ConfigureAwait(false);
+        await Assert.That(deleted).IsTrue();
         await Assert.That(handler.Requests).Count().IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task DeleteReleaseAsync_WhenTheReleaseDoesNotExist_ReturnsFalse()
+    {
+        var handler = Answering(
+            (HttpMethod.Delete, ApiProjectUrl + "/releases/1.0"),
+            """{"message":"404 Not found"}""",
+            HttpStatusCode.NotFound);
+        using var client = NewClient(handler);
+        var deleted = await client.DeleteReleaseAsync(Project, "1.0").ConfigureAwait(false);
+        await Assert.That(deleted).IsFalse();
     }
 
     [Test]

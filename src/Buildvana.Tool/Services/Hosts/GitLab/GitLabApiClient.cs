@@ -29,8 +29,9 @@ namespace Buildvana.Tool.Services.Hosts.GitLab;
 /// <para>Every operation addresses a project by its path, such as <c>group/subgroup/project</c>. The client
 /// escapes the path as one segment of the URL, as the API expects.</para>
 /// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The exceptions
-/// are <see cref="GetProjectWithoutCredentialsAsync"/>, where a 404 means that the project is not public, and
-/// <see cref="GetProjectMemberAsync"/>, where a 404 means that the user is not a member.</para>
+/// are <see cref="GetProjectWithoutCredentialsAsync"/>, where a 404 means that the project is not public,
+/// <see cref="GetProjectMemberAsync"/>, where a 404 means that the user is not a member, and
+/// <see cref="DeleteReleaseAsync"/>, where a 404 means that the release does not exist.</para>
 /// </remarks>
 internal sealed partial class GitLabApiClient : HostApiClient
 {
@@ -224,18 +225,28 @@ internal sealed partial class GitLabApiClient : HostApiClient
     /// <param name="projectPath">The path of the project.</param>
     /// <param name="tagName">The name of the tag of the release.</param>
     /// <param name="cancellationToken">A token that cancels the operation.</param>
-    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
+    /// <returns>A <see cref="Task"/> whose result is <see langword="true"/> when the release was deleted, and
+    /// <see langword="false"/> when the API answers 404.</returns>
     /// <remarks>
     /// <para>The tag of the release stays.</para>
+    /// <para>GitLab deletes a release together with its tag, so a release whose tag was deleted gets a 404.</para>
     /// </remarks>
-    public Task DeleteReleaseAsync(string projectPath, string tagName, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteReleaseAsync(
+        string projectPath,
+        string tagName,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNullOrEmpty(tagName);
-        return SendAsync(
-            HttpMethod.Delete,
-            ApiUrl(ProjectPath(projectPath) + "/releases/" + Uri.EscapeDataString(tagName)),
-            null,
-            cancellationToken);
+        var url = ApiUrl(ProjectPath(projectPath) + "/releases/" + Uri.EscapeDataString(tagName));
+        using var request = CreateRequest(HttpMethod.Delete, url);
+        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        await EnsureSuccessAsync(HttpMethod.Delete, url, response, cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     /// <summary>
