@@ -54,29 +54,29 @@ Each table below states a status for every item.
 
 ### Operating systems
 
-| Operating system | Status    |
-| ---------------- | --------- |
-| Windows          | Supported |
-| Linux            | Supported |
-| macOS            | Untested  |
+| Operating system | Status         |
+| ---------------- | -------------- |
+| Windows          | Supported      |
+| Linux            | Supported      |
+| macOS            | ??? (untested) |
 
 ### Project types
 
-| Project type                                             | Status      |
-| -------------------------------------------------------- | ----------- |
-| Multi-platform and cross-platform projects               | Supported   |
-| Libraries                                                | Supported   |
-| Console apps                                             | Supported   |
-| File-based apps                                          | Supported   |
-| Windows Forms                                            | Supported   |
-| ASP.NET                                                  | Supported   |
-| Projects using the `Microsoft.Build.NoTargets` SDK       | Supported   |
-| [Avalonia UI](https://avaloniaui.net)                    | Supported   |
-| WPF                                                      | Untested    |
-| [UNO Platform](https://platform.uno)                     | Untested    |
-| .NET MAUI                                                | Untested    |
-| Legacy projects, with no `Sdk` attribute                 | Unsupported |
-| Projects whose SDK does not layer on `Microsoft.NET.Sdk` | Unsupported |
+| Project type                                             | Status         |
+| -------------------------------------------------------- | -------------- |
+| Multi-platform and cross-platform projects               | Supported      |
+| Libraries                                                | Supported      |
+| Console apps                                             | Supported      |
+| File-based apps                                          | Supported      |
+| Windows Forms                                            | Supported      |
+| ASP.NET                                                  | Supported      |
+| Projects using the `Microsoft.Build.NoTargets` SDK       | Supported      |
+| [Avalonia UI](https://avaloniaui.net)                    | Supported      |
+| WPF                                                      | ??? (untested) |
+| [UNO Platform](https://platform.uno)                     | ??? (untested) |
+| .NET MAUI                                                | ??? (untested) |
+| Legacy projects, with no `Sdk` attribute                 | Unsupported    |
+| Projects whose SDK does not layer on `Microsoft.NET.Sdk` | Unsupported    |
 
 ### Programming languages
 
@@ -92,10 +92,10 @@ Each table below states a status for every item.
 | Git host                                    | Status                | Limits                                                                                                                                                                                         |
 | ------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GitHub                                      | Supported             |                                                                                                                                                                                                |
-| GitHub Enterprise Server                    | Untested              | [SourceLink](https://github.com/dotnet/sourcelink) needs a `SourceLinkGitHubHost` item.                                                                                                        |
-| GitHub Enterprise Cloud with data residency | Untested              | SourceLink needs a `SourceLinkGitHubHost` item, with `ContentUrl` set to `https://raw.<host>`.                                                                                                 |
-| GitLab                                      | Untested              |                                                                                                                                                                                                |
-| Self-managed GitLab                         | Untested              | SourceLink needs a `SourceLinkGitLabHost` item.                                                                                                                                                |
+| GitHub Enterprise Server                    | Supported (untested)  | [SourceLink](https://github.com/dotnet/sourcelink) needs a `SourceLinkGitHubHost` item.                                                                                                        |
+| GitHub Enterprise Cloud with data residency | Supported (untested)  | SourceLink needs a `SourceLinkGitHubHost` item, with `ContentUrl` set to `https://raw.<host>`.                                                                                                 |
+| GitLab                                      | Supported (untested)  |                                                                                                                                                                                                |
+| Self-managed GitLab                         | Supported (untested)  | SourceLink needs a `SourceLinkGitLabHost` item.                                                                                                                                                |
 | Other Git hosts                             | Supported with limits | Buildvana SDK does not configure SourceLink.<br>`bv release` creates no release page, and runs only with [`release.allowUnknownHost`](tool-commands/release.md#publishing-on-an-unknown-host). |
 
 ### CI platforms
@@ -105,12 +105,12 @@ Generic CI is any other runner that the .NET CLI recognizes as one.
 Local is a machine where `bv` recognizes no CI runner, such as a developer machine.
 Every CI platform runs every command, `bv release` included.
 
-| CI platform                                                            | Status    |
-| ---------------------------------------------------------------------- | --------- |
-| GitHub Actions                                                         | Supported |
-| GitLab CI                                                              | Supported |
-| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported |
-| Local                                                                  | Supported |
+| CI platform                                                            | Status               |
+| ---------------------------------------------------------------------- | -------------------- |
+| GitHub Actions                                                         | Supported            |
+| GitLab CI                                                              | Supported (untested) |
+| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported (untested) |
+| Local                                                                  | Supported (untested) |
 
 ### Toolchain
 
