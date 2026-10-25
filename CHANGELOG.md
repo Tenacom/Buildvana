@@ -53,6 +53,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
 - `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing-on-an-unknown-host) on a Git host `bv` does not know.
 - `bv release` [publishes on GitLab](docs/tool-commands/release.md#publishing-on-gitlab), with the assets in the generic package registry of the project, and `hosts.gitlab.tokenEnv` names the token variable.
+- `bv release` takes a host whose name ends in `.ghe.com` for [GitHub Enterprise Cloud with data residency](docs/tool-commands/release.md#publishing-on-github), whose API is at `https://api.<host>`.
 - [`bv info`](docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
 
 ### Changes to existing features

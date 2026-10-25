@@ -44,7 +44,7 @@ Before building anything, `bv release` checks what a build cannot change:
 2. The clone has a remote that names that repository, as [The release remote](#the-release-remote) says.
 3. `bv` knows the Git host of `repository.url`, or `release.allowUnknownHost` is `true`.
    `bv` takes `repository.host` when it is not `auto`.
-   Otherwise, `github.com` is GitHub, and `gitlab.com` is GitLab.
+   Otherwise, `github.com` and any host whose name ends in `.ghe.com` are GitHub, and `gitlab.com` is GitLab.
    Otherwise, a host whose name is the host name of [`GITHUB_SERVER_URL`](../environment-variables.md#github_server_url) is a GitHub Enterprise Server, on GitHub Actions.
    Otherwise, a host whose name is the host name of [`CI_SERVER_URL`](../environment-variables.md#ci_server_url) is a self-managed GitLab instance, on GitLab CI.
    Any other host is unknown.
@@ -232,6 +232,7 @@ The last line of a release is `notice: Published release <version> with <count> 
 
 `bv` reaches the API of the host of `repository.url`.
 For `github.com`, the API is at `https://api.github.com`.
+A host whose name ends in `.ghe.com` belongs to GitHub Enterprise Cloud with data residency, and its API is at `https://api.<host>`.
 `bv` takes any other host for a GitHub Enterprise Server, whose API is at `https://<host>/api/v3`.
 An asset upload goes to the address that GitHub states in the answer to the creation of the draft release.
 
