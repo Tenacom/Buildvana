@@ -42,6 +42,8 @@ internal sealed class HookArgsSecretsTests
                 Hosts = new() {
                     GitHub = new() { TokenEnv = credentialEnvVar },
                     GitLab = new() { TokenEnv = credentialEnvVar },
+                    Gitea = new() { TokenEnv = credentialEnvVar },
+                    Forgejo = new() { TokenEnv = credentialEnvVar },
                 },
                 NuGet = new() {
                     Feeds = new() {

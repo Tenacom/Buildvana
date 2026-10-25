@@ -26,7 +26,9 @@
           "enum": [
             "auto",
             "github",
-            "gitlab"
+            "gitlab",
+            "gitea",
+            "forgejo"
           ],
           "default": "auto"
         }
@@ -381,6 +383,30 @@
               "description": "Name of the environment variable that holds the GitLab access token.",
               "type": "string",
               "default": "GITLAB_TOKEN"
+            }
+          },
+          "additionalProperties": false
+        },
+        "gitea": {
+          "description": "Configuration for the Gitea host.",
+          "type": "object",
+          "properties": {
+            "tokenEnv": {
+              "description": "Name of the environment variable that holds the Gitea access token.",
+              "type": "string",
+              "default": "GITEA_TOKEN"
+            }
+          },
+          "additionalProperties": false
+        },
+        "forgejo": {
+          "description": "Configuration for the Forgejo host.",
+          "type": "object",
+          "properties": {
+            "tokenEnv": {
+              "description": "Name of the environment variable that holds the Forgejo access token.",
+              "type": "string",
+              "default": "FORGEJO_TOKEN"
             }
           },
           "additionalProperties": false

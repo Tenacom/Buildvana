@@ -23,4 +23,12 @@ public enum HostKind
     /// <summary>The host is GitLab: <c>gitlab.com</c>, or a self-managed GitLab instance.</summary>
     [JsonStringEnumMemberName("gitlab")]
     GitLab,
+
+    /// <summary>The host is Gitea: <c>gitea.com</c>, or a self-hosted Gitea instance.</summary>
+    [JsonStringEnumMemberName("gitea")]
+    Gitea,
+
+    /// <summary>The host is Forgejo: <c>codeberg.org</c>, or a self-hosted Forgejo instance.</summary>
+    [JsonStringEnumMemberName("forgejo")]
+    Forgejo,
 }
