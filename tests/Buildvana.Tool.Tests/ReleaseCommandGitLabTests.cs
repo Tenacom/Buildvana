@@ -92,12 +92,12 @@ internal sealed class ReleaseCommandGitLabTests
         var api = Answering(accessLevel: 40);
         using var harness = new ReleaseHarness(new() { GitLabApi = api, WithHook = true });
         var remoteTip = harness.Repo.GetRemoteTipSha();
+        var artifactsPath = harness.ArtifactsPath;
 
-        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
         harness.HookBehavior = () => {
-            var path = Path.Combine(harness.ArtifactsPath, "Foo 1.zip");
+            var path = Path.Combine(artifactsPath, "Foo 1.zip");
             File.WriteAllText(path, "fake zip");
-            File.WriteAllText(Path.Combine(harness.ArtifactsPath, "Bad.assets.txt"), $"{path}\tapplication/zip\tBad zip\n");
+            File.WriteAllText(Path.Combine(artifactsPath, "Bad.assets.txt"), $"{path}\tapplication/zip\tBad zip\n");
         };
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
