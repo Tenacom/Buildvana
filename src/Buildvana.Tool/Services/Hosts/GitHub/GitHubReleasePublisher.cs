@@ -132,6 +132,7 @@ internal sealed class GitHubReleasePublisher : ReleasePublisher
     /// <remarks>
     /// <para>A deleted release is named after the tag it was published under. A draft carries a provisional name,
     /// which the release commit may have made wrong, so it is reported as the draft it is.</para>
+    /// <para>A release that no longer exists is no failure, because there is nothing left to undo.</para>
     /// </remarks>
     public override async Task UndoAsync()
     {
@@ -141,8 +142,16 @@ internal sealed class GitHubReleasePublisher : ReleasePublisher
         }
 
         _reporter.Info("Deleting the previously created release...");
-        await _host.Client.DeleteReleaseAsync(_host.Owner, _host.Repository, _release.Id).ConfigureAwait(false);
-        _reporter.Notice(_publishedTag is null ? "Deleted the provisional draft release." : $"Deleted release {_publishedTag}.");
+        var deleted = await _host.Client.DeleteReleaseAsync(_host.Owner, _host.Repository, _release.Id).ConfigureAwait(false);
+        if (deleted)
+        {
+            _reporter.Notice(_publishedTag is null ? "Deleted the provisional draft release." : $"Deleted release {_publishedTag}.");
+        }
+        else
+        {
+            _reporter.Info(_publishedTag is null ? "Provisional draft release not found." : $"Release {_publishedTag} not found.");
+        }
+
         _release = null;
     }
 

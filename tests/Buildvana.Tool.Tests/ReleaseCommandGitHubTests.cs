@@ -3,6 +3,7 @@
 
 using System.Net;
 using Buildvana.Core;
+using Buildvana.Core.ConsoleOutput;
 
 /// <summary>
 /// End-to-end tests of the <c>release</c> command on a real GitHub host, whose API answers from a table
@@ -98,9 +99,31 @@ internal sealed class ReleaseCommandGitHubTests
         await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
     }
 
-    // The draft, the notes, the update, and the deletion have answers. Every other request, the uploads
-    // included, gets the fallback answer.
-    private static StubHttpMessageHandler Answering(StubHttpAnswer fallback)
+    // A draft deleted by someone else leaves nothing to undo, so the rollback reports it and goes on.
+    [Test]
+    public async Task Release_WhenAnUploadFails_AndTheDraftIsGone_ReportsIt_AndDeletesTheTag()
+    {
+        var api = Answering(
+            new StubHttpAnswer(HttpStatusCode.UnprocessableEntity, """{"message":"Validation Failed"}"""),
+            new StubHttpAnswer(HttpStatusCode.NotFound, """{"message":"Not Found"}"""));
+        using var harness = new ReleaseHarness(new() { GitHubApi = api });
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        _ = await Assert.That(Act).Throws<BuildFailedException>();
+        await Assert.That(api.Requests[^1].Method).IsEqualTo(HttpMethod.Delete);
+        var messages = harness.Reporter.Messages;
+        await Assert.That(messages.Select(static x => x.Message)).Contains("Provisional draft release not found.");
+        await Assert.That(harness.Notices).DoesNotContain("Deleted the provisional draft release.");
+        var warnings = messages.Where(static x => x.Level == MessageLevel.Warning).Select(static x => x.Message);
+        await Assert.That(warnings.Any(static x => x.Contains("rollback", StringComparison.Ordinal))).IsFalse();
+        await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
+    }
+
+    // The draft, the notes, the update, and the deletion have answers. The deletion succeeds unless
+    // deletion names another answer. Every other request, the uploads included, gets the fallback answer.
+    private static StubHttpMessageHandler Answering(StubHttpAnswer fallback, StubHttpAnswer? deletion = null)
         => new(
             new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer> {
                 [(HttpMethod.Post, ApiRepositoryUrl + "/releases")] = new(
@@ -110,7 +133,7 @@ internal sealed class ReleaseCommandGitHubTests
                     HttpStatusCode.OK,
                     """{"name":"notes","body":"## What's Changed"}"""),
                 [(HttpMethod.Patch, ApiRepositoryUrl + "/releases/42")] = new(HttpStatusCode.OK, """{"id":42}"""),
-                [(HttpMethod.Delete, ApiRepositoryUrl + "/releases/42")] = new(HttpStatusCode.NoContent),
+                [(HttpMethod.Delete, ApiRepositoryUrl + "/releases/42")] = deletion ?? new(HttpStatusCode.NoContent),
             },
             fallback);
 }
