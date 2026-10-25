@@ -149,12 +149,22 @@ internal sealed class GitHubApiClientTests
     }
 
     [Test]
-    public async Task DeleteReleaseAsync_DeletesTheRelease()
+    public async Task DeleteReleaseAsync_WhenTheReleaseIsDeleted_ReturnsTrue()
     {
         var handler = Answering((HttpMethod.Delete, ApiRepositoryUrl + "/releases/42"), null, HttpStatusCode.NoContent);
         using var client = NewClient(handler);
-        await client.DeleteReleaseAsync(Owner, Repo, 42).ConfigureAwait(false);
+        await Assert.That(await client.DeleteReleaseAsync(Owner, Repo, 42).ConfigureAwait(false)).IsTrue();
         await Assert.That(handler.Requests).Count().IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task DeleteReleaseAsync_WhenTheApiAnswersNotFound_ReturnsFalse()
+    {
+        var handler = Answering();
+        using var client = NewClient(handler);
+        await Assert.That(await client.DeleteReleaseAsync(Owner, Repo, 42).ConfigureAwait(false)).IsFalse();
+        await Assert.That(handler.Requests[0].Method).IsEqualTo(HttpMethod.Delete);
+        await Assert.That(handler.Requests[0].Url).IsEqualTo(ApiRepositoryUrl + "/releases/42");
     }
 
     [Test]

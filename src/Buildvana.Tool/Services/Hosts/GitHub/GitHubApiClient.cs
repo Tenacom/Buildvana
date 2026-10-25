@@ -27,8 +27,9 @@ namespace Buildvana.Tool.Services.Hosts.GitHub;
 /// <c>https://&lt;host&gt;/api/v3</c>.</para>
 /// <para>An asset upload goes to the address that the release states in its <c>upload_url</c> member, so this
 /// type derives no upload host.</para>
-/// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The one exception
-/// is a tag lookup, where a 404 means that the tag does not exist.</para>
+/// <para>An answer outside the 2xx range fails the build, as <see cref="HostApiClient"/> says. The exceptions
+/// are <see cref="DeleteReleaseAsync"/>, where a 404 means that the release does not exist, and
+/// <see cref="TagExistsAsync"/>, where a 404 means that the tag does not exist.</para>
 /// </remarks>
 internal sealed class GitHubApiClient : HostApiClient
 {
@@ -163,13 +164,25 @@ internal sealed class GitHubApiClient : HostApiClient
     /// <param name="name">The name of the repository.</param>
     /// <param name="releaseId">The identifier of the release.</param>
     /// <param name="cancellationToken">A token that cancels the operation.</param>
-    /// <returns>A <see cref="Task"/> representing the ongoing operation.</returns>
-    public Task DeleteReleaseAsync(
+    /// <returns>A <see cref="Task"/> whose result is <see langword="true"/> when the release was deleted, and
+    /// <see langword="false"/> when the API answers 404.</returns>
+    public async Task<bool> DeleteReleaseAsync(
         string owner,
         string name,
         long releaseId,
         CancellationToken cancellationToken = default)
-        => SendAsync(HttpMethod.Delete, ApiUrl(ReleasePath(owner, name, releaseId)), null, cancellationToken);
+    {
+        var url = ApiUrl(ReleasePath(owner, name, releaseId));
+        using var request = CreateRequest(HttpMethod.Delete, url);
+        using var response = await SendCoreAsync(request, url, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        await EnsureSuccessAsync(HttpMethod.Delete, url, response, cancellationToken).ConfigureAwait(false);
+        return true;
+    }
 
     /// <summary>
     /// Asynchronously gets a value indicating whether a tag exists.
