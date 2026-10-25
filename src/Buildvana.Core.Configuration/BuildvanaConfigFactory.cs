@@ -170,6 +170,8 @@ public static class BuildvanaConfigFactory
         => new() {
             GitHub = ComposeGitHub(json?.GitHub),
             GitLab = ComposeGitLab(json?.GitLab),
+            Gitea = ComposeGitea(json?.Gitea),
+            Forgejo = ComposeForgejo(json?.Forgejo),
         };
 
     // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
@@ -186,6 +188,24 @@ public static class BuildvanaConfigFactory
     {
         var defaults = new GitLabConfig();
         return new GitLabConfig {
+            TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
+        };
+    }
+
+    // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
+    private static GiteaConfig ComposeGitea(GiteaJsonConfig? json)
+    {
+        var defaults = new GiteaConfig();
+        return new GiteaConfig {
+            TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
+        };
+    }
+
+    // A blank tokenEnv cannot name a variable, so it counts as not stated at all.
+    private static ForgejoConfig ComposeForgejo(ForgejoJsonConfig? json)
+    {
+        var defaults = new ForgejoConfig();
+        return new ForgejoConfig {
             TokenEnv = NormalizeBlankToNull(json?.TokenEnv) ?? defaults.TokenEnv,
         };
     }

@@ -22,4 +22,14 @@ public sealed record HostsJsonConfig
     [JsonPropertyName("gitlab")]
     [Description("Configuration for the GitLab host.")]
     public GitLabJsonConfig? GitLab { get; init; }
+
+    /// <summary>Gets the <c>hosts.gitea</c> section.</summary>
+    [JsonPropertyName("gitea")]
+    [Description("Configuration for the Gitea host.")]
+    public GiteaJsonConfig? Gitea { get; init; }
+
+    /// <summary>Gets the <c>hosts.forgejo</c> section.</summary>
+    [JsonPropertyName("forgejo")]
+    [Description("Configuration for the Forgejo host.")]
+    public ForgejoJsonConfig? Forgejo { get; init; }
 }

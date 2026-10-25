@@ -22,4 +22,12 @@ public sealed record HostsConfig
     /// <summary>Gets the resolved GitLab configuration.</summary>
     [JsonPropertyName("gitlab")]
     public GitLabConfig GitLab { get; init; } = new();
+
+    /// <summary>Gets the resolved Gitea configuration.</summary>
+    [JsonPropertyName("gitea")]
+    public GiteaConfig Gitea { get; init; } = new();
+
+    /// <summary>Gets the resolved Forgejo configuration.</summary>
+    [JsonPropertyName("forgejo")]
+    public ForgejoConfig Forgejo { get; init; } = new();
 }

@@ -152,6 +152,18 @@
       // Name of the environment variable that holds the GitLab access token.
       "tokenEnv": "GITLAB_TOKEN",
     },
+
+    // Configuration for the Gitea host.
+    "gitea": {
+      // Name of the environment variable that holds the Gitea access token.
+      "tokenEnv": "GITEA_TOKEN",
+    },
+
+    // Configuration for the Forgejo host.
+    "forgejo": {
+      // Name of the environment variable that holds the Forgejo access token.
+      "tokenEnv": "FORGEJO_TOKEN",
+    },
   },
 
   // Configuration for Git-related behavior.
