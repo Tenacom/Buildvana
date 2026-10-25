@@ -143,6 +143,36 @@ internal sealed class GitLabReleasePublisherTests
         await Assert.That(notices).IsEquivalentTo(expectedNotices, CollectionOrdering.Matching);
     }
 
+    // A rollback deletes the release tag first, and GitLab deletes the release with it.
+    [Test]
+    public async Task UndoAsync_WhenTheReleaseIsGone_DeletesThePackage()
+    {
+        var api = Answering(releaseDeletion: new(HttpStatusCode.NotFound, """{"message":"404 Not found"}"""));
+        var reporter = new CaptureReporter();
+
+        await RunAsync(api, PublishThenUndoAsync, reporter).ConfigureAwait(false);
+
+        await Assert.That(api.Requests[^1].Url).IsEqualTo(ApiProjectUrl + "/packages/7");
+        var notices = reporter.Messages.Where(static x => x.Level == MessageLevel.Notice).Select(static x => x.Message);
+        string[] expectedNotices = [$"Deleted generic package buildvana {Tag}."];
+        await Assert.That(notices).IsEquivalentTo(expectedNotices, CollectionOrdering.Matching);
+        await Assert.That(reporter.Messages.Any(static x => x.Level == MessageLevel.Warning)).IsFalse();
+    }
+
+    [Test]
+    public async Task UndoAsync_WhenTheReleaseDeletionFails_WarnsAndDeletesThePackage()
+    {
+        var api = Answering(releaseDeletion: new(HttpStatusCode.InternalServerError, """{"message":"500 Internal Server Error"}"""));
+        var reporter = new CaptureReporter();
+
+        await RunAsync(api, PublishThenUndoAsync, reporter).ConfigureAwait(false);
+
+        await Assert.That(api.Requests[^1].Url).IsEqualTo(ApiProjectUrl + "/packages/7");
+        var warnings = reporter.Messages.Where(static x => x.Level == MessageLevel.Warning).Select(static x => x.Message).ToArray();
+        await Assert.That(warnings.Length).IsEqualTo(1);
+        await Assert.That(warnings[0]).StartsWith($"BuildFailedException while deleting release {Tag}:");
+    }
+
     [Test]
     public async Task UndoAsync_WhenTheReleaseWasNotCreated_DeletesThePackage()
     {
@@ -215,12 +245,22 @@ internal sealed class GitLabReleasePublisherTests
         return Task.CompletedTask;
     }
 
+    private static async Task PublishThenUndoAsync(ReleasePublisher publisher, IReadOnlyList<ReleaseAsset> assets)
+    {
+        await publisher.PublishAsync(Tag, "abc123", assets).ConfigureAwait(false);
+        await publisher.UndoAsync().ConfigureAwait(false);
+    }
+
     private static StubHttpAnswer Member(int accessLevel)
         => new(HttpStatusCode.OK, $$"""{"id":42,"access_level":{{accessLevel}}}""");
 
     // The releases, the user, every upload, and the deletions have answers. The membership has one when
-    // member is not null, and the release creation has a 201 unless release names another answer.
-    private static StubHttpMessageHandler Answering(StubHttpAnswer? member = null, StubHttpAnswer? release = null)
+    // member is not null. The release creation and the release deletion succeed unless release and
+    // releaseDeletion name other answers.
+    private static StubHttpMessageHandler Answering(
+        StubHttpAnswer? member = null,
+        StubHttpAnswer? release = null,
+        StubHttpAnswer? releaseDeletion = null)
     {
         var answers = new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer> {
             [(HttpMethod.Get, ReleasesUrl + "?per_page=1")] = new(HttpStatusCode.OK, "[]"),
@@ -228,7 +268,7 @@ internal sealed class GitLabReleasePublisherTests
             [(HttpMethod.Put, PackageUrl + "/Foo.1.0.0.nupkg?select=package_file")] = new(HttpStatusCode.OK, """{"package_id":7}"""),
             [(HttpMethod.Put, PackageUrl + "/setup.exe?select=package_file")] = new(HttpStatusCode.OK, """{"package_id":7}"""),
             [(HttpMethod.Post, ReleasesUrl)] = release ?? new(HttpStatusCode.Created, $$"""{"tag_name":"{{Tag}}"}"""),
-            [(HttpMethod.Delete, ReleasesUrl + "/" + Tag)] = new(HttpStatusCode.OK, $$"""{"tag_name":"{{Tag}}"}"""),
+            [(HttpMethod.Delete, ReleasesUrl + "/" + Tag)] = releaseDeletion ?? new(HttpStatusCode.OK, $$"""{"tag_name":"{{Tag}}"}"""),
             [(HttpMethod.Delete, ApiProjectUrl + "/packages/7")] = new(HttpStatusCode.NoContent),
         };
         if (member is not null)
