@@ -16,6 +16,7 @@ using Buildvana.Tool.Infrastructure.DependencyInjection;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hosts;
+using Buildvana.Tool.Services.Hosts.Gitea;
 using Buildvana.Tool.Services.Hosts.GitHub;
 using Buildvana.Tool.Services.Hosts.GitLab;
 using Buildvana.Tool.Services.Platforms;
@@ -291,6 +292,11 @@ internal sealed class ReleaseHarness : IDisposable
             return new GitLabHost(services, ParseRepositoryUrl(services), gitLabApi);
         }
 
+        if (_options.GiteaApi is { } giteaApi)
+        {
+            return new GiteaHost(services, ParseRepositoryUrl(services), giteaApi);
+        }
+
         return new RecordingHost {
             TokenVariable = _options.HostTokenEnv,
             PushUser = _options.PushUser,
@@ -469,6 +475,7 @@ internal sealed class ReleaseHarness : IDisposable
             ["hosts"] = new JsonObject {
                 ["github"] = new JsonObject { ["tokenEnv"] = _options.HostTokenEnv },
                 ["gitlab"] = new JsonObject { ["tokenEnv"] = _options.HostTokenEnv },
+                ["gitea"] = new JsonObject { ["tokenEnv"] = _options.HostTokenEnv },
             },
         };
         if (_options.RepositoryUrl is { } repositoryUrl)

@@ -115,6 +115,13 @@ internal sealed record ReleaseHarnessOptions
     public StubHttpMessageHandler? GitLabApi { get; init; }
 
     /// <summary>
+    /// Gets the handler that answers the requests of a real <see cref="Buildvana.Tool.Services.Hosts.Gitea.GiteaHost"/>,
+    /// or <see langword="null"/> for a <see cref="RecordingHost"/>. Ignored when <see cref="UnknownHost"/> is
+    /// <see langword="true"/>, or <see cref="GitHubApi"/> or <see cref="GitLabApi"/> is not <see langword="null"/>.
+    /// </summary>
+    public StubHttpMessageHandler? GiteaApi { get; init; }
+
+    /// <summary>
     /// Gets the name of the variable that holds the token of the host: the <c>tokenEnv</c> of every section
     /// under <c>hosts</c>. The harness sets it to <see cref="PushSecret"/> for the duration of the test.
     /// </summary>

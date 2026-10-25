@@ -7,6 +7,7 @@ using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hosts;
+using Buildvana.Tool.Services.Hosts.Gitea;
 using Buildvana.Tool.Services.Hosts.GitHub;
 using Buildvana.Tool.Services.Hosts.GitLab;
 using Buildvana.Tool.Services.Platforms;
@@ -40,6 +41,15 @@ internal sealed class GitHostTests
     public async Task DetectKind_ForGitLabCom_IsGitLab(string url)
     {
         await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.GitLab);
+    }
+
+    [Test]
+    [Arguments("https://gitea.com/tenacom/buildvana")]
+    [Arguments("https://Gitea.com/tenacom/buildvana.git")]
+    [Arguments("git@gitea.com:tenacom/buildvana.git")]
+    public async Task DetectKind_ForGiteaCom_IsGitea(string url)
+    {
+        await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.Gitea);
     }
 
     [Test]
@@ -110,6 +120,16 @@ internal sealed class GitHostTests
         await using (services.ConfigureAwait(false))
         {
             await Assert.That(GitHost.Create(services)).IsTypeOf<GitLabHost>();
+        }
+    }
+
+    [Test]
+    public async Task Create_ForGiteaCom_CreatesAGiteaHost()
+    {
+        var services = Services("https://gitea.com/tenacom/buildvana");
+        await using (services.ConfigureAwait(false))
+        {
+            await Assert.That(GitHost.Create(services)).IsTypeOf<GiteaHost>();
         }
     }
 
