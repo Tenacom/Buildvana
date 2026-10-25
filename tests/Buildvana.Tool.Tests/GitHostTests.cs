@@ -155,7 +155,7 @@ internal sealed class GitHostTests
         var services = Services("https://git.example.invalid/test-repo");
         await using (services.ConfigureAwait(false))
         {
-            // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before services is disposed
+            // ReSharper disable once AccessToDisposedClosure // False positive: the lambda runs before services is disposed
             var exception = await Assert.That(() => GitHost.Create(services)).Throws<BuildFailedException>();
             await Assert.That(exception!.Message).Contains("names no repository");
         }
@@ -181,7 +181,8 @@ internal sealed class GitHostTests
         await publisher.UndoAsync().ConfigureAwait(false);
 
         var notice = reporter.Messages.Single(x => x.Level == MessageLevel.Notice).Message;
-        await Assert.That(notice).IsEqualTo("No release page created for 1.0.0: bv cannot publish a release on unknown host (git.example.invalid).");
+        await Assert.That(notice).IsEqualTo(
+            "No release page created for 1.0.0: bv cannot publish a release on unknown host (git.example.invalid).");
     }
 
     [Test]
@@ -214,7 +215,8 @@ internal sealed class GitHostTests
 
     private static RepositoryConfig Repository(string? url) => new() { Url = url };
 
-    private static GitUrlInfo Parse(string url) => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
+    private static GitUrlInfo Parse(string url)
+        => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
 
     private static ServiceProvider Services(string url)
         => new ServiceCollection()

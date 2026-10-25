@@ -161,7 +161,9 @@ internal sealed class ReleaseHarness : IDisposable
     /// <summary>
     /// Gets the Git host the release drives.
     /// </summary>
-    /// <exception cref="InvalidCastException">The harness runs on an unknown host (<see cref="ReleaseHarnessOptions.UnknownHost"/>).</exception>
+    /// <exception cref="InvalidCastException">
+    /// The harness runs on an unknown host (<see cref="ReleaseHarnessOptions.UnknownHost"/>).
+    /// </exception>
     public RecordingHost Host => (RecordingHost)_services.GetRequiredService<GitHost>();
 
     /// <summary>
