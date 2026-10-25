@@ -56,14 +56,14 @@ internal sealed class ReleaseCommandGitHubTests
         var api = Answering(new StubHttpAnswer(HttpStatusCode.Created, """{"id":7}"""));
         using var harness = new ReleaseHarness(new() { GitHubApi = api, WithHook = true });
         var remoteTip = harness.Repo.GetRemoteTipSha();
+        var artifactsPath = harness.ArtifactsPath;
 
-        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
         harness.HookBehavior = () => {
-            var directory = Directory.CreateDirectory(Path.Combine(harness.ArtifactsPath, "other")).FullName;
+            var directory = Directory.CreateDirectory(Path.Combine(artifactsPath, "other")).FullName;
             var path = Path.Combine(directory, "setup.exe");
             File.WriteAllText(path, "fake setup");
             File.WriteAllText(
-                Path.Combine(harness.ArtifactsPath, "Other.assets.txt"),
+                Path.Combine(artifactsPath, "Other.assets.txt"),
                 $"{path}\tapplication/vnd.microsoft.portable-executable\tOther setup program\n");
         };
 
