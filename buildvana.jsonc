@@ -23,7 +23,7 @@
 {
   // In buildvana.jsonc, the version pinned in dotnet-tools.json. In
   // buildvana.next.jsonc, main: the version it describes does not exist yet.
-  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.829-preview/schemas/buildvana.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Tenacom/Buildvana/2.1.849-preview/schemas/buildvana.schema.json",
 
   "repository": {
     "url": "https://github.com/Tenacom/Buildvana",
