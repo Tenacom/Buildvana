@@ -544,7 +544,7 @@ dotnet_diagnostic.RS0058.severity = warning # Missing shipped or unshipped inter
 # Every rule is listed, defaults included.
 # See https://github.com/tom-englert/Nullable.Extended
 # ----------------------------------------------------------------------------------------------
-# Last update: 2026-10-26 (Nullable.Extended.Analyzer 1.18.0)
+# Last update: 2026-10-26 (Nullable.Extended.Analyzer 1.18.2)
 # ==============================================================================================
 
 dotnet_diagnostic.NX0001.severity = warning # Find general usages of the NullForgiving operator
