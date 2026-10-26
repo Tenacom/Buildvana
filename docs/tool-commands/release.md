@@ -19,6 +19,8 @@ This page says what the command checks, what it does step by step, and what it u
 - [Publishing](#publishing)
   - [Publishing on GitHub](#publishing-on-github)
   - [Publishing on GitLab](#publishing-on-gitlab)
+  - [Publishing on Gitea](#publishing-on-gitea)
+  - [Publishing on Forgejo](#publishing-on-forgejo)
   - [Publishing on an unknown host](#publishing-on-an-unknown-host)
 - [Rollback](#rollback)
 - [Options](#options)
@@ -36,7 +38,7 @@ bv release [OPTIONS]
 
 `bv release` runs on every [CI platform](../introduction.md#ci-platforms), Local included.
 A release from a developer machine goes through the same steps as a release from a CI runner.
-The Git host decides where the release is published: GitHub, GitLab, or a host `bv` does not know.
+The Git host decides where the release is published: GitHub, GitLab, Gitea, Forgejo, or a host `bv` does not know.
 
 Before building anything, `bv release` checks what a build cannot change:
 
@@ -45,8 +47,11 @@ Before building anything, `bv release` checks what a build cannot change:
 3. `bv` knows the Git host of `repository.url`, or `release.allowUnknownHost` is `true`.
    `bv` takes `repository.host` when it is not `auto`.
    Otherwise, `github.com` and any host whose name ends in `.ghe.com` are GitHub, and `gitlab.com` is GitLab.
+   Otherwise, `gitea.com` is Gitea, and `codeberg.org` is Forgejo.
    Otherwise, a host whose name is the host name of [`GITHUB_SERVER_URL`](../environment-variables.md#github_server_url) is a GitHub Enterprise Server, on GitHub Actions.
    Otherwise, a host whose name is the host name of [`CI_SERVER_URL`](../environment-variables.md#ci_server_url) is a self-managed GitLab instance, on GitLab CI.
+   Otherwise, a host whose name is the host name of `GITHUB_SERVER_URL` is a self-hosted Gitea instance, on Gitea Actions.
+   Otherwise, a host whose name is the host name of [`FORGEJO_SERVER_URL`](../environment-variables.md#forgejo_server_url) is a self-hosted Forgejo instance, on Forgejo Actions.
    Any other host is unknown.
 4. `HEAD` is on a branch, and the branch produces [public releases](../sdk-modules/versioning.md#public-releases) under `release.branches`.
 5. A committer identity exists for the commits of the release.
@@ -54,16 +59,22 @@ Before building anything, `bv release` checks what a build cannot change:
    The three are the `git.identity` setting of `buildvana.jsonc`, the bot identity of the CI platform, and the `user.name` and `user.email` of the Git configuration.
    On GitHub Actions, the bot identity is `github-actions[bot]`.
    On GitLab CI, it is `GitLab CI`, with the address `gitlab-ci@noreply.<host>` built from [`CI_SERVER_HOST`](../environment-variables.md#ci_server_host).
+   On Gitea Actions, it is `gitea-actions`, with the address `gitea-actions@noreply.<host>` built from `GITHUB_SERVER_URL`.
+   On Forgejo Actions, it is `forgejo-actions`, with the address `noreply@forgejo.org`.
    `bv` commits with that identity, and writes nothing to the Git configuration.
 6. The host supplies Git credentials.
    On GitHub, they are `x-access-token` and the token that [`hosts.github.tokenEnv`](../environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) names.
    On GitLab, they are a username and the token that `hosts.gitlab.tokenEnv` names, as [Publishing on GitLab](#publishing-on-gitlab) says.
+   On Gitea, they are `token` and the token that `hosts.gitea.tokenEnv` names.
+   On Forgejo, they are `token` and the token that `hosts.forgejo.tokenEnv` names.
+   Both hosts ignore the username when the password is a token.
    An unknown host supplies none.
    Without them, `bv` warns that the fetch and the push may fail, and goes on.
 7. `bv` fetches the tags of the release remote.
 8. The published versions are consistent: the latest tag is not below the latest stable tag, and the current version is below neither.
 9. The version spec change is computed from `--bump` and the public API files, as [`bv version advance`](version.md#bv-version-advance) computes it.
-10. [`GITHUB_OUTPUT`](../environment-variables.md#github_output) is set, on GitHub Actions.
+10. [`GITHUB_OUTPUT`](../environment-variables.md#github_output) is set, on GitHub Actions and on Gitea Actions.
+    [`FORGEJO_OUTPUT`](../environment-variables.md#forgejo_output) is set, on Forgejo Actions, which takes Forgejo Runner 9.0.0 or later.
 
 [`bv info`](info.md) reports the release remote, the Git host, the token, and the committer identity, without releasing.
 
@@ -95,6 +106,7 @@ When no remote matches, the release fails, and the message names the remotes of 
 1. Check that the token can publish on the host, so that a token without permission fails the release early.
    On GitHub, create a provisional draft release, named `<version> [provisional]`.
    On GitLab, read the releases of the project, and check the role of the token, as [Publishing on GitLab](#publishing-on-gitlab) says.
+   On Gitea and Forgejo, read the repository, and check that its releases are enabled and that the token can push to it.
 2. Rewrite `VERSION` when the version spec change is not `none`, with the tag `versioning.prereleaseTag` names.
 3. For a stable version, move the unshipped public and internal API into the shipped one.
    Every `PublicAPI.Unshipped.txt` next to a `PublicAPI.Shipped.txt` is emptied into it, and a line starting with `*REMOVED*` removes its API from the shipped file.
@@ -225,7 +237,8 @@ A line with the wrong shape, or one naming a file that does not exist, is a warn
 `bv` collects the assets before it pushes the commits, so that an asset the host refuses fails the release before anything leaves the clone.
 
 `bv` then publishes the release on the Git host, as the sections below say.
-On GitHub Actions, `bv` appends `version=<version>` to the file [`GITHUB_OUTPUT`](../environment-variables.md#github_output) names, for the later steps of the job.
+On GitHub Actions and on Gitea Actions, `bv` appends `version=<version>` to the file [`GITHUB_OUTPUT`](../environment-variables.md#github_output) names, for the later steps of the job.
+On Forgejo Actions, the file is the one [`FORGEJO_OUTPUT`](../environment-variables.md#forgejo_output) names.
 The last line of a release is `notice: Published release <version> with <count> assets.`
 
 ### Publishing on GitHub
@@ -288,6 +301,79 @@ GitLab accepts an asset only when its file name meets the rules of the generic p
 Two assets of a release also differ in file name and in description.
 An asset that breaks a rule fails the release before the push of the commits.
 
+### Publishing on Gitea
+
+`bv` reaches the API of the host of `repository.url` at `https://<host>/api/v1`, on `gitea.com` and on a self-hosted instance alike.
+`bv` recognizes a self-hosted instance on its own Gitea Actions runners.
+On any other CI platform, set `repository.host` to `gitea`.
+
+The token that `hosts.gitea.tokenEnv` names is an access token, or the token of a Gitea Actions job.
+An access token needs the `write:repository` scope.
+Its user needs write access to the code and to the releases of the repository.
+
+Before the release commit, `bv` reads the repository.
+The release fails when the releases of the repository are disabled, or when the token cannot push to the repository.
+Gitea does not state whether the token can write releases.
+A token without that access fails the release after the push of the tag, and the rollback deletes the tag.
+
+The Gitea runner puts no token in the environment of a step.
+The token of the job is the `GITEA_TOKEN` secret, so the step that runs `bv release` maps it to the variable:
+
+```yaml
+- run: dotnet bv release
+  env:
+    GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+```
+
+By default, the token of the job has write access to its repository.
+When the settings of the repository or of its owner restrict the token, the job needs `contents: write` in its `permissions`.
+A push with the token of the job starts no workflow, so no workflow runs on the release tag.
+
+After the push of the tag, `bv` creates a draft release on the release tag, uploads the assets, and publishes the draft.
+The release is named after the version, and the prerelease flag follows the version.
+Its description is a link to `CHANGELOG.md` on the release branch.
+
+Gitea processes the push of a tag in a queue, and publishes the draft on that tag when it does.
+When the queue is slow, the release appears before all its assets do.
+
+Each asset is an attachment of the release, named after its file.
+An attachment has no description, so the descriptions of the assets do not reach the release.
+Two assets with the same file name fail the release before the push of the commits.
+
+### Publishing on Forgejo
+
+`bv` reaches the API of the host of `repository.url` at `https://<host>/api/v1`, on `codeberg.org` and on a self-hosted instance alike.
+`bv` recognizes a self-hosted instance on its own Forgejo Actions runners.
+On any other CI platform, set `repository.host` to `forgejo`.
+
+The token that `hosts.forgejo.tokenEnv` names is an access token, or the token of a Forgejo Actions job.
+An access token needs the `write:repository` scope.
+Its user needs write access to the code and to the releases of the repository.
+An access token limited to specific repositories must list this repository.
+
+Before the release commit, `bv` reads the repository.
+The release fails when the releases of the repository are disabled, or when the token cannot push to the repository.
+Forgejo does not state whether the token can write releases.
+A token without that access fails the release after the push of the tag, and the rollback deletes the tag.
+
+The Forgejo runner sets `FORGEJO_TOKEN` to the token of the job in the environment of every step.
+The default of `hosts.forgejo.tokenEnv` therefore needs no setup.
+The token of the job has write access to its repository, and read access in a pull request from a fork.
+No setting changes either.
+A push with the token of the job starts no workflow, so no workflow runs on the release tag.
+
+After the push of the tag, `bv` creates a draft release on the release tag, uploads the assets, and publishes the draft.
+The release is named after the version, and the prerelease flag follows the version.
+Its description is a link to `CHANGELOG.md` on the release branch.
+
+Forgejo processes the push of a tag in a queue, and publishes the draft on that tag when it does.
+When the queue is slow, the release appears before all its assets do.
+
+Each asset is an attachment of the release, named after its file.
+An attachment has no description, so the descriptions of the assets do not reach the release.
+Two assets with the same file name fail the release before the push of the commits.
+An asset that exceeds the quota of the instance fails the release.
+
 ### Publishing on an unknown host
 
 On a host `bv` does not know, there is no release page, and `bv` says so with a notice.
@@ -304,7 +390,8 @@ When a step fails, `bv release` undoes what the earlier steps did, in reverse or
 - it resets the branch to the commit before the release commit, post-release commit included;
 - when the commits were pushed, it force-pushes the previous tip;
 - on GitHub, it deletes the release, draft or published;
-- on GitLab, it deletes the release, then the generic package, each when it exists.
+- on GitLab, it deletes the release, then the generic package, each when it exists;
+- on Gitea and Forgejo, it deletes the release, then the record the host keeps of the tag, each when it exists.
 
 A rollback action that fails is a warning, and the rollback goes on.
 Once the release is published and the step output is written, nothing is undone.

@@ -53,6 +53,10 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
 - `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing-on-an-unknown-host) on a Git host `bv` does not know.
 - `bv release` [publishes on GitLab](docs/tool-commands/release.md#publishing-on-gitlab), with the assets in the generic package registry of the project, and `hosts.gitlab.tokenEnv` names the token variable.
+- `bv release` [publishes on Gitea](docs/tool-commands/release.md#publishing-on-gitea), with the assets as attachments of the release, and `hosts.gitea.tokenEnv` names the token variable.
+- `bv release` [publishes on Forgejo](docs/tool-commands/release.md#publishing-on-forgejo), with the assets as attachments of the release, and `hosts.forgejo.tokenEnv` names the token variable.
+- `bv` recognizes [Gitea Actions](docs/environment-variables.md#gitea_actions) as a CI platform, with the `gitea-actions` bot identity and the `version` step output of `bv release`.
+- `bv` recognizes [Forgejo Actions](docs/environment-variables.md#forgejo_actions) as a CI platform, with the `forgejo-actions` bot identity and the `version` step output of `bv release`.
 - `bv release` takes a host whose name ends in `.ghe.com` for [GitHub Enterprise Cloud with data residency](docs/tool-commands/release.md#publishing-on-github), whose API is at `https://api.<host>`.
 - [`bv info`](docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
 

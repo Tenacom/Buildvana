@@ -96,6 +96,8 @@ Each table below states a status for every item.
 | GitHub Enterprise Cloud with data residency | Supported (untested)  | SourceLink needs a `SourceLinkGitHubHost` item, with `ContentUrl` set to `https://raw.<host>`.                                                                                                 |
 | GitLab                                      | Supported (untested)  |                                                                                                                                                                                                |
 | Self-managed GitLab                         | Supported (untested)  | SourceLink needs a `SourceLinkGitLabHost` item.                                                                                                                                                |
+| Gitea                                       | Supported (untested)  | SourceLink needs a `Microsoft.SourceLink.Gitea` reference and a `SourceLinkGiteaHost` item.                                                                                                    |
+| Forgejo                                     | Supported (untested)  | SourceLink needs a `Microsoft.SourceLink.Gitea` reference and a `SourceLinkGiteaHost` item.                                                                                                    |
 | Other Git hosts                             | Supported with limits | Buildvana SDK does not configure SourceLink.<br>`bv release` creates no release page, and runs only with [`release.allowUnknownHost`](tool-commands/release.md#publishing-on-an-unknown-host). |
 
 ### CI platforms
@@ -105,12 +107,14 @@ Generic CI is any other runner that the .NET CLI recognizes as one.
 Local is a machine where `bv` recognizes no CI runner, such as a developer machine.
 Every CI platform runs every command, `bv release` included.
 
-| CI platform                                                            | Status               |
-| ---------------------------------------------------------------------- | -------------------- |
-| GitHub Actions                                                         | Supported            |
-| GitLab CI                                                              | Supported (untested) |
-| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported (untested) |
-| Local                                                                  | Supported (untested) |
+| CI platform                                                            | Status               | Limits                                                                                       |
+| ---------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| GitHub Actions                                                         | Supported            |                                                                                              |
+| GitLab CI                                                              | Supported (untested) |                                                                                              |
+| Gitea Actions                                                          | Supported (untested) |                                                                                              |
+| Forgejo Actions                                                        | Supported (untested) | `bv release` needs [Forgejo Runner 9.0.0 or later](environment-variables.md#forgejo_output). |
+| [Generic CI](environment-variables.md#variables-that-mark-a-ci-runner) | Supported (untested) |                                                                                              |
+| Local                                                                  | Supported (untested) |                                                                                              |
 
 ### Toolchain
 
