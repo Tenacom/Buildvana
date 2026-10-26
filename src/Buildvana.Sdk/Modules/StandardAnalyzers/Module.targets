@@ -54,4 +54,20 @@
   <Import Project="$(MSBuildThisFileDirectory)Module.UsePublicApiAnalyzers.targets"
           Condition="$(UsePublicApiAnalyzers)" />
 
+  <!-- UseNullableExtendedAnalyzer default = true, except for no-target projects. -->
+  <PropertyGroup Condition="'$(UseNullableExtendedAnalyzer)' == ''">
+    <UseNullableExtendedAnalyzer>true</UseNullableExtendedAnalyzer>
+    <UseNullableExtendedAnalyzer Condition="$(BV_IsNoTargetsProject)">false</UseNullableExtendedAnalyzer>
+  </PropertyGroup>
+  <!-- Store 'true' for any value MSBuild compares equal to it, such as 'yes'. -->
+  <PropertyGroup Condition="'$(UseNullableExtendedAnalyzer)' == 'true'">
+    <UseNullableExtendedAnalyzer>true</UseNullableExtendedAnalyzer>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(UseNullableExtendedAnalyzer)' != 'true'">
+    <UseNullableExtendedAnalyzer>false</UseNullableExtendedAnalyzer>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)Module.UseNullableExtendedAnalyzer.targets"
+          Condition="$(UseNullableExtendedAnalyzer)" />
+
 </Project>
