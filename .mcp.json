@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "nullable-extended": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "tool",
+        "run",
+        "nullable-extended-mcp",
+        "--root",
+        ".",
+        "--solution",
+        "Buildvana.slnx"
+      ]
+    }
+  }
+}
