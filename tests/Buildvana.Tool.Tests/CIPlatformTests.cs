@@ -32,6 +32,40 @@ internal sealed class CIPlatformTests
         await Assert.That(platform.HasStepOutputs).IsTrue();
     }
 
+    // A Gitea runner sets GITHUB_ACTIONS to true, which the GitHub Actions detector would match too.
+    [Test]
+    [Arguments("true")]
+    [Arguments("TRUE")]
+    public async Task Detect_WithGiteaActionsTrue_ReturnsGiteaActionsPlatform(string value)
+    {
+        var platform = Detect(
+            ("GITEA_ACTIONS", value),
+            ("GITHUB_ACTIONS", "true"),
+            ("CI", "true"),
+            ("GITHUB_SERVER_URL", "https://gitea.example.invalid"));
+
+        await Assert.That(platform).IsTypeOf<GiteaActionsPlatform>();
+        await Assert.That(platform.IsCI).IsTrue();
+        await Assert.That(platform.BotIdentity!.Name).IsEqualTo("gitea-actions");
+        await Assert.That(platform.BotIdentity!.Email).IsEqualTo("gitea-actions@noreply.gitea.example.invalid");
+        await Assert.That(platform.HasStepOutputs).IsTrue();
+    }
+
+    // Forgejo runners v7 to v12 set GITEA_ACTIONS to true, which the Gitea Actions detector would match too.
+    [Test]
+    [Arguments("true")]
+    [Arguments("TRUE")]
+    public async Task Detect_WithForgejoActionsTrue_ReturnsForgejoActionsPlatform(string value)
+    {
+        var platform = Detect(("FORGEJO_ACTIONS", value), ("GITEA_ACTIONS", "true"), ("GITHUB_ACTIONS", "true"), ("CI", "true"));
+
+        await Assert.That(platform).IsTypeOf<ForgejoActionsPlatform>();
+        await Assert.That(platform.IsCI).IsTrue();
+        await Assert.That(platform.BotIdentity!.Name).IsEqualTo("forgejo-actions");
+        await Assert.That(platform.BotIdentity!.Email).IsEqualTo("noreply@forgejo.org");
+        await Assert.That(platform.HasStepOutputs).IsTrue();
+    }
+
     // GitLab CI sets CI to true, which the generic detector would match too.
     [Test]
     [Arguments("true")]
@@ -106,11 +140,14 @@ internal sealed class CIPlatformTests
     }
 
     [Test]
-    public async Task OpenStepOutputs_OnGitHubActionsWithOutputFile_WritesToTheFile()
+    [Arguments("GITHUB_ACTIONS", "GITHUB_OUTPUT")]
+    [Arguments("GITEA_ACTIONS", "GITHUB_OUTPUT")]
+    [Arguments("FORGEJO_ACTIONS", "FORGEJO_OUTPUT")]
+    public async Task OpenStepOutputs_WithOutputFile_WritesToTheFile(string marker, string outputVariable)
     {
         using var home = new TempHome();
         var path = home.GetFullPath("output.txt");
-        var platform = Detect(("GITHUB_ACTIONS", "true"), ("GITHUB_OUTPUT", path));
+        var platform = Detect((marker, "true"), (outputVariable, path));
 
         platform.OpenStepOutputs().Write("version", "1.2.3");
 
@@ -118,14 +155,29 @@ internal sealed class CIPlatformTests
     }
 
     [Test]
-    [Arguments(null)]
-    [Arguments("")]
-    public async Task OpenStepOutputs_OnGitHubActionsWithoutOutputFile_Fails(string? path)
+    [Arguments("GITHUB_ACTIONS", "GITHUB_OUTPUT", null)]
+    [Arguments("GITHUB_ACTIONS", "GITHUB_OUTPUT", "")]
+    [Arguments("GITEA_ACTIONS", "GITHUB_OUTPUT", null)]
+    [Arguments("GITEA_ACTIONS", "GITHUB_OUTPUT", "")]
+    [Arguments("FORGEJO_ACTIONS", "FORGEJO_OUTPUT", null)]
+    [Arguments("FORGEJO_ACTIONS", "FORGEJO_OUTPUT", "")]
+    public async Task OpenStepOutputs_WithoutOutputFile_Fails(string marker, string outputVariable, string? path)
     {
-        var platform = Detect(("GITHUB_ACTIONS", "true"), ("GITHUB_OUTPUT", path));
+        var platform = Detect((marker, "true"), (outputVariable, path));
 
         var exception = await Assert.That(platform.OpenStepOutputs).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("GITHUB_OUTPUT");
+        await Assert.That(exception!.Message).Contains(outputVariable);
+    }
+
+    // Forgejo runners before v9.0.0 set GITHUB_OUTPUT and no FORGEJO_OUTPUT.
+    [Test]
+    public async Task OpenStepOutputs_OnForgejoActionsWithGitHubOutputOnly_Fails()
+    {
+        using var home = new TempHome();
+        var platform = Detect(("FORGEJO_ACTIONS", "true"), ("GITHUB_OUTPUT", home.GetFullPath("output.txt")));
+
+        var exception = await Assert.That(platform.OpenStepOutputs).Throws<BuildFailedException>();
+        await Assert.That(exception!.Message).Contains("FORGEJO_OUTPUT");
     }
 
     [Test]
@@ -137,21 +189,19 @@ internal sealed class CIPlatformTests
     }
 
     [Test]
-    public async Task Detect_OnGitHubActions_TakesTheServerFromGitHubServerUrl()
+    [Arguments("GITHUB_ACTIONS", "GITHUB_SERVER_URL", HostKind.GitHub)]
+    [Arguments("GITLAB_CI", "CI_SERVER_URL", HostKind.GitLab)]
+    [Arguments("GITEA_ACTIONS", "GITHUB_SERVER_URL", HostKind.Gitea)]
+    [Arguments("FORGEJO_ACTIONS", "FORGEJO_SERVER_URL", HostKind.Forgejo)]
+    public async Task Detect_OnAPlatformWithAServer_TakesTheServerFromItsVariable(
+        string marker,
+        string serverVariable,
+        HostKind kind)
     {
-        var platform = Detect(("GITHUB_ACTIONS", "true"), ("GITHUB_SERVER_URL", "https://github.example.invalid"));
+        var platform = Detect((marker, "true"), (serverVariable, "https://git.example.invalid"));
 
-        await Assert.That(platform.ServerUrl!.Host).IsEqualTo("github.example.invalid");
-        await Assert.That(platform.ServerKind).IsEqualTo(HostKind.GitHub);
-    }
-
-    [Test]
-    public async Task Detect_OnGitLabCI_TakesTheServerFromCIServerUrl()
-    {
-        var platform = Detect(("GITLAB_CI", "true"), ("CI_SERVER_URL", "https://gitlab.example.invalid"));
-
-        await Assert.That(platform.ServerUrl!.Host).IsEqualTo("gitlab.example.invalid");
-        await Assert.That(platform.ServerKind).IsEqualTo(HostKind.GitLab);
+        await Assert.That(platform.ServerUrl!.Host).IsEqualTo("git.example.invalid");
+        await Assert.That(platform.ServerKind).IsEqualTo(kind);
     }
 
     // A value that is not an absolute URL names no server, and host detection then has no hint to go on.

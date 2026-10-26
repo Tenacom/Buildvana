@@ -22,7 +22,7 @@ using Spectre.Console.Testing;
 // repository, so VersionService cannot be constructed, and the build pipeline resolves all the same.
 internal sealed class DotNetServiceResolutionTests
 {
-    private static readonly string[] PlatformVariables = ["GITHUB_ACTIONS", "GITLAB_CI"];
+    private static readonly string[] PlatformVariables = ["FORGEJO_ACTIONS", "GITEA_ACTIONS", "GITHUB_ACTIONS", "GITLAB_CI"];
 
     [Test]
     public async Task GetRequiredService_OnLocalPlatform_ResolvesBuildPipelineWithoutGitRepository()
@@ -48,8 +48,12 @@ internal sealed class DotNetServiceResolutionTests
     public async Task GetRequiredService_OnGitHubActions_ResolvesBuildPipelineWithoutGitRepository()
     {
         var originals = PlatformVariables.ToDictionary(x => x, Environment.GetEnvironmentVariable);
+        foreach (var name in PlatformVariables)
+        {
+            Environment.SetEnvironmentVariable(name, null);
+        }
+
         Environment.SetEnvironmentVariable("GITHUB_ACTIONS", "true");
-        Environment.SetEnvironmentVariable("GITLAB_CI", null);
         try
         {
             using var home = CreateHome();

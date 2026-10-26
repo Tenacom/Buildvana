@@ -15,6 +15,7 @@ namespace Buildvana.Tool.Services.Platforms;
 /// <para>The file format is the one GitHub documents for <c>GITHUB_OUTPUT</c>: a single-line value goes in
 /// a <c>name=value</c> line, and a multi-line value goes between a <c>name&lt;&lt;delimiter</c> line and a
 /// <c>delimiter</c> line.</para>
+/// <para>Gitea and Forgejo runners read the same format, from <c>GITHUB_OUTPUT</c> and <c>FORGEJO_OUTPUT</c>.</para>
 /// </remarks>
 internal sealed class GitHubActionsStepOutputWriter : StepOutputWriter
 {
