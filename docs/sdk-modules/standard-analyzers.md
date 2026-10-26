@@ -1,6 +1,6 @@
 # `StandardAnalyzers` module
 
-This module turns on the code quality and code style analyzers of the .NET SDK, StyleCop, and the public API analyzers.
+This module turns on the code quality and code style analyzers of the .NET SDK, StyleCop, the public API analyzers, and Nullable.Extended.Analyzer.
 It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file and the public and internal API files to the compilation.
 
 ---
@@ -13,6 +13,7 @@ It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file a
   - [Code analysis properties](#code-analysis-properties)
   - [`UseStyleCopAnalyzers` property](#usestylecopanalyzers-property)
   - [`UsePublicApiAnalyzers` property](#usepublicapianalyzers-property)
+  - [`UseNullableExtendedAnalyzer` property](#usenullableextendedanalyzer-property)
   - [`UseTfmSpecificPublicApiFiles` property](#usetfmspecificpublicapifiles-property)
   - [`UseTfmSpecificInternalApiFiles` property](#usetfmspecificinternalapifiles-property)
 - [Usage](#usage)
@@ -20,13 +21,14 @@ It sets stricter defaults than the .NET SDK, and adds the `stylecop.json` file a
   - [`stylecop.json` file](#stylecopjson-file)
   - [Public API files](#public-api-files)
   - [Internal API files](#internal-api-files)
+  - [Null-forgiving operators](#null-forgiving-operators)
 - [Diagnostics](#diagnostics)
 
 ---
 
 ## Configuration
 
-The module is active in every project, and each of the three analyzer sets has a switch of its own.
+The module is active in every project, and each of the four analyzer sets has a switch of its own.
 Configure the rules of every set in an `.editorconfig` file or a `.globalconfig` file, as the [.NET documentation](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files) describes.
 A severity in an `.editorconfig` file reaches only a diagnostic located in a source file.
 So configure RS0052, RS0053, RS0054, and RS0058 in a `.globalconfig` file, because they report a line of an internal API file, or no location.
@@ -62,6 +64,12 @@ Set it to `true` to run the public API analyzers in a project, or to `false` to 
 The default is `true` for a [library project](../internal-use-properties.md#project-type), and `false` for every other project.
 A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
 
+### `UseNullableExtendedAnalyzer` property
+
+Set it to `false` to leave Nullable.Extended.Analyzer out of a project.
+The default is `true`, except for a project that uses the `Microsoft.Build.NoTargets` SDK.
+A value MSBuild reads as true, such as `yes`, counts as `true`, and any other value counts as `false`.
+
 ### `UseTfmSpecificPublicApiFiles` property
 
 Set it to `true` to keep one pair of [public API files](#public-api-files) per target framework, or to `false` to keep one pair for the project.
@@ -80,10 +88,17 @@ A value MSBuild reads as true, such as `yes`, counts as `true`, and any other va
 
 ### Package references
 
-The module adds a `PackageReference` to `StyleCop.Analyzers` when `UseStyleCopAnalyzers` is `true`, and one to `Microsoft.CodeAnalysis.PublicApiAnalyzers` when `UsePublicApiAnalyzers` is `true`.
+The module adds a `PackageReference` to each analyzer package whose switch is `true`:
+
+| Package                                     | Switch                        |
+| ------------------------------------------- | ----------------------------- |
+| `StyleCop.Analyzers`                        | `UseStyleCopAnalyzers`        |
+| `Microsoft.CodeAnalysis.PublicApiAnalyzers` | `UsePublicApiAnalyzers`       |
+| `Nullable.Extended.Analyzer`                | `UseNullableExtendedAnalyzer` |
+
 Buildvana SDK pins the version of each package, and `dotnet list package` shows the reference as auto-referenced, with the `(A)` mark.
 Each reference has `PrivateAssets="All"`, so a project that references this one, and a NuGet package this one produces, get no dependency on the analyzers.
-A `PackageReference` of yours to either package replaces the module's reference, and under central package management a `PackageVersion` item sets its version.
+A `PackageReference` of yours to one of the packages replaces the module's reference, and under central package management a `PackageVersion` item sets its version.
 
 The code quality and code style analyzers ship with the .NET SDK, and need no package.
 
@@ -148,6 +163,29 @@ dotnet_diagnostic.RS0058.severity = warning
 Without `require_api_files`, RS0051 reports every internal type and member of a project that has no internal API file.
 With `require_api_files` set to `true`, a project with neither file of a pair gets no diagnostic for that kind of API.
 A project with one file of the internal pair still gets RS0058.
+
+### Null-forgiving operators
+
+Nullable.Extended.Analyzer reports every null-forgiving operator (`!`) as a warning.
+The operator silences a nullable warning on the strength of an invariant the compiler cannot check, and the analyzer makes each such invariant visible.
+Four rules report the operator, one per context:
+
+| Rule   | Context                                                              |
+| ------ | -------------------------------------------------------------------- |
+| NX0001 | Any context the other three rules do not cover                       |
+| NX0002 | On a `null` or `default` literal                                     |
+| NX0003 | Inside a lambda expression                                           |
+| NX0004 | On a `null` or `default` literal in an init-only property assignment |
+
+A comment on the line above the statement or declaration clears the warning, when its text starts with `!` and a space:
+
+```csharp
+// ! The dictionary was filled from the same keys a moment ago.
+var value = lookup.GetValueOrDefault(key)!;
+```
+
+The [Nullable.Extended documentation](https://github.com/tom-englert/Nullable.Extended) describes the analyzer and its code fixes.
+Set the severity of each rule in a `.editorconfig` file or a `.globalconfig` file, as [Configuration](#configuration) says.
 
 ---
 

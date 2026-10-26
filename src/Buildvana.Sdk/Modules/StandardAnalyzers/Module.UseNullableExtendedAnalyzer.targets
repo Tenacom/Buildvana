@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- Include Nullable.Extended.Analyzer, which reports every use of the null-forgiving operator. -->
+  <ItemGroup>
+    <BV_PackageReference Include="Nullable.Extended.Analyzer"
+                         PrivateAssets="All"
+                         IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+  </ItemGroup>
+
+</Project>

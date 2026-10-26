@@ -100,6 +100,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - **BREAKING CHANGE**: Buildvana SDK raises BVSDK1006 on a project whose [SDK does not layer on `Microsoft.NET.Sdk`](docs/introduction.md#project-types), where such a project used to build.
 - **BREAKING CHANGE**: A file-based app is a [project type of its own](docs/internal-use-properties.md#project-type), `BV_IsFileBasedAppProject`, so `BV_IsExeProject` is `false` for it.
 - **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](docs/directory-structure.md#migration-from-configdotnet-toolsjson) when the home directory holds one.
+- **BREAKING CHANGE**: The `StandardAnalyzers` module adds [Nullable.Extended.Analyzer](docs/sdk-modules/standard-analyzers.md#usenullableextendedanalyzer-property), so a null-forgiving operator without a justification comment no longer compiles without a warning.
 - The [`ReleaseAssetList` module](docs/sdk-modules/release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for a file-based app.
 - On GitHub, `bv release` refuses [two assets with the same file name](docs/tool-commands/release.md#publishing-on-github) before it pushes the commits.
 - A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
