@@ -7,6 +7,7 @@ using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
 using Buildvana.Tool.Services.Hosts;
+using Buildvana.Tool.Services.Hosts.Forgejo;
 using Buildvana.Tool.Services.Hosts.Gitea;
 using Buildvana.Tool.Services.Hosts.GitHub;
 using Buildvana.Tool.Services.Hosts.GitLab;
@@ -50,6 +51,15 @@ internal sealed class GitHostTests
     public async Task DetectKind_ForGiteaCom_IsGitea(string url)
     {
         await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.Gitea);
+    }
+
+    [Test]
+    [Arguments("https://codeberg.org/tenacom/buildvana")]
+    [Arguments("https://Codeberg.org/tenacom/buildvana.git")]
+    [Arguments("git@codeberg.org:tenacom/buildvana.git")]
+    public async Task DetectKind_ForCodebergOrg_IsForgejo(string url)
+    {
+        await Assert.That(GitHost.DetectKind(Repository(url), Parse(url), new FakeCIPlatform())).IsEqualTo(HostKind.Forgejo);
     }
 
     [Test]
@@ -130,6 +140,16 @@ internal sealed class GitHostTests
         await using (services.ConfigureAwait(false))
         {
             await Assert.That(GitHost.Create(services)).IsTypeOf<GiteaHost>();
+        }
+    }
+
+    [Test]
+    public async Task Create_ForCodebergOrg_CreatesAForgejoHost()
+    {
+        var services = Services("https://codeberg.org/tenacom/buildvana");
+        await using (services.ConfigureAwait(false))
+        {
+            await Assert.That(GitHost.Create(services)).IsTypeOf<ForgejoHost>();
         }
     }
 
