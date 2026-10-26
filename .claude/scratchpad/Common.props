@@ -32,6 +32,12 @@
     <IncludeNuGetPackSupport>false</IncludeNuGetPackSupport>
 
     <!--
+      Scratch code does not justify its null-forgiving operators. Nullable.Extended.Analyzer would report each
+      one as an error.
+    -->
+    <UseNullableExtendedAnalyzer>false</UseNullableExtendedAnalyzer>
+
+    <!--
       A scratch Exe that gets packed would otherwise write its asset list into the artifacts directory of the
       repository, where bv release reads it.
     -->
