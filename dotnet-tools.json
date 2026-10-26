@@ -7,6 +7,12 @@
       "commands": [
         "bv"
       ]
+    },
+    "nullable.extended.mcp": {
+      "version": "1.18.2",
+      "commands": [
+        "nullable-extended-mcp"
+      ]
     }
   }
 }
