@@ -170,12 +170,12 @@ Nullable.Extended.Analyzer reports every null-forgiving operator (`!`) as a warn
 The operator silences a nullable warning on the strength of an invariant the compiler cannot check, and the analyzer makes each such invariant visible.
 Four rules report the operator, one per context:
 
-| Rule   | Context                                                              |
-| ------ | -------------------------------------------------------------------- |
-| NX0001 | Any context the other three rules do not cover                       |
-| NX0002 | On a `null` or `default` literal                                     |
-| NX0003 | Inside a lambda expression                                           |
-| NX0004 | On a `null` or `default` literal in an init-only property assignment |
+| Rule   | Context                                                                                        |
+| ------ | ---------------------------------------------------------------------------------------------- |
+| NX0001 | Any context the other three rules do not cover                                                 |
+| NX0002 | On `null`, `default`, or `default(T)`                                                          |
+| NX0003 | Inside a lambda expression, on any other operand                                               |
+| NX0004 | On `null`, `default`, or `default(T)` in the initializer of a property with an `init` accessor |
 
 A comment on the line above the statement or declaration clears the warning, when its text starts with `!` and a space:
 
