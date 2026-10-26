@@ -11,7 +11,7 @@ One name per thing, in every kind of prose: documentation, chat, commit messages
 | The CLI tool                                                                                       | `bv`                | the tool, Buildvana CLI tool, the Buildvana tool   |
 | The shared library package                                                                         | `Buildvana.Runtime` | the runtime                                        |
 | The directory Buildvana works from                                                                 | home directory      | repository root, solution directory                |
-| Where `bv` runs, as `CIPlatform` detects it: GitHub Actions, GitLab CI, Generic CI, or Local       | CI platform         | build platform, cloud build, CI provider           |
+| Where `bv` runs, as `CIPlatform` detects it, listed below the table                                | CI platform         | build platform, cloud build, CI provider           |
 | The service that hosts the repository `repository.url` names, such as GitHub                       | Git host            | server, Git server                                 |
 | The remote of the clone whose URL names the repository `repository.url` names                      | release remote      | upstream remote, `origin`                          |
 | The configuration file, in either spelling                                                         | `buildvana.jsonc`   | `buildvana.json`, the configuration file           |
@@ -33,5 +33,7 @@ One name per thing, in every kind of prose: documentation, chat, commit messages
 | A `PublicAPI.Shipped.txt` or `PublicAPI.Unshipped.txt` file                                        | public API file     |                                                    |
 | An `InternalAPI.Shipped.txt` or `InternalAPI.Unshipped.txt` file                                   | internal API file   |                                                    |
 | The public API files and the internal API files together                                           | declared API files  | API files                                          |
+
+The CI platforms are GitHub Actions, GitLab CI, Gitea Actions, Forgejo Actions, Generic CI, and Local.
 
 `buildvana.jsonc` stands for either spelling because the name reminds the reader that comments and trailing commas are accepted. The page about the configuration file says that `buildvana.json` is accepted too.
