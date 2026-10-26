@@ -547,10 +547,10 @@ dotnet_diagnostic.RS0058.severity = warning # Missing shipped or unshipped inter
 # Last update: 2026-10-26 (Nullable.Extended.Analyzer 1.18.2)
 # ==============================================================================================
 
-dotnet_diagnostic.NX0001.severity = warning # Find general usages of the NullForgiving operator
-dotnet_diagnostic.NX0002.severity = warning # Find usages of the NullForgiving operator on null or default expression
-dotnet_diagnostic.NX0003.severity = warning # Find usages of the NullForgiving operator inside lambda expressions
-dotnet_diagnostic.NX0004.severity = warning # Find usages of the NullForgiving operator on null or default expression at init only property
+dotnet_diagnostic.NX0001.severity = warning # Instance of NullForgiving operator without justification detected
+dotnet_diagnostic.NX0002.severity = warning # Instance of NullForgiving operator without justification detected
+dotnet_diagnostic.NX0003.severity = warning # Instance of NullForgiving operator without justification detected
+dotnet_diagnostic.NX0004.severity = warning # Instance of NullForgiving operator without justification detected
 
 # ==============================================================================================
 #                                    RESHARPER INSPECTIONS
