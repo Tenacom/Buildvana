@@ -8,6 +8,7 @@ using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Git;
+using Buildvana.Tool.Services.Hosts.Forgejo;
 using Buildvana.Tool.Services.Hosts.Gitea;
 using Buildvana.Tool.Services.Hosts.GitHub;
 using Buildvana.Tool.Services.Hosts.GitLab;
@@ -94,6 +95,7 @@ internal abstract class GitHost
             HostKind.GitHub => new GitHubHost(services, url),
             HostKind.GitLab => new GitLabHost(services, url),
             HostKind.Gitea => new GiteaHost(services, url),
+            HostKind.Forgejo => new ForgejoHost(services, url),
             _ => new UnknownHost(url, services.GetRequiredService<IReporter>()),
         };
     }
@@ -123,7 +125,7 @@ internal abstract class GitHost
     /// <param name="url">The parsed URL of the repository.</param>
     /// <param name="platform">The CI platform <c>bv</c> runs on.</param>
     /// <returns>The first of these that applies: <see cref="RepositoryConfig.Host"/> when it is not
-    /// <see cref="HostKind.Auto"/>; the kind of a host that GitHub, GitLab, or Gitea runs, such as
+    /// <see cref="HostKind.Auto"/>; the kind of a host that GitHub, GitLab, Gitea, or Forgejo runs, such as
     /// <c>github.com</c>, when <paramref name="url"/> names it; the
     /// <see cref="CIPlatform.ServerKind"/> of a platform whose <see cref="CIPlatform.ServerUrl"/> has the host
     /// name of <paramref name="url"/>; otherwise, <see langword="null"/>.</returns>
@@ -153,6 +155,11 @@ internal abstract class GitHost
         if (string.Equals(url.Host, "gitea.com", StringComparison.OrdinalIgnoreCase))
         {
             return HostKind.Gitea;
+        }
+
+        if (string.Equals(url.Host, "codeberg.org", StringComparison.OrdinalIgnoreCase))
+        {
+            return HostKind.Forgejo;
         }
 
         // A self-hosted server, such as a GitHub Enterprise Server or a self-managed GitLab instance, is recognized
