@@ -17,10 +17,13 @@ namespace Buildvana.Tool.Services.Platforms;
 /// </remarks>
 internal abstract class CIPlatform
 {
-    // The order matters: each detector runs only when the ones above it found nothing. GenericCIPlatform
-    // recognizes every runner the .NET CLI recognizes, the more specific ones included.
+    // The order matters: each detector runs only when the ones above it found nothing. Forgejo runners v7 to v12
+    // set GITEA_ACTIONS, and Gitea and Forgejo runners set GITHUB_ACTIONS. GenericCIPlatform recognizes every
+    // runner the .NET CLI recognizes, the more specific ones included.
     private static readonly Func<Func<string, string?>, CIPlatform?>[] Detectors = [
         GitLabCIPlatform.DetectIfApplicable,
+        ForgejoActionsPlatform.DetectIfApplicable,
+        GiteaActionsPlatform.DetectIfApplicable,
         GitHubActionsPlatform.DetectIfApplicable,
         GenericCIPlatform.DetectIfApplicable,
     ];
