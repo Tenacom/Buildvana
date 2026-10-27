@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -281,7 +282,8 @@ public sealed partial class JsonHelper : IJsonHelper
         string propertyName,
         List<JsonValueEdit> edits)
     {
-        var currentValue = reader.GetString()!;
+        var currentValue = reader.GetString();
+        Debug.Assert(currentValue is not null, "GetString returns null only for a null token, and the reader is on a string.");
         pathSegments.Add(propertyName);
         var newValue = rewriter(pathSegments, currentValue);
         pathSegments.RemoveAt(pathSegments.Count - 1);

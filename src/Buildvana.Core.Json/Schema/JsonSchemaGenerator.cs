@@ -157,10 +157,11 @@ public static partial class JsonSchemaGenerator
         var keyedElementType = context.TypeInfo.Kind is JsonTypeInfoKind.None
             ? JsonKeyedObjectConverter.TryGetKeyedElementType(context.TypeInfo.Type)
             : null;
-        if (keyedElementType is not null)
+        if (keyedElementType is var (elementType, attribute))
         {
             var keyedSchema = CreateKeyedObjectSchema(
-                keyedElementType,
+                elementType,
+                attribute,
                 context.TypeInfo.Options,
                 nullabilityContext,
                 keyedTypesInProgress);
@@ -477,9 +478,9 @@ public static partial class JsonSchemaGenerator
             }
         }
 
-        if (typeArray.Count == 1)
+        if (typeArray is [{ } single])
         {
-            schema["type"] = typeArray[0]!.GetValue<string>();
+            schema["type"] = single.GetValue<string>();
         }
     }
 

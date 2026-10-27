@@ -111,11 +111,12 @@ public sealed partial class JsonHelper
                     break;
 
                 case JsonTokenType.StartObject or JsonTokenType.StartArray:
-                    var pushed = pendingProperty is not null;
-                    if (pushed)
+                    var pushed = false;
+                    if (pendingProperty is { } property)
                     {
-                        pathSegments.Add(pendingProperty!);
+                        pathSegments.Add(property);
                         pendingProperty = null;
+                        pushed = true;
                     }
 
                     containerPushedSegment.Push(pushed);

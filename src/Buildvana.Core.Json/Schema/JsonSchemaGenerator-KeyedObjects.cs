@@ -18,6 +18,7 @@ partial class JsonSchemaGenerator
     // is synthesized here from the element type's own schema.
     private static JsonObject CreateKeyedObjectSchema(
         Type elementType,
+        JsonKeyedObjectAttribute attribute,
         JsonSerializerOptions options,
         NullabilityInfoContext nullabilityContext,
         HashSet<Type> keyedTypesInProgress)
@@ -33,7 +34,6 @@ partial class JsonSchemaGenerator
 
         try
         {
-            var attribute = elementType.GetCustomAttribute<JsonKeyedObjectAttribute>(inherit: false)!;
             var (keyJsonName, valueJsonName) = JsonKeyedObjectConverter.ResolveKeyedNames(
                 options.GetTypeInfo(elementType),
                 attribute.KeyPropertyName,

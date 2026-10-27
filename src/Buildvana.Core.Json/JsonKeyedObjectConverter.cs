@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,23 +33,27 @@ public sealed partial class JsonKeyedObjectConverter : JsonConverterFactory
     /// <inheritdoc/>
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var elementType = TryGetElementType(typeToConvert)!;
-        var attribute = elementType.GetCustomAttribute<JsonKeyedObjectAttribute>(inherit: false)!;
+        var keyedElementType = TryGetKeyedElementType(typeToConvert);
+        Debug.Assert(keyedElementType is not null, "The serializer calls CreateConverter only after CanConvert returns true.");
+        var (elementType, attribute) = keyedElementType.Value;
 
         // The attribute's CLR property names are resolved to JSON names by the converter itself, at first use,
         // from the element's JsonTypeInfo: the serializer's own metadata is right by construction under any
         // naming policy, TypeInfoResolver, or contract customization. Recomputing the names here from
         // reflection would silently disagree the moment a contract modifier renames a property.
         var converterType = typeof(ListConverter<>).MakeGenericType(elementType);
-        return (JsonConverter)Activator.CreateInstance(converterType, attribute.KeyPropertyName, attribute.ValuePropertyName)!;
+        var converter = (JsonConverter?)Activator.CreateInstance(converterType, attribute.KeyPropertyName, attribute.ValuePropertyName);
+        Debug.Assert(converter is not null, "Activator.CreateInstance returns null only for a nullable value type.");
+        return converter;
     }
 
     // Also serves JsonSchemaGenerator, which renders a keyed list from the same detection this factory
     // converts it by, so the parser and the schema cannot drift apart.
-    internal static Type? TryGetKeyedElementType(Type type)
-        => TryGetElementType(type) is { } elementType && elementType.IsDefined(typeof(JsonKeyedObjectAttribute), inherit: false)
-            ? elementType
-            : null;
+    internal static (Type ElementType, JsonKeyedObjectAttribute Attribute)? TryGetKeyedElementType(Type type)
+        => TryGetElementType(type) is { } elementType
+            && elementType.GetCustomAttribute<JsonKeyedObjectAttribute>(inherit: false) is { } attribute
+                ? (elementType, attribute)
+                : null;
 
     // Resolves the attribute's CLR property names to the JSON names the serializer will actually use, and
     // refuses the models the converter cannot read: a non-string key property, and key and value resolving to
