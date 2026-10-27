@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -278,7 +279,9 @@ public sealed class TempGitRepo : IDisposable
     {
         ArgumentException.ThrowIfNullOrEmpty(canonicalName);
         var lockPath = Path.Combine([_remotePaths[name], .. $"{canonicalName}.lock".Split('/')]);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(lockPath)!);
+        var lockDirectory = Path.GetDirectoryName(lockPath);
+        Debug.Assert(lockDirectory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(lockDirectory);
         File.WriteAllBytes(lockPath, []);
     }
 

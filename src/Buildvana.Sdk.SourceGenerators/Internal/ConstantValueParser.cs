@@ -36,13 +36,13 @@ internal static class ConstantValueParser
 
     public static bool TryParse(string? str, out object? result)
     {
-        if (string.IsNullOrEmpty(str))
+        if (str is null or "")
         {
             result = null;
             return true;
         }
 
-        if (str!.Length > 1 && str[0] == '"' && str[str.Length - 1] == '"')
+        if (str.Length > 1 && str[0] == '"' && str[str.Length - 1] == '"')
         {
             result = str.Substring(1, str.Length - 2).Replace("\"\"", "\"");
             return true;

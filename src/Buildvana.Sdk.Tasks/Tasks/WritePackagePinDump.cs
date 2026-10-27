@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
@@ -124,7 +125,9 @@ public sealed class WritePackagePinDump : BuildvanaSdkTask
         // contract (see docs/sdk-diagnostics.md): every message a task issues must carry a BVSDK code.
         try
         {
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            var directory = Path.GetDirectoryName(path);
+            Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+            _ = Directory.CreateDirectory(directory);
             File.WriteAllText(path, content);
         }
         catch (Exception e) when (e.IsIORelatedException)

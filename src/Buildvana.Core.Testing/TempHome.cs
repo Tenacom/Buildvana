@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using Buildvana.Core.HomeDirectory;
 using CommunityToolkit.Diagnostics;
@@ -47,7 +48,9 @@ public sealed class TempHome : IDisposable
     public void WriteFile(string name, string content)
     {
         var path = GetFullPath(name);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, content);
     }
 

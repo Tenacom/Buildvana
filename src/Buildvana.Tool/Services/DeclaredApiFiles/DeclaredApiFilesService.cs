@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -167,7 +168,9 @@ internal sealed class DeclaredApiFilesService
 
         (string UnshippedPath, string ShippedPath)? GetPair(string shippedPath)
         {
-            var unshippedPath = Path.Combine(Path.GetDirectoryName(shippedPath)!, unshippedFileName);
+            var directory = Path.GetDirectoryName(shippedPath);
+            Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+            var unshippedPath = Path.Combine(directory, unshippedFileName);
             return UserFile.Exists(unshippedPath) ? (unshippedPath, shippedPath) : null;
         }
     }
