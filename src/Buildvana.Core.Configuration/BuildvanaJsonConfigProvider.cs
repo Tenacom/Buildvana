@@ -105,11 +105,11 @@ public sealed class BuildvanaJsonConfigProvider
 
         var node = Parse(json, path);
 
-        // Parse throws unless the document is well-formed JSON, and well-formed JSON always makes a map.
-        Validate(node, sourceMap!, path);
+        Debug.Assert(sourceMap is not null, "Parse throws unless the document is well-formed JSON, which always makes a map.");
+        Validate(node, sourceMap, path);
 
         // Validation guarantees a non-null object at the root, so deserialization cannot return null here.
-        return node!.Deserialize(BuildvanaJsonConfigContext.Default.BuildvanaJsonConfig) ?? new BuildvanaJsonConfig();
+        return node.Deserialize(BuildvanaJsonConfigContext.Default.BuildvanaJsonConfig) ?? new BuildvanaJsonConfig();
     }
 
     // The one probe for the configuration file: nothing outside this class asks which file a home directory

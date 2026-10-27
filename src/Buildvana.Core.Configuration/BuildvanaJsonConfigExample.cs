@@ -166,6 +166,7 @@ public static class BuildvanaJsonConfigExample
     /// <param name="root">The schema document the pointer is relative to.</param>
     /// <param name="path">The setting the reference was found at, for the error message.</param>
     /// <returns>The subschema the pointer names.</returns>
+    /// <exception cref="ArgumentException"><paramref name="schema"/> carries no <c>$ref</c> keyword.</exception>
     /// <exception cref="InvalidOperationException">The pointer does not name a subschema.</exception>
     /// <remarks>
     /// <para>A document-local pointer is the only kind the exporter emits, for a member type that occurs more
@@ -177,7 +178,8 @@ public static class BuildvanaJsonConfigExample
         ArgumentNullException.ThrowIfNull(schema);
         ArgumentNullException.ThrowIfNull(root);
 
-        var pointer = schema["$ref"]!.GetValue<string>();
+        var pointer = schema["$ref"]?.GetValue<string>()
+            ?? throw new ArgumentException("The schema carries no \"$ref\" keyword.", nameof(schema));
         JsonNode node = root;
         foreach (var token in pointer.Split('/').Skip(1))
         {
@@ -310,7 +312,12 @@ public static class BuildvanaJsonConfigExample
     private static List<(string Name, JsonObject Schema)> CollectMembers(JsonObject schema)
     {
         List<(string Name, JsonObject Schema)> members = [];
-        foreach (var (name, node) in (JsonObject)schema["properties"]!)
+        if (schema["properties"] is not JsonObject properties)
+        {
+            return members;
+        }
+
+        foreach (var (name, node) in properties)
         {
             if (node is JsonObject member)
             {

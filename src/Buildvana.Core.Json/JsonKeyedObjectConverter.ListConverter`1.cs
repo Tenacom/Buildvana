@@ -4,6 +4,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -51,7 +52,8 @@ partial class JsonKeyedObjectConverter
                 var entries = new List<(string Key, JsonElement Value)>();
                 while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
                 {
-                    var key = reader.GetString()!;
+                    var key = reader.GetString();
+                    Debug.Assert(key is not null, "GetString returns null only for a null token, and the reader is on a property name.");
                     _ = reader.Read();
                     var document = JsonDocument.ParseValue(ref reader);
                     documents.Add(document);
@@ -88,7 +90,9 @@ partial class JsonKeyedObjectConverter
                     buffer.ResetWrittenCount();
                     elementWriter.Reset(buffer);
                     WriteElementJson(elementWriter, key, value);
-                    result.Add(JsonSerializer.Deserialize(buffer.WrittenSpan, typeInfo)!);
+                    var element = JsonSerializer.Deserialize(buffer.WrittenSpan, typeInfo);
+                    Debug.Assert(element is not null, "WriteElementJson writes an object, and an object never deserializes as null.");
+                    result.Add(element);
                 }
 
                 return result;
@@ -123,11 +127,13 @@ partial class JsonKeyedObjectConverter
 
         private void WriteElementJson(Utf8JsonWriter writer, string key, JsonElement value)
         {
+            Debug.Assert(_keyJsonName is not null, "GetElementTypeInfo sets the key name.");
             writer.WriteStartObject();
-            writer.WriteString(_keyJsonName!, key);
+            writer.WriteString(_keyJsonName, key);
             if (valuePropertyName is not null)
             {
-                writer.WritePropertyName(_valueJsonName!);
+                Debug.Assert(_valueJsonName is not null, "GetElementTypeInfo sets the value name for a value property.");
+                writer.WritePropertyName(_valueJsonName);
                 value.WriteTo(writer);
             }
             else
@@ -157,14 +163,17 @@ partial class JsonKeyedObjectConverter
 
         private void WriteElement(Utf8JsonWriter writer, JsonElement element, HashSet<string> writtenKeys)
         {
-            if (!element.TryGetProperty(_keyJsonName!, out var keyElement) || keyElement.ValueKind != JsonValueKind.String)
+            Debug.Assert(_keyJsonName is not null, "GetElementTypeInfo sets the key name.");
+            var key = element.TryGetProperty(_keyJsonName, out var keyElement) && keyElement.ValueKind == JsonValueKind.String
+                ? keyElement.GetString()
+                : null;
+            if (key is null)
             {
                 throw new JsonException($"The key property '{_keyJsonName}' must serialize as a non-null string.");
             }
 
             // Utf8JsonWriter validates structure only, so without this check two elements sharing a key would
             // produce a document this converter's own Read refuses or silently collapses.
-            var key = keyElement.GetString()!;
             if (!writtenKeys.Add(key))
             {
                 throw new JsonException($"Duplicate key '{key}'.");
@@ -192,7 +201,8 @@ partial class JsonKeyedObjectConverter
 
         private void WriteValueProperty(Utf8JsonWriter writer, JsonElement element)
         {
-            if (element.TryGetProperty(_valueJsonName!, out var valueElement))
+            Debug.Assert(_valueJsonName is not null, "GetElementTypeInfo sets the value name for a value property.");
+            if (element.TryGetProperty(_valueJsonName, out var valueElement))
             {
                 valueElement.WriteTo(writer);
             }

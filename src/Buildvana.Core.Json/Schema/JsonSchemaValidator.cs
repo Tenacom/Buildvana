@@ -447,14 +447,13 @@ public static class JsonSchemaValidator
             "array" => kind is JsonValueKind.Array,
             "string" => kind is JsonValueKind.String,
             "number" => kind is JsonValueKind.Number,
-            "integer" => kind is JsonValueKind.Number && IsIntegral(instance!),
+            "integer" => kind is JsonValueKind.Number && instance is JsonValue value && IsIntegral(value),
             _ => true, // Unknown type keyword: do not fail on a constraint we do not understand.
         };
     }
 
-    private static bool IsIntegral(JsonNode instance)
+    private static bool IsIntegral(JsonValue value)
     {
-        var value = instance.AsValue();
         if (value.TryGetValue<long>(out _))
         {
             return true;
