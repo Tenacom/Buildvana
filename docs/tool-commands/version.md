@@ -41,6 +41,7 @@ Current branch:        main
 - The latest version is the version of the first tag, walking the history from `HEAD`, whose name is a semantic version.
 - The latest stable version is the version of the first such tag with no prerelease part.
   Both lines read `(none)` when there is no such tag.
+- When one commit carries several such tags, the highest version among them counts.
 - The public release line says whether the current branch [produces public releases](../sdk-modules/versioning.md#public-releases).
 - The prerelease line says whether `VERSION` marks a prerelease line.
 - The current branch is the short name of the branch, or `(detached HEAD)`.

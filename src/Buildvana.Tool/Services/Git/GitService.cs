@@ -99,33 +99,26 @@ internal sealed class GitService : IGitService, IDisposable
     /// <inheritdoc/>
     public (SemanticVersion? Latest, SemanticVersion? LatestStable) GetLatestVersions()
     {
-        var versions = _repository.Tags
-            .Select(x => SemanticVersion.TryParse(x.FriendlyName, out var version)
-                ? (x.Target.Sha, Version: version)
-                : (Sha: null!, Version: null!))
-            .Where(x => x.Sha is not null)
-            .ToDictionary();
-
+        var versionsByCommit = GetVersionsByCommit();
         SemanticVersion? latest = null;
-        SemanticVersion? latestStable = null;
         foreach (var commit in _repository.Head.Commits)
         {
-            if (!versions.TryGetValue(commit.Sha, out var version))
+            if (!versionsByCommit.TryGetValue(commit.Sha, out var versions))
             {
                 continue;
             }
 
-            latest ??= version;
-            if (version.IsPrerelease)
+            // A commit can carry several version tags. Its highest version and its highest stable version are the
+            // ones that count.
+            latest ??= versions.Max();
+            var latestStable = versions.Where(static version => !version.IsPrerelease).Max();
+            if (latestStable is not null)
             {
-                continue;
+                return (latest, latestStable);
             }
-
-            latestStable = version;
-            break;
         }
 
-        return (latest, latestStable);
+        return (latest, null);
     }
 
     /// <inheritdoc/>
@@ -312,6 +305,29 @@ internal sealed class GitService : IGitService, IDisposable
     {
         var signature = _repository.Config.BuildSignature(DateTimeOffset.Now);
         return signature is null ? null : new(signature.Name, signature.Email);
+    }
+
+    private Dictionary<string, List<SemanticVersion>> GetVersionsByCommit()
+    {
+        var versionsByCommit = new Dictionary<string, List<SemanticVersion>>(StringComparer.Ordinal);
+        foreach (var tag in _repository.Tags)
+        {
+            if (!SemanticVersion.TryParse(tag.FriendlyName, out var version))
+            {
+                continue;
+            }
+
+            var sha = tag.Target.Sha;
+            if (!versionsByCommit.TryGetValue(sha, out var versions))
+            {
+                versions = [];
+                versionsByCommit.Add(sha, versions);
+            }
+
+            versions.Add(version);
+        }
+
+        return versionsByCommit;
     }
 
     private void Push(string remote, string refSpec)
