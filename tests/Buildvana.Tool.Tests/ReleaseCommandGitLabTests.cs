@@ -62,8 +62,7 @@ internal sealed class ReleaseCommandGitLabTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("below the Maintainer role");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("below the Maintainer role", StringComparison.Ordinal);
         await Assert.That(api.Requests.Count).IsEqualTo(3);
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
         await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
@@ -103,8 +102,9 @@ internal sealed class ReleaseCommandGitLabTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("'Foo 1.zip' is not a valid file name in the generic package registry.");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("'Foo 1.zip' is not a valid file name in the generic package registry.", StringComparison.Ordinal);
         await Assert.That(harness.Events.Select(static x => x.Name)).DoesNotContain("nuget-push");
         await Assert.That(api.Requests.Any(static x => x.Method == HttpMethod.Put)).IsFalse();
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
@@ -121,8 +121,7 @@ internal sealed class ReleaseCommandGitLabTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Validation failed");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("Validation failed", StringComparison.Ordinal);
         var delete = api.Requests[^1];
         await Assert.That(delete.Method).IsEqualTo(HttpMethod.Delete);
         await Assert.That(delete.Url).IsEqualTo(ApiProjectUrl + "/packages/7");

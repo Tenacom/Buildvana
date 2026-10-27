@@ -116,8 +116,8 @@ internal sealed class ProjectAssetsReaderTests
         using var home = new TempHome();
         var project = home.GetFullPath(ProjectFileName);
         var assetsPath = home.GetFullPath(AssetsFileName);
-        var exception = await Assert.That(() => ProjectAssetsReader.Read(project, assetsPath)).Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(3);
+        var exception = Assert.Throws<BuildFailedException>(() => ProjectAssetsReader.Read(project, assetsPath));
+        await Assert.That(exception.ExitCode).IsEqualTo(3);
     }
 
     [Test]
@@ -127,8 +127,8 @@ internal sealed class ProjectAssetsReaderTests
         home.WriteFile(AssetsFileName, "this is not an assets file");
         var project = home.GetFullPath(ProjectFileName);
         var assetsPath = home.GetFullPath(AssetsFileName);
-        var exception = await Assert.That(() => ProjectAssetsReader.Read(project, assetsPath)).Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(3);
+        var exception = Assert.Throws<BuildFailedException>(() => ProjectAssetsReader.Read(project, assetsPath));
+        await Assert.That(exception.ExitCode).IsEqualTo(3);
     }
 
     private static ProjectAssets Read(TempHome home)

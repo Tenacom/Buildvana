@@ -90,7 +90,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
                 ["properties"] = new JsonObject { ["member"] = new JsonObject { ["default"] = true } },
             });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             "The setting 'section' states an example, and its value is a section: an object with members, "
@@ -111,7 +111,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
                 ["additionalProperties"] = new JsonObject { ["type"] = "object" },
             });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             "The setting 'groups' states an example, and its value is a section: an object with members, "
@@ -138,7 +138,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
             },
         };
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             "The setting 'section' states an example, and its value is a section: an object with members, "
@@ -178,7 +178,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
                 ["additionalProperties"] = new JsonObject { ["type"] = "object" },
             });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             "The keyed object 'groups' states no example member name. Annotate the key property of its "
@@ -200,7 +200,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
                 ["propertyNames"] = new JsonObject(),
             });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             "The keyed object 'groups' states no example member name. Annotate the key property of its "
@@ -214,7 +214,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
             "groups",
             new JsonObject { ["propertyNames"] = new JsonObject { ["examples"] = new JsonArray { "My group" } } });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo("The keyed object 'groups' declares no value schema.");
     }
@@ -226,7 +226,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
     {
         var root = SchemaOf("setting", new JsonObject { ["type"] = "string" });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             "The setting 'setting' states neither an example nor a default, and is not a container. "
@@ -239,7 +239,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var description = Words(35);
         var root = SchemaOf("setting", new JsonObject { ["description"] = description, ["default"] = true });
 
-        var problem = await ProblemOf(root).ConfigureAwait(false);
+        var problem = ProblemOf(root);
 
         await Assert.That(problem).IsEqualTo(
             $"The description \"{description}\" needs 3 comment lines, past the 2 a description gets. A "
@@ -366,14 +366,8 @@ internal sealed class BuildvanaJsonConfigExampleTests
         => new() { ["properties"] = new JsonObject { [name] = member } };
 
     // The message the generator refuses a schema with.
-    private static async Task<string> ProblemOf(JsonObject root)
-    {
-        string Act() => BuildvanaJsonConfigExample.Generate(root);
-
-        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-
-        return exception!.Message;
-    }
+    private static string ProblemOf(JsonObject root)
+        => Assert.Throws<InvalidOperationException>(() => BuildvanaJsonConfigExample.Generate(root)).Message;
 
     // Four-letter words joined by single spaces, so the text is (5 * count - 1) characters long and a greedy
     // wrap has somewhere to break.

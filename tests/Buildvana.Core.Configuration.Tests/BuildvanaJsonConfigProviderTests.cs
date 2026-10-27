@@ -159,9 +159,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         {
             Write(dir, "buildvana.json", "{}");
             Write(dir, "buildvana.jsonc", "{}");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Message).Contains(Path.Combine(dir, "buildvana.json"));
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Message).Contains(Path.Combine(dir, "buildvana.json"));
             await Assert.That(exception.Message).Contains(Path.Combine(dir, "buildvana.jsonc"));
             await Assert.That(exception.Diagnostics.Count).IsEqualTo(0);
         }
@@ -178,9 +177,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", "{ not json ");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1100");
         }
         finally
@@ -196,9 +194,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", "{\n  \"release\": { \"branches\": [\"main\", null] }\n}");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1101");
             await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(2);
         }
@@ -215,9 +212,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "bogus": 1 }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1103");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1103");
         }
         finally
         {
@@ -234,9 +230,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "nuget": { "feeds": { "release": { "source": "https://nuget.example" } } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1104");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1104");
             await Assert.That(exception.Diagnostics[0].Message).Contains("apiKeyEnv");
         }
         finally
@@ -252,9 +247,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "git": { "identity": { "name": "Buildvana Bot" } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1104");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1104");
             await Assert.That(exception.Diagnostics[0].Message).Contains("email");
         }
         finally
@@ -273,9 +267,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "nuget": { "feeds": { "release": { "source": "", "apiKeyEnv": "KEY" } } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1106");
         }
         finally
@@ -291,9 +284,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "git": { "identity": { "name": " ", "email": "bot@buildvana.invalid" } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1107");
         }
         finally
@@ -394,9 +386,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", "{\n  \"release\": { \"branches\": [42] }\n}", bom: true);
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Line).IsEqualTo(2);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(2);
         }
         finally
         {
@@ -464,9 +455,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
                 """;
 
             Write(dir, "buildvana.jsonc", content);
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1108");
             await Assert.That(exception.Diagnostics[0].Message).Contains("A*");
             await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(6);
@@ -489,9 +479,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "dotnet": { "all": { "env": { "A": "1", "A": "2" } } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1108");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1108");
         }
         finally
         {
@@ -508,9 +497,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "dependencies": { "policies": { "": "minor" } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1106");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1106");
             await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(1);
 
             // The name that is blank, not the value four characters past it.
@@ -540,9 +528,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
                 """;
 
             Write(dir, "buildvana.jsonc", content);
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1107");
             await Assert.That(exception.Diagnostics[0].Line).IsEqualTo(4);
             await Assert.That(exception.Diagnostics[0].Column).IsEqualTo(7);
@@ -561,9 +548,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "dependencies": { "policies": { "Some.Package": "lts" } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1102");
             await Assert.That(exception.Diagnostics[0].Message).Contains("\"lts\"");
         }
@@ -581,9 +567,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
         try
         {
             Write(dir, "buildvana.jsonc", """{ "dependencies": { "scopes": { "netsdk": "exact" } } }""");
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics.Count).IsEqualTo(1);
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics.Count).IsEqualTo(1);
             await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1102");
         }
         finally
@@ -603,9 +588,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
                 """;
 
             Write(dir, "buildvana.jsonc", content);
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1104");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1104");
             await Assert.That(exception.Diagnostics[0].Message).Contains("items");
         }
         finally
@@ -633,9 +617,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
                 """;
 
             Write(dir, "buildvana.jsonc", content);
-            var exception = Catch(dir);
-            await Assert.That(exception).IsNotNull();
-            await Assert.That(exception!.Diagnostics[0].Code).IsEqualTo("BV1105");
+            var exception = await Assert.That(Catch(dir)).IsNotNull();
+            await Assert.That(exception.Diagnostics[0].Code).IsEqualTo("BV1105");
         }
         finally
         {

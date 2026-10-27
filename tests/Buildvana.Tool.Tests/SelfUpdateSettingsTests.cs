@@ -48,9 +48,9 @@ internal sealed class SelfUpdateSettingsTests
     {
         var settings = SelfUpdateSettings.Parse(["--to", "not-a-version"]);
 
-        var exception = await Assert.That(() => _ = settings.ResolveTo()).Throws<BuildFailedException>();
+        var exception = Assert.Throws<BuildFailedException>(() => _ = settings.ResolveTo());
 
-        await Assert.That(exception!.Message).Contains("--to");
+        await Assert.That(exception.Message).Contains("--to");
         await Assert.That(exception.Message).Contains("not-a-version");
     }
 
@@ -99,9 +99,9 @@ internal sealed class SelfUpdateSettingsTests
     [Arguments("--preview", "--repair", "--to=2.1.40-preview")]
     public async Task Parse_WithTwoTargetOptions_Fails(params string[] options)
     {
-        var exception = await Assert.That(() => _ = SelfUpdateSettings.Parse(options)).Throws<BuildFailedException>();
+        var exception = Assert.Throws<BuildFailedException>(() => _ = SelfUpdateSettings.Parse(options));
 
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
         foreach (var option in options)
         {
             await Assert.That(exception.Message).Contains(option.Split('=')[0]);

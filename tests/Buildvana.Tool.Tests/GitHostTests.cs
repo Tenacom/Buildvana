@@ -102,15 +102,17 @@ internal sealed class GitHostTests
     [Arguments("")]
     public async Task ParseRepositoryUrl_WithoutAUrl_Throws(string? url)
     {
-        var exception = await Assert.That(() => GitHost.ParseRepositoryUrl(Repository(url))).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("repository.url");
+        await Assert.That(() => GitHost.ParseRepositoryUrl(Repository(url)))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("repository.url", StringComparison.Ordinal);
     }
 
     [Test]
     public async Task ParseRepositoryUrl_WithAnInvalidUrl_Throws()
     {
-        var exception = await Assert.That(() => GitHost.ParseRepositoryUrl(Repository("not a URL"))).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("not a Git URL");
+        await Assert.That(() => GitHost.ParseRepositoryUrl(Repository("not a URL")))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("not a Git URL", StringComparison.Ordinal);
     }
 
     [Test]
@@ -176,8 +178,9 @@ internal sealed class GitHostTests
         await using (services.ConfigureAwait(false))
         {
             // ReSharper disable once AccessToDisposedClosure // False positive: the lambda runs before services is disposed
-            var exception = await Assert.That(() => GitHost.Create(services)).Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains("names no repository");
+            await Assert.That(() => GitHost.Create(services))
+                .Throws<BuildFailedException>()
+                .WithMessageContaining("names no repository", StringComparison.Ordinal);
         }
     }
 

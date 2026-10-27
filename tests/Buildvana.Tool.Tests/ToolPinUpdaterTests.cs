@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
@@ -64,7 +65,8 @@ internal sealed class ToolPinUpdaterTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await UpdateAsync(home, runner, pins).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
     }
 

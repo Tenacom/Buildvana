@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 
 /// <summary>
@@ -21,8 +22,9 @@ internal sealed class ReleaseCommandFailureTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains($"Tag '{ReleasedVersion}' already exists");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining($"Tag '{ReleasedVersion}' already exists", StringComparison.Ordinal);
 
         // The check gates the pipeline run: no step runs, Clean included.
         await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
@@ -81,8 +83,7 @@ internal sealed class ReleaseCommandFailureTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("repository.url");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("repository.url", StringComparison.Ordinal);
 
         // The preliminary checks run before the pipeline, so a release that can never succeed costs
         // nothing: no clean, no build, no test run.
@@ -98,8 +99,7 @@ internal sealed class ReleaseCommandFailureTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("release.allowUnknownHost");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("release.allowUnknownHost", StringComparison.Ordinal);
         await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
     }
@@ -116,8 +116,7 @@ internal sealed class ReleaseCommandFailureTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("lower than latest");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("lower than latest", StringComparison.Ordinal);
         await Assert.That(harness.Repo.TagNames).IsEquivalentTo(["2.4.0"]);
         await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
     }
@@ -130,8 +129,7 @@ internal sealed class ReleaseCommandFailureTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("committer identity");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("committer identity", StringComparison.Ordinal);
         await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
         await Assert.That(harness.Events.Count).IsEqualTo(0);
     }
@@ -149,7 +147,8 @@ internal sealed class ReleaseCommandFailureTests
         Task<int> Act() => harness.RunAsync();
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Git height of 0");
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Message).Contains("Git height of 0");
         await Assert.That(exception.Message).Contains("Commit VERSION");
 
         // It is caught before anything is packed, and the release commit is rolled back.

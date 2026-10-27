@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.IO;
@@ -144,8 +145,8 @@ internal sealed partial class UserFileTests
     {
         static string Act() => UserFile.ReadAllText("a\0b");
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not read from");
+        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<ArgumentException>();
     }
 
@@ -154,8 +155,8 @@ internal sealed partial class UserFileTests
     {
         static void Act() => UserFile.WriteAllText("a\0b", "x");
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not write to");
+        var exception = Assert.Throws<BuildFailedException>(Act);
+        await Assert.That(exception.Message).Contains("Could not write to");
         await Assert.That(exception.InnerException).IsTypeOf<ArgumentException>();
     }
 
@@ -540,15 +541,16 @@ internal sealed partial class UserFileTests
 
     private static async Task AssertDenied(Action act, string expectedMessagePrefix)
     {
-        var exception = await Assert.That(act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains(expectedMessagePrefix);
+        var exception = Assert.Throws<BuildFailedException>(act);
+        await Assert.That(exception.Message).Contains(expectedMessagePrefix);
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
     private static async Task AssertDeniedAsync(Func<Task> act, string expectedMessagePrefix)
     {
         var exception = await Assert.That(act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains(expectedMessagePrefix);
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Message).Contains(expectedMessagePrefix);
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 }

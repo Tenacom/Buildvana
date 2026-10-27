@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
@@ -37,9 +38,9 @@ internal sealed class SelfVersionServiceTests
         WriteGlobalJson(home, pin);
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
+        var exception = Assert.Throws<BuildFailedException>(service.EnsureSdkVersionMatch);
 
-        await Assert.That(exception!.Message).Contains(pin);
+        await Assert.That(exception.Message).Contains(pin);
         await Assert.That(exception.Message).Contains("2.1.41-preview");
         await Assert.That(exception.Message).Contains("dotnet bv self-update --repair");
     }
@@ -50,9 +51,9 @@ internal sealed class SelfVersionServiceTests
         using var home = new TempHome();
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
+        var exception = Assert.Throws<BuildFailedException>(service.EnsureSdkVersionMatch);
 
-        await Assert.That(exception!.Message).Contains("global.json");
+        await Assert.That(exception.Message).Contains("global.json");
         await Assert.That(exception.Message).Contains("dotnet bv self-update --repair");
     }
 
@@ -63,9 +64,9 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("global.json", """{ "sdk": { "version": "10.0.302" } }""");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("msbuild-sdks");
+        await Assert.That(service.EnsureSdkVersionMatch)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("msbuild-sdks", StringComparison.Ordinal);
     }
 
     [Test]
@@ -75,9 +76,9 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("global.json", """{ "msbuild-sdks": { "Microsoft.Build.NoTargets": "3.7.134" } }""");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("Buildvana.Sdk");
+        await Assert.That(service.EnsureSdkVersionMatch)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("Buildvana.Sdk", StringComparison.Ordinal);
     }
 
     [Test]
@@ -87,9 +88,9 @@ internal sealed class SelfVersionServiceTests
         WriteGlobalJson(home, "not-a-version");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert.That(service.EnsureSdkVersionMatch).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("not-a-version");
+        await Assert.That(service.EnsureSdkVersionMatch)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("not-a-version", StringComparison.Ordinal);
     }
 
     // No file changes, but the dotnet CLI still runs: a matching manifest pin proves neither that the
@@ -203,11 +204,10 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("'dotnet new tool-manifest' did not create dotnet-tools.json");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("'dotnet new tool-manifest' did not create dotnet-tools.json", StringComparison.Ordinal);
         await Assert.That(runner.Runs.Count).IsEqualTo(1);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
@@ -357,8 +357,9 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains("Could not write to");
+        await Assert.That(exception.Message).Contains("Could not write to");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
@@ -378,8 +379,9 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, To("2.1.41-preview")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains("downgrade");
+        await Assert.That(exception.Message).Contains("downgrade");
         await Assert.That(exception.Message).Contains("dotnet bv self-update --to <version>");
         await Assert.That(exception.Message).Contains("--force");
         await Assert.That(exception.Message).Contains(offender);
@@ -401,8 +403,9 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).StartsWith("The latest bv on the package sources is 2.1.41-preview, but ");
+        await Assert.That(exception.Message).StartsWith("The latest bv on the package sources is 2.1.41-preview, but ");
         await Assert.That(exception.Message).Contains("global.json pins Buildvana.Sdk 2.1.42-preview");
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
@@ -425,13 +428,13 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("Directory.Packages.props", project);
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, To("2.1.41-preview")).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains(
-            "the tool manifest pins bv 2.1.42-preview, global.json pins Buildvana.Sdk 2.1.42-preview, "
-            + "and Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining(
+                "the tool manifest pins bv 2.1.42-preview, global.json pins Buildvana.Sdk 2.1.42-preview, "
+                + "and Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview",
+                StringComparison.Ordinal);
     }
 
     [Test]
@@ -510,8 +513,9 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, To("2.1.40-preview")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains("--to");
+        await Assert.That(exception.Message).Contains("--to");
         await Assert.That(exception.Message).Contains("2.1.40-preview");
         await Assert.That(exception.Message).Contains("downgrade");
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
@@ -695,11 +699,10 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, new SelfUpdateRequest { Repair = true }).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("--repair");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("--repair", StringComparison.Ordinal);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
@@ -762,8 +765,9 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains("Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview");
+        await Assert.That(exception.Message).Contains("Directory.Packages.props pins Buildvana.Runtime 2.1.42-preview");
         await Assert.That(exception.Message).Contains("downgrade");
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("Directory.Packages.props")).IsEqualTo(project);
@@ -786,8 +790,9 @@ internal sealed class SelfVersionServiceTests
         var exception = await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains(expectedDetail);
+        await Assert.That(exception.Message).Contains(expectedDetail);
         await Assert.That(exception.Message).Contains("dotnet-tools.json");
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
@@ -805,11 +810,10 @@ internal sealed class SelfVersionServiceTests
         var runner = new FakeProcessRunner();
         var service = CreateService(home, "2.1.41-preview", runner);
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("git mv .config/dotnet-tools.json dotnet-tools.json", StringComparison.Ordinal);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(before);
     }
@@ -965,11 +969,10 @@ internal sealed class SelfVersionServiceTests
         home.WriteFile("buildvana.jsonc", "{}\n");
         var service = CreateService(home, "2.1.41-preview");
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("Multiple");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("Multiple", StringComparison.Ordinal);
     }
 
     // The sources list the running bv's own version and nothing else, unless a test scripts them: the default

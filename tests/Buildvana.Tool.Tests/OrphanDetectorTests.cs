@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Core.Dependencies;
 using Buildvana.Core.Testing;
@@ -162,8 +163,9 @@ internal sealed class OrphanDetectorTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await DetectAsync(Inventory(home, ["Alpha"])).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
     }
 
     // Audit findings are errors under TreatWarningsAsErrors, and the restore wrote every graph all the same.

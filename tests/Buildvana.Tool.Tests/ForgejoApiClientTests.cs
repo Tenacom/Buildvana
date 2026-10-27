@@ -201,9 +201,9 @@ internal sealed class ForgejoApiClientTests
         using var client = NewClient(AnsweringEverything(new StubHttpAnswer(HttpStatusCode.Conflict, body)));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await InvokeAsync(client, operation).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("409 Conflict: release 1.0.0 already exists");
+        await Assert.That(async () => await InvokeAsync(client, operation).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("409 Conflict: release 1.0.0 already exists", StringComparison.Ordinal);
     }
 
     [Test]
@@ -220,9 +220,9 @@ internal sealed class ForgejoApiClientTests
         using var client = NewClient(AnsweringEverything(new StubHttpAnswer(HttpStatusCode.NotFound, body)));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("404 Not Found: The target couldn't be found.");
+        await Assert.That(async () => await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("404 Not Found: The target couldn't be found.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -235,9 +235,9 @@ internal sealed class ForgejoApiClientTests
         using var client = NewClient(AnsweringEverything(new StubHttpAnswer(HttpStatusCode.BadGateway, body)));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).EndsWith("with 502 Bad Gateway.");
+        await Assert.That(async () => await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageMatching("*with 502 Bad Gateway.");
     }
 
     private static ForgejoApiClient NewClient(StubHttpMessageHandler handler) => new("forgejo.example.com", Token, handler);

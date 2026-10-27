@@ -54,8 +54,9 @@ internal sealed class AnchoringHomeDirectoryProviderTests
         var provider = new AnchoringHomeDirectoryProvider(new FixedHomeDirectoryProvider(directory.FullName));
         directory.Delete();
 
-        var exception = await Assert.That(() => provider.HomeDirectory).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("the current directory");
+        await Assert.That(() => provider.HomeDirectory)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("the current directory", StringComparison.Ordinal);
         await Assert.That(Directory.GetCurrentDirectory()).IsEqualTo(previousCurrentDirectory);
     }
 }

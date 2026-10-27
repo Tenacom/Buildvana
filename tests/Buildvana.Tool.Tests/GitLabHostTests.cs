@@ -166,8 +166,9 @@ internal sealed class GitLabHostTests
             Environment.SetEnvironmentVariable(TokenVariable, null);
 
             // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before host is disposed
-            var exception = await Assert.That(host.IsPrivateRepositoryAsync).Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains(TokenVariable);
+            await Assert.That(host.IsPrivateRepositoryAsync)
+                .Throws<BuildFailedException>()
+                .WithMessageContaining(TokenVariable, StringComparison.Ordinal);
             await Assert.That(api.Requests).IsEmpty();
         }
     }

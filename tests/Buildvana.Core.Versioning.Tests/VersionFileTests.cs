@@ -11,9 +11,8 @@ internal sealed class VersionFileTests
     public async Task Load_MissingFile_Throws()
     {
         using var home = new TempHome();
-        var exception = CatchLoad(home);
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("not found");
+        var exception = await Assert.That(CatchLoad(home)).IsNotNull();
+        await Assert.That(exception.Message).Contains("not found");
     }
 
     [Test]
@@ -21,9 +20,8 @@ internal sealed class VersionFileTests
     {
         using var home = new TempHome();
         home.WriteFile(VersionFile.FileName, "banana\n");
-        var exception = CatchLoad(home);
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("banana");
+        var exception = await Assert.That(CatchLoad(home)).IsNotNull();
+        await Assert.That(exception.Message).Contains("banana");
     }
 
     [Test]

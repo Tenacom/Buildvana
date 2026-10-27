@@ -262,9 +262,9 @@ internal sealed class GitHubApiClientTests
             new StubHttpAnswer(HttpStatusCode.UnprocessableEntity, """{"message":"Validation Failed"}""")));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await InvokeAsync(client, operation).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("422 Unprocessable Entity: Validation Failed");
+        await Assert.That(async () => await InvokeAsync(client, operation).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("422 Unprocessable Entity: Validation Failed", StringComparison.Ordinal);
     }
 
     [Test]
@@ -276,9 +276,9 @@ internal sealed class GitHubApiClientTests
         using var client = NewClient(AnsweringEverything(new StubHttpAnswer(HttpStatusCode.BadGateway, body)));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).EndsWith("with 502 Bad Gateway.");
+        await Assert.That(async () => await client.GetRepositoryAsync(Owner, Repo).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageMatching("*with 502 Bad Gateway.");
     }
 
     [Test]

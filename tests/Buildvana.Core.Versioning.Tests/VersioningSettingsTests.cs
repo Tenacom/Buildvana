@@ -72,17 +72,8 @@ internal sealed class VersioningSettingsTests
     {
         var config = new BuildvanaConfig { Release = new ReleaseConfig { Branches = ["("] } };
         var settings = new VersioningSettings(config);
-        BuildFailedException? exception = null;
-        try
-        {
-            _ = settings.IsPublicReleaseBranch("main");
-        }
-        catch (BuildFailedException e)
-        {
-            exception = e;
-        }
-
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("release.branches");
+        await Assert.That(() => settings.IsPublicReleaseBranch("main"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("release.branches", StringComparison.Ordinal);
     }
 }

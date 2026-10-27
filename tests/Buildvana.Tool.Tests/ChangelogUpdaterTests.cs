@@ -68,8 +68,7 @@ internal sealed class ChangelogUpdaterTests
         string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
         bool Act() => ChangelogUpdater.HasUnreleasedChanges(lines);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessage("CHANGELOG.md contains no sections.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -321,8 +320,7 @@ internal sealed class ChangelogUpdaterTests
         string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
         string Act() => PrepareForRelease(lines);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessage("CHANGELOG.md contains no sections.", StringComparison.Ordinal);
     }
 
     // The title is only needed when a new section is actually written: a changelog that fails validation
@@ -521,8 +519,9 @@ internal sealed class ChangelogUpdaterTests
 
         string Act() => FinalizeNewSection(lines);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains only one section.");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessage("CHANGELOG.md contains only one section.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -531,8 +530,7 @@ internal sealed class ChangelogUpdaterTests
         string[] lines = ["# Changelog", string.Empty, "Nothing to see here."];
         string Act() => FinalizeNewSection(lines);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md contains no sections.");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessage("CHANGELOG.md contains no sections.", StringComparison.Ordinal);
     }
 
     // Same guarantee as PrepareForRelease: the title is composed only when a heading is actually replaced.

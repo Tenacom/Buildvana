@@ -316,9 +316,9 @@ internal sealed class GitLabApiClientTests
             new StubHttpAnswer(HttpStatusCode.Forbidden, """{"message":"403 Forbidden"}""")));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await InvokeAsync(client, operation).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("403 Forbidden: 403 Forbidden");
+        await Assert.That(async () => await InvokeAsync(client, operation).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("403 Forbidden: 403 Forbidden", StringComparison.Ordinal);
     }
 
     [Test]
@@ -332,9 +332,9 @@ internal sealed class GitLabApiClientTests
         using var client = NewClient(AnsweringEverything(new StubHttpAnswer(HttpStatusCode.BadRequest, body)));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await client.GetProjectAsync(Project).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).EndsWith("with 400 Bad Request" + expected);
+        await Assert.That(async () => await client.GetProjectAsync(Project).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageMatching("*with 400 Bad Request" + expected);
     }
 
     [Test]
@@ -349,9 +349,9 @@ internal sealed class GitLabApiClientTests
         using var client = NewClient(AnsweringEverything(new StubHttpAnswer(HttpStatusCode.BadGateway, body)));
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await client.GetProjectAsync(Project).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).EndsWith("with 502 Bad Gateway.");
+        await Assert.That(async () => await client.GetProjectAsync(Project).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageMatching("*with 502 Bad Gateway.");
     }
 
     [Test]

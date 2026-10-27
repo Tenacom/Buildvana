@@ -124,8 +124,9 @@ internal sealed class ProcessRunnerTests
 
         var exception = await Assert.That(async () => await runner.RunAsync(executable, args).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
         await Assert.That(exception.Message).Contains("exited with code 9");
     }
 
@@ -134,10 +135,9 @@ internal sealed class ProcessRunnerTests
     {
         var runner = new ProcessRunner();
 
-        var exception = await Assert.That(() => runner.RunWithInheritedStdioAsync("bv-test-no-such-executable", []))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("bv-test-no-such-executable");
+        await Assert.That(() => runner.RunWithInheritedStdioAsync("bv-test-no-such-executable", []))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("bv-test-no-such-executable", StringComparison.Ordinal);
     }
 
     [Test]

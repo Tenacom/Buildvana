@@ -39,8 +39,8 @@ internal sealed class UrlMatchingReleaseRemoteResolverTests
         using var repo = CreateRepo(("origin", "ssh://git@github.com/Tenacom/Buildvana.git"));
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before repo is disposed
-        var exception = await Assert.That(() => Resolve(repo, RepositoryUrl)).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Remote 'origin' names repository.url");
+        var exception = Assert.Throws<BuildFailedException>(() => Resolve(repo, RepositoryUrl));
+        await Assert.That(exception.Message).Contains("Remote 'origin' names repository.url");
         await Assert.That(exception.Message).Contains("HTTP and HTTPS");
     }
 
@@ -50,8 +50,8 @@ internal sealed class UrlMatchingReleaseRemoteResolverTests
         using var repo = CreateRepo(("origin", "https://github.com/someone/Buildvana"));
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before repo is disposed
-        var exception = await Assert.That(() => Resolve(repo, RepositoryUrl)).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains($"No remote of the clone names repository.url '{RepositoryUrl}'");
+        var exception = Assert.Throws<BuildFailedException>(() => Resolve(repo, RepositoryUrl));
+        await Assert.That(exception.Message).Contains($"No remote of the clone names repository.url '{RepositoryUrl}'");
         await Assert.That(exception.Message).Contains("'origin' (https://github.com/someone/Buildvana)");
     }
 
@@ -61,8 +61,9 @@ internal sealed class UrlMatchingReleaseRemoteResolverTests
         using var repo = CreateRepo();
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before repo is disposed
-        var exception = await Assert.That(() => Resolve(repo, RepositoryUrl)).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("The clone has no remotes.");
+        await Assert.That(() => Resolve(repo, RepositoryUrl))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("The clone has no remotes.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -71,8 +72,9 @@ internal sealed class UrlMatchingReleaseRemoteResolverTests
         using var repo = CreateRepo(("origin", RepositoryUrl));
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before repo is disposed
-        var exception = await Assert.That(() => Resolve(repo, null)).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("repository.url");
+        await Assert.That(() => Resolve(repo, null))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("repository.url", StringComparison.Ordinal);
     }
 
     private static TempGitRepo CreateRepo(params (string Name, string Url)[] remotes)

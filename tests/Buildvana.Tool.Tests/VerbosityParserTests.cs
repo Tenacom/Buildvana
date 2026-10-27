@@ -29,9 +29,11 @@ internal sealed class VerbosityParserTests
     [Test]
     public async Task Parse_UnknownLevel_FailsNamingValueAndAlternatives()
     {
-        var exception = await Assert.That(() => VerbosityParser.Parse("loud")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message)
-            .IsEqualTo("Unknown verbosity level 'loud'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic.");
+        await Assert.That(() => VerbosityParser.Parse("loud"))
+            .Throws<BuildFailedException>()
+            .WithMessage(
+                "Unknown verbosity level 'loud'. Use one of: [q]uiet, [m]inimal, [n]ormal, [d]etailed, [diag]nostic.",
+                StringComparison.Ordinal);
     }
 
     [Test]

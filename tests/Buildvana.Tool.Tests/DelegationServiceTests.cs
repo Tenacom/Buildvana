@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Text.Json;
 using Buildvana.Core;
 using Buildvana.Core.Json;
@@ -68,10 +69,9 @@ internal sealed class DelegationServiceTests
         var service = CreateService(runner);
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(async () => await service.TryDelegateAsync(Context(home)).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
+        await Assert.That(async () => await service.TryDelegateAsync(Context(home)).ConfigureAwait(false))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("git mv .config/dotnet-tools.json dotnet-tools.json", StringComparison.Ordinal);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
         await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(0);
     }
@@ -91,8 +91,9 @@ internal sealed class DelegationServiceTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await service.TryDelegateAsync(Context(home)).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message)
+        await Assert.That(exception.Message)
             .Contains("Merge the tools of .config/dotnet-tools.json into dotnet-tools.json, then delete .config/dotnet-tools.json.");
         await Assert.That(exception.Message).DoesNotContain("git mv");
     }
