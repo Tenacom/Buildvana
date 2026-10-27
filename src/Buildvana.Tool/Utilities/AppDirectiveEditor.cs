@@ -45,12 +45,13 @@ internal static partial class AppDirectiveEditor
     /// place.
     /// </summary>
     /// <param name="path">The path of the file to edit.</param>
-    /// <param name="getNewVersionText">Called once per directive that carries a version, in document order;
-    /// returns the new version text for the directive, or <see langword="null"/> to leave it alone. Text
-    /// ordinally equal to the current version leaves the directive alone too.</param>
+    /// <param name="getNewVersionText">Called once per directive that carries a version, in document order,
+    /// with the directive and its version text; returns the new version text for the directive, or
+    /// <see langword="null"/> to leave it alone. Text ordinally equal to the current version leaves the
+    /// directive alone too.</param>
     /// <returns><see langword="true"/> if the file was modified; otherwise, <see langword="false"/>.
     /// The file is written only when it was modified.</returns>
-    public static bool RewriteVersions(string path, Func<AppDirective, string?> getNewVersionText)
+    public static bool RewriteVersions(string path, Func<AppDirective, string, string?> getNewVersionText)
     {
         Guard.IsNotNull(path);
         Guard.IsNotNull(getNewVersionText);
@@ -63,7 +64,7 @@ internal static partial class AppDirectiveEditor
                 continue;
             }
 
-            var newVersionText = getNewVersionText(match.Directive);
+            var newVersionText = getNewVersionText(match.Directive, versionText);
             if (newVersionText is not null && !string.Equals(newVersionText, versionText, StringComparison.Ordinal))
             {
                 edits.Add(new TextEdit(match.VersionStart, versionText.Length, newVersionText));

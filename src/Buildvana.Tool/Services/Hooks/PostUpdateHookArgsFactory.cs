@@ -47,9 +47,8 @@ internal sealed class PostUpdateHookArgsFactory(
             Tools = ResultsOf(resolution.Tools),
             Packages = ResultsOf(resolution.Packages.Where(static pin => pin.Pin.GroupCaption is null)),
             AdditionalPackages = [
-                .. resolution.Packages
-                    .Where(static pin => pin.Pin.GroupCaption is not null)
-                    .GroupBy(static pin => pin.Pin.GroupCaption!)
+                .. GroupedPins(resolution.Packages)
+                    .GroupBy(static grouped => grouped.Caption, static grouped => grouped.Pin)
                     .Select(static group => new AdditionalPackagesResult { Caption = group.Key, Results = ResultsOf(group) }),
             ],
 
@@ -57,6 +56,17 @@ internal sealed class PostUpdateHookArgsFactory(
             // scope has just rewritten them, and every other run reports what the last one wrote.
             Overrides = OverridesOf(sidecars.Read()),
         };
+    }
+
+    private static IEnumerable<(string Caption, PinResolution Pin)> GroupedPins(IEnumerable<PinResolution> pins)
+    {
+        foreach (var pin in pins)
+        {
+            if (pin.Pin.GroupCaption is { } caption)
+            {
+                yield return (caption, pin);
+            }
+        }
     }
 
     private static IReadOnlyList<TransitiveOverride> OverridesOf(IReadOnlyList<TransitiveOverrideEntry> entries)

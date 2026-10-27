@@ -116,10 +116,11 @@ internal sealed class FamilyPinUpdater(IHomeDirectoryProvider home, Lazy<Buildva
             }
             else
             {
-                // The editor calls back only for directives that carry a version, so VersionText is never null here.
                 _ = AppDirectiveEditor.RewriteVersions(
                     path,
-                    directive => BuildvanaFamily.Contains(directive.Id) ? PinVersionText.Restate(directive.VersionText!, target) : null);
+                    (directive, versionText) => BuildvanaFamily.Contains(directive.Id)
+                        ? PinVersionText.Restate(versionText, target)
+                        : null);
             }
         }
 

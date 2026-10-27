@@ -24,21 +24,29 @@ internal static class PinWriting
     /// Names the pins a run moves.
     /// </summary>
     /// <param name="pins">What the run made of a scope's pins.</param>
-    /// <returns>The pins that move.</returns>
-    public static IEnumerable<PinResolution> Moving(IEnumerable<PinResolution> pins)
-        => pins.Where(static pin => pin is { State: PinResolutionState.Updated, Target: not null });
+    /// <returns>The pins that move, each with the version it moves to.</returns>
+    public static IEnumerable<PinMove> Moving(IEnumerable<PinResolution> pins)
+    {
+        foreach (var pin in pins)
+        {
+            if (pin is { State: PinResolutionState.Updated, Target: { } target })
+            {
+                yield return new PinMove(pin.Pin, target);
+            }
+        }
+    }
 
     /// <summary>
     /// Indexes the versions a set of pins moves to, by what identifies each pin in its file.
     /// </summary>
     /// <param name="pins">The pins that move.</param>
     /// <returns>The lookup a rewrite consults for every declaration it walks past.</returns>
-    public static Dictionary<PinKey, NuGetVersion> TargetsOf(IEnumerable<PinResolution> pins)
+    public static Dictionary<PinKey, NuGetVersion> TargetsOf(IEnumerable<PinMove> pins)
     {
         var targets = new Dictionary<PinKey, NuGetVersion>();
         foreach (var pin in pins)
         {
-            targets[KeyOf(pin.Pin.ItemType, pin.Pin.Id, pin.Pin.VersionText)] = pin.Target!;
+            targets[KeyOf(pin.Pin.ItemType, pin.Pin.Id, pin.Pin.VersionText)] = pin.Target;
         }
 
         return targets;

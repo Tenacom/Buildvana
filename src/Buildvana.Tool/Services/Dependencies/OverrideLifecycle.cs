@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -177,7 +178,8 @@ internal sealed partial class OverrideLifecycle(
             // A project using central package management takes its version from the central file, so that one
             // version answers for every project that needs it. One managing its own versions takes it inline.
             case OverrideOutcome.Override when project.ManagesVersionsCentrally:
-                state.AddCentral(packageId, decision.Version!);
+                Debug.Assert(decision.Version is not null, "OverrideSelector states a version for every override.");
+                state.AddCentral(packageId, decision.Version);
                 state.AddPromotion(project.ProjectFullPath, packageId, version: null);
                 break;
             case OverrideOutcome.Override:
@@ -187,7 +189,8 @@ internal sealed partial class OverrideLifecycle(
                 state.AddPromotion(project.ProjectFullPath, packageId, version: null);
                 break;
             default:
-                verdicts.Add(Verdict(project, packageId, request, decision.Reason!));
+                Debug.Assert(decision.Reason is not null, "OverrideSelector states a reason for every decision that writes nothing.");
+                verdicts.Add(Verdict(project, packageId, request, decision.Reason));
                 break;
         }
     }

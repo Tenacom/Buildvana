@@ -107,18 +107,19 @@ internal sealed class PackagePinReader(IHomeDirectoryProvider home, IReporter re
             MetadataPolicy = EvaluatedMetadata.Stated(item.UpdatePolicy),
         };
 
-        pins.Add(key, ClassifyDeclaration(pin, versionOverride is not null));
+        pins.Add(key, ClassifyDeclaration(pin, item.ItemType, versionOverride is not null));
     }
 
-    private DependencyPin ClassifyDeclaration(DependencyPin pin, bool statesVersionOverride)
+    private DependencyPin ClassifyDeclaration(DependencyPin pin, string itemType, bool statesVersionOverride)
     {
         if (statesVersionOverride)
         {
             return pin with { Management = PinManagement.VersionOverride };
         }
 
-        if (pin.Management != PinManagement.Managed
-            || _declarations.StatesVersion(pin.DeclaringFile, pin.ItemType!, pin.Id, pin.VersionText))
+        var isSettled = pin.Management != PinManagement.Managed
+            || _declarations.StatesVersion(pin.DeclaringFile, itemType, pin.Id, pin.VersionText);
+        if (isSettled)
         {
             return pin;
         }

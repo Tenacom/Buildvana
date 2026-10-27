@@ -64,9 +64,8 @@ internal sealed record OverrideProject
         var moved = MovedCentralPins(packages);
         var gone = RemovedCentralPins(removed);
         return [
-            .. evaluations
-                .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
-                .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
+            .. PackagePinDumps.WithAssetsFile(evaluations)
+                .GroupBy(static dump => dump.Evaluation.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
                 .Select(grouped => Fold(home, grouped, moved, gone))
                 .OrderBy(static project => project.ProjectFullPath, StringComparer.Ordinal),
         ];
@@ -114,14 +113,14 @@ internal sealed record OverrideProject
     // reports more findings and blocks more promotions, and no automatic step should be the bolder reading.
     private static OverrideProject Fold(
         IHomeDirectoryProvider home,
-        IGrouping<string, PackagePinDump> evaluations,
+        IGrouping<string, (PackagePinDump Evaluation, string AssetsFilePath)> evaluations,
         Dictionary<string, Dictionary<PinKey, NuGetVersion>> moved,
         Dictionary<string, HashSet<PinKey>> gone)
     {
         var centralPins = new Dictionary<string, NuGetVersion>(StringComparer.OrdinalIgnoreCase);
         var auditLevel = PackageVulnerabilitySeverity.Critical;
         var managesCentrally = false;
-        foreach (var evaluation in evaluations)
+        foreach (var (evaluation, _) in evaluations)
         {
             managesCentrally |= evaluation.ManagePackageVersionsCentrally;
             auditLevel = (PackageVulnerabilitySeverity)Math.Min((int)auditLevel, (int)AuditLevelOf(evaluation));
@@ -130,7 +129,7 @@ internal sealed record OverrideProject
 
         return new OverrideProject {
             ProjectFullPath = evaluations.Key,
-            AssetsFilePath = evaluations.First().ProjectAssetsFile!,
+            AssetsFilePath = evaluations.First().AssetsFilePath,
             AuditLevel = auditLevel,
             ManagesVersionsCentrally = managesCentrally,
             CentralPins = managesCentrally ? centralPins : new Dictionary<string, NuGetVersion>(StringComparer.OrdinalIgnoreCase),

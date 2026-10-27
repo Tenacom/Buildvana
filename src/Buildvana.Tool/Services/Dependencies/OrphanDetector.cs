@@ -123,10 +123,9 @@ internal sealed class OrphanDetector(
         IReadOnlyList<PackagePinDump> evaluations)
     {
         return [
-            .. evaluations
-                .Where(static dump => !string.IsNullOrEmpty(dump.ProjectAssetsFile))
-                .GroupBy(static dump => dump.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
-                .Select(static grouped => (grouped.Key, grouped.First().ProjectAssetsFile!)),
+            .. PackagePinDumps.WithAssetsFile(evaluations)
+                .GroupBy(static dump => dump.Evaluation.ProjectFullPath, StringComparer.OrdinalIgnoreCase)
+                .Select(static grouped => (grouped.Key, grouped.First().AssetsFilePath)),
         ];
     }
 

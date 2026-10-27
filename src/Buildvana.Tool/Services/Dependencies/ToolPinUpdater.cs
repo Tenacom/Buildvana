@@ -41,7 +41,7 @@ internal sealed class ToolPinUpdater(IProcessRunner processRunner, IHomeDirector
         Guard.IsNotNull(pins);
         foreach (var pin in PinWriting.Moving(pins))
         {
-            var version = pin.Target!.ToNormalizedString();
+            var version = pin.Target.ToNormalizedString();
             reporter.Info($"Updating tool {pin.Pin.Id} to {version}...");
             _ = await processRunner.RunAsync(
                 DotNetMuxer.Path,
@@ -53,8 +53,8 @@ internal sealed class ToolPinUpdater(IProcessRunner processRunner, IHomeDirector
 
     // The CLI has a downgrade guard of its own, and it stays armed unless the run is an assisted manual
     // edit: a policy-driven update never lowers a pin, so a downgrade the CLI blocks there is a bug caught.
-    private static bool IsDowngrade(PinResolution pin)
-        => pin.Pin.Version is { } current && VersionComparer.VersionRelease.Compare(pin.Target!, current) < 0;
+    private static bool IsDowngrade(PinMove pin)
+        => pin.Pin.Version is { } current && VersionComparer.VersionRelease.Compare(pin.Target, current) < 0;
 
     private static string[] ArgumentsFor(DependencyPin pin, string version, bool isDowngrade)
         => isDowngrade

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security;
@@ -80,7 +81,10 @@ internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter repor
                 """;
 
     private static string CentralItem(PackageOverride entry)
-        => $"""    <PackageVersion Include="{Escape(entry.PackageId)}" Version="{Escape(entry.Version!.ToNormalizedString())}" />""";
+    {
+        Debug.Assert(entry.Version is not null, "Every central override states the version it pins.");
+        return $"""    <PackageVersion Include="{Escape(entry.PackageId)}" Version="{Escape(entry.Version.ToNormalizedString())}" />""";
+    }
 
     private static string ProjectItem(PackageOverride entry)
     {

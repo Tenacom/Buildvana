@@ -42,7 +42,12 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
             if (items.Length > 0)
             {
                 var targets = PinWriting.TargetsOf(items);
-                var itemTypes = items.Select(static pin => pin.Pin.ItemType!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                var itemTypes = items
+                    .Select(static pin => pin.Pin.ItemType)
+                    .OfType<string>()
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
                 var rewritten = MsBuildPinEditor.RewritePins(
                     path,
                     itemTypes,
@@ -54,11 +59,9 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
             if (directives.Length > 0)
             {
                 var targets = PinWriting.TargetsOf(directives);
-
-                // The editor calls back only for directives that carry a version, so VersionText is never null here.
                 var rewritten = AppDirectiveEditor.RewriteVersions(
                     path,
-                    directive => PinWriting.Restate(targets, itemType: null, directive.Id, directive.VersionText!));
+                    (directive, versionText) => PinWriting.Restate(targets, itemType: null, directive.Id, versionText));
 
                 EnsureEdited(rewritten, path, "moves");
             }
@@ -82,7 +85,12 @@ internal sealed class PackagePinWriter(IHomeDirectoryProvider home, IReporter re
         {
             var path = home.GetFullPath(file.Key);
             var keys = PinWriting.KeysOf(file);
-            var itemTypes = file.Select(static pin => pin.ItemType!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            var itemTypes = file
+                .Select(static pin => pin.ItemType)
+                .OfType<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
             var removed = MsBuildPinEditor.RemovePins(
                 path,
                 itemTypes,

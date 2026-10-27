@@ -47,7 +47,7 @@ internal sealed class SdkPinWriter(IHomeDirectoryProvider home, IJsonHelper json
                 var targets = PinWriting.TargetsOf(file);
                 var rewritten = AppDirectiveEditor.RewriteVersions(
                     path,
-                    directive => PinWriting.Restate(targets, itemType: null, directive.Id, directive.VersionText!));
+                    (directive, versionText) => PinWriting.Restate(targets, itemType: null, directive.Id, versionText));
 
                 EnsureWritten(rewritten, path);
             }
@@ -61,12 +61,12 @@ internal sealed class SdkPinWriter(IHomeDirectoryProvider home, IJsonHelper json
     private static void EnsureWritten(bool written, string path)
         => BuildFailedException.ThrowIfNot(written, $"{path} no longer states a project SDK version this run moves.");
 
-    private void WriteGlobalJson(string path, IReadOnlyList<PinResolution> pins)
+    private void WriteGlobalJson(string path, IReadOnlyList<PinMove> pins)
     {
         var targets = new Dictionary<string, NuGetVersion>(StringComparer.OrdinalIgnoreCase);
         foreach (var pin in pins)
         {
-            targets[pin.Pin.Id] = pin.Target!;
+            targets[pin.Pin.Id] = pin.Target;
         }
 
         var rewritten = jsonHelper.RewriteStringValues(
