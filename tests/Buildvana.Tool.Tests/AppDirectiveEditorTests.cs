@@ -189,7 +189,7 @@ internal sealed class AppDirectiveEditorTests
             ["Fake"] = "0.0.1",
         };
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, d => newVersions.GetValueOrDefault(d.Id));
+        var changed = AppDirectiveEditor.RewriteVersions(path, (d, _) => newVersions.GetValueOrDefault(d.Id));
 
         await Assert.That(changed).IsTrue();
         await Assert.That(home.ReadFile(FileName)).IsEqualTo("""
@@ -214,15 +214,15 @@ internal sealed class AppDirectiveEditorTests
             using System;
             """;
         var path = WriteFile(home, content);
-        var offered = new List<AppDirective>();
+        var offered = new List<(AppDirective Directive, string VersionText)>();
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, d => {
-            offered.Add(d);
+        var changed = AppDirectiveEditor.RewriteVersions(path, (d, versionText) => {
+            offered.Add((d, versionText));
             return null;
         });
 
         await Assert.That(changed).IsFalse();
-        await Assert.That(offered).IsEquivalentTo([new AppDirective(AppDirectiveKind.Package, "Beta", "1.0.0")]);
+        await Assert.That(offered).IsEquivalentTo([(new AppDirective(AppDirectiveKind.Package, "Beta", "1.0.0"), "1.0.0")]);
         await Assert.That(home.ReadFile(FileName)).IsEqualTo(content);
     }
 
@@ -236,7 +236,7 @@ internal sealed class AppDirectiveEditorTests
             """;
         var path = WriteFile(home, content);
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.0");
+        var changed = AppDirectiveEditor.RewriteVersions(path, (_, _) => "1.0.0");
 
         await Assert.That(changed).IsFalse();
         await Assert.That(home.ReadFile(FileName)).IsEqualTo(content);
@@ -253,7 +253,7 @@ internal sealed class AppDirectiveEditorTests
         const string expected = "#:package Alpha@1.0.1\rusing System;\r";
         await File.WriteAllTextAsync(path, content).ConfigureAwait(false);
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.1");
+        var changed = AppDirectiveEditor.RewriteVersions(path, (_, _) => "1.0.1");
 
         await Assert.That(changed).IsTrue();
         var rewritten = await File.ReadAllTextAsync(path).ConfigureAwait(false);
@@ -269,7 +269,7 @@ internal sealed class AppDirectiveEditorTests
         const string expected = "// Example hook.\r\n#:package Alpha@1.0.1\r\nusing System;\r\n";
         await File.WriteAllTextAsync(path, content).ConfigureAwait(false);
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.1");
+        var changed = AppDirectiveEditor.RewriteVersions(path, (_, _) => "1.0.1");
 
         await Assert.That(changed).IsTrue();
         var rewritten = await File.ReadAllTextAsync(path).ConfigureAwait(false);
@@ -292,7 +292,7 @@ internal sealed class AppDirectiveEditorTests
         var contentBytes = Encoding.UTF8.GetBytes(content);
         await File.WriteAllBytesAsync(path, hasByteOrderMark ? [0xEF, 0xBB, 0xBF, .. contentBytes] : contentBytes).ConfigureAwait(false);
 
-        var changed = AppDirectiveEditor.RewriteVersions(path, _ => "1.0.1");
+        var changed = AppDirectiveEditor.RewriteVersions(path, (_, _) => "1.0.1");
 
         await Assert.That(changed).IsTrue();
         var rewrittenBytes = await File.ReadAllBytesAsync(path).ConfigureAwait(false);

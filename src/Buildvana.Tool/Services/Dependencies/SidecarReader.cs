@@ -51,8 +51,21 @@ internal sealed class SidecarReader(IHomeDirectoryProvider home, IReporter repor
         return entries;
     }
 
-    private static IEnumerable<XElement> ItemsOf(XDocument document, string itemType)
-        => document.Descendants().Where(element => string.Equals(element.Name.LocalName, itemType, StringComparison.Ordinal));
+    // bv writes both values as attributes, and bv is the only writer these files have.
+    private static IEnumerable<TransitiveOverrideEntry> EntriesOf(
+        XDocument document,
+        string relativePath,
+        string itemType)
+    {
+        foreach (var element in document.Descendants())
+        {
+            var isItem = string.Equals(element.Name.LocalName, itemType, StringComparison.Ordinal);
+            if (isItem && (string?)element.Attribute("Include") is { Length: > 0 } id)
+            {
+                yield return new TransitiveOverrideEntry(id, (string?)element.Attribute("Version"), relativePath);
+            }
+        }
+    }
 
     private void ReadFile(List<TransitiveOverrideEntry> entries, string relativePath, string itemType)
     {
@@ -62,16 +75,10 @@ internal sealed class SidecarReader(IHomeDirectoryProvider home, IReporter repor
             return;
         }
 
-        // bv writes both values as attributes, and bv is the only writer these files have.
-        var items = ItemsOf(document, itemType)
-            .Select(static element => (Id: (string?)element.Attribute("Include"), Version: (string?)element.Attribute("Version")))
-            .Where(static item => !string.IsNullOrEmpty(item.Id))
-            .OrderBy(static item => item.Id, StringComparer.OrdinalIgnoreCase);
+        var fileEntries = EntriesOf(document, relativePath, itemType)
+            .OrderBy(static entry => entry.PackageId, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var (id, version) in items)
-        {
-            entries.Add(new TransitiveOverrideEntry(id!, version, relativePath));
-        }
+        entries.AddRange(fileEntries);
     }
 
     // A file bv wrote and something else mangled is not worth a failed command: the next apply run rewrites
