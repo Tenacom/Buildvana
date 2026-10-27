@@ -134,10 +134,10 @@ partial class GitignorePattern
         return tokenIndex == tokens.Length;
     }
 
-    private static bool MatchesChar(GitignoreToken token, char c, bool ignoreCase) => token.Kind switch {
-        GitignoreTokenKind.Literal => CharsEqual(token.Value, c, ignoreCase),
-        GitignoreTokenKind.AnyChar => true,
-        GitignoreTokenKind.CharClass => token.CharClass!.Matches(c, ignoreCase),
+    private static bool MatchesChar(GitignoreToken token, char c, bool ignoreCase) => token switch {
+        { Kind: GitignoreTokenKind.Literal } => CharsEqual(token.Value, c, ignoreCase),
+        { Kind: GitignoreTokenKind.AnyChar } => true,
+        { Kind: GitignoreTokenKind.CharClass, CharClass: { } charClass } => charClass.Matches(c, ignoreCase),
         _ => false, // AnyRun is consumed by MatchTokens and never reaches here.
     };
 

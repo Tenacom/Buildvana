@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.IO;
 using CommunityToolkit.Diagnostics;
 using Microsoft.VisualStudio.SolutionPersistence.Model;
@@ -19,7 +20,15 @@ internal static class SolutionContextExtensions
         /// <summary>
         /// Gets the absolute path of the directory containing the solution file.
         /// </summary>
-        public string SolutionDirectory => Path.GetDirectoryName(@this.SolutionPath)!;
+        public string SolutionDirectory
+        {
+            get
+            {
+                var directory = Path.GetDirectoryName(@this.SolutionPath);
+                Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+                return directory;
+            }
+        }
 
         /// <summary>
         /// Resolves a path that is relative to <see cref="SolutionDirectory"/> into an absolute path,

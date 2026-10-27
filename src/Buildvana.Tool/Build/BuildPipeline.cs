@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -135,7 +136,8 @@ internal sealed class BuildPipeline
         foreach (var project in _solution.Model.SolutionProjects)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var projectDirectory = Path.GetDirectoryName(_solution.ResolveProjectPath(project))!;
+            var projectDirectory = Path.GetDirectoryName(_solution.ResolveProjectPath(project));
+            Debug.Assert(projectDirectory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
             UserDirectory.DeleteIfExists(Path.Combine(projectDirectory, "bin"), _reporter);
             UserDirectory.DeleteIfExists(Path.Combine(projectDirectory, "obj"), _reporter);
         }

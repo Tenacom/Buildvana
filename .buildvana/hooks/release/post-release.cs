@@ -3,6 +3,7 @@
 
 #:package Buildvana.Runtime
 
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using Buildvana.Runtime;
@@ -28,7 +29,9 @@ if (configFile is null)
 // next file sits beside the one it replaces, and is checked in, so a missing one is a broken tree:
 // File.Copy throws, the hook exits non-zero, and the release fails naming the path. Skipping instead
 // would revert the configuration file at the release after.
-var nextConfigFile = Path.Combine(Path.GetDirectoryName(configFile)!, "buildvana.next.jsonc");
+var configDirectory = Path.GetDirectoryName(configFile);
+Debug.Assert(configDirectory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+var nextConfigFile = Path.Combine(configDirectory, "buildvana.next.jsonc");
 File.Copy(nextConfigFile, configFile, overwrite: true);
 
 // Same expression as SelfVersionService.SchemaUrlRegex in src/Buildvana.Tool, which `bv self-update` applies to

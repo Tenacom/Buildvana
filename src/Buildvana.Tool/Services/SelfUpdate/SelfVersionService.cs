@@ -324,7 +324,8 @@ internal sealed partial class SelfVersionService
     // downloads the version in one go — hand-editing the manifest would leave the pin unrestored. The choice
     // between update and install is keyed on entry presence, mirroring the CLI's own contract: update rewrites
     // an existing entry, and install adds one. (An entry with an unusable version never reaches this point;
-    // EnsureUsableManifestEntry rejects it up front.) The manifest itself is created with `dotnet new
+    // EnsureUsableManifestEntry rejects it up front. An entry is therefore present exactly when it has a version,
+    // and the code tests the version.) The manifest itself is created with `dotnet new
     // tool-manifest`, in the home directory, when there is none. Left to `dotnet tool install`, the CLI picks
     // the directory by its own markers — a `.git` directory anywhere above, then a solution file — which can be
     // an ancestor of the home directory. --tool-manifest names the file for the same reason. The template writes
@@ -340,7 +341,6 @@ internal sealed partial class SelfVersionService
     {
         var targetText = target.ToNormalizedString();
         var currentPin = manifestPin.Version;
-        var hasEntry = manifestPin.HasEntry;
         var isUnchanged = currentPin is not null && VersionComparer.VersionRelease.Equals(currentPin, target);
 
         // The dotnet CLI has a downgrade guard of its own: `tool update` refuses to move a tool to a lower
@@ -360,12 +360,12 @@ internal sealed partial class SelfVersionService
         }
 
         string[] args = isDowngrade ? ["tool", "update", ToolPackageId, "--version", targetText, "--allow-downgrade"]
-            : hasEntry ? ["tool", "update", ToolPackageId, "--version", targetText]
+            : currentPin is not null ? ["tool", "update", ToolPackageId, "--version", targetText]
             : ["tool", "install", ToolPackageId, "--version", targetText];
         await RunDotNetAsync([.. args, "--tool-manifest", ToolManifest.FileName], cancellationToken).ConfigureAwait(false);
-        return !hasEntry ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
+        return currentPin is null ? $"{ToolPackageId}: {targetText} (tool manifest, added)"
             : isUnchanged ? ManifestLineWhenUnchanged(target)
-            : $"{ToolPackageId}: {currentPin!.ToNormalizedString()} -> {targetText} (tool manifest)";
+            : $"{ToolPackageId}: {currentPin.ToNormalizedString()} -> {targetText} (tool manifest)";
     }
 
     // A handed-off run finds the manifest already at the target, because the bv that handed off moved it
@@ -384,11 +384,12 @@ internal sealed partial class SelfVersionService
             return $"{ToolPackageId}: {targetText} (tool manifest, added)";
         }
 
-        var isMove = NuGetVersion.TryParse(_handedOffFrom, out var previousPin)
-            && !VersionComparer.VersionRelease.Equals(previousPin, target);
-        return isMove
-            ? $"{ToolPackageId}: {previousPin!.ToNormalizedString()} -> {targetText} (tool manifest)"
-            : $"{ToolPackageId}: {targetText} (tool manifest, unchanged)";
+        if (NuGetVersion.TryParse(_handedOffFrom, out var previousPin) && !VersionComparer.VersionRelease.Equals(previousPin, target))
+        {
+            return $"{ToolPackageId}: {previousPin.ToNormalizedString()} -> {targetText} (tool manifest)";
+        }
+
+        return $"{ToolPackageId}: {targetText} (tool manifest, unchanged)";
     }
 
     private async Task RunDotNetAsync(string[] args, CancellationToken cancellationToken)
@@ -506,8 +507,7 @@ internal sealed partial class SelfVersionService
         }
 
         var root = _jsonHelper.LoadObject(path);
-        var hasSdksSection = root.TryGetPropertyValue(MsbuildSdksPropertyName, out var sdksNode) && sdksNode is JsonObject;
-        if (!hasSdksSection)
+        if (!root.TryGetPropertyValue(MsbuildSdksPropertyName, out var sdksNode) || sdksNode is not JsonObject sdks)
         {
             var section = new JsonObject { [SdkPackageId] = version };
             var inserted = _jsonHelper.InsertProperty(path, [], MsbuildSdksPropertyName, section);
@@ -516,7 +516,7 @@ internal sealed partial class SelfVersionService
             return;
         }
 
-        if (((JsonObject)sdksNode!).ContainsKey(SdkPackageId))
+        if (sdks.ContainsKey(SdkPackageId))
         {
             var rewritten = _jsonHelper.RewriteStringValues(path, (propertyPath, _) => IsPinPath(propertyPath) ? version : null);
             BuildFailedException.ThrowIfNot(rewritten, $"{path} has a '{MsbuildSdksPropertyName}.{SdkPackageId}' property that is not a string.");

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Buildvana.Core;
@@ -304,11 +305,15 @@ internal static class CommandRegistry
         var canonicalNode = root;
         for (var depth = 0; depth < aliasPath.Count; depth++)
         {
-            aliasNode = aliasNode.FindChild(aliasPath[depth])!;
+            var aliasChild = aliasNode.FindChild(aliasPath[depth]);
+            Debug.Assert(aliasChild is not null, "AddPath created every node of the alias path.");
+            aliasNode = aliasChild;
 
             // An alias may be shorter than the path it names, as `version` is for `version show`. Its last
             // node then names the canonical node of the same depth, which for `version` is itself.
-            canonicalNode = canonicalNode.FindChild(canonicalPath[Math.Min(depth, canonicalPath.Count - 1)])!;
+            var canonicalChild = canonicalNode.FindChild(canonicalPath[Math.Min(depth, canonicalPath.Count - 1)]);
+            Debug.Assert(canonicalChild is not null, "AddPath created every node of the canonical path.");
+            canonicalNode = canonicalChild;
             if (aliasNode.IsOnCanonicalPath || ReferenceEquals(aliasNode, canonicalNode))
             {
                 continue;

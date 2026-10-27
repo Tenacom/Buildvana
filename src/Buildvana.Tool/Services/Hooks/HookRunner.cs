@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -119,7 +120,9 @@ internal sealed class HookRunner
         var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
         _reporter.Trace($"Hook {hookName}: args: {json}");
         var argsPath = _home.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event));
-        _ = UserDirectory.CreateDirectory(Path.GetDirectoryName(argsPath)!);
+        var argsDirectory = Path.GetDirectoryName(argsPath);
+        Debug.Assert(argsDirectory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = UserDirectory.CreateDirectory(argsDirectory);
         await UserFile.WriteAllTextAsync(argsPath, json, cancellationToken).ConfigureAwait(false);
         _reporter.Info($"Running hook {hookName}...");
         var result = await _appRunner.RunFileBasedAppAsync(
