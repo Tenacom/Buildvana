@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Text.Json;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
@@ -87,7 +88,8 @@ internal sealed class SolutionPinReaderTests
         var reader = CreateReader(home, runner);
         var exception = await Assert.That(async () => await reader.ReadAsync([ProjectPath]).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(3);
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.ExitCode).IsEqualTo(3);
     }
 
     [Test]
@@ -98,7 +100,8 @@ internal sealed class SolutionPinReaderTests
         var reader = CreateReader(home, runner);
         var exception = await Assert.That(async () => await reader.ReadAsync([ProjectPath]).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(3);
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.ExitCode).IsEqualTo(3);
     }
 
     private static SolutionPinReader CreateReader(TempHome home, IProcessRunner runner)

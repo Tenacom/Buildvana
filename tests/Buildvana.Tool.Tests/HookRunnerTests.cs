@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Text.Json;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
@@ -149,7 +150,8 @@ internal sealed class HookRunnerTests
         Task<HookOutcome> Act() => runner.RunHookAsync(args, acceptsPendingWork: true);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
     }
 
     [Test]
@@ -180,8 +182,7 @@ internal sealed class HookRunnerTests
 
         Task<HookOutcome> Act() => runner.RunHookAsync(args);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not write to");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("Could not write to", StringComparison.Ordinal);
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
     }
 

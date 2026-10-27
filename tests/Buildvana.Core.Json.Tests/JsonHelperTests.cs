@@ -18,8 +18,8 @@ internal sealed partial class JsonHelperTests
     {
         static JsonObject Act() => new JsonHelper().LoadObject(DeniedAccessPath);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not read from");
+        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
@@ -28,8 +28,8 @@ internal sealed partial class JsonHelperTests
     {
         static void Act() => new JsonHelper().SaveObject(new JsonObject(), DeniedAccessPath);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not write to");
+        var exception = Assert.Throws<BuildFailedException>(Act);
+        await Assert.That(exception.Message).Contains("Could not write to");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
@@ -38,8 +38,8 @@ internal sealed partial class JsonHelperTests
     {
         static bool Act() => new JsonHelper().RewriteStringValues(DeniedAccessPath, (_, _) => null);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not read from");
+        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
@@ -48,8 +48,8 @@ internal sealed partial class JsonHelperTests
     {
         static bool Act() => new JsonHelper().InsertProperty(DeniedAccessPath, [], "a", JsonValue.Create("x"));
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not read from");
+        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
 
@@ -314,8 +314,9 @@ internal sealed partial class JsonHelperTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         bool Act() => new JsonHelper().RewriteBooleanValues(file.Path, static (_, current) => !current);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("does not contain valid JSON");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("does not contain valid JSON", StringComparison.Ordinal);
     }
 
     [Test]

@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Dependencies;
@@ -74,7 +75,8 @@ internal sealed class DependencyResolverTests
         var versions = new FakePackageVersionSource();
         var exception = await Assert.That(async () => await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0"))).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        var diagnostic = exception!.Diagnostics.Single();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        var diagnostic = exception.Diagnostics.Single();
         await Assert.That(diagnostic.Code).IsEqualTo("BV1200");
         await Assert.That(diagnostic.File).IsEqualTo("Directory.Packages.props");
     }
@@ -85,7 +87,8 @@ internal sealed class DependencyResolverTests
         var versions = new FakePackageVersionSource().Knows("Serilog", ["3.1.0"]);
         var exception = await Assert.That(async () => await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0"))).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.Diagnostics.Single().Code).IsEqualTo("BV1201");
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Diagnostics.Single().Code).IsEqualTo("BV1201");
     }
 
     [Test]
@@ -95,7 +98,8 @@ internal sealed class DependencyResolverTests
         var inventory = Packages(Pin("Serilog", "3.0.0"), Pin("Newtonsoft.Json", "13.0.3"));
         var exception = await Assert.That(async () => await ResolveAsync(versions, inventory).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.Diagnostics.Select(static diagnostic => diagnostic.Code)).IsEquivalentTo(["BV1201", "BV1200"]);
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Diagnostics.Select(static diagnostic => diagnostic.Code)).IsEquivalentTo(["BV1201", "BV1200"]);
     }
 
     [Test]
@@ -132,7 +136,8 @@ internal sealed class DependencyResolverTests
         var exception = await Assert
             .That(async () => await ResolveNetSdkAsync(releases, NetSdkPin.Create("10.0.999", allowPrerelease: false)).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        var diagnostic = exception!.Diagnostics.Single();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        var diagnostic = exception.Diagnostics.Single();
         await Assert.That(diagnostic.Code).IsEqualTo("BV1202");
         await Assert.That(diagnostic.File).IsEqualTo("global.json");
     }
@@ -202,7 +207,8 @@ internal sealed class DependencyResolverTests
         var exception = await Assert
             .That(async () => await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), request: request).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.Diagnostics.Select(static diagnostic => diagnostic.Code)).Contains("BV1201");
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Diagnostics.Select(static diagnostic => diagnostic.Code)).Contains("BV1201");
     }
 
     [Test]
@@ -213,7 +219,8 @@ internal sealed class DependencyResolverTests
         var exception = await Assert
             .That(async () => await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), request: request).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.Diagnostics.Single().Code).IsEqualTo("BV1203");
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Diagnostics.Single().Code).IsEqualTo("BV1203");
     }
 
     // A family id with no pin bv manages gets the message that says where to go instead.
@@ -225,7 +232,8 @@ internal sealed class DependencyResolverTests
         var exception = await Assert
             .That(async () => await ResolveAsync(versions, Packages(Pin("Serilog", "3.0.0")), request: request).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.Diagnostics.Single().Message).Contains("bv self-update");
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Diagnostics.Single().Message).Contains("bv self-update");
     }
 
     // A request for the latest version moves past the kind of the policy, a disabled one included. The pin is
@@ -303,7 +311,8 @@ internal sealed class DependencyResolverTests
         var pin = NetSdkPin.Create("10.0.100", allowPrerelease: false);
         var exception = await Assert.That(async () => await ResolveNetSdkAsync(releases, pin, request).ConfigureAwait(false))
             .Throws<BuildFailedException>();
-        await Assert.That(exception!.Diagnostics.Single().Code).IsEqualTo("BV1202");
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
+        await Assert.That(exception.Diagnostics.Single().Code).IsEqualTo("BV1202");
     }
 
     private static DependencyPin Pin(string id, string versionText)

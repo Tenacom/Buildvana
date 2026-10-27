@@ -126,8 +126,9 @@ internal sealed class PostReleaseHookArgsTests
 
             PostReleaseHookArgs Act() => PostReleaseHookArgs.Load(dir);
 
-            var exception = await Assert.That(Act).Throws<BuildvanaRuntimeException>();
-            await Assert.That(exception!.Message).Contains("Could not read from");
+            await Assert.That(Act)
+                .Throws<BuildvanaRuntimeException>()
+                .WithMessageContaining("Could not read from", StringComparison.Ordinal);
         }
         finally
         {

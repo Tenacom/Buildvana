@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Tool.Services;
 using Buildvana.Tool.Services.SelfUpdate;
@@ -48,8 +49,9 @@ internal sealed class SelfUpdateTargetResolverTests
         var exception = await Assert
             .That(async () => _ = await Resolve(source, request, NoEntry).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains("--repair");
+        await Assert.That(exception.Message).Contains("--repair");
         await Assert.That(exception.Message).Contains("dotnet-tools.json");
         await Assert.That(source.Asked.Count).IsEqualTo(0);
     }
@@ -186,11 +188,10 @@ internal sealed class SelfUpdateTargetResolverTests
     {
         var source = new FakePackageVersionSource { Sources = [] };
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await Resolve(source, SelfUpdateRequest.Default, Pin("2.1.8")).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("No package source is configured");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("No package source is configured", StringComparison.Ordinal);
     }
 
     // A source that knows nothing of bv is a misconfigured source, and the message names the sources so
@@ -203,8 +204,9 @@ internal sealed class SelfUpdateTargetResolverTests
         var exception = await Assert
             .That(async () => _ = await Resolve(source, SelfUpdateRequest.Default, Pin("2.1.8")).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.Message).Contains("No configured package source knows bv");
+        await Assert.That(exception.Message).Contains("No configured package source knows bv");
         await Assert.That(exception.Message).Contains("nuget.org, private");
     }
 

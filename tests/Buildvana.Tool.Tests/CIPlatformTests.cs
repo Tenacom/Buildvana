@@ -165,8 +165,9 @@ internal sealed class CIPlatformTests
     {
         var platform = Detect((marker, "true"), (outputVariable, path));
 
-        var exception = await Assert.That(platform.OpenStepOutputs).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains(outputVariable);
+        await Assert.That(platform.OpenStepOutputs)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining(outputVariable, StringComparison.Ordinal);
     }
 
     // Forgejo runners before v9.0.0 set GITHUB_OUTPUT and no FORGEJO_OUTPUT.
@@ -176,8 +177,9 @@ internal sealed class CIPlatformTests
         using var home = new TempHome();
         var platform = Detect(("FORGEJO_ACTIONS", "true"), ("GITHUB_OUTPUT", home.GetFullPath("output.txt")));
 
-        var exception = await Assert.That(platform.OpenStepOutputs).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("FORGEJO_OUTPUT");
+        await Assert.That(platform.OpenStepOutputs)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("FORGEJO_OUTPUT", StringComparison.Ordinal);
     }
 
     [Test]

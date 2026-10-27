@@ -71,9 +71,11 @@ internal sealed class ReleaseCommandGitHubTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo(
-            "GitHub refuses the release assets:\n- More than one asset has the file name 'setup.exe'.");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessage(
+                "GitHub refuses the release assets:\n- More than one asset has the file name 'setup.exe'.",
+                StringComparison.Ordinal);
         await Assert.That(harness.Events.Select(static x => x.Name)).DoesNotContain("nuget-push");
         await Assert.That(api.Requests.Any(static x => x.Url.StartsWith(UploadUrl, StringComparison.Ordinal))).IsFalse();
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
@@ -90,8 +92,7 @@ internal sealed class ReleaseCommandGitHubTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Validation Failed");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("Validation Failed", StringComparison.Ordinal);
         var delete = api.Requests[^1];
         await Assert.That(delete.Method).IsEqualTo(HttpMethod.Delete);
         await Assert.That(delete.Url).IsEqualTo(ApiRepositoryUrl + "/releases/42");

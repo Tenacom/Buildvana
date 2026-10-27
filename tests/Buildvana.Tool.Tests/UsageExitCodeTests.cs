@@ -68,7 +68,7 @@ internal sealed class UsageExitCodeTests
 
     private static async Task AssertUsageExitCode(Action action)
     {
-        var exception = await Assert.That(action).Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(action);
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 }

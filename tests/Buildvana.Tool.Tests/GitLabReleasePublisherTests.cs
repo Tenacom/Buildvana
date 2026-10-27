@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Net;
 using Buildvana.Core;
 using Buildvana.Core.ConsoleOutput;
@@ -45,10 +46,9 @@ internal sealed class GitLabReleasePublisherTests
         using var api = Answering(Member(30));
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before api is disposed
-        var exception = await Assert.That(() => RunAsync(api, static (publisher, _) => publisher.BeginAsync()))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("access level 30 on tenacom/buildvana, below the Maintainer role");
+        await Assert.That(() => RunAsync(api, static (publisher, _) => publisher.BeginAsync()))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("access level 30 on tenacom/buildvana, below the Maintainer role", StringComparison.Ordinal);
     }
 
     // An instance administrator, or an organization owner, has no membership and can still delete a package.
@@ -86,10 +86,9 @@ internal sealed class GitLabReleasePublisherTests
         });
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before api is disposed
-        var exception = await Assert.That(() => RunAsync(api, static (publisher, _) => publisher.BeginAsync()))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("403 Forbidden");
+        await Assert.That(() => RunAsync(api, static (publisher, _) => publisher.BeginAsync()))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("403 Forbidden", StringComparison.Ordinal);
         await Assert.That(api.Requests).Count().IsEqualTo(1);
     }
 
@@ -215,9 +214,10 @@ internal sealed class GitLabReleasePublisherTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before api is disposed
         var exception = await Assert.That(() => RunAsync(api, (publisher, _) => CheckAssetsAsync(publisher, assets)))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
         await Assert.That(api.Requests).IsEmpty();
-        await Assert.That(exception!.Message).IsEqualTo(
+        await Assert.That(exception.Message).IsEqualTo(
             "GitLab refuses the release assets:"
             + "\n- 'Foo 1.zip' is not a valid file name in the generic package registry."
             + "\n- 'a+b.zip' is not a valid file name for a release link."

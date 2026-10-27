@@ -160,8 +160,7 @@ internal sealed class ReleaseCommandChangelogTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("release.emptyChangelog");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("release.emptyChangelog", StringComparison.Ordinal);
 
         // The failure happens before anything is built or committed.
         await Assert.That(harness.PipelineSteps.Count).IsEqualTo(0);
@@ -228,8 +227,9 @@ internal sealed class ReleaseCommandChangelogTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("CHANGELOG.md links '../outside.md', which is not a path to a file in the repository.");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessage("CHANGELOG.md links '../outside.md', which is not a path to a file in the repository.", StringComparison.Ordinal);
 
         // The links are pinned once the version is final, after the build, so the failure comes with the
         // release commit in place. The rollback undoes that commit.

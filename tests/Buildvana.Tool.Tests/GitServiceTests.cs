@@ -248,8 +248,9 @@ internal sealed class GitServiceTests
             var remoteTip = repo.GetRemoteTipSha();
 
             // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-            var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains($"'refs/heads/{repo.CurrentBranchName}'");
+            await Assert.That(() => git.PushBranch("origin"))
+                .Throws<BuildFailedException>()
+                .WithMessageContaining($"'refs/heads/{repo.CurrentBranchName}'", StringComparison.Ordinal);
             await Assert.That(repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
         }
     }
@@ -279,8 +280,9 @@ internal sealed class GitServiceTests
         repo.LockRemoteReference(branchRef);
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains(branchRef);
+        await Assert.That(() => git.PushBranch("origin"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining(branchRef, StringComparison.Ordinal);
         await Assert.That(repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
     }
 
@@ -291,8 +293,8 @@ internal sealed class GitServiceTests
         using var git = CreateGitService(repo);
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.PushBranch("origin")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("'origin'");
+        var exception = Assert.Throws<BuildFailedException>(() => git.PushBranch("origin"));
+        await Assert.That(exception.Message).Contains("'origin'");
         await Assert.That(exception.InnerException).IsNotNull();
     }
 
@@ -314,8 +316,9 @@ internal sealed class GitServiceTests
         using var git = CreateGitService(repo);
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.PushBranch("upstream")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("'upstream'");
+        await Assert.That(() => git.PushBranch("upstream"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("'upstream'", StringComparison.Ordinal);
     }
 
     [Test]
@@ -366,8 +369,9 @@ internal sealed class GitServiceTests
         git.CreateTag("1.0.0", repo.HeadSha);
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.PushTag("origin", "1.0.0")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains(firstSha);
+        await Assert.That(() => git.PushTag("origin", "1.0.0"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining(firstSha, StringComparison.Ordinal);
         await Assert.That(repo.GetRemoteTagSha("1.0.0")).IsEqualTo(firstSha);
     }
 
@@ -407,8 +411,9 @@ internal sealed class GitServiceTests
         repo.LockRemoteReference("refs/tags/1.0.0");
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.PushTag("origin", "1.0.0")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("refs/tags/1.0.0");
+        await Assert.That(() => git.PushTag("origin", "1.0.0"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("refs/tags/1.0.0", StringComparison.Ordinal);
         await Assert.That(repo.GetRemoteTagSha("1.0.0")).IsNull();
     }
 
@@ -420,8 +425,8 @@ internal sealed class GitServiceTests
         git.CreateTag("1.0.0", repo.HeadSha);
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.PushTag("origin", "1.0.0")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("'origin'");
+        var exception = Assert.Throws<BuildFailedException>(() => git.PushTag("origin", "1.0.0"));
+        await Assert.That(exception.Message).Contains("'origin'");
         await Assert.That(exception.InnerException).IsNotNull();
     }
 
@@ -451,8 +456,9 @@ internal sealed class GitServiceTests
         repo.LockRemoteReference("refs/tags/1.0.0");
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.DeleteRemoteTag("origin", "1.0.0")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("refs/tags/1.0.0");
+        await Assert.That(() => git.DeleteRemoteTag("origin", "1.0.0"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("refs/tags/1.0.0", StringComparison.Ordinal);
         await Assert.That(repo.GetRemoteTagSha("1.0.0")).IsEqualTo(repo.HeadSha);
     }
 
@@ -490,8 +496,8 @@ internal sealed class GitServiceTests
         using var git = CreateGitService(repo);
 
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before git is disposed
-        var exception = await Assert.That(() => git.FetchTags("origin")).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("'origin'");
+        var exception = Assert.Throws<BuildFailedException>(() => git.FetchTags("origin"));
+        await Assert.That(exception.Message).Contains("'origin'");
         await Assert.That(exception.InnerException).IsNotNull();
     }
 

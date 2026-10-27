@@ -100,8 +100,8 @@ internal sealed class EffectivePolicyResolverTests
     {
         var resolver = new EffectivePolicyResolver(new DependenciesConfig());
         var pin = Pin(DependencyScope.Packages) with { MetadataPolicy = "sometimes" };
-        var exception = await Assert.That(() => resolver.Resolve(pin)).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("sometimes");
+        var exception = Assert.Throws<BuildFailedException>(() => resolver.Resolve(pin));
+        await Assert.That(exception.Message).Contains("sometimes");
         await Assert.That(exception.Message).Contains("Serilog");
         await Assert.That(exception.Message).Contains("Directory.Packages.props");
     }

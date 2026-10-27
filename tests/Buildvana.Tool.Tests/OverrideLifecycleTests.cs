@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.ConsoleOutput;
@@ -185,8 +186,9 @@ internal sealed class OverrideLifecycleTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await RunAsync(home, new FakeDependencyRestorer(), Advisories(), Versions())
             .ConfigureAwait(false)).Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.ExitCode).IsEqualTo(3);
+        await Assert.That(exception.ExitCode).IsEqualTo(3);
         await Assert.That(exception.Message).Contains("could not read a package source");
     }
 
@@ -198,8 +200,9 @@ internal sealed class OverrideLifecycleTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await RunAsync(home, new FakeDependencyRestorer(), Advisories(), Versions())
             .ConfigureAwait(false)).Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.ExitCode).IsEqualTo(3);
+        await Assert.That(exception.ExitCode).IsEqualTo(3);
         await Assert.That(exception.Message).Contains("NU1101");
     }
 
@@ -249,8 +252,9 @@ internal sealed class OverrideLifecycleTests
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
         var exception = await Assert.That(async () => await RunAsync(home, restorer, advisories, versions).ConfigureAwait(false))
             .Throws<BuildFailedException>();
+        Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
 
-        await Assert.That(exception!.ExitCode).IsEqualTo(1);
+        await Assert.That(exception.ExitCode).IsEqualTo(1);
         await Assert.That(exception.Message).Contains("did not settle");
     }
 

@@ -39,10 +39,9 @@ internal sealed class DependencyScopeSelectionTests
     [Test]
     public async Task Narrow_WithAVersionAndAnotherScopeSelected_IsRefused()
     {
-        var exception = await Assert
-            .That(() => DependencyScopeSelection.Narrow(AllScopes.ToHashSet(), namesPins: false, statesVersion: true))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(
+            () => DependencyScopeSelection.Narrow(AllScopes.ToHashSet(), namesPins: false, statesVersion: true));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
@@ -78,9 +77,8 @@ internal sealed class DependencyScopeSelectionTests
     [Test]
     public async Task Resolve_MixingTheTwoFamilies_IsAUsageError()
     {
-        var exception = await Assert.That(() => Resolve([DependencyScope.NetSdk], [DependencyScope.Packages]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(2);
+        var exception = Assert.Throws<BuildFailedException>(() => Resolve([DependencyScope.NetSdk], [DependencyScope.Packages]));
+        await Assert.That(exception.ExitCode).IsEqualTo(2);
     }
 
     [Test]

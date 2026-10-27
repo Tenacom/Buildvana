@@ -14,9 +14,8 @@ internal sealed class VersionCalculatorTests
     {
         using var repo = new TempGitRepo();
         repo.CommitAll();
-        var exception = CatchCalculate(repo, new BuildvanaConfig());
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("VERSION");
+        var exception = await Assert.That(CatchCalculate(repo, new BuildvanaConfig())).IsNotNull();
+        await Assert.That(exception.Message).Contains("VERSION");
     }
 
     [Test]
@@ -25,9 +24,8 @@ internal sealed class VersionCalculatorTests
         using var repo = new TempGitRepo();
         repo.WriteFile("VERSION", "banana\n");
         repo.CommitAll();
-        var exception = CatchCalculate(repo, new BuildvanaConfig());
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("banana");
+        var exception = await Assert.That(CatchCalculate(repo, new BuildvanaConfig())).IsNotNull();
+        await Assert.That(exception.Message).Contains("banana");
     }
 
     [Test]
@@ -36,9 +34,8 @@ internal sealed class VersionCalculatorTests
         using var repo = new TempGitRepo();
         repo.WriteFile("VERSION", "1.0-\n");
         repo.CommitAll();
-        var exception = CatchCalculate(repo, new BuildvanaConfig());
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("versioning.prereleaseTag");
+        var exception = await Assert.That(CatchCalculate(repo, new BuildvanaConfig())).IsNotNull();
+        await Assert.That(exception.Message).Contains("versioning.prereleaseTag");
     }
 
     [Test]
@@ -48,9 +45,8 @@ internal sealed class VersionCalculatorTests
         repo.WriteFile("VERSION", "1.0-\n");
         repo.CommitAll();
         var config = new BuildvanaConfig { Versioning = new VersioningConfig { PrereleaseTag = "not valid" } };
-        var exception = CatchCalculate(repo, config);
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("not valid");
+        var exception = await Assert.That(CatchCalculate(repo, config)).IsNotNull();
+        await Assert.That(exception.Message).Contains("not valid");
     }
 
     [Test]

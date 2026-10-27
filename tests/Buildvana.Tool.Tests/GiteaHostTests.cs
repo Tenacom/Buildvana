@@ -75,9 +75,9 @@ internal sealed class GiteaHostTests
         await using (services.ConfigureAwait(false))
         {
             // ReSharper disable once AccessToDisposedClosure // False positive: the assertion runs the lambda before services is disposed
-            var exception = await Assert.That(() => new GiteaHost(services, Parse("https://gitea.com/a/b/c")))
-                .Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains("not a valid Gitea repository URL");
+            await Assert.That(() => new GiteaHost(services, Parse("https://gitea.com/a/b/c")))
+                .Throws<BuildFailedException>()
+                .WithMessageContaining("not a valid Gitea repository URL", StringComparison.Ordinal);
         }
     }
 
@@ -126,8 +126,9 @@ internal sealed class GiteaHostTests
             Environment.SetEnvironmentVariable(TokenVariable, null);
 
             // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before host is disposed
-            var exception = await Assert.That(host.IsPrivateRepositoryAsync).Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains(TokenVariable);
+            await Assert.That(host.IsPrivateRepositoryAsync)
+                .Throws<BuildFailedException>()
+                .WithMessageContaining(TokenVariable, StringComparison.Ordinal);
             await Assert.That(api.Requests).IsEmpty();
         }
     }

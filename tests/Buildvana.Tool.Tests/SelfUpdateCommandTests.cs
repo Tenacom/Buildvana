@@ -142,11 +142,10 @@ internal sealed class SelfUpdateCommandTests
         var settings = new SelfUpdateSettings { To = "not-a-version" };
         var command = new SelfUpdateCommand(CreateService(home, runner), settings, new TestConsole());
 
-        var exception = await Assert
+        await Assert
             .That(async () => _ = await command.ExecuteAsync(CancellationToken.None).ConfigureAwait(false))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("--to");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("--to", StringComparison.Ordinal);
         await Assert.That(runner.Runs.Count).IsEqualTo(0);
     }
 

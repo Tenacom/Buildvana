@@ -32,8 +32,9 @@ internal sealed class ServerReleaseTests
 
             void Act() => release.EnsureReleaseCommit();
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("already been pushed");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("already been pushed", StringComparison.Ordinal);
         }
     }
 
@@ -50,8 +51,9 @@ internal sealed class ServerReleaseTests
 
             void Act() => release.UpdateRepository("docs/late.md");
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("already been pushed");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("already been pushed", StringComparison.Ordinal);
         }
     }
 
@@ -68,8 +70,9 @@ internal sealed class ServerReleaseTests
 
             void Act() => release.UpdateRepository("docs/late.md");
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("after a post-release commit");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("after a post-release commit", StringComparison.Ordinal);
         }
     }
 
@@ -86,8 +89,9 @@ internal sealed class ServerReleaseTests
 
             void Act() => release.AddPostReleaseCommit("Post-release updates [skip ci]", "docs/late.md");
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("already been pushed");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("already been pushed", StringComparison.Ordinal);
         }
     }
 
@@ -102,8 +106,9 @@ internal sealed class ServerReleaseTests
 
             void Act() => release.AddPostReleaseCommit("Post-release updates [skip ci]", "docs/early.md");
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("before the release commit");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("before the release commit", StringComparison.Ordinal);
         }
     }
 
@@ -117,8 +122,9 @@ internal sealed class ServerReleaseTests
         {
             void Act() => release.PushUpdates();
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("before the release commit");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("before the release commit", StringComparison.Ordinal);
         }
 
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
@@ -158,8 +164,9 @@ internal sealed class ServerReleaseTests
 
             void Act() => release.AddAsset("artifacts/late.bin");
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("already been pushed");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("already been pushed", StringComparison.Ordinal);
         }
     }
 
@@ -191,8 +198,9 @@ internal sealed class ServerReleaseTests
 
             Task Act() => release.PublishAsync();
 
-            var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-            await Assert.That(exception!.Message).Contains("before pushing updates");
+            await Assert.That(Act)
+                .Throws<InvalidOperationException>()
+                .WithMessageContaining("before pushing updates", StringComparison.Ordinal);
             await Assert.That(harness.Publisher!.IsPublished).IsFalse();
         }
     }

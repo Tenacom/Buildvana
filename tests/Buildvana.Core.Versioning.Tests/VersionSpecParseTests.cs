@@ -54,18 +54,9 @@ internal sealed class VersionSpecParseTests
     [Test]
     public async Task Parse_InvalidInput_ThrowsBuildFailedException()
     {
-        BuildFailedException? exception = null;
-        try
-        {
-            _ = VersionSpec.Parse("banana");
-        }
-        catch (BuildFailedException e)
-        {
-            exception = e;
-        }
-
-        await Assert.That(exception).IsNotNull();
-        await Assert.That(exception!.Message).Contains("banana");
+        await Assert.That(() => VersionSpec.Parse("banana"))
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("banana", StringComparison.Ordinal);
     }
 
     [Test]

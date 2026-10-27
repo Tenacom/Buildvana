@@ -108,8 +108,7 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static IReadOnlyList<KeyedValueSample> Act() => Deserialize<KeyedValueSample>("""["a"]""");
 
-        var exception = await Assert.That(Act).Throws<JsonException>();
-        await Assert.That(exception!.Message).Contains("Expected a JSON object");
+        await Assert.That(Act).Throws<JsonException>().WithMessageContaining("Expected a JSON object", StringComparison.Ordinal);
     }
 
     [Test]
@@ -127,8 +126,7 @@ internal sealed class JsonKeyedObjectConverterTests
         var options = CreateOptions(allowDuplicateProperties: false);
         object? Act() => JsonSerializer.Deserialize<IReadOnlyList<KeyedValueSample>>("""{"a":"one","a":"two"}""", options);
 
-        var exception = await Assert.That(Act).Throws<JsonException>();
-        await Assert.That(exception!.Message).Contains("Duplicate key 'a'");
+        await Assert.That(Act).Throws<JsonException>().WithMessageContaining("Duplicate key 'a'", StringComparison.Ordinal);
     }
 
     [Test]
@@ -146,8 +144,7 @@ internal sealed class JsonKeyedObjectConverterTests
             new() { Pattern = "a", Policy = "two" },
         ]);
 
-        var exception = await Assert.That(Act).Throws<JsonException>();
-        await Assert.That(exception!.Message).Contains("Duplicate key 'a'");
+        await Assert.That(Act).Throws<JsonException>().WithMessageContaining("Duplicate key 'a'", StringComparison.Ordinal);
     }
 
     [Test]
@@ -171,8 +168,9 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static IReadOnlyList<KeyedGroupSample> Act() => Deserialize<KeyedGroupSample>("""{"G1":{"caption":"X"}}""");
 
-        var exception = await Assert.That(Act).Throws<JsonException>();
-        await Assert.That(exception!.Message).Contains("must not state the key property 'caption'");
+        await Assert.That(Act)
+            .Throws<JsonException>()
+            .WithMessageContaining("must not state the key property 'caption'", StringComparison.Ordinal);
     }
 
     [Test]
@@ -180,8 +178,7 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static IReadOnlyList<KeyedGroupSample> Act() => Deserialize<KeyedGroupSample>("""{"G1":42}""");
 
-        var exception = await Assert.That(Act).Throws<JsonException>();
-        await Assert.That(exception!.Message).Contains("must be a JSON object");
+        await Assert.That(Act).Throws<JsonException>().WithMessageContaining("must be a JSON object", StringComparison.Ordinal);
     }
 
     [Test]
@@ -214,8 +211,7 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static string Act() => Serialize<KeyedValueSample>([new() { Pattern = null!, Policy = "x" }]);
 
-        var exception = await Assert.That(Act).Throws<JsonException>();
-        await Assert.That(exception!.Message).Contains("non-null string");
+        await Assert.That(Act).Throws<JsonException>().WithMessageContaining("non-null string", StringComparison.Ordinal);
     }
 
     [Test]
@@ -290,8 +286,9 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static object Act() => Deserialize<MissingKeySample>("{}");
 
-        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-        await Assert.That(exception!.Message).Contains("no serializable property 'Nope'");
+        await Assert.That(Act)
+            .Throws<InvalidOperationException>()
+            .WithMessageContaining("no serializable property 'Nope'", StringComparison.Ordinal);
     }
 
     [Test]
@@ -299,8 +296,9 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static object Act() => Deserialize<MissingValueSample>("{}");
 
-        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-        await Assert.That(exception!.Message).Contains("no serializable property 'Nope'");
+        await Assert.That(Act)
+            .Throws<InvalidOperationException>()
+            .WithMessageContaining("no serializable property 'Nope'", StringComparison.Ordinal);
     }
 
     [Test]
@@ -308,8 +306,9 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static object Act() => Deserialize<NonStringKeySample>("{}");
 
-        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-        await Assert.That(exception!.Message).Contains("must be of type string");
+        await Assert.That(Act)
+            .Throws<InvalidOperationException>()
+            .WithMessageContaining("must be of type string", StringComparison.Ordinal);
     }
 
     [Test]
@@ -317,8 +316,9 @@ internal sealed class JsonKeyedObjectConverterTests
     {
         static object Act() => Deserialize<SameKeyValueSample>("{}");
 
-        var exception = await Assert.That(Act).Throws<InvalidOperationException>();
-        await Assert.That(exception!.Message).Contains("to the same JSON name 'name'");
+        await Assert.That(Act)
+            .Throws<InvalidOperationException>()
+            .WithMessageContaining("to the same JSON name 'name'", StringComparison.Ordinal);
     }
 
     private static JsonSerializerOptions CreateOptions(bool allowDuplicateProperties = true)

@@ -71,8 +71,7 @@ internal sealed class ReleaseCommandForgejoTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains(expectedMessage);
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining(expectedMessage, StringComparison.Ordinal);
         await Assert.That(api.Requests.Count).IsEqualTo(1);
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
         await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
@@ -99,9 +98,11 @@ internal sealed class ReleaseCommandForgejoTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo(
-            "The release assets cannot go to a Forgejo release:\n- More than one asset has the file name 'setup.exe'.");
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessage(
+                "The release assets cannot go to a Forgejo release:\n- More than one asset has the file name 'setup.exe'.",
+                StringComparison.Ordinal);
         await Assert.That(harness.Events.Select(static x => x.Name)).DoesNotContain("nuget-push");
         await Assert.That(api.Requests.Count).IsEqualTo(1);
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(remoteTip);
@@ -118,8 +119,7 @@ internal sealed class ReleaseCommandForgejoTests
         // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
         Task<int> Act() => harness.RunAsync();
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("quota exceeded");
+        await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("quota exceeded", StringComparison.Ordinal);
         var deletions = api.Requests.Where(static x => x.Method == HttpMethod.Delete).Select(static x => x.Url);
         string[] expected = [ReleaseUrl, ApiRepositoryUrl + "/tags/" + ReleasedVersion];
         await Assert.That(deletions).IsEquivalentTo(expected, CollectionOrdering.Matching);

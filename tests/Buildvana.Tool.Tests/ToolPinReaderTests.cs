@@ -71,9 +71,9 @@ internal sealed class ToolPinReaderTests
         home.WriteFile("docs/.config/dotnet-tools.json", """{ "tools": { } }""");
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(() => CreateReader(home).Read()).Throws<BuildFailedException>();
+        var exception = Assert.Throws<BuildFailedException>(() => CreateReader(home).Read());
 
-        await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
+        await Assert.That(exception.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
         await Assert.That(exception.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
     }
 
@@ -88,9 +88,9 @@ internal sealed class ToolPinReaderTests
         home.WriteFile("docs/.config/dotnet-tools.json", """{ "tools": { } }""");
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(() => CreateReader(home).Read()).Throws<BuildFailedException>();
+        var exception = Assert.Throws<BuildFailedException>(() => CreateReader(home).Read());
 
-        await Assert.That(exception!.Message)
+        await Assert.That(exception.Message)
             .Contains("merge the tools of .config/dotnet-tools.json into dotnet-tools.json, then delete .config/dotnet-tools.json");
         await Assert.That(exception.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
     }
@@ -105,9 +105,9 @@ internal sealed class ToolPinReaderTests
         home.WriteFile("dotnet-tools.json", "{ not json");
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
-        var exception = await Assert.That(() => CreateReader(home).Read()).Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json");
+        await Assert.That(() => CreateReader(home).Read())
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("git mv docs/.config/dotnet-tools.json docs/dotnet-tools.json", StringComparison.Ordinal);
     }
 
     // The bv entry of the home directory's manifest moves with the family, so bv dependencies never sees it.

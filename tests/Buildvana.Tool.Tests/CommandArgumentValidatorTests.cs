@@ -54,9 +54,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("clean")!;
         var parsed = CliArgSplitter.Split(["clean", "--bogus"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'clean'.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>()
+            .WithMessage("Unknown option '--bogus' for command 'clean'.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -64,9 +64,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("version")!;
         var parsed = CliArgSplitter.Split(["version", "--bogus"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'version show'.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>()
+            .WithMessage("Unknown option '--bogus' for command 'version show'.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -74,9 +74,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("clean")!;
         var parsed = CliArgSplitter.Split(["clean", "junk", "--bogus"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Unexpected argument 'junk' for command 'clean'.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>()
+            .WithMessage("Unexpected argument 'junk' for command 'clean'.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -84,9 +84,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "--bogus"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'release'.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>()
+            .WithMessage("Unknown option '--bogus' for command 'release'.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -122,9 +122,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("release")!;
         var parsed = CliArgSplitter.Split(["release", "--bump"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Option '--bump' requires a value.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
+            .Throws<BuildFailedException>()
+            .WithMessage("Option '--bump' requires a value.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -222,9 +222,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("deps update")!;
         var parsed = CliArgSplitter.Split(["deps", "update", "--bogus", "Serilog"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Unknown option '--bogus' for command 'dependencies update'.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
+            .Throws<BuildFailedException>()
+            .WithMessage("Unknown option '--bogus' for command 'dependencies update'.", StringComparison.Ordinal);
     }
 
     [Test]
@@ -232,9 +232,9 @@ internal sealed class CommandArgumentValidatorTests
     {
         var command = CommandRegistry.Find("version advance")!;
         var parsed = CliArgSplitter.Split(["version", "advance", "--force", "minor", "extra"]);
-        var exception = await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).IsEqualTo("Unexpected argument 'extra' for command 'version advance'.");
+        await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
+            .Throws<BuildFailedException>()
+            .WithMessage("Unexpected argument 'extra' for command 'version advance'.", StringComparison.Ordinal);
     }
 
     [Test]

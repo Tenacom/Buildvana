@@ -31,11 +31,10 @@ internal sealed class SelfReferenceUpdaterTests
         home.WriteFile(".config/dotnet-tools.json", Manifest);
         var updater = CreateUpdater(home);
 
-        var exception = await Assert
+        await Assert
             .That(() => updater.UpdateReferences(new Dictionary<string, string> { ["bv"] = "2.1.41-preview" }))
-            .Throws<BuildFailedException>();
-
-        await Assert.That(exception!.Message).Contains("git mv .config/dotnet-tools.json dotnet-tools.json");
+            .Throws<BuildFailedException>()
+            .WithMessageContaining("git mv .config/dotnet-tools.json dotnet-tools.json", StringComparison.Ordinal);
         await Assert.That(home.ReadFile(".config/dotnet-tools.json")).IsEqualTo(Manifest);
     }
 

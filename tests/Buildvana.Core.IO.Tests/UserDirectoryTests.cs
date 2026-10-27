@@ -37,8 +37,8 @@ internal sealed class UserDirectoryTests
         {
             DirectoryInfo Act() => UserDirectory.CreateDirectory(path);
 
-            var exception = await Assert.That(Act).Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains("Could not create directory");
+            var exception = Assert.Throws<BuildFailedException>(() => Act());
+            await Assert.That(exception.Message).Contains("Could not create directory");
             await Assert.That(exception.InnerException).IsTypeOf<IOException>();
         }
         finally
@@ -77,8 +77,8 @@ internal sealed class UserDirectoryTests
         {
             void Act() => UserDirectory.Delete(root);
 
-            var exception = await Assert.That(Act).Throws<BuildFailedException>();
-            await Assert.That(exception!.Message).Contains("Could not delete directory");
+            var exception = Assert.Throws<BuildFailedException>(Act);
+            await Assert.That(exception.Message).Contains("Could not delete directory");
             await Assert.That(exception.InnerException).IsTypeOf<IOException>();
         }
         finally
@@ -94,8 +94,8 @@ internal sealed class UserDirectoryTests
 
         void Act() => UserDirectory.Delete(path);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("Could not delete directory");
+        var exception = Assert.Throws<BuildFailedException>(Act);
+        await Assert.That(exception.Message).Contains("Could not delete directory");
         await Assert.That(exception.InnerException).IsTypeOf<DirectoryNotFoundException>();
     }
 
@@ -265,8 +265,8 @@ internal sealed class UserDirectoryTests
 
         void Act() => UserDirectory.SetCurrentDirectory(path);
 
-        var exception = await Assert.That(Act).Throws<BuildFailedException>();
-        await Assert.That(exception!.Message).Contains("the current directory");
+        var exception = Assert.Throws<BuildFailedException>(Act);
+        await Assert.That(exception.Message).Contains("the current directory");
         await Assert.That(exception.InnerException).IsTypeOf<DirectoryNotFoundException>();
     }
 

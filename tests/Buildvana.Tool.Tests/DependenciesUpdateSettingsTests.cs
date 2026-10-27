@@ -36,8 +36,8 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_WithAllAndNoCheck_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse([], ["--all"])).Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(() => DependenciesUpdateSettings.Parse([], ["--all"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
@@ -57,17 +57,16 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_WithAVersionThatDoesNotParse_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "not-a-version"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "not-a-version"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
     public async Task Parse_WithToAndCheck_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "3.1.0", "--check"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(
+            () => DependenciesUpdateSettings.Parse(["Serilog"], ["--to", "3.1.0", "--check"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     // Unlike --to, --latest names no version, so it takes patterns and several arguments as a plain run does.
@@ -82,40 +81,37 @@ internal sealed class DependenciesUpdateSettingsTests
     [Test]
     public async Task Parse_WithLatestAndTo_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--latest", "--to", "3.1.0"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(
+            () => DependenciesUpdateSettings.Parse(["Serilog"], ["--latest", "--to", "3.1.0"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
     public async Task Parse_WithLatestAndCheck_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse([], ["--latest", "--check"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(() => DependenciesUpdateSettings.Parse([], ["--latest", "--check"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
     public async Task Parse_WithNetSdkAndAnArgument_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--netsdk"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(() => DependenciesUpdateSettings.Parse(["Serilog"], ["--netsdk"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
     public async Task Parse_WithToAndAPattern_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog.*"], ["--to", "3.1.0"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(() => DependenciesUpdateSettings.Parse(["Serilog.*"], ["--to", "3.1.0"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 
     [Test]
     public async Task Parse_WithToAndSeveralArguments_IsRefused()
     {
-        var exception = await Assert.That(() => DependenciesUpdateSettings.Parse(["Serilog", "Newtonsoft.Json"], ["--to", "3.1.0"]))
-            .Throws<BuildFailedException>();
-        await Assert.That(exception!.ExitCode).IsEqualTo(ExitCodes.Usage);
+        var exception = Assert.Throws<BuildFailedException>(
+            () => DependenciesUpdateSettings.Parse(["Serilog", "Newtonsoft.Json"], ["--to", "3.1.0"]));
+        await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.Usage);
     }
 }
