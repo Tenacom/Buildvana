@@ -152,6 +152,7 @@ The patch number restarted from 1, below the 2.0.x versions already published.
 - `bv release` fails when the remote rejects the [push of its commits](docs/tool-commands/release.md#the-release-tag), where it used to go on as if the push had succeeded.
 - `bv release` reports a failed fetch or [push](docs/tool-commands/release.md#the-release-tag) as one error line naming the release remote, not as an unhandled exception.
 - When a `PackageVersion` item versions a package Buildvana SDK injects, the reference [is an ordinary `PackageReference`](docs/sdk-modules/standard-analyzers.md#package-references), where NuGet rejected the item with NU1009.
+- `bv` no longer fails with `ArgumentException` when two [version tags](docs/tool-commands/version.md#bv-version-show) name the same commit.
 
 ### Known problems introduced by this release
 

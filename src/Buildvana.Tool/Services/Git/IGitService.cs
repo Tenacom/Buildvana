@@ -67,6 +67,8 @@ internal interface IGitService
     /// </summary>
     /// <returns>A tuple of the latest version and the latest stable version.</returns>
     /// <remarks>
+    /// <para>When a commit carries several version tags, the highest one is the version of the commit, and the
+    /// highest stable one is its stable version.</para>
     /// <para>If no version tag is found in commit history, this method returns a tuple of two <see langword="null"/>s.</para>
     /// <para>If no stable version tag is found in commit history, this method returns a tuple of the latest
     /// version and <see langword="null"/>.</para>

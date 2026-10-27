@@ -7,6 +7,7 @@ using Buildvana.Core.HomeDirectory;
 using Buildvana.Core.Testing;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.Git;
+using NuGet.Versioning;
 
 internal sealed class GitServiceTests
 {
@@ -145,6 +146,51 @@ internal sealed class GitServiceTests
         using var git = CreateGitService(repo);
 
         await Assert.That(git.Remotes).IsEmpty();
+    }
+
+    [Test]
+    public async Task GetLatestVersions_WalksHistory_UntilAStableVersion()
+    {
+        using var repo = CreateRepoWithCommit();
+        repo.CreateTag("1.0.0");
+        repo.WriteFile("a.txt", "changed");
+        repo.CommitAll();
+        repo.CreateTag("1.1.0-preview");
+        repo.CreateTag("not-a-version");
+        using var git = CreateGitService(repo);
+
+        var (latest, latestStable) = git.GetLatestVersions();
+
+        await Assert.That(latest).IsEqualTo(SemanticVersion.Parse("1.1.0-preview"));
+        await Assert.That(latestStable).IsEqualTo(SemanticVersion.Parse("1.0.0"));
+    }
+
+    // One commit carries a prerelease tag and a stable tag. Each one counts for its own result.
+    [Test]
+    public async Task GetLatestVersions_WithTwoVersionTagsOnOneCommit_ReadsBoth()
+    {
+        using var repo = CreateRepoWithCommit();
+        repo.CreateTag("2.0.0-preview");
+        repo.CreateTag("1.5.0");
+        using var git = CreateGitService(repo);
+
+        var (latest, latestStable) = git.GetLatestVersions();
+
+        await Assert.That(latest).IsEqualTo(SemanticVersion.Parse("2.0.0-preview"));
+        await Assert.That(latestStable).IsEqualTo(SemanticVersion.Parse("1.5.0"));
+    }
+
+    [Test]
+    public async Task GetLatestVersions_WithoutVersionTags_ReturnsNulls()
+    {
+        using var repo = CreateRepoWithCommit();
+        repo.CreateTag("not-a-version");
+        using var git = CreateGitService(repo);
+
+        var (latest, latestStable) = git.GetLatestVersions();
+
+        await Assert.That(latest).IsNull();
+        await Assert.That(latestStable).IsNull();
     }
 
     [Test]
