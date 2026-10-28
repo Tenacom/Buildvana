@@ -156,25 +156,27 @@ internal sealed class RepositoryConfigFilesTests
     private static string SchemaUrlFor(string reference)
         => $"https://raw.githubusercontent.com/Tenacom/Buildvana/{reference}/schemas/buildvana.schema.json";
 
-    private static async Task<string> SchemaReferenceOfAsync(string fileName)
+    private static async Task<string?> SchemaReferenceOfAsync(string fileName)
     {
         var file = await ReadJsonAsync(fileName).ConfigureAwait(false);
 
-        return file[SchemaMemberName]!.GetValue<string>();
+        return file[SchemaMemberName]?.GetValue<string>();
     }
 
     private static async Task<string> PinnedToolVersionAsync()
     {
         var manifest = await ReadJsonAsync(ToolManifestFileName).ConfigureAwait(false);
+        var version = await Assert.That(manifest["tools"]?[ToolPackageId]?["version"]).IsNotNull();
 
-        return manifest["tools"]![ToolPackageId]!["version"]!.GetValue<string>();
+        return version.GetValue<string>();
     }
 
     private static async Task<JsonObject> ReadJsonAsync(string fileName)
     {
         var text = await File.ReadAllTextAsync(PathOf(fileName)).ConfigureAwait(false);
+        var node = await Assert.That(JsonNode.Parse(text, documentOptions: ReaderOptions)).IsNotNull();
 
-        return (JsonObject)JsonNode.Parse(text, documentOptions: ReaderOptions)!;
+        return node.AsObject();
     }
 
     // Every "description" keyword in a schema document, wherever it sits.

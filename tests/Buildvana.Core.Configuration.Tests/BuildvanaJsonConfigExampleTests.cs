@@ -317,7 +317,7 @@ internal sealed class BuildvanaJsonConfigExampleTests
 
         var resolved = BuildvanaJsonConfigExample.ResolveReference(Reference("#/properties/args"), root, "args");
 
-        await Assert.That(resolved["type"]!.GetValue<string>()).IsEqualTo("array");
+        await Assert.That(resolved["type"]?.GetValue<string>()).IsEqualTo("array");
     }
 
     // A member name holding a slash or a tilde is escaped in a pointer, and has to survive the trip back.
@@ -329,8 +329,8 @@ internal sealed class BuildvanaJsonConfigExampleTests
         var slash = BuildvanaJsonConfigExample.ResolveReference(Reference("#/properties/a~1b"), root, "a/b");
         var tilde = BuildvanaJsonConfigExample.ResolveReference(Reference("#/properties/c~0d"), root, "c~d");
 
-        await Assert.That(slash["type"]!.GetValue<string>()).IsEqualTo("string");
-        await Assert.That(tilde["type"]!.GetValue<string>()).IsEqualTo("boolean");
+        await Assert.That(slash["type"]?.GetValue<string>()).IsEqualTo("string");
+        await Assert.That(tilde["type"]?.GetValue<string>()).IsEqualTo("boolean");
     }
 
     [Test]

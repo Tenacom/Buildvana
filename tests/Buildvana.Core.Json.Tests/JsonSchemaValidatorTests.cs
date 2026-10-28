@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization.Metadata;
@@ -280,7 +281,12 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[0].JsonPointer).IsEqualTo("/limitedPolicies/third");
     }
 
-    private static JsonNode Schema(string json) => JsonNode.Parse(json)!;
+    private static JsonNode Schema(string json)
+    {
+        var schema = JsonNode.Parse(json);
+        Debug.Assert(schema is not null, "Parse returns null only for the null literal, and no test passes it as a schema.");
+        return schema;
+    }
 
     private static JsonNode KeyedSchema() => JsonSchemaGenerator.Generate<KeyedSchemaSample>(KeyedOptions);
 

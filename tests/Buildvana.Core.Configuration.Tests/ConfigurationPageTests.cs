@@ -70,10 +70,15 @@ internal sealed class ConfigurationPageTests
     // says whether the member is a section.
     private static IEnumerable<(string Name, string? Default)> Settings(JsonObject schema, string path)
     {
-        foreach (var (name, node) in (JsonObject)schema["properties"]!)
+        if (schema["properties"] is not JsonObject properties)
         {
-            var member = (JsonObject)node!;
+            yield break;
+        }
+
+        foreach (var (name, node) in properties)
+        {
             var memberPath = path.Length == 0 ? name : $"{path}.{name}";
+            var member = node?.AsObject() ?? throw new InvalidOperationException($"The schema states null for {memberPath}.");
             var declaring = member["$ref"] is null
                 ? member
                 : BuildvanaJsonConfigExample.ResolveReference(member, Schema, memberPath);
