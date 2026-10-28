@@ -39,9 +39,6 @@
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile> <!--Do not generate XML documentation -->
     <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
-
-    <!-- The null-forgiving operators of this repository still lack a "// !" justification comment. -->
-    <UseNullableExtendedAnalyzer>false</UseNullableExtendedAnalyzer>
   </PropertyGroup>
 
   <!-- Target frameworks -->
