@@ -125,7 +125,8 @@ internal sealed class JsonKeyedObjectConverterTests
     public async Task Read_DuplicateKey_WhenDisallowed_Throws()
     {
         var options = CreateOptions(allowDuplicateProperties: false);
-        object? Act() => JsonSerializer.Deserialize<IReadOnlyList<KeyedValueSample>>("""{"a":"one","a":"two"}""", options);
+        object? Act()
+            => JsonSerializer.Deserialize<IReadOnlyList<KeyedValueSample>>("""{"a":"one","a":"two"}""", options);
 
         await Assert.That(Act).Throws<JsonException>().WithMessageContaining("Duplicate key 'a'", StringComparison.Ordinal);
     }
@@ -159,7 +160,8 @@ internal sealed class JsonKeyedObjectConverterTests
     public async Task Read_MembersShape_DuplicateInnerMemberWhenDisallowed_Throws()
     {
         var options = CreateOptions(allowDuplicateProperties: false);
-        object? Act() => JsonSerializer.Deserialize<IReadOnlyList<KeyedGroupSample>>("""{"G1":{"retries":1,"retries":2}}""", options);
+        object? Act()
+            => JsonSerializer.Deserialize<IReadOnlyList<KeyedGroupSample>>("""{"G1":{"retries":1,"retries":2}}""", options);
 
         _ = await Assert.That(Act).Throws<JsonException>();
     }

@@ -265,7 +265,8 @@ internal sealed class OverrideLifecycleTests
     private static AssetsFile NeverSettling(int pass)
         => new AssetsFile().Resolves($"Contoso.Package{pass}", "1.0.0").Reports("NU1902", $"Contoso.Package{pass}");
 
-    private static FakeVulnerabilityDataSource Advisories() => new FakeVulnerabilityDataSource().Knows(Vulnerable, "(, 12.0.2]");
+    private static FakeVulnerabilityDataSource Advisories()
+        => new FakeVulnerabilityDataSource().Knows(Vulnerable, "(, 12.0.2]");
 
     private static FakePackageVersionSource Versions()
         => new FakePackageVersionSource().Knows(Vulnerable, ["12.0.1", "12.0.2", "12.0.3"]);

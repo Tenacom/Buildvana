@@ -75,7 +75,9 @@ internal sealed class ProjectAssetsReaderTests
     {
         using var home = new TempHome();
         var assets = Read(home);
-        var packages = assets.Packages.Select(static package => package.Id + " " + package.Version.ToNormalizedString()).Order(StringComparer.Ordinal);
+        var packages = assets.Packages
+            .Select(static package => package.Id + " " + package.Version.ToNormalizedString())
+            .Order(StringComparer.Ordinal);
         await Assert.That(string.Join(", ", packages)).IsEqualTo("Newtonsoft.Json 12.0.2, Serilog 4.0.0");
     }
 

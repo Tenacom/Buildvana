@@ -212,6 +212,9 @@ internal sealed class SelfUpdateTargetResolverTests
 
     private static BvManifestPin Pin(string version) => new(true, version, NuGetVersion.Parse(version));
 
-    private static Task<SelfUpdateTarget> Resolve(FakePackageVersionSource source, SelfUpdateRequest request, BvManifestPin pin)
+    private static Task<SelfUpdateTarget> Resolve(
+        FakePackageVersionSource source,
+        SelfUpdateRequest request,
+        BvManifestPin pin)
         => new SelfUpdateTargetResolver(source, NuGetVersion.Parse(OwnVersion)).ResolveAsync(request, pin);
 }

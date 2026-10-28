@@ -59,7 +59,7 @@ internal sealed class GitHubHostTests
         var services = Services();
         await using (services.ConfigureAwait(false))
         {
-            // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes the lambda before services is disposed
+            // ReSharper disable once AccessToDisposedClosure // False positive: the assertion runs the lambda before services is disposed
             await Assert.That(() => new GitHubHost(services, Parse("https://github.com/a/b/c")))
                 .Throws<BuildFailedException>()
                 .WithMessageContaining("not a valid GitHub repository URL", StringComparison.Ordinal);
@@ -110,7 +110,8 @@ internal sealed class GitHubHostTests
         }
     }
 
-    private static GitUrlInfo Parse(string url) => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
+    private static GitUrlInfo Parse(string url)
+        => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
 
     private static ServiceProvider Services()
         => new ServiceCollection()

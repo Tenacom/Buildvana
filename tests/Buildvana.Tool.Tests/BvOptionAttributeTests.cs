@@ -34,7 +34,9 @@ internal sealed class BvOptionAttributeTests
     [Test]
     public async Task Attribute_IsDiscoverableViaReflection()
     {
-        var property = typeof(BvOptionAttributeTests).GetProperty(nameof(SampleValueOption), BindingFlags.Instance | BindingFlags.NonPublic);
+        var property = typeof(BvOptionAttributeTests).GetProperty(
+            nameof(SampleValueOption),
+            BindingFlags.Instance | BindingFlags.NonPublic);
         var attribute = await Assert.That(property?.GetCustomAttribute<BvOptionAttribute>()).IsNotNull();
         await Assert.That(attribute.ValueName).IsEqualTo("NAME");
     }

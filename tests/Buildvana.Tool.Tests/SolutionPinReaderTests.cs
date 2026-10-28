@@ -107,7 +107,9 @@ internal sealed class SolutionPinReaderTests
     private static SolutionPinReader CreateReader(TempHome home, IProcessRunner runner)
         => new(home.Provider, runner, NullReporter.Instance);
 
-    private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDumps(string projectName, params string[] targetFrameworks)
+    private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDumps(
+        string projectName,
+        params string[] targetFrameworks)
         => (executable, args) => {
             var directory = DumpDirectoryOf(args);
             foreach (var targetFramework in targetFrameworks)
@@ -145,5 +147,8 @@ internal sealed class SolutionPinReaderTests
     }
 
     private static string DumpDirectoryOf(IReadOnlyList<string> args)
-        => args.Single(static arg => arg.StartsWith(DumpDirectoryArgumentPrefix, StringComparison.Ordinal))[DumpDirectoryArgumentPrefix.Length..];
+    {
+        var argument = args.Single(static arg => arg.StartsWith(DumpDirectoryArgumentPrefix, StringComparison.Ordinal));
+        return argument[DumpDirectoryArgumentPrefix.Length..];
+    }
 }

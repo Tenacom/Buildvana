@@ -24,7 +24,8 @@ internal sealed class TransitiveOverridesFixture : IDisposable
 
     public void WriteHomeFile(string fileName, string content) => Write(Path.Combine(_root, fileName), content);
 
-    public void WriteProjectFile(string fileName, string content) => Write(Path.Combine(ProjectDirectory, fileName), content);
+    public void WriteProjectFile(string fileName, string content)
+        => Write(Path.Combine(ProjectDirectory, fileName), content);
 
     // The identities of the items of one type the evaluation ends up with, in evaluation order.
     public IReadOnlyList<string> EvaluateItems(string itemType, bool suppressOverrides = false)

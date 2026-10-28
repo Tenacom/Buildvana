@@ -15,14 +15,15 @@ internal sealed class AdditionalGroupPinReaderTests
 {
     private const string GroupFile = "src/Sdk/PackageVersions.props";
 
-    private const string GroupFileContent = """
-                                            <Project>
-                                              <ItemGroup>
-                                                <BV_PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" UpdatePolicy="patch-" />
-                                                <BV_PackageVersion Include="Tools.InnoSetup" Version="7.1.0" />
-                                              </ItemGroup>
-                                            </Project>
-                                            """;
+    private const string GroupFileContent =
+        """
+        <Project>
+          <ItemGroup>
+            <BV_PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" UpdatePolicy="patch-" />
+            <BV_PackageVersion Include="Tools.InnoSetup" Version="7.1.0" />
+          </ItemGroup>
+        </Project>
+        """;
 
     [Test]
     public async Task ReadAsync_StatesThePinsOfEveryGroupFile()

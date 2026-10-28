@@ -318,5 +318,6 @@ internal sealed class GitLabReleasePublisherTests
         }
     }
 
-    private static GitUrlInfo Parse(string url) => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
+    private static GitUrlInfo Parse(string url)
+        => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
 }

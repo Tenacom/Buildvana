@@ -135,8 +135,9 @@ internal sealed class DependencyResolverTests
     public async Task ResolveAsync_ANetSdkVersionTheIndexHasNot_Fails()
     {
         var releases = new FakeNetSdkReleaseSource().Knows(isLts: true, "10.0.100");
+        var pin = NetSdkPin.Create("10.0.999", allowPrerelease: false);
         var exception = await Assert
-            .That(async () => await ResolveNetSdkAsync(releases, NetSdkPin.Create("10.0.999", allowPrerelease: false)).ConfigureAwait(false))
+            .That(async () => await ResolveNetSdkAsync(releases, pin).ConfigureAwait(false))
             .Throws<BuildFailedException>();
         Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
         var diagnostic = exception.Diagnostics.Single();

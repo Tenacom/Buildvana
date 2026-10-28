@@ -174,7 +174,11 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task VariadicArgumentCommand_AcceptsMorePositionalsThanDeclaredArguments()
     {
-        var command = new CommandRegistration([["fake"]], typeof(FakeVariadicArgumentSettings), false, typeof(FakeVariadicArgumentSettings));
+        var command = new CommandRegistration(
+            [["fake"]],
+            typeof(FakeVariadicArgumentSettings),
+            false,
+            typeof(FakeVariadicArgumentSettings));
         var parsed = CliArgSplitter.Split(["fake", "mode", "one", "two", "three"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, ["mode", "one", "two", "three"])).ThrowsNothing();
     }
@@ -182,7 +186,11 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task VariadicArgumentCommand_AcceptsNoPositionalAtAll()
     {
-        var command = new CommandRegistration([["fake"]], typeof(FakeVariadicArgumentSettings), false, typeof(FakeVariadicArgumentSettings));
+        var command = new CommandRegistration(
+            [["fake"]],
+            typeof(FakeVariadicArgumentSettings),
+            false,
+            typeof(FakeVariadicArgumentSettings));
         var parsed = CliArgSplitter.Split(["fake"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, [])).ThrowsNothing();
     }

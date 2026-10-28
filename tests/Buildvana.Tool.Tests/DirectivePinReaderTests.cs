@@ -95,7 +95,8 @@ internal sealed class DirectivePinReaderTests
         await Assert.That(Read(home)).IsEmpty();
     }
 
-    private static IReadOnlyList<DependencyPin> Read(TempHome home, BuildvanaConfig? config = null) => ReadAll(home, config).Pins;
+    private static IReadOnlyList<DependencyPin> Read(TempHome home, BuildvanaConfig? config = null)
+        => ReadAll(home, config).Pins;
 
     private static DirectivePins ReadAll(TempHome home, BuildvanaConfig? config = null)
         => new DirectivePinReader(home.Provider, config ?? new BuildvanaConfig { FileBasedApps = ["/tools/"] }).Read();

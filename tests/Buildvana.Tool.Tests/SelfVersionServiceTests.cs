@@ -99,7 +99,9 @@ internal sealed class SelfVersionServiceTests
     [Arguments("2.1.41-preview", "2.1.41-preview")]
     [Arguments("2.1.41-preview+g0123abc", "2.1.41-preview")]
     [Arguments("2.1.41-preview", "2.1.41-preview+g0123abc")]
-    public async Task UpdateRepository_WhenEverythingCurrent_RunsToolUpdateButChangesNoFile(string ownVersion, string pin)
+    public async Task UpdateRepository_WhenEverythingCurrent_RunsToolUpdateButChangesNoFile(
+        string ownVersion,
+        string pin)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, pin);
@@ -341,7 +343,8 @@ internal sealed class SelfVersionServiceTests
 
         _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false);
 
-        await Assert.That(home.ReadFile("global.json")).IsEqualTo("{\n  \"msbuild-sdks\": {\n    \"Buildvana.Sdk\": \"2.1.41-preview\"\n  }\n}\n");
+        await Assert.That(home.ReadFile("global.json"))
+            .IsEqualTo("{\n  \"msbuild-sdks\": {\n    \"Buildvana.Sdk\": \"2.1.41-preview\"\n  }\n}\n");
     }
 
     // A directory named global.json is invisible to File.Exists, so the update takes the create-new-file path
@@ -367,7 +370,10 @@ internal sealed class SelfVersionServiceTests
     [Arguments("2.1.42-preview", "2.1.41-preview", "tool manifest")]
     [Arguments("2.1.41-preview", "2.1.42-preview", "global.json")]
     [Arguments("2.1.42-preview", "2.1.42-preview", "tool manifest")]
-    public async Task UpdateRepository_WithNewerPin_FailsWithoutForce(string manifestPin, string sdkPin, string offender)
+    public async Task UpdateRepository_WithNewerPin_FailsWithoutForce(
+        string manifestPin,
+        string sdkPin,
+        string offender)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, sdkPin);
@@ -652,7 +658,9 @@ internal sealed class SelfVersionServiceTests
     [Arguments("", "bv: 2.1.41-preview (tool manifest, added)")]
     [Arguments("2.1.41-preview", "bv: 2.1.41-preview (tool manifest, unchanged)")]
     [Arguments("not-a-version", "bv: 2.1.41-preview (tool manifest, unchanged)")]
-    public async Task UpdateRepository_WhenHandedOff_ReportsTheManifestMoveOfTheHandingOffRun(string from, string expectedLine)
+    public async Task UpdateRepository_WhenHandedOff_ReportsTheManifestMoveOfTheHandingOffRun(
+        string from,
+        string expectedLine)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.40-preview");
@@ -736,8 +744,10 @@ internal sealed class SelfVersionServiceTests
 
         var summary = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false);
 
-        await Assert.That(home.ReadFile("App.csproj")).IsEqualTo(project.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
-        await Assert.That(home.ReadFile(hookPath)).IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile("App.csproj"))
+            .IsEqualTo(project.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile(hookPath))
+            .IsEqualTo(hook.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
         await Assert.That(summary.FamilyPinLines).IsEquivalentTo([
             "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (.buildvana/hooks/hook.cs)",
             "Buildvana.Runtime: 2.1.40-preview -> 2.1.41-preview (App.csproj)",
@@ -776,9 +786,15 @@ internal sealed class SelfVersionServiceTests
     // An entry whose version the dotnet CLI cannot parse is beyond any `dotnet tool` verb's reach — update must
     // fail up front with a message pointing at the file, before touching anything.
     [Test]
-    [Arguments("""{ "version": 1, "isRoot": true, "tools": { "bv": { "version": "not-a-version", "commands": [ "bv" ] } } }""", "not-a-version")]
-    [Arguments("""{ "version": 1, "isRoot": true, "tools": { "bv": { "commands": [ "bv" ] } } }""", "has no version")]
-    public async Task UpdateRepository_WithUnusableManifestEntry_FailsBeforeChangingAnything(string manifestContent, string expectedDetail)
+    [Arguments(
+        """{ "version": 1, "isRoot": true, "tools": { "bv": { "version": "not-a-version", "commands": [ "bv" ] } } }""",
+        "not-a-version")]
+    [Arguments(
+        """{ "version": 1, "isRoot": true, "tools": { "bv": { "commands": [ "bv" ] } } }""",
+        "has no version")]
+    public async Task UpdateRepository_WithUnusableManifestEntry_FailsBeforeChangingAnything(
+        string manifestContent,
+        string expectedDetail)
     {
         using var home = new TempHome();
         WriteGlobalJson(home, "2.1.40-preview");
@@ -825,7 +841,12 @@ internal sealed class SelfVersionServiceTests
         WriteGlobalJson(home, "2.1.41-preview");
         WriteToolManifest(home, "2.1.40-preview");
         var runner = new FakeProcessRunner {
-            OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 1, string.Empty, "simulated failure", TimeSpan.Zero),
+            OnRun = static (executable, args) => new ProcessResult(
+                $"{executable} {string.Join(' ', args)}",
+                1,
+                string.Empty,
+                "simulated failure",
+                TimeSpan.Zero),
         };
         var service = CreateService(home, "2.1.41-preview", runner);
 
@@ -872,7 +893,8 @@ internal sealed class SelfVersionServiceTests
 
         _ = await UpdateInPlaceAsync(service, SelfUpdateRequest.Default).ConfigureAwait(false);
 
-        await Assert.That(home.ReadFile("buildvana.jsonc")).IsEqualTo(content.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
+        await Assert.That(home.ReadFile("buildvana.jsonc"))
+            .IsEqualTo(content.Replace("2.1.40-preview", "2.1.41-preview", StringComparison.Ordinal));
     }
 
     [Test]
@@ -1010,7 +1032,9 @@ internal sealed class SelfVersionServiceTests
         => new() { To = NuGetVersion.Parse(version), Force = force };
 
     // Most tests exercise an update this bv performs itself, and read its summary.
-    private static async Task<SelfUpdateSummary> UpdateInPlaceAsync(SelfVersionService service, SelfUpdateRequest request)
+    private static async Task<SelfUpdateSummary> UpdateInPlaceAsync(
+        SelfVersionService service,
+        SelfUpdateRequest request)
     {
         var result = await service.UpdateRepositoryAsync(request).ConfigureAwait(false);
         return await Assert.That(result.Summary).IsNotNull();
@@ -1021,7 +1045,8 @@ internal sealed class SelfVersionServiceTests
     private static List<string> MessagesOf(CaptureReporter reporter, MessageLevel level)
         => [.. reporter.Messages.Where(m => m.Level == level).Select(static m => m.Message)];
 
-    private static void WriteGlobalJson(TempHome home, string pin) => home.WriteFile("global.json", GlobalJsonText(pin));
+    private static void WriteGlobalJson(TempHome home, string pin)
+        => home.WriteFile("global.json", GlobalJsonText(pin));
 
     private static string SchemaConfigText(string version) => $$"""
         {
@@ -1063,5 +1088,6 @@ internal sealed class SelfVersionServiceTests
         WriteRawToolManifest(home, content);
     }
 
-    private static void WriteRawToolManifest(TempHome home, string content) => home.WriteFile("dotnet-tools.json", content);
+    private static void WriteRawToolManifest(TempHome home, string content)
+        => home.WriteFile("dotnet-tools.json", content);
 }
