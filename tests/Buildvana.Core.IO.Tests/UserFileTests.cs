@@ -143,9 +143,9 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllText_WithMalformedPath_Fails()
     {
-        static string Act() => UserFile.ReadAllText("a\0b");
+        static void Act() => UserFile.ReadAllText("a\0b");
 
-        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        var exception = Assert.Throws<BuildFailedException>(Act);
         await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<ArgumentException>();
     }

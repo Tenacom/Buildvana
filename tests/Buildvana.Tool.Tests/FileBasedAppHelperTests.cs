@@ -49,8 +49,9 @@ internal sealed class FileBasedAppHelperTests
         var first = Path.Combine(Path.GetTempPath(), "first", "app.cs");
         var second = Path.Combine(Path.GetTempPath(), "second", "app.cs");
 
-        await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(first))
-            .IsNotEqualTo(FileBasedAppHelper.GetArtifactsDirectory(second));
+        var firstDirectory = await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(first)).IsNotNull();
+        var secondDirectory = await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(second)).IsNotNull();
+        await Assert.That(firstDirectory).IsNotEqualTo(secondDirectory);
     }
 
     [Test]
