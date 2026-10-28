@@ -222,7 +222,8 @@ internal sealed class GiteaApiClientTests
 
     private static GiteaApiClient NewClient(StubHttpMessageHandler handler) => new("gitea.example.com", Token, handler);
 
-    private static StubHttpMessageHandler Answering() => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>());
+    private static StubHttpMessageHandler Answering()
+        => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>());
 
     private static StubHttpMessageHandler AnsweringEverything(StubHttpAnswer answer)
         => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>(), answer);

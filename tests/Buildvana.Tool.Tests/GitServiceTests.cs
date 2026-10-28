@@ -116,7 +116,7 @@ internal sealed class GitServiceTests
         using var repo = CreateRepoWithCommit();
         using var git = CreateGitService(repo);
 
-        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the enclosing scope disposes git
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion runs Act before the enclosing scope disposes git
         Task<(bool Result, IReadOnlyList<string> ChangedFiles)> Act()
             => git.TrackChangesAsync<bool>(() => throw new BuildFailedException("Operation failed."));
 

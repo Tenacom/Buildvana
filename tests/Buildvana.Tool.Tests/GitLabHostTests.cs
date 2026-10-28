@@ -173,7 +173,8 @@ internal sealed class GitLabHostTests
         }
     }
 
-    private static GitUrlInfo Parse(string url) => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
+    private static GitUrlInfo Parse(string url)
+        => GitUrlInfo.TryCreate(url, out var info) ? info : throw new InvalidOperationException(url);
 
     private static ServiceProvider Services(string tokenEnv)
         => new ServiceCollection()

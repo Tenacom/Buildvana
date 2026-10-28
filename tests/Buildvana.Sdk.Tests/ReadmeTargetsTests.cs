@@ -33,7 +33,9 @@ internal sealed class ReadmeTargetsTests
         await Assert.That(errors).IsEquivalentTo(["BVSDK1510"]);
     }
 
-    private static (string ReadmePath, IReadOnlyList<string> ErrorCodes) Evaluate(TempHome home, string packageReadmeFile)
+    private static (string ReadmePath, IReadOnlyList<string> ErrorCodes) Evaluate(
+        TempHome home,
+        string packageReadmeFile)
     {
         var projectPath = home.GetFullPath("src/Test/Test.proj");
         var projectText = $"""

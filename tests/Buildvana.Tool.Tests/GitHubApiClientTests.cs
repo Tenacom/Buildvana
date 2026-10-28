@@ -329,7 +329,8 @@ internal sealed class GitHubApiClientTests
 
     private static GitHubApiClient NewClient(StubHttpMessageHandler handler) => new("github.com", Token, handler);
 
-    private static StubHttpMessageHandler Answering() => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>());
+    private static StubHttpMessageHandler Answering()
+        => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>());
 
     private static StubHttpMessageHandler AnsweringEverything(StubHttpAnswer answer)
         => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>(), answer);

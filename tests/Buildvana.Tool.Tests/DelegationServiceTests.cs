@@ -147,9 +147,15 @@ internal sealed class DelegationServiceTests
     // A bv entry the dotnet CLI itself could not use (see ToolManifest.ReadBvPin) reads as "no pin", but
     // deserves a warning — the repository clearly meant to pin something.
     [Test]
-    [Arguments("""{ "version": 1, "isRoot": true, "tools": { "bv": { "version": "not-a-version", "commands": [ "bv" ] } } }""", "not-a-version")]
-    [Arguments("""{ "version": 1, "isRoot": true, "tools": { "bv": { "commands": [ "bv" ] } } }""", "has no version")]
-    public async Task TryDelegate_WithUnusableManifestEntry_RunsInPlaceAndWarns(string manifestContent, string expectedDetail)
+    [Arguments(
+        """{ "version": 1, "isRoot": true, "tools": { "bv": { "version": "not-a-version", "commands": [ "bv" ] } } }""",
+        "not-a-version")]
+    [Arguments(
+        """{ "version": 1, "isRoot": true, "tools": { "bv": { "commands": [ "bv" ] } } }""",
+        "has no version")]
+    public async Task TryDelegate_WithUnusableManifestEntry_RunsInPlaceAndWarns(
+        string manifestContent,
+        string expectedDetail)
     {
         using var home = new TempHome();
         MarkAsHome(home);
@@ -173,7 +179,9 @@ internal sealed class DelegationServiceTests
     {
         using var home = new TempHome();
         MarkAsHome(home);
-        WriteToolManifest(home, """{ "version": 1, "isRoot": true, "tools": { "BV": { "version": "2.1.40-preview", "commands": [ "bv" ] } } }""");
+        WriteToolManifest(
+            home,
+            """{ "version": 1, "isRoot": true, "tools": { "BV": { "version": "2.1.40-preview", "commands": [ "bv" ] } } }""");
         var runner = new FakeProcessRunner();
         var output = new StringWriter();
         var service = CreateService(runner, output);
@@ -308,7 +316,12 @@ internal sealed class DelegationServiceTests
     {
         using var home = CreateDelegatableHome("2.1.40-preview");
         var runner = new FakeProcessRunner {
-            OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 0, "Restored bv.\nRestored ngbv.", string.Empty, TimeSpan.Zero),
+            OnRun = static (executable, args) => new ProcessResult(
+                $"{executable} {string.Join(' ', args)}",
+                0,
+                "Restored bv.\nRestored ngbv.",
+                string.Empty,
+                TimeSpan.Zero),
         };
         var output = new StringWriter();
         var service = CreateService(runner, output);
@@ -327,7 +340,12 @@ internal sealed class DelegationServiceTests
     {
         using var home = CreateDelegatableHome("2.1.40-preview");
         var runner = new FakeProcessRunner {
-            OnRun = static (executable, args) => new ProcessResult($"{executable} {string.Join(' ', args)}", 1, string.Empty, "simulated failure", TimeSpan.Zero),
+            OnRun = static (executable, args) => new ProcessResult(
+                $"{executable} {string.Join(' ', args)}",
+                1,
+                string.Empty,
+                "simulated failure",
+                TimeSpan.Zero),
             OnRunWithInheritedStdio = static (_, _) => 42,
         };
         var output = new StringWriter();
@@ -415,5 +433,6 @@ internal sealed class DelegationServiceTests
         return home;
     }
 
-    private static void WriteToolManifest(TempHome home, string content) => home.WriteFile("dotnet-tools.json", content);
+    private static void WriteToolManifest(TempHome home, string content)
+        => home.WriteFile("dotnet-tools.json", content);
 }

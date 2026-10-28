@@ -240,9 +240,11 @@ internal sealed class ForgejoApiClientTests
             .WithMessageMatching("*with 502 Bad Gateway.");
     }
 
-    private static ForgejoApiClient NewClient(StubHttpMessageHandler handler) => new("forgejo.example.com", Token, handler);
+    private static ForgejoApiClient NewClient(StubHttpMessageHandler handler)
+        => new("forgejo.example.com", Token, handler);
 
-    private static StubHttpMessageHandler Answering() => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>());
+    private static StubHttpMessageHandler Answering()
+        => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>());
 
     private static StubHttpMessageHandler AnsweringEverything(StubHttpAnswer answer)
         => new(new Dictionary<(HttpMethod Method, string Url), StubHttpAnswer>(), answer);

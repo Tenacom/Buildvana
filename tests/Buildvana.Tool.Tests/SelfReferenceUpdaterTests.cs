@@ -38,5 +38,6 @@ internal sealed class SelfReferenceUpdaterTests
         await Assert.That(home.ReadFile(".config/dotnet-tools.json")).IsEqualTo(Manifest);
     }
 
-    private static SelfReferenceUpdater CreateUpdater(TempHome home) => new(NullReporter.Instance, home.Provider, new JsonHelper());
+    private static SelfReferenceUpdater CreateUpdater(TempHome home)
+        => new(NullReporter.Instance, home.Provider, new JsonHelper());
 }

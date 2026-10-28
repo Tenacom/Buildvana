@@ -265,7 +265,9 @@ internal sealed partial class JsonHelperTests
 
             """);
 
-        var rewritten = new JsonHelper().RewriteBooleanValues(file.Path, static (path, _) => path is ["sdk", "allowPrerelease"] ? true : null);
+        var rewritten = new JsonHelper().RewriteBooleanValues(
+            file.Path,
+            static (path, _) => path is ["sdk", "allowPrerelease"] ? true : null);
 
         await Assert.That(rewritten).IsTrue();
         await Assert.That(file.ReadText()).IsEqualTo(

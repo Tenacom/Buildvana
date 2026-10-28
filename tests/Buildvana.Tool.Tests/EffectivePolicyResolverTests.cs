@@ -106,7 +106,8 @@ internal sealed class EffectivePolicyResolverTests
         await Assert.That(exception.Message).Contains("Directory.Packages.props");
     }
 
-    private static string Resolve(EffectivePolicyResolver resolver, DependencyPin pin) => resolver.Resolve(pin).ToString();
+    private static string Resolve(EffectivePolicyResolver resolver, DependencyPin pin)
+        => resolver.Resolve(pin).ToString();
 
     private static DependencyPin Pin(DependencyScope scope, string id = "Serilog")
         => DependencyPin.Create(scope, id, "4.0.0", "Directory.Packages.props");
