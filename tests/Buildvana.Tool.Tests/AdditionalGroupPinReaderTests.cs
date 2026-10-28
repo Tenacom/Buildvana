@@ -28,7 +28,7 @@ internal sealed class AdditionalGroupPinReaderTests
     public async Task ReadAsync_StatesThePinsOfEveryGroupFile()
     {
         using var home = new TempHome();
-        Write(home, GroupFile, GroupFileContent);
+        home.WriteFile(GroupFile, GroupFileContent);
         var runner = Answer(home, ("StyleCop.Analyzers", "1.2.0-beta.556", "patch-"), ("Tools.InnoSetup", "7.1.0", null));
         var pins = await ReadAsync(home, runner).ConfigureAwait(false);
         await Assert.That(pins.Select(static pin => pin.Id + " " + pin.VersionText))
@@ -44,7 +44,7 @@ internal sealed class AdditionalGroupPinReaderTests
     public async Task ReadAsync_AsksMsBuildForTheGroupsItemName()
     {
         using var home = new TempHome();
-        Write(home, GroupFile, GroupFileContent);
+        home.WriteFile(GroupFile, GroupFileContent);
         var runner = Answer(home, ("Tools.InnoSetup", "7.1.0", null));
         _ = await ReadAsync(home, runner).ConfigureAwait(false);
         var args = string.Join(" ", runner.Runs.Single().Args);
@@ -70,7 +70,7 @@ internal sealed class AdditionalGroupPinReaderTests
     public async Task ReadAsync_LeavesOutAnItemDeclaredOutsideTheGlob()
     {
         using var home = new TempHome();
-        Write(home, GroupFile, GroupFileContent);
+        home.WriteFile(GroupFile, GroupFileContent);
         var elsewhere = home.GetFullPath("src/Other/Imported.props");
         var runner = Answer([("Tools.InnoSetup", "7.1.0", null)], declaringFile: elsewhere);
         await Assert.That(await ReadAsync(home, runner).ConfigureAwait(false)).IsEmpty();
@@ -80,7 +80,7 @@ internal sealed class AdditionalGroupPinReaderTests
     public async Task ReadAsync_LeavesTheFamilyOut()
     {
         using var home = new TempHome();
-        Write(home, GroupFile, GroupFileContent);
+        home.WriteFile(GroupFile, GroupFileContent);
         var runner = Answer(home, ("Buildvana.Runtime", "2.1.0", null));
         await Assert.That(await ReadAsync(home, runner).ConfigureAwait(false)).IsEmpty();
     }
@@ -102,7 +102,7 @@ internal sealed class AdditionalGroupPinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, GroupFile, content);
+        home.WriteFile(GroupFile, content);
         var runner = Answer(home, ("Tools.InnoSetup", "7.1.0", null));
         var pins = await ReadAsync(home, runner).ConfigureAwait(false);
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
@@ -127,7 +127,7 @@ internal sealed class AdditionalGroupPinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, GroupFile, content);
+        home.WriteFile(GroupFile, content);
         var runner = Answer(home, ("Tools.InnoSetup", @"\n      7.1.0\n    ", null));
         var pin = (await ReadAsync(home, runner).ConfigureAwait(false)).Single();
         await Assert.That(pin.Management).IsEqualTo(PinManagement.Managed);
@@ -138,7 +138,7 @@ internal sealed class AdditionalGroupPinReaderTests
     public async Task ReadAsync_WhenEvaluationFails_ReportsAFailedStep()
     {
         using var home = new TempHome();
-        Write(home, GroupFile, GroupFileContent);
+        home.WriteFile(GroupFile, GroupFileContent);
         var runner = new FakeProcessRunner {
             OnRun = static (executable, _)
                 => new ProcessResult(executable, 1, "error MSB4025: no.", string.Empty, TimeSpan.Zero),
@@ -198,11 +198,4 @@ internal sealed class AdditionalGroupPinReaderTests
     }
 
     private static string JsonPath(string path) => "\"" + path.Replace(@"\", @"\\", StringComparison.Ordinal) + "\"";
-
-    private static void Write(TempHome home, string relativePath, string content)
-    {
-        var path = home.GetFullPath(relativePath);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, content);
-    }
 }

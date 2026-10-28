@@ -2,7 +2,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Globalization;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Buildvana.Core.Testing;
 
@@ -15,10 +14,7 @@ internal sealed partial class SdkDiagnosticsPageTests
 {
     private const string CodePrefix = "BVSDK";
 
-    private static readonly string RepositoryRoot = typeof(SdkDiagnosticsPageTests).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .First(static attribute => attribute.Key == "RepositoryRoot")
-        .Value!;
+    private static readonly string RepositoryRoot = typeof(SdkDiagnosticsPageTests).Assembly.GetMetadata("RepositoryRoot");
 
     // Every code the SDK raises is on the page, and every code on the page is raised.
     [Test]

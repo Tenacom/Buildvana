@@ -165,6 +165,7 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllText_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static string Act() => UserFile.ReadAllText(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -181,6 +182,7 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task WriteAllText_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static void Act() => UserFile.WriteAllText(null!, "x");
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -199,6 +201,7 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task ReadAllTextAsync_WithNullPath_ThrowsRawAndSynchronously()
     {
+        // ! Null on purpose: testing null detection
         static void Act() => _ = UserFile.ReadAllTextAsync(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -215,6 +218,7 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task WriteAllTextAsync_WithNullPath_ThrowsRawAndSynchronously()
     {
+        // ! Null on purpose: testing null detection
         static void Act() => _ = UserFile.WriteAllTextAsync(null!, "x");
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -526,6 +530,7 @@ internal sealed partial class UserFileTests
     [Test]
     public async Task Exists_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static bool Act() => UserFile.Exists(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();

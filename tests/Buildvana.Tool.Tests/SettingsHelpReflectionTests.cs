@@ -33,8 +33,8 @@ internal sealed class SettingsHelpReflectionTests
         var longNames = type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Select(static p => p.GetCustomAttribute<BvOptionAttribute>())
-            .Where(static a => a is not null)
-            .Select(static a => a!.LongNames[0]);
+            .OfType<BvOptionAttribute>()
+            .Select(static a => a.LongNames[0]);
         return string.Join(",", longNames);
     }
 }

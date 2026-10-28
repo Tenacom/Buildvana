@@ -75,7 +75,7 @@ internal sealed class CommandLineOverridesParserTests
 
         await Assert.That(overrides.Configuration).IsEqualTo("Debug");
         await Assert.That(overrides.ForwardedArgs).IsNotNull();
-        await Assert.That(string.Join('|', overrides.ForwardedArgs!)).IsEqualTo("--no-incremental");
+        await Assert.That(string.Join('|', overrides.ForwardedArgs ?? [])).IsEqualTo("--no-incremental");
     }
 
     [Test]
@@ -86,7 +86,7 @@ internal sealed class CommandLineOverridesParserTests
 
         await Assert.That(overrides.Configuration).IsNull();
         await Assert.That(overrides.ForwardedArgs).IsNotNull();
-        await Assert.That(string.Join('|', overrides.ForwardedArgs!)).IsEqualTo("-m:8|-v:minimal");
+        await Assert.That(string.Join('|', overrides.ForwardedArgs ?? [])).IsEqualTo("-m:8|-v:minimal");
     }
 
     // The cost of ownership: a trailing `-c` that was meant as another forwarded option's value is read

@@ -52,7 +52,7 @@ internal sealed class StubHttpMessageHandler : HttpMessageHandler
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var url = request.RequestUri!.AbsoluteUri;
+        var url = request.RequestUri?.AbsoluteUri ?? throw new InvalidOperationException("The request has no URI.");
         var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         Requests.Add(new StubHttpRequest(request.Method, url, CollectHeaders(request), body));
 

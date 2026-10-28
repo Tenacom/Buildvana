@@ -151,14 +151,15 @@ internal sealed class GitignorePatternMatchTests
     [Test]
     public async Task Matches_WithEmptyPath_ReturnsFalse()
     {
-        var pattern = GitignorePattern.TryParse("*")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("*")).IsNotNull();
 
         await Assert.That(pattern.Matches([], isDirectory: false, ignoreCase: false)).IsFalse();
     }
 
     private static bool Match(string patternText, string path, bool isDirectory = false, bool ignoreCase = false)
     {
-        var pattern = GitignorePattern.TryParse(patternText)!;
+        var pattern = GitignorePattern.TryParse(patternText)
+            ?? throw new InvalidOperationException($"'{patternText}' parses to no pattern.");
         return pattern.Matches(path.Split('/'), isDirectory, ignoreCase);
     }
 }

@@ -1,9 +1,10 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
+using System.Diagnostics;
 using System.Text.Json;
 using Buildvana.Core.Dependencies;
+using Buildvana.Core.Testing;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 
@@ -32,7 +33,9 @@ internal sealed class PinDumpFixture : IDisposable
     public string WriteFile(string relativePath, string content)
     {
         var path = Path.Combine(ProjectDirectory, relativePath);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, content);
         return path;
     }
@@ -60,10 +63,7 @@ internal sealed class PinDumpFixture : IDisposable
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
     private static string GetMetadata(string key)
-        => typeof(PinDumpFixture).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(attribute => attribute.Key == key)
-            .Value!;
+        => typeof(PinDumpFixture).Assembly.GetMetadata(key);
 
     private static PackagePinDump ReadDump(string path)
         => JsonSerializer.Deserialize(File.ReadAllText(path), PackagePinDumpJsonContext.Default.PackagePinDump)

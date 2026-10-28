@@ -1,7 +1,8 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
+using System.Diagnostics;
+using Buildvana.Core.Testing;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
 
@@ -52,14 +53,13 @@ internal sealed class TransitiveOverridesFixture : IDisposable
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
     private static string GetMetadata(string key)
-        => typeof(TransitiveOverridesFixture).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(attribute => attribute.Key == key)
-            .Value!;
+        => typeof(TransitiveOverridesFixture).Assembly.GetMetadata(key);
 
     private static void Write(string path, string content)
     {
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, content);
     }
 }

@@ -55,7 +55,7 @@ internal sealed class ConsoleEncodingScopeTests
     [Arguments(typeof(InvalidOperationException), false)]
     public async Task IsConsoleEncodingFailure_AcceptsOnlyFailuresOfTheConsole(Type exceptionType, bool expected)
     {
-        var exception = (Exception)Activator.CreateInstance(exceptionType)!;
+        var exception = await Assert.That(Activator.CreateInstance(exceptionType) as Exception).IsNotNull();
         await Assert.That(ConsoleEncodingScope.IsConsoleEncodingFailure(exception)).IsEqualTo(expected);
     }
 }

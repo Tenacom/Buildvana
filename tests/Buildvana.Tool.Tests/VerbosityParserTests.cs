@@ -39,6 +39,7 @@ internal sealed class VerbosityParserTests
     [Test]
     public async Task Parse_Null_ThrowsArgumentNullException()
     {
+        // ! Null on purpose: testing null detection
         await Assert.That(() => VerbosityParser.Parse(null!)).Throws<ArgumentNullException>();
     }
 }

@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using Buildvana.Core.Testing;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
@@ -104,8 +103,5 @@ internal sealed class AdditionalAssemblyInfoModuleTests
     }
 
     private static string GetRealTargetsPath()
-        => typeof(AdditionalAssemblyInfoModuleTests).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(static attribute => attribute.Key == "RealAdditionalAssemblyInfoModuleCoreTargetsPath")
-            .Value!;
+        => typeof(AdditionalAssemblyInfoModuleTests).Assembly.GetMetadata("RealAdditionalAssemblyInfoModuleCoreTargetsPath");
 }

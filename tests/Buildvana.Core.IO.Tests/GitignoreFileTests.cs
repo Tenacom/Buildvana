@@ -8,6 +8,7 @@ internal sealed class GitignoreFileTests
     [Test]
     public async Task Parse_WithNullLines_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static GitignoreFile Act() => GitignoreFile.Parse(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();

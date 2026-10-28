@@ -29,10 +29,11 @@ internal sealed class PostUpdateHookArgsFactoryTests
 
         var args = Create(home, resolution, check: true);
         await Assert.That(args.Check).IsTrue();
-        await Assert.That(args.NetSdk!.Id).IsNull();
-        await Assert.That(args.NetSdk.DeclaringFile).IsEqualTo("global.json");
-        await Assert.That(args.NetSdk.Target).IsEqualTo("10.0.201");
-        await Assert.That(args.NetSdk.State).IsEqualTo(DependencyResultState.Updated);
+        var netSdk = await Assert.That(args.NetSdk).IsNotNull();
+        await Assert.That(netSdk.Id).IsNull();
+        await Assert.That(netSdk.DeclaringFile).IsEqualTo("global.json");
+        await Assert.That(netSdk.Target).IsEqualTo("10.0.201");
+        await Assert.That(netSdk.State).IsEqualTo(DependencyResultState.Updated);
         await Assert.That(args.Tools.Single().Id).IsEqualTo("ngbv");
         await Assert.That(args.Packages.Single().Id).IsEqualTo("Serilog");
         await Assert.That(args.Packages.Single().CurrentVersion).IsEqualTo("3.0.0");

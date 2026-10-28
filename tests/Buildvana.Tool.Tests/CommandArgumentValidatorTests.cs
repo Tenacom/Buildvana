@@ -10,7 +10,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ForwardingCommand_AcceptsTokensAfterSeparator()
     {
-        var command = CommandRegistry.Find("build")!;
+        var command = await Assert.That(CommandRegistry.Find("build")).IsNotNull();
         var parsed = CliArgSplitter.Split(["build", "--", "-p:Foo=Bar"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(Join(parameters.Forwarded)).IsEqualTo("-p:Foo=Bar");
@@ -19,7 +19,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ForwardingCommand_RejectsOptionsBeforeSeparator()
     {
-        var command = CommandRegistry.Find("build")!;
+        var command = await Assert.That(CommandRegistry.Find("build")).IsNotNull();
         var parsed = CliArgSplitter.Split(["build", "-p:Foo"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
@@ -27,7 +27,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ForwardingCommand_RejectsPositionals()
     {
-        var command = CommandRegistry.Find("build")!;
+        var command = await Assert.That(CommandRegistry.Find("build")).IsNotNull();
         var parsed = CliArgSplitter.Split(["build", "extra"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
@@ -35,7 +35,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task NonForwardingCommand_RejectsTokensAfterSeparator()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "--", "x"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
@@ -43,7 +43,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task NonForwardingCommand_AllowsItsOwnOptionTokens()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "-c", "Debug"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(Join(parameters.Options)).IsEqualTo("-c|Debug");
@@ -52,7 +52,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsLessCommand_RejectsUnknownOption()
     {
-        var command = CommandRegistry.Find("clean")!;
+        var command = await Assert.That(CommandRegistry.Find("clean")).IsNotNull();
         var parsed = CliArgSplitter.Split(["clean", "--bogus"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
             .Throws<BuildFailedException>()
@@ -62,7 +62,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsLessCommand_RejectsUnknownOption_ViaAlias()
     {
-        var command = CommandRegistry.Find("version")!;
+        var command = await Assert.That(CommandRegistry.Find("version")).IsNotNull();
         var parsed = CliArgSplitter.Split(["version", "--bogus"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
             .Throws<BuildFailedException>()
@@ -72,7 +72,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsLessCommand_ReportsOffendingTokensInCommandLineOrder()
     {
-        var command = CommandRegistry.Find("clean")!;
+        var command = await Assert.That(CommandRegistry.Find("clean")).IsNotNull();
         var parsed = CliArgSplitter.Split(["clean", "junk", "--bogus"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
             .Throws<BuildFailedException>()
@@ -82,7 +82,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsCarryingCommand_RejectsUnknownOption()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "--bogus"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
             .Throws<BuildFailedException>()
@@ -92,7 +92,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsCarryingCommand_ConsumesOptionValue()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "--bump", "minor"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(Join(parameters.Options)).IsEqualTo("--bump|minor");
@@ -102,7 +102,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsCarryingCommand_AllowsInlineOptionValue()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "--bump=minor"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, parsed.Positionals);
         await Assert.That(Join(parameters.Options)).IsEqualTo("--bump=minor");
@@ -111,7 +111,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsCarryingCommand_AllowsFlagOption()
     {
-        var command = CommandRegistry.Find("version advance")!;
+        var command = await Assert.That(CommandRegistry.Find("version advance")).IsNotNull();
         var parsed = CliArgSplitter.Split(["version", "advance", "--force"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, []);
         await Assert.That(Join(parameters.Options)).IsEqualTo("--force");
@@ -120,7 +120,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task SettingsCarryingCommand_RejectsValueOptionWithoutValue()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "--bump"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals))
             .Throws<BuildFailedException>()
@@ -130,7 +130,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task NonForwardingCommand_RejectsPositionals_WhenNoArgumentsDeclared()
     {
-        var command = CommandRegistry.Find("release")!;
+        var command = await Assert.That(CommandRegistry.Find("release")).IsNotNull();
         var parsed = CliArgSplitter.Split(["release", "extra"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, parsed.Positionals)).Throws<BuildFailedException>();
     }
@@ -138,7 +138,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ArgumentCommand_AcceptsDeclaredPositional()
     {
-        var command = CommandRegistry.Find("version advance")!;
+        var command = await Assert.That(CommandRegistry.Find("version advance")).IsNotNull();
         var parsed = CliArgSplitter.Split(["version", "advance", "minor"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, ["minor"]);
         await Assert.That(Join(parameters.Positionals)).IsEqualTo("minor");
@@ -148,7 +148,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ArgumentCommand_AcceptsOmittedOptionalArgument()
     {
-        var command = CommandRegistry.Find("version advance")!;
+        var command = await Assert.That(CommandRegistry.Find("version advance")).IsNotNull();
         var parsed = CliArgSplitter.Split(["version", "advance"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, []);
         await Assert.That(parameters.Positionals.Count).IsEqualTo(0);
@@ -158,7 +158,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ArgumentCommand_RejectsExcessPositionals()
     {
-        var command = CommandRegistry.Find("version advance")!;
+        var command = await Assert.That(CommandRegistry.Find("version advance")).IsNotNull();
         var parsed = CliArgSplitter.Split(["version", "advance", "minor", "extra"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, ["minor", "extra"])).Throws<BuildFailedException>();
     }
@@ -190,7 +190,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task OperandAfterFlag_BindsAsPositional()
     {
-        var command = CommandRegistry.Find("deps update")!;
+        var command = await Assert.That(CommandRegistry.Find("deps update")).IsNotNull();
         var parsed = CliArgSplitter.Split(["deps", "update", "--check", "CommunityToolkit.Diagnostics"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, []);
         await Assert.That(Join(parameters.Positionals)).IsEqualTo("CommunityToolkit.Diagnostics");
@@ -200,7 +200,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task OperandAfterValueOption_BindsAsPositional()
     {
-        var command = CommandRegistry.Find("deps update")!;
+        var command = await Assert.That(CommandRegistry.Find("deps update")).IsNotNull();
         var parsed = CliArgSplitter.Split(["deps", "update", "--to", "1.2.3", "Serilog"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, []);
         await Assert.That(Join(parameters.Positionals)).IsEqualTo("Serilog");
@@ -210,7 +210,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task OperandsOnBothSidesOfAnOption_BindInCommandLineOrder()
     {
-        var command = CommandRegistry.Find("deps update")!;
+        var command = await Assert.That(CommandRegistry.Find("deps update")).IsNotNull();
         var parsed = CliArgSplitter.Split(["deps", "update", "Serilog", "--check", "Louis"]);
         var parameters = CommandArgumentValidator.Validate(command, parsed, ["Serilog"]);
         await Assert.That(Join(parameters.Positionals)).IsEqualTo("Serilog|Louis");
@@ -220,7 +220,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task UnknownOptionBeforeAnOperand_IsReportedFirst()
     {
-        var command = CommandRegistry.Find("deps update")!;
+        var command = await Assert.That(CommandRegistry.Find("deps update")).IsNotNull();
         var parsed = CliArgSplitter.Split(["deps", "update", "--bogus", "Serilog"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
             .Throws<BuildFailedException>()
@@ -230,7 +230,7 @@ internal sealed class CommandArgumentValidatorTests
     [Test]
     public async Task ExcessOperandAfterAnOption_IsRejected()
     {
-        var command = CommandRegistry.Find("version advance")!;
+        var command = await Assert.That(CommandRegistry.Find("version advance")).IsNotNull();
         var parsed = CliArgSplitter.Split(["version", "advance", "--force", "minor", "extra"]);
         await Assert.That(() => CommandArgumentValidator.Validate(command, parsed, []))
             .Throws<BuildFailedException>()

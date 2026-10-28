@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using Buildvana.Core.Testing;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
@@ -112,8 +111,5 @@ internal sealed class XmlDocumentationModuleTests
     }
 
     private static string GetRealPath(string key)
-        => typeof(XmlDocumentationModuleTests).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(attribute => attribute.Key == key)
-            .Value!;
+        => typeof(XmlDocumentationModuleTests).Assembly.GetMetadata(key);
 }

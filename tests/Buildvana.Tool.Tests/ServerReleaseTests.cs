@@ -183,7 +183,8 @@ internal sealed class ServerReleaseTests
             release.PushUpdates();
 
             ReleaseAsset[] expected = [new("artifacts/setup.exe", "Setup program", "application/vnd.microsoft.portable-executable")];
-            await Assert.That(harness.Publisher!.CheckedAssets).IsEquivalentTo(expected);
+            var publisher = await Assert.That(harness.Publisher).IsNotNull();
+            await Assert.That(publisher.CheckedAssets).IsEquivalentTo(expected);
         }
     }
 
@@ -201,7 +202,8 @@ internal sealed class ServerReleaseTests
             await Assert.That(Act)
                 .Throws<InvalidOperationException>()
                 .WithMessageContaining("before pushing updates", StringComparison.Ordinal);
-            await Assert.That(harness.Publisher!.IsPublished).IsFalse();
+            var publisher = await Assert.That(harness.Publisher).IsNotNull();
+            await Assert.That(publisher.IsPublished).IsFalse();
         }
     }
 
@@ -216,14 +218,14 @@ internal sealed class ServerReleaseTests
             release.PushUpdates();
             await release.PublishAsync().ConfigureAwait(false);
 
-            var publisher = harness.Publisher!;
+            var publisher = await Assert.That(harness.Publisher).IsNotNull();
             await Assert.That(publisher.IsBegun).IsTrue();
             await Assert.That(publisher.PublishedTag).IsEqualTo(harness.ComputeVersion());
             await Assert.That(publisher.PublishedSha).IsEqualTo(release.ReleaseCommitSha);
         }
 
         // A published release is final: disposing it undoes nothing.
-        await Assert.That(harness.Publisher!.IsUndone).IsFalse();
+        await Assert.That(harness.Publisher?.IsUndone).IsFalse();
         await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(1);
     }
 
@@ -268,7 +270,8 @@ internal sealed class ServerReleaseTests
         await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(0);
         await Assert.That(harness.Repo.GetRemoteTagSha(tag)).IsNull();
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsEqualTo(initialSha);
-        await Assert.That(harness.Publisher!.IsUndone).IsTrue();
+        var publisher = await Assert.That(harness.Publisher).IsNotNull();
+        await Assert.That(publisher.IsUndone).IsTrue();
         var notices = harness.Notices.ToArray();
         await Assert.That(Array.IndexOf(notices, $"Deleted tag '{tag}' from 'origin'."))
             .IsLessThan(Array.IndexOf(notices, "Undid the release commit."));

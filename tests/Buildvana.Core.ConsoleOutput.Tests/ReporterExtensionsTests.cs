@@ -68,6 +68,7 @@ internal sealed class ReporterExtensionsTests
         using var reporter = new StringWriterReporter(Verbosity.Diagnostic);
 
         // ReSharper disable once AccessToDisposedClosure // the assertion invokes the delegate before returning
+        // ! Null on purpose: testing null detection
         await Assert.That(() => reporter.Report(MessageLevel.Info, (CompositeFormat)null!)).Throws<ArgumentNullException>();
     }
 }

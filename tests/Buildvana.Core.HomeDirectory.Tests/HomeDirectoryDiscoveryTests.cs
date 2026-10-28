@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core.HomeDirectory;
 
 internal sealed class HomeDirectoryDiscoveryTests
@@ -118,7 +119,9 @@ internal sealed class HomeDirectoryDiscoveryTests
     private static void WriteFile(string root, string relativePath)
     {
         var path = Path.Combine(root, relativePath);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, string.Empty);
     }
 

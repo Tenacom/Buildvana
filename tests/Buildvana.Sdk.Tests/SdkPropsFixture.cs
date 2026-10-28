@@ -1,7 +1,8 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
+using System.Diagnostics;
+using Buildvana.Core.Testing;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
 
@@ -49,7 +50,9 @@ internal sealed class SdkPropsFixture : IDisposable
     public void WriteFile(string relativePath, string content = "")
     {
         var path = Path.Combine(RepoDirectory, relativePath);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, content);
     }
 
@@ -123,10 +126,7 @@ internal sealed class SdkPropsFixture : IDisposable
     }
 
     private static string GetRealPath(string key)
-        => typeof(SdkPropsFixture).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(attribute => attribute.Key == key)
-            .Value!;
+        => typeof(SdkPropsFixture).Assembly.GetMetadata(key);
 
     private static SdkEvaluationResult EvaluateProject(string projectPath)
     {

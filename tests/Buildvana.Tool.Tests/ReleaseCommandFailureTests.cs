@@ -70,7 +70,7 @@ internal sealed class ReleaseCommandFailureTests
         // The tag is gone too, locally and on the remote, and the host is asked to undo what it created.
         await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(0);
         await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsNull();
-        var publisher = harness.Publisher!;
+        var publisher = await Assert.That(harness.Publisher).IsNotNull();
         await Assert.That(publisher.IsPublished).IsFalse();
         await Assert.That(publisher.IsUndone).IsTrue();
     }

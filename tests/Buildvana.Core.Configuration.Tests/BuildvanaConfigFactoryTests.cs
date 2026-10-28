@@ -268,10 +268,12 @@ internal sealed class BuildvanaConfigFactoryTests
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
-        await Assert.That(config.NuGet.Feeds.Prerelease!.Source).IsEqualTo("https://prerelease.example/v3/index.json");
-        await Assert.That(config.NuGet.Feeds.Prerelease.ApiKeyEnv).IsEqualTo("PRE_KEY");
-        await Assert.That(config.NuGet.Feeds.Release!.Source).IsEqualTo("https://nuget.example/v3/index.json");
-        await Assert.That(config.NuGet.Feeds.Release.ApiKeyEnv).IsEqualTo("KEY");
+        var prerelease = await Assert.That(config.NuGet.Feeds.Prerelease).IsNotNull();
+        await Assert.That(prerelease.Source).IsEqualTo("https://prerelease.example/v3/index.json");
+        await Assert.That(prerelease.ApiKeyEnv).IsEqualTo("PRE_KEY");
+        var release = await Assert.That(config.NuGet.Feeds.Release).IsNotNull();
+        await Assert.That(release.Source).IsEqualTo("https://nuget.example/v3/index.json");
+        await Assert.That(release.ApiKeyEnv).IsEqualTo("KEY");
     }
 
     // A prerelease with no feed of its own pushes to the release feed: the factory resolves the fallback,
@@ -289,8 +291,9 @@ internal sealed class BuildvanaConfigFactoryTests
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
-        await Assert.That(config.NuGet.Feeds.Prerelease).IsSameReferenceAs(config.NuGet.Feeds.Release!);
-        await Assert.That(config.NuGet.Feeds.Release!.Source).IsEqualTo("https://nuget.example/v3/index.json");
+        var release = await Assert.That(config.NuGet.Feeds.Release).IsNotNull();
+        await Assert.That(config.NuGet.Feeds.Prerelease).IsSameReferenceAs(release);
+        await Assert.That(release.Source).IsEqualTo("https://nuget.example/v3/index.json");
     }
 
     [Test]
@@ -302,8 +305,9 @@ internal sealed class BuildvanaConfigFactoryTests
 
         var config = BuildvanaConfigFactory.Create(json, null);
 
-        await Assert.That(config.Git.Identity!.Name).IsEqualTo("Buildvana Bot");
-        await Assert.That(config.Git.Identity.Email).IsEqualTo("bot@buildvana.invalid");
+        var identity = await Assert.That(config.Git.Identity).IsNotNull();
+        await Assert.That(identity.Name).IsEqualTo("Buildvana Bot");
+        await Assert.That(identity.Email).IsEqualTo("bot@buildvana.invalid");
     }
 
     // Configured patterns extend the built-in scope rather than replace it: hooks are file-based apps by

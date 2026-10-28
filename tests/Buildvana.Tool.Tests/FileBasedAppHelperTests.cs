@@ -49,8 +49,8 @@ internal sealed class FileBasedAppHelperTests
         var first = Path.Combine(Path.GetTempPath(), "first", "app.cs");
         var second = Path.Combine(Path.GetTempPath(), "second", "app.cs");
 
-        await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(first)!)
-            .IsNotEqualTo(FileBasedAppHelper.GetArtifactsDirectory(second)!);
+        await Assert.That(FileBasedAppHelper.GetArtifactsDirectory(first))
+            .IsNotEqualTo(FileBasedAppHelper.GetArtifactsDirectory(second));
     }
 
     [Test]
@@ -84,7 +84,7 @@ internal sealed class FileBasedAppHelperTests
                 RedirectStandardError = true,
                 UseShellExecute = false,
             };
-            using var process = Process.Start(startInfo)!;
+            using var process = await Assert.That(Process.Start(startInfo)).IsNotNull();
             var output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 

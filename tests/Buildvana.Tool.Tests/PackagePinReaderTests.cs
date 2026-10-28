@@ -25,7 +25,7 @@ internal sealed class PackagePinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, ProjectFileName, project);
+        home.WriteFile(ProjectFileName, project);
         var pins = Read(
             home,
             Dump(
@@ -47,7 +47,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_OfOneDeclarationEvaluatedTwice_StatesOnePin()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
         var item = Item("PackageReference", "Serilog", "4.0.0");
         await Assert.That(Read(home, Dump(home, item), Dump(home, item)).Count).IsEqualTo(1);
     }
@@ -67,7 +67,7 @@ internal sealed class PackagePinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, ProjectFileName, project);
+        home.WriteFile(ProjectFileName, project);
         var pins = Read(
             home,
             Dump(home, Item("PackageReference", "Serilog", "4.0.0")),
@@ -80,7 +80,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_LeavesOutWhatIsNotTheRepositorysToMove()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
         var pins = Read(
             home,
             Dump(
@@ -110,7 +110,7 @@ internal sealed class PackagePinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, ProjectFileName, project);
+        home.WriteFile(ProjectFileName, project);
         var pins = Read(home, Dump(home, Item("PackageReference", "Serilog", "4.0.0")));
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
     }
@@ -133,7 +133,7 @@ internal sealed class PackagePinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, ProjectFileName, project);
+        home.WriteFile(ProjectFileName, project);
         var pin = Read(home, Dump(home, Item("PackageVersion", "Serilog", "\n      4.0.0\n    "))).Single();
         await Assert.That(pin.Management).IsEqualTo(PinManagement.Managed);
         await Assert.That(pin.VersionText).IsEqualTo("4.0.0");
@@ -144,7 +144,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_OfAPolicyStatedAsAChildElement_StatesThePolicyAlone()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageVersion", "Serilog", "4.0.0"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageVersion", "Serilog", "4.0.0"));
         var item = Item("PackageVersion", "Serilog", "4.0.0", updatePolicy: "\n      patch-\n    ");
         await Assert.That(Read(home, Dump(home, item)).Single().MetadataPolicy).IsEqualTo("patch-");
     }
@@ -155,7 +155,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_OfAnEmptyPolicyElement_StatesNoPolicy()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageVersion", "Serilog", "4.0.0"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageVersion", "Serilog", "4.0.0"));
         var item = Item("PackageVersion", "Serilog", "4.0.0", updatePolicy: "\n      \n    ");
         await Assert.That(Read(home, Dump(home, item)).Single().MetadataPolicy).IsNull();
     }
@@ -166,7 +166,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_OfAnEmptyVersionElement_IsNoPin()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
         await Assert.That(Read(home, Dump(home, Item("PackageReference", "Serilog", "\n      \n    ")))).IsEmpty();
     }
 
@@ -176,7 +176,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_OfAnEmptyVersionOverrideElement_IsNotAnOverride()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageReference", "Serilog", "4.0.0"));
         var item = Item("PackageReference", "Serilog", "4.0.0", versionOverride: "\n      \n    ");
         var pin = Read(home, Dump(home, item)).Single();
         await Assert.That(pin.Management).IsEqualTo(PinManagement.Managed);
@@ -197,7 +197,7 @@ internal sealed class PackagePinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, ProjectFileName, project);
+        home.WriteFile(ProjectFileName, project);
         var pins = Read(home, Dump(home, Item("PackageReference", "Serilog", "4.0.0")));
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.IndirectVersion);
     }
@@ -214,7 +214,7 @@ internal sealed class PackagePinReaderTests
                                """;
 
         using var home = new TempHome();
-        Write(home, ProjectFileName, project);
+        home.WriteFile(ProjectFileName, project);
         var item = Item("PackageReference", "Serilog", null, versionOverride: "4.1.0");
         var pin = Read(home, Dump(home, item)).Single();
         await Assert.That(pin.Management).IsEqualTo(PinManagement.VersionOverride);
@@ -225,7 +225,7 @@ internal sealed class PackagePinReaderTests
     public async Task Read_OfAnUnmanagedVersionForm_KeepsTheFormsReason()
     {
         using var home = new TempHome();
-        Write(home, ProjectFileName, OneItemProject("PackageVersion", "Serilog", "[4.0.0]"));
+        home.WriteFile(ProjectFileName, OneItemProject("PackageVersion", "Serilog", "[4.0.0]"));
         var pins = Read(home, Dump(home, Item("PackageVersion", "Serilog", "[4.0.0]")));
         await Assert.That(pins.Single().Management).IsEqualTo(PinManagement.BracketExactVersion);
     }
@@ -282,11 +282,4 @@ internal sealed class PackagePinReaderTests
               </ItemGroup>
             </Project>
             """;
-
-    private static void Write(TempHome home, string relativePath, string content)
-    {
-        var path = home.GetFullPath(relativePath);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, content);
-    }
 }

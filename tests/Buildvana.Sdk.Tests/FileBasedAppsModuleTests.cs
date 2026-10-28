@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using Buildvana.Core.Testing;
 using Microsoft.Build.Definition;
 using Microsoft.Build.Evaluation;
@@ -129,8 +128,5 @@ internal sealed class FileBasedAppsModuleTests
             ?.GetMetadataValue("Version") ?? string.Empty;
 
     private static string GetRealTargetsPath()
-        => typeof(FileBasedAppsModuleTests).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(static attribute => attribute.Key == "RealFileBasedAppsModuleTargetsPath")
-            .Value!;
+        => typeof(FileBasedAppsModuleTests).Assembly.GetMetadata("RealFileBasedAppsModuleTargetsPath");
 }

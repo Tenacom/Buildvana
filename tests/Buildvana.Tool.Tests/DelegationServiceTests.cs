@@ -254,7 +254,8 @@ internal sealed class DelegationServiceTests
         await Assert.That(restoreArgs).IsEquivalentTo(["tool", "restore"], CollectionOrdering.Matching);
 
         // Home-directory discovery reports the home path with a trailing separator, per its contract.
-        await Assert.That(Path.TrimEndingDirectorySeparator(restoreDirectory!)).IsEqualTo(home.RootPath);
+        var directory = await Assert.That(restoreDirectory).IsNotNull();
+        await Assert.That(Path.TrimEndingDirectorySeparator(directory)).IsEqualTo(home.RootPath);
 
         await Assert.That(runner.InheritedStdioRuns.Count).IsEqualTo(1);
         var run = runner.InheritedStdioRuns[0];
@@ -264,9 +265,10 @@ internal sealed class DelegationServiceTests
         await Assert.That(run.Args).IsEquivalentTo(
             ["tool", "run", "bv", "--", "build", "--verbosity", "detailed", "--", "/p:Answer=42"],
             CollectionOrdering.Matching);
-        await Assert.That(Path.TrimEndingDirectorySeparator(run.WorkingDirectory!)).IsEqualTo(home.RootPath);
+        var workingDirectory = await Assert.That(run.WorkingDirectory).IsNotNull();
+        await Assert.That(Path.TrimEndingDirectorySeparator(workingDirectory)).IsEqualTo(home.RootPath);
         await Assert.That(run.Environment).IsNotNull();
-        await Assert.That(run.Environment!["BV_DELEGATED"]).IsEqualTo(OwnVersion);
+        await Assert.That(run.Environment?["BV_DELEGATED"]).IsEqualTo(OwnVersion);
     }
 
     // The pinned bv is already installed: `dotnet tool run` needs no restore, so none must run — the common

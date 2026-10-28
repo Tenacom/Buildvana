@@ -71,7 +71,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
         var task = CreateTask(engine, string.Empty, ("Answer", "42"));
         await Assert.That(task.Execute()).IsFalse();
         await Assert.That(engine.Errors.Count).IsEqualTo(1);
-        await Assert.That(engine.Errors[0].Message!).Contains("BVSDK1050");
+        await Assert.That(engine.Errors[0].Message).Contains("BVSDK1050");
     }
 
     private static WriteThisAssemblyConstantsFile CreateTask(

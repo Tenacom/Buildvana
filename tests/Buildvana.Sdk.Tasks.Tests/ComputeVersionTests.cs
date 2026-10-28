@@ -13,7 +13,7 @@ internal sealed class ComputeVersionTests
         var task = new ComputeVersion { BuildEngine = engine };
         await Assert.That(task.Execute()).IsFalse();
         await Assert.That(engine.Errors.Count).IsEqualTo(1);
-        await Assert.That(engine.Errors[0].Message!).Contains("BVSDK1050");
+        await Assert.That(engine.Errors[0].Message).Contains("BVSDK1050");
     }
 
     [Test]
@@ -146,5 +146,5 @@ internal sealed class ComputeVersionTests
     }
 
     private static int CountVersionMessages(RecordingBuildEngine engine, string semVer)
-        => engine.Messages.Count(m => m.Message!.Contains($"Computed version {semVer}", StringComparison.Ordinal));
+        => engine.Messages.Count(m => m.Message?.Contains($"Computed version {semVer}", StringComparison.Ordinal) is true);
 }

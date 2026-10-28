@@ -251,6 +251,7 @@ internal sealed class UpdatePolicyEngineTests
     [Test]
     public async Task SelectPackage_WithNullCurrent_Throws()
     {
+        // ! Null on purpose: testing null detection
         static TargetSelection Act()
             => UpdatePolicyEngine.Select(null!, Versions("1.0.0"), new(PackageUpdatePolicyKind.Minor, false));
 
@@ -260,6 +261,7 @@ internal sealed class UpdatePolicyEngineTests
     [Test]
     public async Task SelectPackage_WithNullCandidates_Throws()
     {
+        // ! Null on purpose: testing null detection
         static TargetSelection Act()
             => UpdatePolicyEngine.Select(
                 NuGetVersion.Parse("1.0.0"),
@@ -381,6 +383,7 @@ internal sealed class UpdatePolicyEngineTests
     [Test]
     public async Task SelectNetSdk_WithNullCurrent_Throws()
     {
+        // ! Null on purpose: testing null detection
         static TargetSelection Act()
             => UpdatePolicyEngine.Select(null!, [Lts("10.0.402")], new(NetSdkUpdatePolicyKind.Major, false));
 
@@ -390,6 +393,7 @@ internal sealed class UpdatePolicyEngineTests
     [Test]
     public async Task SelectNetSdk_WithNullCandidates_Throws()
     {
+        // ! Null on purpose: testing null detection
         static TargetSelection Act()
             => UpdatePolicyEngine.Select(
                 NuGetVersion.Parse("10.0.402"),

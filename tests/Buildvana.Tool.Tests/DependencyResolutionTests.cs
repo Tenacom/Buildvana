@@ -44,9 +44,10 @@ internal sealed class DependencyResolutionTests
 
         var resolution = Skipping(inventory);
 
-        await Assert.That(resolution.NetSdk!.Pin).IsEqualTo(inventory.NetSdk);
-        await Assert.That(resolution.NetSdk.State).IsEqualTo(PinResolutionState.Skipped);
-        await Assert.That(resolution.NetSdk.WritesAllowPrerelease).IsFalse();
+        var netSdk = await Assert.That(resolution.NetSdk).IsNotNull();
+        await Assert.That(netSdk.Pin).IsEqualTo(inventory.NetSdk);
+        await Assert.That(netSdk.State).IsEqualTo(PinResolutionState.Skipped);
+        await Assert.That(netSdk.WritesAllowPrerelease).IsFalse();
     }
 
     [Test]

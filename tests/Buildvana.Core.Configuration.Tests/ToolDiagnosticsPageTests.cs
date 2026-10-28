@@ -12,10 +12,7 @@ internal sealed class ToolDiagnosticsPageTests
 {
     private const string SectionHeading = "Configuration (1100-1199)";
 
-    private static readonly string RepositoryRoot = typeof(ToolDiagnosticsPageTests).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .First(static attribute => attribute.Key == "RepositoryRoot")
-        .Value!;
+    private static readonly string RepositoryRoot = typeof(ToolDiagnosticsPageTests).Assembly.GetMetadata("RepositoryRoot");
 
     [Test]
     public async Task ConfigurationSection_ListsTheCodesOfDiagnosticCodes()
@@ -24,7 +21,8 @@ internal sealed class ToolDiagnosticsPageTests
         var listed = page.GetTableColumn(SectionHeading, "Code");
         var declared = typeof(DiagnosticCodes)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Select(static field => (string)field.GetRawConstantValue()!);
+            .Select(static field => field.GetRawConstantValue())
+            .OfType<string>();
 
         await Assert.That(Join(listed)).IsEqualTo(Join(declared));
     }
