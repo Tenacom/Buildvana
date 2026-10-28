@@ -51,6 +51,40 @@ Semantic differences to keep in mind when converting:
 - List, property, and recursive patterns imply a null test. `propertyPath is [PropertyName, PackageId]` is `false` when `propertyPath` is null, where `propertyPath.Count == 2` would throw. That is usually an improvement, but it is a behavior change, not a pure rewrite.
 - Constant patterns never use the type's `==` operator. A non-null constant compares with `Equals`. `null` is a plain reference test, or a `HasValue` check for a nullable value type. With `float` and `double` the pattern is what you want: `x is double.NaN` matches NaN, while `x == double.NaN` is always `false`. Exception: when a type overloads `==` so that `x == null` and `x is null` disagree, keep the operator form.
 
+## The null-forgiving operator
+
+Do not write the null-forgiving operator, `!`. The operator tells the compiler that a value is not null, and the compiler stops checking it. The fact behind the operator then lives in no type, and a reader has to rebuild it from code elsewhere. `Nullable.Extended.Analyzer` reports every operator as NX0001 to NX0004, and every warning is an error here.
+
+Remove the cause of the operator instead. Try these fixes in order:
+
+1. Let a type state the fact. Make the member non-nullable, or return a type that carries the non-null value next to the rest. A method that filters items on a nullable member returns each item with its non-null value.
+2. Keep a value the code built. Do not read it back through a nullable API.
+3. Write a check that flow analysis follows: a pattern such as `is { } value` or `is JsonObject obj`, or a call to a `[NotNullWhen]` method inside the condition. Flow analysis does not follow a `bool` local that records the outcome of a check.
+4. When no type and no check removes the operator, state the fact with `Debug.Assert(value is not null, "<reason>")`. The message says why the value cannot be null. Store the value in a local first, when it has none.
+
+Do not suppress the analyzer with its justification comment, a `// !` line above the statement. The comment states the fact where no tool checks it. `Debug.Assert` checks it in every Debug build, tests included.
+
+### In tests
+
+A test checks the null with the test framework, so that a null fails the test instead of throwing:
+
+- `await Assert.That(value).IsNotNull()` returns the value, non-null.
+- A comparison through `?.` fails on a null: `await Assert.That(slash["type"]?.GetValue<string>()).IsEqualTo("string")`.
+- A test that asserts a value reached through `?.` is null first asserts the parent non-null. Otherwise a missing parent passes the test.
+- Chain `WithMessage` or `WithMessageContaining` onto `Throws<T>()`, instead of reading `Message` from the exception it returns.
+- To read another member of the exception, use `Assert.Throws<T>(Action)` for a synchronous act, which returns the exception non-null. After an awaited `Throws<T>()`, write `Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.")`.
+
+A synchronous helper cannot await an assertion. When the null comes from the code under test, the helper throws `InvalidOperationException`. When the fact does not depend on the code under test, such as `Path.GetDirectoryName` of a file path, the helper uses `Debug.Assert`. Keep `Debug.Assert` for such facts, because a failed `Debug.Assert` ends the test process through `Environment.FailFast`.
+
+One case keeps the operator. When a test passes `null!` or `default!` on purpose, as the input under test, put this comment on the line above the statement:
+
+```csharp
+// ! Null on purpose: testing null detection
+static GitignorePattern? Act() => GitignorePattern.TryParse(null!);
+```
+
+Use this text and no other, so that a search finds every such input.
+
 ## Partial classes
 
 When a class exceeds 500 lines of code, or has nested types, split it into partial class files.
