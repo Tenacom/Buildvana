@@ -16,9 +16,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task LoadObject_WithDeniedAccess_Fails()
     {
-        static JsonObject Act() => new JsonHelper().LoadObject(DeniedAccessPath);
+        static void Act() => new JsonHelper().LoadObject(DeniedAccessPath);
 
-        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        var exception = Assert.Throws<BuildFailedException>(Act);
         await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
@@ -36,9 +36,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task RewriteStringValues_WithDeniedAccess_Fails()
     {
-        static bool Act() => new JsonHelper().RewriteStringValues(DeniedAccessPath, (_, _) => null);
+        static void Act() => new JsonHelper().RewriteStringValues(DeniedAccessPath, (_, _) => null);
 
-        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        var exception = Assert.Throws<BuildFailedException>(Act);
         await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }
@@ -46,9 +46,9 @@ internal sealed partial class JsonHelperTests
     [Test]
     public async Task InsertProperty_WithDeniedAccess_Fails()
     {
-        static bool Act() => new JsonHelper().InsertProperty(DeniedAccessPath, [], "a", JsonValue.Create("x"));
+        static void Act() => new JsonHelper().InsertProperty(DeniedAccessPath, [], "a", JsonValue.Create("x"));
 
-        var exception = Assert.Throws<BuildFailedException>(() => Act());
+        var exception = Assert.Throws<BuildFailedException>(Act);
         await Assert.That(exception.Message).Contains("Could not read from");
         await Assert.That(exception.InnerException).IsTypeOf<UnauthorizedAccessException>();
     }

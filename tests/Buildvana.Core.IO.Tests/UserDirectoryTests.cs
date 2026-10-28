@@ -35,9 +35,9 @@ internal sealed class UserDirectoryTests
         await File.WriteAllTextAsync(path, string.Empty).ConfigureAwait(false);
         try
         {
-            DirectoryInfo Act() => UserDirectory.CreateDirectory(path);
+            void Act() => UserDirectory.CreateDirectory(path);
 
-            var exception = Assert.Throws<BuildFailedException>(() => Act());
+            var exception = Assert.Throws<BuildFailedException>(Act);
             await Assert.That(exception.Message).Contains("Could not create directory");
             await Assert.That(exception.InnerException).IsTypeOf<IOException>();
         }
