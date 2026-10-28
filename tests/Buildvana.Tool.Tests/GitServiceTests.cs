@@ -165,19 +165,24 @@ internal sealed class GitServiceTests
         await Assert.That(latestStable).IsEqualTo(SemanticVersion.Parse("1.0.0"));
     }
 
-    // One commit carries a prerelease tag and a stable tag. Each one counts for its own result.
+    // One commit carries three stable tags and three prerelease tags. The highest version of each kind is neither the
+    // first nor the last, in name order and in creation order.
     [Test]
-    public async Task GetLatestVersions_WithTwoVersionTagsOnOneCommit_ReadsBoth()
+    public async Task GetLatestVersions_WithSeveralVersionTagsOnOneCommit_ReadsTheHighest()
     {
         using var repo = CreateRepoWithCommit();
-        repo.CreateTag("2.0.0-preview");
-        repo.CreateTag("1.5.0");
+        repo.CreateTag("1.9.0");
+        repo.CreateTag("1.11.0");
+        repo.CreateTag("1.10.0");
+        repo.CreateTag("2.9.0-preview");
+        repo.CreateTag("2.11.0-preview");
+        repo.CreateTag("2.10.0-preview");
         using var git = CreateGitService(repo);
 
         var (latest, latestStable) = git.GetLatestVersions();
 
-        await Assert.That(latest).IsEqualTo(SemanticVersion.Parse("2.0.0-preview"));
-        await Assert.That(latestStable).IsEqualTo(SemanticVersion.Parse("1.5.0"));
+        await Assert.That(latest).IsEqualTo(SemanticVersion.Parse("2.11.0-preview"));
+        await Assert.That(latestStable).IsEqualTo(SemanticVersion.Parse("1.11.0"));
     }
 
     [Test]
