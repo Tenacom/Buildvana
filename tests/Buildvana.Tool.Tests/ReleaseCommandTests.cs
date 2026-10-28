@@ -81,7 +81,7 @@ internal sealed class ReleaseCommandTests
         await Assert.That(releaseCommit.Message).IsEqualTo(ReleaseCommitMessage);
         await Assert.That(harness.Repo.TagNames).IsEquivalentTo([ReleasedVersion]);
         await Assert.That(harness.Repo.GetRemoteTagSha(ReleasedVersion)).IsEqualTo(releaseCommit.Sha);
-        var publisher = harness.Publisher!;
+        var publisher = await Assert.That(harness.Publisher).IsNotNull();
         await Assert.That(publisher.PublishedTag).IsEqualTo(ReleasedVersion);
         await Assert.That(publisher.PublishedSha).IsEqualTo(releaseCommit.Sha);
     }
@@ -201,7 +201,7 @@ internal sealed class ReleaseCommandTests
 
         _ = await harness.RunAsync().ConfigureAwait(false);
 
-        var publisher = harness.Publisher!;
+        var publisher = await Assert.That(harness.Publisher).IsNotNull();
         await Assert.That(publisher.IsPublished).IsTrue();
         var assets = publisher.PublishedAssets;
         var names = assets.Select(x => Path.GetFileName(x.Path)).ToArray();

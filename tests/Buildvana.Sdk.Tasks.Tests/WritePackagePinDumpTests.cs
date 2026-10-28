@@ -144,7 +144,7 @@ internal sealed class WritePackagePinDumpTests
         var task = CreateTask(engine, string.Empty);
         await Assert.That(task.Execute()).IsFalse();
         await Assert.That(engine.Errors.Count).IsEqualTo(1);
-        await Assert.That(engine.Errors[0].Message!).Contains("BVSDK1050");
+        await Assert.That(engine.Errors[0].Message).Contains("BVSDK1050");
     }
 
     private static WritePackagePinDump CreateTask(IBuildEngine engine, string outputDirectory)

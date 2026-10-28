@@ -36,7 +36,7 @@ internal sealed class PostReleaseHookArgsTests
             var written = SampleArgs(dir, withConfigFile);
             var relativePath = WellKnownPaths.GetHookArgsFile(PostReleaseHookArgs.Context, PostReleaseHookArgs.Event);
             var path = Path.Combine(dir, relativePath);
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            _ = Directory.CreateDirectory(await Assert.That(Path.GetDirectoryName(path)).IsNotNull());
             object boxed = written;
             var json = JsonSerializer.Serialize(boxed, boxed.GetType(), BuildvanaJsonContext.Default);
             await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
@@ -75,7 +75,7 @@ internal sealed class PostReleaseHookArgsTests
         {
             var relativePath = WellKnownPaths.GetHookArgsFile(PostReleaseHookArgs.Context, PostReleaseHookArgs.Event);
             var path = Path.Combine(dir, relativePath);
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            _ = Directory.CreateDirectory(await Assert.That(Path.GetDirectoryName(path)).IsNotNull());
             object boxed = SampleArgs(dir);
             var json = JsonSerializer.Serialize(boxed, boxed.GetType(), BuildvanaJsonContext.Default);
             await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
@@ -100,7 +100,7 @@ internal sealed class PostReleaseHookArgsTests
         try
         {
             var path = Path.Combine(dir, WellKnownPaths.GetHookArgsFile("release", "post-release"));
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            _ = Directory.CreateDirectory(await Assert.That(Path.GetDirectoryName(path)).IsNotNull());
             await File.WriteAllTextAsync(path, "{ not json ").ConfigureAwait(false);
             await Assert.That(() => PostReleaseHookArgs.Load(dir)).Throws<BuildvanaRuntimeException>();
         }
@@ -120,7 +120,7 @@ internal sealed class PostReleaseHookArgsTests
         try
         {
             var path = Path.Combine(dir, WellKnownPaths.GetHookArgsFile("release", "post-release"));
-            _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            _ = Directory.CreateDirectory(await Assert.That(Path.GetDirectoryName(path)).IsNotNull());
             await File.WriteAllTextAsync(path, "{}").ConfigureAwait(false);
             await using var locker = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None).ConfigureAwait(false);
 

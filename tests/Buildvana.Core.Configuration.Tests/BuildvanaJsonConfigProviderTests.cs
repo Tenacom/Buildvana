@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
@@ -32,7 +33,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         {
             Write(dir, "buildvana.jsonc", """{ "release": { "branches": ["main"] } }""");
             var config = NewProvider(dir).Config;
-            await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
+            await Assert.That(config.Release?.Branches?.Count).IsEqualTo(1);
         }
         finally
         {
@@ -124,7 +125,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
             Write(dir, "buildvana.jsonc", """{ "release": { "branches": ["main"] } }""");
             var provider = NewProvider(dir);
 
-            await Assert.That(provider.Config.Release!.Branches!.Count).IsEqualTo(1);
+            await Assert.That(provider.Config.Release?.Branches?.Count).IsEqualTo(1);
             await Assert.That(provider.Path).IsEqualTo(Path.Combine(dir, "buildvana.jsonc"));
         }
         finally
@@ -328,7 +329,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
             Write(dir, "buildvana.json", """{ "release": { "branches": ["main"] } }""");
             Write(dir, "buildvana.jsonc", "{}");
             var config = BuildvanaJsonConfigProvider.LoadFile(Path.Combine(dir, "buildvana.json"));
-            await Assert.That(config.Release!.Branches!.Count).IsEqualTo(1);
+            await Assert.That(config.Release?.Branches?.Count).IsEqualTo(1);
         }
         finally
         {
@@ -351,8 +352,8 @@ internal sealed class BuildvanaJsonConfigProviderTests
                 """;
             Write(dir, "buildvana.jsonc", content);
             var config = NewProvider(dir).Config;
-            await Assert.That(config.Versioning!.AssemblyVersionPrecision).IsEqualTo(AssemblyVersionPrecision.Minor);
-            await Assert.That(config.NuGet!.Feeds!.Release!.ApiKeyEnv).IsEqualTo("KEY");
+            await Assert.That(config.Versioning?.AssemblyVersionPrecision).IsEqualTo(AssemblyVersionPrecision.Minor);
+            await Assert.That(config.NuGet?.Feeds?.Release?.ApiKeyEnv).IsEqualTo("KEY");
         }
         finally
         {
@@ -416,17 +417,18 @@ internal sealed class BuildvanaJsonConfigProviderTests
                 """;
 
             Write(dir, "buildvana.jsonc", content);
-            var dependencies = NewProvider(dir).Config.Dependencies!;
+            var dependencies = await Assert.That(NewProvider(dir).Config.Dependencies).IsNotNull();
 
-            await Assert.That(dependencies.Scopes!.NetSdk).IsEqualTo("lts");
-            await Assert.That(dependencies.Scopes.Packages).IsEqualTo("major-");
-            await Assert.That(dependencies.Scopes.Sdks).IsNull();
-            await Assert.That(dependencies.Policies![0].Pattern).IsEqualTo("Microsoft.CodeAnalysis.*");
-            await Assert.That(dependencies.Policies[0].Policy).IsEqualTo("minor");
-            await Assert.That(dependencies.Policies[1].Pattern).IsEqualTo("StyleCop.Analyzers");
-            await Assert.That(dependencies.AdditionalPackages![0].Caption).IsEqualTo("SDK-injected packages");
-            await Assert.That(dependencies.AdditionalPackages[0].Items).IsEqualTo("BV_PackageVersion");
-            await Assert.That(dependencies.AdditionalPackages[0].Policy).IsNull();
+            var scopes = await Assert.That(dependencies.Scopes).IsNotNull();
+            await Assert.That(scopes.NetSdk).IsEqualTo("lts");
+            await Assert.That(scopes.Packages).IsEqualTo("major-");
+            await Assert.That(scopes.Sdks).IsNull();
+            await Assert.That(dependencies.Policies?[0].Pattern).IsEqualTo("Microsoft.CodeAnalysis.*");
+            await Assert.That(dependencies.Policies?[0].Policy).IsEqualTo("minor");
+            await Assert.That(dependencies.Policies?[1].Pattern).IsEqualTo("StyleCop.Analyzers");
+            await Assert.That(dependencies.AdditionalPackages?[0].Caption).IsEqualTo("SDK-injected packages");
+            await Assert.That(dependencies.AdditionalPackages?[0].Items).IsEqualTo("BV_PackageVersion");
+            await Assert.That(dependencies.AdditionalPackages?[0].Policy).IsNull();
         }
         finally
         {
@@ -638,7 +640,9 @@ internal sealed class BuildvanaJsonConfigProviderTests
     private static void Write(string dir, string fileName, string content, bool bom = false)
     {
         var path = Path.Combine(dir, fileName);
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: bom));
     }
 

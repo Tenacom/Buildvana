@@ -12,10 +12,7 @@ using Buildvana.Tool.Subcommands;
 // first: `-c, --configuration <NAME>`. The repository root reaches the tests as ToolDiagnosticsPageTests reads it.
 internal sealed class CommandPagesTests
 {
-    private static readonly string RepositoryRoot = typeof(CommandPagesTests).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .First(static attribute => attribute.Key == "RepositoryRoot")
-        .Value!;
+    private static readonly string RepositoryRoot = typeof(CommandPagesTests).Assembly.GetMetadata("RepositoryRoot");
 
     // The page under docs/tool-commands of each top-level command name. A group page holds one "Options" table
     // for all of its subcommands, with a "Subcommand" column.
@@ -61,7 +58,7 @@ internal sealed class CommandPagesTests
     [MethodDataSource(nameof(CommandNames))]
     public async Task OptionsTable_ListsTheOptionsOfTheSettingsType(string name)
     {
-        var command = CommandRegistry.Find(name)!;
+        var command = await Assert.That(CommandRegistry.Find(name)).IsNotNull();
         await Assert.That(Pages.Keys).Contains(command.CanonicalPath[0]);
         var page = LoadPage(Path.Combine("tool-commands", Pages[command.CanonicalPath[0]]));
         var listed = ListedOptions(page, command);
@@ -84,8 +81,8 @@ internal sealed class CommandPagesTests
         => settingsType
             .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Select(static property => property.GetCustomAttribute<BvOptionAttribute>())
-            .Where(static option => option is not null)
-            .Select(static option => RenderOption(option!));
+            .OfType<BvOptionAttribute>()
+            .Select(RenderOption);
 
     private static string RenderOption(BvOptionAttribute option)
     {

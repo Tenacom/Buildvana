@@ -566,7 +566,7 @@ internal sealed class SelfVersionServiceTests
             ["tool", "run", "bv", "--", "--nologo", "self-update", "--to", "2.1.45-preview"],
             CollectionOrdering.Matching);
         await Assert.That(handoff.Environment).IsNotNull();
-        await Assert.That(handoff.Environment!["BV_SELF_UPDATE_FROM"]).IsEqualTo("2.1.40-preview");
+        await Assert.That(handoff.Environment?["BV_SELF_UPDATE_FROM"]).IsEqualTo("2.1.40-preview");
         await Assert.That(handoff.WorkingDirectory).IsEqualTo(home.RootPath);
         await Assert.That(home.ReadFile("global.json")).IsEqualTo(GlobalJsonText("2.1.40-preview"));
         await Assert.That(result.Summary).IsNull();
@@ -625,7 +625,7 @@ internal sealed class SelfVersionServiceTests
         await Assert.That(runner.Runs[0].Args).IsEquivalentTo(
             ["tool", "install", "bv", "--version", "2.1.45-preview", "--tool-manifest", "dotnet-tools.json"],
             CollectionOrdering.Matching);
-        await Assert.That(runner.InheritedStdioRuns[0].Environment!["BV_SELF_UPDATE_FROM"]).IsEqualTo(string.Empty);
+        await Assert.That(runner.InheritedStdioRuns[0].Environment?["BV_SELF_UPDATE_FROM"]).IsEqualTo(string.Empty);
     }
 
     [Test]
@@ -1013,8 +1013,7 @@ internal sealed class SelfVersionServiceTests
     private static async Task<SelfUpdateSummary> UpdateInPlaceAsync(SelfVersionService service, SelfUpdateRequest request)
     {
         var result = await service.UpdateRepositoryAsync(request).ConfigureAwait(false);
-        await Assert.That(result.Summary).IsNotNull();
-        return result.Summary!;
+        return await Assert.That(result.Summary).IsNotNull();
     }
 
     private static List<string> WarningsOf(CaptureReporter reporter) => MessagesOf(reporter, MessageLevel.Warning);

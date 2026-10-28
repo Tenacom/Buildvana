@@ -10,6 +10,7 @@ using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Solution;
+using Microsoft.VisualStudio.SolutionPersistence.Model;
 using NuGet.Versioning;
 
 internal sealed class OverrideLifecycleTests
@@ -306,8 +307,8 @@ internal sealed class OverrideLifecycleTests
     {
         var actualReporter = reporter ?? new CaptureReporter();
 
-        // The restorer is the only thing that would use the solution, and it is faked.
-        var solution = new Lazy<SolutionContext>(static () => null!);
+        // The restorer is the only thing that would use the solution, and it is faked, so an empty one does.
+        var solution = new Lazy<SolutionContext>(static () => new SolutionContext("Test.slnx", new SolutionModel()));
         var lifecycle = new OverrideLifecycle(
             solution,
             home.Provider,

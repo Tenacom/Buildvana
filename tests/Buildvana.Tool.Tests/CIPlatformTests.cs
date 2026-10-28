@@ -28,7 +28,7 @@ internal sealed class CIPlatformTests
 
         await Assert.That(platform).IsTypeOf<GitHubActionsPlatform>();
         await Assert.That(platform.IsCI).IsTrue();
-        await Assert.That(platform.BotIdentity!.Name).IsEqualTo("github-actions[bot]");
+        await Assert.That(platform.BotIdentity?.Name).IsEqualTo("github-actions[bot]");
         await Assert.That(platform.HasStepOutputs).IsTrue();
     }
 
@@ -46,8 +46,8 @@ internal sealed class CIPlatformTests
 
         await Assert.That(platform).IsTypeOf<GiteaActionsPlatform>();
         await Assert.That(platform.IsCI).IsTrue();
-        await Assert.That(platform.BotIdentity!.Name).IsEqualTo("gitea-actions");
-        await Assert.That(platform.BotIdentity!.Email).IsEqualTo("gitea-actions@noreply.gitea.example.invalid");
+        await Assert.That(platform.BotIdentity?.Name).IsEqualTo("gitea-actions");
+        await Assert.That(platform.BotIdentity?.Email).IsEqualTo("gitea-actions@noreply.gitea.example.invalid");
         await Assert.That(platform.HasStepOutputs).IsTrue();
     }
 
@@ -61,8 +61,8 @@ internal sealed class CIPlatformTests
 
         await Assert.That(platform).IsTypeOf<ForgejoActionsPlatform>();
         await Assert.That(platform.IsCI).IsTrue();
-        await Assert.That(platform.BotIdentity!.Name).IsEqualTo("forgejo-actions");
-        await Assert.That(platform.BotIdentity!.Email).IsEqualTo("noreply@forgejo.org");
+        await Assert.That(platform.BotIdentity?.Name).IsEqualTo("forgejo-actions");
+        await Assert.That(platform.BotIdentity?.Email).IsEqualTo("noreply@forgejo.org");
         await Assert.That(platform.HasStepOutputs).IsTrue();
     }
 
@@ -76,7 +76,7 @@ internal sealed class CIPlatformTests
 
         await Assert.That(platform).IsTypeOf<GitLabCIPlatform>();
         await Assert.That(platform.IsCI).IsTrue();
-        await Assert.That(platform.BotIdentity!.Email).IsEqualTo("gitlab-ci@noreply.gitlab.example.invalid");
+        await Assert.That(platform.BotIdentity?.Email).IsEqualTo("gitlab-ci@noreply.gitlab.example.invalid");
         await Assert.That(platform.HasStepOutputs).IsFalse();
     }
 
@@ -202,7 +202,7 @@ internal sealed class CIPlatformTests
     {
         var platform = Detect((marker, "true"), (serverVariable, "https://git.example.invalid"));
 
-        await Assert.That(platform.ServerUrl!.Host).IsEqualTo("git.example.invalid");
+        await Assert.That(platform.ServerUrl?.Host).IsEqualTo("git.example.invalid");
         await Assert.That(platform.ServerKind).IsEqualTo(kind);
     }
 

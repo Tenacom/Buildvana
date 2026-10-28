@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using Buildvana.Core.Testing;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
@@ -115,8 +114,5 @@ internal sealed class InnoSetupTargetsTests
     }
 
     private static string GetRealTargetsPath()
-        => typeof(InnoSetupTargetsTests).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(static attribute => attribute.Key == "RealAlternatePackInnoSetupTargetsPath")
-            .Value!;
+        => typeof(InnoSetupTargetsTests).Assembly.GetMetadata("RealAlternatePackInnoSetupTargetsPath");
 }

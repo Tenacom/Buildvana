@@ -58,12 +58,20 @@ internal sealed class UsageExitCodeTests
         => AssertUsageExitCode(() => VersionAdvanceSettings.Parse(["bogus"], []).ResolveChange());
 
     // The dispatch path of Program, up to the point where the command would run: resolve the command, then
-    // validate what was given to it.
+    // validate what was given to it. Where Program would print help instead, nothing throws, and the test fails.
     private static void ParseCommandLine(string commandLine)
     {
         var parsed = CliArgSplitter.Split(commandLine.Split(' '));
-        var (node, positionals) = CommandRegistry.Resolve(parsed.Subcommand!, parsed.Positionals);
-        CommandArgumentValidator.Validate(node.Command!, parsed, positionals);
+        if (parsed.Subcommand is null)
+        {
+            return;
+        }
+
+        var (node, positionals) = CommandRegistry.Resolve(parsed.Subcommand, parsed.Positionals);
+        if (node.Command is { } command)
+        {
+            CommandArgumentValidator.Validate(command, parsed, positionals);
+        }
     }
 
     private static async Task AssertUsageExitCode(Action action)

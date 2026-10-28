@@ -1,10 +1,10 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
+using Buildvana.Core.Testing;
 
 // The repository's own configuration files, checked against the model in this branch. The repository root
 // reaches the test through an assembly metadata item the test project supplies, as Buildvana.Sdk.Tests does
@@ -28,10 +28,7 @@ internal sealed class RepositoryConfigFilesTests
         AllowTrailingCommas = true,
     };
 
-    private static readonly string RepositoryRoot = typeof(RepositoryConfigFilesTests).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .First(static attribute => attribute.Key == "RepositoryRoot")
-        .Value!;
+    private static readonly string RepositoryRoot = typeof(RepositoryConfigFilesTests).Assembly.GetMetadata("RepositoryRoot");
 
     // The schema built from the model in this branch, which is what LoadFile validates against too. No
     // committed schema file is read here: a rebase moves the model, and every check below moves with it.

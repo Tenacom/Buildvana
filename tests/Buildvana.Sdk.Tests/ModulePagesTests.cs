@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Buildvana.Core.Testing;
 
@@ -11,10 +10,7 @@ using Buildvana.Core.Testing;
 // reads it.
 internal sealed partial class ModulePagesTests
 {
-    private static readonly string RepositoryRoot = typeof(ModulePagesTests).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .First(static attribute => attribute.Key == "RepositoryRoot")
-        .Value!;
+    private static readonly string RepositoryRoot = typeof(ModulePagesTests).Assembly.GetMetadata("RepositoryRoot");
 
     // Every module has one page whose title names it, and every page names a module.
     [Test]

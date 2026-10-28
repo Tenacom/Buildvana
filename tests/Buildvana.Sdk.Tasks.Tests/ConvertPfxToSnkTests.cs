@@ -43,7 +43,7 @@ internal sealed class ConvertPfxToSnkTests
             var outputPath = Path.Combine(directory, "key.snk");
             await Assert.That(CreateTask(engine, pfxPath, "wrong", outputPath).Execute()).IsFalse();
             await Assert.That(engine.Errors.Count).IsEqualTo(1);
-            await Assert.That(engine.Errors[0].Message!).Contains("BVSDK1201");
+            await Assert.That(engine.Errors[0].Message).Contains("BVSDK1201");
         }).ConfigureAwait(false);
     }
 
@@ -55,7 +55,7 @@ internal sealed class ConvertPfxToSnkTests
             var outputPath = Path.Combine(directory, "key.snk");
             await Assert.That(CreateTask(engine, pfxPath, Password, outputPath).Execute()).IsFalse();
             await Assert.That(engine.Errors.Count).IsEqualTo(1);
-            await Assert.That(engine.Errors[0].Message!).Contains("BVSDK1202");
+            await Assert.That(engine.Errors[0].Message).Contains("BVSDK1202");
         }).ConfigureAwait(false);
     }
 
@@ -65,7 +65,7 @@ internal sealed class ConvertPfxToSnkTests
         var engine = new RecordingBuildEngine();
         await Assert.That(CreateTask(engine, string.Empty, Password, "key.snk").Execute()).IsFalse();
         await Assert.That(engine.Errors.Count).IsEqualTo(1);
-        await Assert.That(engine.Errors[0].Message!).Contains("BVSDK1050");
+        await Assert.That(engine.Errors[0].Message).Contains("BVSDK1050");
     }
 
     private static ConvertPfxToSnk CreateTask(IBuildEngine engine, string pfxPath, string password, string outputPath)

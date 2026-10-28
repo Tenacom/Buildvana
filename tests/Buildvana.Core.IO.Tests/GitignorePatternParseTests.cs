@@ -8,6 +8,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_WithNullLine_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static GitignorePattern? Act() => GitignorePattern.TryParse(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -50,7 +51,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_WithNegation_SetsIsNegated()
     {
-        var pattern = GitignorePattern.TryParse("!foo")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("!foo")).IsNotNull();
 
         await Assert.That(pattern.IsNegated).IsTrue();
         await Assert.That(pattern.IsDirectoryOnly).IsFalse();
@@ -59,7 +60,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_WithTrailingSlash_SetsIsDirectoryOnly()
     {
-        var pattern = GitignorePattern.TryParse("foo/")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("foo/")).IsNotNull();
 
         await Assert.That(pattern.IsDirectoryOnly).IsTrue();
         await Assert.That(pattern.IsNegated).IsFalse();
@@ -68,7 +69,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_PreservesOriginalText()
     {
-        var pattern = GitignorePattern.TryParse("!foo/ ")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("!foo/ ")).IsNotNull();
 
         await Assert.That(pattern.Text).IsEqualTo("!foo/ ");
         await Assert.That(pattern.ToString()).IsEqualTo("!foo/ ");
@@ -77,7 +78,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_WithUnanchoredPattern_PrependsAnyDepth()
     {
-        var pattern = GitignorePattern.TryParse("foo")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("foo")).IsNotNull();
 
         await Assert.That(pattern.Segments.Count).IsEqualTo(2);
         await Assert.That(pattern.Segments[0].IsAnyDepth).IsTrue();
@@ -86,7 +87,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_WithAnchoredPattern_DoesNotPrependAnyDepth()
     {
-        var pattern = GitignorePattern.TryParse("/foo")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("/foo")).IsNotNull();
 
         await Assert.That(pattern.Segments.Count).IsEqualTo(1);
         await Assert.That(pattern.Segments[0].IsAnyDepth).IsFalse();
@@ -95,7 +96,7 @@ internal sealed class GitignorePatternParseTests
     [Test]
     public async Task TryParse_WithTrailingAnyDepth_AppendsAnyComponentSegment()
     {
-        var pattern = GitignorePattern.TryParse("abc/**")!;
+        var pattern = await Assert.That(GitignorePattern.TryParse("abc/**")).IsNotNull();
 
         // "abc", "**", and the synthesized match-one-component segment.
         await Assert.That(pattern.Segments.Count).IsEqualTo(3);

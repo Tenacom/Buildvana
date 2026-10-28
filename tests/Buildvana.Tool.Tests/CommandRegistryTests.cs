@@ -132,8 +132,8 @@ internal sealed class CommandRegistryTests
     {
         var command = new CommandRegistration([["alpha", "show"], ["al", "show"]], typeof(object), false, null);
         var topLevelNodes = CommandRegistry.BuildTree([command]);
-        var alias = topLevelNodes.Single(n => n.Name == "al").FindChild("show")!;
-        await Assert.That(alias.CanonicalNode?.FullName).IsEqualTo("alpha show");
+        var alias = topLevelNodes.Single(n => n.Name == "al").FindChild("show");
+        await Assert.That(alias?.CanonicalNode?.FullName).IsEqualTo("alpha show");
     }
 
     [Test]

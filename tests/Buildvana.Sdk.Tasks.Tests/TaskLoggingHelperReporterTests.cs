@@ -11,6 +11,8 @@ internal sealed class TaskLoggingHelperReporterTests
     public async Task Constructor_NullLog_Throws()
     {
         var engine = new RecordingBuildEngine();
+
+        // ! Null on purpose: testing null detection
         await Assert.That(() => new TaskLoggingHelperReporter(null!, engine)).Throws<ArgumentNullException>();
     }
 
@@ -18,6 +20,8 @@ internal sealed class TaskLoggingHelperReporterTests
     public async Task Constructor_NullEngine_Throws()
     {
         var task = new ReporterProbeTask { BuildEngine = new RecordingBuildEngine() };
+
+        // ! Null on purpose: testing null detection
         await Assert.That(() => new TaskLoggingHelperReporter(task.Log, null!)).Throws<ArgumentNullException>();
     }
 
@@ -72,6 +76,8 @@ internal sealed class TaskLoggingHelperReporterTests
     public async Task Report_NullMessage_Throws()
     {
         var (reporter, _) = CreateReporter();
+
+        // ! Null on purpose: testing null detection
         await Assert.That(() => reporter.Report(MessageLevel.Info, null!)).Throws<ArgumentNullException>();
     }
 
@@ -148,6 +154,8 @@ internal sealed class TaskLoggingHelperReporterTests
     public async Task BeginActivity_NullTitle_Throws()
     {
         var (reporter, _) = CreateReporter();
+
+        // ! Null on purpose: testing null detection
         await Assert.That(() => reporter.BeginActivity(null!)).Throws<ArgumentNullException>();
     }
 
@@ -162,6 +170,8 @@ internal sealed class TaskLoggingHelperReporterTests
     public async Task ChildOutput_NullLine_Throws()
     {
         var (reporter, _) = CreateReporter();
+
+        // ! Null on purpose: testing null detection
         await Assert.That(() => reporter.ChildOutput(null!, null)).Throws<ArgumentNullException>();
     }
 
@@ -169,6 +179,8 @@ internal sealed class TaskLoggingHelperReporterTests
     public async Task ChildError_NullLine_Throws()
     {
         var (reporter, _) = CreateReporter();
+
+        // ! Null on purpose: testing null detection
         await Assert.That(() => reporter.ChildError(null!, null)).Throws<ArgumentNullException>();
     }
 

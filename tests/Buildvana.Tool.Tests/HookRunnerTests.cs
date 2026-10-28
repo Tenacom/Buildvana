@@ -58,8 +58,7 @@ internal sealed class HookRunnerTests
 
         _ = await runner.RunHookAsync(args).ConfigureAwait(false);
 
-        await Assert.That(argsJson).IsNotNull();
-        using var document = JsonDocument.Parse(argsJson!);
+        using var document = JsonDocument.Parse(await Assert.That(argsJson).IsNotNull());
         var root = document.RootElement;
         var runtimeInfo = root.GetProperty("runtimeInfo");
         await Assert.That(runtimeInfo.GetProperty("version").GetString()).IsEqualTo("1.2.3-preview");

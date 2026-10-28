@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Buildvana.Core.IO;
 
 internal sealed class FileFinderTests
@@ -272,7 +273,9 @@ internal sealed class FileFinderTests
     private static void WriteFile(string root, string relativePath, string content = "")
     {
         var path = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var directory = Path.GetDirectoryName(path);
+        Debug.Assert(directory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
+        _ = Directory.CreateDirectory(directory);
         File.WriteAllText(path, content);
     }
 }

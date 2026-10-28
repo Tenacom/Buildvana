@@ -105,10 +105,8 @@ internal sealed class ToolResolverCacheProbeTests
 
     private static string CreateExecutableFile(TempHome home)
     {
-        var path = Path.Combine(home.RootPath, "tools", "Buildvana.Tool.dll");
-        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, string.Empty);
-        return path;
+        home.WriteFile("tools/Buildvana.Tool.dll", string.Empty);
+        return home.GetFullPath("tools/Buildvana.Tool.dll");
     }
 
     // The real cache row shape; the executable path goes through the JSON serializer because Windows paths

@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.Testing;
@@ -17,10 +16,7 @@ internal sealed class ConfigurationPageTests
     // What the page writes for a setting the schema states no default for.
     private const string NoDefault = "none";
 
-    private static readonly string RepositoryRoot = typeof(ConfigurationPageTests).Assembly
-        .GetCustomAttributes<AssemblyMetadataAttribute>()
-        .First(static attribute => attribute.Key == "RepositoryRoot")
-        .Value!;
+    private static readonly string RepositoryRoot = typeof(ConfigurationPageTests).Assembly.GetMetadata("RepositoryRoot");
 
     private static readonly JsonObject Schema = (JsonObject)BuildvanaJsonConfigSchema.GenerateNode();
 

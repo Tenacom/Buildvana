@@ -50,6 +50,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task CreateDirectory_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static DirectoryInfo Act() => UserDirectory.CreateDirectory(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -114,6 +115,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task Delete_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static void Act() => UserDirectory.Delete(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -164,6 +166,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task DeleteIfExists_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static void Act() => UserDirectory.DeleteIfExists(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -210,6 +213,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task EnumerateFiles_WithNullBaseDirectory_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static IReadOnlyList<string> Act() => UserDirectory.EnumerateFiles(null!, "*.nupkg");
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -218,6 +222,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task EnumerateFiles_WithNullPattern_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static IReadOnlyList<string> Act() => UserDirectory.EnumerateFiles(Path.GetTempPath(), null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -234,6 +239,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task Exists_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static bool Act() => UserDirectory.Exists(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();
@@ -273,6 +279,7 @@ internal sealed class UserDirectoryTests
     [Test]
     public async Task SetCurrentDirectory_WithNullPath_ThrowsRaw()
     {
+        // ! Null on purpose: testing null detection
         static void Act() => UserDirectory.SetCurrentDirectory(null!);
 
         await Assert.That(Act).Throws<ArgumentNullException>();

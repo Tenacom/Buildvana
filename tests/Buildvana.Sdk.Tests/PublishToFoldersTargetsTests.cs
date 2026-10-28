@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using Buildvana.Core.Testing;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
@@ -112,8 +111,5 @@ internal sealed class PublishToFoldersTargetsTests
     }
 
     private static string GetRealTargetsPath()
-        => typeof(PublishToFoldersTargetsTests).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(static attribute => attribute.Key == "RealAlternatePackPublishToFoldersTargetsPath")
-            .Value!;
+        => typeof(PublishToFoldersTargetsTests).Assembly.GetMetadata("RealAlternatePackPublishToFoldersTargetsPath");
 }

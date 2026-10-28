@@ -26,7 +26,7 @@ internal sealed class GlobalJsonPinReaderTests
                                """;
         using var home = new TempHome();
         Write(home, content);
-        var netSdk = CreateReader(home).Read().NetSdk!;
+        var netSdk = await Assert.That(CreateReader(home).Read().NetSdk).IsNotNull();
         await Assert.That(netSdk.VersionText).IsEqualTo("10.0.100");
         await Assert.That(netSdk.Version?.ToNormalizedString()).IsEqualTo("10.0.100");
         await Assert.That(netSdk.AllowPrerelease).IsTrue();
@@ -39,7 +39,8 @@ internal sealed class GlobalJsonPinReaderTests
     {
         using var home = new TempHome();
         Write(home, """{ "sdk": { "version": "10.0.100" } }""");
-        await Assert.That(CreateReader(home).Read().NetSdk!.AllowPrerelease).IsNull();
+        var netSdk = await Assert.That(CreateReader(home).Read().NetSdk).IsNotNull();
+        await Assert.That(netSdk.AllowPrerelease).IsNull();
     }
 
     [Test]

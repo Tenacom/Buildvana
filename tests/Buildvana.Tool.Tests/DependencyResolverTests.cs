@@ -115,9 +115,10 @@ internal sealed class DependencyResolverTests
     {
         var releases = new FakeNetSdkReleaseSource().Knows(isLts: true, "10.0.100", "10.0.101", "10.0.201");
         var resolution = await ResolveNetSdkAsync(releases, NetSdkPin.Create("10.0.100", allowPrerelease: false)).ConfigureAwait(false);
-        await Assert.That(resolution.NetSdk!.State).IsEqualTo(PinResolutionState.Updated);
-        await Assert.That(resolution.NetSdk.Target?.ToNormalizedString()).IsEqualTo("10.0.201");
-        await Assert.That(resolution.NetSdk.WritesAllowPrerelease).IsFalse();
+        var netSdk = await Assert.That(resolution.NetSdk).IsNotNull();
+        await Assert.That(netSdk.State).IsEqualTo(PinResolutionState.Updated);
+        await Assert.That(netSdk.Target?.ToNormalizedString()).IsEqualTo("10.0.201");
+        await Assert.That(netSdk.WritesAllowPrerelease).IsFalse();
     }
 
     [Test]
@@ -125,8 +126,9 @@ internal sealed class DependencyResolverTests
     {
         var releases = new FakeNetSdkReleaseSource().Knows(isLts: true, "10.0.100");
         var resolution = await ResolveNetSdkAsync(releases, NetSdkPin.Create("10.0.100", allowPrerelease: null)).ConfigureAwait(false);
-        await Assert.That(resolution.NetSdk!.WritesAllowPrerelease).IsTrue();
-        await Assert.That(resolution.NetSdk.Note).IsNotEmpty();
+        var netSdk = await Assert.That(resolution.NetSdk).IsNotNull();
+        await Assert.That(netSdk.WritesAllowPrerelease).IsTrue();
+        await Assert.That(netSdk.Note).IsNotEmpty();
     }
 
     [Test]
@@ -287,9 +289,10 @@ internal sealed class DependencyResolverTests
         var request = new DependencyResolutionRequest { Latest = true };
         var pin = NetSdkPin.Create("10.0.100", allowPrerelease: false);
         var resolution = await ResolveNetSdkAsync(releases, pin, request, config).ConfigureAwait(false);
-        await Assert.That(resolution.NetSdk!.State).IsEqualTo(PinResolutionState.Updated);
-        await Assert.That(resolution.NetSdk.Target?.ToNormalizedString()).IsEqualTo("11.0.100");
-        await Assert.That(resolution.NetSdk.Policy.ToString()).IsEqualTo("lts");
+        var netSdk = await Assert.That(resolution.NetSdk).IsNotNull();
+        await Assert.That(netSdk.State).IsEqualTo(PinResolutionState.Updated);
+        await Assert.That(netSdk.Target?.ToNormalizedString()).IsEqualTo("11.0.100");
+        await Assert.That(netSdk.Policy.ToString()).IsEqualTo("lts");
     }
 
     [Test]
@@ -299,8 +302,9 @@ internal sealed class DependencyResolverTests
         var request = new DependencyResolutionRequest { To = NuGetVersion.Parse("10.0.100") };
         var pin = NetSdkPin.Create("10.0.201", allowPrerelease: false);
         var resolution = await ResolveNetSdkAsync(releases, pin, request).ConfigureAwait(false);
-        await Assert.That(resolution.NetSdk!.State).IsEqualTo(PinResolutionState.Updated);
-        await Assert.That(resolution.NetSdk.Target?.ToNormalizedString()).IsEqualTo("10.0.100");
+        var netSdk = await Assert.That(resolution.NetSdk).IsNotNull();
+        await Assert.That(netSdk.State).IsEqualTo(PinResolutionState.Updated);
+        await Assert.That(netSdk.Target?.ToNormalizedString()).IsEqualTo("10.0.100");
     }
 
     [Test]

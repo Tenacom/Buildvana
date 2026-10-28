@@ -207,6 +207,7 @@ internal sealed class JsonSchemaValidatorTests
         await Assert.That(errors[0].Column).IsEqualTo(11);
     }
 
+    // ! Null on purpose: testing null detection
     [Test]
     public async Task Validate_WithNullSourceMap_Throws()
         => await Assert.That(() => JsonSchemaValidator.Validate(

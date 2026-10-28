@@ -1,7 +1,6 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Buildvana.Core.Testing;
@@ -100,8 +99,5 @@ internal sealed class AssemblySigningModuleTests
     }
 
     private static string GetRealTargetsPath()
-        => typeof(AssemblySigningModuleTests).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .First(static attribute => attribute.Key == "RealAssemblySigningModuleTargetsPath")
-            .Value!;
+        => typeof(AssemblySigningModuleTests).Assembly.GetMetadata("RealAssemblySigningModuleTargetsPath");
 }

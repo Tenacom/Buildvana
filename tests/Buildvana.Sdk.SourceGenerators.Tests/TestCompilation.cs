@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -26,7 +27,9 @@ internal static class TestCompilation
 
     private static IEnumerable<MetadataReference> GetReferences()
     {
-        var trustedAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator);
+        var trustedAssemblyList = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+        Debug.Assert(trustedAssemblyList is not null, "The .NET host lists the trusted platform assemblies of every process.");
+        var trustedAssemblies = trustedAssemblyList.Split(Path.PathSeparator);
         return trustedAssemblies
               .Where(static p => Path.GetFileName(p) is "System.Runtime.dll" or "System.Private.CoreLib.dll" or "netstandard.dll")
               .Select(MetadataReference (p) => MetadataReference.CreateFromFile(p));

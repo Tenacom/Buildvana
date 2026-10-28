@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Buildvana.Core.Json;
+using TUnit.Assertions.Enums;
 
 internal sealed class JsonKeyedObjectConverterTests
 {
@@ -44,7 +45,7 @@ internal sealed class JsonKeyedObjectConverterTests
         await Assert.That(list[0].Caption).IsEqualTo("G1");
         await Assert.That(list[0].Files).IsEqualTo("src/*.props");
         await Assert.That(list[0].Retries).IsEqualTo(3);
-        await Assert.That(list[0].Tags!.SequenceEqual(["a", "b"])).IsTrue();
+        await Assert.That(list[0].Tags).IsEquivalentTo(["a", "b"], CollectionOrdering.Matching);
         await Assert.That(list[1].Caption).IsEqualTo("G2");
         await Assert.That(list[1].Files).IsNull();
     }
@@ -63,10 +64,10 @@ internal sealed class JsonKeyedObjectConverterTests
         // where the enclosing parse expects it.
         const string json = """{"policies":{"a":"one","b":"two"},"name":"n"}""";
         var options = CreateOptions();
-        var holder = JsonSerializer.Deserialize<KeyedHolderSample>(json, options);
-        await Assert.That(holder!.Name).IsEqualTo("n");
-        await Assert.That(holder.Policies!.Count).IsEqualTo(2);
-        await Assert.That(holder.Policies[0]).IsEqualTo(new KeyedValueSample { Pattern = "a", Policy = "one" });
+        var holder = await Assert.That(JsonSerializer.Deserialize<KeyedHolderSample>(json, options)).IsNotNull();
+        await Assert.That(holder.Name).IsEqualTo("n");
+        await Assert.That(holder.Policies?.Count).IsEqualTo(2);
+        await Assert.That(holder.Policies?[0]).IsEqualTo(new KeyedValueSample { Pattern = "a", Policy = "one" });
         await Assert.That(JsonSerializer.Serialize(holder, options)).IsEqualTo(json);
     }
 
@@ -84,8 +85,8 @@ internal sealed class JsonKeyedObjectConverterTests
         const string json = """{"outer":{"policies":{"a":"one","b":"two"}}}""";
         var list = Deserialize<KeyedNestedSample>(json);
         await Assert.That(list[0].Caption).IsEqualTo("outer");
-        await Assert.That(list[0].Policies!.Count).IsEqualTo(2);
-        await Assert.That(list[0].Policies![1]).IsEqualTo(new KeyedValueSample { Pattern = "b", Policy = "two" });
+        await Assert.That(list[0].Policies?.Count).IsEqualTo(2);
+        await Assert.That(list[0].Policies?[1]).IsEqualTo(new KeyedValueSample { Pattern = "b", Policy = "two" });
         await Assert.That(Serialize(list)).IsEqualTo(json);
     }
 
@@ -209,6 +210,7 @@ internal sealed class JsonKeyedObjectConverterTests
     [Test]
     public async Task Write_NullKey_Throws()
     {
+        // ! Null on purpose: testing null detection
         static string Act() => Serialize<KeyedValueSample>([new() { Pattern = null!, Policy = "x" }]);
 
         await Assert.That(Act).Throws<JsonException>().WithMessageContaining("non-null string", StringComparison.Ordinal);
@@ -217,6 +219,7 @@ internal sealed class JsonKeyedObjectConverterTests
     [Test]
     public async Task Write_ValueShape_NullValue_WritesNull()
     {
+        // ! Null on purpose: testing null detection
         var json = Serialize<KeyedValueSample>([new() { Pattern = "a", Policy = null! }]);
         await Assert.That(json).IsEqualTo("""{"a":null}""");
     }
@@ -240,9 +243,9 @@ internal sealed class JsonKeyedObjectConverterTests
         };
 
         var list = JsonSerializer.Deserialize<IReadOnlyList<KeyedGroupSample>>("""{"G1":{"files":"x"}}""", options);
-        await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That(list[0].Caption).IsEqualTo("G1");
-        await Assert.That(list[0].Files).IsEqualTo("x");
+        await Assert.That(list?.Count).IsEqualTo(1);
+        await Assert.That(list?[0].Caption).IsEqualTo("G1");
+        await Assert.That(list?[0].Files).IsEqualTo("x");
 
         var json = JsonSerializer.Serialize(list, options);
         await Assert.That(json).IsEqualTo("""{"G1":{"files":"x","retries":0,"tags":null}}""");
@@ -274,8 +277,8 @@ internal sealed class JsonKeyedObjectConverterTests
         };
 
         var list = JsonSerializer.Deserialize<IReadOnlyList<KeyedGroupSample>>("""{"G1":{"files":"x"}}""", options);
-        await Assert.That(list![0].Caption).IsEqualTo("G1");
-        await Assert.That(list[0].Files).IsEqualTo("x");
+        await Assert.That(list?[0].Caption).IsEqualTo("G1");
+        await Assert.That(list?[0].Files).IsEqualTo("x");
 
         var json = JsonSerializer.Serialize(list, options);
         await Assert.That(json).IsEqualTo("""{"G1":{"files":"x","retries":0,"tags":null}}""");
@@ -329,7 +332,8 @@ internal sealed class JsonKeyedObjectConverterTests
         };
 
     private static IReadOnlyList<T> Deserialize<T>(string json)
-        => JsonSerializer.Deserialize<IReadOnlyList<T>>(json, CreateOptions())!;
+        => JsonSerializer.Deserialize<IReadOnlyList<T>>(json, CreateOptions())
+            ?? throw new InvalidOperationException("The JSON deserializes to null.");
 
     private static string Serialize<T>(IReadOnlyList<T> list)
         => JsonSerializer.Serialize(list, CreateOptions());
