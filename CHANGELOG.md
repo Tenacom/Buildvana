@@ -9,154 +9,164 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased changes
 
+### New features
+
+### Changes to existing features
+
+### Bugs fixed in this release
+
+### Known problems introduced by this release
+
+## [2.1.887](https://github.com/Tenacom/Buildvana/releases/tag/2.1.887) (2026-10-29)
+
 No 2.0 stable release exists.
 When Buildvana replaced Nerdbank.GitVersioning with the `Versioning` module, `version.json` gave way to `VERSION`.
 The patch number restarted from 1, below the 2.0.x versions already published.
 `bv release` refuses a version below the latest release tag, so the minor version moved to 2.1 instead.
-[Migration from Nerdbank.GitVersioning](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) says how to avoid the restart in your own repository.
+[Migration from Nerdbank.GitVersioning](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) says how to avoid the restart in your own repository.
 
 ### New features
 
-- `bv` prints a [startup logo](docs/command-line.md#global-options) before running a command, and `--nologo` suppresses it.
-- [`bv --version`](docs/command-line.md#global-options) prints the informational version of `bv` and exits without running a command.
-- `bv --help` lists the [global options](docs/command-line.md#global-options), which every command accepts before or after its name, without regard to case.
-- `bv --help` marks the build pipeline commands that [forward arguments to `dotnet`](docs/tool-commands/build-pipeline.md#forwarded-arguments), and `bv <command> --help` describes the forwarding.
-- `bv` reads [`buildvana.jsonc`](docs/configuration-file.md) from the home directory, and a file with an error fails every command, `clean` included.
-- A committed [JSON schema](docs/configuration-file.md#related-files), generated from the typed model, describes every setting to an editor and states each fixed default.
-- [`buildvana.example.jsonc`](docs/configuration-file.md#related-files) states every setting, with its description and an example or default value.
-- Buildvana SDK and `bv` treat `buildvana.jsonc` as a [home-directory marker](docs/configuration-file.md#discovery), and discovery stops at the nearest directory that holds any marker, the starting directory included.
-- `dotnet.configuration` sets the [build configuration](docs/tool-commands/build-pipeline.md#the-build-configuration) of the build pipeline and of `bv release`.
-- The `dotnet.all` section and the `dotnet.<command>` sections add [arguments and environment variables](docs/tool-commands/build-pipeline.md#the-pipeline) to each `dotnet` command `bv` runs.
-- `release.checkPublicApi` and `release.dogfood` set the defaults of [`--check-public-api` and `--dogfood`](docs/tool-commands/release.md#options).
-- A setting with an option [resolves](docs/configuration-file.md#resolution) as the option, then `buildvana.jsonc`, then the built-in default, and a blank string counts as not stated.
-- `nuget.feeds.release` and `nuget.feeds.prerelease` name the [push feeds of `bv release`](docs/tool-commands/release.md#publishing), each with a `source` and an `apiKeyEnv`.
-- `hosts.github.tokenEnv` names the [environment variable holding the GitHub token](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file), `GITHUB_TOKEN` by default, and `buildvana.jsonc` holds no secret.
-- `git.identity` names the [author of the commits of `bv release`](docs/tool-commands/release.md#preconditions), with `name` and `email` both required.
-- `buildvana.jsonc` accepts a [`dependencies` section](docs/tool-commands/dependencies.md#update-policies), which sets the update policy of each dependency and names the files that hold additional package pins.
-- The [`ThisAssemblyClass` module](docs/sdk-modules/this-assembly-class.md) generates a `ThisAssembly` class in a C# project that sets `GenerateThisAssemblyClass` to `true`.
-- The [`Versioning` module](docs/sdk-modules/versioning.md) computes the version of every project from a `VERSION` file in the home directory and the Git height of its version line.
-- A C# project that the `Versioning` module versions gets a `ThisAssembly` class by default, with [five version constants](docs/sdk-modules/versioning.md#thisassembly-constants).
-- `bv` runs [hooks](docs/hooks.md), file-based apps the repository owns, at two events: `release/post-release` and `deps/post-update`.
-- The [`Buildvana.Runtime` package](docs/introduction.md#packages) holds the typed models `bv` shares with the hooks: the resolved configuration, the hook args, and the well-known paths.
-- The [`FileBasedApps` module](docs/sdk-modules/file-based-apps.md) pins `Buildvana.Runtime` to the version of Buildvana SDK in a file-based app, and suppresses SA1402 and SA1649 there.
-- Before running a command that uses Buildvana SDK, `bv` runs [the SDK version check](docs/command-line.md#the-sdk-version-check), which `--skip-sdk-check` skips.
-- When `dotnet-tools.json` pins `bv`, the pinned `bv` [runs in place of the invoked one](docs/command-line.md#delegation), unless `--skip-delegation` is passed.
-- [`bv self-update`](docs/tool-commands/self-update.md) moves every Buildvana pin of the repository to one version: the latest on the package sources, or the one `--preview`, `--repair`, or `--to` picks.
-- [`bv version show`](docs/tool-commands/version.md#bv-version-show) prints the current and published versions, and [`bv version advance`](docs/tool-commands/version.md#bv-version-advance) applies a version spec change to `VERSION`.
-- [`bv dependencies`](docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
-- An apply run of `bv dependencies update` writes [transitive overrides](docs/tool-commands/dependencies.md#transitive-overrides), which lift the transitive dependencies of the repository out of the versions security advisories cover.
-- Buildvana SDK [contributes two things to `bv dependencies`](docs/tool-commands/dependencies.md#what-buildvana-sdk-contributes): the target that dumps the package items of a project, and the import of the transitive override files.
-- The `StandardAnalyzers` module passes the [internal API files](docs/sdk-modules/standard-analyzers.md#internal-api-files) to the compilation, one pair per target framework when `UseTfmSpecificInternalApiFiles` is `true`.
-- On a stable version, `bv release` [moves the unshipped internal API](docs/tool-commands/release.md#the-steps) into the shipped one, as it does for the public API.
-- `bv` recognizes a CI runner [as the .NET CLI does](docs/environment-variables.md#variables-that-mark-a-ci-runner), and passes `ContinuousIntegrationBuild=true` to the build pipeline on every one.
-- `bv release` runs [on any machine](docs/tool-commands/release.md#preconditions), with `repository.url` naming the repository the release goes to.
-- `bv release` fetches the tags of the [release remote](docs/tool-commands/release.md#the-release-remote) before it checks the versions.
-- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](docs/tool-commands/release.md#publishing-on-an-unknown-host) on a Git host `bv` does not know.
-- `bv release` [publishes on GitLab](docs/tool-commands/release.md#publishing-on-gitlab), with the assets in the generic package registry of the project, and `hosts.gitlab.tokenEnv` names the token variable.
-- `bv release` [publishes on Gitea](docs/tool-commands/release.md#publishing-on-gitea), with the assets as attachments of the release, and `hosts.gitea.tokenEnv` names the token variable.
-- `bv release` [publishes on Forgejo](docs/tool-commands/release.md#publishing-on-forgejo), with the assets as attachments of the release, and `hosts.forgejo.tokenEnv` names the token variable.
-- `bv` recognizes [Gitea Actions](docs/environment-variables.md#gitea_actions) as a CI platform, with the `gitea-actions` bot identity and the `version` step output of `bv release`.
-- `bv` recognizes [Forgejo Actions](docs/environment-variables.md#forgejo_actions) as a CI platform, with the `forgejo-actions` bot identity and the `version` step output of `bv release`.
-- `bv release` takes a host whose name ends in `.ghe.com` for [GitHub Enterprise Cloud with data residency](docs/tool-commands/release.md#publishing-on-github), whose API is at `https://api.<host>`.
-- [`bv info`](docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
+- `bv` prints a [startup logo](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#global-options) before running a command, and `--nologo` suppresses it.
+- [`bv --version`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#global-options) prints the informational version of `bv` and exits without running a command.
+- `bv --help` lists the [global options](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#global-options), which every command accepts before or after its name, without regard to case.
+- `bv --help` marks the build pipeline commands that [forward arguments to `dotnet`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#forwarded-arguments), and `bv <command> --help` describes the forwarding.
+- `bv` reads [`buildvana.jsonc`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md) from the home directory, and a file with an error fails every command, `clean` included.
+- A committed [JSON schema](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md#related-files), generated from the typed model, describes every setting to an editor and states each fixed default.
+- [`buildvana.example.jsonc`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md#related-files) states every setting, with its description and an example or default value.
+- Buildvana SDK and `bv` treat `buildvana.jsonc` as a [home-directory marker](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md#discovery), and discovery stops at the nearest directory that holds any marker, the starting directory included.
+- `dotnet.configuration` sets the [build configuration](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#the-build-configuration) of the build pipeline and of `bv release`.
+- The `dotnet.all` section and the `dotnet.<command>` sections add [arguments and environment variables](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#the-pipeline) to each `dotnet` command `bv` runs.
+- `release.checkPublicApi` and `release.dogfood` set the defaults of [`--check-public-api` and `--dogfood`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#options).
+- A setting with an option [resolves](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md#resolution) as the option, then `buildvana.jsonc`, then the built-in default, and a blank string counts as not stated.
+- `nuget.feeds.release` and `nuget.feeds.prerelease` name the [push feeds of `bv release`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing), each with a `source` and an `apiKeyEnv`.
+- `hosts.github.tokenEnv` names the [environment variable holding the GitHub token](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file), `GITHUB_TOKEN` by default, and `buildvana.jsonc` holds no secret.
+- `git.identity` names the [author of the commits of `bv release`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#preconditions), with `name` and `email` both required.
+- `buildvana.jsonc` accepts a [`dependencies` section](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/dependencies.md#update-policies), which sets the update policy of each dependency and names the files that hold additional package pins.
+- The [`ThisAssemblyClass` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/this-assembly-class.md) generates a `ThisAssembly` class in a C# project that sets `GenerateThisAssemblyClass` to `true`.
+- The [`Versioning` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/versioning.md) computes the version of every project from a `VERSION` file in the home directory and the Git height of its version line.
+- A C# project that the `Versioning` module versions gets a `ThisAssembly` class by default, with [five version constants](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/versioning.md#thisassembly-constants).
+- `bv` runs [hooks](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/hooks.md), file-based apps the repository owns, at two events: `release/post-release` and `deps/post-update`.
+- The [`Buildvana.Runtime` package](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/introduction.md#packages) holds the typed models `bv` shares with the hooks: the resolved configuration, the hook args, and the well-known paths.
+- The [`FileBasedApps` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/file-based-apps.md) pins `Buildvana.Runtime` to the version of Buildvana SDK in a file-based app, and suppresses SA1402 and SA1649 there.
+- Before running a command that uses Buildvana SDK, `bv` runs [the SDK version check](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#the-sdk-version-check), which `--skip-sdk-check` skips.
+- When `dotnet-tools.json` pins `bv`, the pinned `bv` [runs in place of the invoked one](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#delegation), unless `--skip-delegation` is passed.
+- [`bv self-update`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/self-update.md) moves every Buildvana pin of the repository to one version: the latest on the package sources, or the one `--preview`, `--repair`, or `--to` picks.
+- [`bv version show`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/version.md#bv-version-show) prints the current and published versions, and [`bv version advance`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/version.md#bv-version-advance) applies a version spec change to `VERSION`.
+- [`bv dependencies`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/dependencies.md), alias `bv deps`, shows, updates, and prunes the .NET SDK version, the MSBuild project SDKs, the .NET local tools, and the NuGet package pins.
+- An apply run of `bv dependencies update` writes [transitive overrides](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/dependencies.md#transitive-overrides), which lift the transitive dependencies of the repository out of the versions security advisories cover.
+- Buildvana SDK [contributes two things to `bv dependencies`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/dependencies.md#what-buildvana-sdk-contributes): the target that dumps the package items of a project, and the import of the transitive override files.
+- The `StandardAnalyzers` module passes the [internal API files](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/standard-analyzers.md#internal-api-files) to the compilation, one pair per target framework when `UseTfmSpecificInternalApiFiles` is `true`.
+- On a stable version, `bv release` [moves the unshipped internal API](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-steps) into the shipped one, as it does for the public API.
+- `bv` recognizes a CI runner [as the .NET CLI does](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/environment-variables.md#variables-that-mark-a-ci-runner), and passes `ContinuousIntegrationBuild=true` to the build pipeline on every one.
+- `bv release` runs [on any machine](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#preconditions), with `repository.url` naming the repository the release goes to.
+- `bv release` fetches the tags of the [release remote](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-remote) before it checks the versions.
+- `release.allowUnknownHost` lets `bv release` [tag and push without a release page](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-an-unknown-host) on a Git host `bv` does not know.
+- `bv release` [publishes on GitLab](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-gitlab), with the assets in the generic package registry of the project, and `hosts.gitlab.tokenEnv` names the token variable.
+- `bv release` [publishes on Gitea](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-gitea), with the assets as attachments of the release, and `hosts.gitea.tokenEnv` names the token variable.
+- `bv release` [publishes on Forgejo](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-forgejo), with the assets as attachments of the release, and `hosts.forgejo.tokenEnv` names the token variable.
+- `bv` recognizes [Gitea Actions](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/environment-variables.md#gitea_actions) as a CI platform, with the `gitea-actions` bot identity and the `version` step output of `bv release`.
+- `bv` recognizes [Forgejo Actions](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/environment-variables.md#forgejo_actions) as a CI platform, with the `forgejo-actions` bot identity and the `version` step output of `bv release`.
+- `bv release` takes a host whose name ends in `.ghe.com` for [GitHub Enterprise Cloud with data residency](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-github), whose API is at `https://api.<host>`.
+- [`bv info`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/info.md) prints the CI platform, the Git host, the release remote, and the identity a release would use.
 
 ### Changes to existing features
 
-- **BREAKING CHANGE**: `bv release` no longer runs without [`repository.url`](docs/configuration-file.md#settings) in `buildvana.jsonc`.
-- **BREAKING CHANGE**: `bv release` no longer leaves the release tag to the host, and [creates and pushes it](docs/tool-commands/release.md#the-release-tag) before it publishes the release.
-- **BREAKING CHANGE**: `BV_MinRoslynVersion` moves from 5.3 to 5.9, so Buildvana SDK raises BVSDK1101 on [Roslyn older than 5.9](docs/sdk-diagnostics.md#source-generators-1100-1199).
-- **BREAKING CHANGE**: `BV_MinMSBuildVersion` moves from 17.4 to 18.9, so Buildvana SDK raises BVSDK1004 on [MSBuild older than 18.9](docs/introduction.md#toolchain).
+- **BREAKING CHANGE**: `bv release` no longer runs without [`repository.url`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md#settings) in `buildvana.jsonc`.
+- **BREAKING CHANGE**: `bv release` no longer leaves the release tag to the host, and [creates and pushes it](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-tag) before it publishes the release.
+- **BREAKING CHANGE**: `BV_MinRoslynVersion` moves from 5.3 to 5.9, so Buildvana SDK raises BVSDK1101 on [Roslyn older than 5.9](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-diagnostics.md#source-generators-1100-1199).
+- **BREAKING CHANGE**: `BV_MinMSBuildVersion` moves from 17.4 to 18.9, so Buildvana SDK raises BVSDK1004 on [MSBuild older than 18.9](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/introduction.md#toolchain).
 - **BREAKING CHANGE**: The `AlternatePack` module no longer adds `Tools.InnoDownloadPlugin` to an Inno Setup project, and the built-in [`download` and `issigverify` flags](https://jrsoftware.org/ishelp/topic_filessection.htm) replace it.
-- **BREAKING CHANGE**: `bv` defaults to [`minimal` verbosity](docs/command-line.md#verbosity) for every command, where it used to default to `normal`.
-- **BREAKING CHANGE**: `.buildvana-home` no longer marks a home directory, and a [`buildvana.jsonc` holding `{}`](docs/configuration-file.md#migration-from-the-buildvana-home-marker) replaces it.
-- **BREAKING CHANGE**: The `JetBrainsAnnotations` module no longer adds a JetBrains annotations package to a project, and `UseJetBrainsAnnotations` gives way to [`ExportJetBrainsAnnotations`](docs/sdk-modules/jetbrains-annotations.md#migration-to-exportjetbrainsannotations).
-- **BREAKING CHANGE**: Buildvana SDK no longer supports [Visual Basic projects](docs/introduction.md#programming-languages).
-- **BREAKING CHANGE**: Buildvana SDK no longer supports [F# projects](docs/introduction.md#programming-languages).
-- **BREAKING CHANGE**: The `prepare` command of `bv` is renamed [`clean`](docs/tool-commands/build-pipeline.md#bv-clean), after `dotnet clean`.
-- **BREAKING CHANGE**: [`bv test`](docs/tool-commands/build-pipeline.md#bv-test) supports Microsoft.Testing.Platform alone, and a VSTest test project fails at test time.
-- **BREAKING CHANGE**: [Code coverage reports](docs/tool-commands/build-pipeline.md#bv-test) go to `TestResults` in the home directory, one file per test project, and are not merged.
-- **BREAKING CHANGE**: A test project is a project whose [`IsTestingPlatformApplication`](docs/tool-commands/build-pipeline.md#bv-test) is `true`, and a `.Tests` name suffix and `IsTestProject` no longer mark one.
-- **BREAKING CHANGE**: [`bv clean`](docs/tool-commands/build-pipeline.md#bv-clean) deletes `TestResults` in the home directory.
-- **BREAKING CHANGE**: The `bv release` options `--versionSpecChange`, `--checkPublicApiFiles`, and `--updateSelfReferences` are renamed [`--bump`, `--check-public-api`, and `--dogfood`](docs/tool-commands/release.md#options).
-- **BREAKING CHANGE**: `bv` no longer reads `CONFIGURATION`, `VERSION_SPEC_CHANGE`, `CHECK_PUBLIC_API_FILES`, or `UPDATE_SELF_REFERENCES` as [defaults for its options](docs/command-line.md#migration-from-the-removed-environment-variables).
-- **BREAKING CHANGE**: `bv release` no longer reads `GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`, `PRIVATE_NUGET_KEY`, `PRERELEASE_NUGET_SOURCE`, `PRERELEASE_NUGET_KEY`, `RELEASE_NUGET_SOURCE`, or `RELEASE_NUGET_KEY`, and reads the [variables `buildvana.jsonc` names](docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) instead.
-- **BREAKING CHANGE**: `bv release` selects the [push feed](docs/tool-commands/release.md#publishing) by version kind, stable or prerelease, and no longer by the visibility of the repository.
-- **BREAKING CHANGE**: `--verbosity` accepts the [values of the .NET CLI](docs/command-line.md#verbosity), `quiet`, `minimal`, `normal`, `detailed`, and `diagnostic`, and the Cake values, such as `verbose`, are gone.
-- **BREAKING CHANGE**: `bv` writes its narration to [standard error](docs/command-line.md#output-streams) and keeps standard output for results, so a script reads diagnostics from standard error.
-- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` forward the [arguments after a `--` separator](docs/tool-commands/build-pipeline.md#forwarded-arguments) to `dotnet` verbatim, and refuse an option before the separator.
-- **BREAKING CHANGE**: `bv release` [refuses a `--` separator](docs/tool-commands/release.md#options), because it forwards nothing.
-- **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of the [build pipeline](docs/tool-commands/build-pipeline.md#the-pipeline).
-- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` read [`-c` and `--configuration`](docs/tool-commands/build-pipeline.md#the-build-configuration) among the forwarded arguments, after the `--` separator, and no longer before it.
-- **BREAKING CHANGE**: The `--main-branch` global option is removed, and the changelog link of a [release description](docs/tool-commands/release.md#publishing) points at the release branch.
-- **BREAKING CHANGE**: The `--unstable-changelog` and `--require-changelog` options of `bv release` are removed, and the [`release.changelogUpdates` and `release.emptyChangelog` settings](docs/tool-commands/release.md#the-changelog) replace them.
-- **BREAKING CHANGE**: Buildvana SDK and `bv` no longer read `version.json` or run `nbgv`, so a repository [migrates from Nerdbank.GitVersioning](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) to a `VERSION` file.
-- **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNerdbankGitVersioning`, which gives way to [`UseVersioning`](docs/sdk-modules/versioning.md#useversioning-property).
-- **BREAKING CHANGE**: `pathFilters`, nested `version.json` files, and package version schemes other than SemVer 2.0 have [no counterpart](docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) in the `Versioning` module.
-- **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](docs/tool-diagnostics.md#exit-codes), so a script that tests for exit code 1 accepts 2 and 3 too.
-- **BREAKING CHANGE**: With one `InnoSetup` item, the `AlternatePack` module [names the setup program](docs/sdk-modules/alternate-pack.md#innosetup-items) `$(AppShortName)_$(AssemblyInformationalVersion).exe`, where the name used to include the item identity.
-- **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module [defaults `UniqueZipFileName` to `true`](docs/sdk-modules/alternate-pack.md#publishfolder-items), where the default was `false` whatever the count.
+- **BREAKING CHANGE**: `bv` defaults to [`minimal` verbosity](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#verbosity) for every command, where it used to default to `normal`.
+- **BREAKING CHANGE**: `.buildvana-home` no longer marks a home directory, and a [`buildvana.jsonc` holding `{}`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/configuration-file.md#migration-from-the-buildvana-home-marker) replaces it.
+- **BREAKING CHANGE**: The `JetBrainsAnnotations` module no longer adds a JetBrains annotations package to a project, and `UseJetBrainsAnnotations` gives way to [`ExportJetBrainsAnnotations`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/jetbrains-annotations.md#migration-to-exportjetbrainsannotations).
+- **BREAKING CHANGE**: Buildvana SDK no longer supports [Visual Basic projects](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/introduction.md#programming-languages).
+- **BREAKING CHANGE**: Buildvana SDK no longer supports [F# projects](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/introduction.md#programming-languages).
+- **BREAKING CHANGE**: The `prepare` command of `bv` is renamed [`clean`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#bv-clean), after `dotnet clean`.
+- **BREAKING CHANGE**: [`bv test`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#bv-test) supports Microsoft.Testing.Platform alone, and a VSTest test project fails at test time.
+- **BREAKING CHANGE**: [Code coverage reports](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#bv-test) go to `TestResults` in the home directory, one file per test project, and are not merged.
+- **BREAKING CHANGE**: A test project is a project whose [`IsTestingPlatformApplication`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#bv-test) is `true`, and a `.Tests` name suffix and `IsTestProject` no longer mark one.
+- **BREAKING CHANGE**: [`bv clean`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#bv-clean) deletes `TestResults` in the home directory.
+- **BREAKING CHANGE**: The `bv release` options `--versionSpecChange`, `--checkPublicApiFiles`, and `--updateSelfReferences` are renamed [`--bump`, `--check-public-api`, and `--dogfood`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#options).
+- **BREAKING CHANGE**: `bv` no longer reads `CONFIGURATION`, `VERSION_SPEC_CHANGE`, `CHECK_PUBLIC_API_FILES`, or `UPDATE_SELF_REFERENCES` as [defaults for its options](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#migration-from-the-removed-environment-variables).
+- **BREAKING CHANGE**: `bv release` no longer reads `GITHUB_TOKEN`, `PRIVATE_NUGET_SOURCE`, `PRIVATE_NUGET_KEY`, `PRERELEASE_NUGET_SOURCE`, `PRERELEASE_NUGET_KEY`, `RELEASE_NUGET_SOURCE`, or `RELEASE_NUGET_KEY`, and reads the [variables `buildvana.jsonc` names](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/environment-variables.md#secret-carrying-variables-named-by-the-configuration-file) instead.
+- **BREAKING CHANGE**: `bv release` selects the [push feed](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing) by version kind, stable or prerelease, and no longer by the visibility of the repository.
+- **BREAKING CHANGE**: `--verbosity` accepts the [values of the .NET CLI](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#verbosity), `quiet`, `minimal`, `normal`, `detailed`, and `diagnostic`, and the Cake values, such as `verbose`, are gone.
+- **BREAKING CHANGE**: `bv` writes its narration to [standard error](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#output-streams) and keeps standard output for results, so a script reads diagnostics from standard error.
+- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` forward the [arguments after a `--` separator](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#forwarded-arguments) to `dotnet` verbatim, and refuse an option before the separator.
+- **BREAKING CHANGE**: `bv release` [refuses a `--` separator](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#options), because it forwards nothing.
+- **BREAKING CHANGE**: `bv` no longer forces `-maxcpucount:1` on the `dotnet` invocations of the [build pipeline](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#the-pipeline).
+- **BREAKING CHANGE**: `bv restore`, `bv build`, `bv test`, and `bv pack` read [`-c` and `--configuration`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#the-build-configuration) among the forwarded arguments, after the `--` separator, and no longer before it.
+- **BREAKING CHANGE**: The `--main-branch` global option is removed, and the changelog link of a [release description](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing) points at the release branch.
+- **BREAKING CHANGE**: The `--unstable-changelog` and `--require-changelog` options of `bv release` are removed, and the [`release.changelogUpdates` and `release.emptyChangelog` settings](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-changelog) replace them.
+- **BREAKING CHANGE**: Buildvana SDK and `bv` no longer read `version.json` or run `nbgv`, so a repository [migrates from Nerdbank.GitVersioning](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) to a `VERSION` file.
+- **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNerdbankGitVersioning`, which gives way to [`UseVersioning`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/versioning.md#useversioning-property).
+- **BREAKING CHANGE**: `pathFilters`, nested `version.json` files, and package version schemes other than SemVer 2.0 have [no counterpart](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/versioning.md#migration-from-nerdbankgitversioning) in the `Versioning` module.
+- **BREAKING CHANGE**: Every `bv` command returns [one vocabulary of exit codes](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-diagnostics.md#exit-codes), so a script that tests for exit code 1 accepts 2 and 3 too.
+- **BREAKING CHANGE**: With one `InnoSetup` item, the `AlternatePack` module [names the setup program](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/alternate-pack.md#innosetup-items) `$(AppShortName)_$(AssemblyInformationalVersion).exe`, where the name used to include the item identity.
+- **BREAKING CHANGE**: With several zipped `PublishFolder` items, the `AlternatePack` module [defaults `UniqueZipFileName` to `true`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/alternate-pack.md#publishfolder-items), where the default was `false` whatever the count.
 - **BREAKING CHANGE**: Buildvana SDK no longer reads `UseNETFrameworkReferenceAssemblies` or adds [`Microsoft.NETFramework.ReferenceAssemblies`](https://learn.microsoft.com/en-us/dotnet/framework/migration-guide/reference-assemblies), which the .NET SDK adds when no targeting pack is installed.
-- **BREAKING CHANGE**: Buildvana SDK no longer reads `XmlDocs`, and the `XmlDocumentation` module [defaults `GenerateDocumentationFile`](docs/sdk-modules/xml-documentation.md#migrating-from-xmldocs) per project type instead.
-- **BREAKING CHANGE**: Buildvana SDK raises BVSDK1006 on a project whose [SDK does not layer on `Microsoft.NET.Sdk`](docs/introduction.md#project-types), where such a project used to build.
-- **BREAKING CHANGE**: A file-based app is a [project type of its own](docs/internal-use-properties.md#project-type), `BV_IsFileBasedAppProject`, so `BV_IsExeProject` is `false` for it.
-- **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](docs/directory-structure.md#migration-from-configdotnet-toolsjson) when the home directory holds one.
-- **BREAKING CHANGE**: The `StandardAnalyzers` module adds [Nullable.Extended.Analyzer](docs/sdk-modules/standard-analyzers.md#usenullableextendedanalyzer-property), so a null-forgiving operator without a justification comment no longer compiles without a warning.
-- The [`ReleaseAssetList` module](docs/sdk-modules/release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for a file-based app.
-- On GitHub, `bv release` refuses [two assets with the same file name](docs/tool-commands/release.md#publishing-on-github) before it pushes the commits.
-- A [`notice:` level](docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
-- The tasks of Buildvana SDK show each [message level](docs/command-line.md#verbosity) from the same verbosity as `bv`.
-- `bv` runs from any directory under the [home directory](docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
+- **BREAKING CHANGE**: Buildvana SDK no longer reads `XmlDocs`, and the `XmlDocumentation` module [defaults `GenerateDocumentationFile`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/xml-documentation.md#migrating-from-xmldocs) per project type instead.
+- **BREAKING CHANGE**: Buildvana SDK raises BVSDK1006 on a project whose [SDK does not layer on `Microsoft.NET.Sdk`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/introduction.md#project-types), where such a project used to build.
+- **BREAKING CHANGE**: A file-based app is a [project type of its own](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/internal-use-properties.md#project-type), `BV_IsFileBasedAppProject`, so `BV_IsExeProject` is `false` for it.
+- **BREAKING CHANGE**: `bv` no longer reads `.config/dotnet-tools.json`, and stops with an error that [names the move](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/directory-structure.md#migration-from-configdotnet-toolsjson) when the home directory holds one.
+- **BREAKING CHANGE**: The `StandardAnalyzers` module adds [Nullable.Extended.Analyzer](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/standard-analyzers.md#usenullableextendedanalyzer-property), so a null-forgiving operator without a justification comment no longer compiles without a warning.
+- The [`ReleaseAssetList` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/release-asset-list.md#generatereleaseassetlist-property) writes no release asset list for a file-based app.
+- On GitHub, `bv release` refuses [two assets with the same file name](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-github) before it pushes the commits.
+- A [`notice:` level](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#verbosity), shown from `minimal` verbosity up, sits between `warning:` and `info:`.
+- The tasks of Buildvana SDK show each [message level](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#verbosity) from the same verbosity as `bv`.
+- `bv` runs from any directory under the [home directory](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#home-directory), which it finds as Buildvana SDK does and makes the current directory.
 - `bv clean` no longer deletes the `TestResults` directory of each test project.
-- `bv release` moves the self-reference rewrites out of the release commit into a [post-release commit](docs/tool-commands/release.md#the-post-release-commit), so the release tag names the source state that was built.
-- `bv release` takes the [identity of its commits](docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity, then from the Git configuration.
-- `bv release` no longer writes `user.name` and `user.email` to the Git configuration of the repository, and keeps [its committer identity](docs/tool-commands/release.md#preconditions) in memory.
-- `bv` renders a message as a [level label and a colored line](docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
-- `bv` streams the [output of `dotnet`](docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
-- The build pipeline commands and `bv release` [observe cancellation](docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
-- `bv` sets the [console encoding](docs/command-line.md#console-encoding) to UTF-8 for its run, as the .NET CLI does, unless `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING` is `1`.
+- `bv release` moves the self-reference rewrites out of the release commit into a [post-release commit](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-post-release-commit), so the release tag names the source state that was built.
+- `bv release` takes the [identity of its commits](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#preconditions) from `git.identity`, then from the CI bot identity, then from the Git configuration.
+- `bv release` no longer writes `user.name` and `user.email` to the Git configuration of the repository, and keeps [its committer identity](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#preconditions) in memory.
+- `bv` renders a message as a [level label and a colored line](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#verbosity), where it used to prefix a log level and a class-name category.
+- `bv` streams the [output of `dotnet`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#output-streams) through as it arrives, where it used to hide the output unless the build failed.
+- The build pipeline commands and `bv release` [observe cancellation](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#cancellation), terminate the running `dotnet` process, and exit with code 130.
+- `bv` sets the [console encoding](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#console-encoding) to UTF-8 for its run, as the .NET CLI does, unless `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING` is `1`.
 - `bv release` rewrites each relative file link of the changelog section it releases into a permalink to the release tag.
-- `bv release` runs the [build pipeline](docs/tool-commands/release.md#the-steps) once, from `clean` through `pack`, after the release commit, and no longer runs `clean` through `test` before it.
-- [The pages under `docs/`](docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
-- The `StandardAnalyzers` module adds [`StyleCop.Analyzers` 1.3.133-beta](docs/sdk-modules/standard-analyzers.md#package-references), which supports C# 8 to 15 and adds several new rules.
-- `bv release` reaches the [GitHub API of the host of the repository](docs/tool-commands/release.md#publishing-on-github), `api.github.com` or `<host>/api/v3`, where it reached `api.github.com` alone.
-- `bv release` passes `ContinuousIntegrationBuild=true` to [its pipeline run](docs/tool-commands/release.md#the-steps) on every platform.
+- `bv release` runs the [build pipeline](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-steps) once, from `clean` through `pack`, after the release commit, and no longer runs `clean` through `test` before it.
+- [The pages under `docs/`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/README.md) moved to kebab-case names, `docs/modules/` to `docs/sdk-modules/`, and `docs/DependencyManagement.md` to `docs/tool-commands/dependencies.md`, so a link to an old name breaks.
+- The `StandardAnalyzers` module adds [`StyleCop.Analyzers` 1.3.133-beta](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/standard-analyzers.md#package-references), which supports C# 8 to 15 and adds several new rules.
+- `bv release` reaches the [GitHub API of the host of the repository](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#publishing-on-github), `api.github.com` or `<host>/api/v3`, where it reached `api.github.com` alone.
+- `bv release` passes `ContinuousIntegrationBuild=true` to [its pipeline run](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-steps) on every platform.
 
 ### Bugs fixed in this release
 
-- A `buildvana.jsonc` that states a property name twice fails as [BV1108](docs/tool-diagnostics.md#configuration-1100-1199), at the repeated name, and no longer as an exception naming no file.
-- Buildvana SDK sets [`BV_IsTestProject`](docs/internal-use-properties.md#project-type) from `IsTestingPlatformApplication`, where it used to read `IsTestProject`.
-- `bv release` no longer tags a version one patch above the built one, because [the release commit](docs/tool-commands/release.md#the-release-commit) is created before the build in every release.
-- `bv release` no longer tags one patch below the built version after a version spec change, because the version is computed after [the release commit](docs/tool-commands/release.md#the-release-commit).
-- `bv release` refuses to publish a version whose [Git height is 0](docs/tool-commands/release.md#the-release-commit), because a build of the tag would produce another version.
-- `bv release` requires [`GITHUB_OUTPUT`](docs/environment-variables.md#github_output) before it changes anything, where a missing variable used to fail the release after publishing and roll it back.
+- A `buildvana.jsonc` that states a property name twice fails as [BV1108](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-diagnostics.md#configuration-1100-1199), at the repeated name, and no longer as an exception naming no file.
+- Buildvana SDK sets [`BV_IsTestProject`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/internal-use-properties.md#project-type) from `IsTestingPlatformApplication`, where it used to read `IsTestProject`.
+- `bv release` no longer tags a version one patch above the built one, because [the release commit](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-commit) is created before the build in every release.
+- `bv release` no longer tags one patch below the built version after a version spec change, because the version is computed after [the release commit](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-commit).
+- `bv release` refuses to publish a version whose [Git height is 0](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-commit), because a build of the tag would produce another version.
+- `bv release` requires [`GITHUB_OUTPUT`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/environment-variables.md#github_output) before it changes anything, where a missing variable used to fail the release after publishing and roll it back.
 - A release link `bv release` builds comes out as `.../Buildvana/releases/tag/1.1.10`, and no longer as `.../Buildvanareleases/tag/1.1.10`, because a separator follows the repository URL.
-- Every `bv` command [refuses an option it does not declare](docs/command-line.md#options-and-arguments) before anything else runs, where `bv clean` ignored one and `bv release` reported it late.
+- Every `bv` command [refuses an option it does not declare](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#options-and-arguments) before anything else runs, where `bv clean` ignored one and `bv release` reported it late.
 - `bv` reports a failed or denied file access as one error line naming the operation, the path, and the reason, not as an unhandled exception.
 - The release date `bv release` writes in a changelog section title uses the Gregorian calendar and the invariant format, whatever the culture of the machine.
-- The `Wine` module [sets `UseWine`](docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
-- `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](docs/command-line.md#home-directory) has no `origin` remote.
-- The [`NuGetPack` module](docs/sdk-modules/nuget-pack.md#readme) finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
-- The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) reads the RSA private key of a `.pfx` file from any key provider, where [BVSDK1202](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) fired on most keys.
-- The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) converts the `.pfx` file before `ResolveKeySource` reads `AssemblyOriginatorKeyFile`, where `dotnet build` failed with `PFX signing not supported on .NET Core`.
-- The [`AssemblySigning` module](docs/sdk-modules/assembly-signing.md) converts a `.pfx` file only when `SignAssembly` is `true`, where a project that does not sign got [BVSDK1200](docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) for a missing file.
-- The [`SourceGenerators` module](docs/sdk-modules/source-generators.md) raises [BVSDK1101](docs/sdk-diagnostics.md#source-generators-1100-1199), where `BV_CheckRoslynVersion` declared it inside an `ItemGroup` and it never fired.
-- The `AlternatePack` module [deletes a `PublishFolder`](docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
-- The [`NuGetPack` module](docs/sdk-modules/nuget-pack.md#package-metadata) no longer forces `PackageRequireLicenseAcceptance` to `false` when `PackageLicenseExpression` states the license.
-- [`ReleaseAssetDefaultDescription`](docs/sdk-modules/release-asset-list.md#releaseassetdefaultdescription-property) no longer defaults to `(no description given)`, which `bv release` set as the GitHub label of every asset without a `Description`.
-- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) suppresses the documentation warnings when a project sets `GenerateDocumentationFile` to `false`, where a library project got SA0001.
-- The [`XmlDocumentation` module](docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) generates the file when a project sets `GenerateDocumentationFile` to `true`, where an Exe project got none.
-- The [`AlternatePack` module](docs/sdk-modules/alternate-pack.md#innosetup-items) leaves `_<version>` out of the default `OutputName` of an `InnoSetup` item when `AssemblyInformationalVersion` is empty, where the name ended in `_`.
-- The [`AdditionalAssemblyInfo` module](docs/sdk-modules/additional-assembly-info.md#clscompliant-property) generates `CLSCompliant(true)` and `ComVisible(true)` for any value MSBuild reads as true, such as `yes`, where it generated `false`.
-- [`bv test`](docs/tool-commands/build-pipeline.md#bv-test) runs the tests of a project that sets `IsTestingPlatformApplication` to a value MSBuild reads as true, such as `yes`, where it skipped the project.
-- The [`ConvertToWinePaths` task](docs/sdk-modules/wine.md#converttowinepaths-task) converts an item when MSBuild reads the metadata named by `OnlyIfMetadata` as true, such as `yes`, where it skipped the item.
-- `bv release` fails when the remote rejects the [push of its commits](docs/tool-commands/release.md#the-release-tag), where it used to go on as if the push had succeeded.
-- `bv release` reports a failed fetch or [push](docs/tool-commands/release.md#the-release-tag) as one error line naming the release remote, not as an unhandled exception.
-- When a `PackageVersion` item versions a package Buildvana SDK injects, the reference [is an ordinary `PackageReference`](docs/sdk-modules/standard-analyzers.md#package-references), where NuGet rejected the item with NU1009.
-- `bv` no longer fails with `ArgumentException` when two [version tags](docs/tool-commands/version.md#bv-version-show) name the same commit.
+- The `Wine` module [sets `UseWine`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/wine.md#usewine-property) and raises BVSDK2200 on macOS, where `UseWine` stayed off.
+- `bv restore`, `bv build`, `bv test`, and `bv pack` no longer fail when the [home directory](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/command-line.md#home-directory) has no `origin` remote.
+- The [`NuGetPack` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/nuget-pack.md#readme) finds the README file that `PackageReadmeFile` names, where it used to look up the name that `PackageLicenseFile` holds and raise [BVSDK1510](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-diagnostics.md#nugetpack-module-1500-1599).
+- The [`AssemblySigning` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/assembly-signing.md) reads the RSA private key of a `.pfx` file from any key provider, where [BVSDK1202](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) fired on most keys.
+- The [`AssemblySigning` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/assembly-signing.md) converts the `.pfx` file before `ResolveKeySource` reads `AssemblyOriginatorKeyFile`, where `dotnet build` failed with `PFX signing not supported on .NET Core`.
+- The [`AssemblySigning` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/assembly-signing.md) converts a `.pfx` file only when `SignAssembly` is `true`, where a project that does not sign got [BVSDK1200](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-diagnostics.md#assemblysigning-module-1200-1299) for a missing file.
+- The [`SourceGenerators` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/source-generators.md) raises [BVSDK1101](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-diagnostics.md#source-generators-1100-1199), where `BV_CheckRoslynVersion` declared it inside an `ItemGroup` and it never fired.
+- The `AlternatePack` module [deletes a `PublishFolder`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/alternate-pack.md#publishfolder-items) whose `Temporary` metadata is `true` after `Pack`, where `ProcessPublishFoldersMetadata` used to reset the metadata to `false`.
+- The [`NuGetPack` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/nuget-pack.md#package-metadata) no longer forces `PackageRequireLicenseAcceptance` to `false` when `PackageLicenseExpression` states the license.
+- [`ReleaseAssetDefaultDescription`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/release-asset-list.md#releaseassetdefaultdescription-property) no longer defaults to `(no description given)`, which `bv release` set as the GitHub label of every asset without a `Description`.
+- The [`XmlDocumentation` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) suppresses the documentation warnings when a project sets `GenerateDocumentationFile` to `false`, where a library project got SA0001.
+- The [`XmlDocumentation` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/xml-documentation.md#generatedocumentationfile-property) generates the file when a project sets `GenerateDocumentationFile` to `true`, where an Exe project got none.
+- The [`AlternatePack` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/alternate-pack.md#innosetup-items) leaves `_<version>` out of the default `OutputName` of an `InnoSetup` item when `AssemblyInformationalVersion` is empty, where the name ended in `_`.
+- The [`AdditionalAssemblyInfo` module](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/additional-assembly-info.md#clscompliant-property) generates `CLSCompliant(true)` and `ComVisible(true)` for any value MSBuild reads as true, such as `yes`, where it generated `false`.
+- [`bv test`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/build-pipeline.md#bv-test) runs the tests of a project that sets `IsTestingPlatformApplication` to a value MSBuild reads as true, such as `yes`, where it skipped the project.
+- The [`ConvertToWinePaths` task](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/wine.md#converttowinepaths-task) converts an item when MSBuild reads the metadata named by `OnlyIfMetadata` as true, such as `yes`, where it skipped the item.
+- `bv release` fails when the remote rejects the [push of its commits](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-tag), where it used to go on as if the push had succeeded.
+- `bv release` reports a failed fetch or [push](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-tag) as one error line naming the release remote, not as an unhandled exception.
+- When a `PackageVersion` item versions a package Buildvana SDK injects, the reference [is an ordinary `PackageReference`](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/sdk-modules/standard-analyzers.md#package-references), where NuGet rejected the item with NU1009.
+- `bv` no longer fails with `ArgumentException` when two [version tags](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/version.md#bv-version-show) name the same commit.
 
 ### Known problems introduced by this release
 
-- When no file changes before the build, [the release commit](docs/tool-commands/release.md#the-release-commit) is empty, which a `pre-receive` hook of a self-hosted Git host may reject.
+- When no file changes before the build, [the release commit](https://github.com/Tenacom/Buildvana/blob/2.1.887/docs/tool-commands/release.md#the-release-commit) is empty, which a `pre-receive` hook of a self-hosted Git host may reject.
 
 ## [1.1.10](https://github.com/Tenacom/Buildvana/releases/tag/1.1.10) (2026-04-27)
 
