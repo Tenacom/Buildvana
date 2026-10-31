@@ -28,6 +28,7 @@ Every page of the Buildvana user documentation is listed here, in one group per 
 - [`FileBasedApps` module](sdk-modules/file-based-apps.md): pinning `Buildvana.Runtime` to the version of Buildvana SDK in every file-based app of the repository, and suppressing SA1402 and SA1649 there.
 - [`JetBrainsAnnotations` module](sdk-modules/jetbrains-annotations.md): exporting the JetBrains annotations of a C# project to a ReSharper external annotations file.
 - [`NuGetPack` module](sdk-modules/nuget-pack.md): packing a README, a license, a third-party notice, and an icon into every NuGet package, and feeding a `.nuspec` file.
+- [`ProjectEvaluation` module](sdk-modules/project-evaluation.md): writing the evaluated facts of a project, for `bv` to describe the projects of the solution to hooks.
 - [`ReleaseAssetList` module](sdk-modules/release-asset-list.md): writing the list of files that `bv release` uploads as the assets of a release.
 - [`SourceGenerators` module](sdk-modules/source-generators.md): adding the Roslyn source generators of Buildvana SDK to a C# project, and checking that the compiler can run them.
 - [`StandardAnalyzers` module](sdk-modules/standard-analyzers.md): turning on the code quality, code style, StyleCop, and public API analyzers in every project, with stricter defaults than the .NET SDK.

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Title>Buildvana project evaluation contracts</Title>
+    <Description>The types describing the evaluated facts of a project, exchanged between Buildvana SDK and the bv tool.</Description>
+    <TargetFramework>$(StandardTfm)</TargetFramework>
+  </PropertyGroup>
+
+</Project>

@@ -14,6 +14,8 @@ This page lists the ones a repository can meet, and what each one means.
 - [Dependency management](#dependency-management)
   - [`BV_PinDumpDirectory`](#bv_pindumpdirectory)
   - [`BV_SuppressTransitiveOverrides`](#bv_suppresstransitiveoverrides)
+- [Project evaluation](#project-evaluation)
+  - [`BV_ProjectEvaluationDumpDirectory`](#bv_projectevaluationdumpdirectory)
 
 ---
 
@@ -83,3 +85,18 @@ The `WritePackagePinDump` task requires the directory, and raises error [BVSDK10
 When the property is `true`, the `Dependencies` module does not import the [transitive override files](tool-commands/dependencies.md#transitive-overrides): `Directory.TransitiveOverrides.props` in the home directory, and `<ProjectName>.TransitiveOverrides.props` beside a project.
 `bv dependencies` sets it to get NuGet's verdict on the dependency graph without the overrides, which is what it computes the next overrides from.
 Suppressing the import spares `bv` from deleting the files and putting them back, which an interrupted run would leave undone.
+
+---
+
+## Project evaluation
+
+`bv` passes one property on the command line, and the [`ProjectEvaluation` module](sdk-modules/project-evaluation.md) reads it.
+
+### `BV_ProjectEvaluationDumpDirectory`
+
+The directory the `BV_DumpProjectEvaluation` target writes to.
+The target writes the evaluated facts of the project and of each of its target frameworks, one file per project.
+`bv` sets the property, runs the target over the projects of the solution, and reads the files back to describe the projects to hooks.
+
+No other target depends on `BV_DumpProjectEvaluation`, so a build never runs it.
+The `WriteProjectEvaluationDump` task requires the directory, and raises error [BVSDK1050](sdk-diagnostics.md#buildvana-sdk-tasks-1050-1099) when the property is empty.

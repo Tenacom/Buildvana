@@ -51,6 +51,7 @@
     <File Path="docs/sdk-modules/file-based-apps.md" />
     <File Path="docs/sdk-modules/jetbrains-annotations.md" />
     <File Path="docs/sdk-modules/nuget-pack.md" />
+    <File Path="docs/sdk-modules/project-evaluation.md" />
     <File Path="docs/sdk-modules/release-asset-list.md" />
     <File Path="docs/sdk-modules/source-generators.md" />
     <File Path="docs/sdk-modules/standard-analyzers.md" />
@@ -82,6 +83,7 @@
     <Project Path="src/Buildvana.Core.IO/Buildvana.Core.IO.csproj" />
     <Project Path="src/Buildvana.Core.Json/Buildvana.Core.Json.csproj" />
     <Project Path="src/Buildvana.Core.Process/Buildvana.Core.Process.csproj" />
+    <Project Path="src/Buildvana.Core.ProjectEvaluation/Buildvana.Core.ProjectEvaluation.csproj" />
     <Project Path="src/Buildvana.Core.Testing/Buildvana.Core.Testing.csproj" />
     <Project Path="src/Buildvana.Core.Versioning/Buildvana.Core.Versioning.csproj" />
     <Project Path="src/Buildvana.Runtime/Buildvana.Runtime.csproj" />
