@@ -23,6 +23,7 @@
     <ProjectReference Include="..\Buildvana.Core.Dependencies\Buildvana.Core.Dependencies.csproj" />
     <ProjectReference Include="..\Buildvana.Core.HomeDirectory\Buildvana.Core.HomeDirectory.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Json\Buildvana.Core.Json.csproj" />
+    <ProjectReference Include="..\Buildvana.Core.ProjectEvaluation\Buildvana.Core.ProjectEvaluation.csproj" />
     <ProjectReference Include="..\Buildvana.Core.Versioning\Buildvana.Core.Versioning.csproj" />
   </ItemGroup>
 

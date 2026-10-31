@@ -1,0 +1,83 @@
+<Project>
+
+  <!--
+    Writes this project's evaluated facts to the directory named by BV_ProjectEvaluationDumpDirectory,
+    one file per project. bv sets the property, runs this target over the solution's projects, and reads
+    every file it finds in the directory, to describe the projects to hooks.
+
+    The facts come from two kinds of evaluation. IsPackable, PackAsTool and PackageId come from this one,
+    which for a multi-targeting project is the outer build that dotnet pack runs in. The facts of a target
+    framework come from the evaluation for that framework, which BV_GetProjectEvaluationTargetFramework
+    returns: NuGet imports the build files of a package into that evaluation alone, so the outer build
+    does not see an OutputType or an IsTestProject that a package sets, as TUnit does.
+  -->
+  <Target Name="BV_DumpProjectEvaluation">
+
+    <PropertyGroup>
+      <_BV_IsProjectEvaluationOuterBuild>false</_BV_IsProjectEvaluationOuterBuild>
+      <_BV_IsProjectEvaluationOuterBuild Condition="'$(TargetFramework)' == '' And '$(TargetFrameworks)' != ''">true</_BV_IsProjectEvaluationOuterBuild>
+    </PropertyGroup>
+
+    <ItemGroup Condition="$(_BV_IsProjectEvaluationOuterBuild)">
+      <_BV_ProjectEvaluationInnerBuild Include="$(TargetFrameworks)" />
+    </ItemGroup>
+
+    <MSBuild Condition="$(_BV_IsProjectEvaluationOuterBuild)"
+             Projects="$(MSBuildProjectFullPath)"
+             Targets="BV_GetProjectEvaluationTargetFramework"
+             Properties="TargetFramework=%(_BV_ProjectEvaluationInnerBuild.Identity)">
+      <Output TaskParameter="TargetOutputs" ItemName="_BV_ProjectEvaluationTargetFramework" />
+    </MSBuild>
+
+    <!-- A project that does not multi-target is its own evaluation for its target framework. -->
+    <MSBuild Condition="!$(_BV_IsProjectEvaluationOuterBuild)"
+             Projects="$(MSBuildProjectFullPath)"
+             Targets="BV_GetProjectEvaluationTargetFramework">
+      <Output TaskParameter="TargetOutputs" ItemName="_BV_ProjectEvaluationTargetFramework" />
+    </MSBuild>
+
+    <!-- The task takes booleans, and an empty or unset property is not one. -->
+    <PropertyGroup>
+      <_BV_ProjectEvaluationIsPackable>false</_BV_ProjectEvaluationIsPackable>
+      <_BV_ProjectEvaluationIsPackable Condition="'$(IsPackable)' == 'true'">true</_BV_ProjectEvaluationIsPackable>
+      <_BV_ProjectEvaluationPackAsTool>false</_BV_ProjectEvaluationPackAsTool>
+      <_BV_ProjectEvaluationPackAsTool Condition="'$(PackAsTool)' == 'true'">true</_BV_ProjectEvaluationPackAsTool>
+    </PropertyGroup>
+
+    <WriteProjectEvaluationDump OutputDirectory="$(BV_ProjectEvaluationDumpDirectory)"
+                                ProjectFullPath="$(MSBuildProjectFullPath)"
+                                IsPackable="$(_BV_ProjectEvaluationIsPackable)"
+                                PackAsTool="$(_BV_ProjectEvaluationPackAsTool)"
+                                PackageId="$(PackageId)"
+                                TargetFrameworks="@(_BV_ProjectEvaluationTargetFramework)" />
+
+  </Target>
+
+  <!--
+    Returns the facts of the evaluation for one target framework, as one item whose identity is the target
+    framework. An evaluation with no target framework, or with no TargetPath, returns nothing.
+
+    The documentation file is FinalDocFile, the copy next to TargetPath, and not DocumentationFile, which
+    names the compiler's output in the intermediate directory.
+  -->
+  <Target Name="BV_GetProjectEvaluationTargetFramework"
+          Returns="@(_BV_ProjectEvaluationTargetFrameworkFacts)">
+
+    <PropertyGroup>
+      <_BV_ProjectEvaluationDocumentationFile>@(FinalDocFile->'%(FullPath)')</_BV_ProjectEvaluationDocumentationFile>
+      <_BV_ProjectEvaluationIsTestProject>false</_BV_ProjectEvaluationIsTestProject>
+      <_BV_ProjectEvaluationIsTestProject Condition="'$(IsTestProject)' == 'true'">true</_BV_ProjectEvaluationIsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' != '' And '$(TargetPath)' != ''">
+      <_BV_ProjectEvaluationTargetFrameworkFacts Include="$(TargetFramework)">
+        <TargetPath>$(TargetPath)</TargetPath>
+        <DocumentationFile>$(_BV_ProjectEvaluationDocumentationFile)</DocumentationFile>
+        <OutputType>$(OutputType)</OutputType>
+        <IsTestProject>$(_BV_ProjectEvaluationIsTestProject)</IsTestProject>
+      </_BV_ProjectEvaluationTargetFrameworkFacts>
+    </ItemGroup>
+
+  </Target>
+
+</Project>
