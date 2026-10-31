@@ -73,6 +73,11 @@ internal sealed record ReleaseHarnessOptions
     public bool WithHook { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the repository has a <c>release/post-pack</c> hook file.
+    /// </summary>
+    public bool WithPostPackHook { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether the release runs on a CI runner.
     /// </summary>
     public bool IsCI { get; init; } = true;

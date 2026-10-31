@@ -183,6 +183,46 @@ internal sealed class ReleaseCommandTests
         await Assert.That(commits[0].ChangedFiles).Contains("docs/release-notes.md");
     }
 
+    // The release tag names the files the hook derives from the released code: they join the release commit,
+    // whatever the hook did to them.
+    [Test]
+    public async Task Release_WithPostPackHook_JoinsHookChangesToTheTaggedReleaseCommit()
+    {
+        using var harness = new ReleaseHarness(new() { WithPostPackHook = true, Dogfood = false });
+        harness.WriteFile("docs/api/Changed.md", "Old.\n");
+        harness.WriteFile("docs/api/Stale.md", "Stale.\n");
+        harness.Repo.CommitAll("Add API pages");
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
+        harness.PostPackHookBehavior = () => RegenerateApiPages(harness);
+
+        var exitCode = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+        var releaseCommit = harness.Repo.GetCommits(1)[0];
+        await Assert.That(releaseCommit.Message).StartsWith("Prepare release ");
+        await Assert.That(releaseCommit.ChangedFiles).IsEquivalentTo(
+            ["docs/api/Changed.md", "docs/api/New.md", "docs/api/Stale.md"]);
+        var tag = harness.Repo.TagNames.Single();
+        await Assert.That(harness.Repo.GetRemoteTagSha(tag)).IsEqualTo(releaseCommit.Sha);
+        await Assert.That(harness.ReadFile("docs/api/Changed.md")).IsEqualTo("New.\n");
+    }
+
+    // The post-pack hook sees the artifacts and the final changelog, and the post-release hook sees what the
+    // post-pack hook generated.
+    [Test]
+    public async Task Release_RunsPostPackHook_AfterPack_AndBeforePostReleaseHook()
+    {
+        using var harness = new ReleaseHarness(new() { WithHook = true, WithPostPackHook = true });
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        var steps = harness.Events.Select(x => x.Name).ToArray();
+        await Assert.That(Array.IndexOf(steps, "post-pack-hook")).IsGreaterThan(Array.IndexOf(steps, "pack"));
+        await Assert.That(Array.IndexOf(steps, "hook")).IsGreaterThan(Array.IndexOf(steps, "post-pack-hook"));
+        await Assert.That(harness.Events.Single(x => x.Name == "post-pack-hook").HeadMessage).IsEqualTo(ReleaseCommitMessage);
+    }
+
     [Test]
     public async Task Release_WithoutHook_SkipsIt()
     {
@@ -491,5 +531,14 @@ internal sealed class ReleaseCommandTests
         await Assert.That(harness.ReadFile("VERSION").Trim()).IsEqualTo("2.4-preview");
         await Assert.That(harness.ReadFile($"{ReleaseHarness.ApiFilesDirectory}/PublicAPI.Unshipped.txt")).Contains("Test.Thing");
         await Assert.That(harness.Repo.GetCommits(1)[0].ChangedFiles).IsEquivalentTo(["VERSION"]);
+    }
+
+    // What a documentation generator does to its output directory: one page added, one changed, one deleted.
+    // A method rather than a lambda, for the reason ReleaseCommandReportingTests.WriteTwoFiles states.
+    private static void RegenerateApiPages(ReleaseHarness harness)
+    {
+        harness.WriteFile("docs/api/New.md", "New.\n");
+        harness.WriteFile("docs/api/Changed.md", "New.\n");
+        File.Delete(Path.Combine(harness.Repo.RootPath, "docs", "api", "Stale.md"));
     }
 }

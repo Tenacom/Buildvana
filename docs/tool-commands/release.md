@@ -122,13 +122,15 @@ When no remote matches, the release fails, and the message names the remotes of 
    The run passes `ContinuousIntegrationBuild=true` to `dotnet` on every platform, Local included, because release artifacts are deterministic.
 10. Finalize the new changelog section with the released version, as [The changelog](#the-changelog) says.
 11. Find the produced packages: every `.nupkg` file in `artifacts\<configuration>\` whose name ends with `.<version>.nupkg`.
-12. Run the [`release/post-release` hook](../hooks.md#the-releasepost-release-hook), and record the files it changed.
-13. Rewrite the self-references when `release.dogfood` is `true`, as [The post-release commit](#the-post-release-commit) says.
-14. Create the post-release commit, when the hook or the rewrites changed a file.
-15. Collect the release assets, and have the host check them, as [Publishing](#publishing) says.
-16. Create the release tag, push the commits, and push the tag, as [The release tag](#the-release-tag) says.
-17. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
-18. Publish the release on the host, and write the `version` step output.
+12. Run the [`release/post-pack` hook](../hooks.md#the-releasepost-pack-hook), and add the files it changed to the release commit.
+    The release fails when the changes of the hook move the version.
+13. Run the [`release/post-release` hook](../hooks.md#the-releasepost-release-hook), and record the files it changed.
+14. Rewrite the self-references when `release.dogfood` is `true`, as [The post-release commit](#the-post-release-commit) says.
+15. Create the post-release commit, when the `release/post-release` hook or the rewrites changed a file.
+16. Collect the release assets, and have the host check them, as [Publishing](#publishing) says.
+17. Create the release tag, push the commits, and push the tag, as [The release tag](#the-release-tag) says.
+18. Push the packages to the NuGet feed, as [Publishing](#publishing) says.
+19. Publish the release on the host, and write the `version` step output.
 
 Every step is undone when a later step fails, as [Rollback](#rollback) says.
 
@@ -144,6 +146,9 @@ The artifacts, the tag, and the release would then disagree by one patch.
 A version whose Git height is 0 is refused, because no commit in the history carries the version line.
 The usual cause is a `VERSION` file changed and not committed.
 A build of the tagged commit would compute another version, so the release stops with a message naming the file to commit.
+
+After the build, the files the [`release/post-pack` hook](../hooks.md#the-releasepost-pack-hook) changed join the release commit.
+The release fails when they move the version, because the artifacts carry the version computed before the build.
 
 When no file changes before the build, the release commit is empty.
 The major public Git hosts accept an empty commit.
@@ -162,7 +167,7 @@ When neither remedy fits, open an issue.
 
 `bv release` creates the release tag itself, as a lightweight tag named after the version.
 The tag names the release commit, whatever commits follow it.
-`bv` creates it after the build, because finalizing the changelog amends the release commit.
+`bv` creates it after the build, because the changelog finalization and the `release/post-pack` hook amend the release commit.
 
 `bv` pushes the branch to the release remote, then the tag.
 A tag of the same name on the remote fails the release, unless it names the same commit.
@@ -428,7 +433,8 @@ The configuration selects the artifacts directory, `artifacts\<configuration>\`,
 `bv release` returns the [exit codes every `bv` command returns](../tool-diagnostics.md#exit-codes).
 
 Code 1 is a precondition that fails, a versioning anomaly, a tag that exists, an empty changelog with no substitute, or a missing feed.
+A `release/post-pack` hook whose changes move the version returns code 1 as well.
 A fetch or a push that fails returns code 1 as well.
 Code 2 is a refusal of the command line: a `--` separator, an unknown option, or an unknown `--bump` value.
-Code 3 says that a program `bv` ran failed: a `dotnet` command, `dotnet nuget push`, or the hook.
+Code 3 says that a program `bv` ran failed: a `dotnet` command, `dotnet nuget push`, or a hook.
 Code 130 is a run terminated with Ctrl-C.

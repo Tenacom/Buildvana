@@ -30,6 +30,7 @@ namespace Buildvana.Runtime;
     UseStringEnumConverter = true,
     WriteIndented = true)]
 [JsonSerializable(typeof(BuildvanaConfig))]
+[JsonSerializable(typeof(PostPackHookArgs))]
 [JsonSerializable(typeof(PostReleaseHookArgs))]
 [JsonSerializable(typeof(PostUpdateHookArgs))]
 [SuppressMessage(

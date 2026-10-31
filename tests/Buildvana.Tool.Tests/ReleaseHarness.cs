@@ -84,7 +84,16 @@ internal sealed class ReleaseHarness : IDisposable
     {
         _options = options ?? new ReleaseHarnessOptions();
         ProcessRunner = new FakeProcessRunner { OnRun = RunDotNet };
-        AppRunner.OnRun = (_, _, _) => {
+
+        // Both hooks of the release live in the same directory, so the file name tells them apart.
+        AppRunner.OnRun = (path, _, _) => {
+            if (Path.GetFileNameWithoutExtension(path) == "post-pack")
+            {
+                Record("post-pack-hook");
+                PostPackHookBehavior?.Invoke();
+                return;
+            }
+
             Record("hook");
             HookBehavior?.Invoke();
         };
@@ -174,10 +183,16 @@ internal sealed class ReleaseHarness : IDisposable
     public RecordingReleasePublisher? Publisher => Host.Publisher;
 
     /// <summary>
-    /// Gets or sets a callback simulating what the hook does to the working tree. Only ever invoked when
-    /// the repository has a hook file (<see cref="ReleaseHarnessOptions.WithHook"/>).
+    /// Gets or sets a callback simulating what the <c>release/post-release</c> hook does to the working tree.
+    /// Only ever invoked when the repository has its hook file (<see cref="ReleaseHarnessOptions.WithHook"/>).
     /// </summary>
     public Action? HookBehavior { get; set; }
+
+    /// <summary>
+    /// Gets or sets a callback simulating what the <c>release/post-pack</c> hook does to the working tree.
+    /// Only ever invoked when the repository has its hook file (<see cref="ReleaseHarnessOptions.WithPostPackHook"/>).
+    /// </summary>
+    public Action? PostPackHookBehavior { get; set; }
 
     /// <summary>
     /// Runs the <c>release</c> command.
@@ -408,6 +423,11 @@ internal sealed class ReleaseHarness : IDisposable
         if (_options.WithHook)
         {
             WriteFile(WellKnownPaths.GetHookFile("release", "post-release"), "// never executed: the app runner is faked\n");
+        }
+
+        if (_options.WithPostPackHook)
+        {
+            WriteFile(WellKnownPaths.GetHookFile("release", "post-pack"), "// never executed: the app runner is faked\n");
         }
     }
 

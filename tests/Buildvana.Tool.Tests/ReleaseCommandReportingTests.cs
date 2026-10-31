@@ -136,6 +136,19 @@ internal sealed class ReleaseCommandReportingTests
         await Assert.That(harness.Notices).Contains("The post-release hook modified 2 files.");
     }
 
+    [Test]
+    public async Task Release_WithPostPackHookThatChangesOneFile_RecordsItInTheSingular()
+    {
+        using var harness = new ReleaseHarness(new() { WithPostPackHook = true, Dogfood = false });
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
+        harness.PostPackHookBehavior = () => harness.WriteFile("docs/api/index.md", "API.\n");
+
+        _ = await harness.RunAsync().ConfigureAwait(false);
+
+        await Assert.That(harness.Notices).Contains("The post-pack hook modified 1 file.");
+    }
+
     // Dogfooding that rewrites nothing is the failure mode the self-reference update is most likely to have
     // - a name that matches no reference rewrites just as silently as a repository that has none - so the
     // line has to be there even when the answer is zero.

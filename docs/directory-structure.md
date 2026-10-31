@@ -43,6 +43,8 @@ On a system other than Windows, MSBuild turns a backslash into a slash when it a
 |    |    |
 |    |    +--- release\
 |    |         |
+|    |         +--- post-pack.cs
+|    |         |
 |    |         +--- post-release.cs
 |
 +--- .buildvana-temp\          <<< Scratch directory of bv (machine-generated; add to .gitignore)

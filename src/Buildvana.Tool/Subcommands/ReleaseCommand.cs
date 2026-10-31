@@ -82,7 +82,8 @@ internal sealed class ReleaseCommand(
         var declaredApiFiles = services.GetRequiredService<DeclaredApiFilesService>();
         var selfReferenceUpdater = services.GetRequiredService<SelfReferenceUpdater>();
         var hookRunner = services.GetRequiredService<HookRunner>();
-        var hookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
+        var postPackHookArgsFactory = services.GetRequiredService<PostPackHookArgsFactory>();
+        var postReleaseHookArgsFactory = services.GetRequiredService<PostReleaseHookArgsFactory>();
 
         // With no committer identity, the release cannot commit.
         var identity = ReleaseCommitterIdentity.Resolve(config.Git, platform, git.CommitterIdentity)?.Identity
@@ -235,7 +236,8 @@ internal sealed class ReleaseCommand(
             // changelog update, the release commit) has happened, the tag check above is the last thing that
             // can refuse this particular version, and the artifacts are built from here on. This is the one
             // place where stating the version is a record of a decision rather than a guess.
-            reporter.Notice($"Releasing version {version.CurrentStr}.");
+            var releasedVersion = version.CurrentStr;
+            reporter.Notice($"Releasing version {releasedVersion}.");
 
             // Build, test, and pack the tree of the release commit, in the one pipeline run of the release.
             // The run comes after the commit, so that the artifacts carry the version that is tagged and
@@ -256,10 +258,42 @@ internal sealed class ReleaseCommand(
                 reporter.Notice("Changelog new section finalization skipped: changelog has not been updated.");
             }
 
-            // Discover the packages produced by the pack step; both the post-release hook args and
-            // the self-reference update consume the map.
+            // Discover the packages produced by the pack step; the args of both hooks and the self-reference
+            // update consume the map.
             var producedPackages = ArtifactsHelper.DiscoverProducedPackages(artifactsPath, version.CurrentStr, reporter);
             var dogfooding = config.Release.Dogfood;
+
+            // Run the repo-owned post-pack hook, if present. The files it changes join the release commit,
+            // which the release tag names, so that files derived from the released code describe it.
+            var (postPackHookOutcome, postPackHookUpdates) = await git.TrackChangesAsync(
+                () => hookRunner.RunHookAsync(
+                    token => postPackHookArgsFactory.CreateAsync(
+                        artifactsPath: artifactsPath,
+                        simpleVersion: version.CurrentSimpleStr,
+                        semVer: version.CurrentStr,
+                        latest: version.Latest,
+                        isPrerelease: version.IsPrerelease,
+                        isPublicRelease: version.IsPublicRelease,
+                        producedPackages: producedPackages,
+                        cancellationToken: token),
+                    cancellationToken: cancellationToken)).ConfigureAwait(false);
+            if (postPackHookOutcome != HookOutcome.NoHook)
+            {
+                reporter.Notice(DescribeHookUpdates(PostPackHookArgs.Event, postPackHookUpdates.Count));
+            }
+
+            if (postPackHookUpdates.Count > 0)
+            {
+                // The amended commit yields the version again. The artifacts carry the version computed before
+                // the build, so a hook that moves it, by changing VERSION for one, fails the release.
+                release.UpdateRepository([.. postPackHookUpdates]);
+                if (!string.Equals(version.CurrentStr, releasedVersion, StringComparison.Ordinal))
+                {
+                    throw new BuildFailedException(
+                        $"The {PostPackHookArgs.Context}/{PostPackHookArgs.Event} hook moved the version from {releasedVersion} "
+                        + $"to {version.CurrentStr}. The artifacts carry {releasedVersion}.");
+                }
+            }
 
             // Run the repo-owned post-release hook, if present. It runs whether or not dogfooding is
             // enabled; the files it changes are detected by snapshotting the working tree around it
@@ -269,9 +303,9 @@ internal sealed class ReleaseCommand(
             // entry in global.json), and the packages produced by this release reach a feed only after
             // publish. A hook that needs the new versions can read them from its args'
             // Release properties instead of the rewritten files.
-            var (hookOutcome, hookUpdates) = await git.TrackChangesAsync(
+            var (postReleaseHookOutcome, postReleaseHookUpdates) = await git.TrackChangesAsync(
                 () => hookRunner.RunHookAsync(
-                    token => hookArgsFactory.CreateAsync(
+                    token => postReleaseHookArgsFactory.CreateAsync(
                         artifactsPath: artifactsPath,
                         simpleVersion: version.CurrentSimpleStr,
                         semVer: version.CurrentStr,
@@ -282,22 +316,9 @@ internal sealed class ReleaseCommand(
                         dogfooding: dogfooding,
                         cancellationToken: token),
                     cancellationToken: cancellationToken)).ConfigureAwait(false);
-            if (hookOutcome != HookOutcome.NoHook)
+            if (postReleaseHookOutcome != HookOutcome.NoHook)
             {
-                switch (hookUpdates.Count)
-                {
-                    case 0:
-                        reporter.Notice("The post-release hook modified no files.");
-                        break;
-                    case 1:
-                        reporter.Notice("The post-release hook modified 1 file.");
-                        break;
-                    default:
-                        reporter.Notice(string.Create(
-                            CultureInfo.InvariantCulture,
-                            $"The post-release hook modified {hookUpdates.Count} files."));
-                        break;
-                }
+                reporter.Notice(DescribeHookUpdates(PostReleaseHookArgs.Event, postReleaseHookUpdates.Count));
             }
 
             // Update in-tree references to packages produced by this release (dogfooding).
@@ -331,7 +352,7 @@ internal sealed class ReleaseCommand(
             }
 
             // Assemble the post-release commit from the self-reference rewrites and the hook's changes.
-            string[] postReleaseUpdates = [.. selfReferenceUpdates.Union(hookUpdates, StringComparer.Ordinal)];
+            string[] postReleaseUpdates = [.. selfReferenceUpdates.Union(postReleaseHookUpdates, StringComparer.Ordinal)];
             if (postReleaseUpdates.Length > 0)
             {
                 release.AddPostReleaseCommit($"Post-release updates for {version.CurrentStr} [skip ci]", postReleaseUpdates);
@@ -396,5 +417,11 @@ internal sealed class ReleaseCommand(
     private static string DescribeModifiedApiFiles(int count, string kind) => count switch {
         0 => $"No {kind} API files were modified.",
         _ => string.Create(CultureInfo.InvariantCulture, $"{count} {kind} API files were modified."),
+    };
+
+    private static string DescribeHookUpdates(string hookEvent, int count) => count switch {
+        0 => $"The {hookEvent} hook modified no files.",
+        1 => $"The {hookEvent} hook modified 1 file.",
+        _ => string.Create(CultureInfo.InvariantCulture, $"The {hookEvent} hook modified {count} files."),
     };
 }

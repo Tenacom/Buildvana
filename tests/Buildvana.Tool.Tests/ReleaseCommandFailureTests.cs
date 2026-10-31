@@ -173,6 +173,29 @@ internal sealed class ReleaseCommandFailureTests
         await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
     }
 
+    // The artifacts carry the version computed before the build. A post-pack hook that moves it would have the
+    // release tag a version that no artifact carries.
+    [Test]
+    public async Task Release_WhenPostPackHookMovesTheVersion_FailsAndLeavesTheRepositoryUnchanged()
+    {
+        using var harness = new ReleaseHarness(new() { WithPostPackHook = true });
+        var initialSha = harness.Repo.HeadSha;
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the hook runs before the harness is disposed
+        harness.PostPackHookBehavior = () => harness.WriteFile("VERSION", "2.4-\n");
+
+        // ReSharper disable once AccessToDisposedClosure // False positive: the assertion invokes Act before the harness is disposed
+        Task<int> Act() => harness.RunAsync();
+
+        await Assert.That(Act)
+            .Throws<BuildFailedException>()
+            .WithMessageContaining($"moved the version from {ReleasedVersion}", StringComparison.Ordinal);
+        await Assert.That(harness.Repo.GetCommits(1)[0].Sha).IsEqualTo(initialSha);
+        await Assert.That(harness.Repo.GetRemoteTipSha()).IsNull();
+        await Assert.That(harness.Repo.TagNames.Count).IsEqualTo(0);
+        await Assert.That(harness.ReadFile("VERSION")).IsEqualTo("2.3-\n");
+    }
+
     // Tags the version about to be released on a commit outside the release branch's history. A tag on the
     // branch itself would be caught earlier, by the versioning consistency check: it would be the latest
     // version in history, and the version being released would no longer be higher than it. What is left
