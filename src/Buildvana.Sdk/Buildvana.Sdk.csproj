@@ -236,11 +236,15 @@
           AfterTargets="CoreBuild">
 
     <!-- Publish binary projects.
-         Do not delete existing files, as some files are in common between projects and we don't want a second Publish to delete them. -->
+         Do not delete existing files, as some files are in common between projects and we don't want a second Publish to delete them.
+         Do not build them either: the global properties below make a second instance of each binary project and of its references,
+         and a build of that instance would write the same outputs as the solution build, at the same time.
+         The solution file makes this project depend on the binary projects, so their outputs exist by now. -->
 
     <MSBuild Projects="%(_BinaryProject.Identity)"
              Targets="Publish"
              Properties="Configuration=$(Configuration);
+                         NoBuild=true;
                          PublishProtocol=FileSystem;
                          PublishDir=$(MSBuildProjectDirectory)\$(OutputPath);
                          TargetFramework=$(StandardTfm);
