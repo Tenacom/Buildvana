@@ -61,5 +61,6 @@ internal sealed class HookArgsSecretsTests
         },
         ProducedPackages = new Dictionary<string, string>(),
         Dogfooding = false,
+        Solution = new() { SolutionFile = null, Configuration = "Release", Projects = [] },
     };
 }

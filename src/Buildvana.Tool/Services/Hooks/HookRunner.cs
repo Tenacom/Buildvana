@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -49,25 +50,39 @@ internal sealed class HookRunner
     /// </summary>
     /// <typeparam name="TArgs">The type of the hook's args, identifying the hook to run
     /// (see <see cref="IHookEvent"/>).</typeparam>
-    /// <param name="args">The args to serialize into the hook's args file
-    /// (<see cref="WellKnownPaths.GetHookArgsFile"/>) before running the hook. Its type must be
-    /// registered in <see cref="BuildvanaJsonContext"/>. The file is left in place after the run,
-    /// so the hook can be re-run by hand against the same args.</param>
+    /// <param name="createArgs">Creates the args to serialize into the hook's args file
+    /// (<see cref="WellKnownPaths.GetHookArgsFile"/>) before running the hook. Called only when the hook's
+    /// file exists, because creating the args can cost an evaluation of the solution's projects. The type of
+    /// the args must be registered in <see cref="BuildvanaJsonContext"/>. The file is left in place after the
+    /// run, so the hook can be re-run by hand against the same args.</param>
     /// <param name="acceptsPendingWork">If <see langword="true"/>, an exit code of 1 is a result rather than
     /// a failure: the hook reports that it would change something, and the caller folds that into its own
     /// verdict. Only a check run passes this.</param>
-    /// <param name="cancellationToken">A token that, when signalled, terminates the hook process.</param>
+    /// <param name="cancellationToken">A token that, when signalled, is passed to <paramref name="createArgs"/>
+    /// and terminates the hook process.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result says what came
     /// of the hook.</returns>
     /// <exception cref="BuildFailedException">The hook exited with an exit code that is a failure.</exception>
-    public Task<HookOutcome> RunHookAsync<TArgs>(
-        TArgs args,
+    public async Task<HookOutcome> RunHookAsync<TArgs>(
+        Func<CancellationToken, Task<TArgs>> createArgs,
         bool acceptsPendingWork = false,
         CancellationToken cancellationToken = default)
         where TArgs : HookArgs, IHookEvent
     {
+        Guard.IsNotNull(createArgs);
+        var hookName = $"{TArgs.Context}/{TArgs.Event}";
+        var relativePath = WellKnownPaths.GetHookFile(TArgs.Context, TArgs.Event);
+        var path = _home.GetFullPath(relativePath);
+        if (!File.Exists(path))
+        {
+            _reporter.Info($"Hook {hookName}: skipped: no {relativePath} file.");
+            return HookOutcome.NoHook;
+        }
+
+        var args = await createArgs(cancellationToken).ConfigureAwait(false);
         Guard.IsNotNull(args);
-        return RunHookAsync(TArgs.Context, TArgs.Event, args, acceptsPendingWork, cancellationToken);
+        var argsPath = _home.GetFullPath(WellKnownPaths.GetHookArgsFile(TArgs.Context, TArgs.Event));
+        return await RunHookAsync(hookName, path, argsPath, args, acceptsPendingWork, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -100,26 +115,17 @@ internal sealed class HookRunner
         }
     }
 
-    // The core of RunHookAsync<TArgs>, working on the hook's context and event names.
+    // The core of RunHookAsync<TArgs>, once the hook's file is known to exist and its args are created.
     private async Task<HookOutcome> RunHookAsync(
-        string context,
-        string @event,
+        string hookName,
+        string path,
+        string argsPath,
         object args,
         bool acceptsPendingWork,
         CancellationToken cancellationToken)
     {
-        var hookName = $"{context}/{@event}";
-        var relativePath = WellKnownPaths.GetHookFile(context, @event);
-        var path = _home.GetFullPath(relativePath);
-        if (!File.Exists(path))
-        {
-            _reporter.Info($"Hook {hookName}: skipped: no {relativePath} file.");
-            return HookOutcome.NoHook;
-        }
-
         var json = JsonSerializer.Serialize(args, args.GetType(), BuildvanaJsonContext.Default);
         _reporter.Trace($"Hook {hookName}: args: {json}");
-        var argsPath = _home.GetFullPath(WellKnownPaths.GetHookArgsFile(context, @event));
         var argsDirectory = Path.GetDirectoryName(argsPath);
         Debug.Assert(argsDirectory is not null, "GetDirectoryName returns null only for a root, and a file path is not one.");
         _ = UserDirectory.CreateDirectory(argsDirectory);

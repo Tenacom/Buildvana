@@ -269,17 +269,19 @@ internal sealed class ReleaseCommand(
             // entry in global.json), and the packages produced by this release reach a feed only after
             // publish. A hook that needs the new versions can read them from its args'
             // Release properties instead of the rewritten files.
-            var hookArgs = hookArgsFactory.Create(
-                artifactsPath: artifactsPath,
-                simpleVersion: version.CurrentSimpleStr,
-                semVer: version.CurrentStr,
-                latest: version.Latest,
-                isPrerelease: version.IsPrerelease,
-                isPublicRelease: version.IsPublicRelease,
-                producedPackages: producedPackages,
-                dogfooding: dogfooding);
             var (hookOutcome, hookUpdates) = await git.TrackChangesAsync(
-                () => hookRunner.RunHookAsync(hookArgs, cancellationToken: cancellationToken)).ConfigureAwait(false);
+                () => hookRunner.RunHookAsync(
+                    token => hookArgsFactory.CreateAsync(
+                        artifactsPath: artifactsPath,
+                        simpleVersion: version.CurrentSimpleStr,
+                        semVer: version.CurrentStr,
+                        latest: version.Latest,
+                        isPrerelease: version.IsPrerelease,
+                        isPublicRelease: version.IsPublicRelease,
+                        producedPackages: producedPackages,
+                        dogfooding: dogfooding,
+                        cancellationToken: token),
+                    cancellationToken: cancellationToken)).ConfigureAwait(false);
             if (hookOutcome != HookOutcome.NoHook)
             {
                 switch (hookUpdates.Count)

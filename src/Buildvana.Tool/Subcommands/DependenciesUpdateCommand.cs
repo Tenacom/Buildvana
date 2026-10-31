@@ -61,9 +61,11 @@ internal sealed class DependenciesUpdateCommand(
 
         // The hook runs before the baseline is written, so the global.json it sees still states the old .NET
         // SDK version, and its args state the foreseen one.
-        var hookArgs = hookArgsFactory.Create(resolution, settings.Check);
         var hookOutcome = await hookRunner
-            .RunHookAsync(hookArgs, acceptsPendingWork: settings.Check, cancellationToken: cancellationToken)
+            .RunHookAsync(
+                token => hookArgsFactory.CreateAsync(resolution, settings.Check, token),
+                acceptsPendingWork: settings.Check,
+                cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
         if (!settings.Check)

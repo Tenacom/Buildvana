@@ -1,1 +1,62 @@
 #nullable enable
+Buildvana.Runtime.HookArgs.Solution.get -> Buildvana.Runtime.SolutionInfo!
+Buildvana.Runtime.HookArgs.Solution.init -> void
+Buildvana.Runtime.ProjectInfo
+Buildvana.Runtime.ProjectInfo.<Clone>$() -> Buildvana.Runtime.ProjectInfo!
+Buildvana.Runtime.ProjectInfo.Equals(Buildvana.Runtime.ProjectInfo? other) -> bool
+Buildvana.Runtime.ProjectInfo.IsPackable.get -> bool?
+Buildvana.Runtime.ProjectInfo.IsPackable.init -> void
+Buildvana.Runtime.ProjectInfo.PackAsTool.get -> bool?
+Buildvana.Runtime.ProjectInfo.PackAsTool.init -> void
+Buildvana.Runtime.ProjectInfo.PackageId.get -> string?
+Buildvana.Runtime.ProjectInfo.PackageId.init -> void
+Buildvana.Runtime.ProjectInfo.ProjectFile.get -> string!
+Buildvana.Runtime.ProjectInfo.ProjectFile.init -> void
+Buildvana.Runtime.ProjectInfo.ProjectInfo() -> void
+Buildvana.Runtime.ProjectInfo.TargetFrameworks.get -> System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.TargetFrameworkInfo!>!
+Buildvana.Runtime.ProjectInfo.TargetFrameworks.init -> void
+Buildvana.Runtime.SolutionInfo
+Buildvana.Runtime.SolutionInfo.<Clone>$() -> Buildvana.Runtime.SolutionInfo!
+Buildvana.Runtime.SolutionInfo.Configuration.get -> string!
+Buildvana.Runtime.SolutionInfo.Configuration.init -> void
+Buildvana.Runtime.SolutionInfo.Equals(Buildvana.Runtime.SolutionInfo? other) -> bool
+Buildvana.Runtime.SolutionInfo.Projects.get -> System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.ProjectInfo!>!
+Buildvana.Runtime.SolutionInfo.Projects.init -> void
+Buildvana.Runtime.SolutionInfo.SolutionFile.get -> string?
+Buildvana.Runtime.SolutionInfo.SolutionFile.init -> void
+Buildvana.Runtime.SolutionInfo.SolutionInfo() -> void
+Buildvana.Runtime.TargetFrameworkInfo
+Buildvana.Runtime.TargetFrameworkInfo.<Clone>$() -> Buildvana.Runtime.TargetFrameworkInfo!
+Buildvana.Runtime.TargetFrameworkInfo.DocumentationFile.get -> string?
+Buildvana.Runtime.TargetFrameworkInfo.DocumentationFile.init -> void
+Buildvana.Runtime.TargetFrameworkInfo.Equals(Buildvana.Runtime.TargetFrameworkInfo? other) -> bool
+Buildvana.Runtime.TargetFrameworkInfo.IsTestProject.get -> bool
+Buildvana.Runtime.TargetFrameworkInfo.IsTestProject.init -> void
+Buildvana.Runtime.TargetFrameworkInfo.OutputType.get -> string?
+Buildvana.Runtime.TargetFrameworkInfo.OutputType.init -> void
+Buildvana.Runtime.TargetFrameworkInfo.TargetFramework.get -> string!
+Buildvana.Runtime.TargetFrameworkInfo.TargetFramework.init -> void
+Buildvana.Runtime.TargetFrameworkInfo.TargetFrameworkInfo() -> void
+Buildvana.Runtime.TargetFrameworkInfo.TargetPath.get -> string!
+Buildvana.Runtime.TargetFrameworkInfo.TargetPath.init -> void
+override Buildvana.Runtime.ProjectInfo.Equals(object? obj) -> bool
+override Buildvana.Runtime.ProjectInfo.GetHashCode() -> int
+override Buildvana.Runtime.ProjectInfo.ToString() -> string!
+override Buildvana.Runtime.SolutionInfo.Equals(object? obj) -> bool
+override Buildvana.Runtime.SolutionInfo.GetHashCode() -> int
+override Buildvana.Runtime.SolutionInfo.ToString() -> string!
+override Buildvana.Runtime.TargetFrameworkInfo.Equals(object? obj) -> bool
+override Buildvana.Runtime.TargetFrameworkInfo.GetHashCode() -> int
+override Buildvana.Runtime.TargetFrameworkInfo.ToString() -> string!
+static Buildvana.Runtime.ProjectInfo.operator !=(Buildvana.Runtime.ProjectInfo? left, Buildvana.Runtime.ProjectInfo? right) -> bool
+static Buildvana.Runtime.ProjectInfo.operator ==(Buildvana.Runtime.ProjectInfo? left, Buildvana.Runtime.ProjectInfo? right) -> bool
+static Buildvana.Runtime.SolutionInfo.operator !=(Buildvana.Runtime.SolutionInfo? left, Buildvana.Runtime.SolutionInfo? right) -> bool
+static Buildvana.Runtime.SolutionInfo.operator ==(Buildvana.Runtime.SolutionInfo? left, Buildvana.Runtime.SolutionInfo? right) -> bool
+static Buildvana.Runtime.TargetFrameworkInfo.operator !=(Buildvana.Runtime.TargetFrameworkInfo? left, Buildvana.Runtime.TargetFrameworkInfo? right) -> bool
+static Buildvana.Runtime.TargetFrameworkInfo.operator ==(Buildvana.Runtime.TargetFrameworkInfo? left, Buildvana.Runtime.TargetFrameworkInfo? right) -> bool
+~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListProjectInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.ProjectInfo>>
+~Buildvana.Runtime.BuildvanaJsonContext.IReadOnlyListTargetFrameworkInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<Buildvana.Runtime.TargetFrameworkInfo>>
+~Buildvana.Runtime.BuildvanaJsonContext.NullableBoolean.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<bool?>
+~Buildvana.Runtime.BuildvanaJsonContext.ProjectInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.ProjectInfo>
+~Buildvana.Runtime.BuildvanaJsonContext.SolutionInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.SolutionInfo>
+~Buildvana.Runtime.BuildvanaJsonContext.TargetFrameworkInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<Buildvana.Runtime.TargetFrameworkInfo>

@@ -20,10 +20,27 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var outcome = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
+        var outcome = await runner.RunHookAsync(Returning(SampleArgs(home))).ConfigureAwait(false);
 
         await Assert.That(outcome).IsEqualTo(HookOutcome.NoHook);
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
+    }
+
+    // Creating the args can cost an evaluation of the solution's projects, which a command whose hooks are
+    // all absent must not pay.
+    [Test]
+    public async Task RunHookAsync_WithoutHookFile_CreatesNoArgs()
+    {
+        using var home = new TempHome();
+        var runner = new HookRunner(NullReporter.Instance, home.Provider, new FakeFileBasedAppRunner());
+        var created = false;
+
+        _ = await runner.RunHookAsync(_ => {
+            created = true;
+            return Task.FromResult(SampleArgs(home));
+        }).ConfigureAwait(false);
+
+        await Assert.That(created).IsFalse();
     }
 
     [Test]
@@ -34,7 +51,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var outcome = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
+        var outcome = await runner.RunHookAsync(Returning(SampleArgs(home))).ConfigureAwait(false);
 
         await Assert.That(outcome).IsEqualTo(HookOutcome.Completed);
         await Assert.That(appRunner.Runs.Count).IsEqualTo(1);
@@ -56,7 +73,7 @@ internal sealed class HookRunnerTests
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var args = SampleArgs(home);
 
-        _ = await runner.RunHookAsync(args).ConfigureAwait(false);
+        _ = await runner.RunHookAsync(Returning(args)).ConfigureAwait(false);
 
         using var document = JsonDocument.Parse(await Assert.That(argsJson).IsNotNull());
         var root = document.RootElement;
@@ -75,6 +92,10 @@ internal sealed class HookRunnerTests
         await Assert.That(release.GetProperty("isPublicRelease").GetBoolean()).IsTrue();
         await Assert.That(root.GetProperty("producedPackages").GetProperty("Buildvana.Sdk").GetString()).IsEqualTo("1.2.3-preview");
         await Assert.That(root.GetProperty("dogfooding").GetBoolean()).IsFalse();
+        var solution = root.GetProperty("solution");
+        await Assert.That(solution.GetProperty("solutionFile").GetString()).IsEqualTo(args.Solution.SolutionFile);
+        await Assert.That(solution.GetProperty("configuration").GetString()).IsEqualTo("Release");
+        await Assert.That(solution.GetProperty("projects").GetArrayLength()).IsEqualTo(0);
     }
 
     [Test]
@@ -87,7 +108,7 @@ internal sealed class HookRunnerTests
         var args = SampleArgs(home);
         args = args with { Release = args.Release with { PreviousVersion = "1.2.2" } };
 
-        _ = await runner.RunHookAsync(args).ConfigureAwait(false);
+        _ = await runner.RunHookAsync(Returning(args)).ConfigureAwait(false);
 
         var argsJson = await File.ReadAllTextAsync(ArgsPath(home)).ConfigureAwait(false);
         using var document = JsonDocument.Parse(argsJson);
@@ -102,7 +123,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        _ = await runner.RunHookAsync(SampleArgs(home)).ConfigureAwait(false);
+        _ = await runner.RunHookAsync(Returning(SampleArgs(home))).ConfigureAwait(false);
 
         await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
@@ -118,7 +139,7 @@ internal sealed class HookRunnerTests
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var args = SampleArgs(home);
 
-        await Assert.That(() => runner.RunHookAsync(args)).Throws<BuildFailedException>();
+        await Assert.That(() => runner.RunHookAsync(Returning(args))).Throws<BuildFailedException>();
         await Assert.That(File.Exists(ArgsPath(home))).IsTrue();
     }
 
@@ -132,7 +153,7 @@ internal sealed class HookRunnerTests
         var appRunner = new FakeFileBasedAppRunner { ExitCode = 1 };
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
 
-        var outcome = await runner.RunHookAsync(SampleArgs(home), acceptsPendingWork: true).ConfigureAwait(false);
+        var outcome = await runner.RunHookAsync(Returning(SampleArgs(home)), acceptsPendingWork: true).ConfigureAwait(false);
 
         await Assert.That(outcome).IsEqualTo(HookOutcome.PendingWork);
     }
@@ -146,7 +167,7 @@ internal sealed class HookRunnerTests
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var args = SampleArgs(home);
 
-        Task<HookOutcome> Act() => runner.RunHookAsync(args, acceptsPendingWork: true);
+        Task<HookOutcome> Act() => runner.RunHookAsync(Returning(args), acceptsPendingWork: true);
 
         var exception = await Assert.That(Act).Throws<BuildFailedException>();
         Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
@@ -162,7 +183,7 @@ internal sealed class HookRunnerTests
         var runner = new HookRunner(NullReporter.Instance, home.Provider, appRunner);
         var args = SampleArgs(home);
 
-        Task<HookOutcome> Act() => runner.RunHookAsync(args);
+        Task<HookOutcome> Act() => runner.RunHookAsync(Returning(args));
 
         _ = await Assert.That(Act).Throws<BuildFailedException>();
     }
@@ -179,7 +200,7 @@ internal sealed class HookRunnerTests
         _ = Directory.CreateDirectory(ArgsPath(home));
         var args = SampleArgs(home);
 
-        Task<HookOutcome> Act() => runner.RunHookAsync(args);
+        Task<HookOutcome> Act() => runner.RunHookAsync(Returning(args));
 
         await Assert.That(Act).Throws<BuildFailedException>().WithMessageContaining("Could not write to", StringComparison.Ordinal);
         await Assert.That(appRunner.Runs.Count).IsEqualTo(0);
@@ -249,7 +270,15 @@ internal sealed class HookRunnerTests
         },
         ProducedPackages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "1.2.3-preview" },
         Dogfooding = false,
+        Solution = new() {
+            SolutionFile = Path.Combine(home.RootPath, "Test.slnx"),
+            Configuration = "Release",
+            Projects = [],
+        },
     };
+
+    private static Func<CancellationToken, Task<PostReleaseHookArgs>> Returning(PostReleaseHookArgs args)
+        => _ => Task.FromResult(args);
 
     private static string WriteHookFile(TempHome home, string context, string @event)
     {

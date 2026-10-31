@@ -56,6 +56,8 @@ internal sealed class PostReleaseHookArgsTests
             await Assert.That(loaded.Release).IsEqualTo(written.Release);
             await Assert.That(loaded.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("1.2.3-preview");
             await Assert.That(loaded.Dogfooding).IsEqualTo(written.Dogfooding);
+            await Assert.That(loaded.Solution.Projects[0].TargetFrameworks[0]).IsEqualTo(written.Solution.Projects[0].TargetFrameworks[0]);
+            await Assert.That(loaded.Solution.Projects[1].IsPackable).IsNull();
         }
         finally
         {
@@ -163,6 +165,36 @@ internal sealed class PostReleaseHookArgsTests
         },
         ProducedPackages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "1.2.3-preview" },
         Dogfooding = true,
+        Solution = new() {
+            SolutionFile = Path.Combine(home, "Test.slnx"),
+            Configuration = "Release",
+            Projects = [
+                new() {
+                    ProjectFile = Path.Combine(home, "src", "A", "A.csproj"),
+                    IsPackable = true,
+                    PackAsTool = false,
+                    PackageId = "A",
+                    TargetFrameworks = [
+                        new() {
+                            TargetFramework = "net10.0",
+                            TargetPath = Path.Combine(home, "src", "A", "bin", "Release", "net10.0", "A.dll"),
+                            DocumentationFile = null,
+                            OutputType = "Library",
+                            IsTestProject = false,
+                        },
+                    ],
+                },
+
+                // A project Buildvana SDK does not reach states nothing, and its nulls must round-trip.
+                new() {
+                    ProjectFile = Path.Combine(home, "src", "B", "B.csproj"),
+                    IsPackable = null,
+                    PackAsTool = null,
+                    PackageId = null,
+                    TargetFrameworks = [],
+                },
+            ],
+        },
     };
 
     private static string NewDir()

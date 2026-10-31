@@ -15,6 +15,7 @@ This page says which events exist, how to write a hook, and what `bv` passes to 
 - [Writing a hook](#writing-a-hook)
   - [Dependencies](#dependencies)
 - [The hook args](#the-hook-args)
+- [The solution model](#the-solution-model)
 - [The repository configuration](#the-repository-configuration)
 - [The build environment](#the-build-environment)
 - [Cleaning hook build caches](#cleaning-hook-build-caches)
@@ -160,7 +161,8 @@ For the release hook, that is `.buildvana-temp/hook-args/release/post-release.js
 `bv` rewrites the file before each run of the hook and leaves it in place afterwards, which is what makes a hook replayable by hand.
 `bv` logs the content at `trace` level, visible at `diagnostic` verbosity.
 Each hook has an args type of its own, whose `Load()` method reads the file.
-The `RuntimeInfo` section is the part every args type shares.
+The `RuntimeInfo` and `Solution` sections are the parts every args type shares.
+[The solution model](#the-solution-model) describes the `Solution` section.
 
 `PostReleaseHookArgs.Load()` reads the args of the `release/post-release` hook.
 The members are:
@@ -215,6 +217,88 @@ Dictionary keys and the names of enumeration values, such as the `State` of a re
 Add it to `.gitignore`.
 `bv` never counts its content as a change a hook made, because the directory is excluded from working-tree change detection.
 Without the ignore entry, Git tooling shows the args files as untracked.
+
+---
+
+## The solution model
+
+The `Solution` section of the args describes the projects of the solution file in the home directory, as MSBuild evaluates them.
+A hook reads the facts of a project there, instead of deriving them from the conventions of the repository.
+
+| Member                   | Type           | Content                                                                                    |
+| ------------------------ | -------------- | ------------------------------------------------------------------------------------------ |
+| `Solution.SolutionFile`  | string or null | The absolute path of the solution file, or `null` when the home directory has none.        |
+| `Solution.Configuration` | string         | The build configuration the projects were evaluated in.                                    |
+| `Solution.Projects`      | array          | One entry per project of the solution file, in the order the solution file states them.    |
+
+Each entry of `Projects` states one project:
+
+| Member             | Type            | Content                                                                                                 |
+| ------------------ | --------------- | ------------------------------------------------------------------------------------------------------- |
+| `ProjectFile`      | string          | The absolute path of the project file.                                                                  |
+| `IsPackable`       | boolean or null | Whether the `IsPackable` property evaluates to `true`, or `null` when the project was not evaluated.    |
+| `PackAsTool`       | boolean or null | Whether the `PackAsTool` property evaluates to `true`, or `null` when the project was not evaluated.    |
+| `PackageId`        | string or null  | The value of the `PackageId` property, or `null` when it is empty or the project was not evaluated.     |
+| `TargetFrameworks` | array           | One entry per target framework of the project, in the order the project states them.                    |
+
+Each entry of `TargetFrameworks` states one target framework:
+
+| Member              | Type           | Content                                                                                                |
+| ------------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| `TargetFramework`   | string         | The target framework, as the project states it, such as `net10.0`.                                     |
+| `TargetPath`        | string         | The absolute path of the built assembly.                                                               |
+| `DocumentationFile` | string or null | The absolute path of the XML documentation file next to `TargetPath`, or `null` when there is none.    |
+| `OutputType`        | string or null | The value of the `OutputType` property, or `null` when it is empty.                                    |
+| `IsTestProject`     | boolean        | Whether the `IsTestProject` property evaluates to `true`.                                              |
+
+The facts of a project come from the evaluation that `dotnet pack` uses, which is the outer build of a multi-targeting project.
+The facts of a target framework come from the evaluation for that target framework.
+A package can set `OutputType` or `IsTestProject` in its build files, and NuGet imports those files for one target framework at a time.
+
+A project that Buildvana SDK does not reach is not evaluated.
+Its entry states the `ProjectFile`, `null` for every other fact, and no target framework.
+
+The model states MSBuild properties, and derives no project type from them.
+A project can be several things at once: a test project on Microsoft.Testing.Platform has `OutputType` `Exe`, for example.
+The hook decides what a combination of properties means to it.
+
+`bv` evaluates the projects in the build configuration of the command.
+`bv release` uses `release.configuration`, and `bv dependencies` uses `dotnet.configuration`.
+The paths state where a build in that configuration puts its files.
+The files exist only when the command has built them, as `bv release` has when its hook runs.
+
+The evaluation receives the build configuration, and no other build argument.
+A build argument that moves the output makes the paths wrong.
+Examples are `-p:OutputPath=...` among the forwarded arguments, or in a `dotnet.<command>.args` setting of `buildvana.jsonc`.
+
+`bv` evaluates the projects at most once per command, right before the first hook whose file exists.
+A command whose hooks are all absent evaluates nothing.
+Every hook of the command gets the same model.
+A hook that changes a project file does not change the model the next hook gets.
+
+A `release/post-release` hook that lists the assembly and the documentation file of every package the release produced:
+
+```csharp
+#:package Buildvana.Runtime
+
+using System;
+using Buildvana.Runtime;
+
+var hookArgs = PostReleaseHookArgs.Load();
+foreach (var project in hookArgs.Solution.Projects)
+{
+    var isProduced = project.PackageId is { } packageId && hookArgs.ProducedPackages.ContainsKey(packageId);
+    if (!isProduced)
+    {
+        continue;
+    }
+
+    foreach (var targetFramework in project.TargetFrameworks)
+    {
+        Console.WriteLine($"{targetFramework.TargetPath} {targetFramework.DocumentationFile ?? "(no documentation file)"}");
+    }
+}
+```
 
 ---
 
