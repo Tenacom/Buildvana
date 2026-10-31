@@ -88,7 +88,7 @@ internal sealed class DependencyDiscoveryTests
             new GlobalJsonPinReader(provider, jsonHelper),
             new ToolPinReader(provider, jsonHelper),
             new DirectivePinReader(provider, config),
-            new SolutionPinReader(provider, runner, reporter),
+            new SolutionPinReader(new SolutionTargetRunner(provider, runner, reporter), reporter),
             new PackagePinReader(provider, reporter),
             new AdditionalGroupPinReader(provider, config, runner, reporter));
 

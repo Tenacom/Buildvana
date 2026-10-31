@@ -78,6 +78,7 @@ internal static class ServiceCollectionExtensions
                 .AddSingleton<IProcessRunner, ProcessRunner>()
                 .AddSingleton<ISolutionContextFactory, HomeDirectorySolutionContextFactory>()
                 .AddSingleton<SolutionContext>(static sp => sp.GetRequiredService<ISolutionContextFactory>().Create())
+                .AddSingleton<SolutionTargetRunner>()
                 .AddSingleton<IGitService, GitService>()
                 .AddSingleton<DeclaredApiFilesService>()
                 .AddSingleton(static _ => CIPlatform.Detect(Environment.GetEnvironmentVariable))
