@@ -89,9 +89,7 @@ internal sealed class DependencyDiscovery(
     {
         // The solution is read only when the packages scope is selected: a repository with no solution file
         // still has a global.json and a tool manifest, and `bv dependencies --netsdk` must work in it.
-        var context = solution.Value;
-        var projectPaths = context.Model.SolutionProjects.Select(context.ResolveProjectPath).ToList();
-        var dumps = await solutionPins.ReadAsync(projectPaths, cancellationToken).ConfigureAwait(false);
+        var dumps = await solutionPins.ReadAsync(solution.Value, cancellationToken).ConfigureAwait(false);
         var solutionPackagePins = packages.Read(dumps);
         var groupPins = await groups.ReadAsync(cancellationToken).ConfigureAwait(false);
         IReadOnlyList<DependencyPin> pins = [

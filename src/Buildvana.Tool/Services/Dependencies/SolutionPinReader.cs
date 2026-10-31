@@ -34,25 +34,25 @@ internal sealed class SolutionPinReader(SolutionTargetRunner runner, IReporter r
     };
 
     /// <summary>
-    /// Runs the pin dump target on the given projects and returns what it wrote.
+    /// Runs the pin dump target on every project of a solution and returns what it wrote.
     /// </summary>
-    /// <param name="projectPaths">The full paths of the solution's projects.</param>
+    /// <param name="solution">The solution whose projects the target runs on.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned process.</param>
     /// <returns>One dump per evaluation: one per project, or one per target framework of a multi-targeting
     /// project. A project the Buildvana SDK does not reach contributes none.</returns>
     /// <exception cref="BuildFailedException">The evaluation failed, or a dump could not be read.</exception>
     public async Task<IReadOnlyList<PackagePinDump>> ReadAsync(
-        IReadOnlyList<string> projectPaths,
+        SolutionContext solution,
         CancellationToken cancellationToken = default)
     {
-        Guard.IsNotNull(projectPaths);
-        if (projectPaths.Count == 0)
+        Guard.IsNotNull(solution);
+        if (solution.Model.SolutionProjects.Count == 0)
         {
             return [];
         }
 
         reporter.Info("Reading the solution's package pins...");
-        var dumps = await runner.RunAsync(Target, projectPaths, Properties, cancellationToken).ConfigureAwait(false);
+        var dumps = await runner.RunAsync(Target, solution, Properties, cancellationToken).ConfigureAwait(false);
 
         // A project whose SDK does not define the dump target is skipped rather than fatal, which is what
         // lets a solution hold projects the Buildvana SDK never sees. When no project at all answered, the

@@ -1,8 +1,10 @@
 // Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using CommunityToolkit.Diagnostics;
 using Microsoft.VisualStudio.SolutionPersistence.Model;
 
@@ -29,6 +31,11 @@ internal static class SolutionContextExtensions
                 return directory;
             }
         }
+
+        /// <summary>
+        /// Gets the absolute paths of the solution's project files, in the order the solution file states them.
+        /// </summary>
+        public IReadOnlyList<string> ProjectPaths => [.. @this.Model.SolutionProjects.Select(@this.ResolveProjectPath)];
 
         /// <summary>
         /// Resolves a path that is relative to <see cref="SolutionDirectory"/> into an absolute path,

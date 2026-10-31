@@ -39,26 +39,27 @@ internal sealed class SolutionTargetRunner(IHomeDirectoryProvider home, IProcess
     private const string DriverProjectFileName = "driver.proj";
 
     /// <summary>
-    /// Runs a target on the given projects and returns what it wrote.
+    /// Runs a target on every project of a solution and returns what it wrote.
     /// </summary>
     /// <typeparam name="T">The type of the content of each file the target writes.</typeparam>
     /// <param name="target">The target to run.</param>
-    /// <param name="projectPaths">The full paths of the solution's projects.</param>
+    /// <param name="solution">The solution whose projects the target runs on.</param>
     /// <param name="properties">The global properties of the run, besides the one that names the output
-    /// directory.</param>
+    /// directory and the ones a solution build gives every project.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned process.</param>
     /// <returns>The content of each file the target wrote, in no particular order. A project the Buildvana SDK
     /// does not reach contributes none.</returns>
     /// <exception cref="BuildFailedException">The evaluation failed, or a file could not be read.</exception>
     public async Task<IReadOnlyList<T>> RunAsync<T>(
         SolutionTarget<T> target,
-        IReadOnlyList<string> projectPaths,
+        SolutionContext solution,
         IReadOnlyDictionary<string, string> properties,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(target);
-        Guard.IsNotNull(projectPaths);
+        Guard.IsNotNull(solution);
         Guard.IsNotNull(properties);
+        var projectPaths = solution.ProjectPaths;
         if (projectPaths.Count == 0)
         {
             return [];
@@ -70,6 +71,7 @@ internal sealed class SolutionTargetRunner(IHomeDirectoryProvider home, IProcess
         WriteFile(driverPath, SolutionDriverProject.Create(projectPaths, target.Name));
         string[] propertyArgs = [
             $"-property:{target.OutputDirectoryProperty}={directory}",
+            .. SolutionProperties(solution).Select(static pair => $"-property:{pair.Key}={pair.Value}"),
             .. properties.Select(static pair => $"-property:{pair.Key}={pair.Value}"),
         ];
 
@@ -106,6 +108,22 @@ internal sealed class SolutionTargetRunner(IHomeDirectoryProvider home, IProcess
         {
             throw new BuildFailedException($"Could not write '{path}': {e.Message}", e);
         }
+    }
+
+    // A solution build gives every project these global properties, and a project may derive its output paths
+    // from them, as in `$(SolutionDir)bin/`. Without them, the evaluation would state paths the build never
+    // wrote. Names and values follow AddGlobalProperties in MSBuild's SolutionProjectGenerator, where
+    // SolutionDir ends with a directory separator.
+    private static Dictionary<string, string> SolutionProperties(SolutionContext solution)
+    {
+        var directory = solution.SolutionDirectory;
+        return new() {
+            ["SolutionDir"] = Path.EndsInDirectorySeparator(directory) ? directory : directory + Path.DirectorySeparatorChar,
+            ["SolutionExt"] = Path.GetExtension(solution.SolutionPath),
+            ["SolutionFileName"] = Path.GetFileName(solution.SolutionPath),
+            ["SolutionName"] = Path.GetFileNameWithoutExtension(solution.SolutionPath),
+            ["SolutionPath"] = solution.SolutionPath,
+        };
     }
 
     private static List<T> ReadFiles<T>(string directory, SolutionTarget<T> target)
