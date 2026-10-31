@@ -110,6 +110,28 @@ internal sealed class GitServiceTests
         await Assert.That(changedFiles[0]).IsEqualTo(Path.Combine(repo.RootPath, "b.txt"));
     }
 
+    // A hook can delete a tracked file, as a documentation generator deletes its stale pages. The commit that follows
+    // the hook has to record the deletion.
+    [Test]
+    public async Task TrackChangesAsync_ReportsFileDeletedByOperation_AndStageStagesItsRemoval()
+    {
+        using var repo = CreateRepoWithCommit();
+        using var git = CreateGitService(repo);
+        var deletedFilePath = Path.Combine(repo.RootPath, "a.txt");
+
+        var (_, changedFiles) = await git.TrackChangesAsync(() => {
+            File.Delete(deletedFilePath);
+            return Task.FromResult(true);
+        }).ConfigureAwait(false);
+        git.Stage([.. changedFiles]);
+        git.CommitterIdentity = new("Release Bot", "bot@example.invalid");
+        git.Commit("Deletion commit");
+
+        await Assert.That(changedFiles).IsEquivalentTo([deletedFilePath]);
+        await Assert.That(repo.GetCommits(1)[0].ChangedFiles).IsEquivalentTo(["a.txt"]);
+        await Assert.That(git.GetDirtyFiles().Count).IsEqualTo(0);
+    }
+
     [Test]
     public async Task TrackChangesAsync_WhenOperationThrows_Propagates()
     {
