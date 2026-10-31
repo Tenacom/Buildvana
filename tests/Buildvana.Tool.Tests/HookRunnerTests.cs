@@ -33,11 +33,12 @@ internal sealed class HookRunnerTests
     {
         using var home = new TempHome();
         var runner = new HookRunner(NullReporter.Instance, home.Provider, new FakeFileBasedAppRunner());
+        var args = SampleArgs(home);
         var created = false;
 
         _ = await runner.RunHookAsync(_ => {
             created = true;
-            return Task.FromResult(SampleArgs(home));
+            return Task.FromResult(args);
         }).ConfigureAwait(false);
 
         await Assert.That(created).IsFalse();
