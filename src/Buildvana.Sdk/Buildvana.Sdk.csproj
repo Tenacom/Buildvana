@@ -27,14 +27,6 @@
     <!-- Remove the <dependencies> tag from .nupkg, because it makes the package "depend" on our TargetPlatform. -->
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
 
-    <!--
-      Prevent the SDK from adding an actual ProjectReference item for binary packages.
-      Dependency on them is set in the solution file.
-      The project system won't let you ProjectReference a multi-targeting project.
-      See https://github.com/dotnet/msbuild/issues/4303
-    -->
-    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
-
   </PropertyGroup>
 
   <!-- Package contents -->
@@ -235,11 +227,20 @@
   <Target Name="PublishBinariesInOutputDirectory"
           AfterTargets="CoreBuild">
 
+    <!-- Build binary projects first.
+         This call adds no global property, so it targets the same instance of each project as the solution build,
+         which gives every project the same global properties.
+         MSBuild then waits for that build, or returns its results, instead of building the project a second time.
+         A solution build dependency would not do: a command-line build honors one only through a synthetic ProjectReference,
+         which can fail with MSB4057. See https://github.com/dotnet/msbuild/issues/4303 -->
+
+    <MSBuild Projects="@(_BinaryProject)"
+             Targets="Build" />
+
     <!-- Publish binary projects.
          Do not delete existing files, as some files are in common between projects and we don't want a second Publish to delete them.
          Do not build them either: the global properties below make a second instance of each binary project and of its references,
-         and a build of that instance would write the same outputs as the solution build, at the same time.
-         The solution file makes this project depend on the binary projects, so their outputs exist by now. -->
+         and a build of that instance would write the same outputs as the solution build, at the same time. -->
 
     <MSBuild Projects="%(_BinaryProject.Identity)"
              Targets="Publish"

@@ -89,9 +89,7 @@
     <Project Path="src/Buildvana.Runtime/Buildvana.Runtime.csproj" />
     <Project Path="src/Buildvana.Sdk.SourceGenerators/Buildvana.Sdk.SourceGenerators.csproj" />
     <Project Path="src/Buildvana.Sdk.Tasks/Buildvana.Sdk.Tasks.csproj" />
-    <Project Path="src/Buildvana.Sdk/Buildvana.Sdk.csproj">
-      <BuildDependency Project="src/Buildvana.Sdk.Tasks/Buildvana.Sdk.Tasks.csproj" />
-    </Project>
+    <Project Path="src/Buildvana.Sdk/Buildvana.Sdk.csproj" />
     <Project Path="src/Buildvana.Tool/Buildvana.Tool.csproj" />
   </Folder>
   <Folder Name="/tests/">
