@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New features
 
 - The args of every hook carry a [model of the solution's projects](docs/hooks.md#the-solution-model) in `Solution`, with `TargetPath`, `DocumentationFile`, `PackageId`, and other evaluated MSBuild properties.
+- `bv release` runs a [`release/post-pack` hook](docs/hooks.md#the-releasepost-pack-hook) after the pack step, and the files it changes join the release commit that the release tag names.
 
 ### Changes to existing features
 

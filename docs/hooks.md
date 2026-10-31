@@ -10,6 +10,7 @@ This page says which events exist, how to write a hook, and what `bv` passes to 
 <!-- markdownlint-enable MD036 -->
 
 - [Events and paths](#events-and-paths)
+- [The `release/post-pack` hook](#the-releasepost-pack-hook)
 - [The `release/post-release` hook](#the-releasepost-release-hook)
 - [The `deps/post-update` hook](#the-depspost-update-hook)
 - [Writing a hook](#writing-a-hook)
@@ -28,12 +29,39 @@ This page says which events exist, how to write a hook, and what `bv` passes to 
 A hook lives at `.buildvana/hooks/<context>/<event>.cs`.
 `<event>` names the event: the moment at which `bv` runs the hook.
 `<context>` names the context the event belongs to, which is always the invoking command.
-Two events exist: `release/post-release` and `deps/post-update`.
+Three events exist: `release/post-pack`, `release/post-release`, and `deps/post-update`.
 
 A hook is optional.
 When the file is absent, `bv` skips it and says so at `info` level.
 
 `bv` runs every hook with the home directory as its working directory, so a relative path in a hook resolves against the home directory.
+
+---
+
+## The `release/post-pack` hook
+
+A repository may derive files from the code it releases, such as API documentation generated from the assemblies.
+The derived files must describe the released code, and the release tag must name them.
+
+`bv release` runs `.buildvana/hooks/release/post-pack.cs` after the artifacts are packed and the changelog section is finalized.
+The hook runs before the `release/post-release` hook, and before anything is pushed.
+
+The hook reports nothing back.
+`bv` snapshots the working tree before and after the hook.
+The files the hook added, changed, or deleted join the release commit, which the release tag names.
+The `release/post-release` hook then finds them committed.
+
+The build does not see the changes of the hook, so the artifacts lack every file the hook writes.
+Do not generate a file that goes into a package, such as a `NuGet-README.md`, in this hook.
+
+The changes of the hook must not move the version.
+When the release commit, with the changes of the hook, yields a version other than the one the artifacts carry, the release fails.
+A change to `VERSION` is one that moves the version.
+
+A non-zero exit code aborts the release, and the rollback undoes the release commit.
+
+The release commit gets a new SHA when `bv` adds the changes of the hook to it.
+To link to the released source, use the release tag, which is `Release.SemVer`.
 
 ---
 
@@ -157,7 +185,7 @@ To use library code of the repository in a hook, reference its project with `#:p
 ## The hook args
 
 `bv` serializes the args of the run to a file per hook, `.buildvana-temp/hook-args/<context>/<event>.json` in the home directory.
-For the release hook, that is `.buildvana-temp/hook-args/release/post-release.json`.
+For the `release/post-release` hook, that is `.buildvana-temp/hook-args/release/post-release.json`.
 `bv` rewrites the file before each run of the hook and leaves it in place afterwards, which is what makes a hook replayable by hand.
 `bv` logs the content at `trace` level, visible at `diagnostic` verbosity.
 Each hook has an args type of its own, whose `Load()` method reads the file.
@@ -183,6 +211,9 @@ The members are:
 | `Release.IsPublicRelease`        | boolean        | Whether the release is a public release. Always `true`, because `bv release` requires a public release.                                                              |
 | `ProducedPackages`               | dictionary     | The packages the release produced, from package id to version.                                                                                                       |
 | `Dogfooding`                     | boolean        | Whether the built-in self-reference rewrites run in this release: the resolved value, which `--dogfood` may have set away from the configured one.                   |
+
+`PostPackHookArgs.Load()` reads the args of the `release/post-pack` hook.
+It carries every member of `PostReleaseHookArgs` except `Dogfooding`, which describes the rewrites that follow the `release/post-release` hook.
 
 `PostUpdateHookArgs.Load()` reads the args of the `deps/post-update` hook.
 It carries the same `RuntimeInfo` section, plus:
@@ -265,7 +296,7 @@ The hook decides what a combination of properties means to it.
 `bv` evaluates the projects in the build configuration of the command.
 `bv release` uses `release.configuration`, and `bv dependencies` uses `dotnet.configuration`.
 The paths state where a build in that configuration puts its files.
-The files exist only when the command has built them, as `bv release` has when its hook runs.
+The files exist only when the command has built them, as `bv release` has when its hooks run.
 
 The evaluation receives the build configuration, and no other build argument.
 A build argument that moves the output makes the paths wrong.

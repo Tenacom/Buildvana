@@ -252,7 +252,8 @@ internal sealed class ServerRelease : IAsyncDisposable
     /// </summary>
     /// <remarks>
     /// <para>The tag is created here, and not with the release commit, because the release commit is amended
-    /// until the changelog is finalized after the build.</para>
+    /// after the build, to finalize the changelog and to add the changes of the <c>release/post-pack</c>
+    /// hook.</para>
     /// <para>The publisher checks the assets first, so that an asset the host refuses fails the release before
     /// the push, and before the caller pushes the packages to a feed that nothing can delete them from.</para>
     /// </remarks>
