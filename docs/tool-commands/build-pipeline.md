@@ -43,6 +43,10 @@ The last two come last, so that no configured or forwarded argument overrides th
 Every `dotnet` command of a step also gets the environment variables of the `dotnet.all` section, and then those of the `dotnet.<command>` section.
 A `null` value removes the variable from the environment of the child.
 
+The evaluation behind the [solution model](../hooks.md#the-solution-model) of the hooks gets the build configuration alone.
+The other arguments and environment variables above do not reach it.
+A setting that moves the output, such as `-p:OutputPath=...` in `dotnet.build.args`, makes the paths of the model wrong.
+
 `bv` sets no `-maxcpucount`, so MSBuild uses its default parallelism unless you forward `-m` or `-maxcpucount`.
 
 The build pipeline commands observe [cancellation](../command-line.md#cancellation).
@@ -141,6 +145,9 @@ Everything after the first `--` is forwarded to `dotnet` verbatim, in the order 
 `bv` neither parses nor validates it, with one exception, the build configuration, described [below](#the-build-configuration).
 The forwarded arguments reach the `dotnet` command of every step of the run, and not the property probe of [`bv test`](#bv-test).
 `bv pack -- -m:8` passes `-m:8` to `dotnet restore`, `dotnet build`, `dotnet test`, and `dotnet pack` alike.
+
+The forwarded arguments do not reach the evaluation behind the [solution model](../hooks.md#the-solution-model) of the hooks either.
+A forwarded argument that moves the output, such as `-p:OutputPath=...`, makes the paths of the model wrong.
 
 A malformed or unknown forwarded argument is an error from `dotnet`, or from the test application under `dotnet test`, and not from `bv`.
 
