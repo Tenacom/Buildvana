@@ -9,6 +9,7 @@ using Buildvana.Core.Dependencies;
 using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
 using Buildvana.Tool.Services.Dependencies;
+using Buildvana.Tool.Services.Solution;
 
 // The reader spawns MSBuild, so the process runner is a fake here, scripted to write what the SDK's dump
 // target would have written into the directory the command line names.
@@ -25,8 +26,8 @@ internal sealed class SolutionPinReaderTests
         _ = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
         var args = string.Join(" ", runner.Runs.Single().Args);
         await Assert.That(args).Contains("msbuild");
-        await Assert.That(args).Contains("pin-dump.proj");
-        await Assert.That(args).Contains("-target:" + PinDumpDriverProject.TargetName);
+        await Assert.That(args).Contains("driver.proj");
+        await Assert.That(args).Contains("-target:" + SolutionDriverProject.TargetName);
         await Assert.That(args).Contains(DumpDirectoryArgumentPrefix);
         await Assert.That(args).Contains("-property:BV_SuppressTransitiveOverrides=true");
     }
@@ -60,7 +61,7 @@ internal sealed class SolutionPinReaderTests
     {
         using var home = new TempHome();
         var reporter = new CaptureReporter();
-        var reader = new SolutionPinReader(home.Provider, new FakeProcessRunner(), reporter);
+        var reader = new SolutionPinReader(new SolutionTargetRunner(home.Provider, new FakeProcessRunner(), reporter), reporter);
         var dumps = await reader.ReadAsync([ProjectPath]).ConfigureAwait(false);
         await Assert.That(dumps).IsEmpty();
         await Assert.That(reporter.Messages.Any(static message => message.Level == MessageLevel.Warning)).IsTrue();
@@ -105,7 +106,7 @@ internal sealed class SolutionPinReaderTests
     }
 
     private static SolutionPinReader CreateReader(TempHome home, IProcessRunner runner)
-        => new(home.Provider, runner, NullReporter.Instance);
+        => new(new SolutionTargetRunner(home.Provider, runner, NullReporter.Instance), NullReporter.Instance);
 
     private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDumps(
         string projectName,
