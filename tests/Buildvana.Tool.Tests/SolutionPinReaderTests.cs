@@ -15,15 +15,20 @@ using Buildvana.Tool.Services.Solution;
 // target would have written into the directory the command line names.
 internal sealed class SolutionPinReaderTests
 {
-    private const string ProjectPath = @"C:\repo\src\A\A.csproj";
     private const string DumpDirectoryArgumentPrefix = "-property:BV_PinDumpDirectory=";
+
+    private const string Solution = """
+                                    <Solution>
+                                      <Project Path="src/A/A.csproj" />
+                                    </Solution>
+                                    """;
 
     [Test]
     public async Task ReadAsync_RunsTheDumpTargetThroughADriverProject()
     {
         using var home = new TempHome();
         var runner = new FakeProcessRunner { OnRun = WriteDumps("A", "net10.0") };
-        _ = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
+        _ = await CreateReader(home, runner).ReadAsync(CreateSolution(home)).ConfigureAwait(false);
         var args = string.Join(" ", runner.Runs.Single().Args);
         await Assert.That(args).Contains("msbuild");
         await Assert.That(args).Contains("driver.proj");
@@ -37,7 +42,7 @@ internal sealed class SolutionPinReaderTests
     {
         using var home = new TempHome();
         var runner = new FakeProcessRunner { OnRun = WriteDumps("A", "net9.0", "net10.0") };
-        var dumps = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
+        var dumps = await CreateReader(home, runner).ReadAsync(CreateSolution(home)).ConfigureAwait(false);
         await Assert.That(dumps.Count).IsEqualTo(2);
         await Assert.That(dumps.Select(static dump => dump.TargetFramework)).Contains("net10.0");
     }
@@ -50,7 +55,7 @@ internal sealed class SolutionPinReaderTests
         using var home = new TempHome();
         WriteStaleDump(home);
         var runner = new FakeProcessRunner { OnRun = WriteDumps("A", "net10.0") };
-        var dumps = await CreateReader(home, runner).ReadAsync([ProjectPath]).ConfigureAwait(false);
+        var dumps = await CreateReader(home, runner).ReadAsync(CreateSolution(home)).ConfigureAwait(false);
         await Assert.That(dumps.Single().ProjectFullPath).Contains("A.csproj");
     }
 
@@ -62,7 +67,7 @@ internal sealed class SolutionPinReaderTests
         using var home = new TempHome();
         var reporter = new CaptureReporter();
         var reader = new SolutionPinReader(new SolutionTargetRunner(home.Provider, new FakeProcessRunner(), reporter), reporter);
-        var dumps = await reader.ReadAsync([ProjectPath]).ConfigureAwait(false);
+        var dumps = await reader.ReadAsync(CreateSolution(home)).ConfigureAwait(false);
         await Assert.That(dumps).IsEmpty();
         await Assert.That(reporter.Messages.Any(static message => message.Level == MessageLevel.Warning)).IsTrue();
     }
@@ -72,7 +77,7 @@ internal sealed class SolutionPinReaderTests
     {
         using var home = new TempHome();
         var runner = new FakeProcessRunner();
-        var dumps = await CreateReader(home, runner).ReadAsync([]).ConfigureAwait(false);
+        var dumps = await CreateReader(home, runner).ReadAsync(CreateSolution(home, "<Solution />")).ConfigureAwait(false);
         await Assert.That(dumps).IsEmpty();
         await Assert.That(runner.Runs).IsEmpty();
     }
@@ -87,7 +92,8 @@ internal sealed class SolutionPinReaderTests
         };
 
         var reader = CreateReader(home, runner);
-        var exception = await Assert.That(async () => await reader.ReadAsync([ProjectPath]).ConfigureAwait(false))
+        var solution = CreateSolution(home);
+        var exception = await Assert.That(async () => await reader.ReadAsync(solution).ConfigureAwait(false))
             .Throws<BuildFailedException>();
         Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
         await Assert.That(exception.ExitCode).IsEqualTo(3);
@@ -99,7 +105,8 @@ internal sealed class SolutionPinReaderTests
         using var home = new TempHome();
         var runner = new FakeProcessRunner { OnRun = WriteText("broken.json", "{ not json") };
         var reader = CreateReader(home, runner);
-        var exception = await Assert.That(async () => await reader.ReadAsync([ProjectPath]).ConfigureAwait(false))
+        var solution = CreateSolution(home);
+        var exception = await Assert.That(async () => await reader.ReadAsync(solution).ConfigureAwait(false))
             .Throws<BuildFailedException>();
         Debug.Assert(exception is not null, "Throws returns null only inside Assert.Multiple.");
         await Assert.That(exception.ExitCode).IsEqualTo(3);
@@ -107,6 +114,12 @@ internal sealed class SolutionPinReaderTests
 
     private static SolutionPinReader CreateReader(TempHome home, IProcessRunner runner)
         => new(new SolutionTargetRunner(home.Provider, runner, NullReporter.Instance), NullReporter.Instance);
+
+    private static SolutionContext CreateSolution(TempHome home, string content = Solution)
+    {
+        home.WriteFile("Test.slnx", content);
+        return new HomeDirectorySolutionContextFactory(home.Provider).Create();
+    }
 
     private static Func<string, IReadOnlyList<string>, ProcessResult> WriteDumps(
         string projectName,

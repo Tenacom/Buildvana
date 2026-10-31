@@ -53,6 +53,26 @@ internal sealed class SolutionInfoReaderTests
         await Assert.That(args.Any(static arg => arg.StartsWith(DumpDirectoryArgumentPrefix, StringComparison.Ordinal))).IsTrue();
     }
 
+    // A project may derive its output paths from the properties a solution build gives it, so the evaluation
+    // gives the same ones.
+    [Test]
+    public async Task ReadAsync_EvaluatesWithThePropertiesOfASolutionBuild()
+    {
+        using var home = new TempHome();
+        home.WriteFile("Test.slnx", Solution);
+        var runner = new FakeProcessRunner();
+
+        _ = await CreateReader(home, runner).ReadAsync("Release").ConfigureAwait(false);
+
+        var args = runner.Runs.Single().Args;
+        var solutionDirectory = home.RootPath.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        await Assert.That(args).Contains("-property:SolutionDir=" + solutionDirectory);
+        await Assert.That(args).Contains("-property:SolutionExt=.slnx");
+        await Assert.That(args).Contains("-property:SolutionFileName=Test.slnx");
+        await Assert.That(args).Contains("-property:SolutionName=Test");
+        await Assert.That(args).Contains("-property:SolutionPath=" + Path.Combine(home.RootPath, "Test.slnx"));
+    }
+
     // Every hook of a command gets the model of one evaluation.
     [Test]
     public async Task ReadAsync_EvaluatesOncePerConfiguration()

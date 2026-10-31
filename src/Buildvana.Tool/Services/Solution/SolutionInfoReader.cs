@@ -132,7 +132,7 @@ internal sealed class SolutionInfoReader(
             return Describe(solutionFile: null, configuration, projectPaths: [], dumps: []);
         }
 
-        var projectPaths = solution.Model.SolutionProjects.Select(solution.ResolveProjectPath).ToList();
+        var projectPaths = solution.ProjectPaths;
         if (projectPaths.Count == 0)
         {
             return Describe(solution.SolutionPath, configuration, projectPaths, dumps: []);
@@ -140,7 +140,7 @@ internal sealed class SolutionInfoReader(
 
         reporter.Info($"Evaluating the solution's projects in configuration {configuration}...");
         var properties = new Dictionary<string, string> { ["Configuration"] = configuration };
-        var dumps = await runner.RunAsync(Target, projectPaths, properties, cancellationToken).ConfigureAwait(false);
+        var dumps = await runner.RunAsync(Target, solution, properties, cancellationToken).ConfigureAwait(false);
 
         // A project whose SDK does not define the target is skipped rather than fatal, which is what lets a
         // solution hold projects the Buildvana SDK never sees. When no project at all answered, every entry
