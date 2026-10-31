@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
+- The args of every hook carry a [model of the solution's projects](docs/hooks.md#the-solution-model) in `Solution`, with `TargetPath`, `DocumentationFile`, `PackageId`, and other evaluated MSBuild properties.
+
 ### Changes to existing features
 
 ### Bugs fixed in this release

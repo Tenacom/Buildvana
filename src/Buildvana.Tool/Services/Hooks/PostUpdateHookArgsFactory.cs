@@ -3,11 +3,14 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure;
 using Buildvana.Tool.Services.Dependencies;
+using Buildvana.Tool.Services.Solution;
 using CommunityToolkit.Diagnostics;
 using NuGet.Versioning;
 
@@ -19,6 +22,8 @@ namespace Buildvana.Tool.Services.Hooks;
 /// <param name="home">The home directory provider.</param>
 /// <param name="configProvider">The provider of the configuration file this run reads.</param>
 /// <param name="configuration">The resolved configuration of the run.</param>
+/// <param name="solutions">The reader of the model of the solution's projects.</param>
+/// <param name="sidecars">The reader of the generated transitive override files.</param>
 /// <remarks>
 /// <para>The additional package groups are a section of their own here, where the resolution keeps their
 /// pins among the package ones: a hook reads a group by the caption its configuration gives it.</para>
@@ -27,20 +32,33 @@ internal sealed class PostUpdateHookArgsFactory(
     IHomeDirectoryProvider home,
     BuildvanaJsonConfigProvider configProvider,
     BuildvanaConfig configuration,
+    SolutionInfoReader solutions,
     SidecarReader sidecars)
-    : HookArgsFactory<PostUpdateHookArgs>(home, configProvider, configuration)
+    : HookArgsFactory<PostUpdateHookArgs>(home, configProvider, configuration, solutions)
 {
     /// <summary>
     /// Creates the args for a <c>deps/post-update</c> hook run.
     /// </summary>
     /// <param name="resolution">What the run made of every pin.</param>
     /// <param name="check">Whether the run reports what it would do and changes nothing.</param>
-    /// <returns>A newly-created <see cref="PostUpdateHookArgs"/> instance.</returns>
-    public PostUpdateHookArgs Create(DependencyResolution resolution, bool check)
+    /// <param name="cancellationToken">A token that, when signalled, terminates the evaluation of the
+    /// projects.</param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the ongoing operation, whose result is a newly-created
+    /// <see cref="PostUpdateHookArgs"/> instance.</returns>
+    /// <remarks>
+    /// <para>The command builds nothing, so the projects are evaluated in <see cref="DotNetConfig.Configuration"/>,
+    /// the configuration of the build pipeline.</para>
+    /// </remarks>
+    public async Task<PostUpdateHookArgs> CreateAsync(
+        DependencyResolution resolution,
+        bool check,
+        CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(resolution);
+        var solution = await ReadSolutionAsync(Configuration.DotNet.Configuration, cancellationToken).ConfigureAwait(false);
         return new() {
             RuntimeInfo = CreateRuntimeInfo(CommonPaths.AllArtifacts),
+            Solution = solution,
             Check = check,
             NetSdk = resolution.NetSdk is { } netSdk ? ResultOf(netSdk) : null,
             Sdks = ResultsOf(resolution.Sdks),

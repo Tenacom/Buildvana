@@ -14,4 +14,12 @@ internal interface ISolutionContextFactory
     /// <returns>A new <see cref="SolutionContext"/> instance.</returns>
     /// <exception cref="Buildvana.Core.BuildFailedException">No solution file was found, or the solution file could not be parsed.</exception>
     SolutionContext Create();
+
+    /// <summary>
+    /// Discovers the solution file, parses it, and returns a <see cref="SolutionContext"/> describing it,
+    /// or <see langword="null"/> when there is no solution file.
+    /// </summary>
+    /// <returns>A new <see cref="SolutionContext"/> instance, or <see langword="null"/>.</returns>
+    /// <exception cref="Buildvana.Core.BuildFailedException">The solution file could not be parsed.</exception>
+    SolutionContext? TryCreate();
 }

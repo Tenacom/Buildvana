@@ -33,6 +33,17 @@ public abstract record HookArgs
     public required RuntimeInfo RuntimeInfo { get; init; }
 
     /// <summary>
+    /// Gets the projects of the solution in the home directory, as MSBuild evaluates them in the build
+    /// configuration of the command.
+    /// </summary>
+    /// <remarks>
+    /// <para>Serialized last in every args file, after the properties of the concrete args type, which
+    /// a human inspecting the file reads first.</para>
+    /// </remarks>
+    [JsonPropertyOrder(1)]
+    public required SolutionInfo Solution { get; init; }
+
+    /// <summary>
     /// Loads the args of the current run of the hook identified by <typeparamref name="TArgs"/>
     /// from the hook's args file.
     /// </summary>

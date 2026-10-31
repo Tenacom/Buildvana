@@ -2,11 +2,14 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.Configuration;
+using Buildvana.Core.ConsoleOutput;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Infrastructure.Delegation;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.Solution;
 using Buildvana.Tool.Utilities;
 using NuGet.Versioning;
 
@@ -25,7 +28,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         {
             Directory.SetCurrentDirectory(temporaryDirectory.FullName);
 
-            var args = Create(home.Provider, artifactsPath: Path.Combine("artifacts", "Release"));
+            var args = await CreateAsync(home.Provider, artifactsPath: Path.Combine("artifacts", "Release")).ConfigureAwait(false);
 
             await Assert.That(args.RuntimeInfo.ArtifactsDirectory)
                 .IsEqualTo(Path.Combine(home.RootPath, "artifacts", "Release"));
@@ -43,7 +46,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
         var absolutePath = Path.Combine(home.RootPath, "artifacts", "Release");
 
-        var args = Create(home.Provider, artifactsPath: absolutePath);
+        var args = await CreateAsync(home.Provider, artifactsPath: absolutePath).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.ArtifactsDirectory).IsEqualTo(absolutePath);
     }
@@ -53,7 +56,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home.Provider);
+        var args = await CreateAsync(home.Provider).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.HomeDirectory).IsEqualTo(home.RootPath);
         await Assert.That(args.RuntimeInfo.ScratchDirectory)
@@ -67,7 +70,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(new FixedHomeDirectoryProvider(home.RootPath + Path.DirectorySeparatorChar));
+        var args = await CreateAsync(new FixedHomeDirectoryProvider(home.RootPath + Path.DirectorySeparatorChar)).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.HomeDirectory).IsEqualTo(home.RootPath);
     }
@@ -82,7 +85,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
         home.WriteFile(fileName, "{}\n");
 
-        var args = Create(home.Provider);
+        var args = await CreateAsync(home.Provider).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.ConfigFile).IsEqualTo(Path.Combine(home.RootPath, fileName));
     }
@@ -92,7 +95,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home.Provider);
+        var args = await CreateAsync(home.Provider).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.ConfigFile).IsNull();
     }
@@ -105,7 +108,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
         var configuration = new BuildvanaConfig { Release = new() { Configuration = "Custom" } };
 
-        var args = Create(home.Provider, configuration: configuration);
+        var args = await CreateAsync(home.Provider, configuration: configuration).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.Configuration).IsSameReferenceAs(configuration);
     }
@@ -115,7 +118,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home.Provider);
+        var args = await CreateAsync(home.Provider).ConfigureAwait(false);
 
         await Assert.That(args.RuntimeInfo.Version).IsEqualTo(OwnVersion.Value.ToNormalizedString());
     }
@@ -129,11 +132,11 @@ internal sealed class PostReleaseHookArgsFactoryTests
         try
         {
             Environment.SetEnvironmentVariable(DelegationService.DelegatedEnvVar, "9.9.9");
-            var args = Create(home.Provider);
+            var args = await CreateAsync(home.Provider).ConfigureAwait(false);
             await Assert.That(args.RuntimeInfo.DelegatingVersion).IsEqualTo("9.9.9");
 
             Environment.SetEnvironmentVariable(DelegationService.DelegatedEnvVar, null);
-            args = Create(home.Provider);
+            args = await CreateAsync(home.Provider).ConfigureAwait(false);
             await Assert.That(args.RuntimeInfo.DelegatingVersion).IsNull();
         }
         finally
@@ -147,13 +150,13 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(
+        var args = await CreateAsync(
             home.Provider,
             simpleVersion: "2.3.4",
             semVer: "2.3.4-rc.1",
             latest: SemanticVersion.Parse("2.3.3"),
             isPrerelease: true,
-            isPublicRelease: false);
+            isPublicRelease: false).ConfigureAwait(false);
 
         await Assert.That(args.Release.Version).IsEqualTo("2.3.4");
         await Assert.That(args.Release.SemVer).IsEqualTo("2.3.4-rc.1");
@@ -167,7 +170,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
     {
         using var home = new TempHome();
 
-        var args = Create(home.Provider, latest: null);
+        var args = await CreateAsync(home.Provider, latest: null).ConfigureAwait(false);
 
         await Assert.That(args.Release.PreviousVersion).IsNull();
     }
@@ -178,14 +181,31 @@ internal sealed class PostReleaseHookArgsFactoryTests
         using var home = new TempHome();
         var packages = new Dictionary<string, string> { ["Buildvana.Sdk"] = "2.3.4" };
 
-        var args = Create(home.Provider, producedPackages: packages, dogfooding: true);
+        var args = await CreateAsync(home.Provider, producedPackages: packages, dogfooding: true).ConfigureAwait(false);
 
         await Assert.That(args.ProducedPackages.Count).IsEqualTo(1);
         await Assert.That(args.ProducedPackages["Buildvana.Sdk"]).IsEqualTo("2.3.4");
         await Assert.That(args.Dogfooding).IsTrue();
     }
 
-    private static PostReleaseHookArgs Create(
+    // The paths of the model name the files the release built, so the projects are evaluated in the
+    // configuration the release builds in.
+    [Test]
+    public async Task Create_EvaluatesTheProjectsInTheReleaseConfiguration()
+    {
+        using var home = new TempHome();
+        home.WriteFile("Test.slnx", """<Solution><Project Path="src/A/A.csproj" /></Solution>""");
+        var processRunner = new FakeProcessRunner();
+        var configuration = new BuildvanaConfig { Release = new() { Configuration = "Custom" } };
+
+        var args = await CreateAsync(home.Provider, configuration: configuration, processRunner: processRunner).ConfigureAwait(false);
+
+        await Assert.That(args.Solution.Configuration).IsEqualTo("Custom");
+        await Assert.That(args.Solution.Projects.Single().ProjectFile).IsEqualTo(Path.Combine(home.RootPath, "src", "A", "A.csproj"));
+        await Assert.That(processRunner.Runs.Single().Args).Contains("-property:Configuration=Custom");
+    }
+
+    private static Task<PostReleaseHookArgs> CreateAsync(
         IHomeDirectoryProvider home,
         string? artifactsPath = null,
         string simpleVersion = "1.2.3",
@@ -195,8 +215,16 @@ internal sealed class PostReleaseHookArgsFactoryTests
         bool isPublicRelease = false,
         IReadOnlyDictionary<string, string>? producedPackages = null,
         bool dogfooding = false,
-        BuildvanaConfig? configuration = null)
-        => new PostReleaseHookArgsFactory(home, new BuildvanaJsonConfigProvider(home), configuration ?? new()).Create(
+        BuildvanaConfig? configuration = null,
+        IProcessRunner? processRunner = null)
+    {
+        var solutions = new SolutionInfoReader(
+            new HomeDirectorySolutionContextFactory(home),
+            new SolutionTargetRunner(home, processRunner ?? new FakeProcessRunner(), NullReporter.Instance),
+            NullReporter.Instance);
+
+        var factory = new PostReleaseHookArgsFactory(home, new BuildvanaJsonConfigProvider(home), configuration ?? new(), solutions);
+        return factory.CreateAsync(
             artifactsPath ?? Path.Combine("artifacts", "Release"),
             simpleVersion,
             semVer,
@@ -205,4 +233,5 @@ internal sealed class PostReleaseHookArgsFactoryTests
             isPublicRelease,
             producedPackages ?? new Dictionary<string, string>(),
             dogfooding);
+    }
 }

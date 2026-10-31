@@ -26,10 +26,16 @@ internal sealed class HomeDirectorySolutionContextFactory : ISolutionContextFact
 
     /// <inheritdoc/>
     public SolutionContext Create()
+        => TryCreate() ?? throw new BuildFailedException($"Cannot find a solution file in '{_home.HomeDirectory}'.");
+
+    /// <inheritdoc/>
+    public SolutionContext? TryCreate()
     {
-        var directory = _home.HomeDirectory;
-        var path = FindSolutionFile(directory)
-            ?? throw new BuildFailedException($"Cannot find a solution file in '{directory}'.");
+        var path = FindSolutionFile(_home.HomeDirectory);
+        if (path is null)
+        {
+            return null;
+        }
 
         var serializer = SolutionSerializers.GetSerializerByMoniker(path)
             ?? throw new BuildFailedException($"No serializer supports solution file '{path}'.");

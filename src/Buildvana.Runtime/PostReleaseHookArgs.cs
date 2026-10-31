@@ -12,8 +12,8 @@ namespace Buildvana.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>The contract is additive-only: newer <c>bv</c> versions may add properties, never remove or repurpose
-/// existing ones. Properties added after the initial release must be optional with a default value, so that an
-/// args file written before an update can still be loaded.</para>
+/// existing ones. An added property may be required. An args file written before the addition then no longer
+/// loads, and running the command again rewrites it.</para>
 /// </remarks>
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed record PostReleaseHookArgs : HookArgs, IHookEvent

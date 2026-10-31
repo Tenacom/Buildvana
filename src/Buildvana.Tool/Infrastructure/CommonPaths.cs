@@ -24,6 +24,12 @@ internal static class CommonPaths
     public const string PinDump = Scratch + "/pin-dump";
 
     /// <summary>
+    /// The path of the directory where the Buildvana SDK writes the evaluated facts of the solution's projects,
+    /// one file per project, for the hook args to describe. Emptied at the start of every read.
+    /// </summary>
+    public const string ProjectEvaluationDump = Scratch + "/project-evaluation";
+
+    /// <summary>
     /// The path of the directory where build artifacts for all configurations are stored.
     /// </summary>
     public const string AllArtifacts = "artifacts";

@@ -3,10 +3,13 @@
 
 using System.Text.Json;
 using Buildvana.Core.Configuration;
+using Buildvana.Core.ConsoleOutput;
+using Buildvana.Core.Process;
 using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 using Buildvana.Tool.Services.Dependencies;
 using Buildvana.Tool.Services.Hooks;
+using Buildvana.Tool.Services.Solution;
 using NuGet.Versioning;
 
 internal sealed class PostUpdateHookArgsFactoryTests
@@ -27,7 +30,7 @@ internal sealed class PostUpdateHookArgsFactoryTests
             Packages = [Moving("Serilog", "3.0.0", "3.1.0", DependencyScope.Packages)],
         };
 
-        var args = Create(home, resolution, check: true);
+        var args = await CreateAsync(home, resolution, check: true).ConfigureAwait(false);
         await Assert.That(args.Check).IsTrue();
         var netSdk = await Assert.That(args.NetSdk).IsNotNull();
         await Assert.That(netSdk.Id).IsNull();
@@ -55,7 +58,7 @@ internal sealed class PostUpdateHookArgsFactoryTests
             ],
         };
 
-        var args = Create(home, resolution, check: false);
+        var args = await CreateAsync(home, resolution, check: false).ConfigureAwait(false);
         await Assert.That(args.Packages.Single().Id).IsEqualTo("Serilog");
         await Assert.That(args.AdditionalPackages.Single().Caption).IsEqualTo("SDK package injections");
         await Assert.That(args.AdditionalPackages.Single().Results.Single().Id).IsEqualTo("StyleCop.Analyzers");
@@ -68,7 +71,7 @@ internal sealed class PostUpdateHookArgsFactoryTests
     {
         using var home = new TempHome();
         var resolution = new DependencyResolution { Tools = [Moving("ngbv", "0.5.1", "0.6.0", DependencyScope.Tools)] };
-        var args = Create(home, resolution, check: false);
+        var args = await CreateAsync(home, resolution, check: false).ConfigureAwait(false);
         var json = JsonSerializer.Serialize(args, BuildvanaJsonContext.Default.PostUpdateHookArgs);
         await Assert.That(json).Contains("\"check\": false");
         await Assert.That(json).Contains("\"id\": \"ngbv\"");
@@ -90,7 +93,7 @@ internal sealed class PostUpdateHookArgsFactoryTests
 
         using var home = new TempHome();
         home.WriteFile("Directory.TransitiveOverrides.props", overrides);
-        var args = Create(home, new DependencyResolution(), check: false);
+        var args = await CreateAsync(home, new DependencyResolution(), check: false).ConfigureAwait(false);
         var entry = args.Overrides.Single();
         await Assert.That(entry.PackageId).IsEqualTo("Newtonsoft.Json");
         await Assert.That(entry.Version).IsEqualTo("13.0.3");
@@ -101,7 +104,23 @@ internal sealed class PostUpdateHookArgsFactoryTests
     public async Task Create_WithNoOverrideFile_StatesNone()
     {
         using var home = new TempHome();
-        await Assert.That(Create(home, new DependencyResolution(), check: false).Overrides).IsEmpty();
+        var args = await CreateAsync(home, new DependencyResolution(), check: false).ConfigureAwait(false);
+        await Assert.That(args.Overrides).IsEmpty();
+    }
+
+    // The command builds nothing, so the projects are evaluated in the configuration of the build pipeline.
+    [Test]
+    public async Task Create_EvaluatesTheProjectsInTheBuildPipelineConfiguration()
+    {
+        using var home = new TempHome();
+        home.WriteFile("Test.slnx", """<Solution><Project Path="src/A/A.csproj" /></Solution>""");
+        var processRunner = new FakeProcessRunner();
+        var configuration = new BuildvanaConfig { DotNet = new() { Configuration = "Custom" } };
+
+        var args = await CreateAsync(home, new DependencyResolution(), check: false, configuration, processRunner).ConfigureAwait(false);
+
+        await Assert.That(args.Solution.Configuration).IsEqualTo("Custom");
+        await Assert.That(processRunner.Runs.Single().Args).Contains("-property:Configuration=Custom");
     }
 
     private static PackageUpdatePolicy Policy()
@@ -124,11 +143,24 @@ internal sealed class PostUpdateHookArgsFactoryTests
             Target = NuGetVersion.Parse(to),
         };
 
-    private static PostUpdateHookArgs Create(TempHome home, DependencyResolution resolution, bool check)
-        => new PostUpdateHookArgsFactory(
+    private static Task<PostUpdateHookArgs> CreateAsync(
+        TempHome home,
+        DependencyResolution resolution,
+        bool check,
+        BuildvanaConfig? configuration = null,
+        IProcessRunner? processRunner = null)
+    {
+        var solutions = new SolutionInfoReader(
+            new HomeDirectorySolutionContextFactory(home.Provider),
+            new SolutionTargetRunner(home.Provider, processRunner ?? new FakeProcessRunner(), NullReporter.Instance),
+            NullReporter.Instance);
+
+        return new PostUpdateHookArgsFactory(
             home.Provider,
             new BuildvanaJsonConfigProvider(home.Provider),
-            new BuildvanaConfig(),
+            configuration ?? new(),
+            solutions,
             new SidecarReader(home.Provider, new CaptureReporter()))
-            .Create(resolution, check);
+            .CreateAsync(resolution, check);
+    }
 }
