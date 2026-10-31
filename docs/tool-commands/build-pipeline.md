@@ -43,7 +43,7 @@ The last two come last, so that no configured or forwarded argument overrides th
 Every `dotnet` command of a step also gets the environment variables of the `dotnet.all` section, and then those of the `dotnet.<command>` section.
 A `null` value removes the variable from the environment of the child.
 
-The evaluation behind the [solution model](../hooks.md#the-solution-model) of the hooks gets the build configuration alone.
+The evaluation behind the [solution model](../hooks.md#the-solution-model) of the hooks gets the build configuration, and the properties a solution build sets, such as `SolutionDir`.
 The other arguments and environment variables above do not reach it.
 A setting that moves the output, such as `-p:OutputPath=...` in `dotnet.build.args`, makes the paths of the model wrong.
 

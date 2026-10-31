@@ -298,7 +298,8 @@ The hook decides what a combination of properties means to it.
 The paths state where a build in that configuration puts its files.
 The files exist only when the command has built them, as `bv release` has when its hooks run.
 
-The evaluation receives the build configuration, and none of the arguments and environment variables of the [build pipeline](tool-commands/build-pipeline.md#the-pipeline).
+The evaluation receives the build configuration, and the properties a solution build sets, such as `SolutionDir`.
+It receives none of the arguments and environment variables of the [build pipeline](tool-commands/build-pipeline.md#the-pipeline).
 A build argument that moves the output makes the paths wrong.
 Examples are `-p:OutputPath=...` among the forwarded arguments, or in a `dotnet.all.args` or `dotnet.<command>.args` setting of `buildvana.jsonc`.
 
