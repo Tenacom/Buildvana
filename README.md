@@ -7,7 +7,6 @@ Releases:
 
 CI:
 [![CI](https://github.com/Tenacom/Buildvana/actions/workflows/ci.yml/badge.svg)](https://github.com/Tenacom/Buildvana/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/Tenacom/Buildvana/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Tenacom/Buildvana/actions/workflows/codeql-analysis.yml)
 [![Code coverage](https://codecov.io/gh/Tenacom/Buildvana/graph/badge.svg?token=70O2IH9GRT)](https://codecov.io/gh/Tenacom/Buildvana)
 
 Licensing and attributions:
