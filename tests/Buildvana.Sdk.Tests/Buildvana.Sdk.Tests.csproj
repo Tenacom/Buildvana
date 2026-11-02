@@ -43,6 +43,7 @@
     <AssemblyMetadata Include="RealSourceGeneratorsAfterModulesCoreTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\SourceGenerators\AfterModules.Core.targets'))" />
     <AssemblyMetadata Include="RealStandardAnalyzersModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\StandardAnalyzers\Module.targets'))" />
     <AssemblyMetadata Include="RealStandardAnalyzersUsePublicApiAnalyzersTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\StandardAnalyzers\Module.UsePublicApiAnalyzers.targets'))" />
+    <AssemblyMetadata Include="RealVersioningModuleCoreTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\Versioning\Module.Core.targets'))" />
     <AssemblyMetadata Include="RealXmlDocumentationModuleTargetsPath" Value="$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\..\src\Buildvana.Sdk\Modules\XmlDocumentation\Module.targets'))" />
   </ItemGroup>
 

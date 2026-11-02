@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bugs fixed in this release
 
+- The nuspec of a package lists a project reference at the version the [`GetBuildVersion` target](docs/sdk-modules/versioning.md#getbuildversion-target) computes, not `1.0.0`.
+
 ### Known problems introduced by this release
 
 ## [2.1.887](https://github.com/Tenacom/Buildvana/releases/tag/2.1.887) (2026-10-29)

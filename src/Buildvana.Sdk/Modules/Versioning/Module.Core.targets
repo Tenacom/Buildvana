@@ -9,6 +9,17 @@
   </PropertyGroup>
 
   <!--
+    When a project that references this one is packed, NuGet runs _GetProjectVersion on this project
+    to get the version of the package dependency.
+    That target depends on $(GetPackageVersionDependsOn) alone, and reads PackageVersion.
+    Without this, PackageVersion would be evaluated too early, before GetBuildVersion runs,
+    and would not reflect the computed version.
+  -->
+  <PropertyGroup>
+    <GetPackageVersionDependsOn>$(GetPackageVersionDependsOn);GetBuildVersion</GetPackageVersionDependsOn>
+  </PropertyGroup>
+
+  <!--
     Compute the version being built from the version file, Git height, and versioning settings,
     and hand it to everything downstream: compilation (GetAssemblyVersion), packing (GenerateNuspec
     and friends), and restore (project-to-project version stamping).
