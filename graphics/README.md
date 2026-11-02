@@ -2,6 +2,10 @@
 
 ---
 
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
+
 - [Color palette](#color-palette)
   - [Design indications](#design-indications)
 - [Graphic elements](#graphic-elements)

@@ -16,12 +16,13 @@ Licensing and attributions:
 
 ![Repobeats analytics image](https://repobeats.axiom.co/api/embed/c3576e175ee43b5bb104c6b93b8286e81383c7e3.svg "Repobeats analytics image")
 
-| Latest packages | NuGet                                                                                                                            | Feedz.io                                                                                                      |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `Buildvana.Sdk` | [![Buildvana.Sdk @ NuGet](https://badgen.net/nuget/v/Buildvana.Sdk?icon=nuget&label=)](https://nuget.org/packages/Buildvana.Sdk) | ![Buildvana.Sdk @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/Buildvana.Sdk?label=&color=orange) |
-| `bv`            | [![bv @ NuGet](https://badgen.net/nuget/v/bv?icon=nuget&label=)](https://nuget.org/packages/bv)                                  | ![bv @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/bv?label=&color=orange)                       |
+| Package name        | Description                                                           | NuGet<br>(stable)                                                                                                                            | Feedz.io<br>(preview)                                                                                                 |
+| ------------------- | --------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: |
+| `bv`                | Runs the build pipeline, dependency updates, versioning, and releases | [![bv @ NuGet](https://badgen.net/nuget/v/bv?icon=nuget&label=)](https://nuget.org/packages/bv)                                              | ![bv @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/bv?label=&color=orange)                               |
+| `Buildvana.Sdk`     | MSBuild SDK that works alongside the SDK a project specifies          | [![Buildvana.Sdk @ NuGet](https://badgen.net/nuget/v/Buildvana.Sdk?icon=nuget&label=)](https://nuget.org/packages/Buildvana.Sdk)             | ![Buildvana.Sdk @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/Buildvana.Sdk?label=&color=orange)         |
+| `Buildvana.Runtime` | Support library for `bv` hooks                                        | [![Buildvana.Runtime @ NuGet](https://badgen.net/nuget/v/Buildvana.Runtime?icon=nuget&label=)](https://nuget.org/packages/Buildvana.Runtime) | ![Buildvana.Runtime @ Feedz](https://img.shields.io/feedz/vpre/tenacom/preview/Buildvana.Runtime?label=&color=orange) |
 
-**Preview versions of the Buildvana packages are on the preview feed of Tenacom at [Feedz.io](https://feedz.io).**
+**Preview versions of Buildvana packages are on Tenacom's preview feed at [Feedz.io](https://feedz.io).**
 **The NuGet v3 URL is `https://f.feedz.io/tenacom/preview/nuget/index.json`.**
 
 ---

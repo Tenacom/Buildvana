@@ -8,6 +8,10 @@ Last reviewed: **2026-04-22**
 
 ---
 
+<!-- markdownlint-disable MD036 -->
+**Table of contents**
+<!-- markdownlint-enable MD036 -->
+
 - [Icons](#icons)
   - [Peace](#peace)
 - [Fonts](#fonts)
