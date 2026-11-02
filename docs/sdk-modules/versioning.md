@@ -105,6 +105,7 @@ A lower precision keeps the assembly version stable across releases.
 ### `GetBuildVersion` target
 
 The target runs before compilation, assembly attribute generation, packing, and restore.
+It also runs when a project that references this one is packed, so that the package dependency carries the computed version.
 It runs the `ComputeVersion` task and sets these properties:
 
 | Property               | Value                                                                              |
