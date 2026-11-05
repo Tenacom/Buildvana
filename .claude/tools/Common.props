@@ -1,0 +1,26 @@
+<Project>
+
+  <!-- Build options for Claude's tools. -->
+  <PropertyGroup>
+
+    <!-- A tool is a script, and nobody reads the documentation of its helpers. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- A tool has no public API. -->
+    <UsePublicApiAnalyzers>false</UsePublicApiAnalyzers>
+
+    <!-- A tool is never packed. -->
+    <IsPackable>false</IsPackable>
+
+  </PropertyGroup>
+
+  <!--
+    Every tool compiles ProjectFacts.cs in, so that the facts about the repository live in one file, and a copy of
+    .claude rewrites that file alone. The cache of `dotnet run` tracks ProjectFacts.cs, and not this file: after a
+    change to this file, run each tool once with the no-cache option of `dotnet run`.
+  -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ProjectFacts.cs" />
+  </ItemGroup>
+
+</Project>

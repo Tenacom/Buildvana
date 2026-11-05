@@ -24,6 +24,9 @@
  *
  * What the tool cannot check stays with the reader: a coined name, a subject that names the rule instead of the
  * behavior that is gone, and a condition stated after its action.
+ *
+ * The two word lists below apply in every repository. `ProjectFacts.cs`, which `Common.props` compiles in, extends
+ * each with the words of the repository.
  */
 
 using System;
@@ -41,7 +44,7 @@ const string Usage = "Usage: dotnet run .claude/tools/lint-commit.cs <message-fi
 
 // A subject that starts with one of these announces what a document says now, or the rule the change obeys,
 // instead of the behavior that is gone.
-string[] announcingVerbs = ["Say", "Tell", "Judge", "Clear"];
+string[] announcingVerbs = ["Say", "Tell", "Judge", "Clear", .. ProjectFacts.CommitMessages.AnnouncingVerbs];
 
 // Metaphors and house verbs that name nothing in the repository. The first four are the style's own examples.
 // The rest stood in, across past commits, for an exit code ("verdict", "judge"), for "keep" ("spare"), and for
@@ -64,6 +67,7 @@ string[] bannedWords = [
     "spared",
     "spares",
     "trio",
+    .. ProjectFacts.CommitMessages.BannedWords,
 ];
 
 if (args.Length != 1)

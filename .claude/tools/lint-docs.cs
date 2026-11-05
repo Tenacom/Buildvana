@@ -15,9 +15,9 @@
  * standard output, in the shape the `inspect` task of .vscode/tasks.json parses. It exits 1 when there is any
  * finding, 0 when there is none, and 2 on a usage error. The codes are:
  *   DocsFileName   a file or folder under docs/ whose name is not kebab-case, or a folder two levels deep;
- *   DocsTemplate   a page that departs from the page template: the title, the summary paragraph, the table of
- *                  contents block, a ruler before each level 2 heading, no heading below level 4, and no
- *                  "Overview" section;
+ *   DocsTemplate   a page that departs from the page template: the title, the summary paragraph and the alerts
+ *                  after it, the table of contents block, a ruler before each level 2 heading, no heading below
+ *                  level 4, and no "Overview" section;
  *   DocsToc        a table of contents that does not list the headings of level 2 and below, in text and order;
  *   DocsIndex      a page that docs/README.md does not link, or a table of contents in docs/README.md;
  *   DocsLink       an inline link whose relative target names no file, or no heading of that file;
@@ -30,9 +30,21 @@
  *                  one sentence; a code span counts as one word, and a link as the words of its text. The
  *                  released sections of CHANGELOG.md are not checked.
  *
+ * The facts about the repository come from `ProjectFacts.cs`, which `Common.props` compiles in. They are the
+ * globs of the files the TODO check and the sentence check leave alone, the generated folders, and the platform
+ * of the Git host. `ProjectFacts.cs` states the glob syntax.
+ *
  * Only inline links, `[text](target)`, are checked. A reference-style link is not. A link inside a code span or
  * a fenced block is not a link. A relative target must match the case of the file name, so that a link that
  * resolves on Windows and not on Linux is a finding on both.
+ *
+ * A generated folder is a subfolder of docs/ that a tool writes in full. Its files are not checked, and the index
+ * need not link them. A link into it is checked for its shape alone, not for the existence of its target, because
+ * a page the tool writes at release does not exist before the release.
+ *
+ * The anchor a heading gets depends on the platform of the Git host, as "Git hosts" in
+ * `.claude/rules/common/documentation.md` says, and so does the check of every anchor and of every table of
+ * contents.
  */
 
 using System;
@@ -56,16 +68,26 @@ const int MaxSentenceWords = 25;
 // The language tags `.claude/rules/common/documentation.md` admits on a fenced block.
 string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shell", "text", "xml", "yaml"];
 
-// Files the TODO check leaves alone. None here; a copy of this tool may name some.
-string[] todoExemptFiles = [];
-
-// Files the sentence check leaves alone. None here: the released sections of CHANGELOG.md, whose lines exceed the
-// limit and are never edited, are skipped by section. A copy of this tool may name some.
-string[] sentenceExemptFiles = [];
+// Globs of the files the sentence check leaves alone: the non-technical documentation that "What is documentation"
+// in `.claude/rules/common/documentation.md` lists, plus the files `ProjectFacts.cs` adds. The released sections
+// of CHANGELOG.md, whose lines exceed the limit and are never edited, are skipped by section.
+string[] sentenceExemptFiles = [
+    "**/README.md",
+    "**/NuGet-README.md",
+    "docs/articles/**",
+    .. ProjectFacts.Documentation.SentenceExemptFiles,
+];
 
 if (args.Length > 1)
 {
     Console.Error.WriteLine(Usage);
+    return 2;
+}
+
+string[] gitHosts = ["GitHub", "GitLab", "Forgejo"];
+if (!gitHosts.Contains(ProjectFacts.GitHost, StringComparer.Ordinal))
+{
+    Console.Error.WriteLine($"ProjectFacts.GitHost is \"{ProjectFacts.GitHost}\", and the platforms are GitHub, GitLab, and Forgejo.");
     return 2;
 }
 
@@ -96,9 +118,10 @@ var nestedListRegex = new Regex(@"^\s+(?:[-*+]|\d+\.)\s", RegexOptions.CultureIn
 
 var findings = new List<(string File, int Line, int Column, string Code, string Message)>();
 
-// The documentation set, as relative paths with forward slashes.
+// The documentation set, as relative paths with forward slashes. The files of a generated folder are not in it.
 var pages = Directory.EnumerateFiles(docsDirectory, "*.md", SearchOption.AllDirectories)
     .Select(path => ToRelative(root, path))
+    .Where(page => !IsGenerated(page))
     .Order(StringComparer.Ordinal)
     .ToList();
 var files = new List<string> { "README.md", ChangelogPath };
@@ -115,10 +138,15 @@ if (Directory.Exists(srcDirectory))
 
 files = files.Where(file => File.Exists(Path.Combine(root, file))).ToList();
 
-// File and folder names under docs/.
+// File and folder names under docs/. A generated folder, and everything under it, is named by its tool.
 foreach (var entry in Directory.EnumerateFileSystemEntries(docsDirectory, "*", SearchOption.AllDirectories))
 {
     var relative = ToRelative(root, entry);
+    if (IsGenerated(relative))
+    {
+        continue;
+    }
+
     var segments = relative.Split('/');
     var name = segments[^1];
     if (Directory.Exists(entry))
@@ -158,8 +186,8 @@ foreach (var file in files)
     var inFence = inFenceByFile[file];
     var isPage = file.StartsWith("docs/", StringComparison.Ordinal) && !string.Equals(file, IndexPath, StringComparison.Ordinal);
     var isChangelog = string.Equals(file, ChangelogPath, StringComparison.Ordinal);
-    var checkTodo = !todoExemptFiles.Contains(file, StringComparer.Ordinal);
-    var checkSentences = !sentenceExemptFiles.Contains(file, StringComparer.Ordinal);
+    var checkTodo = !MatchesAny(ProjectFacts.Documentation.TodoExemptFiles, file);
+    var checkSentences = !MatchesAny(sentenceExemptFiles, file);
     var openRegions = new Dictionary<string, int>(StringComparer.Ordinal);
     var releasedSection = string.Empty;
     var inUnreleased = false;
@@ -306,7 +334,7 @@ void Report(string file, int line, int column, string code, string message)
     findings.Add((file, line, column, code, message));
 }
 
-// Reads a file, marks the lines inside fenced blocks, and lists its headings with their GitHub anchors.
+// Reads a file, marks the lines inside fenced blocks, and lists its headings with their anchors on the Git host.
 // Returns false when the file does not exist.
 bool Load(string file)
 {
@@ -447,6 +475,14 @@ void CheckLink(string file, int lineNumber, int column, string target, HashSet<s
         return;
     }
 
+    // A page of a generated folder may not exist before the release that writes it, and its anchors are the
+    // tool's, not the heading anchors of the Git host.
+    if (IsGenerated(relativeTarget))
+    {
+        _ = targets.Add(relativeTarget);
+        return;
+    }
+
     if (!ExistsWithExactCase(relativeTarget))
     {
         Report(file, lineNumber, column, "DocsLink", $"the link target \"{target}\" names no file");
@@ -549,6 +585,17 @@ void CheckTemplate(string file)
     while (summaryEnd < lines.Length && lines[summaryEnd].Length > 0)
     {
         summaryEnd++;
+    }
+
+    // One or more blockquotes, such as alerts that apply to the whole page, may follow the summary
+    // paragraph. Each is a block of lines starting with ">", after a blank line.
+    while (summaryEnd + 1 < lines.Length && lines[summaryEnd + 1].StartsWith('>'))
+    {
+        summaryEnd++;
+        while (summaryEnd < lines.Length && lines[summaryEnd].Length > 0)
+        {
+            summaryEnd++;
+        }
     }
 
     string[] tocHeader = [Ruler, string.Empty, DisableMarker, TocTitle, EnableMarker, string.Empty];
@@ -655,17 +702,75 @@ void CheckToc(
     }
 }
 
+// Whether a relative path, with forward slashes, is a generated folder or lies under one.
+bool IsGenerated(string relativePath)
+{
+    var withSlash = relativePath + "/";
+    return ProjectFacts.Documentation.GeneratedFolders.Any(folder => withSlash.StartsWith(folder + "/", StringComparison.Ordinal));
+}
+
+// Whether a relative path, with forward slashes, matches one of the globs. `ProjectFacts.cs` states the glob syntax.
+static bool MatchesAny(IEnumerable<string> globs, string relativePath)
+{
+    return globs.Any(glob => Regex.IsMatch(relativePath, GlobToRegex(glob), RegexOptions.CultureInvariant));
+}
+
+static string GlobToRegex(string glob)
+{
+    var builder = new StringBuilder("^");
+    for (var i = 0; i < glob.Length; i++)
+    {
+        var ch = glob[i];
+        if (ch == '*' && i + 1 < glob.Length && glob[i + 1] == '*')
+        {
+            i++;
+            if (i + 1 < glob.Length && glob[i + 1] == '/')
+            {
+                // `**/` matches zero or more whole segments, so that `**/README.md` also matches the root README.md.
+                i++;
+                _ = builder.Append("(?:.*/)?");
+            }
+            else
+            {
+                _ = builder.Append(".*");
+            }
+        }
+        else if (ch == '*')
+        {
+            _ = builder.Append("[^/]*");
+        }
+        else if (ch == '?')
+        {
+            _ = builder.Append("[^/]");
+        }
+        else
+        {
+            _ = builder.Append(Regex.Escape(ch.ToString()));
+        }
+    }
+
+    return builder.Append('$').ToString();
+}
+
 static string ToRelative(string root, string path)
 {
     return Path.GetRelativePath(root, path).Replace('\\', '/');
 }
 
-// GitHub's anchor for a heading: the text in lowercase, with letters, digits, hyphens and underscores kept, a
-// space turned into a hyphen, and everything else dropped. Markdown formatting is punctuation to it, so the
-// backticks of a code span go, and the text of a link stays while its target goes.
+// The anchor the Git host gives a heading, as "Git hosts" in `.claude/rules/common/documentation.md` describes.
+// Every platform lowercases the text and turns a space into a hyphen. Markdown formatting is punctuation to every
+// platform, so the backticks of a code span go, and the text of a link stays while its target goes. The platforms
+// differ on the other punctuation, and the two functions below hold the two algorithms.
 static string Slug(string headingText)
 {
     var text = Regex.Replace(headingText, @"\[([^\]]*)\]\([^)]*\)", "$1", RegexOptions.CultureInvariant);
+    return string.Equals(ProjectFacts.GitHost, "Forgejo", StringComparison.Ordinal) ? ForgejoSlug(text) : GitHubSlug(text);
+}
+
+// GitHub and GitLab keep letters, digits, hyphens and underscores, and drop every other character. GitLab renders
+// through comrak, whose anchorizer follows GitHub's rules.
+static string GitHubSlug(string text)
+{
     var builder = new StringBuilder();
     foreach (var ch in text)
     {
@@ -677,6 +782,34 @@ static string Slug(string headingText)
         else if (lower == ' ')
         {
             _ = builder.Append('-');
+        }
+    }
+
+    return builder.ToString();
+}
+
+// Forgejo keeps letters, digits and underscores. A run of any other characters between two kept characters becomes
+// one hyphen, and such a run at either end is dropped. This is `CleanValue` of its `markup/common` package.
+static string ForgejoSlug(string text)
+{
+    var builder = new StringBuilder();
+    var needsHyphen = false;
+    foreach (var ch in text)
+    {
+        var lower = char.ToLowerInvariant(ch);
+        if (char.IsLetterOrDigit(lower) || lower == '_')
+        {
+            if (needsHyphen && builder.Length > 0)
+            {
+                _ = builder.Append('-');
+            }
+
+            _ = builder.Append(lower);
+            needsHyphen = false;
+        }
+        else
+        {
+            needsHyphen = true;
         }
     }
 
