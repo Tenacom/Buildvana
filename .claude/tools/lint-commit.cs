@@ -13,8 +13,8 @@
  *   - the subject is present, at most 72 characters long, and does not start with a word that announces what a
  *     document says now instead of what changed ("Say", "Tell", "Judge", "Clear");
  *   - the line after the subject is blank;
- *   - the body is present, and, trailers excluded, it is one paragraph of at most three sentences, or one list
- *     with one bullet per defect fixed;
+ *   - the body is present, and, trailers excluded, it holds at most three sentences of prose, in at most three
+ *     paragraphs, or a list with one bullet per defect fixed;
  *   - a body line is at most 72 characters long, unless it holds a URL;
  *   - a sentence has at most 25 words, holds no semicolon, and holds no dash;
  *   - no sentence uses a word from the banned list below.
@@ -42,8 +42,12 @@ const int MaxSubjectLength = 72;
 const int MaxBodyLineLength = 72;
 const int MaxWordsPerSentence = 25;
 
-// A list has one bullet per defect fixed, however many, so the limit holds for a prose paragraph alone.
-const int MaxSentencesPerParagraph = 3;
+// A list has one bullet per defect fixed, however many, so the limit holds for the prose paragraphs alone.
+// The limit is on the whole body, not per paragraph: a writer fills every per-paragraph limit it is given.
+const int MaxBodySentences = 3;
+
+// The sentences may split into short paragraphs, which read better than one block.
+const int MaxParagraphs = 3;
 
 const string Usage = "Usage: dotnet run .claude/tools/lint-commit.cs <message-file>";
 
@@ -170,7 +174,8 @@ for (var i = subjectIndex + 1; i < end; i++)
     var isLongLine = length > MaxBodyLineLength && !lines[i].Contains("://", StringComparison.Ordinal);
     if (isLongLine)
     {
-        findings.Add((i + 1, $"the line is {length} characters long (max {MaxBodyLineLength}): wrap it at a clause boundary"));
+        var message = $"the line is {length} characters long (max {MaxBodyLineLength}): wrap it at a clause or list item boundary";
+        findings.Add((i + 1, message));
     }
 
     var text = lines[i].Trim();
@@ -191,16 +196,22 @@ for (var i = subjectIndex + 1; i < end; i++)
 
 if (paragraphs.Count == 0)
 {
-    findings.Add((subjectLine, "the body is missing: state the why in one paragraph"));
+    findings.Add((subjectLine, "the body is missing: state the why"));
 }
-else if (paragraphs.Count > 1)
+else if (paragraphs.Count > MaxParagraphs)
 {
-    findings.Add((paragraphs[1][0].Line, $"the body has {paragraphs.Count} paragraphs: state the why in one"));
+    findings.Add((paragraphs[MaxParagraphs][0].Line, $"the body has {paragraphs.Count} paragraphs (max {MaxParagraphs})"));
 }
 
+var bodySentences = 0;
 foreach (var paragraph in paragraphs)
 {
-    CheckParagraph(findings, paragraph, bannedRegex);
+    bodySentences += CheckParagraph(findings, paragraph, bannedRegex);
+}
+
+if (bodySentences > MaxBodySentences)
+{
+    findings.Add((paragraphs[0][0].Line, $"the body has {bodySentences} sentences (max {MaxBodySentences})"));
 }
 
 return Finish(path, findings);
@@ -216,7 +227,8 @@ static int Finish(string path, List<(int Line, string Message)> findings)
     return findings.Count > 0 ? 1 : 0;
 }
 
-static void CheckParagraph(
+// Returns the number of sentences the paragraph adds to the body count: its sentences for prose, none for a list.
+static int CheckParagraph(
     List<(int Line, string Message)> findings,
     IReadOnlyList<(int Line, string Text)> paragraph,
     Regex bannedRegex)
@@ -239,12 +251,6 @@ static void CheckParagraph(
     var guarded = Guard(joined);
     var isList = Regex.IsMatch(paragraph[0].Text, @"^(?:[-*]|\d+\.)[ \t]", RegexOptions.CultureInvariant);
     var sentences = SplitSentences(guarded, isList);
-    if (!isList && sentences.Count > MaxSentencesPerParagraph)
-    {
-        var message = $"the paragraph has {sentences.Count} sentences (max {MaxSentencesPerParagraph})";
-        findings.Add((paragraph[0].Line, message));
-    }
-
     foreach (var (offset, length) in sentences)
     {
         var line = LineOf(lineStarts, offset);
@@ -272,6 +278,8 @@ static void CheckParagraph(
             findings.Add((line, $"\"{word}\" names nothing in the repository, describe the mechanism: {shown}"));
         }
     }
+
+    return isList ? 0 : sentences.Count;
 }
 
 // Replaces every character inside a backticked or double-quoted span, and the periods of a few abbreviations,

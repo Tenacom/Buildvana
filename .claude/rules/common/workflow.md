@@ -185,8 +185,8 @@ When a finding asks to remove something deliberate, recovering _why it was put t
 A commit message is read months later, by a reader who has the repository and nothing else. Keep it short, and keep it free of anything that reader cannot look up.
 
 - The subject completes the sentence "This commit, when merged, will ...", with an identifier when the change has one. It says what the code does after the commit. It does not describe the old behavior, and it does not name the rule the change obeys. The body states the old behavior.
-- The body is two or three sentences, and it says why. State the wrong behavior first, then the reason the fix took this shape, when the diff does not show it. The diff says what changed, so the body does not repeat it.
-- The body wraps at 72 characters, with a line break at a clause boundary. A line that holds a URL is exempt.
+- The body is two or three sentences, in one to three paragraphs, and it says why. State the wrong behavior first, then the reason the fix took this shape, when the diff does not show it. The diff says what changed, so the body does not repeat it.
+- The body wraps at 72 characters, with a line break at a clause boundary or between the items of a list. A line that holds a URL is exempt.
 - A commit that fixes several defects has one bullet per defect, each a short "X did Y", and no sentence around them.
 - A term that exists only in the PR's conversation is banned. Name the thing with an identifier from the repository, or describe it. A reader can look up `OverrideLifecycle`. Nobody can look up "the lifecycle".
 - Self-contained does not mean complete. The body stays short by naming things instead of describing them, and by leaving the what to the diff.
