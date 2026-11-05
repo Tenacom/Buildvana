@@ -18,9 +18,10 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `rules/common/testing.md`: test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
 - `rules/common/buildvana.md`: build commands, dependency commands, and the Buildvana documentation. Assumes the project is built with Buildvana.
 - `rules/common/dotnet.md`: efficiency rules for .NET tooling, and how to inspect a third-party package.
-- `rules/common/git-host.md`: what the Git host is, the three platforms, and how to identify the platform and the version of a host. The hosts of the repository are in `rules/project/repository.md`.
+- `rules/common/git-host.md`: what the Git host is, the three platforms, how to identify the platform and the version of a host, the vocabulary the rule files use on every platform, and the operations a host file maps to commands. The hosts of the repository are in `rules/project/repository.md`.
+- `hosts/github.md`, `hosts/forgejo.md`, `hosts/gitlab.md`: the commands of one platform for the operations of `rules/common/git-host.md`. A session reads the one `rules/project/repository.md` names. Nothing repo-specific in them.
 - `rules/common/documentation.md`: what counts as user documentation, the register, the structure of `docs/`, the changelog bullet format, the rendering differences between the platforms, and the checks. The names it relies on are in `rules/project/terminology.md`, and the inventory it applies to is in `rules/project/documentation.md`.
-- `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. Its "What the gate and CI already cover" section names `inspect.cs` and the workflows under `.github/workflows/`, and a copy names its own checks there.
+- `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. It names `inspect.cs`, and takes the CI from `rules/project/repository.md`, the checks to tolerate from `rules/project/pr-checks.md`, and every command on the host from the host file. Nothing repo-specific in it.
 - `agents/pr-reviewer.md`: the subagent that runs the skill for the self-review cycle. Nothing repo-specific in it.
 - `output-styles/simple-tech.md`: the register for every kind of prose, from chat to commit messages. Select it with `/output-style`.
 - `tools/Common.props`: build options for the tools, and the `Compile` item that puts `tools/ProjectFacts.cs` into every tool. The `.editorconfig` next to it turns off the StyleCop rules that a single-file app cannot follow, SA1636 included, so that a tool keeps its header whatever copyright text the repository sets.
@@ -33,7 +34,7 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 
 ### Project-specific: rewrite when copied
 
-- `rules/project/repository.md`: the upstream repository, the fork remote, the hosts and their platforms, and CI. Entirely about this repo.
+- `rules/project/repository.md`: the upstream repository, the fork remote, the hosts and their platforms, the host file, CI, and the issue and PR templates. Entirely about this repo.
 - `rules/project/architecture.md`: Buildvana's own structure, project tiers, target platforms, self-hosting, and tool portability. Entirely about this repo.
 - `rules/project/documentation.md`: the documentation inventory: files, page kinds beyond guide and reference, subfolders of `docs/`, generated regions, generated folders, pinned reference pages. Entirely about this repo.
 - `rules/project/dependency-management.md`: the baseline dependencies, the `Buildvana.Runtime` strictly-BCL carve-out, the packages Buildvana SDK injects, the toolchain floors, and why the Buildvana family is never updated here. Entirely about this repo.

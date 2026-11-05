@@ -18,7 +18,7 @@ When either check fails, or both do:
   curl -s "https://api.codecov.io/api/v2/github/<owner>/repos/<repo>/compare/?pullid=<n>"
   ```
 
-- The response holds `head_commit`. When it differs from `headRefOid`, wait and read again, as for a pending check. Codecov replaces the comparison at every upload.
+- The response holds `head_commit`. When it differs from the head commit of the PR, wait and read again, as for a pending check. Codecov replaces the comparison at every upload.
 - The response holds one entry per file of the solution in `files`. An entry has the path in `name.head`, and the counts for the lines the PR changed in `totals.patch`. A file with uncovered patch lines has a non-zero sum of `misses` and `partials` there.
 
   ```bash

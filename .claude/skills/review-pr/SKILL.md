@@ -3,15 +3,18 @@ name: review-pr
 description: Review a pull request in this repository and post the review.
 argument-hint: "[pr-number]"
 disable-model-invocation: true
-allowed-tools: Bash(gh *) Bash(git *) Bash(sleep *)
+allowed-tools: Bash(gh *) Bash(glab *) Bash(curl *) Bash(jq *) Bash(git *) Bash(sleep *)
 ---
 
 # Review rules
 
-This file is the same in every repository that copies `.claude`, except the section "What the
-gate and CI already cover", which names the checks of this repository.
+This file is the same in every repository that copies `.claude`.
 
-These rules govern a review of a pull request in this repository.
+These rules govern a review of a pull request in this repository. Every command on the Git
+host comes from the host file that `rules/project/repository.md` names, as
+`rules/common/git-host.md` says. Where a rule names an operation in quotes, such as "Read a
+PR", the host file has a section of that name with the command. Read the host file in full
+before the first command on the host.
 
 ## Rounds
 
@@ -23,13 +26,8 @@ These rules govern a review of a pull request in this repository.
 - Every review you post starts with a marker line, defined in "Posting the review".
   Count the reviews that your account posted and whose body starts with the marker line.
   The current round is that count plus one.
-- Take `<login>` from the output of `gh api user --jq .login`. See "Preliminary actions".
-
-  ```bash
-  gh pr view <n> --repo <owner>/<repo> --json reviews \
-    --jq '[.reviews[] | select(.author.login == "<login>" and (.body | startswith("_Review by Claude")))] | length'
-  ```
-
+- Take `<login>` from "Read the login". The round count is the command of "Read the reviews"
+  that filters on the login and the marker line. See "Preliminary actions".
 - The author addresses a finding in one of two ways. The author adds a commit that
   solves the finding, or rejects the finding with a rationale.
 - Read each fix in the tree at the head commit. Do not verify a fix against the author's
@@ -56,39 +54,27 @@ and tell the user why.
   the command again.
 - When the user names a PR or a branch, verify the name against the repository before you
   use it.
-- Read the clone you are in, the branch you are on, and the repository `gh` resolves from
-  the remotes of that clone.
+- Read the clone you are in, and the branch you are on.
 
   ```bash
   git rev-parse --show-toplevel
   git branch --show-current
-  gh repo view --json nameWithOwner,defaultBranchRef
   ```
 
-- Take the repository from `nameWithOwner`. The repository `gh` resolves may differ from
-  the repository you expect.
+- Read the full name and the default branch of the repository with "Identify the
+  repository". The repository the client resolves may differ from the repository you
+  expect.
 - Record the branch that `git branch --show-current` prints. You return to that branch
   after you post the review.
 - When the command prints nothing, stop and tell the user. A review needs a branch to
   return to.
 - When the branch is named `pr-` followed by a number, an earlier review left it behind.
-  Switch to the branch in `defaultBranchRef`, and record that branch instead.
+  Switch to the default branch, and record that branch instead.
 - `$ARGUMENTS` holds the PR number when the user passed one. When `$ARGUMENTS` is empty,
-  read the PR of the current branch.
-
-  ```bash
-  gh pr view --json number,title,url,headRefName
-  ```
-
+  read the PR of the current branch with "Find the PR of a branch".
 - Do not guess a number. When the command finds no PR, stop and tell the user.
-- Read the PR metadata. Pass the number and the repository in this command and in every
-  later `gh` command. Do not rely on a default.
-
-  ```bash
-  gh pr view <n> --repo <owner>/<repo> \
-    --json number,title,url,author,body,isDraft,baseRefName,headRefName,headRefOid,files,reviews
-  ```
-
+- Read the PR metadata with "Read a PR". Pass the number and the repository in this command
+  and in every later command on the host. Do not rely on a default.
 - Report the number, the title, and the URL to the user before you review. Take all three
   from the output of the command.
 - Read the PR text. The PR text states what the PR sets out to do. Measure every finding
@@ -96,33 +82,22 @@ and tell the user why.
 - When the PR is a draft, say so and ask the user before you go on.
 - When the PR text names another PR to co-deploy with it, read that PR too. See "Pull
   requests deployed together".
-- Record the head commit from `headRefOid`. Review the tree at the head commit.
-- Read `headRefOid` again before you post. When the head commit has changed, verify the
-  review again against the new head commit.
+- Record the head commit. Review the tree at the head commit.
+- Read the PR again before you post. When the head commit has changed, verify the review
+  again against the new head commit.
 - Run `git status --porcelain` again before you post. When the command prints a line,
   the working tree has changed since the review started. Stop and tell the user, because
   the files you read may differ from the head commit.
-- Compare the PR author with the account configured in `gh`.
-
-  ```bash
-  gh api user --jq .login
-  ```
-
+- Compare the PR author with the login of "Read the login".
 - When the two accounts match, the review is a _self-review_.
 - Count the round. See "Rounds".
-- Read the state of the PR checks.
-
-  ```bash
-  gh pr checks <n> --repo <owner>/<repo> --json name,bucket
-  ```
-
-- `bucket` holds `pass`, `fail`, `pending`, `skipping`, or `cancel` for each check. Read
-  `cancel` as `fail`, and `skipping` as `pass`.
+- Read the state of the PR checks with "Read the checks". The state of a check is `pass`,
+  `fail`, `pending`, `skipping`, or `cancel`. Read `cancel` as `fail`, and `skipping` as
+  `pass`.
 - While a check is in `pending`, wait and read the state again.
 
   ```bash
   sleep 90
-  gh pr checks <n> --repo <owner>/<repo> --json name,bucket
   ```
 
 - Give up after twenty waits. Tell the user the checks are still running, and do not
@@ -139,12 +114,11 @@ and tell the user why.
 - Read about a failure what its section names, and nothing else. Do not read the logs of
   a check, and do not diagnose a failure the file does not cover. The failure belongs to
   the author. See "What the gate and CI already cover".
-- When the repository reports no checks at all, the command prints `no checks reported`
-  and exits 1, as for a failed check. That output is not a failure. This repository has
-  CI, so that output means the checks have not started yet. Wait and read the state
-  again.
-- The checks belong to the commit they ran on. When you re-read `headRefOid` before you
-  post and the head commit has changed, wait for the checks of the new head commit too.
+- The host file says what the command prints when the repository reports no checks at
+  all. That output is not a failure. This repository has CI, so that output means the
+  checks have not started yet. Wait and read the state again.
+- The checks belong to the commit they ran on. When you read the PR again before you post
+  and the head commit has changed, wait for the checks of the new head commit too.
 - When the working tree is dirty, stop and tell the user. Do not stash the changes. Do
   not review from the diff alone. The working tree is dirty when this command prints a
   line.
@@ -159,25 +133,19 @@ and tell the user why.
   git rev-parse HEAD
   ```
 
-- When the output equals `headRefOid`, the working tree already holds the head commit.
-  Stay on the current branch, and check out nothing. The clone of the PR author is in
-  this state after a push.
-- Otherwise, put the head commit in the working tree, on a branch named after the PR
-  number. PR 345 gets the branch `pr-345`.
-
-  ```bash
-  gh pr checkout <n> --repo <owner>/<repo> --branch pr-<n> --force
-  git rev-parse HEAD
-  ```
-
-- `--force` resets an existing `pr-<n>` branch to the head commit. Never commit to a
+- When the output equals the head commit, the working tree already holds it. Stay on the
+  current branch, and check out nothing. The clone of the PR author is in this state
+  after a push.
+- Otherwise, put the head commit in the working tree with "Check out the head commit", on
+  a branch named after the PR number. PR 345 gets the branch `pr-345`.
+- The checkout resets an existing `pr-<n>` branch to the head commit. Never commit to a
   `pr-<n>` branch. The reset then discards nothing.
-- After a checkout, check the output of `git rev-parse HEAD` against `headRefOid`. When
-  the two differ, stop and tell the user. The check ties the working tree to the PR you
-  read.
+- After a checkout, check the output of `git rev-parse HEAD` against the head commit.
+  When the two differ, stop and tell the user. The check ties the working tree to the PR
+  you read.
 - Find the remote of the repository the PR belongs to. That remote is the one whose URL
-  points to `<owner>/<repo>`, as read from `nameWithOwner`. Remote names vary between
-  clones, so identify the remote by its URL.
+  points to the full name of the repository. Remote names vary between clones, so
+  identify the remote by its URL.
 
   ```bash
   git remote -v
@@ -193,12 +161,8 @@ and tell the user why.
 - The three dots select the diff from the merge base. Do not diff against the tip of the
   base branch.
 - Read every previous review in full, whatever account posted it. Read the review bodies,
-  the code-anchored comments, and the author's replies.
-
-  ```bash
-  gh api repos/<owner>/<repo>/pulls/<n>/comments --paginate
-  ```
-
+  the code-anchored comments, and the author's replies, with "Read the reviews" and "Read
+  the threads".
 - Read what the repository states about itself. Read `CLAUDE.md`, the files under
   `.claude/rules/`, `README.md`, and the files they point to. Read them before you judge
   the code against them.
@@ -208,16 +172,16 @@ and tell the user why.
 
 - `dotnet run .claude/tools/inspect.cs --gate` runs before every push to the PR branch.
   It checks the documentation, builds the code, runs the tests, and analyzes the solution
-  with ReSharper at WARNING severity and above. The workflows under `.github/workflows/`
-  run the build and the tests again at every push.
-- The output of `gh pr checks` is the result of those workflows on the head commit. A
-  passing check is a fact about the code. Do not confirm it.
+  with ReSharper at WARNING severity and above. The CI that `rules/project/repository.md`
+  names runs the build and the tests again at every push.
+- The checks are the result of that CI on the head commit. A passing check is a fact
+  about the code. Do not confirm it.
 - Do not build the code. Do not run the tests. Do not run a linter, a formatter, or a
   static analysis tool. Do not run the code.
-- A review runs `git`, `gh`, and `sleep`. No other command belongs in a review, with one
-  exception. A section of `rules/project/pr-checks.md` may name a read-only request to a
-  service it names, with `curl`, and may name a filter on the response. It never names
-  anything that runs the code or the toolchain.
+- A review runs `git`, `sleep`, and the commands of the host file. No other command
+  belongs in a review, with one exception. A section of `rules/project/pr-checks.md` may
+  name a read-only request to a service it names, with `curl`, and may name a filter on
+  the response. It never names anything that runs the code or the toolchain.
 - The review adds what the gate cannot produce: a judgement about the outcome the code
   produces and about the contracts it holds. Reading gives you that judgement. Running
   the toolchain does not.
@@ -236,10 +200,10 @@ and tell the user why.
 
 ## Sources
 
-- A review reads three sources: what GitHub holds about the PR, the files that git
+- A review reads three sources: what the host holds about the PR, the files that git
   tracks at the head commit, and the NuGet packages the solution restores, under the
   package cache that `dotnet nuget locals global-packages --list` prints.
-- What GitHub holds about the PR includes a PR deployed together with it. See "Pull
+- What the host holds about the PR includes a PR deployed together with it. See "Pull
   requests deployed together".
 - A section of `rules/project/pr-checks.md` may name a fourth source for the failed
   check it covers, such as the service that posts the check.
@@ -258,13 +222,7 @@ and tell the user why.
 ## Pull requests deployed together
 
 - The PR text may name another PR to co-deploy with it, in another repository.
-- Read the other PR and the changes it makes.
-
-  ```bash
-  gh pr view <other-n> --repo <other-owner>/<other-repo> --json title,body,files
-  gh pr diff <other-n> --repo <other-owner>/<other-repo>
-  ```
-
+- Read the other PR and the changes it makes, with "Read another PR".
 - Check that the two sets of changes work together. Check that the caller uses each
   interface with the names, the arguments, and the result shape the callee defines.
 - When the two sides disagree, name the contract each side assumes. Decide which side is
@@ -347,32 +305,29 @@ and tell the user why.
   ---
   ```
 
-- Post the body and every code-anchored comment in one request. Two requests produce two
-  reviews, and two reviews count as two rounds.
-
-  ```bash
-  gh api repos/<owner>/<repo>/pulls/<n>/reviews --method POST --input <file>
-  ```
-
-- Take `<owner>`, `<repo>`, and `<n>` from the metadata you read. Check them against the
-  `url` field before you send the request.
+- Post the body and every code-anchored comment in one publish, with "Post a review". Two
+  publishes produce two reviews, and two reviews count as two rounds.
+- Take the repository and the number from the metadata you read. Check them against the
+  URL of the PR before you send the request.
 - `<file>` is the review file that `session.md` names, under "Scratchpad":
   `.claude/scratchpad/reviews/YYYY-MM-DD_HH.mm.ss_<n>.json`. Take the timestamp when the
   review starts.
 - The review file holds four fields. `event` holds the verdict. `body` holds the
   review text. `commit_id` holds the head commit you recorded. `comments` holds an array
-  of objects with the fields `path`, `line`, `side`, and `body`.
+  of objects with the fields `path`, `line`, `side`, and `body`. The file has this shape
+  on every platform, and the host file says how it becomes the request of its platform.
 - Set `event` to `APPROVE` when you accept the PR.
 - Set `event` to `REQUEST_CHANGES` when you report at least one finding.
 - Take each `line` from the head commit. Anchor each code-anchored comment to a line the
-  PR changes. GitHub rejects a comment anchored outside the diff.
+  PR changes. A comment outside the diff names nothing the PR did, and a platform may
+  reject it.
 - When a defect has several occurrences, write one comment. Anchor the comment at one
   occurrence, and name the other occurrences in the body of the comment.
 
 ## Self-reviews
 
-- Set `event` to `COMMENT` for a self-review. GitHub rejects `APPROVE` and
-  `REQUEST_CHANGES` on a PR you opened.
+- Set `event` to `COMMENT` for a self-review, on every platform. GitHub rejects a verdict
+  from the author of the PR, and one rule holds everywhere.
 - A `COMMENT` review carries no verdict. State the verdict in the body, under the marker
   line.
 - Start the body of a self-review with these lines, then go on like any other review.
@@ -400,7 +355,7 @@ and tell the user why.
   ```
 
 - Take `<previous-branch>` from the branch you recorded before the checkout.
-- Use `-D`. GitHub has not merged the PR into `<previous-branch>`, so `-d` refuses the
+- Use `-D`. The host has not merged the PR into `<previous-branch>`, so `-d` refuses the
   deletion.
 - When the deletion is blocked, leave the branch in place and tell the user. The user
   deletes it.
