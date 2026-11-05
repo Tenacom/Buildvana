@@ -195,8 +195,10 @@ When a finding asks to remove something deliberate, recovering _why it was put t
 
 A commit message is read months later, by a reader who has the repository and nothing else. Keep it short, and keep it free of anything that reader cannot look up.
 
-- The subject says what the commit does, in the imperative, with an identifier when the change has one. It names the behavior that is gone, not the rule the change obeys.
-- The body is one paragraph, and it says why. State the wrong behavior first, then the reason the fix took this shape. The diff says what changed, so the body does not repeat it.
+- The subject completes the sentence "This commit, when merged, will ...", with an identifier when the change has one. It says what the code does after the commit. It does not describe the old behavior, and it does not name the rule the change obeys. The body states the old behavior.
+- The body is two or three sentences, and it says why. State the wrong behavior first, then the reason the fix took this shape, when the diff does not show it. The diff says what changed, so the body does not repeat it.
+- The body wraps at 72 characters, with a line break at a clause boundary. A line that holds a URL is exempt.
+- A commit that fixes several defects has one bullet per defect, each a short "X did Y", and no sentence around them.
 - A term that exists only in the PR's conversation is banned. Name the thing with an identifier from the repository, or describe it. A reader can look up `OverrideLifecycle`. Nobody can look up "the lifecycle".
 - Self-contained does not mean complete. The body stays short by naming things instead of describing them, and by leaving the what to the diff.
 
@@ -205,10 +207,11 @@ Before every commit:
 1. Read `.claude/output-styles/simple-tech.md`. Follow its instructions when writing.
 2. Write the message to a file in `.claude/scratchpad/`.
 3. Run `dotnet run .claude/tools/lint-commit.cs <file>`. Fix the message until the tool reports nothing.
-4. Check the three things the tool cannot, and state the result in the turn:
+4. Check the four things the tool cannot, and state the result in the turn:
    - Every definite noun phrase names a repository identifier, or a thing the message defined earlier.
-   - The subject names the behavior that is gone.
+   - The subject completes "This commit, when merged, will ...", and says what the code does after the commit, not what it did before.
    - Each sentence puts its condition before its action.
+   - No sentence states what the diff shows.
 5. Show me the message together with the diff.
 6. Commit with `git commit -F <file>`.
 

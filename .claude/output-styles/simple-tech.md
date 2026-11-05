@@ -104,9 +104,9 @@ A commit message, a changelog entry, and a code comment are read months after th
 A subject line summarizes a change. It is not a slogan, and it is not the rule the change obeys.
 
 - Put an identifier in the subject whenever the change has one.
-- Keep the imperative mood, and give it a concrete object.
-- Name the behavior that is gone, not the principle that is restored.
-- A reader who searches the log for a symptom must find the commit that fixed it.
+- Complete the sentence "This commit, when merged, will ...", with a concrete object.
+- Say what the code does after the commit, not what it did before, and not the principle the change restores.
+- A reader who searches the log for a symptom must find the commit that fixed it. The body carries the symptom, because it states the wrong behavior first.
 
 ## Examples
 
@@ -175,7 +175,7 @@ Clear what the inspection reported
 After:
 
 ```text
-Stop reading NU1900 as missing audit data
+Report NU1900 as a package source that could not be read
 Key moved central pins by declaring file
 Read central pin versions from the resolution, not the pre-run dump
 Generate transitive override files after an apply run

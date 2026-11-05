@@ -13,7 +13,9 @@
  *   - the subject is present, at most 72 characters long, and does not start with a word that announces what a
  *     document says now instead of what changed ("Say", "Tell", "Judge", "Clear");
  *   - the line after the subject is blank;
- *   - the body is present, and, trailers excluded, it is one paragraph of at most six sentences;
+ *   - the body is present, and, trailers excluded, it is one paragraph of at most three sentences, or one list
+ *     with one bullet per defect fixed;
+ *   - a body line is at most 72 characters long, unless it holds a URL;
  *   - a sentence has at most 25 words, holds no semicolon, and holds no dash;
  *   - no sentence uses a word from the banned list below.
  *
@@ -22,11 +24,11 @@
  * the start of any other line is text. A trailer block is one or more `Key: value` lines at the end of the
  * message, with a blank line before it. A lone `Part of #123` line counts as a trailer too.
  *
- * What the tool cannot check stays with the reader: a coined name, a subject that names the rule instead of the
- * behavior that is gone, and a condition stated after its action.
+ * What the tool cannot check stays with the reader: a coined name, a subject that names the rule instead of what
+ * the code does after the commit, and a condition stated after its action.
  *
- * The two word lists below apply in every repository. `ProjectFacts.cs`, which `Common.props` compiles in, extends
- * each with the words of the repository.
+ * The word lists below apply in every repository. `ProjectFacts.cs`, which `Common.props` compiles in, extends
+ * `announcingVerbs` and `bannedWords` with the words of the repository.
  */
 
 using System;
@@ -37,14 +39,22 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 const int MaxSubjectLength = 72;
+const int MaxBodyLineLength = 72;
 const int MaxWordsPerSentence = 25;
-const int MaxSentencesPerParagraph = 6;
+
+// A list has one bullet per defect fixed, however many, so the limit holds for a prose paragraph alone.
+const int MaxSentencesPerParagraph = 3;
 
 const string Usage = "Usage: dotnet run .claude/tools/lint-commit.cs <message-file>";
 
 // A subject that starts with one of these announces what a document says now, or the rule the change obeys,
-// instead of the behavior that is gone.
+// instead of what the code does after the commit.
 string[] announcingVerbs = ["Say", "Tell", "Judge", "Clear", .. ProjectFacts.CommitMessages.AnnouncingVerbs];
+
+// A subject that starts with one of these describes the old behavior, and hides what the code does after the
+// commit. "Stop SA1115 from failing the build" does not say whether the commit suppressed the rule or fixed the
+// code. The body states the old behavior, so the subject need not.
+string[] oldBehaviorVerbs = ["Stop", "Avoid", "Prevent"];
 
 // Metaphors and house verbs that name nothing in the repository. The first four are the style's own examples.
 // The rest stood in, across past commits, for an exit code ("verdict", "judge"), for "keep" ("spare"), and for
@@ -118,6 +128,12 @@ if (announcingVerbs.Contains(firstWord, StringComparer.Ordinal))
     findings.Add((subjectLine, $"the subject starts with \"{firstWord}\": name what changed, not what is said now"));
 }
 
+if (oldBehaviorVerbs.Contains(firstWord, StringComparer.Ordinal))
+{
+    findings.Add(
+        (subjectLine, $"the subject starts with \"{firstWord}\": say what the code does after the commit, not what it did before"));
+}
+
 CheckParagraph(findings, [(subjectLine, subject)], bannedRegex);
 
 var hasUnblankSecondLine = subjectIndex + 1 < lines.Length && lines[subjectIndex + 1].Trim().Length > 0;
@@ -150,6 +166,13 @@ var paragraphs = new List<List<(int Line, string Text)>>();
 List<(int Line, string Text)>? current = null;
 for (var i = subjectIndex + 1; i < end; i++)
 {
+    var length = lines[i].TrimEnd().Length;
+    var isLongLine = length > MaxBodyLineLength && !lines[i].Contains("://", StringComparison.Ordinal);
+    if (isLongLine)
+    {
+        findings.Add((i + 1, $"the line is {length} characters long (max {MaxBodyLineLength}): wrap it at a clause boundary"));
+    }
+
     var text = lines[i].Trim();
     if (text.Length == 0)
     {
@@ -216,7 +239,7 @@ static void CheckParagraph(
     var guarded = Guard(joined);
     var isList = Regex.IsMatch(paragraph[0].Text, @"^(?:[-*]|\d+\.)[ \t]", RegexOptions.CultureInvariant);
     var sentences = SplitSentences(guarded, isList);
-    if (sentences.Count > MaxSentencesPerParagraph)
+    if (!isList && sentences.Count > MaxSentencesPerParagraph)
     {
         var message = $"the paragraph has {sentences.Count} sentences (max {MaxSentencesPerParagraph})";
         findings.Add((paragraph[0].Line, message));
