@@ -2,7 +2,7 @@
 
 This file is the same in every repository that copies `.claude`. `rules/common/git-host.md` lists the operations, and this file maps each one to the commands of GitLab. The client is `glab`. `glab api` calls the REST API of the host the clone is authenticated with, and expands `:fullpath` to the URL-encoded path of the project. The project of another repository is passed URL-encoded, as `group%2Frepo`.
 
-A request body goes in a JSON file, written with the Write tool in the scratchpad, and sent with `--input`. A single field goes with `-F`.
+A request body goes in a JSON file, written with the Write tool in the scratchpad, and sent with `--input`. A single field goes with `-F`, which reads a value that starts with `@` from the file it names. `-f` sends its value as a string, `@` included.
 
 GitLab normalizes a note before it stores it: it runs and removes quick actions, strips carriage returns, and trims trailing whitespace. A body with a line that starts with `/` loses that line.
 
@@ -105,11 +105,11 @@ A draft note anchors with the three commits of `diff_refs` and the path of the f
 
 ```bash
 glab api -X POST projects/:fullpath/merge_requests/<n>/draft_notes \
-  -f note=@<comment body file> \
+  -F note=@<comment body file> \
   -f position[position_type]=text \
   -f position[base_sha]=<base_sha> -f position[head_sha]=<head_sha> -f position[start_sha]=<start_sha> \
   -f position[new_path]=<path> -f position[old_path]=<path> -F position[new_line]=<line>
-glab api -X POST projects/:fullpath/merge_requests/<n>/draft_notes/bulk_publish -f note=@<body file>
+glab api -X POST projects/:fullpath/merge_requests/<n>/draft_notes/bulk_publish -F note=@<body file>
 ```
 
 GitLab has no verdict on a review. The verdict stays in the body, as the self-review rule of `skills/review-pr/SKILL.md` says. The URL of the review is the URL of the PR followed by `#note_<id>`, with the id of the summary note from the notes list.
@@ -138,7 +138,7 @@ glab api projects/:fullpath/merge_requests/<n>/closes_issues --jq '.[].iid'
 ## Reply in a thread
 
 ```bash
-glab api -X POST projects/:fullpath/merge_requests/<n>/discussions/<discussion id>/notes -f body=@<file>
+glab api -X POST projects/:fullpath/merge_requests/<n>/discussions/<discussion id>/notes -F body=@<file>
 ```
 
 ## Resolve a thread
