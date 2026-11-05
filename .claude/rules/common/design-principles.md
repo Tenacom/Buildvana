@@ -6,9 +6,9 @@ Decisions that outlive any single issue. They say what to build, and which argum
 
 ## Scope: our workflows, not everyone's
 
-Support X when we need X. A downstream consumer that might need X is not a reason. Being open source does not oblige us to accommodate every workflow. Compatibility for its own sake adds maintenance work, and Ric carries that work alone.
+Support X when we need X. A downstream consumer that might need X is not a reason. Being open source does not oblige us to accommodate every workflow. Compatibility for its own sake adds maintenance work for no real benefit.
 
-When Ric does not use VSTest, does not run workflow X, or does not build on platform Y, that is reason enough to drop it. Do not argue for a dual-track, fallback, or configurable design on the grounds that downstream users might need it.
+When no Tenacom project uses VSTest, runs workflow X, nor builds on platform Y, that is reason enough to drop it. Do not argue for a dual-track, fallback, or configurable design on the grounds that downstream users might need it.
 
 This principle has two limits:
 

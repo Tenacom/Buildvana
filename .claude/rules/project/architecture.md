@@ -10,6 +10,8 @@ Production projects live under `src/`, test projects under `tests/`. `Buildvana.
 
 Project names are self-describing. The tier conventions below say what a project is, what it may depend on, and whether it is packaged. This file therefore keeps no glossary of projects. A test project is named after the area under test, which is not always a production project of the same name. `Buildvana.Core.Diagnostics.Tests` covers the diagnostics types in `Buildvana.Core.Abstractions`.
 
+Every project has one target framework, as "Target platforms" below says, so every project has one build, and one test project per area reaches it. The `netstandard` test projects of "Every build of a package gets tested" in `testing.md` do not exist here, and no member binds differently per build.
+
 ### Project tiers
 
 Project names follow a four-tier convention:
@@ -59,6 +61,8 @@ Until one of these holds, the area's contracts live in `Buildvana.Core.Abstracti
 `Buildvana.Sdk.SourceGenerators` targets `$(SourceGeneratorsTfm)`, which is `netstandard2.0`, as Roslyn requires of an analyzer. `Buildvana.Sdk` does the same, because its package contains the source generators of that project.
 
 Every other project targets `$(StandardTfm)`, a `netX.0` moniker that tracks the latest .NET LTS.
+
+Buildvana supports Windows and Linux, and `ci.yml` runs the tests on `ubuntu-latest` and `windows-latest`. "Tests on more than one platform" in `testing.md` holds for every test.
 
 ## Tool portability
 
