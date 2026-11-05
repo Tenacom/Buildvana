@@ -1,6 +1,6 @@
 # Forgejo
 
-This file is the same in every repository that copies `.claude`. `rules/common/git-host.md` lists the operations, and this file maps each one to the commands of Forgejo. The client is `curl` against the REST API, with `jq` on the responses. `rules/project/repository.md` names the API root, `<api>` below, which is the URL of the host followed by `/api/v1`, and the environment variable that holds the token, `FORGEJO_TOKEN` below.
+This file is the same in every repository that copies `.claude`. `rules/common/git-host.md` lists the operations, and this file maps each one to the commands of Forgejo. The client is `curl` against the REST API, with `jq` on the responses. `buildvana.jsonc` holds both facts the commands need. The API root, `<api>` below, is the scheme and host of `repository.url` followed by `/api/v1`. The environment variable that holds the token is `hosts.forgejo.tokenEnv`, `FORGEJO_TOKEN` below and by default.
 
 Every command takes the token in a header. A command that sends a body takes two more options.
 
