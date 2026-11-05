@@ -10,9 +10,27 @@ on:
   pull_request:
     branches: [ main, develop, hotfix/*, dev/*, 'v[0-9]+.[0-9]+' ]
 
+# A push to a pull request branch supersedes the run of the previous push. A push to a branch does not: every commit gets its own result.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build_test_pack:
-    runs-on: ubuntu-latest
+    name: bv ${{ matrix.command }} on ${{ matrix.os }}
+    strategy:
+      # The tests read paths, processes, and consoles, which differ per platform, so the result of each runner stays useful.
+      fail-fast: false
+      matrix:
+        include:
+        # The release packs on Linux, so the Linux run is the one that checks the packages.
+        - os: ubuntu-latest
+          command: pack
+        # The Windows run exists for the tests on the other supported platform, and packs nothing.
+        - os: windows-latest
+          command: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # A hung test must not hold a runner for the default six hours.
     env:
       DOTNET_NOLOGO: 'true'
       DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
@@ -45,13 +63,13 @@ jobs:
     - name: Verify buildvana.jsonc schema is up to date
       shell: bash
       run: dotnet run tools/generate-config-schema.cs -- --check
-    - name: Build, test, and pack with Buildvana
+    - name: Run bv ${{ matrix.command }}
       shell: bash
       run: |
         if [ "$RUNNER_DEBUG" = "1" ]; then
-          dotnet bv pack --verbosity diagnostic
+          dotnet bv ${{ matrix.command }} --verbosity diagnostic
         else
-          dotnet bv pack
+          dotnet bv ${{ matrix.command }}
         fi
     - name: Upload coverage to Codecov
       if: ${{ hashFiles('TestResults/*.cobertura.xml') != '' }}
