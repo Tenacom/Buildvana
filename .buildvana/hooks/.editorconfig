@@ -1,0 +1,14 @@
+# Hooks-specific .editorconfig file
+
+root = false
+
+[*.cs]
+
+# File may only contain a single type - not so important in single-file apps
+dotnet_diagnostic.SA1402.severity = none
+
+# File header copyright text should match - hooks may have a different copyright than the solution
+dotnet_diagnostic.SA1636.severity = none
+
+# File name should match first type name - makes no sense in single-file apps
+dotnet_diagnostic.SA1649.severity = none
