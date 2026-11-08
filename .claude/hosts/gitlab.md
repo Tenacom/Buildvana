@@ -152,3 +152,31 @@ glab api -X PUT projects/:fullpath/merge_requests/<n>/discussions/<discussion id
 ```bash
 glab api projects/:fullpath/issues/<n> --jq '{iid, title, description, state, labels}'
 ```
+
+## Create an issue
+
+```bash
+glab api -X POST projects/:fullpath/issues -f title="<title>" -F description=@<file> -f labels=<name>,<name> --jq '{iid, web_url}'
+```
+
+`labels` is a comma-separated list of label names.
+
+## Update an issue
+
+```bash
+glab api -X PUT projects/:fullpath/issues/<n> -f title="<title>" -F description=@<file> -f labels=<name>,<name> -f state_event=close
+glab api projects/:fullpath/issues/<n> --jq '{iid, title, description, state, labels}'
+```
+
+Pass the fields that change. `labels` replaces every label of the issue. `state_event` takes `close` or `reopen`.
+
+## Labels
+
+A label whose name holds `::` is scoped, and an issue or MR carries one label per scope: adding a second one replaces the first. Labels belong to a project or to a group, and the group labels reach every project of the group.
+
+The first command creates a label of the project, the second one a label of a group.
+
+```bash
+glab label create --name <name> --color <hex> --description <text>
+glab api -X POST groups/<group%2Fpath>/labels -f name=<name> -f color=<hex> -f description=<text>
+```

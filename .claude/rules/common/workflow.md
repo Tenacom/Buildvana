@@ -224,7 +224,7 @@ The PR description tells a reviewer who is about to read the diff what the diff 
 
 ## Labels
 
-- Do not apply `area:*` labels to issues or PRs. A CI workflow manages them automatically on PRs, and they do not matter on issues until triage.
+- `repository.md` says which labels a workflow applies and which are applied by hand. Do not apply by hand a label a workflow manages.
 
 ## Getting stuck
 

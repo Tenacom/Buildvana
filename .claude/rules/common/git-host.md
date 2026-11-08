@@ -40,6 +40,10 @@ The rule files use one name per thing on every platform. The name is GitHub's wh
 
 A reference such as `#1` and the `Closes #N` phrase work on every platform. `documentation.md` says where each platform turns a reference into a link.
 
+## Labels
+
+A label scope groups labels by a prefix of their name, such as `area` in `area/docs`. The platforms differ on the separator, and on whether a scope admits one label at a time. The host file of each platform says how its labels work and how a label is created. `rules/project/repository.md` names the scopes of the repository, and says which labels a workflow applies and which are applied by hand.
+
 ## Operations
 
 Each host file has one section per operation below, with the same heading. An operation reads or writes what the list says, and the rule files rely on nothing else. When a platform has no command and no API for an operation, its host file says so. Skip the step that uses the operation, and say so.
@@ -61,6 +65,8 @@ Each host file has one section per operation below, with the same heading. An op
 - **Reply in a thread.** Post a body file as a reply to a comment of the thread.
 - **Resolve a thread.** Mark the thread resolved.
 - **Read an issue.** Title, body, state, and labels.
+- **Create an issue.** From a title, a body file, and label names. The number and the URL of the created issue. The host applies an issue template in its web UI alone, so the body file carries the headings of the template, one `### <field label>` per field, in its order.
+- **Update an issue.** Any of: the title, the body from a body file, the full list of label names, and the state, `open` or `closed`. Then read the issue back.
 
 ## What the platforms refuse
 

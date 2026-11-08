@@ -17,7 +17,7 @@ The following are non-technical documentation:
 - `NuGet-README.md` files of packaged projects are entry points, too.
 - Articles, under `docs/articles/`, aim for easy reading rather than formality.
 
-Every other Markdown file is not documentation: third-party notices, analyzer release files, and the files under `.claude/`. The rules below do not apply to them.
+Every other Markdown file is not documentation: third-party notices, analyzer release files, the community files `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, and `SECURITY.md` where present, and the files under `.claude/`. The rules below do not apply to them.
 
 ## Register
 

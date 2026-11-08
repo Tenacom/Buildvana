@@ -15,9 +15,10 @@
   </PropertyGroup>
 
   <!--
-    Every tool compiles ProjectFacts.cs in, so that the facts about the repository live in one file, and a copy of
-    .claude rewrites that file alone. The cache of `dotnet run` tracks ProjectFacts.cs, and not this file: after a
-    change to this file, run each tool once with the no-cache option of `dotnet run`.
+    Every tool compiles ProjectFacts.cs in, so that the facts about the repository live in one file,
+    and a copy of .claude rewrites that file alone.
+    The cache of `dotnet run` tracks ProjectFacts.cs, and not this file: after a change to this file,
+    run each tool once with the no-cache option of `dotnet run`.
   -->
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ProjectFacts.cs" />

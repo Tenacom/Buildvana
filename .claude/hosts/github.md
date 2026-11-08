@@ -139,3 +139,30 @@ gh api graphql -f query='mutation { resolveReviewThread(input: { threadId: "<thr
 ```bash
 gh issue view <n> --repo <owner>/<repo> --json number,title,body,state,labels
 ```
+
+## Create an issue
+
+```bash
+gh issue create --repo <owner>/<repo> --title "<title>" --body-file <file> --label <name>
+```
+
+Repeat `--label` for each label. The command prints the URL of the issue, and the number is its last path segment.
+
+## Update an issue
+
+```bash
+gh issue edit <n> --repo <owner>/<repo> --title "<title>" --body-file <file> --add-label <name> --remove-label <name>
+gh issue close <n> --repo <owner>/<repo>
+gh issue reopen <n> --repo <owner>/<repo>
+gh issue view <n> --repo <owner>/<repo> --json number,title,body,state,labels
+```
+
+Pass the options of the parts that change. `gh issue edit` has no option that replaces every label, so remove the labels that go and add the labels that come.
+
+## Labels
+
+GitHub has no scoped labels. A prefix such as `area:` is a naming convention, and nothing keeps two labels of one prefix apart on an issue or PR. Labels belong to a repository, and an organization can set the default labels of its new repositories.
+
+```bash
+gh label create <name> --color <hex> --description <text> --repo <owner>/<repo>
+```

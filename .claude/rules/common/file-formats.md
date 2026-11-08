@@ -19,6 +19,7 @@ A section below overrides them for its own file type.
 - Charset: UTF-8 without BOM, as for every other file.
 - Every file opens with the copyright preamble whose text the StyleCop `copyrightText` setting holds. SA1633, SA1634, and SA1636 check it.
 - A scratch `.cs` file under `.claude/scratchpad/` needs no preamble. The `Common.props` there turns StyleCop off.
+- A tool under `.claude/tools/` and a hook under `.buildvana/hooks/` keep the preamble of the repository they were written in. Where a directory holds such a copy, its `.editorconfig` turns SA1636 off, so the preamble needs no change. A copy from a private repository into an open-source one is the exception: its preamble reserves all rights, so ask the maintainer whether the copy takes the license of its new repository before it is committed.
 
 ## MSBuild XML files (`*.*proj`, `*.props`, `*.targets`)
 

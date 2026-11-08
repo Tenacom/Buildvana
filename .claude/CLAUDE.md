@@ -1,6 +1,7 @@
 # Buildvana
 
-Buildvana is an MSBuild-based build system. `.claude/rules/` holds the project instructions.
+Buildvana is an MSBuild-based build system.
+See `.claude/rules/` for project instructions.
 
 ## Rules index
 
@@ -18,8 +19,8 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 - `rules/common/testing.md`: test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
 - `rules/common/buildvana.md`: build commands, dependency commands, and the Buildvana documentation. Assumes the project is built with Buildvana.
 - `rules/common/dotnet.md`: efficiency rules for .NET tooling, and how to inspect a third-party package.
-- `rules/common/git-host.md`: what the Git host is, the three platforms, how to identify the platform and the version of a host, the vocabulary the rule files use on every platform, and the operations a host file maps to commands. The hosts of the repository are in `rules/project/repository.md`.
-- `hosts/github.md`, `hosts/forgejo.md`, `hosts/gitlab.md`: the commands of one platform for the operations of `rules/common/git-host.md`. A session reads the one `rules/project/repository.md` names. Nothing repo-specific in them.
+- `rules/common/git-host.md`: what the Git host is, the three platforms, how to identify the platform and the version of a host, the vocabulary the rule files use on every platform, what a label scope is, and the operations a host file maps to commands. The hosts of the repository are in `rules/project/repository.md`.
+- `hosts/github.md`, `hosts/forgejo.md`, `hosts/gitlab.md`: the commands of one platform for the operations of `rules/common/git-host.md`, and how its labels work. A session reads the one `rules/project/repository.md` names. Nothing repo-specific in them.
 - `rules/common/documentation.md`: what counts as user documentation, the register, the structure of `docs/`, the changelog bullet format, the rendering differences between the platforms, and the checks. The names it relies on are in `rules/project/terminology.md`, and the inventory it applies to is in `rules/project/documentation.md`.
 - `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. It names `inspect.cs`, and takes the CI from `rules/project/repository.md`, the checks to tolerate from `rules/project/pr-checks.md`, and every command on the host from the host file. Nothing repo-specific in it.
 - `agents/pr-reviewer.md`: the subagent that runs the skill for the self-review cycle. Nothing repo-specific in it.

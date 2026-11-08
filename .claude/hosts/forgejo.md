@@ -2,6 +2,8 @@
 
 This file is the same in every repository that copies `.claude`. `rules/common/git-host.md` lists the operations, and this file maps each one to the commands of Forgejo. The client is `curl` against the REST API, with `jq` on the responses. `buildvana.jsonc` holds both facts the commands need. The API root, `<api>` below, is the scheme and host of `repository.url` followed by `/api/v1`. The environment variable that holds the token is `hosts.forgejo.tokenEnv`, `FORGEJO_TOKEN` below and by default.
 
+The token needs the scopes `read:user`, `write:repository`, and `write:issue`. A PR, its reviews, its comments, and the checks of a commit sit under the repository scope, and an issue and the labels of a repository under the issue scope. The labels of an organization need `write:organization` too, and the owner role in the organization. Forgejo answers 403 to a request outside the scopes of the token, with the missing scope in the message.
+
 Every command takes the token in a header. A command that sends a body takes two more options.
 
 ```bash
@@ -150,4 +152,34 @@ Forgejo 15 has no API to resolve a thread. Skip the step, and say so. The user r
 
 ```bash
 curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/issues/<n> | jq '{number, title, body, state, labels: [.labels[].name]}'
+```
+
+## Create an issue
+
+The body file holds `title` and `body`. The labels go in a second request, whose file holds `labels`, a list of label names. A name that matches no label of the repository or of its organization is ignored, without an error.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X POST --data-binary @<file> <api>/repos/<owner>/<repo>/issues | jq '{number, html_url}'
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X PUT --data-binary @<labels file> <api>/repos/<owner>/<repo>/issues/<n>/labels
+```
+
+## Update an issue
+
+The body file holds any of `title`, `body`, and `state`, which takes `open` or `closed`. The labels file holds `labels`, the full list of label names, and the request replaces the labels of the issue with it. Send the request of each part that changes, then read the issue back.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X PATCH --data-binary @<file> <api>/repos/<owner>/<repo>/issues/<n>
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X PUT --data-binary @<labels file> <api>/repos/<owner>/<repo>/issues/<n>/labels
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/issues/<n> | jq '{number, title, body, state, labels: [.labels[].name]}'
+```
+
+## Labels
+
+A label whose name holds `/` is scoped, and the scope is the part before the last `/`. A label marked exclusive admits no other label of its scope on the same issue or PR. Labels belong to a repository or to an organization, and the organization labels reach every repository of the organization. The instance offers label templates, the files of `options/label/` in its custom directory, at repository creation and on the labels page of a repository. A template is a YAML file with a `labels` list, and each entry has `name`, `exclusive`, `color`, and `description`.
+
+The body file of a new label holds `name`, `color`, `description`, and `exclusive`. The first command creates a label of a repository, the second one a label of an organization.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X POST --data-binary @<file> <api>/repos/<owner>/<repo>/labels
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X POST --data-binary @<file> <api>/orgs/<org>/labels
 ```
