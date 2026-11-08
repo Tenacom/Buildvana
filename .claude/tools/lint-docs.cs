@@ -1,4 +1,4 @@
-// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// Copyright (C) Tenacom and contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 /*
@@ -11,9 +11,11 @@
  * root, gets the full paths its problem matcher expects.
  *
  * The documentation set is README.md, CHANGELOG.md, every .md file under docs/, and the NuGet-README.md of each
- * project directory under src/. The tool writes one `path(line,col): error Code: message` per finding to
- * standard output, in the shape the `inspect` task of .vscode/tasks.json parses. It exits 1 when there is any
- * finding, 0 when there is none, and 2 on a usage error. The codes are:
+ * project directory under src/. A member that does not exist is skipped, and named on standard error, so that a
+ * repository without documentation is a clean run and not an error. The tool writes one
+ * `path(line,col): error Code: message` per finding to standard output, in the shape the `inspect` task of
+ * .vscode/tasks.json parses. It exits 1 when there is any finding, 0 when there is none, and 2 on a usage error.
+ * The codes are:
  *   DocsFileName   a file or folder under docs/ whose name is not kebab-case, or a folder two levels deep;
  *   DocsTemplate   a page that departs from the page template: the title, the summary paragraph and the alerts
  *                  after it, the table of contents block, a ruler before each level 2 heading, no heading below
@@ -56,6 +58,7 @@ using System.Text.RegularExpressions;
 
 const string Usage = "Usage: dotnet run .claude/tools/lint-docs.cs [<root>]";
 const string IndexPath = "docs/README.md";
+const string ReadmePath = "README.md";
 const string ChangelogPath = "CHANGELOG.md";
 const string DisableMarker = "<!-- markdownlint-disable MD036 -->";
 const string TocTitle = "**Table of contents**";
@@ -93,12 +96,18 @@ if (!gitHosts.Contains(ProjectFacts.GitHost, StringComparer.Ordinal))
 
 var rootGiven = args.Length == 1;
 var root = Path.GetFullPath(rootGiven ? args[0] : Environment.CurrentDirectory);
-var docsDirectory = Path.Combine(root, "docs");
-if (!Directory.Exists(docsDirectory) || !File.Exists(Path.Combine(root, ChangelogPath)))
+if (!Directory.Exists(root))
 {
-    Console.Error.WriteLine($"{root} holds no docs/ directory, or no CHANGELOG.md.");
+    Console.Error.WriteLine($"{root} is not a directory.");
     Console.Error.WriteLine(Usage);
     return 2;
+}
+
+var docsDirectory = Path.Combine(root, "docs");
+var hasDocs = Directory.Exists(docsDirectory);
+if (!hasDocs)
+{
+    Console.Error.WriteLine("info: no docs/ directory: skipping the pages and the index.");
 }
 
 var kebabRegex = new Regex(@"^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.CultureInvariant);
@@ -118,13 +127,33 @@ var nestedListRegex = new Regex(@"^\s+(?:[-*+]|\d+\.)\s", RegexOptions.CultureIn
 
 var findings = new List<(string File, int Line, int Column, string Code, string Message)>();
 
-// The documentation set, as relative paths with forward slashes. The files of a generated folder are not in it.
-var pages = Directory.EnumerateFiles(docsDirectory, "*.md", SearchOption.AllDirectories)
-    .Select(path => ToRelative(root, path))
-    .Where(page => !IsGenerated(page))
-    .Order(StringComparer.Ordinal)
-    .ToList();
-var files = new List<string> { "README.md", ChangelogPath };
+// The documentation set, as relative paths with forward slashes. The files of a generated folder are not in it,
+// and neither is a page when there is no docs/ directory.
+var pages = new List<string>();
+if (hasDocs)
+{
+    pages.AddRange(Directory.EnumerateFiles(docsDirectory, "*.md", SearchOption.AllDirectories)
+        .Select(path => ToRelative(root, path))
+        .Where(page => !IsGenerated(page))
+        .Order(StringComparer.Ordinal));
+}
+
+// README.md and CHANGELOG.md are members of the set by name, so an absent one is named on standard error. A
+// project directory holds a NuGet-README.md only when the project is packaged, so an absent one is not news.
+string[] namedFiles = [ReadmePath, ChangelogPath];
+var files = new List<string>();
+foreach (var named in namedFiles)
+{
+    if (File.Exists(Path.Combine(root, named)))
+    {
+        files.Add(named);
+    }
+    else
+    {
+        Console.Error.WriteLine($"info: no {named}: skipping the file.");
+    }
+}
+
 files.AddRange(pages);
 var srcDirectory = Path.Combine(root, "src");
 if (Directory.Exists(srcDirectory))
@@ -136,10 +165,12 @@ if (Directory.Exists(srcDirectory))
         .Order(StringComparer.Ordinal));
 }
 
-files = files.Where(file => File.Exists(Path.Combine(root, file))).ToList();
-
-// File and folder names under docs/. A generated folder, and everything under it, is named by its tool.
-foreach (var entry in Directory.EnumerateFileSystemEntries(docsDirectory, "*", SearchOption.AllDirectories))
+// File and folder names under docs/. A generated folder, and everything under it, is named by its tool. The
+// sequence is empty when there is no docs/ directory.
+IEnumerable<string> docsEntries = hasDocs
+    ? Directory.EnumerateFileSystemEntries(docsDirectory, "*", SearchOption.AllDirectories)
+    : [];
+foreach (var entry in docsEntries)
 {
     var relative = ToRelative(root, entry);
     if (IsGenerated(relative))

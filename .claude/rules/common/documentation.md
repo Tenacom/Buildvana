@@ -220,7 +220,7 @@ A reference is a token such as `#1` that the platform turns into a link to an is
 ## Checks
 
 - markdownlint runs with the configuration in `.markdownlint-cli2.jsonc`. `file-formats.md` says which rules it enforces.
-- `.claude/tools/lint-docs.cs` runs as a phase of `inspect.cs --gate`. `Documentation.GeneratedFolders` in `tools/ProjectFacts.cs` names the generated folders, which it skips, and `GitHost` there names the platform whose anchors it computes. It checks:
+- `.claude/tools/lint-docs.cs` runs as a phase of `inspect.cs --gate`. `Documentation.GeneratedFolders` in `tools/ProjectFacts.cs` names the generated folders, which it skips, and `GitHost` there names the platform whose anchors it computes. A member of the documentation set that does not exist, such as `docs/` or `CHANGELOG.md`, is skipped and named on standard error, so that a repository without documentation passes. It checks:
   - file names under `docs/` are kebab-case, and subfolders are one level deep;
   - every page follows the template: summary paragraph, rulers, and a table of contents that matches the headings;
   - the index links every hand-written page, and no link points at a missing file or anchor, except a link into a generated folder;
