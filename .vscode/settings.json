@@ -83,7 +83,7 @@
   // When enabled, will attempt to guess the character set encoding when opening files
   "files.autoGuessEncoding": false,
   // The default end of line character. Use \n for LF and \r\n for CRLF.
-  "files.eol": "\r\n",
+  "files.eol": "\n",
   // When enabled, will trim trailing whitespace when saving a file.
   "files.trimTrailingWhitespace": true,
   // When enabled, insert a final new line at the end of the file when saving it.
