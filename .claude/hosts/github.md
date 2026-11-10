@@ -159,6 +159,43 @@ gh issue view <n> --repo <owner>/<repo> --json number,title,body,state,labels
 
 Pass the options of the parts that change. `gh issue edit` has no option that replaces every label, so remove the labels that go and add the labels that come.
 
+## Read the parent and the sub-issues of an issue
+
+```bash
+gh issue view <n> --repo <owner>/<repo> --json parent,subIssues,subIssuesSummary
+```
+
+`parent.number` is the parent, and `parent` is `null` when the issue has none. `subIssues[].number` are the sub-issues.
+
+## Set the parent of an issue
+
+```bash
+gh issue edit <n> --repo <owner>/<repo> --parent <parent>
+gh issue edit <n> --repo <owner>/<repo> --remove-parent
+gh issue create --repo <owner>/<repo> --title "<title>" --body-file <file> --label <name> --parent <parent>
+```
+
+`--parent` takes a number or a URL. A parent in another repository of the same owner is passed as a URL. An issue has one parent, and `--parent` replaces it. A parent holds at most 100 sub-issues, and the hierarchy goes eight levels deep. The flags exist in `gh` 2.103.
+
+## Read the blocking issues
+
+```bash
+gh issue view <n> --repo <owner>/<repo> --json blockedBy,blocking
+```
+
+`blockedBy[].number` are the issues that block the issue, and `blocking[].number` the issues it blocks.
+
+## Set a blocking issue
+
+```bash
+gh issue edit <n> --repo <owner>/<repo> --add-blocked-by <other>
+gh issue edit <n> --repo <owner>/<repo> --remove-blocked-by <other>
+gh issue edit <n> --repo <owner>/<repo> --add-blocking <other>
+gh issue edit <n> --repo <owner>/<repo> --remove-blocking <other>
+```
+
+Each flag takes a number or a URL, and an issue in another repository is passed as a URL. GitHub shows the block on both issues, and closes a blocked issue without a warning. The flags exist in `gh` 2.103.
+
 ## Labels
 
 GitHub has no scoped labels. A prefix such as `area:` is a naming convention, and nothing keeps two labels of one prefix apart on an issue or PR. Labels belong to a repository, and an organization can set the default labels of its new repositories.

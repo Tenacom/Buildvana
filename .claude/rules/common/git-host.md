@@ -37,6 +37,8 @@ The rule files use one name per thing on every platform. The name is GitHub's wh
 | login         | login               | login                         | username                                 |
 | head commit   | `headRefOid`        | `head.sha`                    | `sha`                                    |
 | full name     | `nameWithOwner`     | `full_name`                   | `path_with_namespace`                    |
+| sub-issue     | sub-issue           | none                          | child item                               |
+| blocked by    | blocked by          | dependency                    | issue link of type `is_blocked_by`       |
 
 A reference such as `#1` and the `Closes #N` phrase work on every platform. `documentation.md` says where each platform turns a reference into a link.
 
@@ -47,6 +49,8 @@ A label scope groups labels by a prefix of their name, such as `area` in `area/d
 ## Operations
 
 Each host file has one section per operation below, with the same heading. An operation reads or writes what the list says, and the rule files rely on nothing else. When a platform has no command and no API for an operation, its host file says so. Skip the step that uses the operation, and say so.
+
+An operation that no section covers is still done with the client the host file names, from the documentation of the platform. Say that the command is not from the host file, and show it before running it. When the operation will recur, propose a section for it in this file and in the three host files.
 
 - **Identify the repository.** From the clone: the full name of the repository, `owner/repo`, and its default branch. The remote the repository lives on is the one whose URL names the full name.
 - **Read the login.** The login of the account the client is configured with.
@@ -67,6 +71,10 @@ Each host file has one section per operation below, with the same heading. An op
 - **Read an issue.** Title, body, state, and labels.
 - **Create an issue.** From a title, a body file, and label names. The number and the URL of the created issue. The host applies an issue template in its web UI alone, so the body file carries the headings of the template, one `### <field label>` per field, in its order.
 - **Update an issue.** Any of: the title, the body from a body file, the full list of label names, and the state, `open` or `closed`. Then read the issue back.
+- **Read the parent and the sub-issues of an issue.** The number of the parent, when the issue has one, and the numbers of its sub-issues.
+- **Set the parent of an issue.** Make an issue a sub-issue of another, or clear its parent. A platform without a parent/child relation between issues has no mapping, and its host file names the nearest relation it has.
+- **Read the blocking issues.** The numbers of the issues that block the issue, and of the issues it blocks.
+- **Set a blocking issue.** Add or remove "blocked by" between the issue and another, in either direction. The operation states the relation and not its effect, because the platforms differ on what a block does when the blocked issue is closed. Each host file says what its platform does.
 
 ## What the platforms refuse
 

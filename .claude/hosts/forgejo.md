@@ -173,6 +173,34 @@ curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/
 curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/issues/<n> | jq '{number, title, body, state, labels: [.labels[].name]}'
 ```
 
+## Read the parent and the sub-issues of an issue
+
+Forgejo has no parent/child relation between issues. Skip the step, and say so.
+
+## Set the parent of an issue
+
+Forgejo has no parent/child relation between issues. The nearest relation is a dependency, which "Set a blocking issue" maps. A dependency states a different fact than a sub-issue, so ask before using one in its place.
+
+## Read the blocking issues
+
+A dependency of an issue is an issue that blocks it. The first command lists the issues that block the issue, the second one the issues it blocks.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/issues/<n>/dependencies | jq '.[] | {number, repo: .repository.full_name, title}'
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/issues/<n>/blocks | jq '.[] | {number, repo: .repository.full_name, title}'
+```
+
+## Set a blocking issue
+
+The body file holds `owner`, `repo`, and `index` of the other issue. The `dependencies` route makes the other issue block the issue, and the `blocks` route makes the issue block the other one. `POST` adds the relation, and `DELETE` with the same body removes it. Forgejo refuses to close an issue while an issue that blocks it is open.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X POST --data-binary @<file> <api>/repos/<owner>/<repo>/issues/<n>/dependencies
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X DELETE --data-binary @<file> <api>/repos/<owner>/<repo>/issues/<n>/dependencies
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X POST --data-binary @<file> <api>/repos/<owner>/<repo>/issues/<n>/blocks
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X DELETE --data-binary @<file> <api>/repos/<owner>/<repo>/issues/<n>/blocks
+```
+
 ## Labels
 
 A label whose name holds `/` is scoped, and the scope is the part before the last `/`. A label marked exclusive admits no other label of its scope on the same issue or PR. Labels belong to a repository or to an organization, and the organization labels reach every repository of the organization. The instance offers label templates, the files of `options/label/` in its custom directory, at repository creation and on the labels page of a repository. A template is a YAML file with a `labels` list, and each entry has `name`, `exclusive`, `color`, and `description`.

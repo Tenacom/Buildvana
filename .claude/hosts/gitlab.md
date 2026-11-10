@@ -150,8 +150,10 @@ glab api -X PUT projects/:fullpath/merge_requests/<n>/discussions/<discussion id
 ## Read an issue
 
 ```bash
-glab api projects/:fullpath/issues/<n> --jq '{iid, title, description, state, labels}'
+glab api projects/:fullpath/issues/<n> --jq '{iid, id, title, description, state, labels}'
 ```
+
+`iid` is the number. `id` is the id of the issue across the instance, which "Set the parent of an issue" takes.
 
 ## Create an issue
 
@@ -169,6 +171,39 @@ glab api projects/:fullpath/issues/<n> --jq '{iid, title, description, state, la
 ```
 
 Pass the fields that change. `labels` replaces every label of the issue. `state_event` takes `close` or `reopen`.
+
+## Read the parent and the sub-issues of an issue
+
+GitLab has no parent/child relation between two issues. The parent of an issue is an epic, on Premium and Ultimate. The children of an issue are tasks, which are not issues. Skip the step, and say so.
+
+## Set the parent of an issue
+
+One mutation sets or clears the parent of any work item: an issue under an epic, or a task under an issue. `<id>` and `<parent id>` are the `id` of each work item, as "Read an issue" returns it, not the `iid`. `parentId: null` clears the parent.
+
+```bash
+glab api graphql -f query='mutation { workItemUpdate(input: { id: "gid://gitlab/WorkItem/<id>", hierarchyWidget: { parentId: "gid://gitlab/WorkItem/<parent id>" } }) { workItem { id } errors } }'
+```
+
+The mutation and its input come from the GraphQL reference and the source of GitLab, read on 2026-11-10, and not from a run against an instance. Two facts are unverified: that `glab api graphql` reaches the GraphQL endpoint, and that the work item id of an issue is its `id`. When the mutation fails, check both before anything else.
+
+## Read the blocking issues
+
+A block is an issue link of type `blocks` or `is_blocked_by`, on Premium and Ultimate. The list holds every link of the issue, and `link_type` says how the linked issue relates to the issue. `issue_link_id` is the id of the link, which "Set a blocking issue" takes to remove it.
+
+```bash
+glab api projects/:fullpath/issues/<n>/links --jq '.[] | {iid, project_id, link_type, issue_link_id}'
+```
+
+## Set a blocking issue
+
+`link_type` is `is_blocked_by` when the other issue blocks the issue, and `blocks` when the issue blocks the other one. `target_project_id` is the numeric id of the project of the other issue, and `target_issue_iid` its number. Removing a link takes the `issue_link_id` from "Read the blocking issues". GitLab shows a warning when a blocked issue is closed, and closes it.
+
+```bash
+glab api -X POST projects/:fullpath/issues/<n>/links -F target_project_id=<project id> -F target_issue_iid=<other> -f link_type=is_blocked_by
+glab api -X DELETE projects/:fullpath/issues/<n>/links/<issue_link_id>
+```
+
+The numeric id of the current project comes from `glab api projects/:fullpath --jq .id`.
 
 ## Labels
 
