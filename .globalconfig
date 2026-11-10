@@ -437,7 +437,9 @@ dotnet_diagnostic.SA1500.severity = none # Braces for multi-line statements shou
 dotnet_diagnostic.SA1501.severity = warning # Statement should not be on a single line
 dotnet_diagnostic.SA1502.severity = warning # Element should not be on a single line
 dotnet_diagnostic.SA1503.severity = warning # Braces should not be omitted
-dotnet_diagnostic.SA1504.severity = warning # All accessors should be single-line or multi-line
+# SA1504 conflicts with IDE0027 and ReSharper when an expression-bodied accessor sits next to a block-bodied one.
+# Complying means expanding the expression body into a block, which reads worse.
+dotnet_diagnostic.SA1504.severity = none # All accessors should be single-line or multi-line
 dotnet_diagnostic.SA1505.severity = warning # Opening braces should not be followed by blank line
 dotnet_diagnostic.SA1506.severity = warning # Element documentation headers should not be followed by blank line
 dotnet_diagnostic.SA1507.severity = warning # Code should not contain multiple blank lines in a row
