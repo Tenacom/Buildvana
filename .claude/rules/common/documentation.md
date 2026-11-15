@@ -169,8 +169,10 @@ A generated folder is a subfolder of `docs/` that a tool writes in full at relea
 
 `CHANGELOG.md` follows Keep a Changelog. `bv` owns the section skeleton: the "Unreleased changes" section, the release headings, and the four subsections "New features", "Changes to existing features", "Bugs fixed in this release", and "Known problems introduced by this release". The rules below govern what goes inside.
 
+- The reader of a bullet is a person who upgrades to the release. The bullet says what that reader gets or loses. It does not summarize the PR, and it does not say how the change is produced: no hook, no tool, no source file, unless the reader acts on it.
 - A bullet is one sentence. No nested list, no second sentence.
 - The bullet names what changed, with an identifier: a command, a property, a file, a diagnostic id.
+- A bullet about a member says what the member does, and leaves out the condition under which the member acts. The condition and the edge cases belong in the documentation of the member. Write "`Trim` removes white space from both ends of a string", not "of a string that is not empty".
 - It does not say "now". Every bullet describes a change.
 - The docs page that describes the feature is linked inline, on the phrase that names the feature. Do not add a trailing "See X.", which would be a second sentence.
 - A bullet that names a type links the page of the type in the generated folder that holds the API reference, when the repository has one. The page may not exist until the release, as "Generated folders" says.
