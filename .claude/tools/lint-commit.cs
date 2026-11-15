@@ -1,4 +1,4 @@
-// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// Copyright (C) Tenacom and contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 /*
@@ -57,7 +57,7 @@ string[] announcingVerbs = ["Say", "Tell", "Judge", "Clear", .. ProjectFacts.Com
 
 // A subject that starts with one of these describes the old behavior, and hides what the code does after the
 // commit. "Stop SA1115 from failing the build" does not say whether the commit suppressed the rule or fixed the
-// code. The body states the old behavior, so the subject need not.
+// code. The body of a fix states the wrong behavior, so the subject need not.
 string[] oldBehaviorVerbs = ["Stop", "Avoid", "Prevent"];
 
 // Metaphors and house verbs that name nothing in the repository. The first four are the style's own examples.

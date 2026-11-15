@@ -63,6 +63,21 @@ Forgejo has no watch command. Read the checks, and while one is in `pending`, wa
 sleep 90
 ```
 
+## Read the log of a check
+
+Forgejo 15 has no API route for the log of a job. A route of the web UI serves the log, and reads no token. The route therefore works only where a visitor who is not signed in can read the Actions of the repository. Elsewhere, skip the step, and say so. The user downloads the log from the page of the job.
+
+`target_url` of a check that Forgejo Actions posts is `/<owner>/<repo>/actions/runs/<run>/jobs/<job>`, relative to `<host>`, the scheme and host of `repository.url`. A check that a service posts has the URL of the service there, and has no log on Forgejo. The second command prints the URL of the latest attempt of the job, which Forgejo redirects to. The third one saves the log of that attempt.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/commits/<head commit>/status \
+  | jq '.statuses[] | {name: .context, target_url}'
+curl -sS -o /dev/null -w '%{redirect_url}' <host><target_url>
+curl -sS -o <file> <attempt url>/logs
+```
+
+The route answers 404 before the job starts, and after Forgejo has removed the log. It was read from the `v15.0/forgejo` branch on 2026-11-16, and run the same day against `codeberg.org`, which hosts a later version.
+
 ## Check out the head commit
 
 ```bash

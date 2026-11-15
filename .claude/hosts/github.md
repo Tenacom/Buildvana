@@ -49,6 +49,17 @@ gh pr checks <n> --repo <owner>/<repo> --watch
 
 The command returns when every check has ended. Run it in the background.
 
+## Read the log of a check
+
+```bash
+gh pr checks <n> --repo <owner>/<repo> --json name,link
+gh run view --repo <owner>/<repo> --job <job id> --log > <file>
+```
+
+`link` of a check that a workflow job posts ends in `/job/<job id>`. A check that a service posts, such as Codecov, links to the service, and has no log on GitHub.
+
+Each line of the log holds the name of the job, the name of the step, and the text, separated by tabs. A log holds thousands of lines, so search the file with Grep, and do not read it whole. `--log-failed` in place of `--log` keeps the failed steps alone.
+
 ## Check out the head commit
 
 ```bash

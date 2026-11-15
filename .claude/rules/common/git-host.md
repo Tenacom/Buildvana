@@ -58,6 +58,7 @@ An operation that no section covers is still done with the client the host file 
 - **Find the PR of a branch.** The number of the open PR whose head branch is the one given.
 - **Read the checks.** For the head commit: the name of each check and its state, as one of `pass`, `fail`, `pending`, `skipping`, and `cancel`. The host file maps the states of its platform onto these five.
 - **Wait for the checks.** Return when no check of the head commit is in `pending`.
+- **Read the log of a check.** The output of the CI job that posted a check, as text, in a new file in the scratchpad. A check that a service posts, such as Codecov, has no log on the host.
 - **Check out the head commit.** Put the head commit of a PR in the working tree, on a branch named `pr-<n>`, and reset the branch when it exists.
 - **Read the reviews.** For each review of a PR: author login, body, and state. The round count of `skills/review-pr/SKILL.md` reads the body.
 - **Read the threads.** For each thread of a PR: its id, whether it is resolved, and each comment with its id, author login, body, path, and line.

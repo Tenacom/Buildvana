@@ -184,8 +184,11 @@ When a finding asks to remove something deliberate, recovering _why it was put t
 
 A commit message is read months later, by a reader who has the repository and nothing else. Keep it short, and keep it free of anything that reader cannot look up.
 
-- The subject completes the sentence "This commit, when merged, will ...", with an identifier when the change has one. It says what the code does after the commit. It does not describe the old behavior, and it does not name the rule the change obeys. The body states the old behavior.
-- The body is two or three sentences, in one to three paragraphs, and it says why. State the wrong behavior first, then the reason the fix took this shape, when the diff does not show it. The diff says what changed, so the body does not repeat it.
+- The subject completes the sentence "This commit, when merged, will ...", with an identifier when the change has one. It says what the code does after the commit. It does not describe the old behavior, and it does not name the rule the change obeys.
+- The body is one to three sentences, in one to three paragraphs, and it says why the commit exists. The diff says what changed, so the body does not repeat it.
+- The body of a commit that fixes a defect states the symptom: what the code did wrong, in the words a person who met the defect would search the log for. It does not retrace how the code came to do it.
+- The body of any other commit states the purpose: what the change makes possible, or the decision it carries out. It does not describe the code before the commit, because nothing was wrong with it.
+- The body leaves the detail out: how the change works, why each part has its shape, and which alternatives lost. The diff shows how the change works. A reason goes in a code comment only when a reader would take the code for a mistake without it. Every other reason goes in the PR text.
 - The body wraps at 72 characters, with a line break at a clause boundary or between the items of a list. A line that holds a URL is exempt.
 - A commit that fixes several defects has one bullet per defect, each a short "X did Y", and no sentence around them.
 - A term that exists only in the PR's conversation is banned. Name the thing with an identifier from the repository, or describe it. A reader can look up `OverrideLifecycle`. Nobody can look up "the lifecycle".

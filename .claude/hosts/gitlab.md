@@ -55,6 +55,18 @@ glab ci status --branch <head branch> --wait
 
 The command returns when the pipeline ends. A status a service posts may arrive after the pipeline, so read the checks after the command returns, and wait while one is in `pending`.
 
+## Read the log of a check
+
+```bash
+glab api "projects/:fullpath/repository/commits/<head commit>/statuses?ref=<head branch>" --paginate \
+  --jq '.[] | {id, name}'
+glab api projects/:fullpath/jobs/<id>/trace > <file>
+```
+
+`id` of a check that a job posts is the id of the job. A check that a service posts has no log on GitLab, and the second command answers 404 for its `id`.
+
+The route comes from the API reference and the source of GitLab, read on 2026-11-16, and not from a run against an instance. Two facts are unverified: that the `id` of a status is the id of its job, and that `glab api` prints a response that is not JSON as it stands. In the source, `CommitStatus` and `Ci::Build` share one table and one primary key. When the second command fails, check both before anything else. `glab ci trace <id>` prints the same log.
+
 ## Check out the head commit
 
 ```bash

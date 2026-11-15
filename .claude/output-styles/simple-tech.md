@@ -96,7 +96,8 @@ A commit message, a changelog entry, and a code comment are read months after th
 
 - Name what changed with an identifier the repository holds: a type, a member, a file, a command, or a diagnostic id.
 - Do not refer to a thing by a description you invented in the same paragraph. "The lookup" and "the pin dump" match nothing in a search.
-- State the wrong behavior before the fix. A restored rule means nothing to a reader who never saw the rule broken.
+- When the change fixes a defect, state the wrong behavior before the fix. A restored rule means nothing to a reader who never saw the rule broken.
+- When nothing was wrong, state the purpose of the change. Do not describe the code before it.
 - Quote the fact you need from an issue or a review. Do not point at them.
 
 ### Commit subjects
@@ -106,7 +107,7 @@ A subject line summarizes a change. It is not a slogan, and it is not the rule t
 - Put an identifier in the subject whenever the change has one.
 - Complete the sentence "This commit, when merged, will ...", with a concrete object.
 - Say what the code does after the commit, not what it did before, and not the principle the change restores.
-- A reader who searches the log for a symptom must find the commit that fixed it. The body carries the symptom, because it states the wrong behavior first.
+- A reader who searches the log for a symptom must find the commit that fixed it. The body of a fix carries the symptom, because it states the wrong behavior.
 
 ## Examples
 
