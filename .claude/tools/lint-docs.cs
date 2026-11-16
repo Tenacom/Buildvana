@@ -311,7 +311,7 @@ foreach (var file in files)
         {
             var target = match.Groups["target"].Value;
             var column = match.Index + 1;
-            if (releasedSection.Length > 0 && !target.StartsWith('#') && !schemeRegex.IsMatch(target))
+            if (releasedSection.Length > 0 && target is not ['#', ..] && !schemeRegex.IsMatch(target))
             {
                 var message = $"released section \"{releasedSection}\" links \"{target}\" by relative path";
                 Report(file, lineNumber, column, "DocsChangelog", message);
@@ -451,10 +451,7 @@ void CheckFenceTag(string file, int lineNumber, string line)
 void CheckSentence(string file, int lineNumber, string line)
 {
     var trimmed = line.Trim();
-    var isProse = trimmed.Length > 0
-        && !trimmed.StartsWith('#')
-        && !trimmed.StartsWith('|')
-        && !trimmed.StartsWith('<');
+    var isProse = trimmed is [not ('#' or '|' or '<'), ..];
     if (!isProse)
     {
         return;
@@ -477,7 +474,7 @@ void CheckSentence(string file, int lineNumber, string line)
 
 void CheckLink(string file, int lineNumber, int column, string target, HashSet<string> targets)
 {
-    if (target.StartsWith('#'))
+    if (target is ['#', ..])
     {
         CheckAnchor(file, lineNumber, column, file, target[1..]);
         return;
@@ -602,9 +599,7 @@ void CheckTemplate(string file)
     }
 
     var summary = lines.Length > 2 ? lines[2] : string.Empty;
-    var isProse = summary.Length > 0
-        && !summary.StartsWith('#')
-        && !summary.StartsWith('<')
+    var isProse = summary is [not ('#' or '<'), ..]
         && !string.Equals(summary, Ruler, StringComparison.Ordinal);
     if (!isProse)
     {
@@ -620,7 +615,7 @@ void CheckTemplate(string file)
 
     // One or more blockquotes, such as alerts that apply to the whole page, may follow the summary
     // paragraph. Each is a block of lines starting with ">", after a blank line.
-    while (summaryEnd + 1 < lines.Length && lines[summaryEnd + 1].StartsWith('>'))
+    while (summaryEnd + 1 < lines.Length && lines[summaryEnd + 1] is ['>', ..])
     {
         summaryEnd++;
         while (summaryEnd < lines.Length && lines[summaryEnd].Length > 0)
