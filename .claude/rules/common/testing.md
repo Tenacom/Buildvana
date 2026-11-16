@@ -8,7 +8,7 @@ This file is the same in every repository that copies `.claude`. A fact specific
 
 A package that targets several frameworks has one build per target framework, and each build gets tested. Two kinds of test project reach every build. `architecture.md` lists the test projects of the repository.
 
-- The main test project of a package targets the frameworks that run a test by themselves: the newest `net<major>.<minor>` framework, and the .NET Framework target when `$(OS)` is `Windows_NT`, because a .NET Framework build runs on Windows alone.
+- The main test project of a package targets the frameworks that run a test by themselves: every `net<major>.<minor>` framework of the package, and the .NET Framework target when `$(OS)` is `Windows_NT`, because a .NET Framework build runs on Windows alone.
 - A `netstandard` build runs on no framework by itself. A `netstandard` test project per `netstandard` build, named after the main test project with a `.NetStandard20` or `.NetStandard21` suffix, targets the newest framework, compiles the files of the main test project, and references the package project with `SetTargetFramework="TargetFramework=netstandard2.0"` or `netstandard2.1`. It turns `DisableImplicitFrameworkDefines` on and defines the symbols of the build it tests, so that a test of framework-specific code copies the `#if` of the member it tests. The main test project has those symbols already, because its frameworks are the package's.
 
 Two facts about `SetTargetFramework` shape a `netstandard` test project:
