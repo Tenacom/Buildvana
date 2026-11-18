@@ -6,14 +6,26 @@ Decisions that outlive any single issue. They say what to build, and which argum
 
 ## Scope: our workflows, not everyone's
 
-Support X when we need X. A downstream consumer that might need X is not a reason. Being open source does not oblige us to accommodate every workflow. Compatibility for its own sake adds maintenance work for no real benefit.
+Support X when we need X. "We" means every Tenacom project, present and to come, and not the one project that needs the change at hand. A downstream consumer that might need X is not a reason. Being open source does not oblige us to accommodate every workflow. Compatibility for its own sake adds maintenance work for no real benefit.
 
 When no Tenacom project uses VSTest, runs workflow X, nor builds on platform Y, that is reason enough to drop it. Do not argue for a dual-track, fallback, or configurable design on the grounds that downstream users might need it.
 
-This principle has two limits:
+This principle has three limits:
 
-- It governs our own choices, not our consumers'. A project that consumes what we ship must not be locked into our tooling. See "Portability of what we ship" below.
+- It governs our own choices, not our consumers'. A project that consumes what we ship must not be locked into our tooling.
 - It governs features, not internal structure. It never licenses trimming a shared abstraction. See "Completeness of cross-cutting abstractions" below.
+- It decides whether we build a feature, not how complete the feature is. See "Plan past the issue" below.
+
+## Plan past the issue
+
+An issue states the use case of the person who opened it, and often nothing else. A library or a tool serves users with other use cases, and nobody can foresee which Tenacom project will need what. Those users expect to find what belongs next to a feature.
+
+- The plan of an issue covers the most common needs around the feature, whether or not the issue names them.
+- A feature comes with its obvious counterpart. A method that tests the start of a string comes with the one that tests the end.
+- A feature gets the support its neighbors have. Where the string methods of a library also accept character spans, a new string method does too.
+- The same holds for defaults, overloads, edge cases, and tests beyond the acceptance criteria.
+- The plan states what it adds to the issue. A test beyond the acceptance criteria needs no defence. A public API beyond the issue is a proposal, which the maintainer agrees on with the plan.
+- The limit is the feature the issue is about. A feature that no user would look for next to it stays out, as "Scope" above says.
 
 ## Completeness of cross-cutting abstractions
 
@@ -28,39 +40,28 @@ Feature code stays minimal. Shared abstractions get built out in full.
 
 A separate assembly is a boundary, not a packaging decision. It turns a use-case-specific type placed in a shared component into a compile error. Create the assembly when you draw the boundary, not when the assembly gets published.
 
-## Portability of what we ship
+## Code from other projects
 
-A tool we ship must behave the same on any CI platform and on a developer laptop. When a tool needs authentication, identity, secrets, or any other runtime input, take it from a mechanism the tool controls end to end. That mechanism is the tool's own configuration file, with explicit environment-variable references inside config values. Do not take the input from whatever the host CI set up in the workspace.
-
-"The runner sets it up for us" is a defect, not a feature. When a proposed fix works on one CI provider only, say so. Shelling out to native `git` to inherit the installed credential helpers has the same defect, so say so there too.
-
-This rule is about user-visible portability. A platform adapter that exists by design is fine. A dependency on the runner environment in the core flow is not. "Tool portability" in `architecture.md` describes the incident that produced this rule.
-
-## Conformance with the toolchain we belong to
-
-Buildvana is a component of a .NET toolchain. Where that toolchain has settled a question of behavior, we settle it the same way, instead of deciding it on the merits. Examples:
-
-- A console configured to suit `dotnet build` must suit `bv build` identically.
-- The verbosity a user passes to `bv` reaches the `dotnet` invocations underneath.
-- An existing convention is honored by the rules of whoever defined it. `NO_COLOR` follows its own rules, and `DOTNET_CLI_CONSOLE_USE_DEFAULT_ENCODING` follows the .NET CLI's, down to the details where the two disagree.
-
-Borrowed conventions are not harmonized with each other. Each belongs to whoever defined it, and making them consistent would mean obeying neither.
-
-This rule outranks "we would have designed it better". It differs from the scope principle above: that one governs which features to build, this one governs matching established behavior in the ones we build.
-
-Conformance is about observable behavior and the switches that govern it, never about source. Borrow a constant or a rule where it states a fact worth having. The Windows build below which a console host cannot be trusted at codepage 65001 is one such fact.
-
-Do not transcribe an upstream implementation. A copied block needs resynchronizing against a repository we do not track, and nobody will remember to do it. Reimplement, and cite the source of the fact in a comment. Prefer a mechanism that needs no maintenance, such as catching what an unsupported platform throws, over one that lists every known platform.
+Do not transcribe the implementation of another project. A copied block needs resynchronizing against a repository we do not track, and nobody will remember to do it. Reimplement, and cite the source of the fact in a comment.
 
 Copying MIT-licensed code is a last resort. Omitting the attribution the licence requires is a violation in itself. The party best placed to detect a violation automatically, across every public repository, is also the party whose code is copied most often. The risk is out of proportion to the gain. The saving is trivial. The cost is a takedown notice, or an action against the account of a maintainer who works alone.
 
 Facts, constants, names that must match in order to interoperate, and the shape of an interface are not the licensed expression. Use them freely, and cite the source as a reference. Everything else gets reimplemented. When copying is the only viable option, the same commit adds a `THIRD-PARTY-NOTICES.md` entry.
 
-This rule bears on how I work. I answer a conformance question by reading upstream source, so the source is in front of me while I write the equivalent code. When I have read upstream to settle something, I say so, and I state what I took: this fact, this name. I do not emit code that happens to match theirs without saying so.
+A file copied or adapted from another project says so in a block comment, between the copyright preamble and the first `using` directive. For a partial type, the block goes in the main file. Use this template:
 
-Deviate only where the convention's premise does not hold for us, and say so at the point of deviation. Example: `bv` does not copy the CLI's non-English-UI-culture gate on the console encoding switch. That gate exists to make localized CLI output render, and Buildvana is single-culture English. The reason for the switch itself is language-independent, so the switch stays.
+```csharp
+/*
+ * This file is adapted from <project>, under the <license name> license.
+ * Original source: <URL of the file, at a tag or a commit>
+ * Original license: <URL of the license file, at the same tag or commit>
+ * THIRD-PARTY-NOTICES.md, in the project root, holds the copyright notice and the license text.
+ */
+```
 
-Before answering a design question from first principles, check whether `dotnet`, MSBuild, or NuGet has answered it. Read their source instead of recalling it. The decision is usually in the guard clauses, and memory drops those.
+The block is a `/* ... */` comment because StyleCop SA1512 rejects a `//` comment followed by a blank line.
+
+This rule bears on how I work. I answer a question about the behavior of another project by reading its source, so the source is in front of me while I write the equivalent code. When I have read that source to settle something, I say so, and I state what I took: this fact, this name. I do not emit code that happens to match theirs without saying so.
 
 ## Glyphs never carry meaning alone
 

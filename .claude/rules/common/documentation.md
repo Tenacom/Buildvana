@@ -172,6 +172,9 @@ A generated folder is a subfolder of `docs/` that a tool writes in full at relea
 - The reader of a bullet is a person who upgrades to the release. The bullet says what that reader gets or loses. It does not summarize the PR, and it does not say how the change is produced: no hook, no tool, no source file, unless the reader acts on it.
 - A bullet is one sentence. No nested list, no second sentence.
 - The bullet names what changed, with an identifier: a command, a property, a file, a diagnostic id.
+- A new type gets one bullet when the type is the feature, as a type that runs a child process is. The methods of a utility class get a bullet each, because a reader may need one of them alone. 
+- A method shares its bullet with its asynchronous counterpart, and with the same method for another type, such as a string and a character span.
+- - A type or member that exists only to support another gets no bullet. Given a new `Nutcracker` type, its contract `INutcracker` and its `NutcrackerWorkingMode` enum get none. The bullet of `Nutcracker` may name them.
 - A bullet about a member says what the member does, and leaves out the condition under which the member acts. The condition and the edge cases belong in the documentation of the member. Write "`Trim` removes white space from both ends of a string", not "of a string that is not empty".
 - It does not say "now". Every bullet describes a change.
 - The docs page that describes the feature is linked inline, on the phrase that names the feature. Do not add a trailing "See X.", which would be a second sentence.

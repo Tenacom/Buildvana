@@ -27,6 +27,8 @@ Use the latest C# features. Among them:
 - Extension blocks
 - Pattern matching (see below)
 
+The same holds for a feature of the BCL, of a library, or of a tool such as the test framework. Use a feature when it saves code or makes the code clearer. That the existing code does not use the feature is not a convention against it. A feature is forbidden only when a rule file says so.
+
 ## Pattern matching
 
 Prefer pattern matching over an equivalent chain of comparisons, type checks, and casts. A pattern states the shape of the data. A chain of checks makes the reader reassemble it. In particular:
@@ -155,11 +157,26 @@ An extension class that extends a single type is named after the extended type:
 - Use the .NET class name, not the C# keyword: "String", not "string".
 - Add an "Extensions" suffix.
 
+The name works in both directions. Where `<name>` is the name of a type, or `I<name>` the name of an interface, a class named `<name>Extensions` holds extension members for these types only:
+
+- the type `<name>`, the interface `I<name>`, or both;
+- a well-known type that derives from `<name>` or implements `I<name>`, such as `MemoryStream` for `Stream`.
+
+A class that extends any other type says so in a comment above its declaration, after the XML comment. Use this form, so that a search finds every deviation:
+
+```csharp
+// Extension class name: also extends <type>, because <reason>.
+```
+
+Do not report the name of a class that has this comment.
+
 **Examples:**
 
 - `MyClass` extensions go in `MyClassExtensions`.
 - `MyGenericClass<T>` extensions go in ``MyGenericClassExtensions``, because extension classes cannot be generic.
 - `IMyInterface` extensions go in `MyInterfaceExtensions`.
+- `MyClass` and `IMyClass` extensions go in `MyClassExtensions`.
+- `Stream` and `MemoryStream` extensions go in `StreamExtensions`.
 
 When such a class has private helper methods, do not mix them with the extension block. Make the class partial and put the private methods in a separate file, such as `MyClassExtensions-private.cs`. Do this even when the class is under the size threshold for partial classes.
 
@@ -255,6 +272,37 @@ Pick the form that shows the content most clearly. No form wins in every case, s
 - **Regular, with escapes**, when the escape is the point. In a test that asserts line and column, `"{\n  \"name\": 42\n}"` keeps its newlines explicit and independent of the file's line endings. A multi-line raw literal would make them a property of the source file.
 - **Verbatim** (`@"..."`) for content heavy in backslashes and free of quotes, such as Windows paths. Raw strings cover every other case it used to serve.
 - Prefer **consistency with adjacent literals** over the shortest form for each. Where several literals form a group, matching forms read better than one odd member, even when that member would compile as a plain `"..."`.
+
+## Comments
+
+### Code comments
+
+Write as few code comments as possible. The reader of a comment is a programmer at work on the code, not a student of programming.
+
+- Write a comment only where the code would otherwise look wrong: odd, useless, or illogical.
+- A comment names only what is in the code next to it, or a fact about the domain, the BCL, or a library the code uses.
+- A comment does not record how the code was written: an attempt that was dropped, a diagnostic that an earlier version produced, an alternative that lost.
+
+The reader has the file and nothing else. A comment about code that is not in the file explains nothing.
+
+### XML comments
+
+An XML comment describes a member as its caller meets it. It does not mirror the code inside the member.
+
+- An `<exception>` element lists each case a caller can produce, in the caller's terms.
+- One check in the code may cover several cases. `length > text.Length - start` rejects a `start` after the end of the text, and a range that ends after it. The comment lists both.
+
+The wording follows the [API writing guidelines](https://github.com/dotnet/dotnet-api-docs/wiki) of the .NET API reference, which give the BCL documentation its uniform sentences. The wiki has a page for each kind of summary, parameter, and return value. Read the page of an element before writing an element of a kind the code next to it does not have. Where a sentence of the guidelines breaks a rule of `output-styles/simple-tech.md`, the guidelines win.
+
+The most frequent shapes:
+
+- A summary starts with a verb in the present tense and the third person, as in "Determines whether ...". It does not restate the name of the member.
+- The summary of a constructor is "Initializes a new instance of the `<see cref="..."/>` class."
+- The summary of a property starts with "Gets or sets", or with "Gets" when the property has no setter. For a Boolean property, "a value that indicates whether ..." follows.
+- The summary of a method that returns a task starts with "Asynchronously", then the verb.
+- A parameter and a return value are noun phrases that start with an article and leave out the type.
+- A Boolean parameter is "`true` to ...; otherwise, `false`." A Boolean return value is "`true` if ...; otherwise, `false`."
+- Each case of an `<exception>` element is a sentence in a `<para>` of its own, with `<para>- or -</para>` between two cases.
 
 ## Line length
 

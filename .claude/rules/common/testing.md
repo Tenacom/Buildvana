@@ -30,6 +30,7 @@ Framework-specific code can make one call site reach different code per build. A
 
 - The test framework is TUnit on Microsoft.Testing.Platform. Use TUnit's built-in assertions, `await Assert.That(...)`, never FluentAssertions.
 - A test that swaps process-global state, such as console writers or the current directory, must be marked `[NotInParallel]`.
+- A synchronous method and its asynchronous counterpart share their tests. An abstract base class holds the tests, and calls an abstract method that returns a `Task`. One class per method under test derives from the base class, with `[InheritsTests]`.
 
 ## Tests on more than one platform
 
@@ -44,6 +45,6 @@ Framework-specific code can make one call site reach different code per build. A
 
 ## Microsoft.Testing.Platform only
 
-Test orchestration targets MTP only. `bv test`, `DotNetService.TestSolution`, and the `"test": { "runner": "Microsoft.Testing.Platform" }` entry of `global.json` all assume it, and TUnit supports nothing else.
+Test orchestration targets MTP only. `bv test` and the `"test": { "runner": "Microsoft.Testing.Platform" }` entry of `global.json` both assume it, and TUnit supports nothing else.
 
 Do not propose a VSTest fallback, dual-runner support, or a "let the project decide" abstraction. When something in the test path needs fixing, the fix uses MTP. Passing the solution with `--solution`, or invoking `dotnet test` once per test project, are examples. Coverage goes through MTP's `--coverage`, provided by Microsoft.Testing.Extensions.CodeCoverage, not through `--collect "XPlat Code Coverage"`.

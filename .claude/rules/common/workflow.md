@@ -77,6 +77,7 @@ Claude Code runs in auto mode, so a classifier model reviews each tool call befo
    - When the issue needs more than one PR, use the fewest that can each merge on their own. Do not split a coherent area because it is large.
    - Every PR costs a changelog entry, the configuration files, a description, and a style sweep, whatever its size.
    - For each PR, state what makes it independently mergeable.
+   - Plan past the issue, as "Plan past the issue" in `design-principles.md` says. State in the plan what it adds to the issue.
 3. We review the plan together.
 4. You open a branch on my fork for the pull request.
 5. You write the code, and I review before every commit. A code change after my approval needs a new approval. A push needs no approval, unless I ask you to hold it. Always ensure code builds with zero errors and zero warnings, and that all tests pass. The message of each commit follows "Commit messages" below. Write it in a file in the issue scratchpad and give me the link. Do not paste it in chat. List in chat the files of the commit and anything I have not seen yet. After the commit, stop at a session break, as "Session breaks" says. Do not start the next commit in the same turn.
@@ -188,6 +189,7 @@ A commit message is read months later, by a reader who has the repository and no
 - The body is one to three sentences, in one to three paragraphs, and it says why the commit exists. The diff says what changed, so the body does not repeat it.
 - The body of a commit that fixes a defect states the symptom: what the code did wrong, in the words a person who met the defect would search the log for. It does not retrace how the code came to do it.
 - The body of any other commit states the purpose: what the change makes possible, or the decision it carries out. It does not describe the code before the commit, because nothing was wrong with it.
+- Neither the subject nor the body mentions a step of the work that the commit does not contain, such as a change that was undone before the commit.
 - The body leaves the detail out: how the change works, why each part has its shape, and which alternatives lost. The diff shows how the change works. A reason goes in a code comment only when a reader would take the code for a mistake without it. Every other reason goes in the PR text.
 - The body wraps at 72 characters, with a line break at a clause boundary or between the items of a list. A line that holds a URL is exempt.
 - A commit that fixes several defects has one bullet per defect, each a short "X did Y", and no sentence around them.
@@ -224,6 +226,17 @@ The PR description tells a reviewer who is about to read the diff what the diff 
 - **No round headings, no commit-by-commit log, no numbers that were true at some point.** "From the second review", "From Codecov", commit numbers, and a past coverage percentage are history. Git and the review replies hold history.
 - **Fixes to code the PR itself introduced are not additional changes.** They never reached `main`, so a reviewer of the final diff has nothing to reconcile. This holds however much work they were.
 - **A decision to leave something alone is not a change.** Its rationale belongs in the review reply that raised it, or in a comment next to the thing itself. That is where the next person to ask will look. The one exception is a known limitation of what the PR does change, which the reviewer needs in order to assess it.
+
+## Files that stay out of a PR branch
+
+Some files are instructions for the sessions, or infrastructure that the repository shares with others. A change to one of them goes on `main` directly, and no PR carries it.
+
+- The files are every file under `.claude`, and these infrastructure files: `.gitignore`, `.gitattributes`, `.editorconfig`, `.globalconfig`, `.markdownlint-cli2.jsonc`, `nuget.config`, and the `.DotSettings` files.
+- On a PR branch, make the change in the working tree and leave it unstaged. Stage every other file by name.
+- List the unstaged files in the handoff, and name them to me when the PR is open.
+- The maintainer puts the changes on `main`, usually right after the PR is open. The changes of the whole work then go together, and the first self-review finds a clean working tree.
+- On `main`, the files that are the same in every repository go in one commit, and the project-specific files in another. A file that has parts of both kinds, such as `CLAUDE.md`, may be in both commits.
+- When the PR cannot pass its checks without such a change, ask me.
 
 ## Labels
 

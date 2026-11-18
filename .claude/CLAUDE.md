@@ -3,25 +3,22 @@
 Buildvana is an MSBuild-based build system.
 See `.claude/rules/` for project instructions.
 
-## Rules index
+## What a copy of `.claude` keeps
 
-The `.claude` directory is meant to be copied whole into other projects. This index says what survives the copy unchanged and what has to be rewritten on arrival. Each Markdown file under `.claude` says the same of itself in its first paragraph, so that the information survives a copy without this index. The rule files are split by the same criterion: `rules/common/` holds the portable ones, and `rules/project/` the project-specific ones. A file name is unique across both directories, so the rule files refer to each other by bare name.
+The `.claude` directory is meant to be copied whole into other projects. This section says what survives the copy unchanged and what has to be rewritten on arrival. Each Markdown file under `.claude` says the same of itself in its first paragraph, so that the information survives a copy without this section.
+
+### Rule files
+
+`rules/common/` holds the portable rule files, and `rules/project/` the project-specific ones. A file name is unique across both directories, so the rule files refer to each other by bare name.
+
+In `rules/project/pr-checks.md`, the Codecov section applies to any repository whose CI uploads to Codecov.
+
+### Host files
+
+Every file under `hosts/` is portable. "Host files" in `rules/common/git-host.md` says what they hold, and which one a session reads.
 
 ### Portable: copy verbatim
 
-- `rules/common/workflow.md`: how Ric and I work together: issues, PRs, the self-review cycle, sanity checks, out-of-scope fixes, commit messages.
-- `rules/common/session.md`: scratchpad and handoff rules, for every session, with or without an issue.
-- `rules/common/design-principles.md`: scope, abstraction completeness, portability, conformance with the surrounding toolchain, LLM-automation stance.
-- `rules/common/csharp-style-guide.md`: C# style beyond what `.editorconfig` and `.globalconfig` can express.
-- `rules/common/dependency-injection.md`: disposability as an implementation detail, and when a service gets a contract.
-- `rules/common/file-formats.md`: encoding, indentation, and per-format conventions.
-- `rules/common/powershell.md`: Windows PowerShell 5.1 pitfalls and shell-usage rules.
-- `rules/common/testing.md`: test framework, MTP-only orchestration, coverage exclusion policy, cross-platform test rules.
-- `rules/common/buildvana.md`: build commands, dependency commands, and the Buildvana documentation. Assumes the project is built with Buildvana.
-- `rules/common/dotnet.md`: efficiency rules for .NET tooling, and how to inspect a third-party package.
-- `rules/common/git-host.md`: what the Git host is, the three platforms, how to identify the platform and the version of a host, the vocabulary the rule files use on every platform, what a label scope is, and the operations a host file maps to commands. The hosts of the repository are in `rules/project/repository.md`.
-- `hosts/github.md`, `hosts/forgejo.md`, `hosts/gitlab.md`: the commands of one platform for the operations of `rules/common/git-host.md`, and how its labels work. A session reads the one `rules/project/repository.md` names. Nothing repo-specific in them.
-- `rules/common/documentation.md`: what counts as user documentation, the register, the structure of `docs/`, the changelog bullet format, the rendering differences between the platforms, and the checks. The names it relies on are in `rules/project/terminology.md`, and the inventory it applies to is in `rules/project/documentation.md`.
 - `skills/review-pr/SKILL.md`: how a PR is reviewed and how the review is posted. Run it with `/review-pr <N>`. It names `inspect.cs`, and takes the CI from `rules/project/repository.md`, the checks to tolerate from `rules/project/pr-checks.md`, and every command on the host from the host file. Nothing repo-specific in it.
 - `agents/pr-reviewer.md`: the subagent that runs the skill for the self-review cycle. Nothing repo-specific in it.
 - `output-styles/simple-tech.md`: the register for every kind of prose, from chat to commit messages. Select it with `/output-style`.
@@ -35,12 +32,5 @@ The `.claude` directory is meant to be copied whole into other projects. This in
 
 ### Project-specific: rewrite when copied
 
-- `rules/project/repository.md`: the upstream repository, the fork remote, the hosts and their platforms, the host file, CI, and the issue and PR templates. Entirely about this repo.
-- `rules/project/architecture.md`: Buildvana's own structure, project tiers, target platforms, self-hosting, and tool portability. Entirely about this repo.
-- `rules/project/documentation.md`: the documentation inventory: files, page kinds beyond guide and reference, subfolders of `docs/`, generated regions, generated folders, pinned reference pages. Entirely about this repo.
-- `rules/project/dependency-management.md`: the baseline dependencies, the `Buildvana.Runtime` strictly-BCL carve-out, the packages Buildvana SDK injects, the toolchain floors, and why the Buildvana family is never updated here. Entirely about this repo.
-- `rules/project/terminology.md`: the one name for each thing the repository documents. Entirely about this repo.
-- `rules/project/pr-checks.md`: the checks of a pull request whose failure does not stop a review. The Codecov section applies to any repository whose CI uploads to Codecov, and a copy adds its own checks.
-- `rules/project/people.md`: who holds each role the rule files name. Entirely about this repo.
 - `tools/ProjectFacts.cs`: the facts the tools read. The platform of the Git host sits at the top. `Documentation` holds the facts of `lint-docs.cs`: the generated folders, and the globs the TODO and sentence checks leave alone. `CommitMessages` holds the words `lint-commit.cs` rejects on top of its own lists. Entirely about this repo.
-- this file: the index itself.
+- this file.
