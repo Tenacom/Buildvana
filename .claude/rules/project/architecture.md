@@ -64,14 +64,6 @@ Every other project targets `$(StandardTfm)`, a `netX.0` moniker that tracks the
 
 Buildvana supports Windows and Linux, and `ci.yml` runs the tests on `ubuntu-latest` and `windows-latest`. "Tests on more than one platform" in `testing.md` holds for every test.
 
-## Tool portability
-
-`bv` must behave the same on GitHub Actions, GitLab CI, a self-hosted runner, and a developer laptop. "Portability of what we ship" in `design-principles.md` states the general rule. This section records the incident behind it.
-
-`bv release` failed on a GitHub runner. The `Network.Push(...)` call of `LibGit2Sharp` had no `CredentialsProvider`, so it relied on whatever credentials `actions/checkout` left in `.git/config`. That mechanism has no GitLab CI equivalent, and it changed between `actions/checkout` v3 and v5. It is also invisible from our own code, so the failure looked mysterious instead of like the missing-configuration bug it was.
-
-The lesson covers anything `bv` needs at runtime: identity, tokens, feed URLs. The configuration file is the one override mechanism. Do not add a second one that would compete with it.
-
 ## Self-hosting
 
 Buildvana builds itself with the last published version of its own packages, from nuget.org when stable, or from a private NuGet feed when preview. A change to the SDK does not affect the current build. It affects the first build after the new version is published and consumed.
