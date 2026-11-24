@@ -22,7 +22,7 @@ Four MSBuild properties and one generated region declare the minimum supported t
 - `BV_MinRoslynVersionHint` in `Directory.Packages.props`: minimum Roslyn and Visual Studio version, as diagnostic text.
 - `BV_SourceGeneratorsPackageFolder` in `Directory.Packages.props`: source generators package folder, derived from the minimum Roslyn version.
 - `BV_MinMSBuildVersion` in `src/Buildvana.Sdk/Sdk/Sdk.props`: minimum MSBuild version, as `major.minor`, derived from the Visual Studio version paired with the minimum Roslyn version.
-- The `TOOLCHAIN-FLOORS` region of `docs/introduction.md`: the minimum .NET SDK, Visual Studio, and MSBuild versions, as a table, derived from the same values.
+- The `TOOLCHAIN-FLOORS` region of `docs/index.md`: the minimum .NET SDK, Visual Studio, and MSBuild versions, as a table, derived from the same values.
 
 At the end of every `dotnet bv deps update` run, the `deps/post-update` hook, `.buildvana/hooks/deps/post-update.cs`, derives every value in the list above from the `Microsoft.CodeAnalysis.Common` pin. A manual edit to one of the values does not survive the next run.
 

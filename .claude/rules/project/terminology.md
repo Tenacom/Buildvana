@@ -33,6 +33,12 @@ One name per thing, in every kind of prose: documentation, chat, commit messages
 | A `PublicAPI.Shipped.txt` or `PublicAPI.Unshipped.txt` file                                        | public API file     |                                                    |
 | An `InternalAPI.Shipped.txt` or `InternalAPI.Unshipped.txt` file                                   | internal API file   |                                                    |
 | The public API files and the internal API files together                                           | declared API files  | API files                                          |
+| The documentation of the public API of `Buildvana.Runtime`, generated from its XML comments        | API reference       | API documentation, API docs                        |
+| The site that holds the API reference and the pages under `docs/`                                  | documentation site  | docs site, website                                 |
+| The page of the documentation site that `docs/index.md` holds                                      | home page           | index, landing page                                |
+| The part of the documentation site that describes the stable release with the highest version      | stable part         | stable site, release documentation                 |
+| The part of the documentation site that describes the highest release, stable or prerelease        | preview part        | preview site, prerelease documentation             |
+| A documentation file in the register of `output-styles/informal-tech.md`                           | informal document   | non-technical documentation, article               |
 
 The CI platforms are GitHub Actions, GitLab CI, Gitea Actions, Forgejo Actions, Generic CI, and Local.
 

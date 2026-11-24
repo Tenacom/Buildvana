@@ -1,0 +1,150 @@
+name: Publish the documentation site
+
+permissions:
+  contents: read
+
+on:
+  # release.yml calls this workflow after bv release, so that every release updates the site.
+  workflow_call:
+  # A run by hand builds the site again, from the releases that exist.
+  workflow_dispatch:
+
+# A run in progress finishes, and only the latest of the runs that wait for it stays in the queue.
+# A run selects the releases when it starts, so the last run to deploy describes the latest releases.
+# The group belongs to the workflow, so that a run holds it from the selection of the releases to the deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read # actions/configure-pages reads the URL of the site.
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+      DOTNET_CLI_UI_LANGUAGE: 'en-US'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - name: Set bogus local NuGet package directory (to keep nuget.config formally correct)
+      shell: bash
+      run: echo "NUGET_LOCAL_PACKAGES=$RUNNER_TEMP" >> "$GITHUB_ENV"
+    - name: Checkout repository
+      uses: actions/checkout@v7
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v6
+      with:
+        global-json-file: global.json
+    - name: Restore .NET tools
+      shell: bash
+      run: dotnet tool restore
+    - name: Read the URL of the site
+      id: pages
+      uses: actions/configure-pages@v6
+    # The stable part describes the stable release with the highest version, and the preview part the release with the highest version.
+    # The order is by version and not by date, because a servicing branch releases a lower version after a higher one.
+    # Of two releases with the same numbers, the stable one is the higher.
+    # While the repository has no stable release, both parts describe the release with the highest version.
+    - name: Select the releases
+      id: releases
+      shell: bash
+      run: |
+        gh release list --repo "$GITHUB_REPOSITORY" --limit 1000 --exclude-drafts --json tagName,isPrerelease --jq '
+          if length == 0 then error("The repository has no release to describe.") else . end
+          | sort_by((.tagName | split("-")[0] | split(".") | map(tonumber)) + [if .isPrerelease then 0 else 1 end])
+          | { preview: last, stable: (map(select(.isPrerelease | not)) | last) }
+          | "stable=\((.stable // .preview).tagName)", "preview=\(.preview.tagName)"
+        ' | tee -a "$GITHUB_OUTPUT"
+    - name: Download the packages of the releases
+      shell: bash
+      env:
+        STABLE_RELEASE: ${{ steps.releases.outputs.stable }}
+        PREVIEW_RELEASE: ${{ steps.releases.outputs.preview }}
+      run: |
+        gh release download "$STABLE_RELEASE" --repo "$GITHUB_REPOSITORY" --pattern '*.nupkg' --dir .buildvana-temp/docgen-packages/stable
+        gh release download "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" --pattern '*.nupkg' --dir .buildvana-temp/docgen-packages/preview
+    # A part describes one release in full: the API of its packages, and the pages of its tag.
+    # Each part therefore takes docgen.json and the pages under docs/ from the tag of its release.
+    - name: Checkout the stable release
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ steps.releases.outputs.stable }}
+        path: .buildvana-temp/docgen-sources/stable
+    - name: Checkout the preview release
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ steps.releases.outputs.preview }}
+        path: .buildvana-temp/docgen-sources/preview
+    # The stable part is the site directory, and the preview part its preview subdirectory.
+    # Neither build treats a warning as an error. ci.yml rejects a warning, and a release that predates that check may have some.
+    # docgen.json names the packages of the API reference, and the directory where bv pack leaves them.
+    # Each build reads those packages from the assets of its release, so it passes them with the directory of the assets as their path.
+    # The generator resolves a path of the command line against the directory of docgen.json, except the output path,
+    # so the path of the packages is absolute.
+    # A release that predates docgen.json gets the docgen.json and the pages of the checkout of this run.
+    # Such a release may lack a package that the file names, so its build documents every package of the release.
+    # It may also lack a type that a page links, so its build reports a cref: link to no API as a warning, with --allow-invalid-cref.
+    # A collection on the command line replaces the whole collection of docgen.json.
+    # Each build therefore passes the header links of docgen.json, followed by the link to the other part.
+    # jq reads docgen.json, so the file holds no comment.
+    - name: Build the site
+      shell: bash
+      env:
+        BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        BASE_URL: ${{ steps.pages.outputs.base_url }}
+      run: |
+        # Arguments: the part, its subdirectory in the site, the text of the link to the other part, and the subdirectory of the other part.
+        build_part() {
+          local sources=".buildvana-temp/docgen-sources/$1"
+          local packages
+          local -a cref_options=()
+          if [[ -f "$sources/docgen.json" ]]; then
+            packages="$(PACKAGES_PATH="$GITHUB_WORKSPACE/.buildvana-temp/docgen-packages/$1" \
+              jq -c '(.packages // []) | map(. + {path: env.PACKAGES_PATH})' "$sources/docgen.json")"
+          else
+            sources=.
+            packages="$(PACKAGES_PATH="$GITHUB_WORKSPACE/.buildvana-temp/docgen-packages/$1" \
+              jq -nc '[{path: env.PACKAGES_PATH}]')"
+            cref_options=(--allow-invalid-cref)
+          fi
+
+          local header_links
+          header_links="$(OTHER_TEXT="$3" OTHER_URL="$BASE_URL/${4:+$4/}" \
+            jq -c '.site.headerLinks + [{text: env.OTHER_TEXT, url: env.OTHER_URL}]' "$sources/docgen.json")"
+          dotnet Meziantou.DocumentationGenerator build \
+            --config "$sources/docgen.json" \
+            --packages "$packages" \
+            --output ".buildvana-temp/docgen-site${2:+/$2}" \
+            --base-path "$BASE_PATH/${2:+$2/}" \
+            --site-header-links "$header_links" \
+            "${cref_options[@]}"
+        }
+
+        build_part stable '' 'Preview release' preview
+        build_part preview preview 'Stable release' ''
+    - name: Upload the site
+      uses: actions/upload-pages-artifact@v5
+      with:
+        path: .buildvana-temp/docgen-site
+  # actions/deploy-pages lists the artifacts of the run once, and fails when the list lacks the site.
+  # The list can lack an artifact right after its upload, so the deployment has a job of its own, which starts seconds later.
+  deploy:
+    name: Deploy the site
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write # actions/deploy-pages proves the origin of a deployment with an OIDC token.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy the site
+      id: deployment
+      uses: actions/deploy-pages@v5

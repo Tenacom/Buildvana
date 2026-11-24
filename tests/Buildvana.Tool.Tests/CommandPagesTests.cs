@@ -14,7 +14,7 @@ internal sealed class CommandPagesTests
 {
     private static readonly string RepositoryRoot = typeof(CommandPagesTests).Assembly.GetMetadata("RepositoryRoot");
 
-    // The page under docs/tool-commands of each top-level command name. A group page holds one "Options" table
+    // The page under docs/05-bv/05-commands of each top-level command name. A group page holds one "Options" table
     // for all of its subcommands, with a "Subcommand" column.
     private static readonly Dictionary<string, string> Pages = new(StringComparer.Ordinal) {
         ["clean"] = "build-pipeline.md",
@@ -34,7 +34,7 @@ internal sealed class CommandPagesTests
     [Test]
     public async Task CommandsTable_ListsTheCommandsOfCommandRegistry()
     {
-        var page = LoadPage("command-line.md");
+        var page = LoadPage("01-command-line.md");
         var names = page.GetTableColumn("Commands", "Command");
         var aliases = page.GetTableColumn("Commands", "Aliases");
         var checks = page.GetTableColumn("Commands", "SDK version check");
@@ -47,7 +47,7 @@ internal sealed class CommandPagesTests
     [Test]
     public async Task GlobalOptionsTable_ListsTheOptionsOfGlobalSettings()
     {
-        var page = LoadPage("command-line.md");
+        var page = LoadPage("01-command-line.md");
         var listed = page.GetTableColumn("Global options", "Option");
         var declared = RenderOptions(typeof(GlobalSettings)).Append("-h, --help");
 
@@ -60,15 +60,16 @@ internal sealed class CommandPagesTests
     {
         var command = await Assert.That(CommandRegistry.Find(name)).IsNotNull();
         await Assert.That(Pages.Keys).Contains(command.CanonicalPath[0]);
-        var page = LoadPage(Path.Combine("tool-commands", Pages[command.CanonicalPath[0]]));
+        var page = LoadPage(Path.Combine("05-commands", Pages[command.CanonicalPath[0]]));
         var listed = ListedOptions(page, command);
         var declared = command.SettingsType is null ? [] : RenderOptions(command.SettingsType);
 
         await Assert.That(Join(listed)).IsEqualTo(Join(declared));
     }
 
+    // A page of docs/05-bv, by its path relative to that folder.
     private static DocumentationPage LoadPage(string relativePath)
-        => DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", relativePath));
+        => DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "05-bv", relativePath));
 
     // A row of the commands table: the canonical name, the aliases, and the SDK version check flag.
     private static string RenderCommand(CommandRegistration command)

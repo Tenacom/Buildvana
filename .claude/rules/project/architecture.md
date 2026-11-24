@@ -62,6 +62,8 @@ Until one of these holds, the area's contracts live in `Buildvana.Core.Abstracti
 
 Every other project targets `$(StandardTfm)`, a `netX.0` moniker that tracks the latest .NET LTS.
 
+The .NET SDK that `global.json` pins may be newer than `$(StandardTfm)`. A local tool of `dotnet-tools.json` that targets a newer framework, as Meziantou.DocumentationGenerator does, makes `dotnet tool restore` fail on an older SDK. The SDK brings the runtime of its own version alone, so `ci.yml` and `release.yml` install the runtime of `$(StandardTfm)` through `dotnet-version`.
+
 Buildvana supports Windows and Linux, and `ci.yml` runs the tests on `ubuntu-latest` and `windows-latest`. "Tests on more than one platform" in `testing.md` holds for every test.
 
 ## Self-hosting

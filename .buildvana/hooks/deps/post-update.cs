@@ -5,7 +5,7 @@
  * deps/post-update hook: keeps the toolchain floors in step with the Microsoft.CodeAnalysis.Common pin. Five
  * values in three files: BV_MinRoslynVersion, BV_MinRoslynVersionHint and BV_SourceGeneratorsPackageFolder in
  * Directory.Packages.props; BV_MinMSBuildVersion in src/Buildvana.Sdk/Sdk/Sdk.props; and the TOOLCHAIN-FLOORS
- * region of docs/introduction.md, a table stating the minimum .NET SDK, Visual Studio and MSBuild versions.
+ * region of docs/index.md, a table stating the minimum .NET SDK, Visual Studio and MSBuild versions.
  *
  * BV_MinRoslynVersion is the pin's major.minor, and BV_SourceGeneratorsPackageFolder follows from it.
  * BV_MinRoslynVersionHint names the lowest released .NET SDK feature band whose compiler is at least that new,
@@ -59,7 +59,7 @@ const string ReleasesIndexUrl = "https://builds.dotnet.microsoft.com/dotnet/rele
 const string SdkRepoRawUrlPrefix = "https://raw.githubusercontent.com/dotnet/sdk/release/";
 const string PackagesPropsPath = "Directory.Packages.props";
 const string SdkPropsPath = "src/Buildvana.Sdk/Sdk/Sdk.props";
-const string IntroductionPath = "docs/introduction.md";
+const string HomePagePath = "docs/index.md";
 const string RoslynFloorPropertyName = "BV_MinRoslynVersion";
 const string MSBuildFloorPropertyName = "BV_MinMSBuildVersion";
 const string FloorsRegionName = "TOOLCHAIN-FLOORS";
@@ -179,7 +179,7 @@ var expectedRegionLines = FormatTable(
 var homeDirectory = hookArgs.RuntimeInfo.HomeDirectory;
 var packagesPropsText = File.ReadAllText(Path.Combine(homeDirectory, PackagesPropsPath));
 var sdkPropsText = File.ReadAllText(Path.Combine(homeDirectory, SdkPropsPath));
-var introductionText = File.ReadAllText(Path.Combine(homeDirectory, IntroductionPath));
+var homePageText = File.ReadAllText(Path.Combine(homeDirectory, HomePagePath));
 var staleCount = 0;
 var propertyMoves = new List<(string Name, string OldValue, string NewValue)>();
 foreach (var (propertyName, expectedValue) in floorProperties)
@@ -195,7 +195,7 @@ if (!TrySpliceProperty(ref sdkPropsText, SdkPropsPath, MSBuildFloorPropertyName,
     return DerivationFailedExitCode;
 }
 
-if (!TrySpliceRegion(ref introductionText, IntroductionPath, FloorsRegionName, expectedRegionLines, ref staleCount))
+if (!TrySpliceRegion(ref homePageText, HomePagePath, FloorsRegionName, expectedRegionLines, ref staleCount))
 {
     return DerivationFailedExitCode;
 }
@@ -223,7 +223,7 @@ if (hookArgs.Check)
 
 WriteIfChanged(homeDirectory, PackagesPropsPath, packagesPropsText);
 WriteIfChanged(homeDirectory, SdkPropsPath, sdkPropsText);
-WriteIfChanged(homeDirectory, IntroductionPath, introductionText);
+WriteIfChanged(homeDirectory, HomePagePath, homePageText);
 
 // The two public floors: BVSDK1101 and BVSDK1004 fail a consumer's build below them. The bullet is written by hand.
 foreach (var (name, oldValue, newValue) in propertyMoves)

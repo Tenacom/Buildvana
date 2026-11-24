@@ -71,6 +71,8 @@ jobs:
       uses: actions/setup-dotnet@v6
       with:
         global-json-file: global.json
+        # The SDK of global.json brings the runtime of its own version alone. bv and the tests target an older framework, and need its runtime.
+        dotnet-version: 10.0.x
         cache: true
         cache-dependency-path: |
           global.json
@@ -93,3 +95,13 @@ jobs:
         name: v${{ steps.build.outputs.version }}
         token: ${{ secrets.CODECOV_GLOBAL_UPLOAD_TOKEN }}
         verbose: true
+  # The site is built from the assets of the releases, so the job waits for the release to be published.
+  docs:
+    name: Publish the documentation site
+    needs: release
+    # A called workflow gets no permission that the calling job lacks.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/docs.yml

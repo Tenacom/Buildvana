@@ -1,0 +1,128 @@
+---
+title: Buildvana
+description: Buildvana is a build system for .NET projects, built on MSBuild and Roslyn.
+---
+
+Buildvana is a build system for .NET projects, built on MSBuild and Roslyn.
+This page says what Buildvana is made of, what it does for a project, and what it runs on.
+
+This site has two parts.
+The [stable part](https://tenacom.github.io/Buildvana/) describes the stable release with the highest version.
+The [preview part](https://tenacom.github.io/Buildvana/preview/) describes the release with the highest version, stable or prerelease.
+
+The source code, the issue tracker, and the releases are on [GitHub](https://github.com/Tenacom/Buildvana).
+The [changelog](https://github.com/Tenacom/Buildvana/blob/main/CHANGELOG.md) lists the changes of each release.
+
+## Packages
+
+Buildvana ships as three packages.
+
+- Buildvana SDK, package id `Buildvana.Sdk`, is an MSBuild SDK that works alongside the SDK a project specifies.
+- `bv`, package id `bv`, is a .NET CLI global tool that wraps common MSBuild targets and higher-level build operations.
+  Examples are releasing a version and updating dependencies.
+- `Buildvana.Runtime` is a library holding the typed model of the Buildvana configuration, and of the run-time information `bv` passes to [hooks](05-bv/03-hooks.md).
+
+The API reference of this site describes the public types of `Buildvana.Runtime`.
+
+<PackageList Layout="Table" />
+
+## Benefits
+
+- Buildvana SDK keeps project files short.
+  A project states what differs from the defaults, and the defaults cover more than those of a plain MSBuild SDK.
+- A plain-text `VERSION` file states the version of every project.
+  The [`Versioning` module](04-sdk/05-modules/versioning.md) computes the patch number from the Git height.
+- One place states the package license and the copyright notice of every project.
+- Buildvana SDK generates assembly attributes beyond the ones the .NET SDK generates, such as `CLSCompliant` and `ComVisible`.
+- Buildvana SDK configures commonly used code analyzers.
+
+## Compatibility
+
+Each table below states a status for every item.
+"Supported" means that Buildvana works with the item.
+"Supported with limits" means the same, with the limit stated in the table.
+"Untested" means that nobody has reported using Buildvana with the item, and that testers are welcome.
+"Unsupported" means that Buildvana does not work with the item.
+
+### Operating systems
+
+| Operating system | Status         |
+| ---------------- | -------------- |
+| Windows          | Supported      |
+| Linux            | Supported      |
+| macOS            | ??? (untested) |
+
+### Project types
+
+| Project type                                             | Status         |
+| -------------------------------------------------------- | -------------- |
+| Multi-platform and cross-platform projects               | Supported      |
+| Libraries                                                | Supported      |
+| Console apps                                             | Supported      |
+| File-based apps                                          | Supported      |
+| Windows Forms                                            | Supported      |
+| ASP.NET                                                  | Supported      |
+| Projects using the `Microsoft.Build.NoTargets` SDK       | Supported      |
+| [Avalonia UI](https://avaloniaui.net)                    | Supported      |
+| WPF                                                      | ??? (untested) |
+| [UNO Platform](https://platform.uno)                     | ??? (untested) |
+| .NET MAUI                                                | ??? (untested) |
+| Legacy projects, with no `Sdk` attribute                 | Unsupported    |
+| Projects whose SDK does not layer on `Microsoft.NET.Sdk` | Unsupported    |
+
+### Programming languages
+
+| Language        | Status      |
+| --------------- | ----------- |
+| C#              | Supported   |
+| Visual Basic    | Unsupported |
+| F#              | Unsupported |
+| Other languages | Unsupported |
+
+### Git hosts
+
+| Git host                                    | Status                | Limits                                                                                                                                                                                             |
+| ------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub                                      | Supported             |                                                                                                                                                                                                    |
+| GitHub Enterprise Server                    | Supported (untested)  | [SourceLink](https://github.com/dotnet/sourcelink) needs a `SourceLinkGitHubHost` item.                                                                                                            |
+| GitHub Enterprise Cloud with data residency | Supported (untested)  | SourceLink needs a `SourceLinkGitHubHost` item, with `ContentUrl` set to `https://raw.<host>`.                                                                                                     |
+| GitLab                                      | Supported (untested)  |                                                                                                                                                                                                    |
+| Self-managed GitLab                         | Supported (untested)  | SourceLink needs a `SourceLinkGitLabHost` item.                                                                                                                                                    |
+| Gitea                                       | Supported (untested)  | SourceLink needs a `Microsoft.SourceLink.Gitea` reference and a `SourceLinkGiteaHost` item.                                                                                                        |
+| Forgejo                                     | Supported (untested)  | SourceLink needs a `Microsoft.SourceLink.Gitea` reference and a `SourceLinkGiteaHost` item.                                                                                                        |
+| Other Git hosts                             | Supported with limits | Buildvana SDK does not configure SourceLink.<br>`bv release` creates no release page, and runs only with [`release.allowUnknownHost`](05-bv/05-commands/release.md#publishing-on-an-unknown-host). |
+
+### CI platforms
+
+`bv` detects the CI platform it runs on from the environment.
+Generic CI is any other runner that the .NET CLI recognizes as one.
+Local is a machine where `bv` recognizes no CI runner, such as a developer machine.
+Every CI platform runs every command, `bv release` included.
+
+| CI platform                                                                     | Status               | Limits                                                                                                |
+| ------------------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------- |
+| GitHub Actions                                                                  | Supported            |                                                                                                       |
+| GitLab CI                                                                       | Supported (untested) |                                                                                                       |
+| Gitea Actions                                                                   | Supported (untested) |                                                                                                       |
+| Forgejo Actions                                                                 | Supported (untested) | `bv release` needs [Forgejo Runner 9.0.0 or later](05-bv/02-environment-variables.md#forgejo_output). |
+| [Generic CI](05-bv/02-environment-variables.md#variables-that-mark-a-ci-runner) | Supported (untested) |                                                                                                       |
+| Local                                                                           | Supported (untested) |                                                                                                       |
+
+### Toolchain
+
+The table lists the minimum version of each tool that can build a project with Buildvana.
+
+<!-- TOOLCHAIN-FLOORS:START -->
+
+| Tool          | Minimum version |
+| ------------- | --------------- |
+| .NET SDK      | 10.0.400        |
+| Visual Studio | 2026 18.9       |
+| MSBuild       | 18.9            |
+
+<!-- TOOLCHAIN-FLOORS:END -->
+
+MSBuild ships with Visual Studio and with the .NET SDK.
+A Visual Studio version that meets its minimum ships an `msbuild.exe` that meets the MSBuild minimum.
+A .NET SDK version that meets its minimum ships a `dotnet msbuild` that meets it.
+Building from JetBrains Rider is untested.

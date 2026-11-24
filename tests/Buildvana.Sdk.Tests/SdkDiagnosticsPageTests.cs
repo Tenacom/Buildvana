@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Buildvana.Core.Testing;
 
-// docs/sdk-diagnostics.md, pinned against the codes Buildvana SDK raises: the EvaluationError and
+// docs/04-sdk/04-diagnostics.md, pinned against the codes Buildvana SDK raises: the EvaluationError and
 // EvaluationWarning items and the Error and Warning tasks of the .props and .targets files, the messages of the
 // Strings class of the tasks project, and the descriptors of the source generators. A code is raised where a
 // string literal starts with it, which leaves out the comments that mention one. The repository root reaches the
@@ -48,7 +48,7 @@ internal sealed partial class SdkDiagnosticsPageTests
     }
 
     private static DocumentationPage LoadPage()
-        => DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "sdk-diagnostics.md"));
+        => DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "04-sdk", "04-diagnostics.md"));
 
     private static bool IsInRange(string code, Match range)
     {

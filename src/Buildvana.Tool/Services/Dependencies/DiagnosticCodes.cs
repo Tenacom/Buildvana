@@ -3,7 +3,7 @@
 
 namespace Buildvana.Tool.Services.Dependencies;
 
-// Diagnostic codes reported while managing dependencies. Documented in docs/tool-diagnostics.md
+// Diagnostic codes reported while managing dependencies. Documented in docs/05-bv/04-diagnostics.md
 // (dependency management, BV1200-BV1299).
 internal static class DiagnosticCodes
 {

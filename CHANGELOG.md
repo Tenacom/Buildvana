@@ -11,14 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New features
 
-- The args of every hook carry a [model of the solution's projects](docs/hooks.md#the-solution-model) in `Solution`, with `TargetPath`, `DocumentationFile`, `PackageId`, and other evaluated MSBuild properties.
-- `bv release` runs a [`release/post-pack` hook](docs/hooks.md#the-releasepost-pack-hook) after the pack step, and the files it changes join the release commit that the release tag names.
+- The args of every hook carry a [model of the solution's projects](docs/05-bv/03-hooks.md#the-solution-model) in `Solution`, with `TargetPath`, `DocumentationFile`, `PackageId`, and other evaluated MSBuild properties.
+- `bv release` runs a [`release/post-pack` hook](docs/05-bv/03-hooks.md#the-releasepost-pack-hook) after the pack step, and the files it changes join the release commit that the release tag names.
 
 ### Changes to existing features
 
+- The header of every [transitive override file](docs/05-bv/05-commands/dependencies.md#transitive-overrides) links the documentation site, and the next apply run of `bv dependencies update` rewrites the files that exist.
+
 ### Bugs fixed in this release
 
-- The nuspec of a package lists a project reference at the version the [`GetBuildVersion` target](docs/sdk-modules/versioning.md#getbuildversion-target) computes, not `1.0.0`.
+- The nuspec of a package lists a project reference at the version the [`GetBuildVersion` target](docs/04-sdk/05-modules/versioning.md#getbuildversion-target) computes, not `1.0.0`.
 
 ### Known problems introduced by this release
 

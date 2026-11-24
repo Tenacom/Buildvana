@@ -3,7 +3,7 @@
 
 namespace Buildvana.Core.Configuration;
 
-// Diagnostic codes reported while loading a configuration file. Documented in docs/tool-diagnostics.md
+// Diagnostic codes reported while loading a configuration file. Documented in docs/05-bv/04-diagnostics.md
 // (JSON schema validation, BV1100-BV1199).
 internal static class DiagnosticCodes
 {

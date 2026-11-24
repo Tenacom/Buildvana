@@ -34,11 +34,11 @@ internal static class ProjectFacts
     internal static class Documentation
     {
         /// <summary>
-        /// The generated folders, as paths relative to the root with forward slashes.
-        /// <c>.claude/rules/project/documentation.md</c> lists them, with the tool that owns each. The tool skips
-        /// them. None here.
+        /// The URL of the documentation site, with its trailing slash, or an empty string when the repository has
+        /// no documentation site. <c>.claude/rules/project/documentation.md</c> names the site. The tool rejects a
+        /// link to the site under "Unreleased changes" in the changelog.
         /// </summary>
-        public static IReadOnlyList<string> GeneratedFolders { get; } = [];
+        public const string SiteUrl = "https://tenacom.github.io/Buildvana/";
 
         /// <summary>
         /// Globs of the files the TODO check leaves alone. None here.
@@ -46,10 +46,11 @@ internal static class ProjectFacts
         public static IReadOnlyList<string> TodoExemptFiles { get; } = [];
 
         /// <summary>
-        /// Globs of the files the sentence check leaves alone, beyond the non-technical documentation that "What is
-        /// documentation" in <c>.claude/rules/common/documentation.md</c> lists, which the tool knows. None here.
+        /// Globs of the informal documents that <c>.claude/rules/project/documentation.md</c> lists. The tool knows
+        /// the other informal documents of "Register" in <c>.claude/rules/common/documentation.md</c> by their
+        /// name and by their front matter. The sentence check leaves an informal document alone. None here.
         /// </summary>
-        public static IReadOnlyList<string> SentenceExemptFiles { get; } = [];
+        public static IReadOnlyList<string> InformalDocuments { get; } = [];
     }
 
     /// <summary>

@@ -33,5 +33,5 @@ Every file under `hosts/` is portable. "Host files" in `rules/common/git-host.md
 
 ### Project-specific: rewrite when copied
 
-- `tools/ProjectFacts.cs`: the facts the tools read. The platform of the Git host sits at the top. `Documentation` holds the facts of `lint-docs.cs`: the generated folders, and the globs the TODO and sentence checks leave alone. `CommitMessages` holds the words `lint-commit.cs` rejects on top of its own lists. Entirely about this repo.
+- `tools/ProjectFacts.cs`: the facts the tools read. The platform of the Git host sits at the top. `Documentation` holds the facts of `lint-docs.cs`: the URL of the documentation site, the globs the TODO check leaves alone, and the globs of the informal documents. `CommitMessages` holds the words `lint-commit.cs` rejects on top of its own lists. Entirely about this repo.
 - this file.

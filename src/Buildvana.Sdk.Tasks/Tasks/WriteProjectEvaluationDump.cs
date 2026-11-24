@@ -111,7 +111,7 @@ public sealed class WriteProjectEvaluationDump : BuildvanaSdkTask
     private static void Write(string path, string content)
     {
         // I/O failures are wrapped inline, not via UserFile, because SDK diagnostics are a documented
-        // contract (see docs/sdk-diagnostics.md): every message a task issues must carry a BVSDK code.
+        // contract (see docs/04-sdk/04-diagnostics.md): every message a task issues must carry a BVSDK code.
         try
         {
             var directory = Path.GetDirectoryName(path);

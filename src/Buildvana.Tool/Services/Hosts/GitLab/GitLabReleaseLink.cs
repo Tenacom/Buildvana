@@ -1,11 +1,14 @@
 // Copyright (C) Tenacom and contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using JetBrains.Annotations;
+
 namespace Buildvana.Tool.Services.Hosts.GitLab;
 
 /// <summary>
 /// The members <c>bv</c> sends for a link of a new GitLab release.
 /// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 internal sealed record GitLabReleaseLink
 {
     /// <summary>Gets the name of the link, as the release page shows it.</summary>

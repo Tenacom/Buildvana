@@ -5,7 +5,7 @@ using System.Reflection;
 using Buildvana.Core.Testing;
 using Buildvana.Tool.Services.Dependencies;
 
-// The "Dependency management" section of docs/tool-diagnostics.md, pinned against DiagnosticCodes. The test
+// The "Dependency management" section of docs/05-bv/04-diagnostics.md, pinned against DiagnosticCodes. The test
 // fails when a code exists in the class and not on the page, or on the page and not in the class. The repository
 // root reaches the test through an assembly metadata item the test project supplies, as
 // RepositoryConfigFilesTests of Buildvana.Core.Configuration.Tests reads it.
@@ -18,7 +18,7 @@ internal sealed class ToolDiagnosticsPageTests
     [Test]
     public async Task DependencyManagementSection_ListsTheCodesOfDiagnosticCodes()
     {
-        var page = DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "tool-diagnostics.md"));
+        var page = DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "05-bv", "04-diagnostics.md"));
         var listed = page.GetTableColumn(SectionHeading, "Code");
         var declared = typeof(DiagnosticCodes)
             .GetFields(BindingFlags.Public | BindingFlags.Static)

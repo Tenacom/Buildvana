@@ -69,7 +69,7 @@ internal sealed class SidecarWriter(IHomeDirectoryProvider home, IReporter repor
                     This file is generated and managed by `bv dependencies`.
                     DO NOT EDIT. Do not ignore in source control.
 
-                    For more information see https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/dependencies.md#transitive-overrides
+                    For more information see https://tenacom.github.io/Buildvana/bv/commands/dependency-management.html#transitive-overrides
                   -->
 
                   <ItemGroup>

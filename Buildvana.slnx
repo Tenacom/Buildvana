@@ -13,6 +13,7 @@
     <File Path="Common.targets" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
+    <File Path="docgen.json" />
     <File Path="nuget.config" />
     <File Path="VERSION" />
   </Folder>
@@ -29,48 +30,57 @@
     <File Path="THIRD-PARTY-NOTICES.md" />
   </Folder>
   <Folder Name="/- Documentation/docs/">
-    <File Path="docs/command-line.md" />
-    <File Path="docs/configuration-file.md" />
-    <File Path="docs/constants-syntax.md" />
-    <File Path="docs/directory-structure.md" />
-    <File Path="docs/environment-variables.md" />
-    <File Path="docs/getting-started.md" />
-    <File Path="docs/hooks.md" />
-    <File Path="docs/internal-use-properties.md" />
-    <File Path="docs/introduction.md" />
-    <File Path="docs/README.md" />
-    <File Path="docs/sdk-configuration-files.md" />
-    <File Path="docs/sdk-diagnostics.md" />
-    <File Path="docs/tool-diagnostics.md" />
+    <File Path="docs/01-getting-started.md" />
+    <File Path="docs/02-directory-structure.md" />
+    <File Path="docs/03-configuration-file.md" />
+    <File Path="docs/index.md" />
   </Folder>
-  <Folder Name="/- Documentation/docs/sdk-modules/">
-    <File Path="docs/sdk-modules/additional-assembly-info.md" />
-    <File Path="docs/sdk-modules/alternate-pack.md" />
-    <File Path="docs/sdk-modules/assembly-signing.md" />
-    <File Path="docs/sdk-modules/dependencies.md" />
-    <File Path="docs/sdk-modules/file-based-apps.md" />
-    <File Path="docs/sdk-modules/jetbrains-annotations.md" />
-    <File Path="docs/sdk-modules/nuget-pack.md" />
-    <File Path="docs/sdk-modules/project-evaluation.md" />
-    <File Path="docs/sdk-modules/release-asset-list.md" />
-    <File Path="docs/sdk-modules/source-generators.md" />
-    <File Path="docs/sdk-modules/standard-analyzers.md" />
-    <File Path="docs/sdk-modules/this-assembly-class.md" />
-    <File Path="docs/sdk-modules/versioning.md" />
-    <File Path="docs/sdk-modules/wine.md" />
-    <File Path="docs/sdk-modules/xml-documentation.md" />
+  <Folder Name="/- Documentation/docs/04-sdk/">
+    <File Path="docs/04-sdk/01-configuration-files.md" />
+    <File Path="docs/04-sdk/02-constants-syntax.md" />
+    <File Path="docs/04-sdk/03-internal-use-properties.md" />
+    <File Path="docs/04-sdk/04-diagnostics.md" />
+    <File Path="docs/04-sdk/_folder.yml" />
   </Folder>
-  <Folder Name="/- Documentation/docs/tool-commands/">
-    <File Path="docs/tool-commands/build-pipeline.md" />
-    <File Path="docs/tool-commands/dependencies.md" />
-    <File Path="docs/tool-commands/release.md" />
-    <File Path="docs/tool-commands/self-update.md" />
-    <File Path="docs/tool-commands/version.md" />
+  <Folder Name="/- Documentation/docs/04-sdk/05-modules/">
+    <File Path="docs/04-sdk/05-modules/_folder.yml" />
+    <File Path="docs/04-sdk/05-modules/additional-assembly-info.md" />
+    <File Path="docs/04-sdk/05-modules/alternate-pack.md" />
+    <File Path="docs/04-sdk/05-modules/assembly-signing.md" />
+    <File Path="docs/04-sdk/05-modules/dependencies.md" />
+    <File Path="docs/04-sdk/05-modules/file-based-apps.md" />
+    <File Path="docs/04-sdk/05-modules/jetbrains-annotations.md" />
+    <File Path="docs/04-sdk/05-modules/nuget-pack.md" />
+    <File Path="docs/04-sdk/05-modules/project-evaluation.md" />
+    <File Path="docs/04-sdk/05-modules/release-asset-list.md" />
+    <File Path="docs/04-sdk/05-modules/source-generators.md" />
+    <File Path="docs/04-sdk/05-modules/standard-analyzers.md" />
+    <File Path="docs/04-sdk/05-modules/this-assembly-class.md" />
+    <File Path="docs/04-sdk/05-modules/versioning.md" />
+    <File Path="docs/04-sdk/05-modules/wine.md" />
+    <File Path="docs/04-sdk/05-modules/xml-documentation.md" />
+  </Folder>
+  <Folder Name="/- Documentation/docs/05-bv/">
+    <File Path="docs/05-bv/01-command-line.md" />
+    <File Path="docs/05-bv/02-environment-variables.md" />
+    <File Path="docs/05-bv/03-hooks.md" />
+    <File Path="docs/05-bv/04-diagnostics.md" />
+    <File Path="docs/05-bv/_folder.yml" />
+  </Folder>
+  <Folder Name="/- Documentation/docs/05-bv/05-commands/">
+    <File Path="docs/05-bv/05-commands/_folder.yml" />
+    <File Path="docs/05-bv/05-commands/build-pipeline.md" />
+    <File Path="docs/05-bv/05-commands/dependencies.md" />
+    <File Path="docs/05-bv/05-commands/info.md" />
+    <File Path="docs/05-bv/05-commands/release.md" />
+    <File Path="docs/05-bv/05-commands/self-update.md" />
+    <File Path="docs/05-bv/05-commands/version.md" />
   </Folder>
   <Folder Name="/- Schemas/">
     <File Path="schemas/buildvana.schema.json" />
   </Folder>
   <Folder Name="/- Tools/">
+    <File Path="tools/docs.cs" />
     <File Path="tools/generate-config-example.cs" />
     <File Path="tools/generate-config-schema.cs" />
   </Folder>

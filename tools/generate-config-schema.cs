@@ -40,7 +40,7 @@ foreach (var arg in args)
             PrintUsage();
             return 0;
         default:
-            if (arg.StartsWith('-'))
+            if (arg is ['-', ..])
             {
                 Console.Error.WriteLine($"Unknown option: {arg}");
                 PrintUsage();

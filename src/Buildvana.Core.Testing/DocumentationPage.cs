@@ -14,14 +14,18 @@ namespace Buildvana.Core.Testing;
 /// A page of the user documentation, read by the tests that pin a reference page against the code it lists.
 /// </summary>
 /// <remarks>
-/// <para>The reader knows the shape the documentation rules give a page: ATX headings, pipe tables with a header
-/// row and a delimiter row, and fenced code blocks, from which no heading and no table is read. A cell comes back
-/// with the backticks of its code spans stripped and its whitespace trimmed, so that a code listed as
-/// <c>`BV1100`</c> and one listed as <c>BV1100</c> compare equal. A cell holding a pipe inside a code span is
-/// split at the pipe, because no reference page has one.</para>
+/// <para>The reader knows the shape the documentation rules give a page: an optional YAML front matter, ATX
+/// headings, pipe tables with a header row and a delimiter row, and fenced code blocks. No heading and no table is
+/// read from the front matter or from a fenced code block. A cell comes back with the backticks of its code spans
+/// stripped and its whitespace trimmed, so that a code listed as <c>`BV1100`</c> and one listed as <c>BV1100</c>
+/// compare equal. A cell holding a pipe inside a code span is split at the pipe, because no reference page has
+/// one.</para>
 /// </remarks>
 public sealed partial class DocumentationPage
 {
+    private const string FrontMatterDelimiter = "---";
+    private const string TitleKey = "title:";
+
     private readonly List<(int Index, int Level, string Text)> _headings = [];
     private readonly string[] _lines;
     private readonly bool[] _inFence;
@@ -31,8 +35,11 @@ public sealed partial class DocumentationPage
         FilePath = filePath;
         _lines = lines;
         _inFence = new bool[lines.Length];
+        var frontMatterEnd = lines is [FrontMatterDelimiter, ..] ? Array.IndexOf(lines, FrontMatterDelimiter, 1) : -1;
+        var titleLine = lines.Take(frontMatterEnd + 1).FirstOrDefault(static line => line.StartsWith(TitleKey, StringComparison.Ordinal));
+        Title = titleLine is null ? null : titleLine[TitleKey.Length..].Trim().Trim('"', '\'');
         var open = false;
-        for (var i = 0; i < lines.Length; i++)
+        for (var i = frontMatterEnd + 1; i < lines.Length; i++)
         {
             if (FenceRegex().IsMatch(lines[i]))
             {
@@ -53,6 +60,12 @@ public sealed partial class DocumentationPage
     /// Gets the full path of the page.
     /// </summary>
     public string FilePath { get; }
+
+    /// <summary>
+    /// Gets the title that the front matter of the page states, or <see langword="null"/> when the page has no
+    /// front matter, or a front matter without a title.
+    /// </summary>
+    public string? Title { get; }
 
     /// <summary>
     /// Loads a page.

@@ -6,13 +6,22 @@
       "version": "2.2.6-preview",
       "commands": [
         "bv"
-      ]
+      ],
+      "rollForward": false
+    },
+    "meziantou.documentationgenerator": {
+      "version": "0.10.13",
+      "commands": [
+        "Meziantou.DocumentationGenerator"
+      ],
+      "rollForward": false
     },
     "nullable.extended.mcp": {
-      "version": "1.18.2",
+      "version": "1.19.0",
       "commands": [
         "nullable-extended-mcp"
-      ]
+      ],
+      "rollForward": false
     }
   }
 }

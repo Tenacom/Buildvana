@@ -30,8 +30,9 @@ Licensing and attributions:
 Buildvana is a build system for .NET projects, built on MSBuild and Roslyn.
 It comes as an MSBuild SDK, Buildvana SDK, and a .NET CLI global tool, `bv`.
 
-Read the [introduction](docs/introduction.md) first, then follow [Getting started](docs/getting-started.md).
-The [documentation index](docs/README.md) lists every other page.
+Read the introduction on the [documentation site](https://tenacom.github.io/Buildvana/) first, then follow [Getting started](https://tenacom.github.io/Buildvana/getting-started.html).
+The site describes the stable release with the highest version, and lists every other page in its navigation.
+Its [preview part](https://tenacom.github.io/Buildvana/preview/) describes the release with the highest version, stable or prerelease.
 
 ## Contributing
 

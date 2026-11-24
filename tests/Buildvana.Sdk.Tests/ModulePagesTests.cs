@@ -1,14 +1,13 @@
 // Copyright (C) Tenacom and contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Text.RegularExpressions;
 using Buildvana.Core.Testing;
 
-// The module pages under docs/sdk-modules, pinned against the directories under src/Buildvana.Sdk/Modules. A page
-// names its module in its title, as in "# `Wine` module". A test fails when a module has no page, a page names no
-// module, or the index of docs/ leaves a page out. The repository root reaches the tests as SdkDiagnosticsPageTests
+// The module pages under docs/04-sdk/05-modules, pinned against the directories under src/Buildvana.Sdk/Modules. The
+// title of a page, in its front matter, is the name of its module, as in "title: Wine". The test fails when a
+// module has no page, or a page names no module. The repository root reaches the test as SdkDiagnosticsPageTests
 // reads it.
-internal sealed partial class ModulePagesTests
+internal sealed class ModulePagesTests
 {
     private static readonly string RepositoryRoot = typeof(ModulePagesTests).Assembly.GetMetadata("RepositoryRoot");
 
@@ -23,35 +22,12 @@ internal sealed partial class ModulePagesTests
         await Assert.That(Join(titled)).IsEqualTo(Join(modules));
     }
 
-    // The index links every page, and links no page that does not exist. A repeated link counts once.
-    [Test]
-    public async Task Index_LinksEveryPage()
-    {
-        var index = await File.ReadAllTextAsync(Path.Combine(RepositoryRoot, "docs", "README.md")).ConfigureAwait(false);
-        var linked = IndexLinkRegex().Matches(index)
-            .Select(static match => match.Groups["file"].Value)
-            .Distinct(StringComparer.Ordinal);
-        var pages = PageFiles().Select(static path => Path.GetFileName(path));
-
-        await Assert.That(Join(linked)).IsEqualTo(Join(pages));
-    }
-
     private static IEnumerable<string> PageFiles()
-        => Directory.EnumerateFiles(Path.Combine(RepositoryRoot, "docs", "sdk-modules"), "*.md");
+        => Directory.EnumerateFiles(Path.Combine(RepositoryRoot, "docs", "04-sdk", "05-modules"), "*.md");
 
-    // The module a page names in its title, or the title itself when it names none.
+    // The title of a page, or its file name when the page has no title, so that the failure names the page.
     private static string TitledModule(string path)
-    {
-        var title = DocumentationPage.Load(path).GetHeadings(1).Single();
-        return TitleRegex().Match(title) is { Success: true } match ? match.Groups["name"].Value : title;
-    }
+        => DocumentationPage.Load(path).Title ?? $"{Path.GetFileName(path)} (no title)";
 
     private static string Join(IEnumerable<string> items) => string.Join(", ", items.Order(StringComparer.Ordinal));
-
-    [GeneratedRegex(@"^`(?<name>\w+)` module$", RegexOptions.CultureInvariant)]
-    private static partial Regex TitleRegex();
-
-    // The target of a link into sdk-modules/, up to the closing parenthesis or an anchor.
-    [GeneratedRegex(@"\]\(sdk-modules/(?<file>[^)#]+)", RegexOptions.CultureInvariant)]
-    private static partial Regex IndexLinkRegex();
 }

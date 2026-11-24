@@ -5,7 +5,7 @@ using System.Text.Json.Nodes;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.Testing;
 
-// The settings table of docs/configuration-file.md, pinned against the schema BuildvanaJsonConfigSchema generates
+// The settings table of docs/03-configuration-file.md, pinned against the schema BuildvanaJsonConfigSchema generates
 // from the wire model. A test fails when a setting exists in the schema and not on the page, or on the page and
 // not in the schema, or when the page states a default other than the one the schema states, or a default where
 // the schema states none. The repository root reaches the tests as ToolDiagnosticsPageTests reads it.
@@ -57,7 +57,7 @@ internal sealed class ConfigurationPageTests
     }
 
     private static DocumentationPage LoadPage()
-        => DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "configuration-file.md"));
+        => DocumentationPage.Load(Path.Combine(RepositoryRoot, "docs", "03-configuration-file.md"));
 
     // The settings of a schema object, in schema order, as dotted paths. A member with "properties" is a section,
     // walked for the settings inside it. Every other member is a setting, a keyed object and a dictionary
