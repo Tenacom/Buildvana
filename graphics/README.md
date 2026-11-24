@@ -43,13 +43,15 @@ All the graphic elements listed below, except where otherwise specified, are Cop
 
 ### `SquareLogo.svg`
 
-Reference logo, basic square logo. Used as NuGet package icon, favicon for web-based documentation, and anywhere a square-shaped logo is needed or preferred.
+Reference logo, basic square logo. Used as NuGet package icon, favicon and logo for web-based documentation, and anywhere a square-shaped logo is needed or preferred.
 
 This is a modifed version of [Peace](../THIRD-PARTY-GRAPHICS.md#peace). Modified by [@rdeago](https://github.com/rdeago).
 
 Related files:
 
 - `PackageIcon.png` (512x512px)
+- `docs/logo.svg` (optimized)
+- `docs/favicon.ico` (16x16px,32bpp; 32x32px,32bpp; 48x48px,32bpp; 64x64px,32bpp; 128x128px,32bpp)
 
 ### `Readme.svg`
 
@@ -63,7 +65,7 @@ Related files:
 
 ### `SocialCard.svg`
 
-Social card for GitHub project.
+Social card for the GitHub repository and the documentation site.
 
 Uses the following material: [SquareLogo](#squarelogosvg); [Repo](../THIRD-PARTY-GRAPHICS.md#repo); [Courier Prime](../THIRD-PARTY-GRAPHICS.md#courier-prime).
 
