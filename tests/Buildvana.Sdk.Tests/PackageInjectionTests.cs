@@ -1,4 +1,4 @@
-// Copyright (C) Tenacom and Contributors. Licensed under the MIT license.
+// Copyright (C) Tenacom and contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 // The PackageReference items Sdk.targets adds from the BV_PackageReference and BV_PackageVersion items the modules

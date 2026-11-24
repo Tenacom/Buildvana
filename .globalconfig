@@ -602,7 +602,7 @@ dotnet_diagnostic.IDE0290.severity = none # Use primary constructor - No. Just n
 
 # These project-specific values are used for StyleCop documentation rules.
 stylecop.documentation.companyName = Tenacom
-stylecop.documentation.copyrightText = Copyright (C) Tenacom and Contributors. Licensed under the MIT license.\nSee the LICENSE file in the project root for full license information.
+stylecop.documentation.copyrightText = Copyright (C) Tenacom and contributors. Licensed under the MIT license.\nSee the LICENSE file in the project root for full license information.
 
 # Given the type of C# projects (compiled MSBuild tasks, CLI tool) we don't need to optimize logging with LoggerMessage delegates (CA1848),
 # nor do we need CA1873 to complain that "argument evaluation may be expensive when logging is disabled".
