@@ -24,11 +24,11 @@ glab api user --jq .username
 
 ```bash
 glab api projects/:fullpath/merge_requests/<n> \
-  --jq '{iid, title, web_url, author: .author.username, description, draft, base: .target_branch, head: .source_branch, head_sha: .sha, diff_refs}'
+  --jq '{iid, title, web_url, author: .author.username, description, draft, base: .target_branch, head: .source_branch, head_sha: .sha, labels, diff_refs}'
 glab api projects/:fullpath/merge_requests/<n>/diffs --paginate --jq '.[].new_path'
 ```
 
-`iid` is the number. `description` is the body. `diff_refs` holds `base_sha`, `head_sha`, and `start_sha`, which "Post a review" takes.
+`iid` is the number. `description` is the body. `labels` holds the label names. `diff_refs` holds `base_sha`, `head_sha`, and `start_sha`, which "Post a review" takes.
 
 ## Find the PR of a branch
 
@@ -129,10 +129,10 @@ GitLab has no verdict on a review. The verdict stays in the body, as the self-re
 ## Create a PR
 
 ```bash
-glab mr create --target-branch <base> --title "<title>" --description-file <file> --yes
+glab mr create --target-branch <base> --title "<title>" --description-file <file> --label <name>,<name> --yes
 ```
 
-The command prints the URL of the PR.
+`--label` takes a comma-separated list of label names. The command prints the URL of the PR.
 
 ## Update the body of a PR
 
@@ -140,6 +140,14 @@ The command prints the URL of the PR.
 glab mr update <n> --description-file <file>
 glab api projects/:fullpath/merge_requests/<n> --jq .description
 ```
+
+## Update the labels of a PR
+
+```bash
+glab api -X PUT projects/:fullpath/merge_requests/<n> -f labels=<name>,<name> --jq .labels
+```
+
+`labels` is a comma-separated list of label names, and it replaces every label of the PR. An empty value removes them all. The response is the updated PR, so the command reads the labels back.
 
 ## Read the closing link
 

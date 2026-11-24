@@ -1,7 +1,7 @@
 {
   "gitignore": true,
 
-  // Globs of files to ignore
+  // Globs of files to ignore.
   "ignores": ["CLAUDE.md", ".claude/**/*.md", "**/AnalyzerReleases.*.md"],
 
   "config":{
@@ -96,7 +96,8 @@
     "blanks-around-lists": true,
 
     // MD033/no-inline-html : Inline HTML : https://github.com/DavidAnson/markdownlint/blob/main/doc/md033.md
-    "no-inline-html": { "allowed_elements": [ "br", "u" ] },
+    // The elements after "u" are the components of Meziantou.DocumentationGenerator, which a page of the site may hold.
+    "no-inline-html": { "allowed_elements": [ "br", "u", "DependencyGraph", "InstallDotnetTool", "InstallNuGetPackage", "NuGetReference", "PackageList", "SectionList" ] },
 
     // MD034/no-bare-urls : Bare URL used : https://github.com/DavidAnson/markdownlint/blob/main/doc/md034.md
     "no-bare-urls": true,

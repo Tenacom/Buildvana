@@ -2,47 +2,55 @@
 
 This file is the same in every repository that copies `.claude`. A fact specific to one repository lives in another rule file.
 
-User documentation is Markdown, rendered by the Git host. There is no separate site. The rules below say what counts as documentation, how it is written, and how it is checked. `file-formats.md` holds the Markdown format rules, such as emphasis markers and indentation. `output-styles/simple-tech.md` holds the register. `terminology.md` holds the name of each thing the repository documents. `rules/project/documentation.md` lists the repository's documentation files, its page kinds beyond the two of "Page kinds" below, the subfolders of `docs/`, the generated regions, the generated folders, and the pinned reference pages. `git-host.md` says how to identify the platform of a Git host, and "Git hosts" below says where the platforms render a page differently.
+All user documentation is Markdown. The Git host renders every documentation file outside `docs/`, such as a `README.md` file and the changelog. In a repository with a documentation site, the site renders the files under `docs/`, as "Documentation site" below says. In every other repository, the Git host renders them too. The rules below say what counts as documentation, how it is written, and how it is checked. `file-formats.md` holds the Markdown format rules, such as emphasis markers and indentation. `output-styles/simple-tech.md` and `output-styles/informal-tech.md` hold the two registers, and "Register" below says which one a file follows. `terminology.md` holds the name of each thing the repository documents. `rules/project/documentation.md` lists the repository's documentation files, its informal documents, its page kinds beyond the two of "Page kinds" below, the subfolders of `docs/`, the generated regions, the published documentation, and the pinned reference pages. `git-host.md` says how to identify the platform of a Git host, and "Git hosts" below says where the platforms render a page differently.
 
 ## What is documentation
 
-The following files are technical documentation:
+The following files are documentation:
 
+- `README.md` files. The root one is the entry point, read before the rest of the documentation. "The indexes" below covers a `README.md` under `docs/`.
+- `NuGet-README.md` files of packaged projects, which are entry points too.
 - `CHANGELOG.md`.
-- Every file under `docs/`, except its `README.md` and the articles below. A file under a generated folder is documentation that a tool writes, and "Generated folders" below says which rules it follows.
-
-The following are non-technical documentation:
-
-- `README.md` files are either entry points, read before proper documentation, or mere indexes.
-- `NuGet-README.md` files of packaged projects are entry points, too.
-- Articles, under `docs/articles/`, aim for easy reading rather than formality.
+- Every Markdown file under `docs/`.
+- The API reference, in a repository that has one. A tool generates it from the XML comments of the code, so it is no file of the repository. "API reference" below says which rules it follows.
 
 Every other Markdown file is not documentation: third-party notices, analyzer release files, the community files `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, and `SECURITY.md` where present, and the files under `.claude/`. The rules below do not apply to them.
 
 ## Register
 
-`output-styles/simple-tech.md` applies to every **technical documentation** file. On top of it:
+A documentation file follows one of two registers. `output-styles/simple-tech.md` holds the default register. `output-styles/informal-tech.md` holds the register of an informal document.
+
+A file is an informal document in each of these cases:
+
+- Its name is `README.md` or `NuGet-README.md`.
+- Its YAML front matter has the property `x-informal`, set to `true`.
+- `rules/project/documentation.md` lists it as an informal document.
+
+Claude Code loads `simple-tech.md` alone, as the output style that `settings.json` selects. Read `informal-tech.md` before you write or edit an informal document.
+
+On top of `simple-tech.md`, a file in the default register follows these rules:
 
 - Address the reader as "you". Name the product as the actor: "the SDK reads", "the tool writes".
 - No first person. No "we", no "let's".
 - No rhetorical questions, no jokes, no asides.
-- One name per thing. `terminology.md` lists the names. When a thing has no name there, add one before using it in a second page.
 
-**Non-technical documentation** is allowed a less formal register, because a visitor reads them before the documentation. Check it for accuracy and consistency, not for compliance to the rules above. `lint-docs.cs` holds the globs of these files, and `tools/ProjectFacts.cs` adds those of the repository, so that the sentence check leaves them alone. The other checks of `lint-docs.cs` apply to the files it reads: the root `README.md`, `docs/README.md`, the `NuGet-README.md` files, and the articles. A `README.md` elsewhere gets no check.
+In both registers, a thing has one name. `terminology.md` lists the names. When a thing has no name there, add one before using it in a second page.
+
+`lint-docs.cs` runs its sentence check on the files in the default register alone. It knows an informal document by its name and by its front matter, and `tools/ProjectFacts.cs` holds the globs of the ones the repository lists. The other checks of `lint-docs.cs` apply to every file it reads: the root `README.md`, `CHANGELOG.md`, the `NuGet-README.md` files, and the files under `docs/`. A `README.md` elsewhere gets no check.
 
 ## Lines
 
-- One sentence per line in prose. The Git host renders a single newline in a Markdown file as a space, so the rendering does not change. A review then diffs one sentence at a time, and the sentence length stays visible in the source.
+- One sentence per line in prose, in both registers. The Git host renders a single newline in a Markdown file as a space, so the rendering does not change. A review then diffs one sentence at a time, and the sentence length stays visible in the source.
 - In a list item, a second sentence goes on a continuation line, indented to the item's text.
 - A table cell is the exception, because a table row is one line. Where the automatic wrap would break a cell badly, a `<br>` tag breaks it by hand. markdownlint MD033 admits `br` for this reason.
 - A line break inside a paragraph is two trailing spaces, as `file-formats.md` says. Use it only where the rendered text needs a break.
 
 ## Links
 
-- Link a file in the repository with a relative path. A tag then links to the files of the tag. The `NuGet-README.md` files are the exception, because nuget.org renders them outside the repository.
+- Link a file in the repository with a relative path. A tag then links to the files of the tag. The `NuGet-README.md` files are an exception, because nuget.org renders them outside the repository. The pages of a documentation site are another, as "Documentation site" below says.
 - Link an external site with its full URL.
 - Link a section with the anchor of its heading: the heading text in lowercase, with spaces as hyphens and punctuation removed. "Git hosts" below says where the platforms differ on punctuation. markdownlint MD051 checks an anchor within the same file, in GitHub's form. `lint-docs.cs` checks an anchor in another file, and the table of contents, in the form of the platform that `GitHost` in `tools/ProjectFacts.cs` names.
-- Never link a page or a section that does not exist. The one exception is a page of a generated folder that the next release adds, as "Generated folders" says.
+- Never link a page or a section that does not exist. The one exception is a page of the API reference that the next release adds, as "Documentation site" below says.
 - Do not write `#1` for "number 1", and do not write `!1`. Both read as a reference to an issue, a pull request, or a merge request. Every platform links them in an issue, a pull request, a comment, or a release body, and "Git hosts" below says which platform links them in a file too. A reader takes them for a reference even where the platform does not link them.
 
 ## Pages describe the present
@@ -51,33 +59,34 @@ A page under `docs/` describes the code next to it. It does not say when a featu
 
 A migration section is the exception. It describes the old behavior, because the reader is coming from it.
 
-A page of a generated folder describes the latest release, as "Generated folders" says.
-
 ## The root README
 
-The root README is the entry point. It holds what a visitor needs in order to decide whether to read on: what the product is, in two sentences, the packages with their badges, and links to the introduction, the getting-started page, and the index of `docs/`. It documents nothing itself.
+The root README is the entry point. It holds what a visitor needs in order to decide whether to read on: what the product is, in two sentences, the packages with their badges, and links to the introduction, the getting-started page, and the index of `docs/`. In a repository with a documentation site, it links the site in place of those pages. It documents nothing itself.
 
 ## Structure of `docs/`
 
-The rules of this section apply to the hand-written pages. A generated folder follows "Generated folders" below, and the index links it as that section says.
+A repository may have no `docs/` directory. In a repository with a documentation site, "Documentation site" below replaces "The indexes" and "Page template". The other subsections hold in every repository.
 
-### The index
+### The indexes
 
-`docs/README.md` is the index. It links every hand-written page under `docs/`, with one line saying what the page covers. It has no table of contents, because it is one. Its shape:
+A `README.md` under `docs/` is the index of its directory. The Git host shows it to a reader who opens the directory.
 
-- a title
-- one paragraph
-- one level 2 heading per group of pages, each holding a list of links
+- `docs/` has an index, and so does every folder under it that holds a page, at any depth.
+- An index links every page of its directory, and the index of every subfolder that has one. Each link has one line saying what the page or the subfolder covers.
+- An index has no table of contents, because it is one. Its shape:
+  - a title
+  - one paragraph
+  - a list of links, or one level 2 heading per group of links
 
 ### File names
 
-- Every file except `docs/README.md` has a kebab-case name.
+- Every file except a `README.md` has a kebab-case name.
 - The name is a noun phrase for the topic: `getting-started.md`, `environment-variables.md`. It does not contain the product name.
-- Subfolders go one level deep. A subfolder holds pages of one kind, and its name says the kind. `rules/project/documentation.md` lists them. A subfolder has no index of its own.
+- A subfolder holds pages of one kind, and its name says the kind. `rules/project/documentation.md` lists the subfolders. They nest to any depth.
 
 ### Page template
 
-Every page except `docs/README.md` follows this template:
+Every page except an index follows this template. `rules/project/documentation.md` lists the other pages that do not follow it, when the repository has any. In a page with a front matter, the template starts after it.
 
 ```markdown
 # Title
@@ -112,7 +121,7 @@ Text.
 
 ### No stubs
 
-A page exists when it has content. Do not commit a page holding "TODO", or a pointer to where the content will be. The index links only existing pages.
+A page exists when it has content. Do not commit a page holding "TODO", or a pointer to where the content will be. An index links only existing pages.
 
 ### Page kinds
 
@@ -154,16 +163,60 @@ A region a tool maintains sits between two HTML comment markers:
 - Nothing edits the region by hand. The prose around it is hand-written.
 - `rules/project/documentation.md` names each region and the tool that owns it.
 
-## Generated folders
+## Published documentation
 
-A generated folder is a subfolder of `docs/` that a tool writes in full at release. An API reference built from the XML comments of the code is one.
+A repository has a documentation site when its home directory holds `docgen.json`. Without that file, this section does not apply, and no rule elsewhere that names the documentation site or the API reference does.
 
-- `rules/project/documentation.md` names each generated folder, the tool that owns it, and which of its pages are the entry pages.
-- Nothing edits a generated page by hand. A fix goes in the source the tool reads, such as an XML comment.
-- The tool decides the names, the depth, and the shape of its pages. The file-name rules, the page template, the page kinds, and the sentence rules do not apply. `lint-docs.cs` skips the folder, and `.markdownlint-cli2.jsonc` lists it under `ignores`.
-- The index links the entry pages of the folder, one line each. It does not link the other pages.
-- The pages describe the latest release. On `main`, the page of a type that no release holds yet does not exist, and it arrives with the release that adds the type.
-- A link into a generated folder is checked for its shape, and not for the existence of its target. A bullet under "Unreleased changes" links the page of a type whose release comes later, and `bv release` pins the link to the release tag, where the page exists.
+- Meziantou.DocumentationGenerator builds the site. It renders every Markdown file under `docs/` as a page, and it builds the API reference, when the repository has one.
+- The workflow `docs.yml` publishes the site. The `docs` job of the release workflow calls it after `bv release`, and a maintainer runs it by hand to publish again.
+- A public repository on `github.com` has its site on GitHub Pages, at `https://<owner>.github.io/<repo>/`.
+- The site of a private repository has no host yet. Ask the maintainer before you add `docgen.json` to a private repository.
+- `rules/project/documentation.md` names the URL of the site.
+
+### API reference
+
+A repository with a documentation site has an API reference when the `packages` property of `docgen.json` names a package. The property may be empty or absent, and the site then holds the pages under `docs/` alone. The generator builds the API reference from the XML comments of the packages that the property names. The repository holds none of its pages.
+
+- An entry of `packages` has the `id` of a package, the `version` `*-*`, and the `path` `artifacts/Release`, the folder where `bv pack` leaves the packages. The version `*-*` selects the highest version in a folder, prereleases included.
+- A package that `packages` does not name gets no page.
+- Nothing edits a page of the API reference by hand. A fix goes in the XML comment the page comes from.
+- "XML comments" in `csharp-style-guide.md` governs the text of a page. The page template, the page kinds, and the sentence rules do not apply.
+
+### Documentation site
+
+- `docgen.json` holds what every build of the site shares, such as the site title and the packages of the API reference.
+- The site has two parts. The stable part describes the stable release with the highest version. The preview part describes the release with the highest version, stable or prerelease.
+- `docs.yml` builds both parts from the assets of those two releases, and deploys the site. For each part, it reads the packages that `docgen.json` names from the assets of the release. No branch holds a generated page.
+- A part describes one release. The page of a type that no release holds yet does not exist, and it arrives with the release that adds the type.
+- A link to a page of the site, from a file that the Git host renders, is a full URL, and no tool checks that the page exists.
+- The preview part is the `preview` folder of the stable part, so its URL is the URL of the site followed by `preview/`.
+- A warning of the generator is a defect of an XML comment, such as a `cref` that names no member, or of a page of the site. "Checks" below says where the generator runs.
+
+#### Structure of the site
+
+- The `content` section of `docgen.json` names `docs` as its `root`.
+- `docs/index.md` is the home page of the site, and it is required. The repository has no `docs/README.md`, because the site has a navigation and needs no index.
+- The home page says what the product is, as the root README does. Where the site has an API reference, the `<PackageList />` component of the generator lists the packages there.
+- Each part of the site takes `docgen.json` and the pages from the tag of its release. A change to a page therefore reaches a part with the next release that the part describes.
+- A subfolder that holds pages has a `_folder.yml` file with a `title`. The generator names the folder by that title in the navigation.
+- No folder takes the path `preview` in the site, because the preview part is the `preview` folder of the stable part. A folder takes its path from the `slug` of its `_folder.yml`, or else from its title.
+- A number prefix of two digits, such as `01-`, sets the position of a page or of a folder in the navigation, because the generator sorts the entries of a folder by name. The numbers of a folder start at `01` and have no gap. `sortOrder` is not used, so that the order of the files in a directory listing is the order of the navigation.
+- A folder whose pages sort by name alone, such as a folder of reference pages, has no prefix on its pages.
+- The prefix reaches no URL, because the generator takes the URL of a page and of a folder from its title. It is not part of the name that "File names" above governs.
+- A file that moves or gets another number changes its path. The same change updates every link to the file: in the pages, under "Unreleased changes" in the changelog, in the rule files, and in the code.
+
+#### Pages of the site
+
+- The title of a page is `title` in a YAML front matter, or a level 1 heading on the first line. A summary paragraph of one to three sentences follows the title.
+- The generator ignores a property of the front matter that it does not know, such as `x-informal`.
+- A page has no ruler before a heading, and no table of contents. The site lists the headings of a page by itself.
+- The rules of the page template on alerts, on the depth of headings, and on an "Overview" section hold for a page of the site.
+- The generator takes the URL of a page from its title, and not from its file name. When the title of a published page changes, `slug` in the front matter keeps the URL.
+- A link to another page is a relative path to its Markdown file.
+- A link to a type, a member, or a namespace of the API reference is a `cref:` link, such as `[the parser](cref:T:<namespace>.<type>)`.
+- A link to a repository file outside `docs/` is a full URL, because the site publishes nothing outside its content root.
+- The generator gives a heading the anchor of GitHub's rules, on every Git host.
+- A page may hold a component of the generator, such as `<PackageList />`. `.markdownlint-cli2.jsonc` admits the components under MD033.
 
 ## Changelog
 
@@ -178,7 +231,8 @@ A generated folder is a subfolder of `docs/` that a tool writes in full at relea
 - A bullet about a member says what the member does, and leaves out the condition under which the member acts. The condition and the edge cases belong in the documentation of the member. Write "`Trim` removes white space from both ends of a string", not "of a string that is not empty".
 - It does not say "now". Every bullet describes a change.
 - The docs page that describes the feature is linked inline, on the phrase that names the feature. Do not add a trailing "See X.", which would be a second sentence.
-- A bullet that names a type links the page of the type in the generated folder that holds the API reference, when the repository has one. The page may not exist until the release, as "Generated folders" says.
+- In a repository with a documentation site, that link still names the Markdown file, and not the page of the site. The tag of the release keeps the file, and a later build of the site may drop the page.
+- No bullet links the documentation site, the API reference included. A bullet names a type or a member in a code span, without a link, because a later build of the site may drop its page.
 - A breaking change starts with `**BREAKING CHANGE**:` and names the behavior that is gone.
 - Breaking changes come first in their subsection.
 - Migration steps go in a section of the feature's page, and the bullet links there.
@@ -225,14 +279,21 @@ A reference is a token such as `#1` that the platform turns into a link to an is
 ## Checks
 
 - markdownlint runs with the configuration in `.markdownlint-cli2.jsonc`. `file-formats.md` says which rules it enforces.
-- `.claude/tools/lint-docs.cs` runs as a phase of `inspect.cs --gate`. `Documentation.GeneratedFolders` in `tools/ProjectFacts.cs` names the generated folders, which it skips, and `GitHost` there names the platform whose anchors it computes. A member of the documentation set that does not exist, such as `docs/` or `CHANGELOG.md`, is skipped and named on standard error, so that a repository without documentation passes. It checks:
-  - file names under `docs/` are kebab-case, and subfolders are one level deep;
+- `.claude/tools/lint-docs.cs` runs as a phase of `inspect.cs --gate`. `GitHost` in `tools/ProjectFacts.cs` names the platform whose anchors it computes, and `Documentation.SiteUrl` there holds the URL of the documentation site, or an empty string when there is none. A member of the documentation set that does not exist, such as `docs/` or `CHANGELOG.md`, is skipped and named on standard error, so that a repository without documentation passes. It checks:
+  - file names under `docs/` are kebab-case;
   - every page follows the template: summary paragraph, rulers, and a table of contents that matches the headings;
-  - the index links every hand-written page, and no link points at a missing file or anchor, except a link into a generated folder;
+  - every folder that holds a page has an index, and an index links every page of its directory and the index of every subfolder;
+  - no link points at a missing file or anchor;
   - every fenced block has a tag from the list above;
-  - a prose line, outside a fenced block, a table, a released changelog section, and a file matching a glob of its `sentenceExemptFiles` array, holds one sentence of at most 25 words, counting a code span as one word and a link as the words of its text;
+  - a prose line, outside a fenced block, a table, a released changelog section, and an informal document, holds one sentence of at most 25 words, counting a code span as one word and a link as the words of its text;
   - no documentation file contains "TODO";
   - generated-region markers exist and pair;
-  - a bullet under "Unreleased changes" holds no nested list, and the breaking changes of a subsection come before its other bullets;
+  - a bullet under "Unreleased changes" holds no nested list and no link to the documentation site, and the breaking changes of a subsection come before its other bullets;
   - a released changelog section holds no relative file link.
+- In a repository with a documentation site, `lint-docs.cs` checks the pages against "Documentation site" above, in place of the page template and the indexes. It checks:
+  - the content root is `docs/`, `docs/index.md` exists, and `docs/README.md` does not;
+  - every page has a title and a summary paragraph, and no table of contents;
+  - a subfolder that holds pages has a `_folder.yml` with a `title`, and no folder takes the path `preview`;
+  - an anchor of a page has GitHub's form.
+- The generator of the documentation site runs as a phase of `inspect.cs --gate`, when the home directory holds `docgen.json`. It reads the packages the gate built, and the gate reports each of its warnings as an error. It builds the pages under `docs/` too, and reports a link to a page or to a symbol that does not exist. `rules/project/documentation.md` says where CI runs the generator.
 - A reference page that lists a code surface is pinned by a test in the test project of that code. The test fails when an item exists in the code and not on the page, or on the page and not in the code. `rules/project/documentation.md` names the pinned pages, and the code each is pinned against.

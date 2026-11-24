@@ -217,6 +217,9 @@ and tell the user why.
 - A defect outside the PR's changes belongs to another PR. Do not report it.
 - Report a defect outside the PR's changes only when it stops the PR's changes from
   working correctly. Name the failure it causes.
+- Do not report a defect that only a project on an unsupported framework meets. When
+  `rules/project/architecture.md` states the frameworks the repository supports, every
+  other framework is unsupported.
 - Do not widen the scope from one round to the next.
 
 ## Pull requests deployed together

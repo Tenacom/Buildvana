@@ -33,7 +33,7 @@ curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/user | jq -r .login
 
 ```bash
 curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/pulls/<n> \
-  | jq '{number, title, html_url, author: .user.login, body, draft, base: .base.ref, head: .head.ref, head_sha: .head.sha}'
+  | jq '{number, title, html_url, author: .user.login, body, draft, base: .base.ref, head: .head.ref, head_sha: .head.sha, labels: [.labels[].name]}'
 curl -sS -H "Authorization: token $FORGEJO_TOKEN" <api>/repos/<owner>/<repo>/pulls/<n>/files | jq -r '.[].filename'
 ```
 
@@ -131,7 +131,7 @@ The response holds `id` and `html_url`.
 
 ## Create a PR
 
-The body file holds `title`, `body`, `head`, and `base`. When the head branch is on a fork, `head` is `<fork owner>:<branch>`.
+The body file holds `title`, `body`, `head`, and `base`. When the head branch is on a fork, `head` is `<fork owner>:<branch>`. The `labels` field of this request takes label ids, so the labels go in a second request, by name, as "Update the labels of a PR" says.
 
 ```bash
 curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X POST --data-binary @<file> <api>/repos/<owner>/<repo>/pulls | jq '{number, html_url}'
@@ -146,6 +146,16 @@ curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/
 ```
 
 The response is the updated PR, so the command reads the body back.
+
+## Update the labels of a PR
+
+The labels route of an issue serves a PR too, with the number of the PR as `<n>`. The labels file holds `labels`, the full list of label names, and the request replaces the labels of the PR with it. A name that matches no label of the repository or of its organization is ignored, without an error.
+
+```bash
+curl -sS -H "Authorization: token $FORGEJO_TOKEN" -H "Content-Type: application/json" -X PUT --data-binary @<labels file> <api>/repos/<owner>/<repo>/issues/<n>/labels | jq -r '.[].name'
+```
+
+The response is the list of the labels the PR has after the request, so the command reads the labels back.
 
 ## Read the closing link
 

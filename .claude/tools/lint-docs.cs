@@ -16,37 +16,57 @@
  * `path(line,col): error Code: message` per finding to standard output, in the shape the `inspect` task of
  * .vscode/tasks.json parses. It exits 1 when there is any finding, 0 when there is none, and 2 on a usage error.
  * The codes are:
- *   DocsFileName   a file or folder under docs/ whose name is not kebab-case, or a folder two levels deep;
+ *   DocsFileName   a file or folder under docs/ whose name is not kebab-case;
  *   DocsTemplate   a page that departs from the page template: the title, the summary paragraph and the alerts
  *                  after it, the table of contents block, a ruler before each level 2 heading, no heading below
  *                  level 4, and no "Overview" section;
  *   DocsToc        a table of contents that does not list the headings of level 2 and below, in text and order;
- *   DocsIndex      a page that docs/README.md does not link, or a table of contents in docs/README.md;
+ *   DocsIndex      a folder under docs/ that holds a page and no README.md, a page or the index of a subfolder
+ *                  that the index of its directory does not link, or a table of contents in an index;
+ *   DocsSite       in a repository with a documentation site: a content root other than docs/, no docs/index.md,
+ *                  a docs/README.md, a subfolder with pages and no _folder.yml that holds a title, or a folder
+ *                  that takes the path `preview`;
  *   DocsLink       an inline link whose relative target names no file, or no heading of that file;
  *   DocsFence      a fenced block with no language tag, or with a tag outside the list of the rules;
  *   DocsTodo       the word TODO;
  *   DocsRegion     a generated-region marker without its pair;
- *   DocsChangelog  a relative file link in a released section of CHANGELOG.md, a nested list under "Unreleased
- *                  changes", or a breaking change after a plain bullet in a subsection of "Unreleased changes";
+ *   DocsChangelog  a relative file link in a released section of CHANGELOG.md, a link to the documentation site
+ *                  or a nested list under "Unreleased changes", or a breaking change after a plain bullet in a
+ *                  subsection of "Unreleased changes";
  *   DocsSentence   a prose line, outside a fenced block and a table, holding more than 25 words, or more than
  *                  one sentence; a code span counts as one word, and a link as the words of its text. The
- *                  released sections of CHANGELOG.md are not checked.
+ *                  released sections of CHANGELOG.md and the informal documents are not checked.
  *
  * The facts about the repository come from `ProjectFacts.cs`, which `Common.props` compiles in. They are the
- * globs of the files the TODO check and the sentence check leave alone, the generated folders, and the platform
- * of the Git host. `ProjectFacts.cs` states the glob syntax.
+ * globs of the files the TODO check leaves alone, the globs of the informal documents, the URL of the
+ * documentation site, and the platform of the Git host. `ProjectFacts.cs` states the glob syntax.
+ *
+ * An informal document follows `.claude/output-styles/informal-tech.md`, as "Register" in
+ * `.claude/rules/common/documentation.md` says. It is a README.md or NuGet-README.md file, a file whose YAML
+ * front matter sets `x-informal` to `true`, or a file that matches a glob of `ProjectFacts.cs`. The tool checks
+ * no rule of that register. The lines of a front matter are not prose in any file, and hold no heading.
  *
  * Only inline links, `[text](target)`, are checked. A reference-style link is not. A link inside a code span or
  * a fenced block is not a link. A relative target must match the case of the file name, so that a link that
  * resolves on Windows and not on Linux is a finding on both.
  *
- * A generated folder is a subfolder of docs/ that a tool writes in full. Its files are not checked, and the index
- * need not link them. A link into it is checked for its shape alone, not for the existence of its target, because
- * a page the tool writes at release does not exist before the release.
+ * The published documentation is outside the repository, as "Published documentation" in
+ * `.claude/rules/common/documentation.md` says. A link to it has a scheme, so its target is not checked. A bullet
+ * under "Unreleased changes" in CHANGELOG.md links no page of the documentation site, because a later build of
+ * the site may drop the page.
  *
  * The anchor a heading gets depends on the platform of the Git host, as "Git hosts" in
  * `.claude/rules/common/documentation.md` says, and so does the check of every anchor and of every table of
  * contents.
+ *
+ * A repository has a documentation site when the root holds `docgen.json`, as "Documentation site" in
+ * `.claude/rules/common/documentation.md` says. The site renders the pages under docs/, so the tool then checks
+ * them against the rules of that section:
+ *   - DocsIndex is not checked, because the site has no index, and DocsToc is not, because a page has no table
+ *     of contents;
+ *   - DocsTemplate is a page without a title or without a summary paragraph, a hand-written table of contents,
+ *     a heading below level 4, or an "Overview" section;
+ *   - the anchor of a heading of a page follows GitHub's rules on every Git host, because the generator computes it.
  */
 
 using System;
@@ -54,10 +74,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 const string Usage = "Usage: dotnet run .claude/tools/lint-docs.cs [<root>]";
-const string IndexPath = "docs/README.md";
+const string IndexFileName = "README.md";
+const string IndexPath = "docs/" + IndexFileName;
+const string HomePagePath = "docs/index.md";
+const string DocgenConfigPath = "docgen.json";
+const string SiteContentRoot = "docs";
+const string FolderFileName = "_folder.yml";
+const string PreviewFolderName = "preview";
 const string ReadmePath = "README.md";
 const string ChangelogPath = "CHANGELOG.md";
 const string DisableMarker = "<!-- markdownlint-disable MD036 -->";
@@ -71,14 +98,13 @@ const int MaxSentenceWords = 25;
 // The language tags `.claude/rules/common/documentation.md` admits on a fenced block.
 string[] fenceTags = ["csharp", "json", "jsonc", "markdown", "powershell", "shell", "text", "xml", "yaml"];
 
-// Globs of the files the sentence check leaves alone: the non-technical documentation that "What is documentation"
-// in `.claude/rules/common/documentation.md` lists, plus the files `ProjectFacts.cs` adds. The released sections
-// of CHANGELOG.md, whose lines exceed the limit and are never edited, are skipped by section.
-string[] sentenceExemptFiles = [
+// Globs of the informal documents that a name identifies: the ones "Register" in
+// `.claude/rules/common/documentation.md` names, plus the files `ProjectFacts.cs` adds. The sentence check leaves
+// an informal document alone.
+string[] informalDocuments = [
     "**/README.md",
     "**/NuGet-README.md",
-    "docs/articles/**",
-    .. ProjectFacts.Documentation.SentenceExemptFiles,
+    .. ProjectFacts.Documentation.InformalDocuments,
 ];
 
 if (args.Length > 1)
@@ -110,6 +136,23 @@ if (!hasDocs)
     Console.Error.WriteLine("info: no docs/ directory: skipping the pages and the index.");
 }
 
+// The repository has a documentation site when the root holds docgen.json. The site then renders the pages
+// under docs/, and "Documentation site" in the rules replaces the index and the page template.
+string? siteContentRoot;
+try
+{
+    siteContentRoot = ReadSiteContentRoot(Path.Combine(root, DocgenConfigPath));
+}
+catch (JsonException exception)
+{
+    Console.Error.WriteLine($"{DocgenConfigPath} is not valid JSON: {exception.Message}");
+    return 2;
+}
+
+var hasSite = siteContentRoot is not null;
+var frontMatterTitleRegex = new Regex(@"^title\s*:\s*\S", RegexOptions.CultureInvariant);
+var frontMatterInformalRegex = new Regex(@"^x-informal\s*:\s*true\s*$", RegexOptions.CultureInvariant);
+
 var kebabRegex = new Regex(@"^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.CultureInvariant);
 var fenceOpenRegex = new Regex(@"^\s*(?:`{3,}|~{3,})\s*(?<tag>\S*)", RegexOptions.CultureInvariant);
 var fenceCloseRegex = new Regex(@"^\s*(?:`{3,}|~{3,})\s*$", RegexOptions.CultureInvariant);
@@ -127,14 +170,33 @@ var nestedListRegex = new Regex(@"^\s+(?:[-*+]|\d+\.)\s", RegexOptions.CultureIn
 
 var findings = new List<(string File, int Line, int Column, string Code, string Message)>();
 
-// The documentation set, as relative paths with forward slashes. The files of a generated folder are not in it,
-// and neither is a page when there is no docs/ directory.
+if (siteContentRoot is not null)
+{
+    if (!string.Equals(siteContentRoot, SiteContentRoot, StringComparison.Ordinal))
+    {
+        var shownRoot = siteContentRoot.Length > 0 ? $"\"{siteContentRoot}\"" : "not set";
+        var message = $"content.root is {shownRoot}, and the content root of a documentation site is {SiteContentRoot}";
+        Report(DocgenConfigPath, 1, 1, "DocsSite", message);
+    }
+
+    if (!File.Exists(Path.Combine(root, HomePagePath)))
+    {
+        Report(DocgenConfigPath, 1, 1, "DocsSite", $"the site has no home page: {HomePagePath} does not exist");
+    }
+
+    if (File.Exists(Path.Combine(root, IndexPath)))
+    {
+        Report(IndexPath, 1, 1, "DocsSite", $"README.md is a page of the site here, and the home page is {HomePagePath}");
+    }
+}
+
+// The documentation set, as relative paths with forward slashes. It holds no page when there is no docs/
+// directory.
 var pages = new List<string>();
 if (hasDocs)
 {
     pages.AddRange(Directory.EnumerateFiles(docsDirectory, "*.md", SearchOption.AllDirectories)
         .Select(path => ToRelative(root, path))
-        .Where(page => !IsGenerated(page))
         .Order(StringComparer.Ordinal));
 }
 
@@ -165,36 +227,44 @@ if (Directory.Exists(srcDirectory))
         .Order(StringComparer.Ordinal));
 }
 
-// File and folder names under docs/. A generated folder, and everything under it, is named by its tool. The
-// sequence is empty when there is no docs/ directory.
+// File and folder names under docs/. The sequence is empty when there is no docs/ directory.
 IEnumerable<string> docsEntries = hasDocs
     ? Directory.EnumerateFileSystemEntries(docsDirectory, "*", SearchOption.AllDirectories)
     : [];
 foreach (var entry in docsEntries)
 {
     var relative = ToRelative(root, entry);
-    if (IsGenerated(relative))
-    {
-        continue;
-    }
-
     var segments = relative.Split('/');
     var name = segments[^1];
     if (Directory.Exists(entry))
     {
-        if (segments.Length > 2)
-        {
-            Report(relative, 1, 1, "DocsFileName", $"folder \"{relative}\" is more than one level deep under docs/");
-        }
-        else if (!kebabRegex.IsMatch(name))
+        if (!kebabRegex.IsMatch(name))
         {
             Report(relative, 1, 1, "DocsFileName", $"folder name \"{name}\" is not kebab-case");
+        }
+
+        // The generator names a folder of pages in the sidebar by the title of its _folder.yml.
+        var folderFile = Path.Combine(entry, FolderFileName);
+        var holdsPages = Directory.EnumerateFiles(entry, "*.md").Any();
+        var hasTitle = File.Exists(folderFile) && File.ReadLines(folderFile).Any(frontMatterTitleRegex.IsMatch);
+        if (hasSite && holdsPages && !hasTitle)
+        {
+            Report(relative, 1, 1, "DocsSite", $"folder \"{relative}\" holds pages, and no {FolderFileName} with a title");
+        }
+
+        // The preview part of the site is the `preview` folder of the stable part, so no folder of pages takes
+        // that name, or that path in the site.
+        var isPreviewFolder = string.Equals(name, PreviewFolderName, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(FolderSlug(folderFile, name), PreviewFolderName, StringComparison.OrdinalIgnoreCase);
+        if (hasSite && isPreviewFolder)
+        {
+            Report(relative, 1, 1, "DocsSite", $"folder \"{relative}\" takes the path of the preview part of the site");
         }
 
         continue;
     }
 
-    var isPage = name.EndsWith(".md", StringComparison.Ordinal) && !string.Equals(relative, IndexPath, StringComparison.Ordinal);
+    var isPage = name.EndsWith(".md", StringComparison.Ordinal) && !string.Equals(name, IndexFileName, StringComparison.Ordinal);
     if (isPage && !kebabRegex.IsMatch(Path.GetFileNameWithoutExtension(name)))
     {
         Report(relative, 1, 1, "DocsFileName", $"file name \"{name}\" is not kebab-case");
@@ -206,6 +276,7 @@ var linesByFile = new Dictionary<string, string[]>(StringComparer.Ordinal);
 var inFenceByFile = new Dictionary<string, bool[]>(StringComparer.Ordinal);
 var headingsByFile = new Dictionary<string, List<(int Line, int Level, string Text, string Slug)>>(StringComparer.Ordinal);
 var linkTargetsByFile = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+var frontMatterLengthByFile = new Dictionary<string, int>(StringComparer.Ordinal);
 foreach (var file in files)
 {
     _ = Load(file);
@@ -215,10 +286,12 @@ foreach (var file in files)
 {
     var lines = linesByFile[file];
     var inFence = inFenceByFile[file];
-    var isPage = file.StartsWith("docs/", StringComparison.Ordinal) && !string.Equals(file, IndexPath, StringComparison.Ordinal);
+    var frontMatterLength = frontMatterLengthByFile[file];
+    var isSitePage = IsSitePage(file);
+    var isPage = !hasSite && file.StartsWith("docs/", StringComparison.Ordinal) && !IsIndex(file);
     var isChangelog = string.Equals(file, ChangelogPath, StringComparison.Ordinal);
     var checkTodo = !MatchesAny(ProjectFacts.Documentation.TodoExemptFiles, file);
-    var checkSentences = !MatchesAny(sentenceExemptFiles, file);
+    var checkSentences = !IsInformal(file);
     var openRegions = new Dictionary<string, int>(StringComparer.Ordinal);
     var releasedSection = string.Empty;
     var inUnreleased = false;
@@ -236,6 +309,12 @@ foreach (var file in files)
             {
                 Report(file, lineNumber, match.Index + 1, "DocsTodo", "the file contains \"TODO\"");
             }
+        }
+
+        // A line of the front matter is YAML, and no other check reads it.
+        if (i < frontMatterLength)
+        {
+            continue;
         }
 
         if (inFence[i])
@@ -317,6 +396,12 @@ foreach (var file in files)
                 Report(file, lineNumber, column, "DocsChangelog", message);
             }
 
+            if (inUnreleased && IsSiteLink(target))
+            {
+                var message = $"a bullet under \"Unreleased changes\" links \"{target}\", in the documentation site";
+                Report(file, lineNumber, column, "DocsChangelog", message);
+            }
+
             CheckLink(file, lineNumber, column, target, targets);
         }
     }
@@ -326,26 +411,50 @@ foreach (var file in files)
         Report(file, startLine, 1, "DocsRegion", $"region \"{regionName}\" does not end");
     }
 
-    if (isPage)
+    if (isSitePage)
+    {
+        CheckSitePage(file);
+    }
+    else if (isPage)
     {
         CheckTemplate(file);
     }
 }
 
-// The index links every page, and has no table of contents because it is one.
-if (linesByFile.TryGetValue(IndexPath, out var indexLines))
+// A README.md under docs/ is the index of its directory. Every directory that holds a page, at any depth, has
+// one. An index links every page of its directory and the index of every subfolder, and has no table of
+// contents because it is one. A documentation site has no index.
+var pageDirectories = pages
+    .Where(page => !hasSite && !IsIndex(page))
+    .SelectMany(AncestorDirectories)
+    .Distinct(StringComparer.Ordinal)
+    .Order(StringComparer.Ordinal)
+    .ToList();
+foreach (var directory in pageDirectories)
 {
-    var tocLine = Array.IndexOf(indexLines, TocTitle);
-    if (tocLine >= 0)
+    var index = $"{directory}/{IndexFileName}";
+    if (!linkTargetsByFile.TryGetValue(index, out var indexTargets))
     {
-        Report(IndexPath, tocLine + 1, 1, "DocsIndex", "the index has a table of contents, and it is one");
+        Report(directory, 1, 1, "DocsIndex", $"folder \"{directory}\" holds a page, and no {IndexFileName}");
+        continue;
     }
 
-    foreach (var page in pages.Where(page => !string.Equals(page, IndexPath, StringComparison.Ordinal)))
+    var tocLine = Array.IndexOf(linesByFile[index], TocTitle);
+    if (tocLine >= 0)
     {
-        if (!linkTargetsByFile[IndexPath].Contains(page))
+        Report(index, tocLine + 1, 1, "DocsIndex", "the index has a table of contents, and it is one");
+    }
+
+    var ownPages = pages.Where(page => !IsIndex(page) && string.Equals(DirectoryOf(page), directory, StringComparison.Ordinal));
+    var subfolderIndexes = pageDirectories
+        .Where(subfolder => string.Equals(DirectoryOf(subfolder), directory, StringComparison.Ordinal))
+        .Select(subfolder => $"{subfolder}/{IndexFileName}")
+        .Where(linkTargetsByFile.ContainsKey);
+    foreach (var expected in ownPages.Concat(subfolderIndexes))
+    {
+        if (!indexTargets.Contains(expected))
         {
-            Report(IndexPath, 1, 1, "DocsIndex", $"the index does not link \"{page}\"");
+            Report(index, 1, 1, "DocsIndex", $"the index does not link \"{expected}\"");
         }
     }
 }
@@ -385,7 +494,10 @@ bool Load(string file)
     var headings = new List<(int Line, int Level, string Text, string Slug)>();
     var slugCounts = new Dictionary<string, int>(StringComparer.Ordinal);
     var open = false;
-    for (var i = 0; i < lines.Length; i++)
+
+    var isSitePage = IsSitePage(file);
+    var frontMatterLength = FrontMatterLength(lines);
+    for (var i = frontMatterLength; i < lines.Length; i++)
     {
         if (open)
         {
@@ -412,7 +524,7 @@ bool Load(string file)
         }
 
         var text = match.Groups["text"].Value;
-        var slug = Slug(text);
+        var slug = Slug(text, isSitePage);
         if (slugCounts.TryGetValue(slug, out var count))
         {
             slugCounts[slug] = count + 1;
@@ -429,7 +541,21 @@ bool Load(string file)
     linesByFile[file] = lines;
     inFenceByFile[file] = inFence;
     headingsByFile[file] = headings;
+    frontMatterLengthByFile[file] = frontMatterLength;
     return true;
+}
+
+// Whether the documentation site renders a file: every file under docs/, in a repository that has the site.
+bool IsSitePage(string file)
+{
+    return hasSite && file.StartsWith("docs/", StringComparison.Ordinal);
+}
+
+// Whether a file of the documentation set is an informal document: by its name, or by its front matter.
+bool IsInformal(string file)
+{
+    var frontMatter = linesByFile[file].Take(frontMatterLengthByFile[file]);
+    return MatchesAny(informalDocuments, file) || frontMatter.Any(frontMatterInformalRegex.IsMatch);
 }
 
 void CheckFenceTag(string file, int lineNumber, string line)
@@ -503,14 +629,6 @@ void CheckLink(string file, int lineNumber, int column, string target, HashSet<s
         return;
     }
 
-    // A page of a generated folder may not exist before the release that writes it, and its anchors are the
-    // tool's, not the heading anchors of the Git host.
-    if (IsGenerated(relativeTarget))
-    {
-        _ = targets.Add(relativeTarget);
-        return;
-    }
-
     if (!ExistsWithExactCase(relativeTarget))
     {
         Report(file, lineNumber, column, "DocsLink", $"the link target \"{target}\" names no file");
@@ -563,51 +681,84 @@ bool ExistsWithExactCase(string relativePath)
     return true;
 }
 
+// A page of the documentation site has a title, then a summary paragraph, and no table of contents. The title is
+// `title` in the front matter, or a level 1 heading on the first line after it.
+void CheckSitePage(string file)
+{
+    var lines = linesByFile[file];
+    foreach (var (line, level, text, _) in headingsByFile[file])
+    {
+        CheckHeading(file, line, level, text);
+    }
+
+    var tocLine = Array.IndexOf(lines, TocTitle);
+    if (tocLine >= 0)
+    {
+        Report(file, tocLine + 1, 1, "DocsTemplate", "a hand-written table of contents: the site lists the headings of a page");
+    }
+
+    var frontMatterLength = frontMatterLengthByFile[file];
+    var hasFrontMatterTitle = lines.Take(frontMatterLength).Any(frontMatterTitleRegex.IsMatch);
+    var index = SkipBlankLines(lines, frontMatterLength);
+    if (!hasFrontMatterTitle)
+    {
+        if (index >= lines.Length || !lines[index].StartsWith("# ", StringComparison.Ordinal))
+        {
+            const string Message = "the page has no title: neither `title` in a front matter, nor a level 1 heading on the first line";
+            Report(file, index + 1, 1, "DocsTemplate", Message);
+            return;
+        }
+
+        index = SkipBlankLines(lines, index + 1);
+    }
+
+    var summary = index < lines.Length ? lines[index] : string.Empty;
+    var isProse = summary is [not ('#' or '<' or '>' or '|'), ..]
+        && !string.Equals(summary, Ruler, StringComparison.Ordinal);
+    if (!isProse)
+    {
+        Report(file, index + 1, 1, "DocsTemplate", "no summary paragraph after the title");
+    }
+}
+
 void CheckTemplate(string file)
 {
     var lines = linesByFile[file];
     var headings = headingsByFile[file];
     foreach (var (line, level, text, _) in headings)
     {
-        var hashes = new string('#', level);
-        if (level > 4)
-        {
-            Report(file, line, 1, "DocsTemplate", $"the heading \"{hashes} {text}\" is below level 4");
-        }
-
-        if (level == 2 && string.Equals(text, "Overview", StringComparison.Ordinal))
-        {
-            const string Message = "an \"Overview\" section: put its content in the summary paragraph, or under a heading that names it";
-            Report(file, line, 1, "DocsTemplate", Message);
-        }
-
+        CheckHeading(file, line, level, text);
         if (level == 2)
         {
             CheckRuler(file, lines, line, text);
         }
     }
 
-    if (lines.Length == 0 || !lines[0].StartsWith("# ", StringComparison.Ordinal))
+    // In a page with a front matter, the template starts after it.
+    var frontMatterLength = frontMatterLengthByFile[file];
+    var titleIndex = frontMatterLength > 0 ? SkipBlankLines(lines, frontMatterLength) : 0;
+    if (titleIndex >= lines.Length || !lines[titleIndex].StartsWith("# ", StringComparison.Ordinal))
     {
-        Report(file, 1, 1, "DocsTemplate", "the first line is not the title, a level 1 heading");
+        Report(file, titleIndex + 1, 1, "DocsTemplate", "the first line is not the title, a level 1 heading");
         return;
     }
 
-    if (!Expect(file, lines, 1, string.Empty))
+    if (!Expect(file, lines, titleIndex + 1, string.Empty))
     {
         return;
     }
 
-    var summary = lines.Length > 2 ? lines[2] : string.Empty;
+    var summaryIndex = titleIndex + 2;
+    var summary = lines.Length > summaryIndex ? lines[summaryIndex] : string.Empty;
     var isProse = summary is [not ('#' or '<'), ..]
         && !string.Equals(summary, Ruler, StringComparison.Ordinal);
     if (!isProse)
     {
-        Report(file, 3, 1, "DocsTemplate", "no summary paragraph between the title and the table of contents");
+        Report(file, summaryIndex + 1, 1, "DocsTemplate", "no summary paragraph between the title and the table of contents");
         return;
     }
 
-    var summaryEnd = 2;
+    var summaryEnd = summaryIndex;
     while (summaryEnd < lines.Length && lines[summaryEnd].Length > 0)
     {
         summaryEnd++;
@@ -654,6 +805,21 @@ void CheckTemplate(string file)
     }
 
     CheckToc(file, lines, listStart, listEnd, headings);
+}
+
+// The rules on headings that hold for every page, on the Git host and on the documentation site.
+void CheckHeading(string file, int line, int level, string text)
+{
+    if (level > 4)
+    {
+        Report(file, line, 1, "DocsTemplate", $"the heading \"{new string('#', level)} {text}\" is below level 4");
+    }
+
+    if (level == 2 && string.Equals(text, "Overview", StringComparison.Ordinal))
+    {
+        const string Message = "an \"Overview\" section: put its content in the summary paragraph, or under a heading that names it";
+        Report(file, line, 1, "DocsTemplate", Message);
+    }
 }
 
 bool Expect(string file, string[] lines, int index, string expected)
@@ -728,11 +894,108 @@ void CheckToc(
     }
 }
 
-// Whether a relative path, with forward slashes, is a generated folder or lies under one.
-bool IsGenerated(string relativePath)
+// The content root that docgen.json states for the documentation site, without a leading "./" and a trailing
+// slash. Null when the file does not exist, which means the repository has no site. An empty string when the
+// file states no content root. The generator accepts comments and trailing commas in the file.
+static string? ReadSiteContentRoot(string path)
 {
-    var withSlash = relativePath + "/";
-    return ProjectFacts.Documentation.GeneratedFolders.Any(folder => withSlash.StartsWith(folder + "/", StringComparison.Ordinal));
+    if (!File.Exists(path))
+    {
+        return null;
+    }
+
+    var options = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+    using var document = JsonDocument.Parse(File.ReadAllText(path), options);
+    var config = document.RootElement;
+    var content = config.ValueKind == JsonValueKind.Object && config.TryGetProperty("content", out var contentProperty)
+        ? contentProperty
+        : default;
+    var hasRoot = content.ValueKind == JsonValueKind.Object
+        && content.TryGetProperty("root", out var rootProperty)
+        && rootProperty.ValueKind == JsonValueKind.String;
+    var contentRoot = hasRoot ? content.GetProperty("root").GetString() ?? string.Empty : string.Empty;
+    contentRoot = contentRoot.Replace('\\', '/').TrimEnd('/');
+    return contentRoot.StartsWith("./", StringComparison.Ordinal) ? contentRoot[2..] : contentRoot;
+}
+
+// The number of lines of the YAML front matter of a page, both "---" lines included, or 0 when the page has none.
+static int FrontMatterLength(string[] lines)
+{
+    if (lines.Length == 0 || !string.Equals(lines[0], "---", StringComparison.Ordinal))
+    {
+        return 0;
+    }
+
+    var end = Array.IndexOf(lines, "---", 1);
+    return end < 0 ? 0 : end + 1;
+}
+
+// The path segment the generator gives a folder of pages, in the case of its source: the `slug` of its
+// _folder.yml, else its `title` slugified, else its name slugified without a number prefix. The generator
+// lowercases the segment, so a caller compares it without case.
+static string FolderSlug(string folderFile, string folderName)
+{
+    string[] lines = File.Exists(folderFile) ? File.ReadAllLines(folderFile) : [];
+    var slug = YamlValue(lines, "slug");
+    if (slug.Length > 0)
+    {
+        return slug;
+    }
+
+    var title = YamlValue(lines, "title");
+    var source = title.Length > 0 ? title : Regex.Replace(folderName, @"^\d+-", string.Empty, RegexOptions.CultureInvariant);
+    var slugified = Regex.Replace(source, "[^A-Za-z0-9]+", "-", RegexOptions.CultureInvariant);
+    return slugified.Trim('-');
+}
+
+// The value of a top-level key of a YAML file, without quotes, or an empty string when the file has no such key.
+static string YamlValue(string[] lines, string key)
+{
+    var prefix = key + ":";
+    var line = lines.FirstOrDefault(candidate => candidate.StartsWith(prefix, StringComparison.Ordinal));
+    return line is null ? string.Empty : line[prefix.Length..].Trim().Trim('"', '\'');
+}
+
+static int SkipBlankLines(string[] lines, int index)
+{
+    while (index < lines.Length && lines[index].Length == 0)
+    {
+        index++;
+    }
+
+    return index;
+}
+
+// Whether a link target is the documentation site, or a page of it. A repository without a site states an empty
+// URL, and no target is one. The host name of a URL has no case, so the comparison has none. The URL of the
+// site ends with a slash, and a link to the site may leave the slash out.
+static bool IsSiteLink(string target)
+{
+    var siteUrl = ProjectFacts.Documentation.SiteUrl;
+    var isSite = string.Equals(target, siteUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
+    return siteUrl.Length > 0 && (isSite || target.StartsWith(siteUrl, StringComparison.OrdinalIgnoreCase));
+}
+
+// Whether a file under docs/ is the index of its directory.
+static bool IsIndex(string file)
+{
+    return file.StartsWith("docs/", StringComparison.Ordinal) && file.EndsWith("/" + IndexFileName, StringComparison.Ordinal);
+}
+
+// The directories that hold a file, from its own up to the first segment of its path, as relative paths.
+static IEnumerable<string> AncestorDirectories(string file)
+{
+    for (var directory = DirectoryOf(file); directory.Length > 0; directory = DirectoryOf(directory))
+    {
+        yield return directory;
+    }
+}
+
+// The directory of a relative path with forward slashes, or an empty string when the path has one segment.
+static string DirectoryOf(string path)
+{
+    var slash = path.LastIndexOf('/', StringComparison.Ordinal);
+    return slash < 0 ? string.Empty : path[..slash];
 }
 
 // Whether a relative path, with forward slashes, matches one of the globs. `ProjectFacts.cs` states the glob syntax.
@@ -786,11 +1049,13 @@ static string ToRelative(string root, string path)
 // The anchor the Git host gives a heading, as "Git hosts" in `.claude/rules/common/documentation.md` describes.
 // Every platform lowercases the text and turns a space into a hyphen. Markdown formatting is punctuation to every
 // platform, so the backticks of a code span go, and the text of a link stays while its target goes. The platforms
-// differ on the other punctuation, and the two functions below hold the two algorithms.
-static string Slug(string headingText)
+// differ on the other punctuation, and the two functions below hold the two algorithms. The documentation site
+// renders its own pages, and the generator gives a heading the anchor of GitHub's rules, whatever the Git host.
+static string Slug(string headingText, bool isSitePage)
 {
     var text = Regex.Replace(headingText, @"\[([^\]]*)\]\([^)]*\)", "$1", RegexOptions.CultureInvariant);
-    return string.Equals(ProjectFacts.GitHost, "Forgejo", StringComparison.Ordinal) ? ForgejoSlug(text) : GitHubSlug(text);
+    var useForgejoRules = !isSitePage && string.Equals(ProjectFacts.GitHost, "Forgejo", StringComparison.Ordinal);
+    return useForgejoRules ? ForgejoSlug(text) : GitHubSlug(text);
 }
 
 // GitHub and GitLab keep letters, digits, hyphens and underscores, and drop every other character. GitLab renders

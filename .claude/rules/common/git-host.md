@@ -54,7 +54,7 @@ An operation that no section covers is still done with the client the host file 
 
 - **Identify the repository.** From the clone: the full name of the repository, `owner/repo`, and its default branch. The remote the repository lives on is the one whose URL names the full name.
 - **Read the login.** The login of the account the client is configured with.
-- **Read a PR.** Number, title, URL, author login, body, draft flag, base branch, head branch, head commit, and the paths of the changed files.
+- **Read a PR.** Number, title, URL, author login, body, draft flag, base branch, head branch, head commit, label names, and the paths of the changed files.
 - **Find the PR of a branch.** The number of the open PR whose head branch is the one given.
 - **Read the checks.** For the head commit: the name of each check and its state, as one of `pass`, `fail`, `pending`, `skipping`, and `cancel`. The host file maps the states of its platform onto these five.
 - **Wait for the checks.** Return when no check of the head commit is in `pending`.
@@ -64,8 +64,9 @@ An operation that no section covers is still done with the client the host file 
 - **Read the threads.** For each thread of a PR: its id, whether it is resolved, and each comment with its id, author login, body, path, and line.
 - **Read another PR.** Title, body, changed files, and diff of a PR in another repository of the same host.
 - **Post a review.** From the review file that `skills/review-pr/SKILL.md` describes: the verdict, the body, the head commit, and the code-anchored comments, in one publish. Two publishes make two reviews, and two reviews count as two rounds.
-- **Create a PR.** From a title and a body file, against a base branch. The number and the URL of the created PR.
+- **Create a PR.** From a title, a body file, and label names, against a base branch. The number and the URL of the created PR.
 - **Update the body of a PR.** From a body file. Then read the body back.
+- **Update the labels of a PR.** From the full list of label names: a label that is not in the list is removed. Then read the labels back. "Update an issue" does the same for an issue.
 - **Read the closing link.** The issues the host will close when it merges the PR. The host derives the link from the body, so a stored body does not prove the link.
 - **Reply in a thread.** Post a body file as a reply to a comment of the thread.
 - **Resolve a thread.** Mark the thread resolved.

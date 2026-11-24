@@ -63,6 +63,28 @@ The block is a `/* ... */` comment because StyleCop SA1512 rejects a `//` commen
 
 This rule bears on how I work. I answer a question about the behavior of another project by reading its source, so the source is in front of me while I write the equivalent code. When I have read that source to settle something, I say so, and I state what I took: this fact, this name. I do not emit code that happens to match theirs without saying so.
 
+## Native AOT
+
+A library that an application references at run time must not prevent the application from being published with `PublishAot`. The `IsAotCompatible` property in a project file states that the project meets this requirement. It also turns on the analyzers that check the requirement, and every warning is an error. A project without the property is not required to meet it.
+
+[Native AOT deployment](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) lists what a native AOT application cannot do. [Prepare .NET libraries for trimming](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming) and [Introduction to AOT warnings](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/fixing-warnings) say how to fix each kind of diagnostic.
+
+In a project with the property:
+
+- A fix that keeps the member compatible needs no decision. Examples are a generic type parameter in place of a `Type` argument, and `DynamicallyAccessedMembers` on a `Type` parameter.
+- When no such fix exists, the feature is incompatible. Stop and ask the maintainer, or say so in the plan when the plan can foresee it. The maintainer chooses one of these outcomes:
+  - The feature is not implemented. This is the default for a feature that no issue asks for.
+  - The feature moves to a project of its own, without the property. This suits a whole namespace or area.
+  - The member gets `RequiresUnreferencedCode` or `RequiresDynamicCode`, as do its callers up to the public API. An application then gets a warning only where it calls such a member.
+- Do not turn the property off to silence a diagnostic.
+- Do not silence a diagnostic with `#pragma`, `SuppressMessage`, or `NoWarn`. They act on the build of the library alone, and the application still gets the warning when it is published.
+- `UnconditionalSuppressMessage` is the one valid suppression, because it stays in the assembly. Use it only when the code behaves correctly in a native AOT application in spite of the diagnostic. The justification states the fact that makes it so, such as the annotation that keeps a member, or the check that guards a call.
+
+The analyzers read the annotations on the API of a dependency, and not its code.
+
+- Before proposing a run-time dependency for a project with the property, check the package, as "Checking a package for native AOT compatibility" in `dotnet.md` says. Check it again when it moves to a new major version.
+- Do not turn `VerifyReferenceAotCompatibility` on. Its IL3058 diagnostic reports an assembly without the `IsAotCompatible` mark, and a compatible package that targets a .NET version before .NET 10 has none.
+
 ## Glyphs never carry meaning alone
 
 Setting a console's encoding changes what can be transmitted, not what can be drawn. The terminal still needs a font that contains the character, and nothing exposes font coverage. On a console with a raster font, `✓` and `✗` both render as the missing-glyph box. "Passed" and "failed" then look the same, which is worse than two distinct wrong characters.

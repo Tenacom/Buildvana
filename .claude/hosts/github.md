@@ -20,10 +20,10 @@ gh api user --jq .login
 
 ```bash
 gh pr view <n> --repo <owner>/<repo> \
-  --json number,title,url,author,body,isDraft,baseRefName,headRefName,headRefOid,files
+  --json number,title,url,author,body,isDraft,baseRefName,headRefName,headRefOid,labels,files
 ```
 
-`author.login` is the author login. `isDraft` is the draft flag. `baseRefName` and `headRefName` are the branches. `headRefOid` is the head commit. `files[].path` are the changed files.
+`author.login` is the author login. `isDraft` is the draft flag. `baseRefName` and `headRefName` are the branches. `headRefOid` is the head commit. `labels[].name` are the label names. `files[].path` are the changed files.
 
 ## Find the PR of a branch
 
@@ -113,10 +113,10 @@ gh api repos/<owner>/<repo>/pulls/<n>/reviews --method POST --input <file>
 ## Create a PR
 
 ```bash
-gh pr create --repo <owner>/<repo> --base <base> --title "<title>" --body-file <file>
+gh pr create --repo <owner>/<repo> --base <base> --title "<title>" --body-file <file> --label <name>
 ```
 
-The command prints the URL of the PR. The PR branch is on the fork, so `gh` asks where to push when the branch is not pushed yet. Push first.
+Repeat `--label` for each label. The command prints the URL of the PR. The PR branch is on the fork, so `gh` asks where to push when the branch is not pushed yet. Push first.
 
 ## Update the body of a PR
 
@@ -124,6 +124,15 @@ The command prints the URL of the PR. The PR branch is on the fork, so `gh` asks
 gh pr edit <n> --repo <owner>/<repo> --body-file <file>
 gh pr view <n> --repo <owner>/<repo> --json body
 ```
+
+## Update the labels of a PR
+
+```bash
+gh pr edit <n> --repo <owner>/<repo> --add-label <name> --remove-label <name>
+gh pr view <n> --repo <owner>/<repo> --json labels
+```
+
+`gh pr edit` has no option that replaces every label, so remove the labels that go and add the labels that come. Repeat each option for each label.
 
 ## Read the closing link
 

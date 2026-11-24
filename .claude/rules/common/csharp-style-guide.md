@@ -118,36 +118,30 @@ The reader then meets the high-level method first and reads down into its callee
 
 ## Extension blocks
 
-Extension blocks need some warning suppression because of bugs in Roslyn analyzers. Always use this template, adjusting names and access modifier as needed:
+Declare every extension member in an extension block. "Classic extension methods" below holds the one exception.
 
-```csharp
-/// <summary>
-/// Provides extension methods for `MyClass` instances.
-/// </summary>
-// False positive on C# 14 extension blocks. Fixed in .NET 11, backport to .NET 10 requested in https://github.com/dotnet/sdk/issues/53984
-#pragma warning disable CA1034 // Nested types should not be visible
-// False positive on classes with C# 14 extension blocks. Fixed in .NET 11: https://github.com/dotnet/sdk/issues/51716
-#pragma warning disable CA1708 // Identifiers should differ by more than case
-public static class MyClassExtensions
-{
-    extension(MyClass @this)
-    {
-        // ...
-    }
-}
-```
-
-The receiver parameter must be named `@this`.
-
-Add `partial` only when the class is split across files, as described in "Partial classes" above and "Extension classes" below. ReSharper's `PartialTypeWithSinglePart` flags a partial class with a single part, and every warning is an error here.
-
-Do not mix extension blocks with regular static methods in the same class. "Partial classes" above and "Extension classes" below say how to split an extension class into files.
+- Name the receiver parameter `@this`.
+- A block that declares static members alone names no receiver, as in `extension(DateTime)`.
+- The XML comment of the receiver goes on the block, as `<param name="this">`. So does the `<typeparam>` comment of each type parameter of the block. The members refer to them with `<paramref name="this"/>` and `<typeparamref>`.
+- When a class has several blocks for one receiver, every block carries these comments. The compiler reports nothing when a block has none.
+- A member calls another extension member of its class through the receiver, as in `@this.GetEndOfWeek(culture)`. It does not call the static method the compiler generates, as in `GetEndOfWeek(@this, culture)`.
+- A file that holds extension blocks holds no other member of the class. "Partial classes" above and "Extension classes" below say how to split an extension class into files.
+- Add `partial` only when the class is split across files. ReSharper's `PartialTypeWithSinglePart` flags a partial class with a single part, and every warning is an error here.
 
 Do not infer the convention from existing files. This section is the convention.
 
-## Extension classes
+### Classic extension methods
 
-Prefer one extension block per class. Use multiple blocks only when they provide related functionality and share private helpers, and split them into separate files as the rules below describe.
+A classic extension method is a static method whose first parameter has the `this` modifier. Write one only when a block cannot hold the member, or when a tool fails on the block. A documentation generator that gives two block members the same anchor is an example.
+
+- Classic extension methods go in a file of their own, with no block.
+- The file says why in a comment above its class declaration, after the XML comment when the declaration has one. Use this form, so that a search finds every such file:
+
+```csharp
+// Classic extension methods: <reason>.
+```
+
+## Extension classes
 
 ### Classes that extend a single type
 
@@ -156,6 +150,8 @@ An extension class that extends a single type is named after the extended type:
 - Strip the initial "I" when the extended type is an interface.
 - Use the .NET class name, not the C# keyword: "String", not "string".
 - Add an "Extensions" suffix.
+
+A class of the BCL, or of another library, with the same name is no reason for another name. Code calls an extension member through its receiver, and seldom names the class.
 
 The name works in both directions. Where `<name>` is the name of a type, or `I<name>` the name of an interface, a class named `<name>Extensions` holds extension members for these types only:
 
@@ -273,6 +269,15 @@ Pick the form that shows the content most clearly. No form wins in every case, s
 - **Verbatim** (`@"..."`) for content heavy in backslashes and free of quotes, such as Windows paths. Raw strings cover every other case it used to serve.
 - Prefer **consistency with adjacent literals** over the shortest form for each. Where several literals form a group, matching forms read better than one odd member, even when that member would compile as a plain `"..."`.
 
+### Concatenation
+
+Do not build a string with a chain of `+`. In a chain, the quotes and the operators hide the text that the code produces.
+
+- Use an interpolated string in place of a chain.
+- Use a multi-line raw literal for content of several lines, interpolated when it holds values.
+- One `+` is fine, and two at most.
+- A file name, a path, and an identifier always use interpolation, even where one `+` would do.
+
 ## Comments
 
 ### Code comments
@@ -298,7 +303,7 @@ The most frequent shapes:
 
 - A summary starts with a verb in the present tense and the third person, as in "Determines whether ...". It does not restate the name of the member.
 - The summary of a constructor is "Initializes a new instance of the `<see cref="..."/>` class."
-- The summary of a property starts with "Gets or sets", or with "Gets" when the property has no setter. For a Boolean property, "a value that indicates whether ..." follows.
+- The summary of a property starts with "Gets or sets", or with "Gets" when the property has no setter. For a Boolean property, "a value indicating whether ..." follows. StyleCop SA1623 requires these words, and every warning is an error here. The guidelines have "a value that indicates whether", which SA1623 rejects.
 - The summary of a method that returns a task starts with "Asynchronously", then the verb.
 - A parameter and a return value are noun phrases that start with an article and leave out the type.
 - A Boolean parameter is "`true` to ...; otherwise, `false`." A Boolean return value is "`true` if ...; otherwise, `false`."

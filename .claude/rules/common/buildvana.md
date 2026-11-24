@@ -10,6 +10,7 @@ The Buildvana documentation lives in the `docs/` folder of [Tenacom/Buildvana](h
 
 - Read the documentation of the `bv` version this repository pins. The `tools.bv.version` property of `dotnet-tools.json` holds it.
 - Each release has a tag named after the bare version, such as `2.1.768-preview`. Replace `main` with that tag in a link: `https://github.com/Tenacom/Buildvana/blob/<version>/docs/...`.
+- A page may have another path at an older tag, because a file under `docs/` moves when the navigation of the documentation site changes. When a link with a tag answers 404, list the `docs/` folder of that tag, and read the page from its path there.
 - Before answering a question about the behavior of `bv` or Buildvana SDK, read the documentation page about it. Do not answer from memory.
 
 ## Build commands
@@ -22,7 +23,7 @@ Run `dotnet tool restore` first, to install the local tools. Then use these comm
 - `dotnet bv test`: run the tests.
 - `dotnet bv pack`: create the NuGet packages in `artifacts/`.
 
-Each command includes the ones before it: `dotnet bv build` also cleans and restores, `dotnet bv test` also builds, and so on. [Build pipeline](https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/build-pipeline.md) documents them.
+Each command includes the ones before it: `dotnet bv build` also cleans and restores, `dotnet bv test` also builds, and so on. [Build pipeline](https://github.com/Tenacom/Buildvana/blob/main/docs/05-bv/05-commands/build-pipeline.md) documents them.
 
 ### Capturing build/test output
 
@@ -38,9 +39,16 @@ Without a file argument, `dotnet build` builds the one solution file in the curr
 
 This command shows the per-project outputs plus the summary. Use `dotnet bv build`, `pack`, or `test` when you need the full clean, restore, and build chain, or the artifacts. Use the direct `dotnet build` above for a quick compile-and-warning check.
 
+## Where a property goes
+
+Buildvana SDK imports every `Common.props` file from the home directory down to the directory of a project, in that order. A file in a subdirectory therefore overrides a file in a parent directory. [Directory structure](https://github.com/Tenacom/Buildvana/blob/main/docs/02-directory-structure.md) documents the import.
+
+- A property that applies to one group of projects goes in the `Common.props` file of the directory that holds the group, such as `src/Common.props` for the packaged libraries.
+- Do not set such a property in the home directory and then override it in every other project. Each new project would need the override.
+
 ## Dependencies
 
-[Dependency management](https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/dependencies.md) documents `bv dependencies`, its scopes, its update policies, and what `bv` counts as a pin. `bv deps` is an alias.
+[Dependency management](https://github.com/Tenacom/Buildvana/blob/main/docs/05-bv/05-commands/dependencies.md) documents `bv dependencies`, its scopes, its update policies, and what `bv` counts as a pin. `bv deps` is an alias.
 
 ### Where versions live
 
@@ -51,7 +59,7 @@ This command shows the per-project outputs plus the summary. Use `dotnet bv buil
   - versions that override transitive dependencies, when present
 - `global.json` holds the .NET SDK version and the version of Buildvana SDK.
 - `dotnet-tools.json` holds the versions of the local tools, `bv` included.
-- Buildvana SDK adds some packages to every project. [What Buildvana SDK contributes](https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/dependencies.md#what-buildvana-sdk-contributes) lists them.
+- Buildvana SDK adds some packages to every project. [What Buildvana SDK contributes](https://github.com/Tenacom/Buildvana/blob/main/docs/05-bv/05-commands/dependencies.md#what-buildvana-sdk-contributes) lists them.
 
 ### How to update dependencies
 
@@ -67,7 +75,7 @@ Run `dotnet bv deps update` from the home directory. One run moves each pin it m
 
 ### The Buildvana family
 
-`bv`, `Buildvana.Sdk`, and `Buildvana.Runtime` form the Buildvana family. They are released together, and a repository pins them at one version. `bv deps` does not move them. [`bv self-update`](https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/self-update.md) moves all of them at once.
+`bv`, `Buildvana.Sdk`, and `Buildvana.Runtime` form the Buildvana family. They are released together, and a repository pins them at one version. `bv deps` does not move them. [`bv self-update`](https://github.com/Tenacom/Buildvana/blob/main/docs/05-bv/05-commands/self-update.md) moves all of them at once.
 
 ## Other commands
 
@@ -77,4 +85,4 @@ Run `dotnet bv deps update` from the home directory. One run moves each pin it m
   - `dotnet bv self-update` moves the pins of the Buildvana family.
 - Never run `dotnet bv release`. It publishes a release, and it runs only on a CI runner.
 
-[Version](https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/version.md) and [Release](https://github.com/Tenacom/Buildvana/blob/main/docs/tool-commands/release.md) document `bv version` and `bv release`.
+[Version](https://github.com/Tenacom/Buildvana/blob/main/docs/05-bv/05-commands/version.md) and [Release](https://github.com/Tenacom/Buildvana/blob/main/docs/05-bv/05-commands/release.md) document `bv version` and `bv release`.

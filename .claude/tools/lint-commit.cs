@@ -13,8 +13,8 @@
  *   - the subject is present, at most 72 characters long, and does not start with a word that announces what a
  *     document says now instead of what changed ("Say", "Tell", "Judge", "Clear");
  *   - the line after the subject is blank;
- *   - the body is present, and, trailers excluded, it holds at most three sentences of prose, in at most three
- *     paragraphs, or a list with one bullet per defect fixed;
+ *   - the body, when the message has one, holds at most three sentences of prose, in at most three paragraphs,
+ *     or a list with one bullet per defect fixed, trailers excluded;
  *   - a body line is at most 72 characters long, unless it holds a URL;
  *   - a sentence has at most 25 words, holds no semicolon, and holds no dash;
  *   - no sentence uses a word from the banned list below.
@@ -194,11 +194,7 @@ for (var i = subjectIndex + 1; i < end; i++)
     current.Add((i + 1, text));
 }
 
-if (paragraphs.Count == 0)
-{
-    findings.Add((subjectLine, "the body is missing: state the why"));
-}
-else if (paragraphs.Count > MaxParagraphs)
+if (paragraphs.Count > MaxParagraphs)
 {
     findings.Add((paragraphs[MaxParagraphs][0].Line, $"the body has {paragraphs.Count} paragraphs (max {MaxParagraphs})"));
 }
