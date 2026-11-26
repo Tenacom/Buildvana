@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bugs fixed in this release
 
 - The nuspec of a package lists a project reference at the version the [`GetBuildVersion` target](docs/04-sdk/05-modules/versioning.md#getbuildversion-target) computes, not `1.0.0`.
+- The [`ThisAssembly` class](docs/04-sdk/05-modules/this-assembly-class.md#generated-class) has the `DebuggerNonUserCode` and `GeneratedCode` attributes in place of `CompilerGenerated`.
+- The files that the source generators of Buildvana SDK add to a C# project have names ending in `.g.cs`, and a header naming `Buildvana.Sdk`.
 
 ### Known problems introduced by this release
 

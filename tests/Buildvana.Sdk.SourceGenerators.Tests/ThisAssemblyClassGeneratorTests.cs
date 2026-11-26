@@ -10,6 +10,23 @@ internal sealed class ThisAssemblyClassGeneratorTests
 {
     private const string ConstantsFilePath = "/obj/Test.ThisAssemblyConstants.txt";
 
+    private const string PolyfillsSource = """
+        namespace System.Diagnostics
+        {
+            internal sealed class DebuggerNonUserCodeAttribute : Attribute { }
+        }
+
+        namespace System.Diagnostics.CodeAnalysis
+        {
+            internal sealed class ExcludeFromCodeCoverageAttribute : Attribute { }
+        }
+
+        namespace System.CodeDom.Compiler
+        {
+            internal sealed class GeneratedCodeAttribute : Attribute { }
+        }
+        """;
+
     private static readonly IReadOnlyDictionary<string, string> ConstantsFileMetadata = new Dictionary<string, string> {
         ["build_metadata.AdditionalFiles.BV_ItemType"] = "ThisAssemblyConstants",
     };
@@ -40,12 +57,59 @@ internal sealed class ThisAssemblyClassGeneratorTests
     {
         var result = RunGenerator("Answer=42\n");
         var source = GetSingleGeneratedSource(result);
-        await Assert.That(source).Contains("[global::System.Runtime.CompilerServices.CompilerGenerated]");
-        await Assert.That(source).Contains("[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]");
-        await Assert.That(source).Contains("internal static partial class ThisAssembly");
+        await Assert.That(source).StartsWith($"{ExpectedGuestCode.FileHeader}\n\n");
+        await Assert.That(source).Contains($"""
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Buildvana.Sdk", "{ExpectedGuestCode.PackageVersion}")]
+            internal static partial class ThisAssembly
+            """);
         await Assert.That(source).Contains("public const int Answer = 42;");
+        await Assert.That(source).DoesNotContain("CompilerGenerated");
         await Assert.That(source).DoesNotContain("namespace");
         await TestCompilation.AssertHasNoErrors(result.OutputCompilation).ConfigureAwait(false);
+    }
+
+    [Test]
+    public async Task Constants_GenerateFileWithGeneratedCodeName()
+    {
+        var result = RunGenerator("Answer=42\n");
+        var filePath = result.RunResult.GeneratedTrees.Single().FilePath;
+        await Assert.That(Path.GetFileName(filePath)).IsEqualTo("BV_ThisAssembly.g.cs");
+    }
+
+    [Test]
+    public async Task CompilationWithoutAttributeTypes_GeneratesClassWithoutAttributes()
+    {
+        var result = RunGenerator("Answer=42\n", compilation: TestCompilation.Create([]));
+        var source = GetSingleGeneratedSource(result);
+        await Assert.That(source).Contains("internal static partial class ThisAssembly");
+        await Assert.That(source).DoesNotContain("[global::");
+    }
+
+    [Test]
+    public async Task InaccessiblePolyfills_AreNotNamed()
+    {
+        var polyfills = TestCompilation.CreateReference("Polyfills", PolyfillsSource);
+        var result = RunGenerator("Answer=42\n", compilation: TestCompilation.Create([polyfills]));
+        var source = GetSingleGeneratedSource(result);
+        await Assert.That(source).Contains("internal static partial class ThisAssembly");
+        await Assert.That(source).DoesNotContain("[global::");
+    }
+
+    [Test]
+    public async Task PolyfillsVisibleThroughInternalsVisibleTo_AreNamed()
+    {
+        var source = $"""
+            [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("{TestCompilation.AssemblyName}")]
+            {PolyfillsSource}
+            """;
+        var polyfills = TestCompilation.CreateReference("Polyfills", source);
+        var result = RunGenerator("Answer=42\n", compilation: TestCompilation.Create([polyfills]));
+        var generatedSource = GetSingleGeneratedSource(result);
+        await Assert.That(generatedSource).Contains("[global::System.Diagnostics.DebuggerNonUserCodeAttribute]");
+        await Assert.That(generatedSource).Contains("[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute]");
+        await Assert.That(generatedSource).Contains("[global::System.CodeDom.Compiler.GeneratedCodeAttribute(");
     }
 
     [Test]
@@ -111,9 +175,10 @@ internal sealed class ThisAssemblyClassGeneratorTests
     private static (GeneratorDriverRunResult RunResult, Compilation OutputCompilation) RunGenerator(
         string? constantsContent,
         IReadOnlyDictionary<string, string>? globalOptions = null,
-        bool tagFile = true)
+        bool tagFile = true,
+        CSharpCompilation? compilation = null)
     {
-        var compilation = TestCompilation.Create();
+        compilation ??= TestCompilation.Create();
         var additionalTexts = constantsContent is null
             ? []
             : new AdditionalText[] { new InMemoryAdditionalText(ConstantsFilePath, constantsContent) };
@@ -139,5 +204,5 @@ internal sealed class ThisAssemblyClassGeneratorTests
 
     private static string GetSingleGeneratedSource(
         (GeneratorDriverRunResult RunResult, Compilation OutputCompilation) result)
-        => result.RunResult.GeneratedTrees.Single().ToString();
+        => result.RunResult.GeneratedTrees.Single().ToString().ReplaceLineEndings("\n");
 }

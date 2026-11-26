@@ -6,16 +6,39 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 /// <summary>
-/// Creates the empty C# compilation a generator test runs against,
+/// Creates the C# compilations a generator test runs against,
 /// and checks the compilation the generator run leaves behind.
 /// </summary>
 internal static class TestCompilation
 {
+    public const string AssemblyName = "TestAssembly";
+
+    private static readonly CSharpCompilationOptions Options = new(OutputKind.DynamicallyLinkedLibrary);
+
     public static CSharpCompilation Create()
-        => CSharpCompilation.Create(
-            "TestAssembly",
-            references: GetReferences(),
-            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        => Create(GetReferences());
+
+    public static CSharpCompilation Create(IEnumerable<MetadataReference> references)
+        => CSharpCompilation.Create(AssemblyName, references: references, options: Options);
+
+    public static MetadataReference CreateReference(string assemblyName, string source)
+    {
+        var compilation = CSharpCompilation.Create(
+            assemblyName,
+            [CSharpSyntaxTree.ParseText(source)],
+            GetReferences(),
+            Options);
+
+        using var stream = new MemoryStream();
+        var result = compilation.Emit(stream);
+        if (!result.Success)
+        {
+            var errors = string.Join(Environment.NewLine, result.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error));
+            throw new InvalidOperationException($"The source of {assemblyName} does not compile:{Environment.NewLine}{errors}");
+        }
+
+        return MetadataReference.CreateFromImage(stream.ToArray());
+    }
 
     public static async Task AssertHasNoErrors(Compilation compilation)
     {
