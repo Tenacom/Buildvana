@@ -45,8 +45,8 @@ A value MSBuild reads as true, such as `yes`, counts as `true`, and any other va
 With the defaults, the module adds this source to the compilation:
 
 ```csharp
-[assembly:System.CLSCompliant(true)]
-[assembly:System.Runtime.InteropServices.ComVisible(false)]
+[assembly:global::System.CLSCompliant(true)]
+[assembly:global::System.Runtime.InteropServices.ComVisible(false)]
 ```
 
 A Roslyn source generator that Buildvana SDK ships writes the attributes, and the [`SourceGenerators` module](source-generators.md) adds it to the compilation.

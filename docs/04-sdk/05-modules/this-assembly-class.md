@@ -59,8 +59,9 @@ The class is `internal`, `static`, and `partial`, and every constant is `public 
 The project above gets this class, followed by the default constants:
 
 ```csharp
-[global::System.Runtime.CompilerServices.CompilerGenerated]
-[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+[global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute]
+[global::System.CodeDom.Compiler.GeneratedCodeAttribute("Buildvana.Sdk", "2.2.7-preview")]
 internal static partial class ThisAssembly
 {
     public const int Answer = 42;
@@ -68,7 +69,11 @@ internal static partial class ThisAssembly
 }
 ```
 
+The second argument of `GeneratedCode` is the version of Buildvana SDK.
+The generator writes each attribute only when the compilation can name it, as a project with an old target framework may lack one.
+
 The class is partial, so a file of yours can add members to it.
+The attributes of the class apply to those members too.
 
 A Roslyn source generator that Buildvana SDK ships writes the class, and the [`SourceGenerators` module](source-generators.md) adds it to the compilation.
 The generator reads the constants from a file that the `BV_WriteThisAssemblyConstantsFile` target writes before compilation.
