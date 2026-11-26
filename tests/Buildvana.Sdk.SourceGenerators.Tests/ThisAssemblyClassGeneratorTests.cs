@@ -100,7 +100,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
     [Test]
     public async Task PolyfillsVisibleThroughInternalsVisibleTo_AreNamed()
     {
-        var source = $"""
+        const string source = $"""
             [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("{TestCompilation.AssemblyName}")]
             {PolyfillsSource}
             """;
