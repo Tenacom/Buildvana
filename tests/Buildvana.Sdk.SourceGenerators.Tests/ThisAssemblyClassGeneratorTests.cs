@@ -137,6 +137,7 @@ internal sealed class ThisAssemblyClassGeneratorTests
         return (runResult, outputCompilation);
     }
 
-    private static string GetSingleGeneratedSource((GeneratorDriverRunResult RunResult, Compilation OutputCompilation) result)
+    private static string GetSingleGeneratedSource(
+        (GeneratorDriverRunResult RunResult, Compilation OutputCompilation) result)
         => result.RunResult.GeneratedTrees.Single().ToString();
 }
