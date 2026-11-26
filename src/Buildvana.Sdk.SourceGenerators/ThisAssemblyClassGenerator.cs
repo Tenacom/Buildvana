@@ -36,7 +36,8 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
         var constantsTextsProvider = context.AdditionalTextsProvider
                                             .Combine(context.AnalyzerConfigOptionsProvider)
                                             .Where(static pair => IsConstantsFile(pair.Right.GetOptions(pair.Left)))
-                                            .Select(static (pair, cancellationToken) => pair.Left.GetText(cancellationToken)?.ToString() ?? string.Empty)
+                                            .Select(static (pair, cancellationToken)
+                                                 => pair.Left.GetText(cancellationToken)?.ToString() ?? string.Empty)
                                             .Collect();
 
         var optionsProvider = context.AnalyzerConfigOptionsProvider
