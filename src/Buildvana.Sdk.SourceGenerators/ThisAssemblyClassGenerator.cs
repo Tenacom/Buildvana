@@ -48,10 +48,13 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
         var attributesProvider = context.CompilationProvider
                                         .Select(static (compilation, _) => GuestCodeAttributes.FromCompilation(compilation));
 
-        var finalProvider = constantsTextsProvider.Combine(optionsProvider).Combine(attributesProvider);
+        var enableNullableProvider = context.ParseOptionsProvider
+                                            .Select(static (options, _) => options.SupportsNullableReferenceTypes);
+
+        var finalProvider = constantsTextsProvider.Combine(optionsProvider).Combine(attributesProvider).Combine(enableNullableProvider);
         context.RegisterSourceOutput(finalProvider, static (spc, data) => {
-            var ((constantsTexts, options), attributes) = data;
-            GenerateThisAssemblyClass(spc, constantsTexts, options.ClassName, options.Namespace, attributes);
+            var (((constantsTexts, options), attributes), enableNullable) = data;
+            GenerateThisAssemblyClass(spc, constantsTexts, options.ClassName, options.Namespace, attributes, enableNullable);
         });
     }
 
@@ -60,7 +63,8 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
         ImmutableArray<string> constantsTexts,
         string className,
         string? namespaceName,
-        GuestCodeAttributes attributes)
+        GuestCodeAttributes attributes,
+        bool enableNullable)
     {
         if (constantsTexts.IsEmpty)
         {
@@ -73,7 +77,7 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
         }
 
         var sb = new StringBuilder();
-        _ = sb.AppendFileHeader();
+        _ = sb.AppendFileHeader(enableNullable);
 
         var indent = string.Empty;
         if (!string.IsNullOrEmpty(namespaceName))
@@ -89,7 +93,7 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
 
         foreach (var (name, value) in constants)
         {
-            _ = sb.AppendLine($"{indent}    public const {GetTypeKeyword(value)} {name} = {GetLiteral(value)};");
+            _ = sb.AppendLine($"{indent}    public const {GetTypeKeyword(value, enableNullable)} {name} = {GetLiteral(value)};");
         }
 
         _ = sb.AppendLine($"{indent}}}");
@@ -140,9 +144,9 @@ public class ThisAssemblyClassGenerator : IIncrementalGenerator
             && itemType == "ThisAssemblyConstants";
 
     // NOTE: All supported types must be listed (check ConstantValueParser.AllowedTypes).
-    private static string GetTypeKeyword(object? value)
+    private static string GetTypeKeyword(object? value, bool enableNullable)
         => value switch {
-            null => "string?",
+            null => enableNullable ? "string?" : "string",
             byte => "byte",
             short => "short",
             int => "int",
