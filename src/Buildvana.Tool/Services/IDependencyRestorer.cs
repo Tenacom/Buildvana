@@ -13,9 +13,9 @@ namespace Buildvana.Tool.Services;
 /// <remarks>
 /// <para>This restore differs from the one a build asks for in four ways. It forces the restore, so that no
 /// cached result stands in for the audit. It can leave the transitive override files out of the evaluation,
-/// which is how the graph as it stands without them is obtained. It can report every warning as a warning,
-/// whatever the repository sets about warnings. And it reports the exit code instead of failing on it,
-/// because a restore can fail while writing everything the caller reads.</para>
+/// which is how the graph as it stands without them is obtained. It can turn off the properties that make
+/// NuGet report a warning as an error, except in a project that keeps its own values. And it reports the exit
+/// code instead of failing on it, because a restore can fail while writing everything the caller reads.</para>
 /// </remarks>
 internal interface IDependencyRestorer
 {
@@ -26,8 +26,8 @@ internal interface IDependencyRestorer
     /// <param name="suppressTransitiveOverrides"><see langword="true"/> to leave the transitive override
     /// files out of the evaluation, <see langword="false"/> to let the SDK import them.</param>
     /// <param name="disableWarningsAsErrors"><see langword="true"/> to have NuGet report every warning as a
-    /// warning, whatever <c>TreatWarningsAsErrors</c> and <c>WarningsAsErrors</c> say in the repository;
-    /// <see langword="false"/> to let the repository decide.</param>
+    /// warning, except in a project that lists <c>TreatWarningsAsErrors</c> or <c>WarningsAsErrors</c> in
+    /// <c>TreatAsLocalProperty</c>; <see langword="false"/> to let the repository decide.</param>
     /// <param name="cancellationToken">A token that, when signalled, terminates the spawned
     /// <c>dotnet</c> child process.</param>
     /// <returns>A task whose result is the exit code of the <c>dotnet restore</c> invocation.</returns>
