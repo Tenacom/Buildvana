@@ -21,7 +21,8 @@ namespace Buildvana.Tool.Services.Dependencies;
 /// read in full, which may be the vulnerability data the audit needs, and NU1905 that an audit source
 /// provided none.</para>
 /// <para>An entry whose level is an error and whose code is none of the audit ones says that the restore
-/// failed for a reason of its own, which the lifecycle reports as a failed step.</para>
+/// failed for a reason of its own, which the lifecycle reports as a failed step. NuGet raises an audit code at
+/// the error level in a project that treats warnings as errors.</para>
 /// </remarks>
 internal sealed record AssetsLogEntry(
     NuGetLogCode Code,
@@ -35,4 +36,10 @@ internal sealed record AssetsLogEntry(
     /// </summary>
     public bool IsAuditFinding
         => Code is NuGetLogCode.NU1901 or NuGetLogCode.NU1902 or NuGetLogCode.NU1903 or NuGetLogCode.NU1904;
+
+    /// <summary>
+    /// Gets a value indicating whether the entry is one of the audit codes NU1900 to NU1905.
+    /// </summary>
+    public bool IsAuditCode
+        => Code is >= NuGetLogCode.NU1900 and <= NuGetLogCode.NU1905;
 }

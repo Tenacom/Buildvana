@@ -132,12 +132,12 @@ internal sealed class OrphanDetector(
     }
 
     // Vulnerability data is no concern of orphan detection: what a project references does not depend on it.
-    // NU1900, which stops the override lifecycle, therefore does not stop a prune.
+    // No audit code stops a prune, whatever its level. NU1900 is one, although it stops the override lifecycle.
     private static void EnsureRestored(ProjectAssets assets)
     {
         foreach (var entry in assets.Logs)
         {
-            if (entry is { Level: LogLevel.Error, IsAuditFinding: false })
+            if (entry is { Level: LogLevel.Error, IsAuditCode: false })
             {
                 throw new BuildFailedException(
                     ExitCodes.ExternalProgramFailed,

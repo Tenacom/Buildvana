@@ -207,11 +207,14 @@ internal sealed class OverrideLifecycleTests
         await Assert.That(exception.Message).Contains("NU1101");
     }
 
-    // An audit source with no data at all is NuGet's own warning, and it says nothing about bv's own step.
+    // An audit source with no data at all is NuGet's own warning, and it says nothing about bv's own step,
+    // even in a project that makes it an error.
     [Test]
-    public async Task RunAsync_WithAnAuditSourceThatHasNoData_PassesTheWarningOn()
+    [Arguments("Warning")]
+    [Arguments("Error")]
+    public async Task RunAsync_WithAnAuditSourceThatHasNoData_PassesTheWarningOn(string level)
     {
-        using var home = NewHome(new AssetsFile().Resolves(Vulnerable, "13.0.3").Reports("NU1905"));
+        using var home = NewHome(new AssetsFile().Resolves(Vulnerable, "13.0.3").Reports("NU1905", level: level));
         var reporter = new CaptureReporter();
         await RunAsync(home, new FakeDependencyRestorer(), new FakeVulnerabilityDataSource(), Versions(), reporter: reporter)
             .ConfigureAwait(false);
