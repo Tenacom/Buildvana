@@ -23,9 +23,13 @@ public class AdditionalAssemblyInfoGenerator : IIncrementalGenerator
                                               p.GetBooleanMSBuildProperty("CLSCompliant"),
                                               p.GetBooleanMSBuildProperty("ComVisible")));
 
-        context.RegisterSourceOutput(attributeValuesProvider, static (spc, values) => {
+        var enableNullableProvider = context.ParseOptionsProvider
+                                            .Select(static (options, _) => options.SupportsNullableReferenceTypes);
+
+        context.RegisterSourceOutput(attributeValuesProvider.Combine(enableNullableProvider), static (spc, data) => {
+            var (values, enableNullable) = data;
             var sb = new StringBuilder()
-                    .AppendFileHeader()
+                    .AppendFileHeader(enableNullable)
                     .AppendBooleanAssemblyAttribute("global::System.CLSCompliant", values.CLSCompliant)
                     .AppendBooleanAssemblyAttribute("global::System.Runtime.InteropServices.ComVisible", values.ComVisible);
 
