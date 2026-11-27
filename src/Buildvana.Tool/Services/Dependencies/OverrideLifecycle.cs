@@ -218,12 +218,14 @@ internal sealed partial class OverrideLifecycle(
 
     private async Task RestoreAsync(bool suppressOverrides, CancellationToken cancellationToken)
     {
+        // A warning leaves the graph complete, whatever the repository makes of it, and the files must follow
+        // the graph even when a warning comes from the very change that makes them stale.
         var exitCode = await restorer
-            .RestoreAsync(solution.Value, suppressOverrides, cancellationToken)
+            .RestoreAsync(solution.Value, suppressOverrides, disableWarningsAsErrors: true, cancellationToken)
             .ConfigureAwait(false);
 
-        // The exit code is not the verdict: a restore whose audit findings are errors fails and still writes
-        // every graph. What went wrong, if anything did, is in the graphs themselves.
+        // The exit code is not the verdict: MSBuild can fail a restore that writes every graph, as it does
+        // under a configured -warnaserror. What went wrong, if anything did, is in the graphs themselves.
         reporter.Detail($"The restore exited with code {exitCode}.");
     }
 

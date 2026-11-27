@@ -127,7 +127,7 @@ internal sealed class OrphanDetectorTests
 
         _ = await DetectAsync(Inventory(home, ["Alpha"]), restorer).ConfigureAwait(false);
 
-        await Assert.That(restorer.Restores).IsEquivalentTo([true]);
+        await Assert.That(restorer.Restores).IsEquivalentTo([(true, true)]);
     }
 
     // The detection restore rewrites every graph without the override files, and a caller that writes none
@@ -140,7 +140,7 @@ internal sealed class OrphanDetectorTests
 
         _ = await DetectAsync(Inventory(home, ["Alpha"]), restorer, restoreOverridesAfterwards: true).ConfigureAwait(false);
 
-        await Assert.That(restorer.Restores).IsEquivalentTo([true, false]);
+        await Assert.That(restorer.Restores).IsEquivalentTo([(true, true), (false, true)]);
     }
 
     // Nothing was suppressed, so there is nothing to put back.
@@ -169,7 +169,8 @@ internal sealed class OrphanDetectorTests
         await Assert.That(exception.ExitCode).IsEqualTo(ExitCodes.ExternalProgramFailed);
     }
 
-    // Audit findings are errors under TreatWarningsAsErrors, and the restore wrote every graph all the same.
+    // The restore keeps warnings from being errors, except in a project that declares TreatWarningsAsErrors
+    // in TreatAsLocalProperty. There an audit finding is an error, and the restore wrote every graph all the same.
     [Test]
     public async Task DetectAsync_WithAnAuditFindingAsAnError_AnswersAllTheSame()
     {

@@ -297,9 +297,8 @@ bv deps update Microsoft.CodeAnalysis.* --latest
 ```
 
 `--to` takes one id, so moving the same packages to a version that is not the latest takes one run per package.
-Every run but the last writes its pin, and then fails with exit code 3 when the [transitive overrides](#transitive-overrides) restore the solution.
-The `deps/post-update` hook does not run, and no report is written.
-The last run finds the pins in agreement, and the restore succeeds.
+Every run completes, because the restore of the [transitive overrides](#transitive-overrides) reports NU1605 as a warning.
+A build between two of those runs fails with NU1605, until the last run sets every pin to the same version.
 
 ### The `deps/post-update` hook
 
@@ -325,6 +324,7 @@ NuGet gives the answer.
 A textual scan of the MSBuild files could not answer as much.
 A reference written through a property or an item transform is one only an evaluation sees.
 The restore leaves the [transitive override files](#transitive-overrides) out of the evaluation, so a promotion `bv` wrote never makes a pin look alive.
+It reports each warning as a warning, as [What a run does](#what-a-run-does) says of the restores of `update`.
 
 That restore is why the diagnosis lives here rather than in the offline `show`.
 Removing an entry and moving a version forward are different actions with different consequences, so they are different commands.
@@ -396,6 +396,8 @@ A check run leaves them alone, because predicting what a restore would find is a
 
 1. Restore, with the override files left out of the evaluation.
    That is the answer of NuGet on the graph as the repository states it, which is what the overrides are computed from.
+   This restore, and every later one, reports each warning as a warning, whatever `TreatWarningsAsErrors` and `WarningsAsErrors` say.
+   A warning leaves the graph complete, and only an error that NuGet raises itself stops the run.
 2. Read the dependency graph of each project, and take the audit findings of the restore from it.
    `bv` does not re-implement the audit, so every NuGet audit setting is honored under the rules of NuGet: `NuGetAudit`, `NuGetAuditMode`, `NuGetAuditLevel`, `NuGetAuditSuppress`, `NoWarn`, and `<auditSources>`.
    What a project does not report is not lifted.
@@ -476,7 +478,7 @@ The pins of the `packages` scope come from an MSBuild evaluation.
 A report missing that scope would otherwise read as a repository with no packages.
 A failed `dotnet tool update` and a failed hook are two more.
 The [transitive overrides](#transitive-overrides) add two of their own.
-One is a restore that failed for a reason other than its own audit findings.
+One is a restore error that NuGet raises itself, such as a package no source has.
 The other is a restore that could not read a package source in full.
 The restore [`prune`](#bv-dependencies-prune) runs carries the first of the two, and not the second, because what a project references does not depend on vulnerability data.
 Overrides regenerated from a fraction of the advisories would delete one that is still needed.

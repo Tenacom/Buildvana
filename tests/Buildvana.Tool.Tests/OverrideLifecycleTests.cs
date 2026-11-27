@@ -29,7 +29,7 @@ internal sealed class OverrideLifecycleTests
         var restorer = new FakeDependencyRestorer();
         await RunAsync(home, restorer, new FakeVulnerabilityDataSource(), Versions()).ConfigureAwait(false);
         await Assert.That(File.Exists(home.GetFullPath(CentralFileName))).IsFalse();
-        await Assert.That(restorer.Restores).IsEquivalentTo([true]);
+        await Assert.That(restorer.Restores).IsEquivalentTo([(true, true)]);
     }
 
     // The central file states the version once, and the project's own file promotes the package to a
@@ -43,7 +43,7 @@ internal sealed class OverrideLifecycleTests
         await Assert.That(home.ReadFile(CentralFileName)).Contains("""<PackageVersion Include="Newtonsoft.Json" Version="12.0.3" />""");
         await Assert.That(home.ReadFile(ProjectFileName))
             .Contains("""<PackageReference Include="Newtonsoft.Json" PrivateAssets="all" />""");
-        await Assert.That(restorer.Restores).IsEquivalentTo([true, false]);
+        await Assert.That(restorer.Restores).IsEquivalentTo([(true, true), (false, true)]);
     }
 
     [Test]

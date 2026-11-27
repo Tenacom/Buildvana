@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The [`ThisAssembly` class](docs/04-sdk/05-modules/this-assembly-class.md#generated-class) has the `DebuggerNonUserCode` and `GeneratedCode` attributes in place of `CompilerGenerated`.
 - The files that the source generators of Buildvana SDK add to a C# project have names ending in `.g.cs`, and a header naming `Buildvana.Sdk`.
 - The [`ThisAssembly` class](docs/04-sdk/05-modules/this-assembly-class.md) compiles in a project whose language version is below C# 8.
+- `bv dependencies update` and `bv dependencies prune` do not stop when [their restore](docs/05-bv/05-commands/dependencies.md#what-a-run-does) reports a warning that the repository treats as an error, such as NU1510.
 
 ### Known problems introduced by this release
 
