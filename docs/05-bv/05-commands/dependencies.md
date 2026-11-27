@@ -482,7 +482,8 @@ The pins of the `packages` scope come from an MSBuild evaluation.
 A report missing that scope would otherwise read as a repository with no packages.
 A failed `dotnet tool update` and a failed hook are two more.
 The [transitive overrides](#transitive-overrides) add two of their own.
-One is a restore error other than an audit finding or NU1905, such as a missing package, or a warning a project treats as an error.
+One is a restore error other than an audit finding or NU1905.
+A missing package is one, and so is a warning a project treats as an error.
 The other is a restore that could not read a package source in full.
 The restore [`prune`](#bv-dependencies-prune) runs carries the first of the two, and not the second, because what a project references does not depend on vulnerability data.
 Overrides regenerated from a fraction of the advisories would delete one that is still needed.
