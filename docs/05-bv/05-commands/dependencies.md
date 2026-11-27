@@ -325,6 +325,7 @@ A textual scan of the MSBuild files could not answer as much.
 A reference written through a property or an item transform is one only an evaluation sees.
 The restore leaves the [transitive override files](#transitive-overrides) out of the evaluation, so a promotion `bv` wrote never makes a pin look alive.
 Its warnings follow the rules that [What a run does](#what-a-run-does) states for the restores of `update`.
+The exception is NU1900, which does not stop `prune`.
 
 That restore is why the diagnosis lives here rather than in the offline `show`.
 Removing an entry and moving a version forward are different actions with different consequences, so they are different commands.
