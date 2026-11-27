@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using Buildvana.Core.IO;
+using Buildvana.Core.Testing;
 
 internal sealed class FileFinderTests
 {
@@ -22,7 +23,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -43,7 +44,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -65,7 +66,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -86,7 +87,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -109,7 +110,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -129,7 +130,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -148,7 +149,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -167,7 +168,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -188,7 +189,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -209,7 +210,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -229,7 +230,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -249,7 +250,7 @@ internal sealed class FileFinderTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 

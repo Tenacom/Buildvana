@@ -48,7 +48,7 @@ internal sealed class ProjectEvaluationDumpFixture : IDisposable
         return ReadDump(Directory.EnumerateFiles(DumpDirectory).Single());
     }
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => TestDirectory.Delete(_root);
 
     private static string GetMetadata(string key)
         => typeof(ProjectEvaluationDumpFixture).Assembly.GetMetadata(key);

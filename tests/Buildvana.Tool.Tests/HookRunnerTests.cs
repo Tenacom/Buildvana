@@ -223,7 +223,7 @@ internal sealed class HookRunnerTests
         }
         finally
         {
-            Directory.Delete(artifactsPath, recursive: true);
+            TestDirectory.Delete(artifactsPath);
         }
     }
 

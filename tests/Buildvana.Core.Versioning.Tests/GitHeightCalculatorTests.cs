@@ -29,7 +29,7 @@ internal sealed class GitHeightCalculatorTests
         }
         finally
         {
-            directory.Delete(recursive: true);
+            TestDirectory.Delete(directory.FullName);
         }
     }
 
@@ -185,7 +185,7 @@ internal sealed class GitHeightCalculatorTests
         }
         finally
         {
-            directory.Delete(recursive: true);
+            TestDirectory.Delete(directory.FullName);
         }
     }
 

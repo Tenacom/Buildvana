@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 
 internal sealed class PostReleaseHookArgsTests
@@ -16,7 +17,7 @@ internal sealed class PostReleaseHookArgsTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -61,7 +62,7 @@ internal sealed class PostReleaseHookArgsTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -91,7 +92,7 @@ internal sealed class PostReleaseHookArgsTests
         finally
         {
             Directory.SetCurrentDirectory(previousCurrentDirectory);
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -108,7 +109,7 @@ internal sealed class PostReleaseHookArgsTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -134,7 +135,7 @@ internal sealed class PostReleaseHookArgsTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 

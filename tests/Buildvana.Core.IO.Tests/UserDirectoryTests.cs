@@ -23,7 +23,7 @@ internal sealed class UserDirectoryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -84,7 +84,7 @@ internal sealed class UserDirectoryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -194,7 +194,7 @@ internal sealed class UserDirectoryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -260,7 +260,7 @@ internal sealed class UserDirectoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCurrentDirectory);
-            root.Delete();
+            TestDirectory.Delete(root.FullName);
         }
     }
 

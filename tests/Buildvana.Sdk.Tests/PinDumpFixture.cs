@@ -60,7 +60,7 @@ internal sealed class PinDumpFixture : IDisposable
         ];
     }
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => TestDirectory.Delete(_root);
 
     private static string GetMetadata(string key)
         => typeof(PinDumpFixture).Assembly.GetMetadata(key);

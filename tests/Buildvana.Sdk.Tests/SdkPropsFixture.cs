@@ -105,7 +105,7 @@ internal sealed class SdkPropsFixture : IDisposable
         return EvaluateProject(Path.Combine(RepoDirectory, "src", "Test", "Test.proj"));
     }
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => TestDirectory.Delete(_root);
 
     private static (string SdkPropsPath, string SdkTargetsPath) BuildSdkLayout(string layoutRoot)
     {

@@ -36,7 +36,7 @@ internal sealed class PostReleaseHookArgsFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(previousCurrentDirectory);
-            temporaryDirectory.Delete();
+            TestDirectory.Delete(temporaryDirectory.FullName);
         }
     }
 

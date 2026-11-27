@@ -6,6 +6,7 @@ using System.Text;
 using Buildvana.Core;
 using Buildvana.Core.Configuration;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 
 internal sealed class BuildvanaJsonConfigProviderTests
@@ -21,7 +22,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -37,7 +38,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -55,7 +56,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -69,7 +70,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -86,7 +87,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -110,7 +111,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -130,7 +131,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -148,7 +149,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -167,7 +168,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -184,7 +185,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -202,7 +203,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -218,7 +219,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -237,7 +238,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -254,7 +255,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -274,7 +275,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -291,7 +292,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -308,7 +309,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -333,7 +334,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -357,7 +358,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -376,7 +377,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -392,7 +393,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -432,7 +433,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -468,7 +469,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -486,7 +487,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -508,7 +509,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -538,7 +539,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -557,7 +558,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -575,7 +576,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -596,7 +597,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
@@ -624,7 +625,7 @@ internal sealed class BuildvanaJsonConfigProviderTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 
