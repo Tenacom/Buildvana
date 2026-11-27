@@ -8,6 +8,7 @@ using System.Runtime.Versioning;
 internal sealed class UnixWriteProtection : IDisposable
 {
     private readonly string _path;
+    private bool _disposed;
 
     public UnixWriteProtection(string path)
     {
@@ -15,5 +16,14 @@ internal sealed class UnixWriteProtection : IDisposable
         File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserExecute);
     }
 
-    public void Dispose() => File.SetUnixFileMode(_path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        File.SetUnixFileMode(_path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+    }
 }
