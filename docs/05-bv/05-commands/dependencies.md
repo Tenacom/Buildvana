@@ -324,7 +324,7 @@ NuGet gives the answer.
 A textual scan of the MSBuild files could not answer as much.
 A reference written through a property or an item transform is one only an evaluation sees.
 The restore leaves the [transitive override files](#transitive-overrides) out of the evaluation, so a promotion `bv` wrote never makes a pin look alive.
-It reports each warning as a warning, as [What a run does](#what-a-run-does) says of the restores of `update`.
+Its warnings follow the rules that [What a run does](#what-a-run-does) states for the restores of `update`.
 
 That restore is why the diagnosis lives here rather than in the offline `show`.
 Removing an entry and moving a version forward are different actions with different consequences, so they are different commands.
@@ -396,8 +396,10 @@ A check run leaves them alone, because predicting what a restore would find is a
 
 1. Restore, with the override files left out of the evaluation.
    That is the answer of NuGet on the graph as the repository states it, which is what the overrides are computed from.
-   This restore, and every later one, reports each warning as a warning, whatever `TreatWarningsAsErrors` and `WarningsAsErrors` say.
-   A warning leaves the graph complete, and only an error that NuGet raises itself stops the run.
+   This restore, and every later one, sets `TreatWarningsAsErrors` to `false` and `WarningsAsErrors` to an empty value, as global properties.
+   A warning leaves the graph complete, so `bv` has NuGet report each one as a warning.
+   A project that lists either property in `TreatAsLocalProperty` keeps its own value, because MSBuild lets it override a global property.
+   A warning that such a project treats as an error stops the run, as does an error that NuGet raises itself.
 2. Read the dependency graph of each project, and take the audit findings of the restore from it.
    `bv` does not re-implement the audit, so every NuGet audit setting is honored under the rules of NuGet: `NuGetAudit`, `NuGetAuditMode`, `NuGetAuditLevel`, `NuGetAuditSuppress`, `NoWarn`, and `<auditSources>`.
    What a project does not report is not lifted.
