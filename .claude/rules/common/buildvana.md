@@ -69,7 +69,7 @@ Run `dotnet bv deps update` from the home directory. One run moves each pin it m
 - Add `--all` to `--check` to list every pin, not only the ones that would move. In the output, the line of each pin ends with the latest stable version the sources have. The latest prerelease above it follows, when there is one.
 - `dotnet bv deps update <id> --to <version>` moves every pin of that id to the version, whatever its policy. It is the one way to lower a pin.
 - `dotnet bv deps update <id or pattern>... --latest` moves the named pins to the latest version the sources have, whatever their policy.
-- Move packages that depend on each other at one version, such as `Microsoft.CodeAnalysis.*`, in one `--latest` run. With one `--to` run per package, the restore of the transitive overrides fails until the last run.
+- Move packages that depend on each other at one version, such as `Microsoft.CodeAnalysis.*`, in one `--latest` run. With one `--to` run per package, a build fails until the last run.
 - `bv deps` knows nothing about a package with no pin. To find its latest version, run `dotnet package search <id> --exact-match`. Add `--prerelease` to count prereleases as well.
 - Do not update tools with `dotnet tool update --local --all`. For a tool pinned to a prerelease line, the command picks the latest stable version, which is a downgrade. The command then fails the whole run instead of downgrading. Update each tool with `dotnet tool update <id> --local --version <version>` instead.
 
