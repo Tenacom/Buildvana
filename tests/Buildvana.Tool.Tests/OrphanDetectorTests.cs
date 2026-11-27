@@ -181,12 +181,16 @@ internal sealed class OrphanDetectorTests
         await Assert.That(orphans.Select(static pin => pin.Id)).IsEquivalentTo(["Alpha"]);
     }
 
-    // NU1900 says a source could not be read in full, which stops the override lifecycle. What a project
-    // references does not depend on vulnerability data, so it does not stop this.
+    // NU1900 says a source could not be read in full, which stops the override lifecycle, and NU1905 that an
+    // audit source has no data. What a project references does not depend on vulnerability data, so neither
+    // stops this, even in a project that makes them errors.
     [Test]
-    public async Task DetectAsync_WithASourceTheRestoreCouldNotRead_AnswersAllTheSame()
+    [Arguments("NU1900", "Warning")]
+    [Arguments("NU1900", "Error")]
+    [Arguments("NU1905", "Error")]
+    public async Task DetectAsync_WithAnAuditCodeThatIsNoFinding_AnswersAllTheSame(string code, string level)
     {
-        using var home = NewHome(new AssetsFile().Resolves("Alpha", "1.0.0").Reports("NU1900"));
+        using var home = NewHome(new AssetsFile().Resolves("Alpha", "1.0.0").Reports(code, level: level));
 
         var orphans = await DetectAsync(Inventory(home, ["Alpha"])).ConfigureAwait(false);
 

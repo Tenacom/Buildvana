@@ -399,7 +399,8 @@ A check run leaves them alone, because predicting what a restore would find is a
    This restore, and every later one, sets `TreatWarningsAsErrors` to `false` and `WarningsAsErrors` to an empty value, as global properties.
    A warning leaves the graph complete, so `bv` has NuGet report each one as a warning.
    A project that lists either property in `TreatAsLocalProperty` keeps its own value, because MSBuild lets it override a global property.
-   A warning that such a project treats as an error stops the run, unless the warning is an audit finding.
+   A warning that such a project treats as an error stops the run, unless the warning is an audit finding or NU1905.
+   NU1905 says that an audit source has no vulnerability data, and `bv` reports it as a warning.
    An error that NuGet raises itself stops the run too.
 2. Read the dependency graph of each project, and take the audit findings of the restore from it.
    `bv` does not re-implement the audit, so every NuGet audit setting is honored under the rules of NuGet: `NuGetAudit`, `NuGetAuditMode`, `NuGetAuditLevel`, `NuGetAuditSuppress`, `NoWarn`, and `<auditSources>`.
@@ -481,7 +482,7 @@ The pins of the `packages` scope come from an MSBuild evaluation.
 A report missing that scope would otherwise read as a repository with no packages.
 A failed `dotnet tool update` and a failed hook are two more.
 The [transitive overrides](#transitive-overrides) add two of their own.
-One is a restore error other than an audit finding, such as a missing package, or a warning a project treats as an error.
+One is a restore error other than an audit finding or NU1905, such as a missing package, or a warning a project treats as an error.
 The other is a restore that could not read a package source in full.
 The restore [`prune`](#bv-dependencies-prune) runs carries the first of the two, and not the second, because what a project references does not depend on vulnerability data.
 Overrides regenerated from a fraction of the advisories would delete one that is still needed.
