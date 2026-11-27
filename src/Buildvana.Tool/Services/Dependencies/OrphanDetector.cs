@@ -71,12 +71,14 @@ internal sealed class OrphanDetector(
         }
 
         reporter.Info("Restoring the solution to see which packages its projects reference...");
+
+        // A warning leaves the direct references of a project complete, whatever the repository makes of it.
         var exitCode = await restorer
-            .RestoreAsync(solution.Value, suppressTransitiveOverrides: true, cancellationToken)
+            .RestoreAsync(solution.Value, suppressTransitiveOverrides: true, disableWarningsAsErrors: true, cancellationToken)
             .ConfigureAwait(false);
 
-        // The exit code is not the verdict: a restore whose audit findings are errors fails and still writes
-        // every graph. What went wrong, if anything did, is in the graphs themselves.
+        // The exit code is not the verdict: MSBuild can fail a restore that writes every graph, as it does
+        // under a configured -warnaserror. What went wrong, if anything did, is in the graphs themselves.
         reporter.Detail($"The restore exited with code {exitCode}.");
         var referenced = new HashSet<string>(inventory.DirectiveReferences, StringComparer.OrdinalIgnoreCase);
         foreach (var (projectFullPath, assetsFilePath) in projects)
@@ -101,11 +103,11 @@ internal sealed class OrphanDetector(
         {
             reporter.Info("Restoring the solution again, to leave its dependency graph as the repository builds it...");
             var restoredCode = await restorer
-                .RestoreAsync(solution.Value, suppressTransitiveOverrides: false, cancellationToken)
+                .RestoreAsync(solution.Value, suppressTransitiveOverrides: false, disableWarningsAsErrors: true, cancellationToken)
                 .ConfigureAwait(false);
 
-            // Judged no more than the first one, and for the same reason: this restore reports the audit
-            // findings the first one reported, so a non-zero code here says nothing new.
+            // Judged no more than the first one, and for the same reason: a non-zero code here says nothing
+            // about the graph this restore wrote.
             reporter.Detail($"The restore exited with code {restoredCode}.");
         }
 

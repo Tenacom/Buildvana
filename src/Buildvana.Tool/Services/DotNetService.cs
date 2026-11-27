@@ -99,6 +99,7 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
     public async Task<int> RestoreAsync(
         SolutionContext solution,
         bool suppressTransitiveOverrides,
+        bool disableWarningsAsErrors,
         CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(solution);
@@ -114,10 +115,13 @@ internal sealed partial class DotNetService : IFileBasedAppRunner, IDependencyRe
             "-nologo",
         ];
 
-        // The property goes last, where neither a configured nor a forwarded argument can countermand it.
-        string[] trailingArgs = suppressTransitiveOverrides
-            ? [$"-p:{TransitiveOverrides.SuppressionProperty}=true"]
-            : [];
+        // The properties go last, where neither a configured nor a forwarded argument can countermand them.
+        // NuGet promotes a warning through TreatWarningsAsErrors or through WarningsAsErrors, so turning off
+        // one of the two is not enough.
+        string[] trailingArgs = [
+            .. suppressTransitiveOverrides ? [$"-p:{TransitiveOverrides.SuppressionProperty}=true"] : Array.Empty<string>(),
+            .. disableWarningsAsErrors ? ["-p:TreatWarningsAsErrors=false", "-p:WarningsAsErrors="] : Array.Empty<string>(),
+        ];
 
         var result = await RunDotNetAsync(
             args,

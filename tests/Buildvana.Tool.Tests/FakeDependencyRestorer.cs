@@ -20,16 +20,20 @@ internal sealed class FakeDependencyRestorer : IDependencyRestorer
     /// </summary>
     public Func<bool, int> OnRestore { get; set; } = static _ => 0;
 
-    /// <summary>Gets one entry per restore, stating whether the override files were suppressed.</summary>
-    public List<bool> Restores { get; } = [];
+    /// <summary>
+    /// Gets one entry per restore, stating whether the override files were suppressed, and whether the
+    /// warnings were kept from being errors.
+    /// </summary>
+    public List<(bool SuppressTransitiveOverrides, bool DisableWarningsAsErrors)> Restores { get; } = [];
 
     /// <inheritdoc/>
     public Task<int> RestoreAsync(
         SolutionContext solution,
         bool suppressTransitiveOverrides,
+        bool disableWarningsAsErrors,
         CancellationToken cancellationToken = default)
     {
-        Restores.Add(suppressTransitiveOverrides);
+        Restores.Add((suppressTransitiveOverrides, disableWarningsAsErrors));
         return Task.FromResult(OnRestore(suppressTransitiveOverrides));
     }
 }
