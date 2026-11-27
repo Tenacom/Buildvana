@@ -19,6 +19,7 @@ The analyzers, the coverage collector, the code metrics, and the debugger of tha
 
 - In a file that no tool generates, the second line is `// This file is part of <package>. DO NOT MODIFY!`.
 - A blank line and `#nullable enable` follow the comment. The compiler turns the nullable context off in a file it takes for generated code, as [Nullable](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-options/language#nullable) says.
+- Below C# 8, the file has no `#nullable` directive and no nullable annotation, because the compiler rejects both with CS8370. A project that targets `netstandard2.0` or .NET Framework compiles as C# 7.3 unless it sets `LangVersion`. A source generator reads the language version from `ParseOptionsProvider`.
 
 The compiler takes a file for generated code on either sign, and then reports no analyzer diagnostic in it. A file needs both signs. The compiler may change a hint name, and a coverage tool that excludes files by name cannot read a comment.
 
