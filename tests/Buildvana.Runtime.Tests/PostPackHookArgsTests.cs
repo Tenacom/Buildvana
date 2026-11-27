@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Buildvana.Core.Testing;
 using Buildvana.Runtime;
 
 internal sealed class PostPackHookArgsTests
@@ -38,7 +39,7 @@ internal sealed class PostPackHookArgsTests
         }
         finally
         {
-            Directory.Delete(dir, recursive: true);
+            TestDirectory.Delete(dir);
         }
     }
 

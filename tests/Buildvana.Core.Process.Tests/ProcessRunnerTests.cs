@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using Buildvana.Core;
 using Buildvana.Core.Process;
+using Buildvana.Core.Testing;
 
 internal sealed class ProcessRunnerTests
 {
@@ -110,7 +111,7 @@ internal sealed class ProcessRunnerTests
         }
         finally
         {
-            directory.Delete(recursive: true);
+            TestDirectory.Delete(directory.FullName);
         }
     }
 

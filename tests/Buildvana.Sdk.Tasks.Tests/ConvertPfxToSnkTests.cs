@@ -4,6 +4,7 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Buildvana.Core.Testing;
 using Buildvana.Sdk.Tasks;
 using Microsoft.Build.Framework;
 
@@ -130,7 +131,7 @@ internal sealed class ConvertPfxToSnkTests
         }
         finally
         {
-            tempDirectory.Delete(recursive: true);
+            TestDirectory.Delete(tempDirectory.FullName);
         }
     }
 }

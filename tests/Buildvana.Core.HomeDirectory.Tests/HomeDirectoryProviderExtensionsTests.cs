@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.Testing;
 
 internal sealed class HomeDirectoryProviderExtensionsTests
 {
@@ -19,7 +20,7 @@ internal sealed class HomeDirectoryProviderExtensionsTests
         }
         finally
         {
-            home.Delete();
+            TestDirectory.Delete(home.FullName);
         }
     }
 
@@ -38,7 +39,7 @@ internal sealed class HomeDirectoryProviderExtensionsTests
         }
         finally
         {
-            home.Delete();
+            TestDirectory.Delete(home.FullName);
         }
     }
 
@@ -57,7 +58,7 @@ internal sealed class HomeDirectoryProviderExtensionsTests
         }
         finally
         {
-            home.Delete();
+            TestDirectory.Delete(home.FullName);
         }
     }
 }

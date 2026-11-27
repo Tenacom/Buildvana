@@ -51,7 +51,7 @@ internal sealed class TransitiveOverridesFixture : IDisposable
         return [.. project.GetItems(itemType).Select(static item => item.EvaluatedInclude)];
     }
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    public void Dispose() => TestDirectory.Delete(_root);
 
     private static string GetMetadata(string key)
         => typeof(TransitiveOverridesFixture).Assembly.GetMetadata(key);

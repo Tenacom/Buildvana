@@ -62,5 +62,5 @@ public sealed class TempHome : IDisposable
     public string ReadFile(string name) => File.ReadAllText(Path.Combine(RootPath, name));
 
     /// <inheritdoc/>
-    public void Dispose() => _directory.Delete(recursive: true);
+    public void Dispose() => TestDirectory.Delete(RootPath);
 }

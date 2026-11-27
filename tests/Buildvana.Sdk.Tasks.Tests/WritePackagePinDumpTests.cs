@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using Buildvana.Core.Dependencies;
+using Buildvana.Core.Testing;
 using Buildvana.Sdk.Tasks;
 using Microsoft.Build.Framework;
 using TaskItem = Microsoft.Build.Utilities.TaskItem;
@@ -174,7 +175,7 @@ internal sealed class WritePackagePinDumpTests
         }
         finally
         {
-            tempDirectory.Delete(recursive: true);
+            TestDirectory.Delete(tempDirectory.FullName);
         }
     }
 }

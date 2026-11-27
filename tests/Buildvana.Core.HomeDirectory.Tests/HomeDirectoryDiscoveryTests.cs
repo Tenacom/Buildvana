@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using Buildvana.Core.HomeDirectory;
+using Buildvana.Core.Testing;
 
 internal sealed class HomeDirectoryDiscoveryTests
 {
@@ -23,7 +24,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -44,7 +45,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -63,7 +64,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -84,7 +85,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 
@@ -105,7 +106,7 @@ internal sealed class HomeDirectoryDiscoveryTests
         }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            TestDirectory.Delete(root);
         }
     }
 

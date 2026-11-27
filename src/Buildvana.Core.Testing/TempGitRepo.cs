@@ -56,7 +56,7 @@ public sealed class TempGitRepo : IDisposable
         AppDomain.CurrentDomain.ProcessExit += (_, _) => {
             try
             {
-                Directory.Delete(path, recursive: true);
+                TestDirectory.Delete(path);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -389,6 +389,6 @@ public sealed class TempGitRepo : IDisposable
             File.SetAttributes(file, FileAttributes.Normal);
         }
 
-        Directory.Delete(path, recursive: true);
+        TestDirectory.Delete(path);
     }
 }

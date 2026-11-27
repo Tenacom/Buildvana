@@ -1,6 +1,7 @@
 // Copyright (C) Tenacom and contributors. Licensed under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using Buildvana.Core.Testing;
 using Buildvana.Sdk.Tasks;
 using Microsoft.Build.Framework;
 using TaskItem = Microsoft.Build.Utilities.TaskItem;
@@ -94,7 +95,7 @@ internal sealed class WriteThisAssemblyConstantsFileTests
         }
         finally
         {
-            tempDirectory.Delete(recursive: true);
+            TestDirectory.Delete(tempDirectory.FullName);
         }
     }
 }
